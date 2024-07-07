@@ -1,6 +1,7 @@
 import React from "react";
 import classes from './Estafeta.module.css';
 import { Link } from "react-router-dom";
+import Input from "../../Standart/Input/Input";
 
 function Estafeta({ children, ...props }) {
 
@@ -19,6 +20,11 @@ function Estafeta({ children, ...props }) {
                             <img src="/avatar.png" alt="" />
                         </Link>
                     </div>
+                </div>
+
+                <div className={classes.section_searchAndFilter}>
+                    <Input background={'#E9EFFF'} width={'415px'} needSearchButton />
+                    
                 </div>
             </div>
         </>

@@ -1,0 +1,22 @@
+.input{
+    position: relative;
+}
+
+.input input{
+    width: 100%;
+    height: 36px;
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    font-family: Inter;
+}
+
+.search{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 10px;
+    cursor: pointer;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}
