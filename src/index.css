@@ -11,11 +11,14 @@ a {
 }
 
 :root {
+    --menu-width: 345px;
     --blockWidth: 1300px;
     --menu-gray: #7f808a;
     --menu-bg: #353B55;
     --menu-item-bg: #303552;
     --white: #fff;
+    --red: #C03B28;
+    --main-gray: #545873;
 }
 
 body {
