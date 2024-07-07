@@ -34,7 +34,6 @@ main {
     padding-bottom: 80px;
 }
 
-
 ::-webkit-scrollbar {
     width: 8px;
 }
@@ -42,7 +41,6 @@ main {
 ::-webkit-scrollbar-thumb {
     background-color: #0057C3;
     border-radius: 10px;
-
 }
 
 ::-webkit-scrollbar-thumb:hover {
