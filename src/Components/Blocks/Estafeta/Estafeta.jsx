@@ -6,7 +6,6 @@ import Filter from "../Filter/Filter";
 import InfoTableData from "../InfoTableData/InfoTableData";
 
 function Estafeta({ children, ...props }) {
-
     return (
         <>
             <div className={classes.section}>
@@ -29,7 +28,7 @@ function Estafeta({ children, ...props }) {
                     <Filter />
                 </div>
 
-                <InfoTableData/>
+                <InfoTableData />
             </div>
         </>
     );
