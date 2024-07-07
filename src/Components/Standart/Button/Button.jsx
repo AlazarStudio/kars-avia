@@ -3,7 +3,6 @@ import classes from './Button.module.css';
 import { Link } from "react-router-dom";
 
 function Button({ children, timeLeft, ...props }) {
-    // Создаем переменную стилей
     const buttonStyles = {
         width: props.width, 
         height: props.height, 

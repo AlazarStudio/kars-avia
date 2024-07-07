@@ -4,7 +4,7 @@ import classes from './Input.module.css';
 function Input({ children, ...props }) {
     return (
         <div className={classes.input} style={{ width: props.width ? props.width : null }}>
-            <input type="text" style={{ 
+            <input type={props.type ? props.type : 'text'} style={{ 
                 background: props.background ? props.background : null,
                 padding: props.needSearchButton ? '8px 35px 8px 15px' : '8px 15px'
                 }} />
