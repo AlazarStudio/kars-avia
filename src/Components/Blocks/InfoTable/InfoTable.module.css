@@ -1,0 +1,8 @@
+.InfoTable {
+    width: 100%;
+    background-color: var(--white);
+    border-radius: 8px;
+}
+
+
+@media (min-width: 0px) and (max-width: 1299px) {}

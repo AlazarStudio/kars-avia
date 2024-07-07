@@ -9,6 +9,7 @@
     outline: none;
     border-radius: 5px;
     font-family: Inter;
+    color: var(--main-gray);
 }
 
 .search{

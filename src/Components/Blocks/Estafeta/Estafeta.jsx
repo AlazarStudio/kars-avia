@@ -3,6 +3,7 @@ import classes from './Estafeta.module.css';
 import { Link } from "react-router-dom";
 import Input from "../../Standart/Input/Input";
 import Filter from "../Filter/Filter";
+import InfoTableData from "../InfoTableData/InfoTableData";
 
 function Estafeta({ children, ...props }) {
 
@@ -25,8 +26,10 @@ function Estafeta({ children, ...props }) {
 
                 <div className={classes.section_searchAndFilter}>
                     <Input background={'#E9EFFF'} width={'415px'} needSearchButton />
-                    <Filter/>
+                    <Filter />
                 </div>
+
+                <InfoTableData/>
             </div>
         </>
     );

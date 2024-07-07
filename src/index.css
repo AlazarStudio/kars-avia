@@ -20,6 +20,7 @@ a {
     --red: #C03B28;
     --main-gray: #545873;
     --text-gray: #9E9E9E;
+    --hover-gray: #F5F6F8;
 }
 
 body {
@@ -31,4 +32,19 @@ main {
     flex-direction: column;
     gap: 80px;
     padding-bottom: 80px;
+}
+
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #0057C3;
+    border-radius: 10px;
+
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: #0063DE;
 }
