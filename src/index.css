@@ -12,10 +12,14 @@ a {
 
 :root {
     --blockWidth: 1300px;
+    --menu-gray: #7f808a;
+    --menu-bg: #353B55;
+    --menu-item-bg: #303552;
+    --white: #fff;
 }
 
 body {
-    background-color: #eef0f4;
+    background-color: #F1F4FB;
 }
 
 main {

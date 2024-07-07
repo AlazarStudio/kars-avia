@@ -1,12 +1,12 @@
 import React from "react";
-import Menu from "../Blocks/Menu/Menu";
+import MenuDispetcher from "../Blocks/MenuDispetcher/MenuDispetcher";
 
 function Main_Page({ children, ...props }) {
-    return ( 
+    return (
         <>
-            <Menu/>
+            <MenuDispetcher />
         </>
-     );
+    );
 }
 
 export default Main_Page;
