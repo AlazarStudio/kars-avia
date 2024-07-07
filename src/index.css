@@ -1,0 +1,26 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', sans-serif;
+    scroll-behavior: smooth;
+}
+
+a {
+    text-decoration: none;
+}
+
+:root {
+    --blockWidth: 1300px;
+}
+
+body {
+    background-color: #eef0f4;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 80px;
+    padding-bottom: 80px;
+}

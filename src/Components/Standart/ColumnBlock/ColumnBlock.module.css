@@ -1,0 +1,4 @@
+.ColumnBlock{
+    display: flex;
+    flex-direction: column;
+}
