@@ -2,7 +2,7 @@ import React from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableData({ children, ...props }) {
+function InfoTableData({ children, toggleRequestSidebar, ...props }) {
     
     return (
         <InfoTable >
@@ -18,7 +18,7 @@ function InfoTableData({ children, ...props }) {
             </div>
 
             <div className={classes.bottom}>
-                <div className={classes.InfoTable_data}>
+                <div className={classes.InfoTable_data} onClick={toggleRequestSidebar}>
                     <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>01</div>
                     <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
                         <div className={classes.InfoTable_data_elem_information}>

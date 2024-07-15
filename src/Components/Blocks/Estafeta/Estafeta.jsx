@@ -4,12 +4,18 @@ import { Link } from "react-router-dom";
 import Filter from "../Filter/Filter";
 import InfoTableData from "../InfoTableData/InfoTableData";
 import CreateRequest from "../CreateRequest/CreateRequest";
+import ExistRequest from "../ExistRequest/ExistRequest";
 
 function Estafeta({ children, ...props }) {
-    const [showSidebar, setShowSidebar] = useState(false);
+    const [showCreateSidebar, setShowCreateSidebar] = useState(false);
+    const [showRequestSidebar, setShowRequestSidebar] = useState(false);
 
-    const toggleSidebar = () => {
-        setShowSidebar(!showSidebar);
+    const toggleCreateSidebar = () => {
+        setShowCreateSidebar(!showCreateSidebar);
+    };
+
+    const toggleRequestSidebar = () => {
+        setShowRequestSidebar(!showRequestSidebar);
     };
 
     const [filterData, setFilterData] = useState({
@@ -44,12 +50,13 @@ function Estafeta({ children, ...props }) {
 
                 <div className={classes.section_searchAndFilter}>
                     <input type="text" placeholder="Поиск" style={{'width': '500px'}}/>
-                    <Filter toggleSidebar={toggleSidebar} handleChange={handleChange} filterData={filterData}/>
+                    <Filter toggleSidebar={toggleCreateSidebar} handleChange={handleChange} filterData={filterData}/>
                 </div>
 
-                <InfoTableData />
+                <InfoTableData toggleRequestSidebar={toggleRequestSidebar}/>
 
-                <CreateRequest show={showSidebar} onClose={toggleSidebar} />
+                <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
+                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} />
             </div>
         </>
     );
