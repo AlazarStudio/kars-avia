@@ -1,11 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import classes from './Estafeta.module.css';
 import { Link } from "react-router-dom";
 import Input from "../../Standart/Input/Input";
 import Filter from "../Filter/Filter";
 import InfoTableData from "../InfoTableData/InfoTableData";
+import CreateRequest from "../CreateRequest/CreateRequest";
 
 function Estafeta({ children, ...props }) {
+    const [showSidebar, setShowSidebar] = useState(false);
+
+    const toggleSidebar = () => {
+        setShowSidebar(!showSidebar);
+    };
+    
     return (
         <>
             <div className={classes.section}>
@@ -25,10 +32,12 @@ function Estafeta({ children, ...props }) {
 
                 <div className={classes.section_searchAndFilter}>
                     <Input background={'#E9EFFF'} width={'415px'} needSearchButton />
-                    <Filter />
+                    <Filter toggleSidebar={toggleSidebar} />
                 </div>
 
                 <InfoTableData />
+
+                <CreateRequest show={showSidebar} onClose={toggleSidebar} />
             </div>
         </>
     );

@@ -1,10 +1,13 @@
-.section {
+ .section {
     width: calc(100% - var(--menu-width));
     min-width: 1000px;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     gap: 45px;
     padding: 35px;
+    overflow: hidden;
+    position: relative;
 }
 
 .section_top {
