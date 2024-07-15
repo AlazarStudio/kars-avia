@@ -150,7 +150,7 @@ select {
     width: 60%;
 }
 
-.requestData_messages{
+.requestData_messages {
     height: 590px;
     overflow: hidden;
     overflow-y: scroll;
@@ -209,7 +209,7 @@ select {
     color: #545873;
 }
 
-.requestData_message_time{
+.requestData_message_time {
     font-family: Nunito Sans;
     font-size: 12px;
     font-weight: 500;
@@ -217,30 +217,76 @@ select {
     color: #545873;
 }
 
-.requestData_message_full{
+.requestData_message_full {
     display: flex;
     justify-content: flex-start;
 }
 
-.myMes{
+.myMes {
     display: flex;
     justify-content: flex-end;
     padding-right: 10px;
 }
 
-.myMes .requestData_message_name,    
-.myMes .requestData_message_post,   
-.myMes .requestData_message_time{    
+.myMes .requestData_message_name,
+.myMes .requestData_message_post,
+.myMes .requestData_message_time {
     display: flex;
     justify-content: flex-end;
 }
 
-.sendBlock{
+.sendBlock {
     display: flex;
     justify-content: space-between;
     gap: 10px;
 }
-.sendBlock input{
+
+.sendBlock input {
     width: 100%;
 }
+
+.historyDate {
+    box-shadow: 0px 4px 16px 0px #00000026;
+    border-radius: 50px;
+    width: 190px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    color: #545873;
+}
+
+.logs {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    align-items: center;
+    height: 600px;
+    overflow: hidden;
+    overflow-y: scroll;
+    padding: 10px 0;
+}
+
+.historyLog {
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: #54587380;
+}
+
+.historyLog span {
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: #545873;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

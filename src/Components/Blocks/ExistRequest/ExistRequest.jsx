@@ -246,7 +246,7 @@ function ExistRequest({ show, onClose }) {
                                     <div className={classes.requestData_message_name}>Алина </div>
                                     <div className={classes.requestData_message_post}>Менеджер авиакомпании “Азимут”</div>
                                     <div className={classes.requestData_message_text}>
-                                    Все правки внесены.
+                                        Все правки внесены.
                                     </div>
                                     <div className={classes.requestData_message_time}>17:27</div>
                                 </div>
@@ -263,7 +263,25 @@ function ExistRequest({ show, onClose }) {
                 )}
                 {activeTab === 'История' && (
                     <div className={classes.requestData}>
-                        История
+                        <div className={classes.logs}>
+                            <div className={classes.historyDate}>
+                                24 апреля 2024
+                            </div>
+
+                            <div className={classes.historyLog}>
+                                15:24 <span>Марина</span> Изменил(а) время прибытия с <span>17.05.2024, 13:00</span> на <span>18.05.2024, 13:00</span>
+                            </div>
+                            <div className={classes.historyLog}>
+                                15:24 <span>Марина</span> Изменил(а) время прибытия с <span>18.05.2024, 13:00</span> на <span>19.05.2024, 13:00</span>
+                            </div>
+
+                            <div className={classes.historyDate}>
+                                Сегодня
+                            </div>
+                            <div className={classes.historyLog}>
+                                15:24 <span>Марина</span> Изменил(а) время прибытия с <span>17.05.2024, 13:00</span> на <span>18.05.2024, 13:00</span>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
