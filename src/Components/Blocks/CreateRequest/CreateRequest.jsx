@@ -123,50 +123,48 @@ function CreateRequest({ show, onClose }) {
 
                 {activeTab === 'Общая' && (
                     <div className={classes.requestData}>
-                        <label>
-                            ФИО
-                            <input type="text" name="fullName" placeholder="Иванов Иван Иванович" value={formData.fullName} onChange={handleChange} />
-                        </label>
-                        <label>
-                            Аэропорт
-                            <select name="airport" value={formData.airport} onChange={handleChange}>
-                                <option value="Аэропорт">Аэропорт</option>
-                            </select>
-                        </label>
-                        <label>
-                            Прибытие
-                            <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} />
-                            <div className={classes.reis_info}>
-                                <input type="date" name="arrivalDate" value={formData.arrivalDate} onChange={handleChange} placeholder="Дата" />
-                                <input type="time" name="arrivalTime" value={formData.arrivalTime} onChange={handleChange} placeholder="Время" />
-                            </div>
-                        </label>
-                        <label>
-                            Отъезд
-                            <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} />
-                            <div className={classes.reis_info}>
-                                <input type="date" name="departureDate" value={formData.departureDate} onChange={handleChange} placeholder="Дата" />
-                                <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
-                            </div>
-                        </label>
-                        <label>
-                            Номер
-                            <select name="roomType" value={formData.roomType} onChange={handleChange}>
-                                <option value="Одноместный">Одноместный</option>
-                                <option value="Двухместный">Двухместный</option>
-                            </select>
-                        </label>
+                        <label>ФИО</label>
+                        <input type="text" name="fullName" placeholder="Иванов Иван Иванович" value={formData.fullName} onChange={handleChange} />
+
+                        <label>Аэропорт</label>
+                        <select name="airport" value={formData.airport} onChange={handleChange}>
+                            <option value="" disabled>Выберите аэропорт</option>
+                            <option value="Аэропорт1">Аэропорт1</option>
+                            <option value="Аэропорт2">Аэропорт2</option>
+                            <option value="Аэропорт3">Аэропорт3</option>
+                        </select>
+
+                        <label>Прибытие</label>
+                        <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} />
+                        <div className={classes.reis_info}>
+                            <input type="date" name="arrivalDate" value={formData.arrivalDate} onChange={handleChange} placeholder="Дата" />
+                            <input type="time" name="arrivalTime" value={formData.arrivalTime} onChange={handleChange} placeholder="Время" />
+                        </div>
+
+                        <label>Отъезд</label>
+                        <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} />
+                        <div className={classes.reis_info}>
+                            <input type="date" name="departureDate" value={formData.departureDate} onChange={handleChange} placeholder="Дата" />
+                            <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
+                        </div>
+
+                        <label>Номер</label>
+                        <select name="roomType" value={formData.roomType} onChange={handleChange}>
+                            <option value="" disabled>Выберите номер</option>
+                            <option value="Одноместный">Одноместный</option>
+                            <option value="Двухместный">Двухместный</option>
+                        </select>
+
                     </div>
                 )}
                 {activeTab === 'Доп. услуги' && (
                     <div className={classes.requestData}>
-                        <label>
-                            Питание
-                            <select name="included" value={formData.meals.included} onChange={handleChange}>
-                                <option value="Включено">Включено</option>
-                                <option value="Не включено">Не включено</option>
-                            </select>
-                        </label>
+                        <label>Питание</label>
+                        <select name="included" value={formData.meals.included} onChange={handleChange}>
+                            <option value="Включено">Включено</option>
+                            <option value="Не включено">Не включено</option>
+                        </select>
+
                         <div className={classes.checks} style={{ 'display': `${formData.meals.included == 'Включено' ? 'flex' : 'none'}` }}>
                             <label>
                                 <input type="checkbox" name="breakfast" checked={formData.meals.breakfast} onChange={handleChange} />

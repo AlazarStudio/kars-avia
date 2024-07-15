@@ -34,6 +34,15 @@ main {
     padding-bottom: 80px;
 }
 
+input, select{
+    height: 36px;
+    border: 1px solid #545873;
+    outline: none;
+    border-radius: 5px;
+    font-family: Inter;
+    padding: 0 10px;
+}
+
 ::-webkit-scrollbar {
     width: 8px;
 }

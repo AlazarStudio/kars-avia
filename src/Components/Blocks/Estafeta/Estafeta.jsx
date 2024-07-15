@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import classes from './Estafeta.module.css';
 import { Link } from "react-router-dom";
-import Input from "../../Standart/Input/Input";
 import Filter from "../Filter/Filter";
 import InfoTableData from "../InfoTableData/InfoTableData";
 import CreateRequest from "../CreateRequest/CreateRequest";
@@ -12,6 +11,19 @@ function Estafeta({ children, ...props }) {
     const toggleSidebar = () => {
         setShowSidebar(!showSidebar);
     };
+
+    const [filterData, setFilterData] = useState({
+        filterAirport: '',
+        filterDate: '',
+    });
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFilterData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    }
     
     return (
         <>
@@ -31,8 +43,8 @@ function Estafeta({ children, ...props }) {
                 </div>
 
                 <div className={classes.section_searchAndFilter}>
-                    <Input background={'#E9EFFF'} width={'415px'} needSearchButton />
-                    <Filter toggleSidebar={toggleSidebar} />
+                    <input type="text" placeholder="Поиск" style={{'width': '500px'}}/>
+                    <Filter toggleSidebar={toggleSidebar} handleChange={handleChange} filterData={filterData}/>
                 </div>
 
                 <InfoTableData />

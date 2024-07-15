@@ -1,17 +1,18 @@
-import React from "react";
+import React, { useState } from "react";
 import classes from './Filter.module.css';
 import Button from "../../Standart/Button/Button";
-import Input from "../../Standart/Input/Input";
 
-function Filter({ children, toggleSidebar, ...props }) {
+function Filter({ children, toggleSidebar, handleChange, filterData, ...props }) {
     return (
         <div className={classes.filter}>
             <div className={classes.filter_title}>Фильтр:</div>
-            <select className={classes.filter_select}>
-                <option value="Авиакомпания 1">Авиакомпания 1</option>
-                <option value="Авиакомпания 2">Авиакомпания 2</option>
+            <select className={classes.filter_select} name="filterAirport" value={filterData.filterAirport} onChange={handleChange}>
+                <option value="" disabled>Выберите авиакомпанию</option>
+                <option value="Азимут">Азимут</option>
+                <option value="S7 airlines">S7 airlines</option>
+                <option value="Северный ветер">Северный ветер</option>
             </select>
-            <Input width={'170px'} type={'date'} />
+            <input type="date" name="filterDate" value={filterData.filterDate} onChange={handleChange} />
             <Button onClick={toggleSidebar}>Создать заявку</Button>
         </div>
     );
