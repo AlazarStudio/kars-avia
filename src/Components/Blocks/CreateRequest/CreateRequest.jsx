@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import classes from './CreateRequest.module.css';
 import Button from "../../Standart/Button/Button";
+import Sidebar from "../Sidebar/Sidebar";
 
 function CreateRequest({ show, onClose }) {
     const [activeTab, setActiveTab] = useState('Общая');
@@ -110,7 +111,7 @@ function CreateRequest({ show, onClose }) {
     }, [show, onClose]);
 
     return (
-        <div ref={sidebarRef} className={classes.createRequest} style={{ transform: transform }}>
+        <Sidebar show={show} transform={transform} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
                 <div className={classes.requestTitle_name}>Создать заявку</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
@@ -193,7 +194,7 @@ function CreateRequest({ show, onClose }) {
             <div className={classes.requestButon}>
                 <Button onClick={() => alert('Заявка создана!')}>Создать заявку</Button>
             </div>
-        </div>
+        </Sidebar>
     );
 }
 
