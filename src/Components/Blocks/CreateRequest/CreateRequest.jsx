@@ -90,8 +90,6 @@ function CreateRequest({ show, onClose }) {
         }
     }
 
-    let transform = show ? 'translateX(0px)' : 'translateX(500px)';
-
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
@@ -111,7 +109,7 @@ function CreateRequest({ show, onClose }) {
     }, [show, onClose]);
 
     return (
-        <Sidebar show={show} transform={transform} sidebarRef={sidebarRef}>
+        <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
                 <div className={classes.requestTitle_name}>Создать заявку</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
@@ -133,10 +131,6 @@ function CreateRequest({ show, onClose }) {
                             Аэропорт
                             <select name="airport" value={formData.airport} onChange={handleChange}>
                                 <option value="Аэропорт">Аэропорт</option>
-                                <option value="Аэропорт1">Аэропорт1</option>
-                                <option value="Аэропорт2">Аэропорт2</option>
-                                <option value="Аэропорт3">Аэропорт3</option>
-                                <option value="Аэропорт4">Аэропорт4</option>
                             </select>
                         </label>
                         <label>
@@ -192,7 +186,7 @@ function CreateRequest({ show, onClose }) {
             </div>
 
             <div className={classes.requestButon}>
-                <Button onClick={() => alert('Заявка создана!')}>Создать заявку</Button>
+                <Button>Создать заявку</Button>
             </div>
         </Sidebar>
     );
