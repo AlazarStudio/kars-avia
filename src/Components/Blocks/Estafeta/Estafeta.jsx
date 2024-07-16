@@ -7,6 +7,7 @@ import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 
 import { requests } from "../../../requests";
+import DeleteComponent from "../DeleteComponent/DeleteComponent";
 
 function Estafeta({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -77,6 +78,8 @@ function Estafeta({ children, ...props }) {
                         </Link>
                     </div>
                 </div>
+
+                {/* <DeleteComponent title={'Вы действительно хотите удалить заявку?'}/> */}
 
                 <div className={classes.section_searchAndFilter}>
                     <input
