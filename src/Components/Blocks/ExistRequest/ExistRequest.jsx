@@ -3,7 +3,7 @@ import classes from './ExistRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function ExistRequest({ show, onClose }) {
+function ExistRequest({ show, onClose, setShowChooseHotel }) {
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState({
         fullName: '',
@@ -287,7 +287,10 @@ function ExistRequest({ show, onClose }) {
             </div>
 
             <div className={classes.requestButon}>
-                <Button >Разместить<img src="/user-check.png" alt="" /></Button>
+                <Button onClick={() => {
+                    onClose();
+                    setShowChooseHotel(true)
+                }}>Разместить<img src="/user-check.png" alt="" /></Button>
             </div>
         </Sidebar>
     );

@@ -12,6 +12,7 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Main_Page />} />
           <Route path="/:id" element={<Main_Page />} />
+          <Route path="/placement" element={<Main_Page />} />
           <Route path="*" element={<Non_Found_Page />} />
         </Route>
       </Routes>

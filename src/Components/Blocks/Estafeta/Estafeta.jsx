@@ -5,13 +5,15 @@ import Filter from "../Filter/Filter";
 import InfoTableData from "../InfoTableData/InfoTableData";
 import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
+import ChooseHotel from "../ChooseHotel/ChooseHotel";
 
 import { requests } from "../../../requests";
-import DeleteComponent from "../DeleteComponent/DeleteComponent";
+import Header from "../Header/Header";
 
 function Estafeta({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
+    const [showChooseHotel, setShowChooseHotel] = useState(false);
 
     const toggleCreateSidebar = () => {
         setShowCreateSidebar(!showCreateSidebar);
@@ -19,6 +21,10 @@ function Estafeta({ children, ...props }) {
 
     const toggleRequestSidebar = () => {
         setShowRequestSidebar(!showRequestSidebar);
+    };
+
+    const toggleChooseHotel = () => {
+        setShowChooseHotel(!showChooseHotel);
     };
 
     const [filterData, setFilterData] = useState({
@@ -66,20 +72,8 @@ function Estafeta({ children, ...props }) {
         <>
             <div className={classes.section}>
                 <div className={classes.section_top}>
-                    <div className={classes.section_top_title}>Эстафета</div>
-                    <div className={classes.section_top_elems}>
-                        <div className={classes.section_top_elems_notify}>
-                            <div className={classes.section_top_elems_notify_red}></div>
-                            <img src="/notify.png" alt="" />
-                        </div>
-                        <div className={classes.section_top_elems_date}>Чт, 25 апреля</div>
-                        <Link to={'/profile'} className={classes.section_top_elems_profile}>
-                            <img src="/avatar.png" alt="" />
-                        </Link>
-                    </div>
+                    <Header>Эстафета</Header>
                 </div>
-
-                {/* <DeleteComponent title={'Вы действительно хотите удалить заявку?'}/> */}
 
                 <div className={classes.section_searchAndFilter}>
                     <input
@@ -95,7 +89,8 @@ function Estafeta({ children, ...props }) {
                 <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} />
 
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} />
+                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} />
+                <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} />
             </div>
         </>
     );
