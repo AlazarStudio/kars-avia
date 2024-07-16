@@ -1,9 +1,9 @@
 export const requests = [
     {
         id: '01',
-        fullName: 'Иванов И.И.',
+        fullName: 'Иванов Иван Иванович',
         post: 'КВС',
-        date: '17 май 2024',
+        date: '17.05.2024',
         aviacompany: 'Азимут',
         airport: 'MRV',
         airport_icon: 'azimut_preview.png',
@@ -18,9 +18,9 @@ export const requests = [
     },
     {
         id: '02',
-        fullName: 'Иванов И.И.',
+        fullName: 'Иванов Иван Иванович',
         post: 'КВС',
-        date: '17 май 2024',
+        date: '17.05.2024',
         aviacompany: 'Азимут',
         airport: 'MRV',
         airport_icon: 'azimut_preview.png',

@@ -6,6 +6,8 @@ import InfoTableData from "../InfoTableData/InfoTableData";
 import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 
+import { requests } from "../../../requests";
+
 function Estafeta({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -53,7 +55,7 @@ function Estafeta({ children, ...props }) {
                     <Filter toggleSidebar={toggleCreateSidebar} handleChange={handleChange} filterData={filterData}/>
                 </div>
 
-                <InfoTableData toggleRequestSidebar={toggleRequestSidebar}/>
+                <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={requests}/>
 
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
                 <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} />

@@ -2,7 +2,6 @@
 .InfoTable_title,
 .InfoTable_data {
     display: flex;
-    justify-content: space-between;
     font-family: Inter;
     font-size: 16px;
     font-weight: 400;
@@ -11,6 +10,7 @@
     margin-left: 8px;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
+    box-shadow: 0px -1px 0px 0px #E4E4EF inset;
 }
 
 .InfoTable_data:hover{
@@ -30,6 +30,7 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
+    border-right: 1px solid #E4E4EF;
 }
 
 .InfoTable_data_elem_img {
@@ -49,6 +50,7 @@
     font-weight: 400;
     line-height: 20px;
     color: var(--main-gray);
+    width: 100%;
 }
 
 .w5 {
@@ -63,6 +65,18 @@
     width: 12.5%;
 }
 
+.w10 {
+    width: 10%;
+}
+
+.w8 {
+    width: 8%;
+}
+
+.w20 {
+    width: 20%;
+}
+
 .w12:last-child {
     border-right: none;
 }
@@ -70,7 +84,9 @@
 .InfoTable_data_elem_information {
     display: flex;
     flex-direction: column;
-    align-items: start;
+    align-items: center;
+    width: 100%;
+    padding: 0 10px;
 }
 
 .InfoTable_data_elem_moreInfo {
@@ -93,7 +109,7 @@
 .InfoTable_data_elem_position {
     display: flex;
     align-items: center;
-    justify-content: start;
+    justify-content: center;
     gap: 10px;
     width: 100%;
     padding: 0 10px;
