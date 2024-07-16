@@ -4,13 +4,15 @@ import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Estafeta from "../../Blocks/Estafeta/Estafeta";
 import { useParams } from "react-router-dom";
 import Non_Found_Page from "../Non_Found_Page";
+import Placement from "../Placement/Placement"
 
 function Main_Page({ children, ...props }) {
     let { id } = useParams();
     return (
         <div className={classes.main}>
             <MenuDispetcher />
-            {id == 'relay' || !id ? <Estafeta /> : <Non_Found_Page />}
+            
+            {(id == 'relay' || !id) && <Estafeta />}
         </div>
     );
 }
