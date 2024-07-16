@@ -8,13 +8,12 @@ const HotelTable = () => {
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
 
     useEffect(() => {
-        // Загрузка данных о бронированиях (замените на реальный API запрос)
         const data = [
-            { room: '№121', start: '2024-07-01', end: '2024-07-08', guest: 'Иванов И.И.' },
-            { room: '№122', start: '2024-07-03', end: '2024-07-07', guest: 'Иванов И.И.' },
-            { room: '№123', start: '2024-07-10', end: '2024-07-11', guest: 'Гочияев Р. Р.' },
-            { room: '№123', start: '2024-06-01', end: '2024-06-11', guest: 'Гочияев Р. Р.' },
-            { room: '№123', start: '2024-06-28', end: '2024-07-04', guest: 'Гочияев Р. Р.' },
+            { room: '№121', start: '2024-07-01', end: '2024-07-09', guest: 'с 01.07.2024 по 09.07.2024' },
+            { room: '№122', start: '2024-07-03', end: '2024-07-10', guest: 'с 03.07.2024 по 10.07.2024' },
+            { room: '№123', start: '2024-07-10', end: '2024-07-19', guest: 'с 10.07.2024 по 19.07.2024' },
+            { room: '№124', start: '2024-07-12', end: '2024-07-18', guest: 'с 12.07.2024 по 18.07.2024' },
+            { room: '№125', start: '2024-06-28', end: '2024-07-01', guest: 'с 28.06.2024 по 01.07.2024' },
         ];
         setBookings(data);
     }, []);
@@ -68,7 +67,7 @@ const HotelTable = () => {
         return cells;
     };
 
-    const rooms = ['№121', '№122', '№123', '№124'];
+    const rooms = ['№121', '№122', '№123', '№124', '№125'];
 
     const previousMonth = () => {
         setCurrentMonth((prevMonth) => (prevMonth === 0 ? 11 : prevMonth - 1));
@@ -116,5 +115,3 @@ const HotelTable = () => {
 };
 
 export default HotelTable;
-
-{/* <div className={classes.table}> */ }
