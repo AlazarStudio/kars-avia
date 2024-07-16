@@ -19,8 +19,8 @@ function Placement({ children, ...props }) {
                         </div>
                     </Header>
                 </div>
-
             </div>
+            
         </div>
     );
 }

@@ -6,6 +6,7 @@ function Header({ children, ...props }) {
     return (
         <>
             <div className={classes.section_top_title}>{children}</div>
+            
             <div className={classes.section_top_elems}>
                 <div className={classes.section_top_elems_notify}>
                     <div className={classes.section_top_elems_notify_red}></div>
