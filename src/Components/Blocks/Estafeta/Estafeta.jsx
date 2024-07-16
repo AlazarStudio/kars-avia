@@ -25,6 +25,8 @@ function Estafeta({ children, ...props }) {
         filterDate: '',
     });
 
+    const [searchQuery, setSearchQuery] = useState('');
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFilterData(prevState => ({
@@ -32,7 +34,33 @@ function Estafeta({ children, ...props }) {
             [name]: value
         }));
     }
-    
+
+    const handleSearch = (e) => {
+        setSearchQuery(e.target.value);
+    }
+
+    const filteredRequests = requests.filter(request => {
+        return (
+            (filterData.filterAirport === '' || request.aviacompany.includes(filterData.filterAirport)) &&
+            (filterData.filterDate === '' || request.date === filterData.filterDate) &&
+            (
+                request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.post.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.aviacompany.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airport.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.arrival_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.arrival_date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.arrival_time.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.departure_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.departure_date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.departure_time.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.status.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+        );
+    });
+
     return (
         <>
             <div className={classes.section}>
@@ -51,11 +79,17 @@ function Estafeta({ children, ...props }) {
                 </div>
 
                 <div className={classes.section_searchAndFilter}>
-                    <input type="text" placeholder="Поиск" style={{'width': '500px'}}/>
-                    <Filter toggleSidebar={toggleCreateSidebar} handleChange={handleChange} filterData={filterData}/>
+                    <input
+                        type="text"
+                        placeholder="Поиск"
+                        style={{ 'width': '500px' }}
+                        value={searchQuery}
+                        onChange={handleSearch}
+                    />
+                    <Filter toggleSidebar={toggleCreateSidebar} handleChange={handleChange} filterData={filterData} />
                 </div>
 
-                <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={requests}/>
+                <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} />
 
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
                 <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} />

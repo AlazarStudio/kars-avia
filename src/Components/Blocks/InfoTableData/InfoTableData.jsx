@@ -30,7 +30,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, ...props }) {
                         <div className={`${classes.InfoTable_data_elem} ${classes.w8}`}>{item.date}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_img}>
-                                <img src={`/${item.airport_icon}`} alt="" />
+                                <img src={`/${item.aviacompany_icon}`} alt="" />
                             </div>
                             {item.aviacompany}
                         </div>
