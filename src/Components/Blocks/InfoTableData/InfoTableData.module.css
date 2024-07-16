@@ -99,33 +99,6 @@
     padding: 0 10px;
 }
 
-.processing {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #D9D9D9;
-}
-
-.cancelled {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #FFB5B5;
-}
-
-.done {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #9AF6CA;
-}
-
-.adopted {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: #97C7FF;
-}
 
 .bottom{
     height: calc(100vh - 296px);

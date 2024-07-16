@@ -55,3 +55,32 @@ input, select{
 ::-webkit-scrollbar-thumb:hover {
     background-color: #0063DE;
 }
+
+
+.processing {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #D9D9D9;
+}
+
+.cancelled {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #FFB5B5;
+}
+
+.done {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #9AF6CA;
+}
+
+.adopted {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #97C7FF;
+}

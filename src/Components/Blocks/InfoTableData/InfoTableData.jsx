@@ -2,8 +2,10 @@ import React from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
+import { requests } from "../../../requests";
+
 function InfoTableData({ children, toggleRequestSidebar, ...props }) {
-    
+
     return (
         <InfoTable >
             <div className={classes.InfoTable_title}>
@@ -18,48 +20,50 @@ function InfoTableData({ children, toggleRequestSidebar, ...props }) {
             </div>
 
             <div className={classes.bottom}>
-                <div className={classes.InfoTable_data} onClick={toggleRequestSidebar}>
-                    <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>01</div>
-                    <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
-                        <div className={classes.InfoTable_data_elem_information}>
-                            <div className={classes.InfoTable_data_elem_title}>Иванов И.И.</div>
-                            <div className={classes.InfoTable_data_elem_moreInfo}>
-                                КВС
+                {requests.map((item, index) => (
+                    <div className={classes.InfoTable_data} onClick={toggleRequestSidebar} key={index}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.id}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
+                            <div className={classes.InfoTable_data_elem_information}>
+                                <div className={classes.InfoTable_data_elem_title}>{item.fullName}</div>
+                                <div className={classes.InfoTable_data_elem_moreInfo}>{item.post}</div>
+                            </div>
+                        </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.date}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
+                            <div className={classes.InfoTable_data_elem_img}>
+                                <img src={`/${item.airport_icon}`} alt="" />
+                            </div>
+                            {item.aviacompany}
+                        </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.airport}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
+                            <div className={classes.InfoTable_data_elem_information}>
+                                <div className={classes.InfoTable_data_elem_title}>{item.arrival_title}</div>
+                                <div className={classes.InfoTable_data_elem_moreInfo}>
+                                    <span><img src="/calendar.png" alt="" /> {item.arrival_date}</span>
+                                    <span><img src="/time.png" alt="" /> {item.arrival_time}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
+                            <div className={classes.InfoTable_data_elem_information}>
+                                <div className={classes.InfoTable_data_elem_title}>{item.departure_title}</div>
+                                <div className={classes.InfoTable_data_elem_moreInfo}>
+                                    <span><img src="/calendar.png" alt="" /> {item.departure_date}</span>
+                                    <span><img src="/time.png" alt="" /> {item.departure_time}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
+                            <div className={classes.InfoTable_data_elem_position}>
+                                <div className={item.statusCode}></div>
+                                {item.status}
                             </div>
                         </div>
                     </div>
-                    <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>17 май 2024</div>
-                    <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
-                        <div className={classes.InfoTable_data_elem_img}>
-                            <img src="/azimut_preview.png" alt="" />
-                        </div>
-                        Азимут
-                    </div>
-                    <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>MRV</div>
-                    <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
-                        <div className={classes.InfoTable_data_elem_information}>
-                            <div className={classes.InfoTable_data_elem_title}>РС№002435</div>
-                            <div className={classes.InfoTable_data_elem_moreInfo}>
-                                <span><img src="/calendar.png" alt="" /> 17.05.2024</span>
-                                <span><img src="/time.png" alt="" /> 13.50</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
-                        <div className={classes.InfoTable_data_elem_information}>
-                            <div className={classes.InfoTable_data_elem_title}>РС№002435</div>
-                            <div className={classes.InfoTable_data_elem_moreInfo}>
-                                <span><img src="/calendar.png" alt="" /> 17.05.2024</span>
-                                <span><img src="/time.png" alt="" /> 13.50</span>
-                            </div>
-                        </div></div>
-                    <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
-                        <div className={classes.InfoTable_data_elem_position}>
-                            <div className={classes.processing}></div>
-                            В обработке
-                        </div>
-                    </div>
-                </div>
+                ))}
+
             </div>
         </InfoTable>
     );
