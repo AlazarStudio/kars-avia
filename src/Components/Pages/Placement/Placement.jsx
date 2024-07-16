@@ -3,6 +3,7 @@ import classes from './Placement.module.css';
 import { Link, useParams } from "react-router-dom";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Header from "../../Blocks/Header/Header"
+import HotelTable from "../../Blocks/HotelTable/HotelTable";
 
 function Placement({ children, ...props }) {
     let { idHotel } = useParams();
@@ -19,6 +20,8 @@ function Placement({ children, ...props }) {
                         </div>
                     </Header>
                 </div>
+
+                <HotelTable/>
             </div>
             
         </div>
