@@ -99,24 +99,22 @@ const HotelTable = () => {
                 <span>{monthNames[currentMonth]} {currentYear}</span>
                 <button onClick={nextMonth}>→</button>
             </div>
-            <div className={classes.table}>
-                <table className={classes.hotelTable}>
-                    <thead>
-                        <tr>
-                            <th>Номер комнаты</th>
-                            {renderDays()}
+            <table className={classes.hotelTable}>
+                <thead>
+                    <tr>
+                        <th>Номер комнаты</th>
+                        {renderDays()}
+                    </tr>
+                </thead>
+                <tbody>
+                    {rooms.map((room) => (
+                        <tr key={room}>
+                            <td>{room}</td>
+                            {renderBookings(room)}
                         </tr>
-                    </thead>
-                    <tbody>
-                        {rooms.map((room) => (
-                            <tr key={room}>
-                                <td>{room}</td>
-                                {renderBookings(room)}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                    ))}
+                </tbody>
+            </table>
         </div>
     );
 };
