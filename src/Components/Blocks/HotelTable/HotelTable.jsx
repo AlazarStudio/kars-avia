@@ -63,8 +63,7 @@ const HotelTable = () => {
 
                     cells.push(
                         <td key={i} colSpan={colSpan} className={`
-                            ${
-                                endDate <= today.setHours(0, 0, 0, 0) &&
+                            ${endDate <= today.setHours(0, 0, 0, 0) &&
                                 startDate <= today.setHours(0, 0, 0, 0)
                                 ?
                                 classes.booking_light
@@ -109,16 +108,18 @@ const HotelTable = () => {
 
     return (
         <div>
-            <div className={classes.controls}>
-                <button onClick={previousMonth}>←</button>
-                <span>{monthNames[currentMonth]} {currentYear}</span>
-                <button onClick={nextMonth}>→</button>
-            </div>
+
             <div className={classes.table}>
                 <table className={classes.hotelTable}>
                     <thead>
                         <tr>
-                            <th>Номер комнаты</th>
+                            <th>
+                                <div className={classes.controls}>
+                                    <div onClick={previousMonth}><img src="/arrow-left.png" alt="" /></div>
+                                    <span>{monthNames[currentMonth]} {currentYear}</span>
+                                    <div onClick={nextMonth}><img src="/arrow-right.png" alt="" /></div>
+                                </div>
+                            </th>
                             {renderDays()}
                         </tr>
                     </thead>
