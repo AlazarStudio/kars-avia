@@ -13,7 +13,7 @@ const HotelTable = () => {
             { room: '№122', start: '2024-07-03', end: '2024-07-10', guest: 'с 03.07.2024 по 10.07.2024' },
             { room: '№123', start: '2024-07-10', end: '2024-07-19', guest: 'с 10.07.2024 по 19.07.2024' },
             { room: '№124', start: '2024-07-12', end: '2024-07-18', guest: 'с 12.07.2024 по 18.07.2024' },
-            { room: '№125', start: '2024-06-28', end: '2024-07-01', guest: 'с 28.06.2024 по 01.07.2024' },
+            { room: '№125', start: '2024-06-28', end: '2024-07-11', guest: 'с 28.06.2024 по 01.07.2024' },
         ];
         setBookings(data);
     }, []);
@@ -42,21 +42,30 @@ const HotelTable = () => {
             const booking = bookings.find(
                 (b) =>
                     b.room === room &&
-                    new Date(b.start).setHours(0, 0, 0, 0) <= date && 
+                    new Date(b.start).setHours(0, 0, 0, 0) <= date &&
                     new Date(b.end).setHours(0, 0, 0, 0) >= date
             );
 
-            if (booking && new Date(booking.start).getDate() <= i && new Date(booking.end).getDate() >= i) {
+            if (booking) {
                 const startDate = new Date(booking.start);
                 const endDate = new Date(booking.end);
-                const colSpan = (Math.min(endDate.getDate(), daysInMonth) - i + 1)
 
-                cells.push(
-                    <td key={i} colSpan={colSpan} className={classes.booking}>
-                        <Booking>{booking.guest}</Booking>
-                    </td>
-                );
-                i += colSpan;
+                const startDay = startDate.getMonth() === currentMonth ? startDate.getDate() : 1;
+                const endDay = endDate.getMonth() === currentMonth ? endDate.getDate() : daysInMonth;
+
+                if (startDay <= i && endDay >= i) {
+                    const colSpan = endDay - i + 1;
+
+                    cells.push(
+                        <td key={i} colSpan={colSpan} className={classes.booking}>
+                            <Booking>{booking.guest}</Booking>
+                        </td>
+                    );
+                    i += colSpan;
+                } else {
+                    cells.push(<td key={i}></td>);
+                    i++;
+                }
             } else {
                 cells.push(<td key={i}></td>);
                 i++;
