@@ -22,8 +22,6 @@ const HotelTable = () => {
         return new Date(year, month + 1, 0).getDate();
     };
 
-    console.log(new Date('2024-07-01'))
-
     const renderDays = () => {
         const daysInMonth = getDaysInMonth(currentMonth, currentYear);
         const days = [];
