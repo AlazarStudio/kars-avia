@@ -31,7 +31,8 @@
     line-height: 14.52px;
     text-align: center;
 }
-.booking_light{
+
+.booking_light {
     background-color: #c4c4c4 !important;
     color: #000;
     text-align: center;
@@ -69,7 +70,7 @@
 }
 
 .currentDay {
-    background-color: #F5F6F8 !important; 
+    background-color: #F5F6F8 !important;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}
