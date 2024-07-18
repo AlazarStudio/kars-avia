@@ -10,16 +10,35 @@ const HotelTable = () => {
 
     useEffect(() => {
         const data = [
-            { room: '№121', type: 'Одноместные', start: '2024-07-01', end: '2024-07-09', guest: 'с 01.07.2024 по 09.07.2024' },
-            // { room: '№121', type: 'Одноместные', start: '2024-07-09', end: '2024-07-29', guest: 'с 01.07.2024 по 09.07.2024' },
-            { room: '№122', type: 'Одноместные', start: '2024-07-03', end: '2024-07-10', guest: 'с 03.07.2024 по 10.07.2024' },
-            { room: '№123', type: 'Одноместные', start: '2024-07-06', end: '2024-07-18', guest: 'с 06.07.2024 по 18.07.2024' },
-            { room: '№221', type: 'Двухместные', start: '2024-07-10', end: '2024-07-19', guest: 'с 10.07.2024 по 19.07.2024' },
-            { room: '№222', type: 'Двухместные', start: '2024-07-12', end: '2024-07-17', guest: 'с 12.07.2024 по 18.07.2024' },
-            { room: '№321', type: 'Трехместные', start: '2024-06-28', end: '2024-07-10', guest: 'с 28.06.2024 по 10.07.2024' },
+            { room: '№121', place: 1, start: '2024-07-01', end: '2024-07-09', client: 'fio' },
+            { room: '№122', place: 1, start: '2024-07-03', end: '2024-07-10', client: 'fio' },
+            { room: '№123', place: 1, start: '2024-07-06', end: '2024-07-18', client: 'fio' },
+            { room: '№221', place: 1, start: '2024-07-10', end: '2024-07-19', client: 'fio' },
+            { room: '№221', place: 2, start: '2024-07-10', end: '2024-07-19', client: 'fio' },
+            { room: '№222', place: 2, start: '2024-07-12', end: '2024-07-17', client: 'fio' },
+            { room: '№321', place: 1, start: '2024-06-28', end: '2024-07-10', client: 'fio' },
+            { room: '№321', place: 2, start: '2024-06-28', end: '2024-07-08', client: 'fio' },
+            { room: '№321', place: 3, start: '2024-06-28', end: '2024-07-08', client: 'fio' },
+            { room: '№324', place: 1, start: '2024-07-10', end: '2024-07-24', client: 'fio' },
+            { room: '№324', place: 2, start: '2024-07-18', end: '2024-07-24', client: 'fio' },
+            { room: '№324', place: 3, start: '2024-07-18', end: '2024-07-22', client: 'fio' },
         ];
         setBookings(data);
     }, []);
+
+    const allRooms = [
+        { room: '№121', places: 1 },
+        { room: '№122', places: 1 },
+        { room: '№123', places: 1 },
+        { room: '№124', places: 1 },
+        { room: '№221', places: 2 },
+        { room: '№222', places: 2 },
+        { room: '№223', places: 2 },
+        { room: '№321', places: 3 },
+        { room: '№322', places: 3 },
+        { room: '№323', places: 3 },
+        { room: '№324', places: 3 },
+    ];
 
     const getDaysInMonth = (month, year) => {
         return new Date(year, month + 1, 0).getDate();
@@ -35,7 +54,7 @@ const HotelTable = () => {
         return days;
     };
 
-    const renderBookings = (room) => {
+    const renderBookings = (room, place) => {
         const daysInMonth = getDaysInMonth(currentMonth, currentYear);
         const cells = [];
         let i = 1;
@@ -46,6 +65,7 @@ const HotelTable = () => {
             const booking = bookings.find(
                 (b) =>
                     b.room === room &&
+                    b.place === place &&
                     new Date(b.start).setHours(0, 0, 0, 0) <= date &&
                     new Date(b.end).setHours(0, 0, 0, 0) >= date
             );
@@ -73,7 +93,7 @@ const HotelTable = () => {
                             } 
                             ${isToday ? classes.currentDay : ''}
                         `}>
-                            <Booking>{booking.guest}</Booking>
+                            <Booking>с {booking.start} по {booking.end}</Booking>
                         </td>
                     );
                     i += colSpan;
@@ -88,8 +108,6 @@ const HotelTable = () => {
         }
         return cells;
     };
-
-    const roomTypes = ['Одноместные', 'Двухместные', 'Трехместные'];
 
     const previousMonth = () => {
         setCurrentMonth((prevMonth) => (prevMonth === 0 ? 11 : prevMonth - 1));
@@ -107,37 +125,54 @@ const HotelTable = () => {
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
+    // Grouping rooms by number of places
+    const groupedRooms = allRooms.reduce((acc, room) => {
+        const key = room.places;
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(room);
+        return acc;
+    }, {});
+
     return (
         <div>
-
-            <div className={classes.table}>
+            <div className={classes.tableContainer}>
                 <table className={classes.hotelTable}>
-                    <thead>
+                    <thead className={classes.stickyHeader}>
                         <tr>
                             <th>
                                 <div className={classes.controls}>
-                                    <div onClick={previousMonth}><img src="/arrow-left.png" alt="" /></div>
+                                    <div onClick={previousMonth}><img src="/arrow-left.png" alt="previous month" /></div>
                                     <span>{monthNames[currentMonth]} {currentYear}</span>
-                                    <div onClick={nextMonth}><img src="/arrow-right.png" alt="" /></div>
+                                    <div onClick={nextMonth}><img src="/arrow-right.png" alt="next month" /></div>
                                 </div>
                             </th>
                             {renderDays()}
                         </tr>
                     </thead>
                     <tbody>
-                        {roomTypes.map((type) => (
-                            <React.Fragment key={type}>
+                        <tr><td></td></tr>
+                        {Object.keys(groupedRooms).map((places) => (
+                            <React.Fragment key={places}>
                                 <tr>
-                                    <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}><b>{type}</b></td>
+                                    <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}>
+                                        <b>{places} - МЕСТНЫЕ КОМНАТЫ</b>
+                                    </td>
                                 </tr>
-                                {bookings
-                                    .filter((booking) => booking.type === type)
-                                    .map((booking) => (
-                                        <tr key={booking.room}>
-                                            <td>{booking.room}</td>
-                                            {renderBookings(booking.room)}
+                                {groupedRooms[places].map(({ room }) => (
+                                    <React.Fragment key={room}>
+                                        <tr>
+                                            <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}><b>{room}</b></td>
                                         </tr>
-                                    ))}
+                                        {[...Array(Number(places))].map((_, placeIndex) => (
+                                            <tr key={`${room}-${placeIndex}`}>
+                                                <td style={{width: '181px'}}>Место {placeIndex + 1}</td>
+                                                {renderBookings(room, placeIndex + 1)}
+                                            </tr>
+                                        ))}
+                                    </React.Fragment>
+                                ))}
                             </React.Fragment>
                         ))}
                     </tbody>
