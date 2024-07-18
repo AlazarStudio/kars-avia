@@ -22,7 +22,7 @@ function Placement({ children, ...props }) {
         { room: '№221', place: 2, start: '2024-07-10', end: '2024-07-19', client: 'Джатдоев А. С-А.' },
         { room: '№222', place: 2, start: '2024-07-12', end: '2024-07-23', client: 'Гочияев Р. Р.' },
     ];
-    
+
     return (
         <div className={classes.main}>
             <MenuDispetcher />
