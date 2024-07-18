@@ -2,21 +2,36 @@
     overflow-x: auto;
     overflow-y: auto;
     position: relative;
-    width: 1500px;
+    width: 100%;
     height: 755px;
 }
 
-.stickyHeader {
-    width: 1491px;
-    position: fixed;
-    background-color: white;
-    z-index: 10;
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.4); /* Добавляем тень для улучшенной видимости */
-}
-
-
 .currentDay {
     background-color: #F5F6F8 !important;
+}
+
+.stickyHeader {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 10;
+    box-shadow: 0 0 5px #E4E4EF;
+}
+
+.topDayBlock {
+    width: 100%;
+    height: 40px;
+    border-left: 1px solid #E4E4EF;
+    border-top: 1px solid #E4E4EF;
+    border-bottom: 1px solid #E4E4EF;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 10px;
+}
+
+.hotelTable th:last-child .topDayBlock {
+    border-right: 1px solid #E4E4EF;
 }
 
 .hotelTable {
@@ -24,17 +39,17 @@
     width: 100%;
 }
 
-.hotelTable th,
-.hotelTable td {
+.hotelTable tbody tr,
+.hotelTable tbody td {
     border: 1px solid #E4E4EF;
     background-color: #fff;
     padding: 10px;
+    width: 40px;
+    height: 40px;
     font-family: Nunito Sans;
     font-size: 14px;
     line-height: 20px;
-    /* text-align: center; */
-    width: 45px;
-    height: 45px;
+    padding: 10px;
 }
 
 .booking {
@@ -63,12 +78,15 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 160px;
+    width: 100%;
+    height: 40px;
     font-family: Nunito Sans;
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     gap: 20px;
+    border: 1px solid #E4E4EF;
+    border-right: none;
 }
 
 .controls>div {

@@ -10,18 +10,11 @@ const HotelTable = () => {
 
     useEffect(() => {
         const data = [
-            { room: '№121', place: 1, start: '2024-07-01', end: '2024-07-09', client: 'fio' },
-            { room: '№122', place: 1, start: '2024-07-03', end: '2024-07-10', client: 'fio' },
-            { room: '№123', place: 1, start: '2024-07-06', end: '2024-07-18', client: 'fio' },
-            { room: '№221', place: 1, start: '2024-07-10', end: '2024-07-19', client: 'fio' },
-            { room: '№221', place: 2, start: '2024-07-10', end: '2024-07-19', client: 'fio' },
-            { room: '№222', place: 2, start: '2024-07-12', end: '2024-07-17', client: 'fio' },
-            { room: '№321', place: 1, start: '2024-06-28', end: '2024-07-10', client: 'fio' },
-            { room: '№321', place: 2, start: '2024-06-28', end: '2024-07-08', client: 'fio' },
-            { room: '№321', place: 3, start: '2024-06-28', end: '2024-07-08', client: 'fio' },
-            { room: '№324', place: 1, start: '2024-07-10', end: '2024-07-24', client: 'fio' },
-            { room: '№324', place: 2, start: '2024-07-18', end: '2024-07-24', client: 'fio' },
-            { room: '№324', place: 3, start: '2024-07-18', end: '2024-07-22', client: 'fio' },
+            { room: '№121', place: 1, start: '2024-07-01', end: '2024-07-09', client: 'Джатдоев А. С-А.' },
+            { room: '№122', place: 1, start: '2024-07-03', end: '2024-07-10', client: 'Гочияев Р. Р.' },
+            { room: '№221', place: 1, start: '2024-07-12', end: '2024-07-29', client: 'Уртенов А. З.' },
+            { room: '№221', place: 2, start: '2024-07-10', end: '2024-07-19', client: 'Джатдоев А. С-А.' },
+            { room: '№222', place: 2, start: '2024-07-12', end: '2024-07-23', client: 'Гочияев Р. Р.' },
         ];
         setBookings(data);
     }, []);
@@ -29,15 +22,8 @@ const HotelTable = () => {
     const allRooms = [
         { room: '№121', places: 1 },
         { room: '№122', places: 1 },
-        { room: '№123', places: 1 },
-        { room: '№124', places: 1 },
         { room: '№221', places: 2 },
         { room: '№222', places: 2 },
-        { room: '№223', places: 2 },
-        { room: '№321', places: 3 },
-        { room: '№322', places: 3 },
-        { room: '№323', places: 3 },
-        { room: '№324', places: 3 },
     ];
 
     const getDaysInMonth = (month, year) => {
@@ -49,7 +35,9 @@ const HotelTable = () => {
         const days = [];
         for (let i = 1; i <= daysInMonth; i++) {
             const isToday = i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
-            days.push(<th key={i} className={isToday ? classes.currentDay : ''}>{i}</th>);
+            days.push(<th key={i} className={isToday ? classes.currentDay : ''}>
+                <div className={classes.topDayBlock}>{i}</div>
+            </th>);
         }
         return days;
     };
@@ -93,7 +81,7 @@ const HotelTable = () => {
                             } 
                             ${isToday ? classes.currentDay : ''}
                         `}>
-                            <Booking>с {booking.start} по {booking.end}</Booking>
+                            <Booking>{booking.client} - с {booking.start} по {booking.end}</Booking>
                         </td>
                     );
                     i += colSpan;
@@ -152,7 +140,6 @@ const HotelTable = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td></td></tr>
                         {Object.keys(groupedRooms).map((places) => (
                             <React.Fragment key={places}>
                                 <tr>
@@ -167,7 +154,7 @@ const HotelTable = () => {
                                         </tr>
                                         {[...Array(Number(places))].map((_, placeIndex) => (
                                             <tr key={`${room}-${placeIndex}`}>
-                                                <td style={{width: '181px'}}>Место {placeIndex + 1}</td>
+                                                <td style={{ width: '181px' }}>Место {placeIndex + 1}</td>
                                                 {renderBookings(room, placeIndex + 1)}
                                             </tr>
                                         ))}
