@@ -13,6 +13,9 @@ function Placement({ children, ...props }) {
         { room: '№122', places: 1 },
         { room: '№221', places: 2 },
         { room: '№222', places: 2 },
+        { room: '№321', places: 2 },
+        { room: '№322', places: 2 },
+        { room: '№422', places: 2 },
     ];
 
     const data = [
@@ -20,7 +23,8 @@ function Placement({ children, ...props }) {
         { room: '№122', place: 1, start: '2024-07-03', end: '2024-07-10', client: 'Гочияев Р. Р.' },
         { room: '№221', place: 1, start: '2024-07-12', end: '2024-07-29', client: 'Уртенов А. З.' },
         { room: '№221', place: 2, start: '2024-07-10', end: '2024-07-19', client: 'Джатдоев А. С-А.' },
-        { room: '№222', place: 2, start: '2024-07-12', end: '2024-07-23', client: 'Гочияев Р. Р.' },
+        { room: '№222', place: 1, start: '2024-07-12', end: '2024-07-18', client: 'Гочияев Р. Р.' },
+        { room: '№222', place: 2, start: '2024-06-12', end: '2024-07-24', client: 'Гочияев Р. Р.' },
     ];
 
     return (

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
 
-const HotelTable = ({allRooms, data}) => {
+const HotelTable = ({ allRooms, data }) => {
     const [bookings, setBookings] = useState([]);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -10,7 +10,7 @@ const HotelTable = ({allRooms, data}) => {
 
     useEffect(() => {
         setBookings(data);
-    }, []);
+    }, [data]);
 
     const getDaysInMonth = (month, year) => {
         return new Date(year, month + 1, 0).getDate();
@@ -21,9 +21,11 @@ const HotelTable = ({allRooms, data}) => {
         const days = [];
         for (let i = 1; i <= daysInMonth; i++) {
             const isToday = i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
-            days.push(<th key={i} className={isToday ? classes.currentDay : ''}>
-                <div className={classes.topDayBlock}>{i}</div>
-            </th>);
+            days.push(
+                <th key={i} className={isToday ? classes.currentDay : ''}>
+                    <div className={classes.topDayBlock}>{i <= 9 ? '0' + i : i}</div>
+                </th>
+            );
         }
         return days;
     };
@@ -31,56 +33,59 @@ const HotelTable = ({allRooms, data}) => {
     const renderBookings = (room, place) => {
         const daysInMonth = getDaysInMonth(currentMonth, currentYear);
         const cells = [];
-        let i = 1;
+        const bookingElements = [];
 
-        while (i <= daysInMonth) {
+        for (let i = 1; i <= daysInMonth; i++) {
             const date = new Date(currentYear, currentMonth, i);
-
-            const booking = bookings.find(
-                (b) =>
-                    b.room === room &&
-                    b.place === place &&
-                    new Date(b.start).setHours(0, 0, 0, 0) <= date &&
-                    new Date(b.end).setHours(0, 0, 0, 0) >= date
-            );
-
             const isToday = i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+            cells.push(<td key={i} className={isToday ? classes.currentDay : ''}></td>);
+        }
 
-            if (booking) {
+        bookings.forEach(booking => {
+            if (booking.room === room && booking.place === place) {
                 const startDate = new Date(booking.start);
                 const endDate = new Date(booking.end);
 
-                const startDay = startDate.getMonth() === currentMonth ? startDate.getDate() : 1;
-                const endDay = endDate.getMonth() === currentMonth ? endDate.getDate() : daysInMonth;
+                // Проверяем, пересекаются ли даты бронирования с текущим месяцем
+                const isBookingInCurrentMonth = (startDate.getMonth() === currentMonth && startDate.getFullYear() === currentYear) ||
+                    (endDate.getMonth() === currentMonth && endDate.getFullYear() === currentYear) ||
+                    (startDate < new Date(currentYear, currentMonth + 1, 0) && endDate > new Date(currentYear, currentMonth, 1));
 
-                if (startDay <= i && endDay >= i) {
-                    const colSpan = endDay - i + 1;
+                if (isBookingInCurrentMonth) {
+                    const startDay = startDate.getMonth() === currentMonth ? startDate.getDate() : 1;
+                    const endDay = endDate.getMonth() === currentMonth ? endDate.getDate() : daysInMonth;
 
-                    cells.push(
-                        <td key={i} colSpan={colSpan} className={`
-                            ${endDate <= today.setHours(0, 0, 0, 0) &&
-                                startDate <= today.setHours(0, 0, 0, 0)
-                                ?
-                                classes.booking_light
-                                :
-                                classes.booking
-                            } 
-                            ${isToday ? classes.currentDay : ''}
-                        `}>
-                            <Booking>{booking.client} - с {booking.start} по {booking.end}</Booking>
-                        </td>
-                    );
-                    i += colSpan;
-                } else {
-                    cells.push(<td key={i} className={isToday ? classes.currentDay : ''}></td>);
-                    i++;
+                    if (startDay <= daysInMonth && endDay >= 1) {
+                        const colStart = Math.max(startDay, 1);
+                        const colEnd = Math.min(endDay, daysInMonth);
+                        const left = ((colStart - 1) / daysInMonth) * 100;
+                        const width = ((colEnd - colStart + 1) / daysInMonth) * 100;
+
+                        bookingElements.push(
+                            <div
+                                key={booking.id}
+                                className={`${classes.booking} ${endDate <= today && startDate <= today ? classes.booking_light : ''}`}
+                                style={{
+                                    left: `${left}%`,
+                                    width: `${width}%`,
+                                    top: `50%`,
+                                    transform: `translateY(-50%)`
+                                }}
+                            >
+                                <Booking>{booking.client} - с {booking.start} по {booking.end}</Booking>
+                            </div>
+                        );
+                    }
                 }
-            } else {
-                cells.push(<td key={i} className={isToday ? classes.currentDay : ''}></td>);
-                i++;
             }
-        }
-        return cells;
+        });
+
+        return (
+            <td colSpan={daysInMonth} className={classes.bookingCell}>
+                {cells}
+                {bookingElements}
+            </td>
+        );
     };
 
     const previousMonth = () => {
@@ -99,7 +104,6 @@ const HotelTable = ({allRooms, data}) => {
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
-    // Grouping rooms by number of places
     const groupedRooms = allRooms.reduce((acc, room) => {
         const key = room.places;
         if (!acc[key]) {
