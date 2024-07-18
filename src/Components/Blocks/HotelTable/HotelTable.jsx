@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
+import dayjs from 'dayjs';
 
 const HotelTable = ({ allRooms, data }) => {
     const [bookings, setBookings] = useState([]);
@@ -28,6 +29,11 @@ const HotelTable = ({ allRooms, data }) => {
             );
         }
         return days;
+    };
+
+    const getTimeHours = (timeString) => {
+        const [hours] = timeString.split(':');
+        return parseInt(hours, 10);
     };
 
     const renderBookings = (room, place) => {
@@ -58,8 +64,25 @@ const HotelTable = ({ allRooms, data }) => {
                     if (startDay <= daysInMonth && endDay >= 1) {
                         const colStart = Math.max(startDay, 1);
                         const colEnd = Math.min(endDay, daysInMonth);
-                        const left = ((colStart - 1) / daysInMonth) * 100;
-                        const width = ((colEnd - colStart + 1) / daysInMonth) * 100;
+
+                        let startTime = getTimeHours(booking.startTime) <= 20 ? getTimeHours(booking.startTime) : 20.5
+                        let endTime = getTimeHours(booking.endTime) <= 23 ? getTimeHours(booking.endTime) : 24
+
+                        let koefStart = 0;
+                        let koefEnd = 0;
+
+                        let koef = 0.16;
+
+                        if (startDate.getMonth() === currentMonth) {
+                            koefStart = koef
+                        }
+                        
+                        if (endDate.getMonth() === currentMonth) {
+                            koefEnd = koef
+                        }
+
+                        const left = (((colStart - 1) / daysInMonth) * 100) + (startTime * koefStart);
+                        const width = (((colEnd - colStart) / daysInMonth) * 100) - (startTime * koefStart) + (endTime * koefEnd);
 
                         bookingElements.push(
                             <div
@@ -72,7 +95,7 @@ const HotelTable = ({ allRooms, data }) => {
                                     transform: `translateY(-50%)`
                                 }}
                             >
-                                <Booking>{booking.client} - с {booking.start} по {booking.end}</Booking>
+                                <Booking>{booking.client}</Booking>
                             </div>
                         );
                     }
