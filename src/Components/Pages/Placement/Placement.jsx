@@ -16,9 +16,9 @@ function Placement({ children, ...props }) {
     ];
 
     const data = [
-        { room: '№121', place: 1, start: '2024-07-01', startTime: '14:00', end: '2024-07-09', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { room: '№121', place: 1, start: '2024-07-09', startTime: '14:00', end: '2024-07-24', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { room: '№121', place: 1, start: '2024-07-24', startTime: '14:00', end: '2024-07-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { room: '№121', place: 1, start: '2024-07-01', startTime: '14:00', end: '2024-07-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { room: '№121', place: 1, start: '2024-07-10', startTime: '14:00', end: '2024-07-26', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { room: '№121', place: 1, start: '2024-07-26', startTime: '14:00', end: '2024-07-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
         { room: '№122', place: 1, start: '2024-07-03', startTime: '14:00', end: '2024-07-10', endTime: '10:00', client: 'Гочияев Р. Р.' },
         { room: '№221', place: 1, start: '2024-07-12', startTime: '14:00', end: '2024-07-29', endTime: '10:00', client: 'Уртенов А. З.' },
         { room: '№221', place: 2, start: '2024-07-10', startTime: '14:00', end: '2024-07-19', endTime: '10:00', client: 'Джатдоев А. С-А.' },

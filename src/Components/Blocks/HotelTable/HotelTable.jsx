@@ -7,6 +7,7 @@ const HotelTable = ({ allRooms, data }) => {
     const [bookings, setBookings] = useState([]);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    const [highlightedDay, setHighlightedDay] = useState(null);
     const today = new Date();
 
     useEffect(() => {
@@ -22,8 +23,9 @@ const HotelTable = ({ allRooms, data }) => {
         const days = [];
         for (let i = 1; i <= daysInMonth; i++) {
             const isToday = i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+            const isHighlighted = i === highlightedDay;
             days.push(
-                <th key={i} className={isToday ? classes.currentDay : ''}>
+                <th key={i} className={`${isToday ? classes.currentDay : ''} ${isHighlighted ? classes.highlightedDay : ''}`}>
                     <div className={classes.topDayBlock}>{i <= 9 ? '0' + i : i}</div>
                 </th>
             );
@@ -44,7 +46,15 @@ const HotelTable = ({ allRooms, data }) => {
         for (let i = 1; i <= daysInMonth; i++) {
             const date = new Date(currentYear, currentMonth, i);
             const isToday = i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
-            cells.push(<td key={i} className={isToday ? classes.currentDay : ''}></td>);
+            const isHighlighted = i === highlightedDay;
+            cells.push(
+                <td
+                    key={i}
+                    className={`${isToday ? classes.currentDay : ''} ${isHighlighted ? classes.highlightedDay : ''}`}
+                    onMouseEnter={() => setHighlightedDay(i)}
+                    onMouseLeave={() => setHighlightedDay(null)}
+                ></td>
+            );
         }
 
         bookings.forEach(booking => {
@@ -52,7 +62,6 @@ const HotelTable = ({ allRooms, data }) => {
                 const startDate = new Date(booking.start);
                 const endDate = new Date(booking.end);
 
-                // Проверяем, пересекаются ли даты бронирования с текущим месяцем
                 const isBookingInCurrentMonth = (startDate.getMonth() === currentMonth && startDate.getFullYear() === currentYear) ||
                     (endDate.getMonth() === currentMonth && endDate.getFullYear() === currentYear) ||
                     (startDate < new Date(currentYear, currentMonth + 1, 0) && endDate > new Date(currentYear, currentMonth, 1));
@@ -65,24 +74,17 @@ const HotelTable = ({ allRooms, data }) => {
                         const colStart = Math.max(startDay, 1);
                         const colEnd = Math.min(endDay, daysInMonth);
 
-                        let startTime = getTimeHours(booking.startTime) <= 20 ? getTimeHours(booking.startTime) : 20.5
-                        let endTime = getTimeHours(booking.endTime) <= 23 ? getTimeHours(booking.endTime) : 24
+                        const startTime = getTimeHours(booking.startTime);
+                        const endTime = getTimeHours(booking.endTime);
 
-                        let koefStart = 0;
-                        let koefEnd = 0;
+                        const dayWidth = 100 / daysInMonth;
+                        const startOffset = startDate.getMonth() === currentMonth ? (startTime / 24) * dayWidth : 0;
+                        const endOffset = endDate.getMonth() === currentMonth ? ((24 - endTime) / 24) * dayWidth : 0;
 
-                        let koef = 0.16;
 
-                        if (startDate.getMonth() === currentMonth) {
-                            koefStart = koef
-                        }
-                        
-                        if (endDate.getMonth() === currentMonth) {
-                            koefEnd = koef
-                        }
 
-                        const left = (((colStart - 1) / daysInMonth) * 100) + (startTime * koefStart);
-                        const width = (((colEnd - colStart) / daysInMonth) * 100) - (startTime * koefStart) + (endTime * koefEnd);
+                        const left = (colStart - 1) * dayWidth + startOffset;
+                        const width = ((colEnd - colStart + 1) * dayWidth) - startOffset - endOffset;
 
                         bookingElements.push(
                             <div
@@ -92,7 +94,11 @@ const HotelTable = ({ allRooms, data }) => {
                                     left: `${left}%`,
                                     width: `${width}%`,
                                     top: `50%`,
-                                    transform: `translateY(-50%)`
+                                    transform: `translateY(-50%)`,
+                                    'border-top-left-radius': startDate.getMonth() === currentMonth ? '4px' : '0',
+                                    'border-bottom-left-radius': startDate.getMonth() === currentMonth ? '4px' : '0',
+                                    'border-top-right-radius': endDate.getMonth() === currentMonth ? '4px' : '0',
+                                    'border-bottom-right-radius': endDate.getMonth() === currentMonth ? '4px' : '0',
                                 }}
                             >
                                 <Booking>{booking.client}</Booking>

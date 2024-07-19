@@ -77,7 +77,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.booking:hover{
+    opacity: 1;
 }
 
 .booking_light {
@@ -97,6 +102,12 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.booking_light:hover{
+    opacity: 1;
 }
 
 .controls {
@@ -121,6 +132,10 @@
 
 .controls img {
     cursor: pointer;
+}
+
+.highlightedDay {
+    background-color: #F5F6F8  !important; /* Цвет выделения для наведения */
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}
