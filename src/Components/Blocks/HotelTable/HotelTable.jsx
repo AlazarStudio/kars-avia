@@ -4,15 +4,21 @@ import classes from './HotelTable.module.css';
 import dayjs from 'dayjs';
 
 const HotelTable = ({ allRooms, data }) => {
-    const [bookings, setBookings] = useState([]);
+    const [bookings, setBookings] = useState(data);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [highlightedDay, setHighlightedDay] = useState(null);
     const today = new Date();
 
-    useEffect(() => {
-        setBookings(data);
-    }, [data]);
+    const [newBooking, setNewBooking] = useState({
+        room: '',
+        place: '',
+        start: '',
+        startTime: '',
+        end: '',
+        endTime: '',
+        client: ''
+    });
 
     const getDaysInMonth = (month, year) => {
         return new Date(year, month + 1, 0).getDate();
@@ -81,8 +87,6 @@ const HotelTable = ({ allRooms, data }) => {
                         const startOffset = startDate.getMonth() === currentMonth ? (startTime / 24) * dayWidth : 0;
                         const endOffset = endDate.getMonth() === currentMonth ? ((24 - endTime) / 24) * dayWidth : 0;
 
-
-
                         const left = (colStart - 1) * dayWidth + startOffset;
                         const width = ((colEnd - colStart + 1) * dayWidth) - startOffset - endOffset;
 
@@ -129,6 +133,24 @@ const HotelTable = ({ allRooms, data }) => {
         if (currentMonth === 11) {
             setCurrentYear((prevYear) => prevYear + 1);
         }
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewBooking(prevState => ({ ...prevState, [name]: value }));
+    };
+
+    const handleAddBooking = () => {
+        setBookings(prevBookings => [...prevBookings, { ...newBooking, id: bookings.length + 1 }]);
+        setNewBooking({
+            room: '',
+            place: '',
+            start: '',
+            startTime: '',
+            end: '',
+            endTime: '',
+            client: ''
+        });
     };
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
