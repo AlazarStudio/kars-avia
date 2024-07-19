@@ -1,9 +1,15 @@
+.tableData {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+}
+
 .tableContainer {
     overflow-x: auto;
     overflow-y: auto;
     position: relative;
     width: 100%;
-    height: 755px;
+    max-height: 755px;
 }
 
 .currentDay {
@@ -51,7 +57,7 @@
     line-height: 20px;
 }
 
-.hotelTable tbody tr>td td{
+.hotelTable tbody tr>td td {
     border-left: 1px solid #E4E4EF;
     width: 45px;
     height: 45px;
@@ -63,7 +69,7 @@
 }
 
 .booking {
-    background-color: #9FD923 !important;
+    background-color: #9FD923;
     color: #000;
     text-align: center;
     font-family: Inter;
@@ -73,20 +79,20 @@
     text-align: center;
     position: absolute;
     top: 0;
-    height: 60%;
+    height: 70%;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.8;
+    opacity: 0.9;
     cursor: pointer;
 }
 
-.booking:hover{
+.booking:hover {
     opacity: 1;
 }
 
 .booking_light {
-    background-color: #E0D251 !important;
+    background-color: #9FD923;
     color: #000;
     text-align: center;
     font-family: Inter;
@@ -96,15 +102,15 @@
     text-align: center;
     position: absolute;
     top: 0;
-    height: 60%;
+    height: 70%;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: pointer;
 }
 
-.booking_light:hover{
+.booking_light:hover {
     opacity: 1;
 }
 
@@ -121,6 +127,7 @@
     gap: 20px;
     border: 1px solid #E4E4EF;
     border-right: none;
+    padding: 0 10px;
 }
 
 .controls>div {
@@ -133,7 +140,8 @@
 }
 
 .highlightedDay {
-    background-color: #F5F6F8  !important; /* Цвет выделения для наведения */
+    background-color: #F5F6F8 !important;
+    /* Цвет выделения для наведения */
 }
 
 .formContainer {

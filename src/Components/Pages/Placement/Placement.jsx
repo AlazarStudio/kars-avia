@@ -16,14 +16,14 @@ function Placement({ children, ...props }) {
     ];
 
     const data = [
-        { room: '№121', place: 1, start: '2024-07-01', startTime: '14:00', end: '2024-07-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { room: '№121', place: 1, start: '2024-07-10', startTime: '14:00', end: '2024-07-26', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { room: '№121', place: 1, start: '2024-07-26', startTime: '14:00', end: '2024-07-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { room: '№122', place: 1, start: '2024-07-03', startTime: '14:00', end: '2024-07-10', endTime: '10:00', client: 'Гочияев Р. Р.' },
-        { room: '№221', place: 1, start: '2024-07-12', startTime: '14:00', end: '2024-07-29', endTime: '10:00', client: 'Уртенов А. З.' },
-        { room: '№221', place: 2, start: '2024-07-10', startTime: '14:00', end: '2024-07-19', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { room: '№222', place: 1, start: '2024-07-12', startTime: '14:00', end: '2024-07-18', endTime: '10:00', client: 'Гочияев Р. Р.' },
-        { room: '№222', place: 2, start: '2024-06-12', startTime: '14:00', end: '2024-07-24', endTime: '10:00', client: 'Гочияев Р. Р.' },
+        { public: true, room: '№121', place: 1, start: '2024-07-01', startTime: '14:00', end: '2024-07-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№121', place: 1, start: '2024-07-10', startTime: '14:00', end: '2024-07-26', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№121', place: 1, start: '2024-07-26', startTime: '14:00', end: '2024-07-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№122', place: 1, start: '2024-07-03', startTime: '14:00', end: '2024-07-10', endTime: '10:00', client: 'Гочияев Р. Р.' },
+        { public: true, room: '№221', place: 1, start: '2024-07-12', startTime: '14:00', end: '2024-07-29', endTime: '10:00', client: 'Уртенов А. З.' },
+        { public: true, room: '№221', place: 2, start: '2024-07-10', startTime: '14:00', end: '2024-07-19', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№222', place: 1, start: '2024-07-12', startTime: '14:00', end: '2024-07-18', endTime: '10:00', client: 'Гочияев Р. Р.' },
+        { public: true, room: '№222', place: 2, start: '2024-06-12', startTime: '14:00', end: '2024-07-24', endTime: '10:00', client: 'Гочияев Р. Р.' },
     ];
 
     return (

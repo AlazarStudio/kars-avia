@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
-import dayjs from 'dayjs';
 
 const HotelTable = ({ allRooms, data }) => {
     const [bookings, setBookings] = useState(data);
@@ -12,12 +11,13 @@ const HotelTable = ({ allRooms, data }) => {
 
     const [newBooking, setNewBooking] = useState({
         room: '',
-        place: '',
+        place: 1,
         start: '',
         startTime: '',
         end: '',
         endTime: '',
-        client: ''
+        client: '',
+        public: false,
     });
 
     const getDaysInMonth = (month, year) => {
@@ -63,7 +63,12 @@ const HotelTable = ({ allRooms, data }) => {
             );
         }
 
-        bookings.forEach(booking => {
+        const previewBooking = {
+            ...newBooking,
+            id: 'preview',
+        };
+
+        const renderBooking = (booking) => {
             if (booking.room === room && booking.place === place) {
                 const startDate = new Date(booking.start);
                 const endDate = new Date(booking.end);
@@ -99,10 +104,12 @@ const HotelTable = ({ allRooms, data }) => {
                                     width: `${width}%`,
                                     top: `50%`,
                                     transform: `translateY(-50%)`,
-                                    'border-top-left-radius': startDate.getMonth() === currentMonth ? '4px' : '0',
-                                    'border-bottom-left-radius': startDate.getMonth() === currentMonth ? '4px' : '0',
-                                    'border-top-right-radius': endDate.getMonth() === currentMonth ? '4px' : '0',
-                                    'border-bottom-right-radius': endDate.getMonth() === currentMonth ? '4px' : '0',
+                                    backgroundColor: booking.public ? `#9FD923` : 'grey',
+                                    opacity: !booking.public ? 1 : null,
+                                    borderTopLeftRadius: startDate.getMonth() === currentMonth ? '4px' : '0',
+                                    borderBottomLeftRadius: startDate.getMonth() === currentMonth ? '4px' : '0',
+                                    borderTopRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
+                                    borderBottomRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                 }}
                             >
                                 <Booking>{booking.client}</Booking>
@@ -111,7 +118,10 @@ const HotelTable = ({ allRooms, data }) => {
                     }
                 }
             }
-        });
+        };
+
+        bookings.forEach(renderBooking);
+        renderBooking(previewBooking);
 
         return (
             <td colSpan={daysInMonth} className={classes.bookingCell}>
@@ -141,15 +151,32 @@ const HotelTable = ({ allRooms, data }) => {
     };
 
     const handleAddBooking = () => {
-        setBookings(prevBookings => [...prevBookings, { ...newBooking, id: bookings.length + 1 }]);
+        // Perform validations before adding booking
+        if (!newBooking.room || !newBooking.place || !newBooking.start || !newBooking.startTime || !newBooking.end || !newBooking.endTime || !newBooking.client) {
+            alert('Пожалуйста, заполните все поля.');
+            return;
+        }
+
+        const startDate = new Date(newBooking.start);
+        const endDate = new Date(newBooking.end);
+        const startTime = getTimeHours(newBooking.startTime);
+        const endTime = getTimeHours(newBooking.endTime);
+
+        if (endDate < startDate || (endDate.getTime() === startDate.getTime() && endTime <= startTime)) {
+            alert('Дата окончания должна быть позже даты начала, и время окончания должно быть позже времени начала.');
+            return;
+        }
+
+        setBookings(prevBookings => [...prevBookings, { ...newBooking, id: bookings.length + 1, public: true }]);
         setNewBooking({
             room: '',
-            place: '',
+            place: 1,
             start: '',
             startTime: '',
             end: '',
             endTime: '',
-            client: ''
+            client: '',
+            public: false,
         });
     };
 
@@ -165,7 +192,7 @@ const HotelTable = ({ allRooms, data }) => {
     }, {});
 
     return (
-        <div>
+        <div className={classes.tableData}>
             <div className={classes.tableContainer}>
                 <table className={classes.hotelTable}>
                     <thead className={classes.stickyHeader}>
@@ -205,6 +232,16 @@ const HotelTable = ({ allRooms, data }) => {
                         ))}
                     </tbody>
                 </table>
+            </div>
+            <div className={classes.formContainer}>
+                <input type="text" name="room" placeholder="Комната" value={newBooking.room} onChange={handleInputChange} />
+                <input type="number" name="place" placeholder="Место" value={newBooking.place} onChange={handleInputChange} />
+                <input type="date" name="start" placeholder="Дата начала" value={newBooking.start} onChange={handleInputChange} />
+                <input type="time" name="startTime" placeholder="Время начала" value={newBooking.startTime} onChange={handleInputChange} />
+                <input type="date" name="end" placeholder="Дата окончания" value={newBooking.end} onChange={handleInputChange} />
+                <input type="time" name="endTime" placeholder="Время окончания" value={newBooking.endTime} onChange={handleInputChange} />
+                <input type="text" name="client" placeholder="Клиент" value={newBooking.client} onChange={handleInputChange} />
+                <button onClick={handleAddBooking}>Добавить бронирование</button>
             </div>
         </div>
     );
