@@ -116,9 +116,9 @@
 
 .controls {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    width: 100%;
+    width: 180px;
     height: 45px;
     font-family: Nunito Sans;
     font-size: 12px;
