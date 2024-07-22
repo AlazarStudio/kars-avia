@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
 
-const HotelTable = ({ allRooms, data }) => {
+const HotelTable = ({ allRooms, data, idHotel }) => {
     const [bookings, setBookings] = useState(data);
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -11,7 +11,7 @@ const HotelTable = ({ allRooms, data }) => {
 
     const [newBooking, setNewBooking] = useState({
         room: '',
-        place: 1,
+        place: '',
         start: '',
         startTime: '',
         end: '',
@@ -69,7 +69,7 @@ const HotelTable = ({ allRooms, data }) => {
         };
 
         const renderBooking = (booking) => {
-            if (booking.room === room && booking.place === place) {
+            if (booking.room === room && booking.place == place) {
                 const startDate = new Date(booking.start);
                 const endDate = new Date(booking.end);
 
@@ -147,11 +147,47 @@ const HotelTable = ({ allRooms, data }) => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+
+        if (name === 'start' || name === 'end') {
+            const inputDate = new Date(value);
+
+            if (inputDate.setHours(0, 0, 0, 0) < today.setHours(0, 0, 0, 0)) {
+                alert('Дата не может быть раньше сегодняшнего дня.');
+                return;
+            }
+
+            if (name === 'end' && newBooking.start) {
+                const startDate = new Date(newBooking.start);
+                startDate.setHours(0, 0, 0, 0);
+                const endDate = new Date(value);
+                endDate.setHours(0, 0, 0, 0);
+
+                if (endDate < startDate) {
+                    alert('Дата окончания не может быть раньше даты начала.');
+                    return;
+                } else if (endDate.getTime() === startDate.getTime() && newBooking.endTime && getTimeHours(newBooking.endTime) <= getTimeHours(newBooking.startTime)) {
+                    alert('Время окончания должно быть позже времени начала.');
+                    return;
+                }
+            }
+        }
+
+        if (name === 'endTime' && newBooking.start && newBooking.end) {
+            const startDate = new Date(newBooking.start);
+            startDate.setHours(0, 0, 0, 0);
+            const endDate = new Date(newBooking.end);
+            endDate.setHours(0, 0, 0, 0);
+
+            if (endDate.getTime() === startDate.getTime() && value && getTimeHours(value) <= getTimeHours(newBooking.startTime)) {
+                alert('Время окончания должно быть позже времени начала.');
+                return;
+            }
+        }
+
         setNewBooking(prevState => ({ ...prevState, [name]: value }));
     };
 
     const handleAddBooking = () => {
-        // Perform validations before adding booking
         if (!newBooking.room || !newBooking.place || !newBooking.start || !newBooking.startTime || !newBooking.end || !newBooking.endTime || !newBooking.client) {
             alert('Пожалуйста, заполните все поля.');
             return;
@@ -163,14 +199,14 @@ const HotelTable = ({ allRooms, data }) => {
         const endTime = getTimeHours(newBooking.endTime);
 
         if (endDate < startDate || (endDate.getTime() === startDate.getTime() && endTime <= startTime)) {
-            alert('Дата окончания должна быть позже даты начала, и время окончания должно быть позже времени начала.');
+            alert('Время окончания должно быть позже времени начала.');
             return;
         }
 
-        setBookings(prevBookings => [...prevBookings, { ...newBooking, id: bookings.length + 1, public: true }]);
+        setBookings([...bookings, { ...newBooking, id: bookings.length + 1, public: true }]);
         setNewBooking({
             room: '',
-            place: 1,
+            place: '',
             start: '',
             startTime: '',
             end: '',
@@ -234,8 +270,18 @@ const HotelTable = ({ allRooms, data }) => {
                 </table>
             </div>
             <div className={classes.formContainer}>
-                <input type="text" name="room" placeholder="Комната" value={newBooking.room} onChange={handleInputChange} />
-                <input type="number" name="place" placeholder="Место" value={newBooking.place} onChange={handleInputChange} />
+                <select name="room" value={newBooking.room} onChange={handleInputChange}>
+                    <option value="">Выберите комнату</option>
+                    {allRooms.map((room, index) => (
+                        <option key={index} value={room.room}>{room.room}</option>
+                    ))}
+                </select>
+                <select name="place" value={newBooking.place} onChange={handleInputChange}>
+                    <option value="">Выберите место</option>
+                    {newBooking.room && Array.from({ length: allRooms.find(room => room.room === newBooking.room).places }, (_, i) => (
+                        <option key={i} value={i + 1}>{i + 1}</option>
+                    ))}
+                </select>
                 <input type="date" name="start" placeholder="Дата начала" value={newBooking.start} onChange={handleInputChange} />
                 <input type="time" name="startTime" placeholder="Время начала" value={newBooking.startTime} onChange={handleInputChange} />
                 <input type="date" name="end" placeholder="Дата окончания" value={newBooking.end} onChange={handleInputChange} />
