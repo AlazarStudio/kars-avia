@@ -10,6 +10,7 @@
     position: relative;
     width: 100%;
     max-height: 755px;
+    height: fit-content;
 }
 
 .currentDay {
@@ -20,7 +21,7 @@
     position: sticky;
     top: 0;
     background-color: white;
-    z-index: 999999999;
+    z-index: 3;
     box-shadow: 0 0 5px #E4E4EF;
 }
 
@@ -150,24 +151,44 @@
     gap: 10px;
     margin-bottom: 20px;
     width: 400px;
+    height: fit-content;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
 }
 
 .formContainer input,
-.formContainer button {
+.formContainer button,
+.formContainer a {
     padding: 10px;
     font-size: 14px;
 }
 
-.formContainer button {
-    background-color: #4CAF50;
+.formContainer button,
+.formContainer a {
+    background-color: #0057C3;
     color: white;
     border: none;
     cursor: pointer;
     border-radius: 5px;
+    opacity: 0.8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-.formContainer button:hover {
-    background-color: #45a049;
+.formContainer button:hover,
+.formContainer a:hover {
+    opacity: 1;
+}
+
+.formContainer .anotherHotel {
+    background-color: #fff;
+    color: #545873;
+    cursor: pointer;
+    border-radius: 5px;
+    opacity: 1;
+    border: 1px solid #545873;
 }
 
 .booking_conflict {
@@ -184,6 +205,14 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 21.82px;
+}
+
+.successBron {
+    font-family: Montserrat;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 

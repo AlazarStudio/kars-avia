@@ -8,5 +8,6 @@
     right: 0;
     transition: all 0.3s ease-in-out;
     transform: translateX(500px);
+    z-index: 99999999999;
 }
 @media (min-width: 0px) and (max-width: 1299px) {}

@@ -1,6 +1,8 @@
 import React, { useReducer, useEffect, useState } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
+import BronInfo from '../BronInfo/BronInfo';
+import { Link } from 'react-router-dom';
 
 const initialState = {
     bookings: [],
@@ -173,6 +175,7 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
                                     borderTopRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                     borderBottomRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                 }}
+                                onClick={toggleCreateSidebar}
                             >
                                 <Booking>{booking.client}</Booking>
                             </div>
@@ -254,6 +257,7 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
 
         dispatch({ type: 'ADD_BOOKING' });
         dispatch({ type: 'RESET_NEW_BOOKING' });
+        setIsBron(true)
     };
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
@@ -267,71 +271,97 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
         return acc;
     }, {});
 
+    const [showCreateSidebar, setShowCreateSidebar] = useState(false);
+
+    const toggleCreateSidebar = () => {
+        setShowCreateSidebar(!showCreateSidebar);
+    };
+
+    const [isBron, setIsBron] = useState(false);
+
+    console.log(state);
     return (
-        <div className={classes.tableData}>
-            <div className={classes.tableContainer}>
-                <table className={classes.hotelTable}>
-                    <thead className={classes.stickyHeader}>
-                        <tr>
-                            <th>
-                                <div className={classes.controls}>
-                                    <div onClick={previousMonth}><img src="/arrow-left.png" alt="previous month" /></div>
-                                    <span>{monthNames[currentMonth]} {currentYear}</span>
-                                    <div onClick={nextMonth}><img src="/arrow-right.png" alt="next month" /></div>
-                                </div>
-                            </th>
-                            {renderDays()}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {Object.keys(groupedRooms).map((places) => (
-                            <React.Fragment key={places}>
-                                <tr>
-                                    <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}>
-                                        <b>{places} - МЕСТНЫЕ КОМНАТЫ</b>
-                                    </td>
-                                </tr>
-                                {groupedRooms[places].map(({ room }) => (
-                                    <React.Fragment key={room}>
-                                        <tr>
-                                            <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}><b>{room}</b></td>
-                                        </tr>
-                                        {[...Array(Number(places))].map((_, placeIndex) => (
-                                            <tr key={`${room}-${placeIndex}`}>
-                                                <td style={{ width: '181px' }}>Место {placeIndex + 1}</td>
-                                                {renderBookings(room, placeIndex + 1)}
+        <>
+            <div className={classes.tableData}>
+                <div className={classes.tableContainer}>
+                    <table className={classes.hotelTable}>
+                        <thead className={classes.stickyHeader}>
+                            <tr>
+                                <th>
+                                    <div className={classes.controls}>
+                                        <div onClick={previousMonth}><img src="/arrow-left.png" alt="previous month" /></div>
+                                        <span>{monthNames[currentMonth]} {currentYear}</span>
+                                        <div onClick={nextMonth}><img src="/arrow-right.png" alt="next month" /></div>
+                                    </div>
+                                </th>
+                                {renderDays()}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {Object.keys(groupedRooms).map((places) => (
+                                <React.Fragment key={places}>
+                                    <tr>
+                                        <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}>
+                                            <b>{places} - МЕСТНЫЕ КОМНАТЫ</b>
+                                        </td>
+                                    </tr>
+                                    {groupedRooms[places].map(({ room }) => (
+                                        <React.Fragment key={room}>
+                                            <tr>
+                                                <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}><b>{room}</b></td>
                                             </tr>
-                                        ))}
-                                    </React.Fragment>
-                                ))}
-                            </React.Fragment>
-                        ))}
-                    </tbody>
-                </table>
+                                            {[...Array(Number(places))].map((_, placeIndex) => (
+                                                <tr key={`${room}-${placeIndex}`}>
+                                                    <td style={{ width: '181px' }}>Место {placeIndex + 1}</td>
+                                                    {renderBookings(room, placeIndex + 1)}
+                                                </tr>
+                                            ))}
+                                        </React.Fragment>
+                                    ))}
+                                </React.Fragment>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+                {!isBron ?
+                    <div className={classes.formContainer}>
+                        <select name="room" value={state.newBooking.room} onChange={handleInputChange}>
+                            <option value="">Выберите комнату</option>
+                            {allRooms.map((room, index) => (
+                                <option key={index} value={room.room}>{room.room}</option>
+                            ))}
+                        </select>
+                        <select name="place" value={state.newBooking.place} onChange={handleInputChange}>
+                            <option value="">Выберите место</option>
+                            {state.newBooking.room && Array.from({ length: allRooms.find(room => room.room === state.newBooking.room).places }, (_, i) => (
+                                <option key={i} value={i + 1}>{i + 1}</option>
+                            ))}
+                        </select>
+                        <input disabled type="date" name="start" placeholder="Дата начала" value={state.newBooking.start} onChange={handleInputChange} />
+                        <input disabled type="time" name="startTime" placeholder="Время начала" value={state.newBooking.startTime} onChange={handleInputChange} />
+                        <input disabled type="date" name="end" placeholder="Дата окончания" value={state.newBooking.end} onChange={handleInputChange} />
+                        <input disabled type="time" name="endTime" placeholder="Время окончания" value={state.newBooking.endTime} onChange={handleInputChange} />
+                        <input disabled type="text" name="client" placeholder="Клиент" value={state.newBooking.client} onChange={handleInputChange} />
+
+                        <br />
+                        <button onClick={handleAddBooking}>Добавить бронирование</button>
+                        <button className={classes.anotherHotel}>Выбрать другой отель</button>
+
+                        {
+                            state.conflict &&<div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>
+                        }
+                    </div>
+                    : 
+                    <div className={classes.formContainer}>
+                        <div className={classes.successBron}>Бронирование прошло успешно </div>
+
+                        <Link to={'/'}>Вернуться назад</Link>
+                    </div>
+                }
             </div>
-            <div className={classes.formContainer}>
-                <select name="room" value={state.newBooking.room} onChange={handleInputChange}>
-                    <option value="">Выберите комнату</option>
-                    {allRooms.map((room, index) => (
-                        <option key={index} value={room.room}>{room.room}</option>
-                    ))}
-                </select>
-                <select name="place" value={state.newBooking.place} onChange={handleInputChange}>
-                    <option value="">Выберите место</option>
-                    {state.newBooking.room && Array.from({ length: allRooms.find(room => room.room === state.newBooking.room).places }, (_, i) => (
-                        <option key={i} value={i + 1}>{i + 1}</option>
-                    ))}
-                </select>
-                <input type="date" name="start" placeholder="Дата начала" value={state.newBooking.start} onChange={handleInputChange} />
-                <input type="time" name="startTime" placeholder="Время начала" value={state.newBooking.startTime} onChange={handleInputChange} />
-                <input type="date" name="end" placeholder="Дата окончания" value={state.newBooking.end} onChange={handleInputChange} />
-                <input type="time" name="endTime" placeholder="Время окончания" value={state.newBooking.endTime} onChange={handleInputChange} />
-                <input type="text" name="client" placeholder="Клиент" value={state.newBooking.client} onChange={handleInputChange} />
-                <button onClick={handleAddBooking}>Добавить бронирование</button>
-                
-                {state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br/> Пожалуйста, выберите другую комнату или время.</div>}
-            </div>
-        </div>
+
+            <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />
+        </>
     );
 };
 
