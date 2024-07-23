@@ -87,7 +87,7 @@ function ChooseHotel({ show, onClose }) {
             </div>
 
             <div className={classes.requestButon}>
-                <Button link={'/placement/idHotel'}>Разместить<img src="/user-check.png" alt="" /></Button>
+                <Button link={'/relay/placement/idHotel'}>Разместить<img src="/user-check.png" alt="" /></Button>
             </div>
         </Sidebar>
     );

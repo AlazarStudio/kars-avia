@@ -51,3 +51,70 @@ export const requests = [
         statusCode: 'done',
     },
 ]
+export const requestsReserve = [
+    {
+        id: '01',
+        date: '2024-05-27',
+        aviacompany: 'Азимут',
+        aviacompany_icon: 'azimut_preview.png',
+        airport: 'MRV',
+        arrival_title: 'РС№0024358',
+        departure_title: 'РС№002435',
+        status: 'В обработке',
+        statusCode: 'processing',
+        passengers: [
+            {
+                id: '01',
+                fio: 'Иванов Иван Иванович',
+                sex: 'М',
+                phone: '8 909 000 00 00',
+                arrival_date: '17.05.2024',
+                arrival_time: '13:50',
+                departure_date: '19.06.2024',
+                departure_time: '14:50',
+            },
+            {
+                id: '02',
+                fio: 'Иванов Иван Иванович',
+                sex: 'М',
+                phone: '8 909 000 00 00',
+                arrival_date: '17.05.2024',
+                arrival_time: '13:50',
+                departure_date: '19.06.2024',
+                departure_time: '14:50',
+            }
+        ]
+    },
+    {
+        id: '02',
+        date: '2024-05-28',
+        aviacompany: 'S7 airlines',
+        aviacompany_icon: 'S7-airlines-preview.png',
+        airport: 'MRV',
+        arrival_title: 'РС№002435',
+        arrival_date: '17.05.2024',
+        arrival_time: '13:50',
+        departure_title: 'РС№002435',
+        departure_date: '17.05.2024',
+        departure_time: '13:50',
+        status: 'Отменен',
+        statusCode: 'cancelled',
+        passengers: []
+    },
+    {
+        id: '03',
+        date: '2024-05-28',
+        aviacompany: 'Северный ветер',
+        aviacompany_icon: 'Северный-ветер-preview.png',
+        airport: 'MRV',
+        arrival_title: 'РС№002435',
+        arrival_date: '17.05.2024',
+        arrival_time: '13:50',
+        departure_title: 'РС№002435',
+        departure_date: '17.05.2024',
+        departure_time: '13:50',
+        status: 'Готово',
+        statusCode: 'done',
+        passengers: []
+    },
+]
