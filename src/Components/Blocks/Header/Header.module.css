@@ -36,9 +36,10 @@
 
 .section_top_elems_date {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     background-color: var(--white);
+    width: 175px;
     height: 40px;
     border-radius: 5px;
     padding: 0 20px;
@@ -46,7 +47,6 @@
     font-size: 12px;
     font-weight: 700;
     line-height: 14.52px;
-    cursor: pointer;
     color: var(--main-gray);
 }
 
