@@ -163,10 +163,27 @@
     color: white;
     border: none;
     cursor: pointer;
+    border-radius: 5px;
 }
 
 .formContainer button:hover {
     background-color: #45a049;
+}
+
+.booking_conflict {
+    background-color: red;
+}
+
+.conflictBlock {
+    border: 2px solid red;
+    border-radius: 5px;
+    color: red;
+    padding: 10px;
+    text-align: center;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
 }
 
 

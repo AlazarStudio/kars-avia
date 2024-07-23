@@ -1,24 +1,86 @@
-import React, { useState } from 'react';
+import React, { useReducer, useEffect, useState } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
 
+const initialState = {
+    bookings: [],
+    newBooking: {
+        room: '',
+        place: '',
+        start: '2024-07-23',
+        startTime: '14:00',
+        end: '2024-07-27',
+        endTime: '10:00',
+        client: 'Джатдоев А. С-А.',
+        public: false,
+    },
+    conflict: false,
+};
+
+const reducer = (state, action) => {
+    switch (action.type) {
+        case 'SET_BOOKINGS':
+            return { ...state, bookings: action.payload };
+        case 'UPDATE_NEW_BOOKING':
+            const updatedBooking = { ...state.newBooking, [action.name]: action.value };
+            return {
+                ...state,
+                newBooking: updatedBooking,
+                conflict: checkBookingConflict(updatedBooking, state.bookings),
+            };
+        case 'RESET_NEW_BOOKING':
+            return {
+                ...state,
+                newBooking: {
+                    room: '',
+                    place: '',
+                    start: '',
+                    startTime: '',
+                    end: '',
+                    endTime: '',
+                    client: '',
+                    public: false,
+                },
+                conflict: false,
+            };
+        case 'ADD_BOOKING':
+            return {
+                ...state,
+                bookings: [...state.bookings, { ...state.newBooking, id: state.bookings.length + 1, public: true }],
+            };
+        default:
+            return state;
+    }
+};
+
+const checkBookingConflict = (newBooking, existingBookings) => {
+    const newStart = new Date(newBooking.start + 'T' + newBooking.startTime);
+    const newEnd = new Date(newBooking.end + 'T' + newBooking.endTime);
+
+    for (const booking of existingBookings) {
+        if (booking.room === newBooking.room && booking.place == newBooking.place) {
+            const existingStart = new Date(booking.start + 'T' + booking.startTime);
+            const existingEnd = new Date(booking.end + 'T' + booking.endTime);
+
+            if (
+                (newStart >= existingStart && newStart < existingEnd) ||
+                (newEnd > existingStart && newEnd <= existingEnd) ||
+                (newStart <= existingStart && newEnd >= existingEnd)
+            ) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+};
+
 const HotelTable = ({ allRooms, data, idHotel }) => {
-    const [bookings, setBookings] = useState(data);
+    const [state, dispatch] = useReducer(reducer, { ...initialState, bookings: data });
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [highlightedDay, setHighlightedDay] = useState(null);
     const today = new Date();
-
-    const [newBooking, setNewBooking] = useState({
-        room: '',
-        place: '',
-        start: '',
-        startTime: '',
-        end: '',
-        endTime: '',
-        client: '',
-        public: false,
-    });
 
     const getDaysInMonth = (month, year) => {
         return new Date(year, month + 1, 0).getDate();
@@ -64,7 +126,7 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
         }
 
         const previewBooking = {
-            ...newBooking,
+            ...state.newBooking,
             id: 'preview',
         };
 
@@ -98,13 +160,13 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
                         bookingElements.push(
                             <div
                                 key={booking.id}
-                                className={`${classes.booking} ${endDate <= today && startDate <= today ? classes.booking_light : ''}`}
+                                className={`${classes.booking} ${endDate <= today && startDate <= today ? classes.booking_light : ''} ${state.conflict && booking.id === 'preview' ? classes.booking_conflict : ''}`}
                                 style={{
                                     left: `${left}%`,
                                     width: `${width}%`,
                                     top: `50%`,
                                     transform: `translateY(-50%)`,
-                                    backgroundColor: booking.public ? `#9FD923` : 'grey',
+                                    backgroundColor: state.conflict && booking.id === 'preview' ? 'red' : (booking.public ? '#9FD923' : 'grey'),
                                     opacity: !booking.public ? 1 : null,
                                     borderTopLeftRadius: startDate.getMonth() === currentMonth ? '4px' : '0',
                                     borderBottomLeftRadius: startDate.getMonth() === currentMonth ? '4px' : '0',
@@ -120,7 +182,7 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
             }
         };
 
-        bookings.forEach(renderBooking);
+        state.bookings.forEach(renderBooking);
         renderBooking(previewBooking);
 
         return (
@@ -156,64 +218,42 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
                 return;
             }
 
-            if (name === 'end' && newBooking.start) {
-                const startDate = new Date(newBooking.start);
-                startDate.setHours(0, 0, 0, 0);
-                const endDate = new Date(value);
-                endDate.setHours(0, 0, 0, 0);
-
-                if (endDate < startDate) {
-                    alert('Дата окончания не может быть раньше даты начала.');
-                    return;
-                } else if (endDate.getTime() === startDate.getTime() && newBooking.endTime && getTimeHours(newBooking.endTime) <= getTimeHours(newBooking.startTime)) {
-                    alert('Время окончания должно быть позже времени начала.');
-                    return;
-                }
+            if (name === 'end' && state.newBooking.start && inputDate < new Date(state.newBooking.start)) {
+                alert('Дата окончания не может быть раньше даты начала.');
+                return;
             }
-        }
 
-        if (name === 'endTime' && newBooking.start && newBooking.end) {
-            const startDate = new Date(newBooking.start);
-            startDate.setHours(0, 0, 0, 0);
-            const endDate = new Date(newBooking.end);
-            endDate.setHours(0, 0, 0, 0);
-
-            if (endDate.getTime() === startDate.getTime() && value && getTimeHours(value) <= getTimeHours(newBooking.startTime)) {
-                alert('Время окончания должно быть позже времени начала.');
+            if (name === 'start' && state.newBooking.end && inputDate > new Date(state.newBooking.end)) {
+                alert('Дата начала не может быть позже даты окончания.');
                 return;
             }
         }
 
-        setNewBooking(prevState => ({ ...prevState, [name]: value }));
+        dispatch({ type: 'UPDATE_NEW_BOOKING', name, value });
     };
 
     const handleAddBooking = () => {
-        if (!newBooking.room || !newBooking.place || !newBooking.start || !newBooking.startTime || !newBooking.end || !newBooking.endTime || !newBooking.client) {
+        if (!state.newBooking.room || !state.newBooking.place || !state.newBooking.start || !state.newBooking.startTime || !state.newBooking.end || !state.newBooking.endTime || !state.newBooking.client) {
             alert('Пожалуйста, заполните все поля.');
             return;
         }
 
-        const startDate = new Date(newBooking.start);
-        const endDate = new Date(newBooking.end);
-        const startTime = getTimeHours(newBooking.startTime);
-        const endTime = getTimeHours(newBooking.endTime);
+        const startDate = new Date(state.newBooking.start);
+        const endDate = new Date(state.newBooking.end);
+        const startTime = getTimeHours(state.newBooking.startTime);
+        const endTime = getTimeHours(state.newBooking.endTime);
 
         if (endDate < startDate || (endDate.getTime() === startDate.getTime() && endTime <= startTime)) {
             alert('Время окончания должно быть позже времени начала.');
             return;
         }
 
-        setBookings([...bookings, { ...newBooking, id: bookings.length + 1, public: true }]);
-        setNewBooking({
-            room: '',
-            place: '',
-            start: '',
-            startTime: '',
-            end: '',
-            endTime: '',
-            client: '',
-            public: false,
-        });
+        if (state.conflict) {
+            return;
+        }
+
+        dispatch({ type: 'ADD_BOOKING' });
+        dispatch({ type: 'RESET_NEW_BOOKING' });
     };
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
@@ -270,24 +310,26 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
                 </table>
             </div>
             <div className={classes.formContainer}>
-                <select name="room" value={newBooking.room} onChange={handleInputChange}>
+                <select name="room" value={state.newBooking.room} onChange={handleInputChange}>
                     <option value="">Выберите комнату</option>
                     {allRooms.map((room, index) => (
                         <option key={index} value={room.room}>{room.room}</option>
                     ))}
                 </select>
-                <select name="place" value={newBooking.place} onChange={handleInputChange}>
+                <select name="place" value={state.newBooking.place} onChange={handleInputChange}>
                     <option value="">Выберите место</option>
-                    {newBooking.room && Array.from({ length: allRooms.find(room => room.room === newBooking.room).places }, (_, i) => (
+                    {state.newBooking.room && Array.from({ length: allRooms.find(room => room.room === state.newBooking.room).places }, (_, i) => (
                         <option key={i} value={i + 1}>{i + 1}</option>
                     ))}
                 </select>
-                <input type="date" name="start" placeholder="Дата начала" value={newBooking.start} onChange={handleInputChange} />
-                <input type="time" name="startTime" placeholder="Время начала" value={newBooking.startTime} onChange={handleInputChange} />
-                <input type="date" name="end" placeholder="Дата окончания" value={newBooking.end} onChange={handleInputChange} />
-                <input type="time" name="endTime" placeholder="Время окончания" value={newBooking.endTime} onChange={handleInputChange} />
-                <input type="text" name="client" placeholder="Клиент" value={newBooking.client} onChange={handleInputChange} />
+                <input type="date" name="start" placeholder="Дата начала" value={state.newBooking.start} onChange={handleInputChange} />
+                <input type="time" name="startTime" placeholder="Время начала" value={state.newBooking.startTime} onChange={handleInputChange} />
+                <input type="date" name="end" placeholder="Дата окончания" value={state.newBooking.end} onChange={handleInputChange} />
+                <input type="time" name="endTime" placeholder="Время окончания" value={state.newBooking.endTime} onChange={handleInputChange} />
+                <input type="text" name="client" placeholder="Клиент" value={state.newBooking.client} onChange={handleInputChange} />
                 <button onClick={handleAddBooking}>Добавить бронирование</button>
+                
+                {state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br/> Пожалуйста, выберите другую комнату или время.</div>}
             </div>
         </div>
     );
