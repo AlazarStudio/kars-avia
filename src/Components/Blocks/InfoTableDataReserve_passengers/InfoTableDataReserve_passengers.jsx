@@ -1,18 +1,9 @@
 import React, { useEffect, useState } from "react";
 import classes from './InfoTableDataReserve_passengers.module.css';
 import InfoTable from "../InfoTable/InfoTable";
-import { Link } from "react-router-dom";
 import Button from "../../Standart/Button/Button";
 
-function InfoTableDataReserve_passengers({ children, requests, idRequest, ...props }) {
-    const [placement, setPlacement] = useState([]);
-
-    useEffect(() => {
-        if (requests[idRequest]) {
-            setPlacement(requests[idRequest].passengers);
-        }
-    }, [idRequest, requests]);
-
+function InfoTableDataReserve_passengers({ children, placement, ...props }) {
     return (
         <InfoTable >
             <div className={classes.InfoTable_title}>
@@ -28,7 +19,7 @@ function InfoTableDataReserve_passengers({ children, requests, idRequest, ...pro
             <div className={classes.bottom}>
                 {placement.map((item, index) => (
                     <div className={classes.InfoTable_data} key={index}>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.id}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{item.fio}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{item.sex}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{item.phone}</div>

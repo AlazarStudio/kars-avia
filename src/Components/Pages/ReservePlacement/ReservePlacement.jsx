@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import classes from './ReservePlacement.module.css';
 import { Link, useParams } from "react-router-dom";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
@@ -8,34 +8,29 @@ import Button from "../../Standart/Button/Button";
 import InfoTableDataReserve_passengers from "../../Blocks/InfoTableDataReserve_passengers/InfoTableDataReserve_passengers";
 
 import { requestsReserve } from "../../../requests";
+import AddNewPassenger from "../../Blocks/AddNewPassenger/AddNewPassenger";
 
 function ReservePlacement({ children, ...props }) {
     let { idRequest } = useParams();
 
-    const [searchQuery, setSearchQuery] = useState('');
-
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
 
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
-    }
-    
     const toggleCreateSidebar = () => {
         setShowCreateSidebar(!showCreateSidebar);
     };
-    
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFilterData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    }
 
-    const [filterData, setFilterData] = useState({
-        filterAirport: '',
-        filterDate: '',
-    });
+    const [placement, setPlacement] = useState([]);
+
+    useEffect(() => {
+        if (requestsReserve[idRequest]) {
+            setPlacement(requestsReserve[idRequest].passengers);
+        }
+    }, [idRequest, requestsReserve]);
+
+    const addPassenger = (newPassenger) => {
+        setPlacement(prevPlacement => [...prevPlacement, newPassenger]);
+    };
+
 
     return (
         <div className={classes.main}>
@@ -52,11 +47,20 @@ function ReservePlacement({ children, ...props }) {
                 </div>
 
                 <div className={classes.section_searchAndFilter}>
-                    <Button>Добавить пассажира</Button>
+                    <Button onClick={toggleCreateSidebar}>Добавить пассажира</Button>
                 </div>
 
-                <InfoTableDataReserve_passengers idRequest={idRequest} requests={requestsReserve}/>
+                <InfoTableDataReserve_passengers placement={placement} />
 
+                <AddNewPassenger
+                    show={showCreateSidebar}
+                    onClose={toggleCreateSidebar}
+                    onAddPassenger={addPassenger}
+                    arrival_date={requestsReserve[idRequest].arrival_date}
+                    arrival_time={requestsReserve[idRequest].arrival_time}
+                    departure_date={requestsReserve[idRequest].departure_date}
+                    departure_time={requestsReserve[idRequest].departure_time}
+                />
             </div>
 
         </div>

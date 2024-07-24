@@ -119,7 +119,7 @@
     overflow-y: scroll;
 }
 
-.InfoTable_data_elem img {
+.InfoTable_data_elem>img {
     cursor: pointer;
 }
 
