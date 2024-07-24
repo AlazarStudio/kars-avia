@@ -9,6 +9,8 @@ import InfoTableDataReserve_passengers from "../../Blocks/InfoTableDataReserve_p
 
 import { requestsReserve } from "../../../requests";
 import AddNewPassenger from "../../Blocks/AddNewPassenger/AddNewPassenger";
+import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
+import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 
 function ReservePlacement({ children, ...props }) {
     let { idRequest } = useParams();
@@ -18,6 +20,26 @@ function ReservePlacement({ children, ...props }) {
     const toggleCreateSidebar = () => {
         setShowCreateSidebar(!showCreateSidebar);
     };
+
+    const [showUpdateSidebar, setShowUpdateSidebar] = useState(false);
+
+    const toggleUpdateSidebar = () => {
+        setShowUpdateSidebar(!showUpdateSidebar);
+    };
+
+    const [idDelete, setIdDelete] = useState();
+    const [showDelete, setshowDelete] = useState(false);
+
+    const openDeletecomponent = (index) => {
+        setshowDelete(true);
+        setIdDelete(index)
+    };
+
+    const closeDeletecomponent = () => {
+        setshowDelete(false);
+    };
+
+    const [idPassangerForUpdate, setIdPassangerForUpdate] = useState();
 
     const [placement, setPlacement] = useState([]);
 
@@ -31,6 +53,20 @@ function ReservePlacement({ children, ...props }) {
         setPlacement(prevPlacement => [...prevPlacement, newPassenger]);
     };
 
+    const updatePassenger = (updatedPassenger, index) => {
+        setPlacement(prevPlacement =>
+            prevPlacement.map((passenger, i) =>
+                i === index ? updatedPassenger : passenger
+            )
+        );
+    };
+
+    const removePassenger = (index) => {
+        setPlacement(prevPlacement =>
+            prevPlacement.filter((_, i) => i !== index)
+        );
+        closeDeletecomponent()
+    };
 
     return (
         <div className={classes.main}>
@@ -50,7 +86,12 @@ function ReservePlacement({ children, ...props }) {
                     <Button onClick={toggleCreateSidebar}>Добавить пассажира</Button>
                 </div>
 
-                <InfoTableDataReserve_passengers placement={placement} />
+                <InfoTableDataReserve_passengers
+                    placement={placement}
+                    toggleUpdateSidebar={toggleUpdateSidebar}
+                    setIdPassangerForUpdate={setIdPassangerForUpdate}
+                    openDeletecomponent={openDeletecomponent}
+                />
 
                 <AddNewPassenger
                     show={showCreateSidebar}
@@ -61,6 +102,16 @@ function ReservePlacement({ children, ...props }) {
                     departure_date={requestsReserve[idRequest].departure_date}
                     departure_time={requestsReserve[idRequest].departure_time}
                 />
+
+                <UpdatePassanger
+                    show={showUpdateSidebar}
+                    onClose={toggleUpdateSidebar}
+                    placement={placement[idPassangerForUpdate]}
+                    idPassangerForUpdate={idPassangerForUpdate}
+                    updatePassenger={updatePassenger}
+                />
+
+                {showDelete && <DeleteComponent remove={removePassenger} index={idDelete} close={closeDeletecomponent} title={`Вы действительно хотите удалить пассажира? `} />}
             </div>
 
         </div>

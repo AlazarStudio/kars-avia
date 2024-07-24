@@ -2,11 +2,11 @@ import React from "react";
 import classes from './Button.module.css';
 import { Link } from "react-router-dom";
 
-function Button({ children, timeLeft, ...props }) {
+function Button({ children, timeLeft, dataObject, ...props }) {
     const buttonStyles = {
-        width: props.width, 
-        height: props.height, 
-        cursor: props.cursor, 
+        width: props.width,
+        height: props.height,
+        cursor: props.cursor,
         opacity: props.opacity,
         backgroundColor: props.backgroundColor
     };
@@ -17,7 +17,7 @@ function Button({ children, timeLeft, ...props }) {
     }
 
     return (
-        <Link to={props.link} className={classes.Button} style={buttonStyles} {...props}>
+        <Link to={props.link} state={dataObject ? { dataObject } : {}} className={classes.Button} style={buttonStyles} {...props}>
             {children}
         </Link>
     );

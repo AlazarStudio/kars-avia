@@ -1,30 +1,30 @@
 import React, { useState, useRef, useEffect } from "react";
-import classes from './AddNewPassenger.module.css';
+import classes from './UpdatePassanger.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function AddNewPassenger({ show, onClose, onAddPassenger, ...props }) {
+function UpdatePassanger({ show, onClose, onAddPassenger, placement, idPassangerForUpdate, updatePassenger, ...props }) {
     const [formData, setFormData] = useState({
         fio: '',
         sex: '',
         phone: '',
-        arrival_date: props.arrival_date,
-        arrival_time: props.arrival_time,
-        departure_date: props.departure_date,
-        departure_time: props.departure_time
+        arrival_date: '',
+        arrival_time: '',
+        departure_date: '',
+        departure_time: ''
     });
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
-            fio: '',
-            sex: '',
-            phone: '',
-            arrival_date: props.arrival_date,
-            arrival_time: props.arrival_time,
-            departure_date: props.departure_date,
-            departure_time: props.departure_time
+            fio: placement.fio || '',
+            sex: placement.sex || '',
+            phone: placement.phone || '',
+            arrival_date: placement.arrival_date || '',
+            arrival_time: placement.arrival_time || '',
+            departure_date: placement.departure_date || '',
+            departure_time: placement.departure_time || ''
         });
     };
 
@@ -45,7 +45,7 @@ function AddNewPassenger({ show, onClose, onAddPassenger, ...props }) {
     };
 
     const handleSubmit = () => {
-        onAddPassenger(formData);
+        updatePassenger(formData, idPassangerForUpdate);
         resetForm();
         onClose();
     };
@@ -68,10 +68,24 @@ function AddNewPassenger({ show, onClose, onAddPassenger, ...props }) {
         };
     }, [show, onClose]);
 
+    useEffect(() => {
+        if (placement) {
+            setFormData({
+                fio: placement.fio || '',
+                sex: placement.sex || '',
+                phone: placement.phone || '',
+                arrival_date: placement.arrival_date || '',
+                arrival_time: placement.arrival_time || '',
+                departure_date: placement.departure_date || '',
+                departure_time: placement.departure_time || ''
+            });
+        }
+    }, [placement]);
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Добавить пассажира</div>
+                <div className={classes.requestTitle_name}>Редактировать</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
             </div>
 
@@ -89,14 +103,26 @@ function AddNewPassenger({ show, onClose, onAddPassenger, ...props }) {
 
                     <label>Телефон</label>
                     <input type="text" name="phone" placeholder="89094567899" value={formData.phone} onChange={handleChange} />
+
+                    <label>Прибытие</label>
+                    <div className={classes.reis_info}>
+                        <input disabled type="date" name="arrival_date" value={formData.arrival_date} onChange={handleChange} placeholder="Дата" />
+                        <input disabled type="time" name="arrival_time" value={formData.arrival_time} onChange={handleChange} placeholder="Время" />
+                    </div>
+
+                    <label>Отъезд</label>
+                    <div className={classes.reis_info}>
+                        <input type="date" name="departure_date" value={formData.departure_date} onChange={handleChange} placeholder="Дата" />
+                        <input type="time" name="departure_time" value={formData.departure_time} onChange={handleChange} placeholder="Время" />
+                    </div>
                 </div>
             </div>
 
             <div className={classes.requestButon}>
-                <Button onClick={handleSubmit}>Добавить пассажира</Button>
+                <Button onClick={handleSubmit}>Редактировать пассажира</Button>
             </div>
         </Sidebar>
     );
 }
 
-export default AddNewPassenger;
+export default UpdatePassanger;

@@ -2,8 +2,20 @@ import React from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableData({ children, toggleRequestSidebar, requests, ...props }) {
-
+function InfoTableData({ children, toggleRequestSidebar, requests,setChooseObject, ...props }) {
+    const handleObject = () => {
+        setChooseObject({
+            room: '',
+            place: '',
+            start: '2024-07-23',
+            startTime: '14:00',
+            end: '2024-07-27',
+            endTime: '10:00',
+            client: 'Джатдоев А. С-А.',
+            public: false,
+        })
+        toggleRequestSidebar()
+    }
     return (
         <InfoTable >
             <div className={classes.InfoTable_title}>
@@ -19,7 +31,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, ...props }) {
 
             <div className={classes.bottom}>
                 {requests.map((item, index) => (
-                    <div className={classes.InfoTable_data} onClick={toggleRequestSidebar} key={index}>
+                    <div className={classes.InfoTable_data} onClick={handleObject} key={index}>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.id}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>

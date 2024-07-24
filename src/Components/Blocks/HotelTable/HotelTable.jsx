@@ -4,20 +4,20 @@ import classes from './HotelTable.module.css';
 import BronInfo from '../BronInfo/BronInfo';
 import { Link } from 'react-router-dom';
 
-const initialState = {
-    bookings: [],
+const initialState = (data, dataObject) => ({
+    bookings: data,
     newBooking: {
-        room: '',
-        place: '',
-        start: '2024-07-23',
-        startTime: '14:00',
-        end: '2024-07-27',
-        endTime: '10:00',
-        client: 'Джатдоев А. С-А.',
-        public: false,
+        room: dataObject?.room || '',
+        place: dataObject?.place || '',
+        start: dataObject?.start || '',
+        startTime: dataObject?.startTime || '',
+        end: dataObject?.end || '',
+        endTime: dataObject?.endTime || '',
+        client: dataObject?.client || '',
+        public: dataObject?.public || false,
     },
     conflict: false,
-};
+});
 
 const reducer = (state, action) => {
     switch (action.type) {
@@ -77,12 +77,28 @@ const checkBookingConflict = (newBooking, existingBookings) => {
     return false;
 };
 
-const HotelTable = ({ allRooms, data, idHotel }) => {
-    const [state, dispatch] = useReducer(reducer, { ...initialState, bookings: data });
+const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
+    const [state, dispatch] = useReducer(reducer, initialState(data, dataObject));
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [highlightedDay, setHighlightedDay] = useState(null);
     const today = new Date();
+
+    useEffect(() => {
+        if (dataObject) {
+            const newBooking = {
+                room: dataObject.room,
+                place: dataObject.place,
+                start: dataObject.start,
+                startTime: dataObject.startTime,
+                end: dataObject.end,
+                endTime: dataObject.endTime,
+                client: dataObject.client,
+                public: dataObject.public,
+            };
+            dispatch({ type: 'SET_BOOKINGS', payload: [...state.bookings, newBooking] });
+        }
+    }, [dataObject]);
 
     const getDaysInMonth = (month, year) => {
         return new Date(year, month + 1, 0).getDate();
@@ -278,8 +294,6 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
     };
 
     const [isBron, setIsBron] = useState(false);
-
-    console.log(state);
     return (
         <>
             <div className={classes.tableData}>
@@ -348,10 +362,10 @@ const HotelTable = ({ allRooms, data, idHotel }) => {
                         <button className={classes.anotherHotel}>Выбрать другой отель</button>
 
                         {
-                            state.conflict &&<div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>
+                            state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>
                         }
                     </div>
-                    : 
+                    :
                     <div className={classes.formContainer}>
                         <div className={classes.successBron}>Бронирование прошло успешно </div>
 

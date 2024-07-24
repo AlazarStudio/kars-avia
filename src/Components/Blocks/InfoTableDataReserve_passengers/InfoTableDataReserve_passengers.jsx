@@ -2,8 +2,14 @@ import React, { useEffect, useState } from "react";
 import classes from './InfoTableDataReserve_passengers.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
+import DeleteComponent from "../DeleteComponent/DeleteComponent";
 
-function InfoTableDataReserve_passengers({ children, placement, ...props }) {
+function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, ...props }) {
+    const handleUpdate = (id) => {
+        toggleUpdateSidebar()
+        setIdPassangerForUpdate(id)
+    }
+
     return (
         <InfoTable >
             <div className={classes.InfoTable_title}>
@@ -32,10 +38,11 @@ function InfoTableDataReserve_passengers({ children, placement, ...props }) {
                             <span><img src="/time.png" alt="" /> {item.departure_time}</span>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                            <img src="/updateTime.png" alt="" />
-                            <img src="/editPassenger.png" alt="" />
-                            <img src="/deletePassenger.png" alt="" />
+                            <img src="/editPassenger.png" alt="" onClick={() => handleUpdate(index)} />
+                            <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(index)} />
                         </div>
+
+                        
                     </div>
                 ))}
             </div>

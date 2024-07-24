@@ -1,12 +1,14 @@
 import React from "react";
 import classes from './Placement.module.css';
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Header from "../../Blocks/Header/Header"
 import HotelTable from "../../Blocks/HotelTable/HotelTable";
 
 function Placement({ children, ...props }) {
-    let { idHotel } = useParams();
+    let { id, idHotel } = useParams();
+    const location = useLocation();
+    const { dataObject } = location.state || {};
 
     const allRooms = [
         { room: '№121', places: 1 },
@@ -28,19 +30,19 @@ function Placement({ children, ...props }) {
 
     return (
         <div className={classes.main}>
-            <MenuDispetcher />
+            <MenuDispetcher id={id} />
 
             <div className={classes.section}>
                 <div className={classes.section_top}>
                     <Header>
                         <div className={classes.titleHeader}>
-                            <Link to={'/relay'} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
+                            <Link to={`/${id}`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
                             Заявка №123MV077
                         </div>
                     </Header>
                 </div>
 
-                <HotelTable allRooms={allRooms} data={data} idHotel={idHotel} />
+                <HotelTable allRooms={allRooms} data={data} idHotel={idHotel} dataObject={dataObject}/>
             </div>
 
         </div>
