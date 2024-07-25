@@ -7,14 +7,14 @@ import { Link } from 'react-router-dom';
 const initialState = (data, dataObject) => ({
     bookings: data,
     newBooking: {
-        room: dataObject?.room || '',
-        place: dataObject?.place || '',
-        start: dataObject?.start || '',
-        startTime: dataObject?.startTime || '',
-        end: dataObject?.end || '',
-        endTime: dataObject?.endTime || '',
-        client: dataObject?.client || '',
-        public: dataObject?.public || false,
+        room: dataObject[0]?.room || '',
+        place: dataObject[0]?.place || '',
+        start: dataObject[0]?.start || '',
+        startTime: dataObject[0]?.startTime || '',
+        end: dataObject[0]?.end || '',
+        endTime: dataObject[0]?.endTime || '',
+        client: dataObject[0]?.client || '',
+        public: dataObject[0]?.public || false,
     },
     conflict: false,
 });
@@ -337,41 +337,62 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
                         </tbody>
                     </table>
                 </div>
-                {!isBron ?
-                    <div className={classes.formContainer}>
-                        <select name="room" value={state.newBooking.room} onChange={handleInputChange}>
-                            <option value="">Выберите комнату</option>
-                            {allRooms.map((room, index) => (
-                                <option key={index} value={room.room}>{room.room}</option>
-                            ))}
-                        </select>
-                        <select name="place" value={state.newBooking.place} onChange={handleInputChange}>
-                            <option value="">Выберите место</option>
-                            {state.newBooking.room && Array.from({ length: allRooms.find(room => room.room === state.newBooking.room).places }, (_, i) => (
-                                <option key={i} value={i + 1}>{i + 1}</option>
-                            ))}
-                        </select>
-                        <input disabled type="date" name="start" placeholder="Дата начала" value={state.newBooking.start} onChange={handleInputChange} />
-                        <input disabled type="time" name="startTime" placeholder="Время начала" value={state.newBooking.startTime} onChange={handleInputChange} />
-                        <input disabled type="date" name="end" placeholder="Дата окончания" value={state.newBooking.end} onChange={handleInputChange} />
-                        <input disabled type="time" name="endTime" placeholder="Время окончания" value={state.newBooking.endTime} onChange={handleInputChange} />
-                        <input disabled type="text" name="client" placeholder="Клиент" value={state.newBooking.client} onChange={handleInputChange} />
+                <div className={classes.formContainer}>
+                    <div className={classes.formContainer_title}>Сотрудники на заселение</div>
+                    <div className={classes.formContainer_items}>
+                        <div className={classes.formContainer_items_item}>
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_client}>{state.newBooking.client}</div>
+                            </div>
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
+                                <div className={classes.formContainer_items_item_data_info}>
+                                    <span> <img src="/calendar.png" alt="" />{state.newBooking.start}</span>
+                                    <span> <img src="/time.png" alt="" />{state.newBooking.startTime}</span>
+                                </div>
+                            </div>
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_name}>Отъезд</div>
+                                <div className={classes.formContainer_items_item_data_info}>
+                                    <span> <img src="/calendar.png" alt="" />{state.newBooking.end}</span>
+                                    <span> <img src="/time.png" alt="" />{state.newBooking.endTime}</span>
+                                </div>
+                            </div>
 
-                        <br />
-                        <button onClick={handleAddBooking}>Добавить бронирование</button>
-                        <button className={classes.anotherHotel}>Выбрать другой отель</button>
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_name}>Комната</div>
+                                <div className={classes.formContainer_items_item_data_info}>
+                                    <select name="room" value={state.newBooking.room} onChange={handleInputChange}>
+                                        <option value="">Выберите комнату</option>
+                                        {allRooms.map((room, index) => (
+                                            <option key={index} value={room.room}>{room.room}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
 
-                        {
-                            state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>
-                        }
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_name}>Выберите место</div>
+                                <div className={classes.formContainer_items_item_data_info}>
+                                    <select name="place" value={state.newBooking.place} onChange={handleInputChange}>
+                                        <option value="">Выберите место</option>
+                                        {state.newBooking.room && Array.from({ length: allRooms.find(room => room.room === state.newBooking.room).places }, (_, i) => (
+                                            <option key={i} value={i + 1}>{i + 1}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className={classes.formContainer_items_item_data_buttons}>
+                                <button className={classes.anotherHotel}>Выбрать другое</button>
+                                <button onClick={handleAddBooking}>Готово</button>
+
+                            </div>
+                            
+                            {state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>}
+                        </div>
                     </div>
-                    :
-                    <div className={classes.formContainer}>
-                        <div className={classes.successBron}>Бронирование прошло успешно </div>
-
-                        <Link to={'/'}>Вернуться назад</Link>
-                    </div>
-                }
+                </div>
             </div>
 
             <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />

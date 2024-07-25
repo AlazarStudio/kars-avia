@@ -2,18 +2,30 @@ import React from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableData({ children, toggleRequestSidebar, requests,setChooseObject, ...props }) {
+function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, ...props }) {
     const handleObject = () => {
-        setChooseObject({
-            room: '',
-            place: '',
-            start: '2024-07-23',
-            startTime: '14:00',
-            end: '2024-07-27',
-            endTime: '10:00',
-            client: 'Джатдоев А. С-А.',
-            public: false,
-        })
+        setChooseObject([
+            {
+                room: '',
+                place: '',
+                start: '2024-07-25',
+                startTime: '14:00',
+                end: '2024-07-31',
+                endTime: '10:00',
+                client: 'Джатдоев А. С-А.',
+                public: false,
+            },
+            {
+                room: '',
+                place: '',
+                start: '2024-07-25',
+                startTime: '14:00',
+                end: '2024-07-31',
+                endTime: '10:00',
+                client: 'Джатдоев А. С-А.111',
+                public: false,
+            },
+        ])
         toggleRequestSidebar()
     }
     return (

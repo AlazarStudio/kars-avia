@@ -14,7 +14,7 @@ function Estafeta({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
-    const [chooseObject, setChooseObject] = useState({});
+    const [chooseObject, setChooseObject] = useState([]);
 
     const toggleCreateSidebar = () => {
         setShowCreateSidebar(!showCreateSidebar);
