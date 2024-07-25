@@ -1,8 +1,7 @@
 import React, { useReducer, useEffect, useState } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
-import BronInfo from '../BronInfo/BronInfo';
-import { Link } from 'react-router-dom';
+import Button from '../../Standart/Button/Button';
 
 const initialState = (data, dataObject) => ({
     bookings: data || [],
@@ -295,12 +294,9 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
         setShowCreateSidebar(!showCreateSidebar);
     };
 
-    const [isBron, setIsBron] = useState(false);
-
     const currentBooking = state.newBookings[state.currentBookingIndex];
 
     return (
-        <>
             <div className={classes.tableData}>
                 <div className={classes.tableContainer}>
                     <table className={classes.hotelTable}>
@@ -401,12 +397,10 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
                 ) : (
                     <div className={classes.formContainer}>
                         <div className={classes.formContainer_title_success}>Все бронирования завершены!</div>
+                        <Button link={'/relay'}>Вернуться к заявкам</Button>
                     </div>
                 )}
         </div >
-
-            <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />
-        </>
     );
 };
 
