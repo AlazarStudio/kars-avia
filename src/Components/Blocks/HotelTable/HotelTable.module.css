@@ -145,6 +145,7 @@
     /* Цвет выделения для наведения */
 }
 
+
 .formContainer {
     display: flex;
     flex-direction: column;
@@ -213,7 +214,6 @@
     text-align: center;
     margin-bottom: 20px;
 }
-
 .formContainer_title {
     font-family: Nunito Sans;
     font-size: 14px;
@@ -222,6 +222,13 @@
     text-align: center;
     padding-bottom: 20px;
     border-bottom: 1px solid #E4E4EF;
+}
+.formContainer_title_success{
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
 }
 
 .formContainer_items {
@@ -232,8 +239,7 @@
 .formContainer_items_item {
     display: flex;
     flex-direction: column;
-    padding: 10px 0;
-    border-bottom: 1px solid #E4E4EF;
+    padding-top: 10px;
     gap: 10px;
 }
 

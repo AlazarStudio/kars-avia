@@ -5,17 +5,10 @@ import BronInfo from '../BronInfo/BronInfo';
 import { Link } from 'react-router-dom';
 
 const initialState = (data, dataObject) => ({
-    bookings: data,
-    newBooking: {
-        room: dataObject[0]?.room || '',
-        place: dataObject[0]?.place || '',
-        start: dataObject[0]?.start || '',
-        startTime: dataObject[0]?.startTime || '',
-        end: dataObject[0]?.end || '',
-        endTime: dataObject[0]?.endTime || '',
-        client: dataObject[0]?.client || '',
-        public: dataObject[0]?.public || false,
-    },
+    bookings: data || [],
+    newBookings: dataObject || [],
+    currentBookingIndex: 0,
+    countBooking: dataObject.length || 0,
     conflict: false,
 });
 
@@ -24,16 +17,19 @@ const reducer = (state, action) => {
         case 'SET_BOOKINGS':
             return { ...state, bookings: action.payload };
         case 'UPDATE_NEW_BOOKING':
-            const updatedBooking = { ...state.newBooking, [action.name]: action.value };
+            const updatedBookings = state.newBookings.map((booking, index) =>
+                index === action.index ? { ...booking, [action.name]: action.value } : booking
+            );
+            const conflict = checkBookingConflict(updatedBookings[state.currentBookingIndex], state.bookings);
             return {
                 ...state,
-                newBooking: updatedBooking,
-                conflict: checkBookingConflict(updatedBooking, state.bookings),
+                newBookings: updatedBookings,
+                conflict,
             };
-        case 'RESET_NEW_BOOKING':
+        case 'RESET_NEW_BOOKINGS':
             return {
                 ...state,
-                newBooking: {
+                newBookings: state.newBookings.map(() => ({
                     room: '',
                     place: '',
                     start: '',
@@ -42,13 +38,21 @@ const reducer = (state, action) => {
                     endTime: '',
                     client: '',
                     public: false,
-                },
+                })),
                 conflict: false,
+                currentBookingIndex: 0,
+                countBooking: dataObject.length || 0
             };
         case 'ADD_BOOKING':
             return {
                 ...state,
-                bookings: [...state.bookings, { ...state.newBooking, id: state.bookings.length + 1, public: true }],
+                bookings: [
+                    ...state.bookings,
+                    { ...state.newBookings[state.currentBookingIndex], id: state.bookings.length + 1, public: true },
+                ],
+                currentBookingIndex: state.currentBookingIndex + 1,
+                conflict: false,
+                countBooking: state.countBooking - 1,
             };
         default:
             return state;
@@ -86,17 +90,17 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
 
     useEffect(() => {
         if (dataObject) {
-            const newBooking = {
-                room: dataObject.room,
-                place: dataObject.place,
-                start: dataObject.start,
-                startTime: dataObject.startTime,
-                end: dataObject.end,
-                endTime: dataObject.endTime,
-                client: dataObject.client,
-                public: dataObject.public,
-            };
-            dispatch({ type: 'SET_BOOKINGS', payload: [...state.bookings, newBooking] });
+            const newBookings = dataObject.map(item => ({
+                room: item.room,
+                place: item.place,
+                start: item.start,
+                startTime: item.startTime,
+                end: item.end,
+                endTime: item.endTime,
+                client: item.client,
+                public: item.public,
+            }));
+            dispatch({ type: 'SET_BOOKINGS', payload: [...state.bookings, ...newBookings] });
         }
     }, [dataObject]);
 
@@ -143,12 +147,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
             );
         }
 
-        const previewBooking = {
-            ...state.newBooking,
-            id: 'preview',
-        };
-
-        const renderBooking = (booking) => {
+        const renderBooking = (booking, isNew = false) => {
             if (booking.room === room && booking.place == place) {
                 const startDate = new Date(booking.start);
                 const endDate = new Date(booking.end);
@@ -177,14 +176,14 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
 
                         bookingElements.push(
                             <div
-                                key={booking.id}
-                                className={`${classes.booking} ${endDate <= today && startDate <= today ? classes.booking_light : ''} ${state.conflict && booking.id === 'preview' ? classes.booking_conflict : ''}`}
+                                key={isNew ? `new-${booking.client}-${colStart}` : booking.id}
+                                className={`${classes.booking} ${endDate <= today && startDate <= today ? classes.booking_light : ''} ${state.conflict && isNew ? classes.booking_conflict : ''}`}
                                 style={{
                                     left: `${left}%`,
                                     width: `${width}%`,
                                     top: `50%`,
                                     transform: `translateY(-50%)`,
-                                    backgroundColor: state.conflict && booking.id === 'preview' ? 'red' : (booking.public ? '#9FD923' : 'grey'),
+                                    backgroundColor: state.conflict && isNew ? 'red' : (booking.public ? '#9FD923' : 'grey'),
                                     opacity: !booking.public ? 1 : null,
                                     borderTopLeftRadius: startDate.getMonth() === currentMonth ? '4px' : '0',
                                     borderBottomLeftRadius: startDate.getMonth() === currentMonth ? '4px' : '0',
@@ -201,8 +200,10 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
             }
         };
 
-        state.bookings.forEach(renderBooking);
-        renderBooking(previewBooking);
+        state.bookings.forEach(booking => renderBooking(booking));
+        if (state.newBookings[state.currentBookingIndex]) {
+            renderBooking(state.newBookings[state.currentBookingIndex], true);
+        }
 
         return (
             <td colSpan={daysInMonth} className={classes.bookingCell}>
@@ -228,6 +229,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        const index = state.currentBookingIndex;
 
         if (name === 'start' || name === 'end') {
             const inputDate = new Date(value);
@@ -237,30 +239,32 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
                 return;
             }
 
-            if (name === 'end' && state.newBooking.start && inputDate < new Date(state.newBooking.start)) {
+            if (name === 'end' && state.newBookings[index].start && inputDate < new Date(state.newBookings[index].start)) {
                 alert('Дата окончания не может быть раньше даты начала.');
                 return;
             }
 
-            if (name === 'start' && state.newBooking.end && inputDate > new Date(state.newBooking.end)) {
+            if (name === 'start' && state.newBookings[index].end && inputDate > new Date(state.newBookings[index].end)) {
                 alert('Дата начала не может быть позже даты окончания.');
                 return;
             }
         }
 
-        dispatch({ type: 'UPDATE_NEW_BOOKING', name, value });
+        dispatch({ type: 'UPDATE_NEW_BOOKING', name, value, index });
     };
 
     const handleAddBooking = () => {
-        if (!state.newBooking.room || !state.newBooking.place || !state.newBooking.start || !state.newBooking.startTime || !state.newBooking.end || !state.newBooking.endTime || !state.newBooking.client) {
+        const booking = state.newBookings[state.currentBookingIndex];
+
+        if (!booking.room || !booking.place || !booking.start || !booking.startTime || !booking.end || !booking.endTime || !booking.client) {
             alert('Пожалуйста, заполните все поля.');
             return;
         }
 
-        const startDate = new Date(state.newBooking.start);
-        const endDate = new Date(state.newBooking.end);
-        const startTime = getTimeHours(state.newBooking.startTime);
-        const endTime = getTimeHours(state.newBooking.endTime);
+        const startDate = new Date(booking.start);
+        const endDate = new Date(booking.end);
+        const startTime = getTimeHours(booking.startTime);
+        const endTime = getTimeHours(booking.endTime);
 
         if (endDate < startDate || (endDate.getTime() === startDate.getTime() && endTime <= startTime)) {
             alert('Время окончания должно быть позже времени начала.');
@@ -272,8 +276,6 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
         }
 
         dispatch({ type: 'ADD_BOOKING' });
-        dispatch({ type: 'RESET_NEW_BOOKING' });
-        setIsBron(true)
     };
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
@@ -294,6 +296,9 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
     };
 
     const [isBron, setIsBron] = useState(false);
+
+    const currentBooking = state.newBookings[state.currentBookingIndex];
+
     return (
         <>
             <div className={classes.tableData}>
@@ -337,63 +342,68 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
                         </tbody>
                     </table>
                 </div>
-                <div className={classes.formContainer}>
-                    <div className={classes.formContainer_title}>Сотрудники на заселение</div>
-                    <div className={classes.formContainer_items}>
-                        <div className={classes.formContainer_items_item}>
-                            <div className={classes.formContainer_items_item_data}>
-                                <div className={classes.formContainer_items_item_data_client}>{state.newBooking.client}</div>
-                            </div>
-                            <div className={classes.formContainer_items_item_data}>
-                                <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
-                                <div className={classes.formContainer_items_item_data_info}>
-                                    <span> <img src="/calendar.png" alt="" />{state.newBooking.start}</span>
-                                    <span> <img src="/time.png" alt="" />{state.newBooking.startTime}</span>
+                {currentBooking ? (
+                    <div className={classes.formContainer}>
+                        <div className={classes.formContainer_title}>Сотрудники на заселение <br /> На заселение {state.countBooking} человека</div>
+                        <div className={classes.formContainer_items}>
+                            <div className={classes.formContainer_items_item}>
+                                <div className={classes.formContainer_items_item_data}>
+                                    <div className={classes.formContainer_items_item_data_client}>{currentBooking.client}</div>
                                 </div>
-                            </div>
-                            <div className={classes.formContainer_items_item_data}>
-                                <div className={classes.formContainer_items_item_data_name}>Отъезд</div>
-                                <div className={classes.formContainer_items_item_data_info}>
-                                    <span> <img src="/calendar.png" alt="" />{state.newBooking.end}</span>
-                                    <span> <img src="/time.png" alt="" />{state.newBooking.endTime}</span>
+                                <div className={classes.formContainer_items_item_data}>
+                                    <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
+                                    <div className={classes.formContainer_items_item_data_info}>
+                                        <span> <img src="/calendar.png" alt="" />{currentBooking.start}</span>
+                                        <span> <img src="/time.png" alt="" />{currentBooking.startTime}</span>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <div className={classes.formContainer_items_item_data}>
-                                <div className={classes.formContainer_items_item_data_name}>Комната</div>
-                                <div className={classes.formContainer_items_item_data_info}>
-                                    <select name="room" value={state.newBooking.room} onChange={handleInputChange}>
-                                        <option value="">Выберите комнату</option>
-                                        {allRooms.map((room, index) => (
-                                            <option key={index} value={room.room}>{room.room}</option>
-                                        ))}
-                                    </select>
+                                <div className={classes.formContainer_items_item_data}>
+                                    <div className={classes.formContainer_items_item_data_name}>Отъезд</div>
+                                    <div className={classes.formContainer_items_item_data_info}>
+                                        <span> <img src="/calendar.png" alt="" />{currentBooking.end}</span>
+                                        <span> <img src="/time.png" alt="" />{currentBooking.endTime}</span>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className={classes.formContainer_items_item_data}>
-                                <div className={classes.formContainer_items_item_data_name}>Выберите место</div>
-                                <div className={classes.formContainer_items_item_data_info}>
-                                    <select name="place" value={state.newBooking.place} onChange={handleInputChange}>
-                                        <option value="">Выберите место</option>
-                                        {state.newBooking.room && Array.from({ length: allRooms.find(room => room.room === state.newBooking.room).places }, (_, i) => (
-                                            <option key={i} value={i + 1}>{i + 1}</option>
-                                        ))}
-                                    </select>
+                                <div className={classes.formContainer_items_item_data}>
+                                    <div className={classes.formContainer_items_item_data_name}>Комната</div>
+                                    <div className={classes.formContainer_items_item_data_info}>
+                                        <select name="room" value={currentBooking.room} onChange={handleInputChange}>
+                                            <option value="">Выберите комнату</option>
+                                            {allRooms.map((room, index) => (
+                                                <option key={index} value={room.room}>{room.room}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className={classes.formContainer_items_item_data_buttons}>
-                                <button className={classes.anotherHotel}>Выбрать другое</button>
-                                <button onClick={handleAddBooking}>Готово</button>
+                                <div className={classes.formContainer_items_item_data}>
+                                    <div className={classes.formContainer_items_item_data_name}>Выберите место</div>
+                                    <div className={classes.formContainer_items_item_data_info}>
+                                        <select name="place" value={currentBooking.place} onChange={handleInputChange}>
+                                            <option value="">Выберите место</option>
+                                            {currentBooking.room && Array.from({ length: allRooms.find(room => room.room === currentBooking.room).places }, (_, i) => (
+                                                <option key={i} value={i + 1}>{i + 1}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
 
+                                <div className={classes.formContainer_items_item_data_buttons}>
+                                    <button className={classes.anotherHotel}>Выбрать другое</button>
+                                    <button onClick={handleAddBooking}>Готово</button>
+                                </div>
+
+                                {state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>}
                             </div>
-                            
-                            {state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>}
                         </div>
                     </div>
-                </div>
-            </div>
+                ) : (
+                    <div className={classes.formContainer}>
+                        <div className={classes.formContainer_title_success}>Все бронирования завершены!</div>
+                    </div>
+                )}
+        </div >
 
             <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />
         </>

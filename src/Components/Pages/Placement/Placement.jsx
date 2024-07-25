@@ -9,8 +9,6 @@ function Placement({ children, ...props }) {
     let { id, idHotel } = useParams();
     const location = useLocation();
     const { dataObject } = location.state || [];
-    
-    console.log(dataObject)
 
     const allRooms = [
         { room: '№121', places: 1 },
