@@ -17,24 +17,21 @@
     background-color: #F5F6F8 !important;
 }
 
-.stickyHeader {
-    position: sticky;
-    top: 0;
-    background-color: white;
-    z-index: 3;
-    box-shadow: 0 0 5px #E4E4EF;
-}
 
 .topDayBlock {
     width: 100%;
     height: 45px;
     border-left: 1px solid #E4E4EF;
     border-top: 1px solid #E4E4EF;
-    border-bottom: 1px solid #E4E4EF;
+    /* border-bottom: 1px solid #E4E4EF; */
     font-family: Nunito Sans;
     font-size: 14px;
     line-height: 20px;
     padding: 10px;
+}
+
+.hotelTable th:nth-child(2) .topDayBlock{
+    border-left: none;
 }
 
 .hotelTable th:last-child .topDayBlock {
@@ -49,8 +46,9 @@
 .hotelTable tbody th,
 .hotelTable tbody tr>td {
     border: 1px solid #E4E4EF;
+    border-left: none;
     background-color: #fff;
-    padding: 10px;
+    /* padding: 10px; */
     width: 45px;
     height: 45px;
     font-family: Nunito Sans;
@@ -58,8 +56,13 @@
     line-height: 20px;
 }
 
+.hotelTable tbody tr>td:nth-child(1){
+    border: none;
+    border-bottom: 1px solid #E4E4EF;
+}
+
 .hotelTable tbody tr>td td {
-    border-left: 1px solid #E4E4EF;
+    border-right: 1px solid #E4E4EF;
     width: 45px;
     height: 45px;
 }
@@ -127,7 +130,6 @@
     text-transform: uppercase;
     gap: 20px;
     border: 1px solid #E4E4EF;
-    border-right: none;
     padding: 0 10px;
 }
 
@@ -214,6 +216,7 @@
     text-align: center;
     margin-bottom: 20px;
 }
+
 .formContainer_title {
     font-family: Nunito Sans;
     font-size: 14px;
@@ -223,7 +226,8 @@
     padding-bottom: 20px;
     border-bottom: 1px solid #E4E4EF;
 }
-.formContainer_title_success{
+
+.formContainer_title_success {
     font-family: Nunito Sans;
     font-size: 16px;
     font-weight: 700;
@@ -283,24 +287,47 @@
     margin-bottom: 10px;
 }
 
-.formContainer_items_item_data_info select{
+.formContainer_items_item_data_info select {
     width: 100%;
     height: 30px;
     padding: 0;
     font-size: 12px;
 }
 
-.formContainer_items_item_data_buttons{
+.formContainer_items_item_data_buttons {
     display: flex;
     gap: 10px;
 }
 
-.formContainer_items_item_data_buttons button{
+.formContainer_items_item_data_buttons button {
     width: 100%;
     height: 30px;
     font-size: 12px;
     padding: 0;
     font-weight: 600;
+}
+
+.stickyColumn {
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 1;
+}
+
+.roomTypeBlock {
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    border-right: 1px solid #E4E4EF;
+    border-left: 1px solid #E4E4EF;
+    padding: 10px;
+}
+
+.stickyHeader {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 2;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

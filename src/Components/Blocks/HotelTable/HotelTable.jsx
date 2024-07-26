@@ -297,109 +297,111 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
     const currentBooking = state.newBookings[state.currentBookingIndex];
 
     return (
-            <div className={classes.tableData}>
-                <div className={classes.tableContainer}>
-                    <table className={classes.hotelTable}>
-                        <thead className={classes.stickyHeader}>
-                            <tr>
-                                <th>
-                                    <div className={classes.controls}>
-                                        <div onClick={previousMonth}><img src="/arrow-left.png" alt="previous month" /></div>
-                                        <span>{monthNames[currentMonth]} {currentYear}</span>
-                                        <div onClick={nextMonth}><img src="/arrow-right.png" alt="next month" /></div>
-                                    </div>
-                                </th>
-                                {renderDays()}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Object.keys(groupedRooms).map((places) => (
-                                <React.Fragment key={places}>
-                                    <tr>
-                                        <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}>
-                                            <b>{places} - МЕСТНЫЕ КОМНАТЫ</b>
-                                        </td>
-                                    </tr>
-                                    {groupedRooms[places].map(({ room }) => (
-                                        <React.Fragment key={room}>
-                                            <tr>
-                                                <td colSpan={getDaysInMonth(currentMonth, currentYear) + 1} className={classes.roomType}><b>{room}</b></td>
+        <div className={classes.tableData}>
+            <div className={classes.tableContainer}>
+                <table className={classes.hotelTable}>
+                    <thead className={classes.stickyHeader}>
+                        <tr>
+                            <th className={classes.stickyColumn}>
+                                <div className={classes.controls}>
+                                    <div onClick={previousMonth}><img src="/arrow-left.png" alt="previous month" /></div>
+                                    <span>{monthNames[currentMonth]} {currentYear}</span>
+                                    <div onClick={nextMonth}><img src="/arrow-right.png" alt="next month" /></div>
+                                </div>
+                            </th>
+                            {renderDays()}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {Object.keys(groupedRooms).map((places) => (
+                            <React.Fragment key={places}>
+                                <tr>
+                                    <td className={`${classes.roomType} ${classes.stickyColumn}`}>
+                                        <div className={classes.roomTypeBlock}><b>{places} - МЕСТНЫЕ</b></div>
+                                    </td>
+                                    <td colSpan={getDaysInMonth(currentMonth, currentYear)} className={`${classes.roomType}`}></td>
+                                </tr>
+                                {groupedRooms[places].map(({ room }) => (
+                                    <React.Fragment key={room}>
+                                        <tr>
+                                            <td className={`${classes.roomType} ${classes.stickyColumn}`}><div className={classes.roomTypeBlock}><b>{room}</b></div></td>
+                                            <td colSpan={getDaysInMonth(currentMonth, currentYear)} className={`${classes.roomType}`}></td>
+                                        </tr>
+                                        {[...Array(Number(places))].map((_, placeIndex) => (
+                                            <tr key={`${room}-${placeIndex}`}>
+                                                <td className={`${classes.stickyColumn}`} style={{ width: '181px' }}><div className={classes.roomTypeBlock}>Место {placeIndex + 1}</div></td>
+                                                {renderBookings(room, placeIndex + 1)}
                                             </tr>
-                                            {[...Array(Number(places))].map((_, placeIndex) => (
-                                                <tr key={`${room}-${placeIndex}`}>
-                                                    <td style={{ width: '181px' }}>Место {placeIndex + 1}</td>
-                                                    {renderBookings(room, placeIndex + 1)}
-                                                </tr>
-                                            ))}
-                                        </React.Fragment>
-                                    ))}
-                                </React.Fragment>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                {currentBooking ? (
-                    <div className={classes.formContainer}>
-                        <div className={classes.formContainer_title}>Сотрудники на заселение <br /> На заселение {state.countBooking} человека</div>
-                        <div className={classes.formContainer_items}>
-                            <div className={classes.formContainer_items_item}>
-                                <div className={classes.formContainer_items_item_data}>
-                                    <div className={classes.formContainer_items_item_data_client}>{currentBooking.client}</div>
-                                </div>
-                                <div className={classes.formContainer_items_item_data}>
-                                    <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
-                                    <div className={classes.formContainer_items_item_data_info}>
-                                        <span> <img src="/calendar.png" alt="" />{currentBooking.start}</span>
-                                        <span> <img src="/time.png" alt="" />{currentBooking.startTime}</span>
-                                    </div>
-                                </div>
-                                <div className={classes.formContainer_items_item_data}>
-                                    <div className={classes.formContainer_items_item_data_name}>Отъезд</div>
-                                    <div className={classes.formContainer_items_item_data_info}>
-                                        <span> <img src="/calendar.png" alt="" />{currentBooking.end}</span>
-                                        <span> <img src="/time.png" alt="" />{currentBooking.endTime}</span>
-                                    </div>
-                                </div>
-
-                                <div className={classes.formContainer_items_item_data}>
-                                    <div className={classes.formContainer_items_item_data_name}>Комната</div>
-                                    <div className={classes.formContainer_items_item_data_info}>
-                                        <select name="room" value={currentBooking.room} onChange={handleInputChange}>
-                                            <option value="">Выберите комнату</option>
-                                            {allRooms.map((room, index) => (
-                                                <option key={index} value={room.room}>{room.room}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className={classes.formContainer_items_item_data}>
-                                    <div className={classes.formContainer_items_item_data_name}>Выберите место</div>
-                                    <div className={classes.formContainer_items_item_data_info}>
-                                        <select name="place" value={currentBooking.place} onChange={handleInputChange}>
-                                            <option value="">Выберите место</option>
-                                            {currentBooking.room && Array.from({ length: allRooms.find(room => room.room === currentBooking.room).places }, (_, i) => (
-                                                <option key={i} value={i + 1}>{i + 1}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div className={classes.formContainer_items_item_data_buttons}>
-                                    <button className={classes.anotherHotel}>Выбрать другое</button>
-                                    <button onClick={handleAddBooking}>Готово</button>
-                                </div>
-
-                                {state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>}
+                                        ))}
+                                    </React.Fragment>
+                                ))}
+                            </React.Fragment>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            {currentBooking ? (
+                <div className={classes.formContainer}>
+                    <div className={classes.formContainer_title}>Сотрудники на заселение <br /> На заселение {state.countBooking} человека</div>
+                    <div className={classes.formContainer_items}>
+                        <div className={classes.formContainer_items_item}>
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_client}>{currentBooking.client}</div>
                             </div>
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
+                                <div className={classes.formContainer_items_item_data_info}>
+                                    <span> <img src="/calendar.png" alt="" />{currentBooking.start}</span>
+                                    <span> <img src="/time.png" alt="" />{currentBooking.startTime}</span>
+                                </div>
+                            </div>
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_name}>Отъезд</div>
+                                <div className={classes.formContainer_items_item_data_info}>
+                                    <span> <img src="/calendar.png" alt="" />{currentBooking.end}</span>
+                                    <span> <img src="/time.png" alt="" />{currentBooking.endTime}</span>
+                                </div>
+                            </div>
+
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_name}>Комната</div>
+                                <div className={classes.formContainer_items_item_data_info}>
+                                    <select name="room" value={currentBooking.room} onChange={handleInputChange}>
+                                        <option value="">Выберите комнату</option>
+                                        {allRooms.map((room, index) => (
+                                            <option key={index} value={room.room}>{room.room}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className={classes.formContainer_items_item_data}>
+                                <div className={classes.formContainer_items_item_data_name}>Выберите место</div>
+                                <div className={classes.formContainer_items_item_data_info}>
+                                    <select name="place" value={currentBooking.place} onChange={handleInputChange}>
+                                        <option value="">Выберите место</option>
+                                        {currentBooking.room && Array.from({ length: allRooms.find(room => room.room === currentBooking.room).places }, (_, i) => (
+                                            <option key={i} value={i + 1}>{i + 1}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className={classes.formContainer_items_item_data_buttons}>
+                                <button className={classes.anotherHotel}>Выбрать другое</button>
+                                <button onClick={handleAddBooking}>Готово</button>
+                            </div>
+
+                            {state.conflict && <div className={classes.conflictBlock}>В это время эта комната уже забронирована. <br /> Пожалуйста, выберите другую комнату или время.</div>}
                         </div>
                     </div>
-                ) : (
-                    <div className={classes.formContainer}>
-                        <div className={classes.formContainer_title_success}>Все бронирования завершены!</div>
-                        <Button link={'/relay'}>Вернуться к заявкам</Button>
-                    </div>
-                )}
+                </div>
+            ) : (
+                <div className={classes.formContainer}>
+                    <div className={classes.formContainer_title_success}>Все бронирования завершены!</div>
+                    <Button link={'/relay'}>Вернуться к заявкам</Button>
+                </div>
+            )}
         </div >
     );
 };
