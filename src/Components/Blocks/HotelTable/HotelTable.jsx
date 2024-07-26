@@ -1,13 +1,15 @@
-import React, { useReducer, useEffect, useState } from 'react';
+import React, { useReducer, useEffect, useState, useRef } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
 import Button from '../../Standart/Button/Button';
+import { LinearProgress, Box, Typography } from '@mui/material';
 
 const initialState = (data, dataObject) => ({
     bookings: data || [],
     newBookings: dataObject || [],
     currentBookingIndex: 0,
     countBooking: dataObject.length || 0,
+    totalBookings: dataObject.length || 0,
     conflict: false,
 });
 
@@ -40,7 +42,8 @@ const reducer = (state, action) => {
                 })),
                 conflict: false,
                 currentBookingIndex: 0,
-                countBooking: dataObject.length || 0
+                countBooking: dataObject.length || 0,
+                totalBookings: dataObject.length || 0
             };
         case 'ADD_BOOKING':
             return {
@@ -86,6 +89,8 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [highlightedDay, setHighlightedDay] = useState(null);
     const today = new Date();
+    const currentDayRef = useRef(null);
+    const tableContainerRef = useRef(null);
 
     useEffect(() => {
         if (dataObject) {
@@ -103,6 +108,12 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
         }
     }, [dataObject]);
 
+    useEffect(() => {
+        if (tableContainerRef.current && currentDayRef.current) {
+            tableContainerRef.current.scrollLeft = currentDayRef.current.offsetLeft;
+        }
+    }, [currentMonth, currentYear]);
+
     const getDaysInMonth = (month, year) => {
         return new Date(year, month + 1, 0).getDate();
     };
@@ -114,7 +125,11 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
             const isToday = i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
             const isHighlighted = i === highlightedDay;
             days.push(
-                <th key={i} className={`${isToday ? classes.currentDay : ''} ${isHighlighted ? classes.highlightedDay : ''}`}>
+                <th
+                    key={i}
+                    className={`${isToday ? classes.currentDay : ''} ${isHighlighted ? classes.highlightedDay : ''}`}
+                    ref={isToday ? currentDayRef : null}
+                >
                     <div className={classes.topDayBlock}>{i <= 9 ? '0' + i : i}</div>
                 </th>
             );
@@ -298,7 +313,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
 
     return (
         <div className={classes.tableData}>
-            <div className={classes.tableContainer}>
+            <div className={classes.tableContainer} ref={tableContainerRef}>
                 <table className={classes.hotelTable}>
                     <thead className={classes.stickyHeader}>
                         <tr>
@@ -342,7 +357,17 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
             </div>
             {currentBooking ? (
                 <div className={classes.formContainer}>
-                    <div className={classes.formContainer_title}>Сотрудники на заселение <br /> На заселение {state.countBooking} человека</div>
+                    <div className={classes.formContainer_title}>
+                        Клиентов на заселение: {state.totalBookings} чел.
+                    </div>
+                    <Box sx={{ width: '100%', marginTop: 2 }}>
+                        <LinearProgress variant="determinate" value={((state.totalBookings - state.countBooking) / state.totalBookings) * 100} />
+                        <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
+                            <Box sx={{ minWidth: 35 }}>
+                                <Typography variant="body2" color="textSecondary">{state.totalBookings - state.countBooking} / {state.totalBookings}</Typography>
+                            </Box>
+                        </Box>
+                    </Box>
                     <div className={classes.formContainer_items}>
                         <div className={classes.formContainer_items_item}>
                             <div className={classes.formContainer_items_item_data}>
@@ -399,6 +424,15 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
             ) : (
                 <div className={classes.formContainer}>
                     <div className={classes.formContainer_title_success}>Все бронирования завершены!</div>
+                    <Box sx={{ width: '100%', marginTop: 2 }}>
+                        <LinearProgress variant="determinate" value={((state.totalBookings - state.countBooking) / state.totalBookings) * 100} />
+                        <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
+                            <Box sx={{ minWidth: 35 }}>
+                                <Typography variant="body2" color="textSecondary">{`${Math.round(((state.totalBookings - state.countBooking) / state.totalBookings) * 100)}%`}</Typography>
+                            </Box>
+                        </Box>
+                    </Box>
+                    <br />
                     <Button link={'/relay'}>Вернуться к заявкам</Button>
                 </div>
             )}

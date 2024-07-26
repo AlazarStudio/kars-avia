@@ -14,6 +14,26 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                 endTime: '10:00',
                 client: 'Джатдоев А. С-А.',
                 public: false,
+            },
+            {
+                room: '',
+                place: '',
+                start: '2024-07-25',
+                startTime: '14:00',
+                end: '2024-07-31',
+                endTime: '10:00',
+                client: 'Джатдоев А. С-А.',
+                public: false,
+            },
+            {
+                room: '',
+                place: '',
+                start: '2024-07-25',
+                startTime: '14:00',
+                end: '2024-07-31',
+                endTime: '10:00',
+                client: 'Джатдоев А. С-А.',
+                public: false,
             }
         ])
         toggleRequestSidebar()
