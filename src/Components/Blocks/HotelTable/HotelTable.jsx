@@ -2,6 +2,7 @@ import React, { useReducer, useEffect, useState, useRef } from 'react';
 import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
 import Button from '../../Standart/Button/Button';
+import BronInfo from '../BronInfo/BronInfo';
 import { LinearProgress, Box, Typography, CircularProgress  } from '@mui/material';
 
 const initialState = (data, dataObject) => ({
@@ -449,6 +450,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                     <Button link={`/${id}`}>Вернуться к заявкам</Button>
                 </div>
             )}
+             <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />
         </div >
     );
 };
