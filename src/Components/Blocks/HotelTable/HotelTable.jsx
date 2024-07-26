@@ -83,7 +83,7 @@ const checkBookingConflict = (newBooking, existingBookings) => {
     return false;
 };
 
-const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
+const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
     const [state, dispatch] = useReducer(reducer, initialState(data, dataObject));
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -318,7 +318,6 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
     };
 
     const currentBooking = state.newBookings[state.currentBookingIndex];
-
     return (
         <div className={classes.tableData}>
             <div className={classes.tableContainer} ref={tableContainerRef}>
@@ -447,7 +446,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject }) => {
                         </Box>
                     </Box>
                     <br />
-                    <Button link={'/relay'}>Вернуться к заявкам</Button>
+                    <Button link={`/${id}`}>Вернуться к заявкам</Button>
                 </div>
             )}
         </div >

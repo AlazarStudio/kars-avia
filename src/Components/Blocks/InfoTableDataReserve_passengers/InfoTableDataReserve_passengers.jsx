@@ -3,8 +3,10 @@ import classes from './InfoTableDataReserve_passengers.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
+import ChooseHotel from "../ChooseHotel/ChooseHotel";
 
-function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, ...props }) {
+function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, ...props }) {
+    
     const handleUpdate = (id) => {
         toggleUpdateSidebar()
         setIdPassangerForUpdate(id)
@@ -26,16 +28,16 @@ function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSide
                 {placement.map((item, index) => (
                     <div className={classes.InfoTable_data} key={index}>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{item.fio}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{item.client}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{item.sex}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{item.phone}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                            <span><img src="/calendar.png" alt="" /> {item.arrival_date}</span>
-                            <span><img src="/time.png" alt="" /> {item.arrival_time}</span>
+                            <span><img src="/calendar.png" alt="" /> {item.start}</span>
+                            <span><img src="/time.png" alt="" /> {item.startTime}</span>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                            <span><img src="/calendar.png" alt="" /> {item.departure_date}</span>
-                            <span><img src="/time.png" alt="" /> {item.departure_time}</span>
+                            <span><img src="/calendar.png" alt="" /> {item.end}</span>
+                            <span><img src="/time.png" alt="" /> {item.endTime}</span>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <img src="/editPassenger.png" alt="" onClick={() => handleUpdate(index)} />
@@ -52,9 +54,12 @@ function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSide
                     <img src="/peopleCount.png" alt="" />
                     {placement.length} человек
                 </div>
-                <Button>Разместить <img src="/user-check.png" alt="" /></Button>
+                <Button onClick={toggleChooseHotel}>Разместить <img src="/user-check.png" alt="" /></Button>
             </div>
+
         </InfoTable>
+
+        
     );
 }
 

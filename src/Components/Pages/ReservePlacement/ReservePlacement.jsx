@@ -11,6 +11,7 @@ import { requestsReserve } from "../../../requests";
 import AddNewPassenger from "../../Blocks/AddNewPassenger/AddNewPassenger";
 import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
 import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
+import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 
 function ReservePlacement({ children, ...props }) {
     let { idRequest } = useParams();
@@ -68,6 +69,12 @@ function ReservePlacement({ children, ...props }) {
         closeDeletecomponent()
     };
 
+
+    const [showChooseHotel, setShowChooseHotel] = useState(false);
+    const toggleChooseHotel = () => {
+        setShowChooseHotel(!showChooseHotel);
+    };
+
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />
@@ -91,16 +98,17 @@ function ReservePlacement({ children, ...props }) {
                     toggleUpdateSidebar={toggleUpdateSidebar}
                     setIdPassangerForUpdate={setIdPassangerForUpdate}
                     openDeletecomponent={openDeletecomponent}
+                    toggleChooseHotel={toggleChooseHotel}
                 />
 
                 <AddNewPassenger
                     show={showCreateSidebar}
                     onClose={toggleCreateSidebar}
                     onAddPassenger={addPassenger}
-                    arrival_date={requestsReserve[idRequest].arrival_date}
-                    arrival_time={requestsReserve[idRequest].arrival_time}
-                    departure_date={requestsReserve[idRequest].departure_date}
-                    departure_time={requestsReserve[idRequest].departure_time}
+                    start={requestsReserve[idRequest].arrival_date}
+                    startTime={requestsReserve[idRequest].arrival_time}
+                    end={requestsReserve[idRequest].departure_date}
+                    endTime={requestsReserve[idRequest].departure_time}
                 />
 
                 <UpdatePassanger
@@ -110,6 +118,8 @@ function ReservePlacement({ children, ...props }) {
                     idPassangerForUpdate={idPassangerForUpdate}
                     updatePassenger={updatePassenger}
                 />
+
+                <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={placement} id={'reserve'} />
 
                 {showDelete && <DeleteComponent remove={removePassenger} index={idDelete} close={closeDeletecomponent} title={`Вы действительно хотите удалить пассажира? `} />}
             </div>

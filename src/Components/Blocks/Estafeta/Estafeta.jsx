@@ -91,7 +91,7 @@ function Estafeta({ children, ...props }) {
 
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
                 <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} />
-                <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject}/>
+                <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'}/>
             </div>
         </>
     );

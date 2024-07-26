@@ -3,7 +3,7 @@ import classes from './ChooseHotel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function ChooseHotel({ show, onClose, chooseObject }) {
+function ChooseHotel({ show, onClose, chooseObject, id }) {
     const [formData, setFormData] = useState({
         city: '',
         hotel: '',
@@ -87,7 +87,7 @@ function ChooseHotel({ show, onClose, chooseObject }) {
             </div>
 
             <div className={classes.requestButon}>
-                <Button link={'/relay/placement/idHotel'} dataObject={chooseObject}>Разместить<img src="/user-check.png" alt="" /></Button>
+                <Button link={`/${id}/placement/idHotel`} dataObject={chooseObject}>Разместить<img src="/user-check.png" alt="" /></Button>
             </div>
         </Sidebar>
     );

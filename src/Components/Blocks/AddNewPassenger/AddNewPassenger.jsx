@@ -5,26 +5,32 @@ import Sidebar from "../Sidebar/Sidebar";
 
 function AddNewPassenger({ show, onClose, onAddPassenger, ...props }) {
     const [formData, setFormData] = useState({
-        fio: '',
+        client: '',
         sex: '',
         phone: '',
-        arrival_date: props.arrival_date,
-        arrival_time: props.arrival_time,
-        departure_date: props.departure_date,
-        departure_time: props.departure_time
+        start: props.start,
+        startTime: props.startTime,
+        end: props.end,
+        endTime: props.endTime,
+        room: '',
+        place: '',
+        public: false,
     });
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
-            fio: '',
+            client: '',
             sex: '',
             phone: '',
-            arrival_date: props.arrival_date,
-            arrival_time: props.arrival_time,
-            departure_date: props.departure_date,
-            departure_time: props.departure_time
+            start: props.start,
+            startTime: props.startTime,
+            end: props.end,
+            endTime: props.endTime,
+            room: '',
+            place: '',
+            public: false,
         });
     };
 
@@ -78,7 +84,7 @@ function AddNewPassenger({ show, onClose, onAddPassenger, ...props }) {
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>ФИО</label>
-                    <input type="text" name="fio" placeholder="Иванов Иван Иванович" value={formData.fio} onChange={handleChange} />
+                    <input type="text" name="client" placeholder="Иванов Иван Иванович" value={formData.client} onChange={handleChange} />
 
                     <label>Пол</label>
                     <select name="sex" value={formData.sex} onChange={handleChange}>

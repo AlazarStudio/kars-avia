@@ -5,26 +5,32 @@ import Sidebar from "../Sidebar/Sidebar";
 
 function UpdatePassanger({ show, onClose, onAddPassenger, placement, idPassangerForUpdate, updatePassenger, ...props }) {
     const [formData, setFormData] = useState({
-        fio: '',
+        client: '',
         sex: '',
         phone: '',
-        arrival_date: '',
-        arrival_time: '',
-        departure_date: '',
-        departure_time: ''
+        start: '',
+        startTime: '',
+        end: '',
+        endTime: '',
+        room: '',
+        place: '',
+        public: false,
     });
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
-            fio: placement.fio || '',
+            client: placement.client || '',
             sex: placement.sex || '',
             phone: placement.phone || '',
-            arrival_date: placement.arrival_date || '',
-            arrival_time: placement.arrival_time || '',
-            departure_date: placement.departure_date || '',
-            departure_time: placement.departure_time || ''
+            start: placement.start || '',
+            startTime: placement.startTime || '',
+            end: placement.end || '',
+            endTime: placement.endTime || '',
+            room: '',
+            place: '',
+            public: false,
         });
     };
 
@@ -71,13 +77,16 @@ function UpdatePassanger({ show, onClose, onAddPassenger, placement, idPassanger
     useEffect(() => {
         if (placement) {
             setFormData({
-                fio: placement.fio || '',
+                client: placement.client || '',
                 sex: placement.sex || '',
                 phone: placement.phone || '',
-                arrival_date: placement.arrival_date || '',
-                arrival_time: placement.arrival_time || '',
-                departure_date: placement.departure_date || '',
-                departure_time: placement.departure_time || ''
+                start: placement.start || '',
+                startTime: placement.startTime || '',
+                end: placement.end || '',
+                endTime: placement.endTime || '',
+                room: '',
+                place: '',
+                public: false,
             });
         }
     }, [placement]);
@@ -92,7 +101,7 @@ function UpdatePassanger({ show, onClose, onAddPassenger, placement, idPassanger
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>ФИО</label>
-                    <input type="text" name="fio" placeholder="Иванов Иван Иванович" value={formData.fio} onChange={handleChange} />
+                    <input type="text" name="client" placeholder="Иванов Иван Иванович" value={formData.client} onChange={handleChange} />
 
                     <label>Пол</label>
                     <select name="sex" value={formData.sex} onChange={handleChange}>
@@ -106,14 +115,14 @@ function UpdatePassanger({ show, onClose, onAddPassenger, placement, idPassanger
 
                     <label>Прибытие</label>
                     <div className={classes.reis_info}>
-                        <input disabled type="date" name="arrival_date" value={formData.arrival_date} onChange={handleChange} placeholder="Дата" />
-                        <input disabled type="time" name="arrival_time" value={formData.arrival_time} onChange={handleChange} placeholder="Время" />
+                        <input  type="date" name="start" value={formData.start} onChange={handleChange} placeholder="Дата" />
+                        <input  type="time" name="startTime" value={formData.startTime} onChange={handleChange} placeholder="Время" />
                     </div>
 
                     <label>Отъезд</label>
                     <div className={classes.reis_info}>
-                        <input type="date" name="departure_date" value={formData.departure_date} onChange={handleChange} placeholder="Дата" />
-                        <input type="time" name="departure_time" value={formData.departure_time} onChange={handleChange} placeholder="Время" />
+                        <input type="date" name="end" value={formData.end} onChange={handleChange} placeholder="Дата" />
+                        <input type="time" name="endTime" value={formData.endTime} onChange={handleChange} placeholder="Время" />
                     </div>
                 </div>
             </div>

@@ -42,7 +42,7 @@ function Placement({ children, ...props }) {
                     </Header>
                 </div>
 
-                <HotelTable allRooms={allRooms} data={data} idHotel={idHotel} dataObject={dataObject}/>
+                <HotelTable allRooms={allRooms} data={data} idHotel={idHotel} dataObject={dataObject} id={id}/>
             </div>
 
         </div>
