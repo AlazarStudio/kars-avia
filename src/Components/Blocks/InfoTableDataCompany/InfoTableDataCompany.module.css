@@ -137,4 +137,15 @@
     text-align: left;
 }
 
+.InfoTable_data_elem_avatar{
+    width: 40px;
+    height: 40px;
+}
+
+.InfoTable_data_elem_avatar img{
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

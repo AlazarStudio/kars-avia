@@ -78,8 +78,6 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
         };
     }, [show, onClose]);
 
-    console.log(formData)
-
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>

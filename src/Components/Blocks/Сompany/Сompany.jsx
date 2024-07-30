@@ -1,23 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import classes from './Сompany.module.css';
 import Filter from "../Filter/Filter";
 import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
-
 import { requestsCompany } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
-import ExistRequest from "../ExistRequest/ExistRequest";
+import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
+import DeleteComponent from "../DeleteComponent/DeleteComponent";
 
-function Сompany({ children, ...props }) {
+function Company({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-    const [showChooseHotel, setShowChooseHotel] = useState(false);
-    const [chooseObject, setChooseObject] = useState([]);
+    const [chooseObject, setChooseObject] = useState(null);
+    const [showDelete, setShowDelete] = useState(false);
+    const [deleteIndex, setDeleteIndex] = useState(null);
+    
+    const deleteComponentRef = useRef();
     
     const [companyData, setCompanyData] = useState(requestsCompany);
 
     const addDispatcher = (newDispatcher) => {
         setCompanyData([...companyData, newDispatcher]);
+    };
+
+    const updateDispatcher = (updatedDispatcher, index) => {
+        const newData = [...companyData];
+        newData[index] = updatedDispatcher;
+        setCompanyData(newData);
+    };
+
+    const deleteDispatcher = (index) => {
+        setCompanyData(companyData.filter((_, i) => i !== index));
+        setShowDelete(false);
+        setShowRequestSidebar(false);
     };
 
     const toggleCreateSidebar = () => {
@@ -27,6 +42,18 @@ function Сompany({ children, ...props }) {
     const toggleRequestSidebar = () => {
         setShowRequestSidebar(!showRequestSidebar);
     };
+
+    const openDeleteComponent = (index) => {
+        setShowDelete(true);
+        setDeleteIndex(index);
+        setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
+    };
+
+    const closeDeleteComponent = () => {
+        setShowDelete(false);
+        setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
+    };
+
     const [filterData, setFilterData] = useState({
         filterSelect: '',
     });
@@ -40,7 +67,6 @@ function Сompany({ children, ...props }) {
             [name]: value
         }));
     }
-
 
     const handleSearch = (e) => {
         setSearchQuery(e.target.value);
@@ -56,7 +82,7 @@ function Сompany({ children, ...props }) {
         );
     });
 
-    let filterList = ['Модератор', 'Администратор']
+    let filterList = ['Модератор', 'Администратор'];
 
     return (
         <>
@@ -69,7 +95,7 @@ function Сompany({ children, ...props }) {
                     <input
                         type="text"
                         placeholder="Поиск"
-                        style={{ 'width': '500px' }}
+                        style={{ width: '500px' }}
                         value={searchQuery}
                         onChange={handleSearch}
                     />
@@ -83,13 +109,39 @@ function Сompany({ children, ...props }) {
                     />
                 </div>
 
-                <InfoTableDataCompany toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} />
+                <InfoTableDataCompany 
+                    toggleRequestSidebar={toggleRequestSidebar} 
+                    requests={filteredRequests} 
+                    setChooseObject={setChooseObject} 
+                />
 
-                <CreateRequestCompany show={showCreateSidebar} onClose={toggleCreateSidebar} addDispatcher={addDispatcher} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} />
+                <CreateRequestCompany 
+                    show={showCreateSidebar} 
+                    onClose={toggleCreateSidebar} 
+                    addDispatcher={addDispatcher} 
+                />
+
+                <ExistRequestCompany 
+                    show={showRequestSidebar} 
+                    onClose={toggleRequestSidebar} 
+                    chooseObject={chooseObject} 
+                    updateDispatcher={updateDispatcher} 
+                    openDeleteComponent={openDeleteComponent} 
+                    deleteComponentRef={deleteComponentRef}
+                    filterList={filterList}
+                />
+
+                {showDelete && (
+                    <DeleteComponent
+                        ref={deleteComponentRef}
+                        remove={() => deleteDispatcher(deleteIndex)}
+                        close={closeDeleteComponent}
+                        title={`Вы действительно хотите удалить диспетчера?`}
+                    />
+                )}
             </div>
         </>
     );
 }
 
-export default Сompany;
+export default Company;

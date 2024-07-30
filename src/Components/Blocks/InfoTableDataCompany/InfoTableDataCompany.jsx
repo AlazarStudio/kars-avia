@@ -3,11 +3,13 @@ import classes from './InfoTableDataCompany.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
 function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setChooseObject, ...props }) {
-    const handleObject = () => {
-        toggleRequestSidebar()
-    }
+    const handleObject = (item, index) => {
+        setChooseObject({ ...item, index });
+        toggleRequestSidebar();
+    };
+
     return (
-        <InfoTable >
+        <InfoTable>
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>ФИО</div>
@@ -16,11 +18,17 @@ function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setCho
 
             <div className={classes.bottom}>
                 {requests.map((item, index) => (
-                    <div className={classes.InfoTable_data} onClick={handleObject} key={index}>
+                    <div
+                        className={classes.InfoTable_data}
+                        onClick={() => handleObject(item, index)}
+                        key={index}
+                    >
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
-                                <div className={classes.InfoTable_data_elem_avatar}><img src={`/${item.avatar}`} alt="" /></div>
+                                <div className={classes.InfoTable_data_elem_avatar}>
+                                    <img src={`/${item.avatar}`} alt="" />
+                                </div>
                                 <div className={classes.InfoTable_data_elem_title}>{item.fio}</div>
                             </div>
                         </div>
@@ -29,7 +37,6 @@ function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setCho
                         </div>
                     </div>
                 ))}
-
             </div>
         </InfoTable>
     );

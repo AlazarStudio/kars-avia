@@ -137,8 +137,8 @@ export const requestsCompany = [
         password: 'password'
     },
     {
-        avatar: 'avatar.png',
-        fio: 'Джатдоев Алим Сеит-Алиевич',
+        avatar: 'avatar1.png',
+        fio: 'Иванов Иван Иванович',
         post: 'Модератор',
         login: 'login',
         password: 'password'

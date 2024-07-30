@@ -8,7 +8,8 @@ function Button({ children, timeLeft, dataObject, ...props }) {
         height: props.height,
         cursor: props.cursor,
         opacity: props.opacity,
-        backgroundColor: props.backgroundColor
+        backgroundColor: props.backgroundcolor,
+        color: props.color
     };
 
     if (timeLeft > 0) {

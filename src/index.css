@@ -45,8 +45,9 @@ input, select{
 
 input[type="file"] {
     border: none;
-    padding: 0;
+    padding: 0 !important;
     border-radius: 0;
+    height: auto;
 }
 
 ::-webkit-scrollbar {
