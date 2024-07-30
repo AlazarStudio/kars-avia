@@ -60,6 +60,8 @@ function Reserve({ children, ...props }) {
         );
     });
 
+    let filterList = ['Азимут', 'S7 airlines', 'Северный ветер']
+
     return (
         <>
             <div className={classes.section}>
@@ -75,7 +77,14 @@ function Reserve({ children, ...props }) {
                         value={searchQuery}
                         onChange={handleSearch}
                     />
-                    <Filter toggleSidebar={toggleCreateSidebar} handleChange={handleChange} filterData={filterData} />
+                    <Filter
+                        toggleSidebar={toggleCreateSidebar}
+                        handleChange={handleChange}
+                        filterData={filterData}
+                        buttonTitle={'Создать заявку'}
+                        filterList={filterList}
+                        needDate={true}
+                    />
                 </div>
 
                 <InfoTableDataReserve toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} />

@@ -14,8 +14,12 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Main_Page />} />
           <Route path="/:id" element={<Main_Page />} />
-          <Route path="/:id/placement/:idHotel" element={<Placement />} />
+
+          {/* Резерв внутри заявки */}
           <Route path="/:id/reservePlacement/:idRequest" element={<ReservePlacement />} />
+
+          {/* Шахматка */}
+          <Route path="/:id/placement/:idHotel" element={<Placement />} />
           <Route path="*" element={<Non_Found_Page />} />
         </Route>
       </Routes>

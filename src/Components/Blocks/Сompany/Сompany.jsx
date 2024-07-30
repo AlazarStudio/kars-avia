@@ -1,20 +1,16 @@
 import React, { useState } from "react";
-import classes from './Estafeta.module.css';
-import { Link } from "react-router-dom";
+import classes from './Сompany.module.css';
 import Filter from "../Filter/Filter";
-import InfoTableData from "../InfoTableData/InfoTableData";
-import CreateRequest from "../CreateRequest/CreateRequest";
-import ExistRequest from "../ExistRequest/ExistRequest";
-import ChooseHotel from "../ChooseHotel/ChooseHotel";
+import CreateRequestReserve from "../CreateRequestReserve/CreateRequestReserve";
 
-import { requests } from "../../../requests";
+import { requestsReserve } from "../../../requests";
 import Header from "../Header/Header";
+import InfoTableDataReserve from "../InfoTableDataReserve/InfoTableDataReserve";
 
-function Estafeta({ children, ...props }) {
+function Сompany({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
-    const [chooseObject, setChooseObject] = useState([]);
 
     const toggleCreateSidebar = () => {
         setShowCreateSidebar(!showCreateSidebar);
@@ -47,35 +43,30 @@ function Estafeta({ children, ...props }) {
         setSearchQuery(e.target.value);
     }
 
-    const filteredRequests = requests.filter(request => {
+    const filteredRequests = requestsReserve.filter(request => {
         return (
             (filterData.filterAirport === '' || request.aviacompany.includes(filterData.filterAirport)) &&
             (filterData.filterDate === '' || request.date === filterData.filterDate) &&
             (
                 request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.post.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.aviacompany.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.airport.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival_date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival_time.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.departure_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure_date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure_time.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.status.toLowerCase().includes(searchQuery.toLowerCase())
+                request.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.passengers.length == searchQuery
             )
         );
     });
 
-    let filterList = ['Азимут', 'S7 airlines', 'Северный ветер']
+    let filterList = ['Модератор', 'Администратор']
 
     return (
         <>
             <div className={classes.section}>
                 <div className={classes.section_top}>
-                    <Header>Эстафета</Header>
+                    <Header>Компания</Header>
                 </div>
 
                 <div className={classes.section_searchAndFilter}>
@@ -90,20 +81,18 @@ function Estafeta({ children, ...props }) {
                         toggleSidebar={toggleCreateSidebar}
                         handleChange={handleChange}
                         filterData={filterData}
-                        buttonTitle={'Создать заявку'}
+                        buttonTitle={'Добавить аккаунт диспетчера'}
                         filterList={filterList}
-                        needDate={true}
+                        needDate={false}
                     />
                 </div>
 
-                <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} />
+                <InfoTableDataReserve toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} />
 
-                <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} />
-                <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
+                <CreateRequestReserve show={showCreateSidebar} onClose={toggleCreateSidebar} />
             </div>
         </>
     );
 }
 
-export default Estafeta;
+export default Сompany;

@@ -1,0 +1,26 @@
+ .section {
+    width: calc(100% - var(--menu-width));
+    min-width: 1000px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 45px;
+    padding: 35px;
+    overflow: hidden;
+    position: relative;
+}
+
+.section_top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section_searchAndFilter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+
+@media (min-width: 0px) and (max-width: 1299px) {}
