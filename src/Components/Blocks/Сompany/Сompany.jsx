@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import classes from './Сompany.module.css';
 import Filter from "../Filter/Filter";
-import CreateRequestReserve from "../CreateRequestReserve/CreateRequestReserve";
+import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
 
 import { requestsReserve } from "../../../requests";
 import Header from "../Header/Header";
-import InfoTableDataReserve from "../InfoTableDataReserve/InfoTableDataReserve";
+import InfoTableData from "../InfoTableData/InfoTableData";
+import ExistRequest from "../ExistRequest/ExistRequest";
 
 function Сompany({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
+    const [chooseObject, setChooseObject] = useState([]);
 
     const toggleCreateSidebar = () => {
         setShowCreateSidebar(!showCreateSidebar);
@@ -87,9 +89,10 @@ function Сompany({ children, ...props }) {
                     />
                 </div>
 
-                <InfoTableDataReserve toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} />
+                <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} />
 
-                <CreateRequestReserve show={showCreateSidebar} onClose={toggleCreateSidebar} />
+                <CreateRequestCompany show={showCreateSidebar} onClose={toggleCreateSidebar} />
+                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} />
             </div>
         </>
     );
