@@ -25,7 +25,7 @@ function Reserve({ children, ...props }) {
     };
 
     const [filterData, setFilterData] = useState({
-        filterAirport: '',
+        filterSelect: '',
         filterDate: '',
     });
 
@@ -45,7 +45,7 @@ function Reserve({ children, ...props }) {
 
     const filteredRequests = requestsReserve.filter(request => {
         return (
-            (filterData.filterAirport === '' || request.aviacompany.includes(filterData.filterAirport)) &&
+            (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
             (filterData.filterDate === '' || request.date === filterData.filterDate) &&
             (
                 request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||

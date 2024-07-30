@@ -29,7 +29,7 @@ function Estafeta({ children, ...props }) {
     };
 
     const [filterData, setFilterData] = useState({
-        filterAirport: '',
+        filterSelect: '',
         filterDate: '',
     });
 
@@ -49,7 +49,7 @@ function Estafeta({ children, ...props }) {
 
     const filteredRequests = requests.filter(request => {
         return (
-            (filterData.filterAirport === '' || request.aviacompany.includes(filterData.filterAirport)) &&
+            (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
             (filterData.filterDate === '' || request.date === filterData.filterDate) &&
             (
                 request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||

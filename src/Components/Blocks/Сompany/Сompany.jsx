@@ -3,9 +3,9 @@ import classes from './Сompany.module.css';
 import Filter from "../Filter/Filter";
 import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
 
-import { requestsReserve } from "../../../requests";
+import { requestsCompany } from "../../../requests";
 import Header from "../Header/Header";
-import InfoTableData from "../InfoTableData/InfoTableData";
+import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
 import ExistRequest from "../ExistRequest/ExistRequest";
 
 function Сompany({ children, ...props }) {
@@ -13,6 +13,12 @@ function Сompany({ children, ...props }) {
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const [chooseObject, setChooseObject] = useState([]);
+    
+    const [companyData, setCompanyData] = useState(requestsCompany);
+
+    const addDispatcher = (newDispatcher) => {
+        setCompanyData([...companyData, newDispatcher]);
+    };
 
     const toggleCreateSidebar = () => {
         setShowCreateSidebar(!showCreateSidebar);
@@ -21,14 +27,8 @@ function Сompany({ children, ...props }) {
     const toggleRequestSidebar = () => {
         setShowRequestSidebar(!showRequestSidebar);
     };
-
-    const toggleChooseHotel = () => {
-        setShowChooseHotel(!showChooseHotel);
-    };
-
     const [filterData, setFilterData] = useState({
-        filterAirport: '',
-        filterDate: '',
+        filterSelect: '',
     });
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -41,23 +41,17 @@ function Сompany({ children, ...props }) {
         }));
     }
 
+
     const handleSearch = (e) => {
         setSearchQuery(e.target.value);
     }
 
-    const filteredRequests = requestsReserve.filter(request => {
+    const filteredRequests = companyData.filter(request => {
         return (
-            (filterData.filterAirport === '' || request.aviacompany.includes(filterData.filterAirport)) &&
-            (filterData.filterDate === '' || request.date === filterData.filterDate) &&
+            (filterData.filterSelect === '' || request.post.includes(filterData.filterSelect)) &&
             (
-                request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.aviacompany.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airport.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.passengers.length == searchQuery
+                request.fio.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.post.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
     });
@@ -89,9 +83,9 @@ function Сompany({ children, ...props }) {
                     />
                 </div>
 
-                <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} />
+                <InfoTableDataCompany toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} />
 
-                <CreateRequestCompany show={showCreateSidebar} onClose={toggleCreateSidebar} />
+                <CreateRequestCompany show={showCreateSidebar} onClose={toggleCreateSidebar} addDispatcher={addDispatcher} />
                 <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} />
             </div>
         </>

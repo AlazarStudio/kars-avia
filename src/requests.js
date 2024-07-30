@@ -51,6 +51,7 @@ export const requests = [
         statusCode: 'done',
     },
 ]
+
 export const requestsReserve = [
     {
         id: '01',
@@ -124,5 +125,22 @@ export const requestsReserve = [
         status: 'Готово',
         statusCode: 'done',
         passengers: []
+    },
+]
+
+export const requestsCompany = [
+    {
+        avatar: 'avatar.png',
+        fio: 'Уртенов Азамат Заурович',
+        post: 'Администратор',
+        login: 'login',
+        password: 'password'
+    },
+    {
+        avatar: 'avatar.png',
+        fio: 'Джатдоев Алим Сеит-Алиевич',
+        post: 'Модератор',
+        login: 'login',
+        password: 'password'
     },
 ]

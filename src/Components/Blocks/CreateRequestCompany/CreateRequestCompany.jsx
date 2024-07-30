@@ -3,13 +3,11 @@ import classes from './CreateRequestCompany.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function CreateRequestCompany({ show, onClose }) {
+function CreateRequestCompany({ show, onClose, addDispatcher }) {
     const [formData, setFormData] = useState({
         avatar: '',
-        surname: '',
-        name: '',
-        patronymic: '',
-        post: '',
+        fio: '',
+        post: 'Модератор',
         login: '',
         password: ''
     });
@@ -19,10 +17,8 @@ function CreateRequestCompany({ show, onClose }) {
     const resetForm = () => {
         setFormData({
             avatar: '',
-            surname: '',
-            name: '',
-            patronymic: '',
-            post: '',
+            fio: '',
+            post: 'Модератор',
             login: '',
             password: ''
         });
@@ -34,39 +30,35 @@ function CreateRequestCompany({ show, onClose }) {
             resetForm();
             onClose();
         }
-    }
+    };
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        if (type === 'checkbox') {
-            setFormData(prevState => ({
-                ...prevState,
-                meals: {
-                    ...prevState.meals,
-                    [name]: checked
-                }
-            }));
-        } else if (name === 'included') {
-            setFormData(prevState => ({
-                ...prevState,
-                meals: {
-                    ...prevState.meals,
-                    included: value
-                }
-            }));
-        } else {
-            setFormData(prevState => ({
-                ...prevState,
-                [name]: value
-            }));
-        }
+        const { name, value } = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value
+        }));
+    };
 
-        if (formData.meals.included == 'Не включено') {
-            formData.meals.breakfast = false;
-            formData.meals.lunch = false;
-            formData.meals.dinner = false;
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setFormData(prevState => ({
+                ...prevState,
+                avatar: file.name
+            }));
         }
-    }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        addDispatcher({
+            ...formData,
+            id: Date.now().toString()  // Generate a unique id for the new dispatcher
+        });
+        resetForm();
+        onClose();
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -86,6 +78,8 @@ function CreateRequestCompany({ show, onClose }) {
         };
     }, [show, onClose]);
 
+    console.log(formData)
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -95,36 +89,30 @@ function CreateRequestCompany({ show, onClose }) {
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
-                    <label>Фамилия</label>
-                    <input type="text" name="arrivalRoute" placeholder="Фамилия" value={formData.arrivalRoute} onChange={handleChange} />
-
-                    <label>Имя</label>
-                    <input type="text" name="arrivalRoute" placeholder="Имя" value={formData.arrivalRoute} onChange={handleChange} />
-
-                    <label>Отчество</label>
-                    <input type="text" name="arrivalRoute" placeholder="Отчество" value={formData.arrivalRoute} onChange={handleChange} />
+                    <label>ФИО</label>
+                    <input type="text" name="fio" placeholder="Иванов Иван Иванович" value={formData.arrivalRoute} onChange={handleChange} />
 
                     <label>Должность</label>
-                    <select name="airport" value={formData.airport} onChange={handleChange}>
+                    <select name="post" value={formData.airport} onChange={handleChange}>
                         <option value="" disabled>Выберите должность</option>
                         <option value="Модератор">Модератор</option>
                         <option value="Администратор">Администратор</option>
                     </select>
 
                     <label>Логин</label>
-                    <input type="text" name="arrivalRoute" placeholder="Логин" value={formData.arrivalRoute} onChange={handleChange} />
-                    
+                    <input type="text" name="login" placeholder="Логин" value={formData.arrivalRoute} onChange={handleChange} />
+
                     <label>Пароль</label>
-                    <input type="text" name="arrivalRoute" placeholder="Пароль" value={formData.arrivalRoute} onChange={handleChange} />
-                    
+                    <input type="text" name="password" placeholder="Пароль" value={formData.arrivalRoute} onChange={handleChange} />
+
                     <label>Аватар</label>
-                    <input type="file" name="arrivalRoute" placeholder="Пароль" value={formData.arrivalRoute} onChange={handleChange} />
+                    <input type="file" name="avatar" placeholder="Пароль" value={formData.arrivalRoute} onChange={handleFileChange} />
                 </div>
 
             </div>
 
             <div className={classes.requestButon}>
-                <Button>Добавить</Button>
+                <Button type="submit" onClick={handleSubmit}>Добавить</Button>
             </div>
         </Sidebar>
     );

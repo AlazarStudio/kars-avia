@@ -9,8 +9,8 @@ function Filter({ children, toggleSidebar, handleChange, filterData, buttonTitle
             {filterList &&
                 <>
                     <div className={classes.filter_title}>Фильтр:</div>
-                    <select className={classes.filter_select} name="filterAirport" value={filterData.filterAirport} onChange={handleChange}>
-                        <option value="" disabled>Выберите</option>
+                    <select className={classes.filter_select} name="filterSelect" value={filterData.filterAirport} onChange={handleChange}>
+                        <option value="">Показать все</option>
                         {filterList.map((item, index) => <option key={index} value={item}>{item}</option>)}
                     </select>
                 </>
