@@ -144,3 +144,13 @@ export const requestsCompany = [
         password: 'password'
     },
 ]
+
+export const requestsHotels = [
+    {
+        hotelImage: 'hotelImage.png',
+        hotelName: 'Гостиница “Славянка”',
+        hotelCity: 'Москва',
+        hotelAdress: 'ул. Лесная  147',
+        hotelKvota: '24',
+    },
+]

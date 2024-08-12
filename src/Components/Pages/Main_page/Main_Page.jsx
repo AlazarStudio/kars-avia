@@ -5,6 +5,7 @@ import Estafeta from "../../Blocks/Estafeta/Estafeta";
 import { useParams } from "react-router-dom";
 import Reserve from "../../Blocks/Reserve/Reserve";
 import Сompany from "../../Blocks/Сompany/Сompany";
+import HotelsList from "../../Blocks/HotelsList/HotelsList";
 
 function Main_Page({ children, ...props }) {
     let { id } = useParams();
@@ -16,6 +17,7 @@ function Main_Page({ children, ...props }) {
             {(id == 'relay' || !id) && <Estafeta />}
             {(id == 'reserve') && <Reserve />}
             {(id == 'company') && <Сompany />}
+            {(id == 'hotels') && <HotelsList />}
         </div>
     );
 }
