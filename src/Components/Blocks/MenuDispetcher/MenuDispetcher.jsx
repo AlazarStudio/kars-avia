@@ -2,7 +2,7 @@ import React from "react";
 import classes from './MenuDispetcher.module.css';
 import { Link } from "react-router-dom";
 
-function MenuDispetcher({ children, id, ...props }) {
+function MenuDispetcher({ children, id, hotelID, ...props }) {
     return (
         <>
             <div className={classes.menu}>

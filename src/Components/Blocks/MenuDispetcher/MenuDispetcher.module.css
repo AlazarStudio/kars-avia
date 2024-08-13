@@ -20,7 +20,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    font-family: Open Sans;
+    font-family: "Open Sans", sans-serif;
     font-size: 16px;
     font-weight: 600;
     line-height: 21.79px;

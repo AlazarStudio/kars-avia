@@ -1,0 +1,348 @@
+.tableData {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+}
+
+.tableContainer {
+    overflow-x: auto;
+    overflow-y: auto;
+    position: relative;
+    width: 100%;
+    max-height: 755px;
+    height: fit-content;
+}
+
+.currentDay {
+    background-color: #F5F6F8 !important;
+}
+
+
+.topDayBlock {
+    width: 100%;
+    height: 45px;
+    border-left: 1px solid #E4E4EF;
+    border-top: 1px solid #E4E4EF;
+    /* border-bottom: 1px solid #E4E4EF; */
+    font-family: Nunito Sans;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 10px;
+}
+
+.hotelTable th:nth-child(2) .topDayBlock{
+    border-left: none;
+}
+
+.hotelTable th:last-child .topDayBlock {
+    border-right: 1px solid #E4E4EF;
+}
+
+.hotelTable {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.hotelTable tbody th,
+.hotelTable tbody tr>td {
+    border: 1px solid #E4E4EF;
+    border-left: none;
+    background-color: #fff;
+    /* padding: 10px; */
+    width: 45px;
+    height: 45px;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    line-height: 20px;
+}
+
+.hotelTable tbody tr>td:nth-child(1){
+    border: none;
+    border-bottom: 1px solid #E4E4EF;
+}
+
+.hotelTable tbody tr>td td {
+    border-right: 1px solid #E4E4EF;
+    width: 45px;
+    height: 45px;
+}
+
+.bookingCell {
+    position: relative;
+    padding: 0 !important;
+}
+
+.booking {
+    background-color: #9FD923;
+    color: #000;
+    text-align: center;
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 14.52px;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    height: 70%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.9;
+    cursor: pointer;
+}
+
+.booking:hover {
+    opacity: 1;
+}
+
+.booking_light {
+    background-color: #9FD923;
+    color: #000;
+    text-align: center;
+    font-family: Inter;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 14.52px;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    height: 70%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.4;
+    cursor: pointer;
+}
+
+.booking_light:hover {
+    opacity: 1;
+}
+
+.controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 180px;
+    height: 45px;
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    gap: 20px;
+    border: 1px solid #E4E4EF;
+    padding: 0 10px;
+}
+
+.controls>div {
+    display: flex;
+    align-items: center;
+}
+
+.controls img {
+    cursor: pointer;
+}
+
+.highlightedDay {
+    background-color: #F5F6F8 !important;
+    /* Цвет выделения для наведения */
+}
+
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    width: 400px;
+    height: fit-content;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.formContainer input,
+.formContainer button,
+.formContainer a {
+    padding: 10px;
+    font-size: 14px;
+}
+
+.formContainer button,
+.formContainer a {
+    background-color: #0057C3;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    opacity: 0.8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.formContainer button:hover,
+.formContainer a:hover {
+    opacity: 1;
+}
+
+.formContainer .anotherHotel {
+    background-color: #fff;
+    color: #545873;
+    cursor: pointer;
+    border-radius: 5px;
+    opacity: 1;
+    border: 1px solid #545873;
+}
+
+.booking_conflict {
+    background-color: red;
+}
+
+.conflictBlock {
+    border: 2px solid red;
+    border-radius: 5px;
+    color: red;
+    padding: 10px;
+    text-align: center;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+}
+
+.successBron {
+    font-family: Montserrat;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.formContainer_title {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: left;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #E4E4EF;
+}
+
+.formContainer_title_success {
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.formContainer_items {
+    display: flex;
+    flex-direction: column;
+}
+
+.formContainer_items_item {
+    display: flex;
+    flex-direction: column;
+    padding-top: 10px;
+    gap: 10px;
+}
+
+.formContainer_items_item_data {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.formContainer_items_item_data_name {
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 400;
+    width: 50%;
+}
+
+.formContainer_items_item_data_info {
+    font-family: Nunito Sans;
+    font-size: 10px;
+    font-weight: 400;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #0057C3;
+    width: 50%;
+}
+
+.formContainer_items_item_data_info span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.formContainer_items_item_data_client {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 600;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.formContainer_items_item_data_client input {
+    width: 100%;
+    height: 30px;
+    padding: 0 5px;
+    font-size: 12px;
+}
+
+.formContainer_items_item_data_info input,
+.formContainer_items_item_data_info select {
+    width: 100%;
+    height: 30px;
+    font-size: 12px;
+    padding: 0 5px;
+}
+
+.formContainer_items_item_data_buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.formContainer_items_item_data_buttons button {
+    width: 100%;
+    height: 30px;
+    font-size: 12px;
+    padding: 0;
+    font-weight: 600;
+}
+
+.stickyColumn {
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 1;
+}
+
+.roomTypeBlock {
+    background-color: white;
+    width: 100%;
+    height: 100%;
+    border-right: 1px solid #E4E4EF;
+    border-left: 1px solid #E4E4EF;
+    padding: 10px;
+}
+
+.stickyHeader {
+    position: sticky;
+    top: 0;
+    background-color: white;
+    z-index: 2;
+}
+
+.loader{
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}
