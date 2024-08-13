@@ -6,7 +6,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     return (
         <>
             <div className={classes.menu}>
-                <Link to={'/'} className={classes.menu_logo}><img src="/kars-avia-mainLogo.png" alt="" /></Link>
+                <Link to={'/relay'} className={classes.menu_logo}><img src="/kars-avia-mainLogo.png" alt="" /></Link>
                 <div className={classes.menu_items}>
                     <Link to={'/relay'} className={`${classes.menu_items__elem} ${(id == 'relay' || id == undefined) && classes.menu_items__activeElem}`}>
                         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">

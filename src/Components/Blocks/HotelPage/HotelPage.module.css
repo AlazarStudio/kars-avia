@@ -78,6 +78,7 @@
     color: #545873;
     opacity: 0.5;
     transition: all 0.3s ease-in-out;
+    outline: none;
 }
 
 .tab:hover {
