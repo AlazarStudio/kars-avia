@@ -92,3 +92,9 @@ input[type="file"] {
     border-radius: 50%;
     background-color: #97C7FF;
 }
+
+.react-tabs__tab--selected {
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 1;
+}
