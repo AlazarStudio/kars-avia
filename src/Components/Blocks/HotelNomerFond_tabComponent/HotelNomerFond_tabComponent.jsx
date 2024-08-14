@@ -8,6 +8,7 @@ import InfoTableDataNomerFond from "../InfoTableDataNomerFond/InfoTableDataNomer
 import CreateRequestNomerFond from "../CreateRequestNomerFond/CreateRequestNomerFond";
 import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequestCategoryNomer";
 import EditRequestCategory from "../EditRequestCategory/EditRequestCategory";
+import EditRequestNomerFond from "../EditRequestNomerFond/EditRequestNomerFond";
 
 function HotelNomerFond_tabComponent({ children, ...props }) {
     const [addTarif, setAddTarif] = useState([]);
@@ -19,6 +20,9 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
     const [selectQuery, setSelectQuery] = useState('');
     const [showEditCategory, setShowEditCategory] = useState(false); // Новый стейт для редактирования категории
     const [selectedCategory, setSelectedCategory] = useState(null); // Стейт для хранения выбранной категории
+
+    const [showEditNomer, setShowEditNomer] = useState(false);
+    const [selectedNomer, setSelectedNomer] = useState({});
 
     useEffect(() => {
         const sortedTarifs = requestsNomerFond.map(tarif => ({
@@ -82,6 +86,32 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
         setShowEditCategory(true);
     };
 
+    const toggleEditNomer = (nomer, category) => {
+        setSelectedNomer({ nomer, category });
+        setShowEditNomer(true);
+    }
+
+    const handleEditNomer = (updatedNomer, oldNomer, newCategory) => {
+        const updatedTarifs = addTarif.map(tarif => {
+            if (tarif.type === selectedNomer.category) {
+                const updatedNumbers = tarif.numbers.filter(n => n !== oldNomer);
+                return { ...tarif, numbers: updatedNumbers };
+            }
+            if (tarif.type === newCategory) {
+                const updatedNumbers = [...tarif.numbers, updatedNomer].sort((a, b) => {
+                    const numA = parseInt(a.replace(/^\D+/g, ''));
+                    const numB = parseInt(b.replace(/^\D+/g, ''));
+                    return numA - numB;
+                });
+                return { ...tarif, numbers: updatedNumbers };
+            }
+            return tarif;
+        });
+        setAddTarif(updatedTarifs);
+        setShowEditNomer(false);
+        setSelectedNomer({});
+    }
+
     const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
 
     const filteredRequestsTarif = addTarif.filter(request => {
@@ -122,6 +152,7 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
 
             <InfoTableDataNomerFond
                 toggleRequestSidebar={toggleEditCategory}
+                toggleRequestEditNumber={toggleEditNomer}
                 requests={filteredRequestsTarif}
                 openDeleteComponent={openDeleteComponent}
             />
@@ -129,6 +160,14 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
             <CreateRequestNomerFond show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
             <CreateRequestCategoryNomer show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
 
+            <EditRequestNomerFond
+                show={showEditNomer}
+                onClose={() => setShowEditNomer(false)}
+                nomer={selectedNomer.nomer}
+                category={selectedNomer.category}
+                onSubmit={handleEditNomer}
+                uniqueCategories={uniqueCategories}
+            />
             <EditRequestCategory show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
 
             {showDelete && (

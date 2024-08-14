@@ -2,7 +2,7 @@ import React from "react";
 import classes from './InfoTableDataNomerFond.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, openDeleteComponent, ...props }) {
+function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, ...props }) {
 
     return (
         <InfoTable>
@@ -24,11 +24,11 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
                         </div>
                         <div className={classes.InfoTable_BottomInfo}>
                             <div className={`${classes.InfoTable_BottomInfo__item}`}>
-                                {item.numbers.map((item, index) => (
-                                    <div className={`${classes.InfoTable_BottomInfo__item___elem}`}>
-                                        {item}
+                                {item.numbers.map((elem, index) => (
+                                    <div className={`${classes.InfoTable_BottomInfo__item___elem}`} key={index}>
+                                        {elem}
                                         <div className={classes.infoTable_buttons}>
-                                            <img src="/editPassenger.png" alt="" />
+                                            <img src="/editPassenger.png" alt="" onClick={() => toggleRequestEditNumber(elem, item.type)}/>
                                             <img src="/deletePassenger.png" alt="" />
                                         </div>
                                     </div>
