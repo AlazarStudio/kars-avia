@@ -190,3 +190,20 @@ export const requestsNomerFond = [
         numbers: ['№ 350', '№ 351']
     },
 ]
+
+export const requestsCompanyHotel = [
+    {
+        avatar: 'avatar.png',
+        fio: 'Иванов Иван',
+        post: 'Администратор',
+        login: 'login',
+        password: 'password'
+    },
+    {
+        avatar: 'avatar1.png',
+        fio: 'Коротковский Евгений',
+        post: 'Модератор',
+        login: 'login',
+        password: 'password'
+    },
+]
