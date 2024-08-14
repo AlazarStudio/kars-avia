@@ -329,8 +329,6 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
     };
 
     const currentBooking = state.newBookings[state.currentBookingIndex];
-
-    console.log(state.newBookings)
     
     return (
         <div className={classes.tableData}>

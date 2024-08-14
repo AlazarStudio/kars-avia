@@ -16,7 +16,7 @@ function Main_Page({ children, ...props }) {
         <div className={classes.main}>
             <MenuDispetcher id={id ? id : pageClicked} />
 
-            {(id == 'relay') && <Estafeta />}
+            {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta />}
             {(id == 'reserve') && <Reserve />}
             {(id == 'company') && <Сompany />}
             {(id == 'hotels') && <HotelsList />}

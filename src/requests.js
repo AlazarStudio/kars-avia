@@ -154,3 +154,24 @@ export const requestsHotels = [
         hotelKvota: '24',
     },
 ]
+
+export const requestsTarifs = [
+    {
+        tarifName: "ЭКОНОМ",
+        tarif_сategory_one_place: "3000",
+        tarif_сategory_two_place: "4000",
+        tarif_сategory_three_place: "5000",
+        tarif_airline_one_place: "3000",
+        tarif_airline_two_place: "4000",
+        tarif_airline_three_place: "5000"
+    },
+    {
+        tarifName: "ЛЮКС",
+        tarif_сategory_one_place: "6000",
+        tarif_сategory_two_place: "7000",
+        tarif_сategory_three_place: "8000",
+        tarif_airline_one_place: "3000",
+        tarif_airline_two_place: "4000",
+        tarif_airline_three_place: "5000"
+    }
+]
