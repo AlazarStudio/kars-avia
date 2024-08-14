@@ -1,0 +1,118 @@
+.requestTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 40px;
+    border-bottom: 1px solid #54587380;
+}
+
+.requestButon {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 40px;
+    border-top: 1px solid #54587380;
+}
+
+.requestTitle_name {
+    font-family: Inter;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 38.73px;
+    color: var(--main-gray);
+}
+
+.requestTitle_close {
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+}
+
+.requestTitle_close img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.tabs {
+    display: flex;
+    gap: 35px;
+    padding: 20px 40px;
+}
+
+.tab {
+    cursor: pointer;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    border-bottom: 5px solid transparent
+}
+
+.activeTab {
+    border-bottom: 5px solid #54587380;
+}
+
+.requestData {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 40px;
+    gap: 15px;
+}
+
+.requestData label {
+    display: flex;
+    gap: 15px;
+}
+
+.requestData input,
+select {
+    height: 38px;
+    outline: none;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+.requestMiddle {
+    height: calc(100% - 90px - 87px);
+    overflow: hidden;
+    overflow-y: scroll;
+}
+
+.reis_info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.reis_info input {
+    width: 50%;
+}
+
+.checks {
+    display: flex;
+    justify-content: space-between;
+}
+
+.checks label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+}
+
+.requestButon {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.titleLabel {
+    display: flex;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 19.36px;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}

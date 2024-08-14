@@ -7,10 +7,12 @@ import Filter from "../Filter/Filter";
 import { requestsNomerFond } from "../../../requests";
 import InfoTableDataNomerFond from "../InfoTableDataNomerFond/InfoTableDataNomerFond";
 import CreateRequestNomerFond from "../CreateRequestNomerFond/CreateRequestNomerFond";
+import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequestCategoryNomer";
 
 function HotelNomerFond_tabComponent({ children, ...props }) {
     const [addTarif, setAddTarif] = useState([]);
     const [showAddTarif, setShowAddTarif] = useState(false);
+    const [showAddCategory, setshowAddCategory] = useState(false);
     const [showEditAddTarif, setEditShowAddTarif] = useState(false);
     const [selectedTarif, setSelectedTarif] = useState(null);
     const [showDelete, setShowDelete] = useState(false);
@@ -26,7 +28,7 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
                 const numB = parseInt(b.replace(/^\D+/g, ''));
                 return numA - numB;
             })
-        }));
+        })).sort((a, b) => parseInt(a.type) - parseInt(b.type));
 
         setAddTarif(sortedTarifs);
     }, []);
@@ -43,6 +45,10 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
 
     const toggleTarifs = () => {
         setShowAddTarif(!showAddTarif)
+    }
+
+    const toggleCategory = () => {
+        setshowAddCategory(!showAddCategory)
     }
 
     const toggleEditTarifs = (tarif) => {
@@ -76,7 +82,7 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
         setEditShowAddTarif(true);
     };
 
-    const uniqueCategories = Array.from(new Set(requestsNomerFond.map(request => request.type)));
+    const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
 
     const filteredRequestsTarif = addTarif.filter(request => {
         const matchesCategory = selectQuery === '' || request.type === selectQuery;
@@ -98,9 +104,7 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
                     <select onChange={handleSelect}>
                         <option value="">Показать все</option>
                         {uniqueCategories.map(category => (
-                            <option key={category} value={category}>
-                                {category === '1' ? 'Одноместный' : category === '2' ? 'Двухместный' : 'Трехместный'}
-                            </option>
+                            <option key={category} value={category}>{category} - местный</option>
                         ))}
                     </select>
                     <Filter
@@ -109,7 +113,7 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
                         buttonTitle={'Добавить номер'}
                     />
                     <Filter
-                        toggleSidebar={''}
+                        toggleSidebar={toggleCategory}
                         handleChange={''}
                         buttonTitle={'Добавить Категорию'}
                     />
@@ -123,6 +127,7 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
             />
 
             <CreateRequestNomerFond show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+            <CreateRequestCategoryNomer show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
             <EditRequestTarif show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} />
 
             {showDelete && (
