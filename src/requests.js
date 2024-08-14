@@ -175,3 +175,18 @@ export const requestsTarifs = [
         tarif_airline_three_place: "5000"
     }
 ]
+
+export const requestsNomerFond = [
+    {
+        type: '1',
+        numbers: ['№ 150', '№ 151']
+    },
+    {
+        type: '2',
+        numbers: ['№ 250', '№ 251']
+    },
+    {
+        type: '3',
+        numbers: ['№ 350', '№ 351']
+    },
+]
