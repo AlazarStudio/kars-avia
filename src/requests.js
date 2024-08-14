@@ -148,10 +148,19 @@ export const requestsCompany = [
 export const requestsHotels = [
     {
         hotelImage: 'hotelImage.png',
+        hotelCountry: 'Россия',
         hotelName: 'Гостиница “Славянка”',
         hotelCity: 'Москва',
         hotelAdress: 'ул. Лесная  147',
         hotelKvota: '24',
+        hotelIndex: '119180',
+        hotelEmail: 'example@gmail.com',
+        hotelPhone: '0 000 000 00 00',
+        hotelInn: '772470642050',
+        hotelOgrn: '315774600021240',
+        hotelRs: '40802810600000031447',
+        hotelBank: 'филиал №7701 банка ВТБ 24 (ПАО) г. Москва',
+        hotelBik: '30102810345250000745'
     },
 ]
 

@@ -66,7 +66,7 @@ function HotelPage({ children, id, ...props }) {
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <HotelAbout_tabComponent />
+                        <HotelAbout_tabComponent hotelName={id}/>
                     </TabPanel>
                 </Tabs>
             </div>
