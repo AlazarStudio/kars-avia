@@ -14,8 +14,12 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
     const [addTarif, setAddTarif] = useState([]);
     const [showAddTarif, setShowAddTarif] = useState(false);
     const [showAddCategory, setshowAddCategory] = useState(false);
+
     const [showDelete, setShowDelete] = useState(false);
+
     const [deleteIndex, setDeleteIndex] = useState(null);
+    const [deleteNomer, setDeleteNomer] = useState(null);
+
     const [searchTarif, setSearchTarif] = useState('');
     const [selectQuery, setSelectQuery] = useState('');
     const [showEditCategory, setShowEditCategory] = useState(false); // Новый стейт для редактирования категории
@@ -75,6 +79,23 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
         setShowEditCategory(false);
     };
 
+    const openDeleteNomerComponent = (nomer, category) => {
+        setDeleteNomer({ nomer, category });
+        setShowDelete(true);
+    };
+
+    const deleteNomerFromCategory = () => {
+        setAddTarif(prevTarifs => prevTarifs.map(tarif => {
+            if (tarif.type === deleteNomer.category) {
+                const updatedNumbers = tarif.numbers.filter(num => num !== deleteNomer.nomer);
+                return { ...tarif, numbers: updatedNumbers };
+            }
+            return tarif;
+        }));
+        setShowDelete(false);
+        setDeleteNomer(null);
+    };
+
     const openDeleteComponent = (index) => {
         setShowDelete(true);
         setDeleteIndex(index);
@@ -95,8 +116,20 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
         const updatedTarifs = addTarif.map(tarif => {
             if (tarif.type === selectedNomer.category) {
                 const updatedNumbers = tarif.numbers.filter(n => n !== oldNomer);
+    
+                if (newCategory === selectedNomer.category) {
+                    updatedNumbers.push(updatedNomer);
+                    updatedNumbers.sort((a, b) => {
+                        const numA = parseInt(a.replace(/^\D+/g, ''));
+                        const numB = parseInt(b.replace(/^\D+/g, ''));
+                        return numA - numB;
+                    });
+                    return { ...tarif, numbers: updatedNumbers };
+                }
+    
                 return { ...tarif, numbers: updatedNumbers };
             }
+    
             if (tarif.type === newCategory) {
                 const updatedNumbers = [...tarif.numbers, updatedNomer].sort((a, b) => {
                     const numA = parseInt(a.replace(/^\D+/g, ''));
@@ -105,12 +138,15 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
                 });
                 return { ...tarif, numbers: updatedNumbers };
             }
+    
             return tarif;
         });
+    
         setAddTarif(updatedTarifs);
         setShowEditNomer(false);
         setSelectedNomer({});
-    }
+    };
+    
 
     const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
 
@@ -155,6 +191,7 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
                 toggleRequestEditNumber={toggleEditNomer}
                 requests={filteredRequestsTarif}
                 openDeleteComponent={openDeleteComponent}
+                openDeleteNomerComponent={openDeleteNomerComponent}
             />
 
             <CreateRequestNomerFond show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
@@ -173,9 +210,9 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
             {showDelete && (
                 <DeleteComponent
                     ref={deleteComponentRef}
-                    remove={() => deleteTarif(deleteIndex)}
+                    remove={deleteNomer ? deleteNomerFromCategory : () => deleteTarif(deleteIndex)}
                     close={closeDeleteComponent}
-                    title={`Вы действительно хотите удалить категорию?`}
+                    title={`Вы действительно хотите удалить ${deleteNomer ? 'номер' : 'категорию'}?`}
                 />
             )}
         </>
