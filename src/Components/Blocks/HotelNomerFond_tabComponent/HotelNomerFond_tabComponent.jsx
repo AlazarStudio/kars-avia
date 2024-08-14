@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import classes from './HotelNomerFond_tabComponent.module.css';
-import EditRequestTarif from "../EditRequestTarif/EditRequestTarif";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import Filter from "../Filter/Filter";
 
@@ -8,17 +7,18 @@ import { requestsNomerFond } from "../../../requests";
 import InfoTableDataNomerFond from "../InfoTableDataNomerFond/InfoTableDataNomerFond";
 import CreateRequestNomerFond from "../CreateRequestNomerFond/CreateRequestNomerFond";
 import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequestCategoryNomer";
+import EditRequestCategory from "../EditRequestCategory/EditRequestCategory";
 
 function HotelNomerFond_tabComponent({ children, ...props }) {
     const [addTarif, setAddTarif] = useState([]);
     const [showAddTarif, setShowAddTarif] = useState(false);
     const [showAddCategory, setshowAddCategory] = useState(false);
-    const [showEditAddTarif, setEditShowAddTarif] = useState(false);
-    const [selectedTarif, setSelectedTarif] = useState(null);
     const [showDelete, setShowDelete] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
     const [searchTarif, setSearchTarif] = useState('');
     const [selectQuery, setSelectQuery] = useState('');
+    const [showEditCategory, setShowEditCategory] = useState(false); // Новый стейт для редактирования категории
+    const [selectedCategory, setSelectedCategory] = useState(null); // Стейт для хранения выбранной категории
 
     useEffect(() => {
         const sortedTarifs = requestsNomerFond.map(tarif => ({
@@ -51,35 +51,35 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
         setshowAddCategory(!showAddCategory)
     }
 
-    const toggleEditTarifs = (tarif) => {
-        setSelectedTarif(tarif);
-        setEditShowAddTarif(true);
+    const toggleEditCategory = (category) => {
+        setSelectedCategory(category);
+        setShowEditCategory(true);
     }
 
-    const handleEditTarif = (updatedTarif) => {
+    const handleEditCategory = (updatedCategory) => {
         const updatedTarifs = addTarif.map(tarif =>
-            tarif === selectedTarif ? updatedTarif : tarif
-        );
+            tarif.type === selectedCategory.type ? { ...tarif, type: updatedCategory.type } : tarif
+        ).sort((a, b) => parseInt(a.type) - parseInt(b.type));
         setAddTarif(updatedTarifs);
-        setEditShowAddTarif(false);
-        setSelectedTarif(null);
+        setShowEditCategory(false);
+        setSelectedCategory(null);
     }
 
     const deleteTarif = (index) => {
         setAddTarif(addTarif.filter((_, i) => i !== index));
         setShowDelete(false);
-        setEditShowAddTarif(false);
+        setShowEditCategory(false);
     };
 
     const openDeleteComponent = (index) => {
         setShowDelete(true);
         setDeleteIndex(index);
-        setEditShowAddTarif(false);
+        setShowEditCategory(false);
     };
 
     const closeDeleteComponent = () => {
         setShowDelete(false);
-        setEditShowAddTarif(true);
+        setShowEditCategory(true);
     };
 
     const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
@@ -121,21 +121,22 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
             </div>
 
             <InfoTableDataNomerFond
-                toggleRequestSidebar={toggleEditTarifs}
+                toggleRequestSidebar={toggleEditCategory}
                 requests={filteredRequestsTarif}
                 openDeleteComponent={openDeleteComponent}
             />
 
             <CreateRequestNomerFond show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
             <CreateRequestCategoryNomer show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
-            <EditRequestTarif show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} />
+
+            <EditRequestCategory show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
 
             {showDelete && (
                 <DeleteComponent
                     ref={deleteComponentRef}
                     remove={() => deleteTarif(deleteIndex)}
                     close={closeDeleteComponent}
-                    title={`Вы действительно хотите удалить тариф?`}
+                    title={`Вы действительно хотите удалить категорию?`}
                 />
             )}
         </>
