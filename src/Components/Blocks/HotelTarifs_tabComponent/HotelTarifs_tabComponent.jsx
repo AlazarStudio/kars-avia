@@ -9,7 +9,6 @@ import Filter from "../Filter/Filter";
 import { requestsTarifs } from "../../../requests";
 
 function HotelTarifs_tabComponent({ children, ...props }) {
-
     const [addTarif, setAddTarif] = useState(requestsTarifs);
     const [showAddTarif, setShowAddTarif] = useState(false);
     const [showEditAddTarif, setEditShowAddTarif] = useState(false);
