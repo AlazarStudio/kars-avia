@@ -1,11 +1,11 @@
 import React, { useState, useRef } from "react";
 import classes from './HotelCompany_tabComponent.module.css';
 import Filter from "../Filter/Filter";
-import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
 import { requestsCompanyHotel } from "../../../requests";
 import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
-import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
+import CreateRequestCompanyHotel from "../CreateRequestCompanyHotel/CreateRequestCompanyHotel";
+import ExistRequestCompanyHotel from "../ExistRequestCompanyHotel/ExistRequestCompanyHotel";
 
 function HotelCompany_tabComponent({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -45,12 +45,12 @@ function HotelCompany_tabComponent({ children, ...props }) {
     const openDeleteComponent = (index) => {
         setShowDelete(true);
         setDeleteIndex(index);
-        setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
+        setShowRequestSidebar(false);
     };
 
     const closeDeleteComponent = () => {
         setShowDelete(false);
-        setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
+        setShowRequestSidebar(true); 
     };
 
     const [filterData, setFilterData] = useState({
@@ -109,13 +109,13 @@ function HotelCompany_tabComponent({ children, ...props }) {
                 setChooseObject={setChooseObject}
             />
 
-            <CreateRequestCompany
+            <CreateRequestCompanyHotel
                 show={showCreateSidebar}
                 onClose={toggleCreateSidebar}
                 addDispatcher={addDispatcher}
             />
 
-            <ExistRequestCompany
+            <ExistRequestCompanyHotel
                 show={showRequestSidebar}
                 onClose={toggleRequestSidebar}
                 chooseObject={chooseObject}
