@@ -9,6 +9,7 @@ import HotelShahmatka_tabComponent from "../HotelShahmatka_tabComponent/HotelSha
 import AirlineCompany_tabComponent from "../AirlineCompany_tabComponent/AirlineCompany_tabComponent";
 import HotelCompany_tabComponent from "../HotelCompany_tabComponent/HotelCompany_tabComponent";
 import HotelAbout_tabComponent from "../HotelAbout_tabComponent/HotelAbout_tabComponent";
+import AirlineAbout_tabComponent from "../AirlineAbout_tabComponent/AirlineAbout_tabComponent";
 
 function AirlinePage({ children, id, ...props }) {
     const [selectedTab, setSelectedTab] = useState(0);
@@ -56,7 +57,7 @@ function AirlinePage({ children, id, ...props }) {
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <HotelAbout_tabComponent hotelName={id} />
+                        <AirlineAbout_tabComponent airlineName={id} />
                     </TabPanel>
                 </Tabs>
             </div>

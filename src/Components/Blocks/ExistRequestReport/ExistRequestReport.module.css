@@ -1,0 +1,310 @@
+.requestTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 40px;
+    border-bottom: 1px solid #54587380;
+}
+
+.requestButon {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 40px;
+    border-top: 1px solid #54587380;
+}
+
+.requestTitle_name {
+    font-family: Inter;
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 38.73px;
+    color: var(--main-gray);
+}
+
+.requestTitle_close {
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+}
+
+.requestTitle_close img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.tabs {
+    display: flex;
+    gap: 35px;
+    padding: 20px 40px;
+}
+
+.tab {
+    cursor: pointer;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 21.82px;
+    border-bottom: 5px solid transparent
+}
+
+.activeTab {
+    border-bottom: 5px solid #54587380;
+}
+
+.requestData {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 40px;
+    gap: 15px;
+}
+
+.requestData label {
+    display: flex;
+    gap: 15px;
+}
+
+.requestData input,
+.requestData select {
+    width: 60%;
+    height: 38px;
+    outline: none;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+.requestMiddle {
+    height: calc(100% - 90px - 87px);
+    overflow: hidden;
+    overflow-y: scroll;
+}
+
+.reis_info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.reis_info input {
+    width: 50%;
+}
+
+.checks {
+    display: flex;
+    justify-content: space-between;
+}
+
+.checks label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+}
+
+.requestButon {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.requestButon a {
+    width: 50%;
+}
+
+.requestDataTitle {
+    font-family: Nunito Sans;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 24.2px;
+    color: var(--main-gray);
+    padding: 10px 0;
+}
+
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    width: 40%;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+.requestDataInfo input {
+    width: 60%;
+}
+
+.requestData_messages {
+    height: 590px;
+    overflow: hidden;
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.requestData_date {
+    display: flex;
+    justify-content: center;
+}
+
+.requestData_date_info {
+    background-color: #F3F3F3;
+    padding: 5px 15px;
+    border-radius: 5px;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 21.82px;
+    text-align: center;
+}
+
+.requestData_message {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.requestData_message_name {
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    color: #545873;
+}
+
+.requestData_message_post {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 16.37px;
+    color: #0057C3;
+}
+
+.requestData_message_text {
+    background-color: #F6F6FC;
+    padding: 20px;
+    border-radius: 5px;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 19.1px;
+    color: #545873;
+}
+
+.requestData_message_time {
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16.37px;
+    color: #545873;
+}
+
+.requestData_message_full {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.myMes {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 10px;
+}
+
+.myMes .requestData_message_name,
+.myMes .requestData_message_post,
+.myMes .requestData_message_time {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.sendBlock {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sendBlock input {
+    width: 100%;
+}
+
+.historyDate {
+    box-shadow: 0px 4px 16px 0px #00000026;
+    border-radius: 50px;
+    width: 190px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    color: #545873;
+}
+
+.logs {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    align-items: center;
+    height: 600px;
+    overflow: hidden;
+    overflow-y: scroll;
+    padding: 10px 0;
+}
+
+.historyLog {
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: #54587380;
+}
+
+.historyLog span {
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: #545873;
+}
+
+.requestDataInfo_img{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.requestDataInfo_img_imgBlock{
+    width: 80px;
+    height: 80px;
+}
+
+.requestDataInfo_img_imgBlock img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}
