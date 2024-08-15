@@ -4,11 +4,11 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import Filter from "../Filter/Filter";
 
 import { requestsAirlinesCompany } from "../../../requests";
-import CreateRequestNomerFond from "../CreateRequestNomerFond/CreateRequestNomerFond";
-import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequestCategoryNomer";
-import EditRequestCategory from "../EditRequestCategory/EditRequestCategory";
-import EditRequestNomerFond from "../EditRequestNomerFond/EditRequestNomerFond";
+import CreateRequestAirlineCompany from "../CreateRequestAirlineCompany/CreateRequestAirlineCompany";
+import EditRequestAirlineOtdel from "../EditRequestAirlineOtdel/EditRequestAirlineOtdel";
+import EditRequestAirlineCompany from "../EditRequestAirlineCompany/EditRequestAirlineCompany";
 import InfoTableDataAirlineCompany from "../InfoTableDataAirlineCompany/InfoTableDataAirlineCompany";
+import CreateRequestAirlineOtdel from "../CreateRequestAirlineOtdel/CreateRequestAirlineOtdel";
 
 function AirlineCompany_tabComponent({ children, ...props }) {
     const [addTarif, setAddTarif] = useState([]);
@@ -36,7 +36,7 @@ function AirlineCompany_tabComponent({ children, ...props }) {
                 return a.fio.localeCompare(b.fio);
             })
         })).sort((a, b) => a.type.localeCompare(b.type)); // Сортировка по названию отдела (type)
-    
+
         setAddTarif(sortedTarifs);
     }, []);
 
@@ -111,47 +111,62 @@ function AirlineCompany_tabComponent({ children, ...props }) {
         setShowEditNomer(true);
     }
 
-    const handleEditNomer = (updatedNomer, oldNomer, newCategory) => {
+    const handleEditNomer = (updatedNomer) => {
         const updatedTarifs = addTarif.map(tarif => {
+            // Если отдел не изменился, обновляем информацию о сотруднике
+            if (tarif.type === selectedNomer.category && tarif.type === updatedNomer.category) {
+                return {
+                    ...tarif,
+                    numbers: tarif.numbers.map(n => n.login === selectedNomer.nomer.login ? updatedNomer : n)
+                };
+            }
+
+            // Если сотрудник перемещается в новый отдел, удаляем из старого отдела
             if (tarif.type === selectedNomer.category) {
-                const updatedNumbers = tarif.numbers.filter(n => n !== oldNomer);
-    
-                if (newCategory === selectedNomer.category) {
-                    updatedNumbers.push(updatedNomer);
-                    updatedNumbers.sort((a, b) => {
-                        const numA = parseInt(a.replace(/^\D+/g, ''));
-                        const numB = parseInt(b.replace(/^\D+/g, ''));
-                        return numA - numB;
-                    });
-                    return { ...tarif, numbers: updatedNumbers };
-                }
-    
-                return { ...tarif, numbers: updatedNumbers };
+                return {
+                    ...tarif,
+                    numbers: tarif.numbers.filter(n => n.login !== selectedNomer.nomer.login)
+                };
             }
-    
-            if (tarif.type === newCategory) {
-                const updatedNumbers = [...tarif.numbers, updatedNomer].sort((a, b) => {
-                    const numA = parseInt(a.replace(/^\D+/g, ''));
-                    const numB = parseInt(b.replace(/^\D+/g, ''));
-                    return numA - numB;
-                });
-                return { ...tarif, numbers: updatedNumbers };
+
+            // Добавляем сотрудника в новый отдел
+            if (tarif.type === updatedNomer.category) {
+                return {
+                    ...tarif,
+                    numbers: [...tarif.numbers, updatedNomer].sort((a, b) => a.fio.localeCompare(b.fio))
+                };
             }
-    
+
             return tarif;
         });
-    
+
+        // Если новый отдел еще не существует, создаем его и добавляем туда сотрудника
+        if (!updatedTarifs.some(tarif => tarif.type === updatedNomer.category)) {
+            updatedTarifs.push({
+                type: updatedNomer.category,
+                numbers: [updatedNomer]
+            });
+        }
+
         setAddTarif(updatedTarifs);
         setShowEditNomer(false);
         setSelectedNomer({});
     };
-    
+
+
 
     const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
 
     const filteredRequestsTarif = addTarif.filter(request => {
-        const matchesCategory = selectQuery === '' || request.type === selectQuery;
-        const matchesSearch = searchTarif === '' || request.numbers.some(number => number.toLowerCase().includes(searchTarif.toLowerCase()));
+        const matchesCategory = selectQuery === '' || request.type.toLowerCase().includes(selectQuery.toLowerCase());
+    
+        const matchesSearch = searchTarif === '' || 
+            request.type.toLowerCase().includes(searchTarif.toLowerCase()) ||
+            request.numbers.some(number => 
+                number.fio.toLowerCase().includes(searchTarif.toLowerCase()) ||
+                number.post.toLowerCase().includes(searchTarif.toLowerCase())
+            );
+    
         return matchesCategory && matchesSearch;
     });
 
@@ -174,7 +189,7 @@ function AirlineCompany_tabComponent({ children, ...props }) {
                     <Filter
                         toggleSidebar={toggleCategory}
                         handleChange={''}
-                        buttonTitle={'Добавить подразделение'}
+                        buttonTitle={'Добавить отдел'}
                     />
                 </div>
             </div>
@@ -187,10 +202,10 @@ function AirlineCompany_tabComponent({ children, ...props }) {
                 openDeleteNomerComponent={openDeleteNomerComponent}
             />
 
-            <CreateRequestNomerFond show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
-            <CreateRequestCategoryNomer show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+            <CreateRequestAirlineCompany show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+            <CreateRequestAirlineOtdel show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
 
-            <EditRequestNomerFond
+            <EditRequestAirlineCompany
                 show={showEditNomer}
                 onClose={() => setShowEditNomer(false)}
                 nomer={selectedNomer.nomer}
@@ -198,14 +213,14 @@ function AirlineCompany_tabComponent({ children, ...props }) {
                 onSubmit={handleEditNomer}
                 uniqueCategories={uniqueCategories}
             />
-            <EditRequestCategory show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
+            <EditRequestAirlineOtdel show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
 
             {showDelete && (
                 <DeleteComponent
                     ref={deleteComponentRef}
                     remove={deleteNomer ? deleteNomerFromCategory : () => deleteTarif(deleteIndex)}
                     close={closeDeleteComponent}
-                    title={`Вы действительно хотите удалить ${deleteNomer ? 'номер' : 'категорию'}?`}
+                    title={`Вы действительно хотите удалить ${deleteNomer ? 'менеджера' : 'отдел'}?`}
                 />
             )}
         </>

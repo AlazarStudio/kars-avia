@@ -244,14 +244,14 @@ export const requestsAirlinesCompany = [
                 avatar: 'avatar.png',
                 fio: 'Уртенов Азамат Заурович',
                 post: 'Администратор',
-                login: 'login',
+                login: 'login1',
                 password: 'password'
             },
             {
                 avatar: 'avatar.png',
                 fio: 'Иванов Иван Иванович',
                 post: 'Модератор',
-                login: 'login',
+                login: 'login2',
                 password: 'password'
             }
         ]
@@ -263,14 +263,14 @@ export const requestsAirlinesCompany = [
                 avatar: 'avatar.png',
                 fio: 'Иванов Иван Иванович',
                 post: 'Модератор',
-                login: 'login',
+                login: 'login3',
                 password: 'password'
             },
             {
                 avatar: 'avatar.png',
                 fio: 'Уртенов Азамат Заурович',
                 post: 'Администратор',
-                login: 'login',
+                login: 'login4',
                 password: 'password'
             },
         ]
