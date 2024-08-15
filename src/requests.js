@@ -248,7 +248,7 @@ export const requestsAirlinesCompany = [
                 password: 'password'
             },
             {
-                avatar: 'avatar.png',
+                avatar: 'avatar1.png',
                 fio: 'Иванов Иван Иванович',
                 post: 'Модератор',
                 login: 'login2',
@@ -267,7 +267,7 @@ export const requestsAirlinesCompany = [
                 password: 'password'
             },
             {
-                avatar: 'avatar.png',
+                avatar: 'avatar1.png',
                 fio: 'Уртенов Азамат Заурович',
                 post: 'Администратор',
                 login: 'login4',
