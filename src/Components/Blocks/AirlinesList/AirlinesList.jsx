@@ -1,16 +1,16 @@
 import React, { useState, useRef } from "react";
-import classes from './HotelsList.module.css';
+import classes from './AirlinesList.module.css';
 import Filter from "../Filter/Filter";
-import CreateRequestHotel from "../CreateRequestHotel/CreateRequestHotel";
-import { requestsHotels } from "../../../requests";
+import { requestsAirlanes } from "../../../requests";
 import Header from "../Header/Header";
-import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
+import InfoTableDataAirlines from "../InfoTableDataAirlines/InfoTableDataAirlines";
+import CreateRequestAirline from "../CreateRequestAirline/CreateRequestAirline";
 
-function HotelsList({ children, ...props }) {
+function AirlinesList({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     
-    const [companyData, setCompanyData] = useState(requestsHotels);
+    const [companyData, setCompanyData] = useState(requestsAirlanes);
 
     const addHotel = (newHotel) => {
         setCompanyData([...companyData, newHotel]);
@@ -44,12 +44,8 @@ function HotelsList({ children, ...props }) {
 
     const filteredRequests = companyData.filter(request => {
         return (
-            (filterData.filterSelect === '' || request.hotelCity.includes(filterData.filterSelect)) &&
             (
-                request.hotelName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.hotelCity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.hotelAdress.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.hotelKvota.toLowerCase().includes(searchQuery.toLowerCase())
+                request.airlineName.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
     });
@@ -60,7 +56,7 @@ function HotelsList({ children, ...props }) {
         <>
             <div className={classes.section}>
                 <div className={classes.section_top}>
-                    <Header>Гостиницы</Header>
+                    <Header>Авиакомпании</Header>
                 </div>
 
                 <div className={classes.section_searchAndFilter}>
@@ -75,18 +71,17 @@ function HotelsList({ children, ...props }) {
                         toggleSidebar={toggleCreateSidebar}
                         handleChange={handleChange}
                         filterData={filterData}
-                        buttonTitle={'Добавить гостиницу'}
-                        filterList={filterList}
+                        buttonTitle={'Добавить авиакомпанию'}
                         needDate={false}
                     />
                 </div>
 
-                <InfoTableDataHotels 
+                <InfoTableDataAirlines 
                     toggleRequestSidebar={toggleRequestSidebar} 
                     requests={filteredRequests}  
                 />
 
-                <CreateRequestHotel 
+                <CreateRequestAirline 
                     show={showCreateSidebar} 
                     onClose={toggleCreateSidebar} 
                     addHotel={addHotel} 
@@ -96,4 +91,4 @@ function HotelsList({ children, ...props }) {
     );
 }
 
-export default HotelsList;
+export default AirlinesList;

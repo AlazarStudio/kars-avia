@@ -7,6 +7,8 @@ import Reserve from "../../Blocks/Reserve/Reserve";
 import Сompany from "../../Blocks/Сompany/Сompany";
 import HotelsList from "../../Blocks/HotelsList/HotelsList";
 import HotelPage from "../../Blocks/HotelPage/HotelPage";
+import AirlinesList from "../../Blocks/AirlinesList/AirlinesList";
+import AirlinePage from "../../Blocks/AirlinePage/AirlinePage";
 
 function Main_Page({ children, ...props }) {
     let { id, hotelID, airlineID } = useParams();
@@ -20,7 +22,9 @@ function Main_Page({ children, ...props }) {
             {(id == 'reserve') && <Reserve />}
             {(id == 'company') && <Сompany />}
             {(id == 'hotels') && <HotelsList />}
+            {(id == 'airlines') && <AirlinesList />}
             {(!id && hotelID) && <HotelPage id={hotelID}/>}
+            {(!id && airlineID) && <AirlinePage id={airlineID}/>}
         </div>
     );
 }

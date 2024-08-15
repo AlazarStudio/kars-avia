@@ -216,3 +216,63 @@ export const requestsCompanyHotel = [
         password: 'password'
     },
 ]
+
+export const requestsAirlanes = [
+    {
+        airlineImage: 'azimut_preview.png',
+        airlineCountry: 'Россия',
+        airlineName: 'Азимут',
+        airlineCity: 'Москва',
+        airlineAdress: 'ул. Лесная  147',
+        airlineKvota: '24',
+        airlineIndex: '119180',
+        airlineEmail: 'example@gmail.com',
+        airlinePhone: '0 000 000 00 00',
+        airlineInn: '772470642050',
+        airlineOgrn: '315774600021240',
+        airlineRs: '40802810600000031447',
+        airlineBank: 'филиал №7701 банка ВТБ 24 (ПАО) г. Москва',
+        airlineBik: '30102810345250000745'
+    },
+]
+
+export const requestsAirlinesCompany = [
+    {
+        type: 'Отдел планирования',
+        numbers: [
+            {
+                avatar: 'avatar.png',
+                fio: 'Уртенов Азамат Заурович',
+                post: 'Администратор',
+                login: 'login',
+                password: 'password'
+            },
+            {
+                avatar: 'avatar.png',
+                fio: 'Иванов Иван Иванович',
+                post: 'Модератор',
+                login: 'login',
+                password: 'password'
+            }
+        ]
+    },
+    {
+        type: 'Отдел кадров',
+        numbers: [
+            {
+                avatar: 'avatar.png',
+                fio: 'Иванов Иван Иванович',
+                post: 'Модератор',
+                login: 'login',
+                password: 'password'
+            },
+            {
+                avatar: 'avatar.png',
+                fio: 'Уртенов Азамат Заурович',
+                post: 'Администратор',
+                login: 'login',
+                password: 'password'
+            },
+        ]
+    },
+]
