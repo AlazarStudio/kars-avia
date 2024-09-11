@@ -7,10 +7,10 @@ import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 
-import { requests } from "../../../requests";
+// import { requests } from "../../../requests";
 import Header from "../Header/Header";
 
-function Estafeta({ children, ...props }) {
+function Estafeta({ children, requests, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
@@ -47,23 +47,26 @@ function Estafeta({ children, ...props }) {
         setSearchQuery(e.target.value);
     }
 
+    function convertToDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toISOString().split('T')[0]; // возвращает дату в формате YYYY-MM-DD
+    }
+
     const filteredRequests = requests.filter(request => {
         return (
             (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
-            (filterData.filterDate === '' || request.date === filterData.filterDate) &&
+            (filterData.filterDate === '' || convertToDate(Number(request.createdAt)) == filterData.filterDate) &&
             (
-                request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.post.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.aviacompany.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                // request.airline.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.airport.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival_date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival_time.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure_date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure_time.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.arrival.flight.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.arrival.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.arrival.time.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.departure.flight.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.departure.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.departure.time.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.status.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
