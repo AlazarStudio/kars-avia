@@ -113,9 +113,12 @@ function Main_Page({ children, ...props }) {
         }
     }, [subscriptionData]);
 
-    if (loading) return 'Loading...';
-    if (error) return `Error! ${error.message}`;
+    // if (loading) return 'Loading...';
+    // if (error) return `Error! ${error.message}`;
 
+    if (loading) console.log('Loading...');
+    if (error) console.log(`Error! ${error.message}`);
+    
     return (
         <div className={classes.main}>
             <MenuDispetcher id={id ? id : pageClicked} />

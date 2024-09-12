@@ -25,7 +25,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
     return (
         <InfoTable >
             <div className={classes.InfoTable_title}>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>№</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>ФИО</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w8}`}>Дата заявки</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Авиакомпания</div>
@@ -74,6 +74,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
                             <div className={classes.InfoTable_data_elem_position}>
                                 <div className={item.status}></div>
+                                {item.status == 'created' && 'Создан'}
                                 {item.status == 'processing' && 'В обработке'}
                                 {item.status == 'cancelled' && 'Отменен'}
                                 {item.status == 'done' && 'Готово'}

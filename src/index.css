@@ -69,28 +69,28 @@ input[type="file"] {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: var(--text-gray);
+    background-color: #ffbd97;
 }
 
 .cancelled {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: #FFB5B5;
+    background-color: #ff6a6a;
 }
 
 .done {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: #9AF6CA;
+    background-color: #7cffc0;
 }
 
-.adopted {
+.created {
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background-color: #97C7FF;
+    background-color: var(--text-gray);
 }
 
 .react-tabs__tab--selected {
