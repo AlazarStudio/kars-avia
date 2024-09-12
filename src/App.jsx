@@ -10,9 +10,11 @@ import Non_Found_Page from "./Components/Pages/Non_Found_Page";
 import Layout from "./Components/Standart/Layout/Layout";
 import Placement from "./Components/Pages/Placement/Placement";
 import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlacement";
+import FileUpload from "./Components/Blocks/FileUpload/FileUpload";
+import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
 // HTTP линк для работы через обычные запросы
-const httpLink = new HttpLink({
+const uploadLink = createUploadLink({
   uri: 'http://192.168.0.112:4000/graphql', // URL вашего HTTP GraphQL сервера
 });
 
@@ -20,7 +22,6 @@ const httpLink = new HttpLink({
 const wsLink = new GraphQLWsLink(createClient({
   url: 'ws://192.168.0.112:4000/graphql',
   connectionParams: () => {
-    // Получаем сессию из localStorage, контекста или любой другой системы управления состоянием
     const session = JSON.parse(localStorage.getItem('session')); // Или используйте правильный метод
     if (!session) {
       return {};
@@ -41,7 +42,7 @@ const splitLink = split(
     );
   },
   wsLink, // Если это подписка, используем WebSocket
-  httpLink // Если это query/mutation, используем HTTP
+  uploadLink // Если это query/mutation, используем HTTP
 );
 
 const client = new ApolloClient({
@@ -58,6 +59,7 @@ function App() {
           <Route path="/:id" element={<Main_Page />} />
           <Route path="/hotels/:hotelID" element={<Main_Page />} />
           <Route path="/airlines/:airlineID" element={<Main_Page />} />
+          <Route path="/sendFile" element={<FileUpload />} />
 
           {/* Резерв внутри заявки */}
           <Route path="/:id/reservePlacement/:idRequest" element={<ReservePlacement />} />

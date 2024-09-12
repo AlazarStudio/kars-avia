@@ -89,6 +89,7 @@ function Estafeta({ children, requests, ...props }) {
                         value={searchQuery}
                         onChange={handleSearch}
                     />
+                    
                     <Filter
                         toggleSidebar={toggleCreateSidebar}
                         handleChange={handleChange}

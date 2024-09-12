@@ -58,6 +58,7 @@
     flex-direction: column;
     padding: 0 40px;
     gap: 15px;
+    margin-bottom: 20px;
 }
 
 .requestData label{

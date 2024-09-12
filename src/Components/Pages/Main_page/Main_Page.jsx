@@ -20,31 +20,32 @@ const GET_REQUESTS = gql`
             position
             gender
             phoneNumber
-            airport
             arrival {
-                flight
-                date
-                time
+            flight
+            date
+            time
             }
             departure {
-                flight
-                date
-                time
+            flight
+            date
+            time
             }
             roomCategory
             mealPlan {
-                included
-                breakfast
-                lunch
-                dinner
+            included
+            breakfast
+            lunch
+            dinner
             }
             senderId
+            receiverId
             createdAt
             updatedAt
             hotelId
             roomNumber
             airlineId
             status
+            airportId
         }
     }
 `;
@@ -57,7 +58,6 @@ const REQUEST_CREATED_SUBSCRIPTION = gql`
             position
             gender
             phoneNumber
-            airport
             arrival {
                 flight
                 date
@@ -76,12 +76,14 @@ const REQUEST_CREATED_SUBSCRIPTION = gql`
                 dinner
             }
             senderId
+            receiverId
             createdAt
             updatedAt
             hotelId
             roomNumber
             airlineId
             status
+            airportId
         }
     }
 `;
@@ -118,7 +120,8 @@ function Main_Page({ children, ...props }) {
 
     if (loading) console.log('Loading...');
     if (error) console.log(`Error! ${error.message}`);
-    
+
+    // console.log(requests)
     return (
         <div className={classes.main}>
             <MenuDispetcher id={id ? id : pageClicked} />
