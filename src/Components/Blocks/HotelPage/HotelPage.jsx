@@ -9,9 +9,22 @@ import HotelShahmatka_tabComponent from "../HotelShahmatka_tabComponent/HotelSha
 import HotelNomerFond_tabComponent from "../HotelNomerFond_tabComponent/HotelNomerFond_tabComponent";
 import HotelCompany_tabComponent from "../HotelCompany_tabComponent/HotelCompany_tabComponent";
 import HotelAbout_tabComponent from "../HotelAbout_tabComponent/HotelAbout_tabComponent";
+import { gql, useQuery } from "@apollo/client";
 
 function HotelPage({ children, id, ...props }) {
     const [selectedTab, setSelectedTab] = useState(0);
+
+    // const GET_HOTELS = gql`
+    //     query Hotel($hotelId: ID!) {
+    //         hotel(id: $hotelId) {
+    //             name
+    //         }
+    //     }
+    // `;
+
+    // const { loading, error, data } = useQuery(GET_HOTELS, {
+    //     variables: { hotelId: id },
+    // });
 
     useEffect(() => {
         const savedTab = localStorage.getItem('selectedTab');
@@ -31,14 +44,14 @@ function HotelPage({ children, id, ...props }) {
                     <Header>
                         <div className={classes.titleHeader}>
                             <Link to={`/hotels`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                            {id}
+                            {/* {data && data.hotel.name} */}
                         </div>
                     </Header>
                 </div>
 
-                <Tabs 
-                    className={classes.tabs} 
-                    selectedIndex={selectedTab} 
+                <Tabs
+                    className={classes.tabs}
+                    selectedIndex={selectedTab}
                     onSelect={handleTabSelect}
                 >
                     <TabList className={classes.tabList}>
@@ -54,19 +67,19 @@ function HotelPage({ children, id, ...props }) {
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <HotelTarifs_tabComponent />
+                        <HotelTarifs_tabComponent id={id} />
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <HotelNomerFond_tabComponent />
+                        <HotelNomerFond_tabComponent id={id} />
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <HotelCompany_tabComponent />
+                        <HotelCompany_tabComponent id={id} />
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <HotelAbout_tabComponent hotelName={id}/>
+                        <HotelAbout_tabComponent hotelName={id} />
                     </TabPanel>
                 </Tabs>
             </div>

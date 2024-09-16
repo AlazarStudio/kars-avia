@@ -90,7 +90,9 @@ const REQUEST_CREATED_SUBSCRIPTION = gql`
 
 function Main_Page({ children, ...props }) {
     let { id, hotelID, airlineID } = useParams();
+
     let pageClicked = hotelID ? 'hotels' : airlineID && 'airlines';
+
     const { loading, error, data } = useQuery(GET_REQUESTS);
     const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION);
     const [requests, setRequests] = useState([]);

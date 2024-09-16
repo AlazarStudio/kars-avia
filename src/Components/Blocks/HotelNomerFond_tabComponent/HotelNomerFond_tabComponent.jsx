@@ -3,7 +3,7 @@ import classes from './HotelNomerFond_tabComponent.module.css';
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import Filter from "../Filter/Filter";
 
-import { requestsNomerFond } from "../../../requests";
+import { requestsNomerFond, requestsTarifs } from "../../../requests";
 import InfoTableDataNomerFond from "../InfoTableDataNomerFond/InfoTableDataNomerFond";
 import CreateRequestNomerFond from "../CreateRequestNomerFond/CreateRequestNomerFond";
 import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequestCategoryNomer";
@@ -116,7 +116,7 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
         const updatedTarifs = addTarif.map(tarif => {
             if (tarif.type === selectedNomer.category) {
                 const updatedNumbers = tarif.numbers.filter(n => n !== oldNomer);
-    
+
                 if (newCategory === selectedNomer.category) {
                     updatedNumbers.push(updatedNomer);
                     updatedNumbers.sort((a, b) => {
@@ -126,10 +126,10 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
                     });
                     return { ...tarif, numbers: updatedNumbers };
                 }
-    
+
                 return { ...tarif, numbers: updatedNumbers };
             }
-    
+
             if (tarif.type === newCategory) {
                 const updatedNumbers = [...tarif.numbers, updatedNomer].sort((a, b) => {
                     const numA = parseInt(a.replace(/^\D+/g, ''));
@@ -138,15 +138,15 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
                 });
                 return { ...tarif, numbers: updatedNumbers };
             }
-    
+
             return tarif;
         });
-    
+
         setAddTarif(updatedTarifs);
         setShowEditNomer(false);
         setSelectedNomer({});
     };
-    
+
 
     const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
 
@@ -194,10 +194,11 @@ function HotelNomerFond_tabComponent({ children, ...props }) {
                 openDeleteNomerComponent={openDeleteNomerComponent}
             />
 
-            <CreateRequestNomerFond show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+            <CreateRequestNomerFond tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
             <CreateRequestCategoryNomer show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
 
             <EditRequestNomerFond
+                tarifs={requestsTarifs}
                 show={showEditNomer}
                 onClose={() => setShowEditNomer(false)}
                 nomer={selectedNomer.nomer}

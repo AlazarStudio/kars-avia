@@ -159,7 +159,7 @@ export const requestsHotels = [
     {
         hotelImage: 'hotelImage.png',
         hotelCountry: 'Россия',
-        hotelName: 'Гостиница “Славянка”',
+        hotelName: '66cc9f32b681cf6105517b6f',
         hotelCity: 'Москва',
         hotelAdress: 'ул. Лесная  147',
         hotelKvota: '24',
@@ -177,22 +177,44 @@ export const requestsHotels = [
 export const requestsTarifs = [
     {
         tarifName: "ЭКОНОМ",
-        tarif_сategory_one_place: "3000",
-        tarif_сategory_two_place: "4000",
-        tarif_сategory_three_place: "5000",
-        tarif_airline_one_place: "3000",
-        tarif_airline_two_place: "4000",
-        tarif_airline_three_place: "5000"
+        categories: [
+            {
+                type: '1',
+                price: '3000',
+                price_airline: '4000'
+            },
+            {
+                type: '2',
+                price: '4000',
+                price_airline: '5000'
+            },
+            {
+                type: '3',
+                price: '5000',
+                price_airline: '6000'
+            }
+        ],
     },
     {
         tarifName: "ЛЮКС",
-        tarif_сategory_one_place: "6000",
-        tarif_сategory_two_place: "7000",
-        tarif_сategory_three_place: "8000",
-        tarif_airline_one_place: "3000",
-        tarif_airline_two_place: "4000",
-        tarif_airline_three_place: "5000"
-    }
+        categories: [
+            {
+                type: '1',
+                price: '6000',
+                price_airline: '7000'
+            },
+            {
+                type: '2',
+                price: '7000',
+                price_airline: '8000'
+            },
+            {
+                type: '3',
+                price: '8000',
+                price_airline: '9000'
+            }
+        ],
+    },
 ]
 
 export const requestsNomerFond = [
@@ -286,3 +308,103 @@ export const requestsAirlinesCompany = [
         ]
     },
 ]
+
+// let hotelModel = [
+//     {
+//         id: 'id',
+//         hotelImage: 'hotelImage.png',
+//         hotelCountry: 'Россия',
+//         hotelName: '66cc9f32b681cf6105517b6f',
+//         hotelCity: 'Москва',
+//         hotelAdress: 'ул. Лесная  147',
+//         hotelKvota: '24',
+//         hotelIndex: '119180',
+//         hotelEmail: 'example@gmail.com',
+//         hotelPhone: '0 000 000 00 00',
+//         hotelInn: '772470642050',
+//         hotelOgrn: '315774600021240',
+//         hotelRs: '40802810600000031447',
+//         hotelBank: 'филиал №7701 банка ВТБ 24 (ПАО) г. Москва',
+//         hotelBik: '30102810345250000745',
+//         tarifs: [
+//             {
+//                 tarifName: "ЭКОНОМ",
+//                 categories: [
+//                     {
+//                         type: '1',
+//                         price: '3000',
+//                         price_airline: '4000'
+//                     },
+//                     {
+//                         type: '2',
+//                         price: '4000',
+//                         price_airline: '5000'
+//                     },
+//                     {
+//                         type: '3',
+//                         price: '5000',
+//                         price_airline: '6000'
+//                     }
+//                 ],
+//             }
+//         ],
+//         nomerFond: [
+//             {
+//                 type: '1',
+//                 numbers: [
+//                     {
+//                         room: '№ 150',
+//                         tarif: 'ЭКОНОМ',
+//                     },
+//                     {
+//                         room: '№ 151',
+//                         tarif: 'ЭКОНОМ',
+//                     },
+//                 ]
+//             },
+//             {
+//                 type: '2',
+//                 numbers: [
+//                     {
+//                         room: '№ 250',
+//                         tarif: 'ЭКОНОМ',
+//                     },
+//                     {
+//                         room: '№ 251',
+//                         tarif: 'ЭКОНОМ',
+//                     },
+//                 ]
+//             },
+//             {
+//                 type: '3',
+//                 numbers: [
+//                     {
+//                         room: '№ 350',
+//                         tarif: 'ЭКОНОМ',
+//                     },
+//                     {
+//                         room: '№ 351',
+//                         tarif: 'ЭКОНОМ',
+//                     },
+//                 ]
+//             },
+//         ],
+//         companyStaff: [
+//             {
+//                 avatar: 'avatar.png',
+//                 fio: 'Иванов Иван',
+//                 post: 'Администратор',
+//                 login: 'login',
+//                 password: 'password'
+//             },
+//             {
+//                 avatar: 'avatar1.png',
+//                 fio: 'Коротковский Евгений',
+//                 post: 'Модератор',
+//                 login: 'login',
+//                 password: 'password'
+//             },
+//         ],
+//         request: []
+//     }
+// ]

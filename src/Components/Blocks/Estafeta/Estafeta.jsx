@@ -60,7 +60,7 @@ function Estafeta({ children, requests, ...props }) {
                 request.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 // request.airline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airport.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airportId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.flight.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.time.toLowerCase().includes(searchQuery.toLowerCase()) ||

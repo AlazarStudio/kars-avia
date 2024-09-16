@@ -3,18 +3,27 @@ import classes from './CreateRequestNomerFond.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCategories }) {
+function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCategories, tarifs }) {
     const [formData, setFormData] = useState({
         nomerName: '',
-        category: '1'
+        category: '1',
+        tarif: ''
     });
+    
+    const [tarifNames, setTarifNames] = useState([]);
+
+    useEffect(() => {
+        const names = tarifs.map(tarif => tarif.tarifName);
+        setTarifNames(names);
+    }, [tarifs]);
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
             nomerName: '',
-            category: uniqueCategories[0] || '1'
+            category: uniqueCategories[0] || '1',
+            tarif: ''
         });
     };
 
@@ -100,6 +109,13 @@ function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCa
                     <select name="category" value={formData.category} onChange={handleChange}>
                         {uniqueCategories.map(category => (
                             <option key={category} value={category}>{category} - местный</option>
+                        ))}
+                    </select>
+
+                    <label>Тариф</label>
+                    <select name="tarif" value={formData.tarif} onChange={handleChange}>
+                        {tarifNames.map(category => (
+                            <option key={category} value={category}>{category}</option>
                         ))}
                     </select>
                 </div>

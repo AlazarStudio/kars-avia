@@ -2,7 +2,7 @@ import React from "react";
 import classes from './InfoTableDataTarifs.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDeleteComponent, ...props }) {
+function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDeleteComponent, openDeleteComponentCategory, toggleEditTarifsCategory, ...props }) {
 
     return (
         <InfoTable>
@@ -23,27 +23,25 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDel
                             </div>
 
                             <div className={classes.infoTable_buttons}>
-                                <img src="/editPassenger.png" alt="" onClick={() => {toggleRequestSidebar(item)}}/>
-                                <img src="/deletePassenger.png" alt=""  onClick={() => openDeleteComponent(index)}/>
+                                <img src="/editPassenger.png" alt="" onClick={() => { toggleRequestSidebar(item) }} />
+                                <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponent(index)} />
                             </div>
 
                         </div>
                         <div className={classes.InfoTable_BottomInfo}>
-                            <div className={`${classes.InfoTable_BottomInfo__item}`}>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>Одноместный номер</div>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{item.tarif_сategory_one_place} р / сутки</div>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{item.tarif_airline_one_place} р / сутки</div>
-                            </div>
-                            <div className={`${classes.InfoTable_BottomInfo__item}`}>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>Двухместный номер</div>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{item.tarif_сategory_two_place} р / сутки</div>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{item.tarif_airline_two_place} р / сутки</div>
-                            </div>
-                            <div className={`${classes.InfoTable_BottomInfo__item}`}>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>Трехместный номер</div>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{item.tarif_сategory_three_place} р / сутки</div>
-                                <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{item.tarif_airline_three_place} р / сутки</div>
-                            </div>
+                            {item.categories.sort((a, b) => a.price - b.price).map((category, index) => (
+                                <div className={`${classes.InfoTable_BottomInfo__item}`} key={index}>
+                                    <div className={classes.infoTableData_items}>
+                                        <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{category.type} - местный номер</div>
+                                        <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{category.price} р / сутки</div>
+                                        <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{category.price_airline} р / сутки</div>
+                                    </div>
+                                    <div className={classes.infoTableData_buttons}>
+                                        <img src="/editPassenger.png" alt="" onClick={() => toggleEditTarifsCategory(category, item.tarifName)} />
+                                        <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponentCategory(category, item.tarifName)} />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
 
                     </div>

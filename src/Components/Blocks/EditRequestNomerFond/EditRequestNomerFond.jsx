@@ -3,11 +3,19 @@ import classes from './EditRequestNomerFond.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, uniqueCategories }) {
+function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, uniqueCategories, tarifs }) {
     const [formData, setFormData] = useState({
         nomerName: nomer || '',
-        category: category || uniqueCategories[0] || '1'
+        category: category || uniqueCategories[0] || '1',
+        tarif: ''
     });
+
+    const [tarifNames, setTarifNames] = useState([]);
+
+    useEffect(() => {
+        const names = tarifs.map(tarif => tarif.tarifName);
+        setTarifNames(names);
+    }, [tarifs]);
 
     const sidebarRef = useRef();
 
@@ -15,7 +23,8 @@ function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, unique
         if (show) {
             setFormData({
                 nomerName: nomer || '',
-                category: category || uniqueCategories[0] || '1'
+                category: category || uniqueCategories[0] || '1',
+                tarif: ''
             });
         }
     }, [show, nomer, category]);
@@ -60,6 +69,13 @@ function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, unique
                     <select name="category" value={formData.category} onChange={handleChange}>
                         {uniqueCategories.map(category => (
                             <option key={category} value={category}>{category} - местный</option>
+                        ))}
+                    </select>
+
+                    <label>Тариф</label>
+                    <select name="tarif" value={formData.tarif} onChange={handleChange}>
+                        {tarifNames.map(category => (
+                            <option key={category} value={category}>{category}</option>
                         ))}
                     </select>
                 </div>

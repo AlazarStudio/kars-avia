@@ -25,7 +25,7 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
     ];
 
     const data = [
-        { public: true, room: '№121', place: 1, start: '2024-08-01', startTime: '14:00', end: '2024-08-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-20', endTime: '10:00', client: 'Джатдоев А. С-А.' },
         { public: true, room: '№121', place: 1, start: '2024-08-10', startTime: '14:00', end: '2024-08-26', endTime: '10:00', client: 'Джатдоев А. С-А.' },
         { public: true, room: '№121', place: 1, start: '2024-08-26', startTime: '14:00', end: '2024-08-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
         { public: true, room: '№122', place: 1, start: '2024-08-03', startTime: '14:00', end: '2024-08-10', endTime: '10:00', client: 'Гочияев Р. Р.' },

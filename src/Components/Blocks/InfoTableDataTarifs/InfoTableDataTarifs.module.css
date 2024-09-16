@@ -154,12 +154,17 @@
 
 .InfoTable_BottomInfo__item {
     display: flex;
-    padding: 20px 0px;
+    padding: 20px;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;  
+    transition: all 0.3s ease-in-out;  
 }
 
 .InfoTable_BottomInfo__item___elem {
     padding: 0 20px;
     text-align: center;
+    width: 20%;
 }
 
 .InfoTable_data {
@@ -177,6 +182,33 @@
 }
 
 .infoTable_buttons img{
+    cursor: pointer;
+}
+
+.infoTableData_items{
+    position: relative;
+    display: flex;
+    width: calc(100% - 80px);
+}
+
+.infoTableData_buttons{
+    width: 60px;
+    gap: 20px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: all 0.3s ease-in-out;
+}
+
+.InfoTable_BottomInfo__item:hover .infoTableData_buttons{
+    opacity: 1;
+}
+
+.InfoTable_BottomInfo__item:hover{
+    background-color: var(--hover-gray);
+}
+
+.infoTableData_buttons img{
     cursor: pointer;
 }
 

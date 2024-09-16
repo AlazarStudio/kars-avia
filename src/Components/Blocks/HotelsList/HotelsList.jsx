@@ -1,16 +1,51 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import classes from './HotelsList.module.css';
 import Filter from "../Filter/Filter";
 import CreateRequestHotel from "../CreateRequestHotel/CreateRequestHotel";
 import { requestsHotels } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
+import { gql, useQuery } from "@apollo/client";
 
 function HotelsList({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-    
-    const [companyData, setCompanyData] = useState(requestsHotels);
+
+    const GET_HOTELS = gql`
+        query Hotel {
+            hotels {
+                id
+                name
+                city
+                address
+                quote
+            }
+        }
+    `;
+
+    const { loading, error, data } = useQuery(GET_HOTELS);
+    const [companyData, setCompanyData] = useState([]);
+
+    useEffect(() => {
+        if (data && data.hotels) {
+            const sortedHotels = [...data.hotels].reverse();
+            let sorted = [];
+            sortedHotels.map((hotel) => {
+                sorted.push({
+                    id: hotel.id,
+                    hotelName: hotel.name,
+                    hotelCity: hotel.city,
+                    hotelAdress: hotel.address,
+                    hotelKvota: hotel.quote,
+                    // hotelImage: hotel.images
+                    hotelImage: 'hotelImage.png'
+                })
+            })
+
+            setCompanyData(sorted);
+        }
+    }, [data]);
+
 
     const addHotel = (newHotel) => {
         setCompanyData([...companyData, newHotel]);
@@ -54,6 +89,8 @@ function HotelsList({ children, ...props }) {
         );
     });
 
+    // console.log(filteredRequests)
+
     let filterList = ['Москва', 'Санкт-Петербург'];
 
     return (
@@ -81,15 +118,15 @@ function HotelsList({ children, ...props }) {
                     />
                 </div>
 
-                <InfoTableDataHotels 
-                    toggleRequestSidebar={toggleRequestSidebar} 
-                    requests={filteredRequests}  
+                <InfoTableDataHotels
+                    toggleRequestSidebar={toggleRequestSidebar}
+                    requests={filteredRequests}
                 />
 
-                <CreateRequestHotel 
-                    show={showCreateSidebar} 
-                    onClose={toggleCreateSidebar} 
-                    addHotel={addHotel} 
+                <CreateRequestHotel
+                    show={showCreateSidebar}
+                    onClose={toggleCreateSidebar}
+                    addHotel={addHotel}
                 />
             </div>
         </>

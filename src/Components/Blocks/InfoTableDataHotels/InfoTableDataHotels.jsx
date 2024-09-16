@@ -8,6 +8,8 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
         toggleRequestSidebar();
     };
 
+
+
     return (
         <InfoTable>
             <div className={classes.InfoTable_title}>
@@ -20,7 +22,7 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
 
             <div className={classes.bottom}>
                 {requests.map((item, index) => (
-                    <Link to={`/hotels/${item.hotelName}`}
+                    <Link to={`/hotels/${item.id}`}
                         className={classes.InfoTable_data}
                         onClick={() => handleObject(item, index)}
                         key={index}
