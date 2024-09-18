@@ -13,26 +13,23 @@ import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlaceme
 import FileUpload from "./Components/Blocks/FileUpload/FileUpload";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-// HTTP линк для работы через обычные запросы
 const uploadLink = createUploadLink({
-  uri: 'http://192.168.0.112:4000/graphql', // URL вашего HTTP GraphQL сервера
+  uri: 'http://192.168.0.112:4000/graphql',
 });
 
-// WebSocket линк для подписок
 const wsLink = new GraphQLWsLink(createClient({
   url: 'ws://192.168.0.112:4000/graphql',
   connectionParams: () => {
-    const session = JSON.parse(localStorage.getItem('session')); // Или используйте правильный метод
+    const session = JSON.parse(localStorage.getItem('session'));
     if (!session) {
       return {};
     }
     return {
-      Authorization: `Bearer ${session.token}`, // Или другой заголовок авторизации
+      Authorization: `Bearer ${session.token}`,
     };
   },
 }));
 
-// Функция для определения, использовать ли WebSocket или HTTP
 const splitLink = split(
   ({ query }) => {
     const definition = getMainDefinition(query);
@@ -41,8 +38,8 @@ const splitLink = split(
       definition.operation === 'subscription'
     );
   },
-  wsLink, // Если это подписка, используем WebSocket
-  uploadLink // Если это query/mutation, используем HTTP
+  wsLink,
+  uploadLink
 );
 
 const client = new ApolloClient({
