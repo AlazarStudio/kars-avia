@@ -5,11 +5,11 @@ import Sidebar from "../Sidebar/Sidebar";
 
 function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, uniqueCategories, tarifs }) {
     const [formData, setFormData] = useState({
-        nomerName: nomer || '',
-        category: category || uniqueCategories[0] || '1',
-        tarif: ''
+        nomerName: (nomer && nomer.name) || '',
+        category: uniqueCategories[0] || '',
+        tarif: tarifs[0] || ''
     });
-
+    
     const [tarifNames, setTarifNames] = useState([]);
 
     useEffect(() => {
@@ -22,9 +22,9 @@ function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, unique
     useEffect(() => {
         if (show) {
             setFormData({
-                nomerName: nomer || '',
-                category: category || uniqueCategories[0] || '1',
-                tarif: ''
+                nomerName: (nomer && nomer.name) || '',
+                category: category || uniqueCategories[0] || '',
+                tarif: tarifs[0] || ''
             });
         }
     }, [show, nomer, category]);
@@ -68,7 +68,7 @@ function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, unique
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
                         {uniqueCategories.map(category => (
-                            <option key={category} value={category}>{category} - местный</option>
+                            <option key={category} value={category}>{category}</option>
                         ))}
                     </select>
 

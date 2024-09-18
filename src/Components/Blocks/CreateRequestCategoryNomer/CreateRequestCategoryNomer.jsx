@@ -36,7 +36,7 @@ function CreateRequestCategoryNomer({ show, onClose, addTarif, setAddTarif, uniq
         e.preventDefault();
 
         setAddTarif(prevTarifs => {
-            const categoryExists = prevTarifs.some(tarif => tarif.type === formData.category);
+            const categoryExists = prevTarifs.some(tarif => tarif.name === formData.category);
 
             if (categoryExists) {
                 alert("Такая категория уже существует!");
@@ -46,12 +46,12 @@ function CreateRequestCategoryNomer({ show, onClose, addTarif, setAddTarif, uniq
             const updatedTarifs = [
                 ...prevTarifs,
                 {
-                    type: formData.category,
-                    numbers: []
+                    name: formData.category,
+                    rooms: []
                 }
             ];
 
-            return updatedTarifs.sort((a, b) => parseInt(a.type) - parseInt(b.type));
+            return updatedTarifs.sort((a, b) => a.name.localeCompare(b.name));
         });
 
         resetForm();

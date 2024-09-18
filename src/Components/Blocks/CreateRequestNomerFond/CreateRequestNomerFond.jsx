@@ -6,7 +6,7 @@ import Sidebar from "../Sidebar/Sidebar";
 function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCategories, tarifs }) {
     const [formData, setFormData] = useState({
         nomerName: '',
-        category: '1',
+        category: '',
         tarif: ''
     });
     
@@ -22,8 +22,8 @@ function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCa
     const resetForm = () => {
         setFormData({
             nomerName: '',
-            category: uniqueCategories[0] || '1',
-            tarif: ''
+            category: uniqueCategories[0] || '',
+            tarif: tarifs[0].tarifName || ''
         });
     };
 
@@ -49,26 +49,22 @@ function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCa
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
 
         setAddTarif(prevTarifs => {
-            const existingCategory = prevTarifs.find(tarif => tarif.type === formData.category);
+            const existingCategory = prevTarifs.find(tarif => tarif.name === formData.category);
 
             if (existingCategory) {
-                const updatedNumbers = [...existingCategory.numbers, nomerName].sort((a, b) => {
-                    const numA = parseInt(a.replace(/^\D+/g, ''));
-                    const numB = parseInt(b.replace(/^\D+/g, ''));
-                    return numA - numB;
-                });
+                const updatedNumbers = [...existingCategory.rooms, {name: nomerName}].sort((a, b) => a.name.localeCompare(b.name));
 
                 return prevTarifs.map(tarif =>
-                    tarif.type === formData.category
-                        ? { ...tarif, numbers: updatedNumbers }
+                    tarif.name === formData.category
+                        ? { ...tarif, rooms: updatedNumbers }
                         : tarif
                 );
             } else {
                 return [
                     ...prevTarifs,
                     {
-                        type: formData.category,
-                        numbers: [nomerName]
+                        name: formData.category,
+                        rooms: [nomerName]
                     }
                 ];
             }
@@ -92,7 +88,6 @@ function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCa
             };
         }
     }, [show]);
-
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -108,7 +103,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCa
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
                         {uniqueCategories.map(category => (
-                            <option key={category} value={category}>{category} - местный</option>
+                            <option key={category} value={category}>{category}</option>
                         ))}
                     </select>
 

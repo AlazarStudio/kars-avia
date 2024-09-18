@@ -9,22 +9,15 @@ import HotelShahmatka_tabComponent from "../HotelShahmatka_tabComponent/HotelSha
 import HotelNomerFond_tabComponent from "../HotelNomerFond_tabComponent/HotelNomerFond_tabComponent";
 import HotelCompany_tabComponent from "../HotelCompany_tabComponent/HotelCompany_tabComponent";
 import HotelAbout_tabComponent from "../HotelAbout_tabComponent/HotelAbout_tabComponent";
-import { gql, useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client";
+import { GET_HOTEL_NAME } from '../../../../graphQL_requests.js';
 
 function HotelPage({ children, id, ...props }) {
     const [selectedTab, setSelectedTab] = useState(0);
 
-    // const GET_HOTELS = gql`
-    //     query Hotel($hotelId: ID!) {
-    //         hotel(id: $hotelId) {
-    //             name
-    //         }
-    //     }
-    // `;
-
-    // const { loading, error, data } = useQuery(GET_HOTELS, {
-    //     variables: { hotelId: id },
-    // });
+    const { loading, error, data } = useQuery(GET_HOTEL_NAME, {
+        variables: { hotelId: id },
+    });
 
     useEffect(() => {
         const savedTab = localStorage.getItem('selectedTab');
@@ -44,7 +37,7 @@ function HotelPage({ children, id, ...props }) {
                     <Header>
                         <div className={classes.titleHeader}>
                             <Link to={`/hotels`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                            {/* {data && data.hotel.name} */}
+                            {data && data.hotel.name}
                         </div>
                     </Header>
                 </div>
@@ -79,7 +72,7 @@ function HotelPage({ children, id, ...props }) {
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <HotelAbout_tabComponent hotelName={id} />
+                        <HotelAbout_tabComponent id={id} />
                     </TabPanel>
                 </Tabs>
             </div>

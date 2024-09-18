@@ -12,7 +12,7 @@ function EditRequestCategory({ show, onClose, category, onSubmit }) {
 
     useEffect(() => {
         if (show && category) {
-            setFormData({ type: category.type });
+            setFormData({ type: category.name });
         }
     }, [show, category]);
 

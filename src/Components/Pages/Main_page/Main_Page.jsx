@@ -120,8 +120,8 @@ function Main_Page({ children, ...props }) {
     // if (loading) return 'Loading...';
     // if (error) return `Error! ${error.message}`;
 
-    if (loading) console.log('Loading...');
-    if (error) console.log(`Error! ${error.message}`);
+    // if (loading) console.log('Loading...');
+    // if (error) console.log(`Error! ${error.message}`);
 
     // console.log(requests)
     return (

@@ -159,7 +159,7 @@ export const requestsHotels = [
     {
         hotelImage: 'hotelImage.png',
         hotelCountry: 'Россия',
-        hotelName: '66cc9f32b681cf6105517b6f',
+        hotelName: '66e986ad8a6e0b2c0f30e6fb',
         hotelCity: 'Москва',
         hotelAdress: 'ул. Лесная  147',
         hotelKvota: '24',

@@ -1,19 +1,58 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import classes from './HotelAbout_tabComponent.module.css';
-import { requestsHotels } from '../../../requests.js';
+import { gql, useQuery, useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
+import { GET_HOTEL, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 
-function HotelAbout_tabComponent({ hotelName, ...props }) {
-    const hotelData = requestsHotels.find(hotel => hotel.hotelName === hotelName);
 
-    const [hotel, setHotel] = useState(hotelData);
+function HotelAbout_tabComponent({ id }) {
+    const { loading, error, data } = useQuery(GET_HOTEL, {
+        variables: { hotelId: id },
+    });
+
+    const [hotel, setHotel] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
+
+    const [updateHotel] = useMutation(UPDATE_HOTEL);
+
+    useEffect(() => {
+        if (data) {
+            setHotel(data.hotel);
+        }
+    }, [data]);
 
     if (!hotel) {
         return <div className={classes.hotelAbout}>Отель не найден</div>;
     }
 
-    const handleEditClick = () => {
+    const handleEditClick = async () => {
+        if (isEditing) {
+            try {
+                await updateHotel({
+                    variables: {
+                        updateHotelId: hotel.id,
+                        input: {
+                            name: hotel.name,
+                            country: hotel.country,
+                            city: hotel.city,
+                            address: hotel.address,
+                            bank: hotel.bank,
+                            bik: hotel.bik,
+                            email: hotel.email,
+                            index: hotel.index,
+                            inn: hotel.inn,
+                            number: hotel.number,
+                            ogrn: hotel.ogrn,
+                            rs: hotel.rs,
+                        }
+                    }
+                });
+                alert('Данные успешно сохранены');
+            } catch (err) {
+                console.error(err);
+                alert('Произошла ошибка при сохранении данных');
+            }
+        }
         setIsEditing(!isEditing);
     };
 
@@ -30,13 +69,13 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
             <div className={classes.hotelAbout_top}>
                 <div className={classes.hotelAbout_top_complete}>
                     <div className={classes.hotelAbout_top_img}>
-                        <img src={`/${hotel.hotelImage}`} alt={hotel.hotelName} />
+                        <img src={`http://192.168.0.112:4000${hotel.images[0]}`} alt={hotel.name} />
                     </div>
                     <div className={classes.hotelAbout_top_title}>
-                        <div className={classes.hotelAbout_top_title_name}>{hotel.hotelName}</div>
+                        <div className={classes.hotelAbout_top_title_name}>{hotel.name}</div>
                         <div className={classes.hotelAbout_top_title_desc}>
                             <img src="/map.png" alt="" />
-                            {hotel.hotelCity}, {hotel.hotelAdress}
+                            {hotel.city}, {hotel.address}
                         </div>
                     </div>
                 </div>
@@ -48,16 +87,13 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
             </div>
             <div className={classes.hotelAbout_info}>
                 <div className={classes.hotelAbout_info_block}>
-                    <div className={classes.hotelAbout_info_label}>
-                        Адрес
-                    </div>
-
+                    <div className={classes.hotelAbout_info_label}>Адрес</div>
                     <div className={classes.hotelAbout_info_item}>
                         <label>Страна</label>
                         <input
                             type="text"
-                            name="hotelCountry"
-                            value={hotel.hotelCountry}
+                            name="country"
+                            value={hotel.country || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
@@ -67,8 +103,8 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
                         <label>Город</label>
                         <input
                             type="text"
-                            name="hotelCity"
-                            value={hotel.hotelCity}
+                            name="city"
+                            value={hotel.city || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
@@ -78,8 +114,8 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
                         <label>Улица</label>
                         <input
                             type="text"
-                            name="hotelAdress"
-                            value={hotel.hotelAdress}
+                            name="address"
+                            value={hotel.address || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
@@ -89,23 +125,21 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
                         <label>Индекс</label>
                         <input
                             type="text"
-                            name="hotelIndex"
-                            value={hotel.hotelIndex}
+                            name="index"
+                            value={hotel.index || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
                         />
                     </div>
 
-                    <div className={classes.hotelAbout_info_label}>
-                        Контакты
-                    </div>
+                    <div className={classes.hotelAbout_info_label}>Контакты</div>
                     <div className={classes.hotelAbout_info_item}>
                         <label>Почта</label>
                         <input
                             type="email"
-                            name="hotelEmail"
-                            value={hotel.hotelEmail}
+                            name="email"
+                            value={hotel.email || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
@@ -115,8 +149,8 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
                         <label>Телефон</label>
                         <input
                             type="tel"
-                            name="hotelPhone"
-                            value={hotel.hotelPhone}
+                            name="number"
+                            value={hotel.number || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
@@ -124,15 +158,13 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
                     </div>
                 </div>
                 <div className={classes.hotelAbout_info_block}>
-                    <div className={classes.hotelAbout_info_label}>
-                        Реквизиты
-                    </div>
+                    <div className={classes.hotelAbout_info_label}>Реквизиты</div>
                     <div className={classes.hotelAbout_info_item}>
                         <label>ИНН</label>
                         <input
                             type="text"
-                            name="hotelInn"
-                            value={hotel.hotelInn}
+                            name="inn"
+                            value={hotel.inn || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
@@ -142,8 +174,8 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
                         <label>ОГРН</label>
                         <input
                             type="text"
-                            name="hotelOgrn"
-                            value={hotel.hotelOgrn}
+                            name="ogrn"
+                            value={hotel.ogrn || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
@@ -153,20 +185,19 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
                         <label>Р/С</label>
                         <input
                             type="text"
-                            name="hotelRs"
-                            value={hotel.hotelRs}
+                            name="rs"
+                            value={hotel.rs || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
                         />
                     </div>
-
                     <div className={classes.hotelAbout_info_item}>
                         <label>В БАНКЕ</label>
                         <input
                             type="text"
-                            name="hotelBank"
-                            value={hotel.hotelBank}
+                            name="bank"
+                            value={hotel.bank || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
@@ -176,8 +207,8 @@ function HotelAbout_tabComponent({ hotelName, ...props }) {
                         <label>БИК</label>
                         <input
                             type="text"
-                            name="hotelBik"
-                            value={hotel.hotelBik}
+                            name="bik"
+                            value={hotel.bik || ""}
                             onChange={handleChange}
                             disabled={!isEditing}
                             className={classes.hotelAbout_info_input}
