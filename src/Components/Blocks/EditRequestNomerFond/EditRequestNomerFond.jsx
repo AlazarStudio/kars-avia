@@ -3,13 +3,16 @@ import classes from './EditRequestNomerFond.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, uniqueCategories, tarifs }) {
+import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
+function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, uniqueCategories, tarifs, addTarif }) {
     const [formData, setFormData] = useState({
         nomerName: (nomer && nomer.name) || '',
         category: uniqueCategories[0] || '',
         tarif: tarifs[0] || ''
     });
-    
+
     const [tarifNames, setTarifNames] = useState([]);
 
     useEffect(() => {
@@ -44,13 +47,34 @@ function EditRequestNomerFond({ show, onClose, nomer, category, onSubmit, unique
         }));
     };
 
-    const handleSubmit = (e) => {
+    const [updateHotel] = useMutation(UPDATE_HOTEL);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
 
-        onSubmit(nomerName, nomer, formData.category);
-        onClose();
+        const existingCategoryForRooms = addTarif.find(tarif => tarif.name === formData.category);
+
+        let response_update_room = await updateHotel({
+            variables: {
+                updateHotelId: id,
+                input: {
+                    "rooms": [
+                        {
+                            "id": nomer.id,
+                            "name": nomerName,
+                            "categoryId": existingCategoryForRooms.id
+                        }
+                    ]
+                }
+            }
+        });
+
+        if (response_update_room) {
+            onSubmit(nomerName, nomer, formData.category);
+            onClose();
+        }
     };
 
     return (

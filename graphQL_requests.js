@@ -27,8 +27,10 @@ export const GET_HOTEL_ROOMS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
       categories {
-      name
+        id
+        name
         rooms {
+          id
           name
         }
     }

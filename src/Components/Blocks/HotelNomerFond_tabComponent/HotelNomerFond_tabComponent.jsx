@@ -74,10 +74,10 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     const handleEditCategory = (updatedCategory) => {
         const updatedTarifs = addTarif.map(tarif =>
             tarif.name === selectedCategory.name
-            ?
-            { ...tarif, name: updatedCategory.type }
-            :
-            tarif
+                ?
+                { ...tarif, name: updatedCategory.type }
+                :
+                tarif
         ).sort((a, b) => a.name.localeCompare(b.name));
 
         setAddTarif(updatedTarifs);
@@ -98,8 +98,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
     const deleteNomerFromCategory = () => {
         setAddTarif(prevTarifs => prevTarifs.map(tarif => {
-            if (tarif.name === deleteNomer.name) {
-                const updatedNumbers = tarif.rooms.filter(num => num !== deleteNomer.name);
+            if (tarif.name === deleteNomer.category) {
+                const updatedNumbers = tarif.rooms.filter(num => num.name !== deleteNomer.nomer.name);
                 return { ...tarif, rooms: updatedNumbers };
             }
             return tarif;
@@ -114,9 +114,10 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         setShowEditCategory(false);
     };
 
+
     const closeDeleteComponent = () => {
         setShowDelete(false);
-        setShowEditCategory(true);
+        setShowEditCategory(false);
     };
 
     const toggleEditNomer = (nomer, category) => {
@@ -151,9 +152,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         setShowEditNomer(false);
         setSelectedNomer({});
     };
-
-    // console.log(addTarif)
-
 
     const uniqueCategories = Array.from(new Set(addTarif.map(request => request.name)));
 
@@ -206,10 +204,11 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                         openDeleteNomerComponent={openDeleteNomerComponent}
                     />
 
-                    <CreateRequestNomerFond tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
-                    <CreateRequestCategoryNomer show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+                    <CreateRequestNomerFond id={id} tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+                    <CreateRequestCategoryNomer id={id} show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
 
                     <EditRequestNomerFond
+                        id={id} 
                         tarifs={requestsTarifs}
                         show={showEditNomer}
                         onClose={() => setShowEditNomer(false)}
@@ -217,8 +216,9 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                         category={selectedNomer.category}
                         onSubmit={handleEditNomer}
                         uniqueCategories={uniqueCategories}
+                        addTarif={addTarif}
                     />
-                    <EditRequestCategory show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
+                    <EditRequestCategory id={id} show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
 
                     {showDelete && (
                         <DeleteComponent

@@ -3,7 +3,10 @@ import classes from './EditRequestCategory.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function EditRequestCategory({ show, onClose, category, onSubmit }) {
+import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
+function EditRequestCategory({ show, id, onClose, category, onSubmit }) {
     const [formData, setFormData] = useState({
         type: ''
     });
@@ -28,9 +31,29 @@ function EditRequestCategory({ show, onClose, category, onSubmit }) {
         setFormData({ [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const [updateHotel] = useMutation(UPDATE_HOTEL);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(formData);
+
+        let response_update_category = await updateHotel({
+            variables: {
+                updateHotelId: id,
+                input: {
+                    "categories": [
+                        {
+                            "name": formData.type, 
+                            "id": category.id
+                        }
+                    ]
+                }
+            }
+        });
+
+        if (response_update_category) {
+            onSubmit(formData);
+            onClose();
+        }
     };
 
     return (

@@ -3,14 +3,18 @@ import classes from './CreateRequestNomerFond.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCategories, tarifs }) {
+import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
+function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniqueCategories, tarifs }) {
     const [formData, setFormData] = useState({
         nomerName: '',
         category: '',
         tarif: ''
     });
-    
+
     const [tarifNames, setTarifNames] = useState([]);
+    const [updateHotel] = useMutation(UPDATE_HOTEL);
 
     useEffect(() => {
         const names = tarifs.map(tarif => tarif.tarifName);
@@ -43,34 +47,50 @@ function CreateRequestNomerFond({ show, onClose, addTarif, setAddTarif, uniqueCa
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
+        const existingCategoryForRooms = addTarif.find(tarif => tarif.name === formData.category);
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
 
-        setAddTarif(prevTarifs => {
-            const existingCategory = prevTarifs.find(tarif => tarif.name === formData.category);
-
-            if (existingCategory) {
-                const updatedNumbers = [...existingCategory.rooms, {name: nomerName}].sort((a, b) => a.name.localeCompare(b.name));
-
-                return prevTarifs.map(tarif =>
-                    tarif.name === formData.category
-                        ? { ...tarif, rooms: updatedNumbers }
-                        : tarif
-                );
-            } else {
-                return [
-                    ...prevTarifs,
-                    {
-                        name: formData.category,
-                        rooms: [nomerName]
-                    }
-                ];
+        let response_update_room = await updateHotel({
+            variables: {
+                updateHotelId: id,
+                input: {
+                    "rooms": [
+                        {
+                            "name": nomerName,
+                            "categoryId": existingCategoryForRooms.id
+                        }
+                    ]
+                }
             }
         });
-        resetForm();
-        onClose();
+
+        if (response_update_room.data.updateHotel) {
+            setAddTarif(prevTarifs => {
+                const existingCategory = prevTarifs.find(tarif => tarif.name === formData.category);
+
+                if (existingCategory) {
+                    const updatedNumbers = [...existingCategory.rooms, { name: nomerName }].sort((a, b) => a.name.localeCompare(b.name));
+
+                    return prevTarifs.map(tarif =>
+                        tarif.name === formData.category
+                            ? { ...tarif, rooms: updatedNumbers }
+                            : tarif
+                    );
+                } else {
+                    return [
+                        ...prevTarifs,
+                        {
+                            name: formData.category,
+                            rooms: [nomerName]
+                        }
+                    ];
+                }
+            });
+            resetForm();
+            onClose();
+        }
     };
 
     useEffect(() => {

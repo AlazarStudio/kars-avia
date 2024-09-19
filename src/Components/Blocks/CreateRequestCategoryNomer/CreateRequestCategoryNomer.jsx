@@ -3,7 +3,10 @@ import classes from './CreateRequestCategoryNomer.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function CreateRequestCategoryNomer({ show, onClose, addTarif, setAddTarif, uniqueCategories }) {
+import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
+function CreateRequestCategoryNomer({ show, onClose, id, addTarif, setAddTarif, uniqueCategories }) {
     const [formData, setFormData] = useState({
         category: ''
     });
@@ -32,30 +35,49 @@ function CreateRequestCategoryNomer({ show, onClose, addTarif, setAddTarif, uniq
         }));
     };
 
-    const handleSubmit = (e) => {
+    const [updateHotel] = useMutation(UPDATE_HOTEL);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        setAddTarif(prevTarifs => {
-            const categoryExists = prevTarifs.some(tarif => tarif.name === formData.category);
-
-            if (categoryExists) {
-                alert("Такая категория уже существует!");
-                return prevTarifs;
-            }
-
-            const updatedTarifs = [
-                ...prevTarifs,
-                {
-                    name: formData.category,
-                    rooms: []
+        let response_update_category = await updateHotel({
+            variables: {
+                updateHotelId: id,
+                input: {
+                    "categories": [
+                        {
+                            "name": formData.category
+                        }
+                    ]
                 }
-            ];
-
-            return updatedTarifs.sort((a, b) => a.name.localeCompare(b.name));
+            }
         });
 
-        resetForm();
-        onClose();
+        if (response_update_category.data.updateHotel) {
+
+            setAddTarif(prevTarifs => {
+                const categoryExists = prevTarifs.some(tarif => tarif.name === formData.category);
+
+                if (categoryExists) {
+                    alert("Такая категория уже существует!");
+                    return prevTarifs;
+                }
+
+                const updatedTarifs = [
+                    ...prevTarifs,
+                    {
+                        name: formData.category,
+                        rooms: []
+                    }
+                ];
+
+                return updatedTarifs.sort((a, b) => a.name.localeCompare(b.name));
+            });
+
+            resetForm();
+            onClose();
+        }
+
     };
 
     useEffect(() => {
