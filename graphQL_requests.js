@@ -33,7 +33,7 @@ export const GET_HOTEL_ROOMS = gql`
           id
           name
         }
-    }
+      }
     }
   }
 `;

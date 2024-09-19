@@ -188,11 +188,11 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                                 handleChange={''}
                                 buttonTitle={'Добавить номер'}
                             />
-                            <Filter
+                            {/* <Filter
                                 toggleSidebar={toggleCategory}
                                 handleChange={''}
                                 buttonTitle={'Добавить Категорию'}
-                            />
+                            /> */}
                         </div>
                     </div>
 
