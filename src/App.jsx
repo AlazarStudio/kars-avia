@@ -16,7 +16,7 @@ import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 const uploadLink = createUploadLink({
   uri: 'http://192.168.0.112:4000/graphql',
 });
-
+ 
 const wsLink = new GraphQLWsLink(createClient({
   url: 'ws://192.168.0.112:4000/graphql',
   connectionParams: () => {

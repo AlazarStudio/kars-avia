@@ -117,12 +117,16 @@ function HotelsList({ children, ...props }) {
                         needDate={false}
                     />
                 </div>
+                {loading && <p>Loading...</p>}
+                {error && <p>Error: {error.message}</p>}
 
-                <InfoTableDataHotels
-                    toggleRequestSidebar={toggleRequestSidebar}
-                    requests={filteredRequests}
-                />
+                {!loading && !error && (
+                    <InfoTableDataHotels
+                        toggleRequestSidebar={toggleRequestSidebar}
+                        requests={filteredRequests}
+                    />
 
+                )}
                 <CreateRequestHotel
                     show={showCreateSidebar}
                     onClose={toggleCreateSidebar}

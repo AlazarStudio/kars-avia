@@ -32,6 +32,7 @@ function HotelPage({ children, id, ...props }) {
     };
     return (
         <>
+
             <div className={classes.section}>
                 <div className={classes.section_top}>
                     <Header>
@@ -41,7 +42,6 @@ function HotelPage({ children, id, ...props }) {
                         </div>
                     </Header>
                 </div>
-
                 <Tabs
                     className={classes.tabs}
                     selectedIndex={selectedTab}
