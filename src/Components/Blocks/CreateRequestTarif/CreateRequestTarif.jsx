@@ -3,18 +3,21 @@ import classes from './CreateRequestTarif.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function CreateRequestTarif({ show, onClose, addTarif, setAddTarif }) {
+import { UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
+function CreateRequestTarif({ show, onClose, id, addTarif, setAddTarif }) {
     const [formData, setFormData] = useState({
-        tarifName: '',
-        categories: [],
+        name: '',
     });
+
+    const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF);
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
-            tarifName: '',
-            categories: [],
+            name: '',
         });
     };
 
@@ -34,13 +37,26 @@ function CreateRequestTarif({ show, onClose, addTarif, setAddTarif }) {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setAddTarif([...addTarif, {
-            ...formData
-        }]);
-        resetForm();
-        onClose();
+
+        let response_update_tarif = await updateHotelTarif({
+            variables: {
+                updateHotelId: id,
+                input: {
+                    "tariffs": [
+                        {
+                            "name": formData.name
+                        }
+                    ]
+                }
+            }
+        });
+        if (response_update_tarif) {
+            setAddTarif(response_update_tarif.data.updateHotel.tariffs);
+            resetForm();
+            onClose();
+        }
     };
 
     useEffect(() => {
@@ -69,7 +85,7 @@ function CreateRequestTarif({ show, onClose, addTarif, setAddTarif }) {
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Название</label>
-                    <input type="text" name="tarifName" value={formData.tarifName} onChange={handleChange} />
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} />
                 </div>
 
             </div>

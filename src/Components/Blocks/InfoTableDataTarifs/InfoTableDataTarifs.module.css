@@ -23,10 +23,10 @@
 
 .InfoTable_title_elem,
 .InfoTable_data_elem {
-    padding: 20px 0px;
+    padding: 20px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    /* justify-content: center; */
     gap: 10px;
     border-right: 1px solid #E4E4EF;
 }
@@ -159,13 +159,16 @@
     justify-content: space-between;
     align-items: center;  
     transition: all 0.3s ease-in-out;  
+    position: relative;
+    margin-left: 8px;
 }
 
 .InfoTable_BottomInfo__item___elem {
-    padding: 0 20px;
-    text-align: center;
+    /* padding: 0 20px; */
+    /* text-align: center; */
     width: 20%;
 }
+
 
 .InfoTable_data {
     position: relative;
@@ -188,10 +191,12 @@
 .infoTableData_items{
     position: relative;
     display: flex;
-    width: calc(100% - 80px);
+    width: 100%;
 }
 
 .infoTableData_buttons{
+    position: absolute;
+    right: 28px;
     width: 60px;
     gap: 20px;
     display: flex;

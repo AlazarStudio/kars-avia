@@ -23,6 +23,24 @@ export const GET_HOTEL = gql`
   }
 `;
 
+export const GET_HOTEL_TARIFS = gql`
+  query Hotel($hotelId: ID!) {
+    hotel(id: $hotelId) {
+      tariffs {
+        id
+        name
+        category {
+          name
+          prices {
+            amount
+            amountair
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const GET_HOTEL_ROOMS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
@@ -51,6 +69,25 @@ export const UPDATE_HOTEL = gql`
     updateHotel(id: $updateHotelId, input: $input) {
       id
       name
+    }
+  }
+`;
+
+export const UPDATE_HOTEL_TARIF = gql`
+  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
+    updateHotel(id: $updateHotelId, input: $input) {
+      tariffs {
+        id
+        name
+        category {
+          id
+          name
+          prices {
+            amount
+            amountair
+          }
+        }
+      }
     }
   }
 `;

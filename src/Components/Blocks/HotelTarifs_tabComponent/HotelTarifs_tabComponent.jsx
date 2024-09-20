@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import classes from './HotelTarifs_tabComponent.module.css';
 import CreateRequestTarif from "../CreateRequestTarif/CreateRequestTarif";
 import CreateRequestTarifCategory from "../CreateRequestTarifCategory/CreateRequestTarifCategory";
@@ -8,33 +8,18 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import Filter from "../Filter/Filter";
 
 import { requestsTarifs } from "../../../requests";
-import { gql, useQuery } from "@apollo/client";
+
+import { GET_HOTEL_TARIFS } from '../../../../graphQL_requests.js';
+import { useQuery } from "@apollo/client";
+
 import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTarifCategory";
 
 function HotelTarifs_tabComponent({ children, id, ...props }) {
-    const GET_HOTEL = gql`
-        query Hotel($hotelId: ID!) {
-            hotel(id: $hotelId) {
-                tariffs {
-                    name
-                    price
-                    # aviaPrice
-                }
-                categories {
-                    name
-                }
-            }
-        }
-    `;
-
-    const { loading, error, data } = useQuery(GET_HOTEL, {
+    const { loading, error, data } = useQuery(GET_HOTEL_TARIFS, {
         variables: { hotelId: id },
     });
 
-    // console.log(data);
-    // console.log(requestsTarifs);
-
-    const [addTarif, setAddTarif] = useState(requestsTarifs);
+    const [addTarif, setAddTarif] = useState([]);
     const [showAddTarif, setShowAddTarif] = useState(false);
     const [showAddTarifCategory, setShowAddTarifCategory] = useState(false);
     const [showEditAddTarif, setEditShowAddTarif] = useState(false);
@@ -43,6 +28,12 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
     const [showDelete, setShowDelete] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
     const [searchTarif, setSearchTarif] = useState('');
+
+    useEffect(() => {
+        if (data) {
+            setAddTarif(data.hotel.tariffs);
+        }
+    }, [data]);
 
     const handleSearchTarif = (e) => {
         setSearchTarif(e.target.value);
@@ -87,12 +78,12 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
     const handleEditTarifCategory = (updatedCategory) => {
         const { tarif: currentTarif, category: currentCategory } = selectedTarif.data;
         const newTarifName = updatedCategory.tarifName;
-        
+
         let updatedTarifs = addTarif.map(tarif => {
             if (tarif.tarifName === currentTarif && currentTarif === newTarifName) {
                 const updatedCategories = tarif.categories.map(category => {
-                    if (category.type === currentCategory.type && 
-                        category.price === currentCategory.price && 
+                    if (category.type === currentCategory.type &&
+                        category.price === currentCategory.price &&
                         category.price_airline === currentCategory.price_airline) {
                         return { ...updatedCategory.categories };
                     }
@@ -105,10 +96,10 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
             }
 
             if (tarif.tarifName === currentTarif) {
-                const updatedCategories = tarif.categories.filter(category => 
-                    !(category.type === currentCategory.type && 
-                      category.price === currentCategory.price && 
-                      category.price_airline === currentCategory.price_airline)
+                const updatedCategories = tarif.categories.filter(category =>
+                    !(category.type === currentCategory.type &&
+                        category.price === currentCategory.price &&
+                        category.price_airline === currentCategory.price_airline)
                 );
                 return {
                     ...tarif,
@@ -117,7 +108,7 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
             }
             return { ...tarif };
         });
-    
+
         if (currentTarif !== newTarifName) {
             let newTarifFound = false;
             updatedTarifs = updatedTarifs.map(tarif => {
@@ -130,7 +121,7 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
                 }
                 return { ...tarif };
             });
-    
+
             if (!newTarifFound) {
                 const newTarif = {
                     tarifName: newTarifName,
@@ -139,13 +130,13 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
                 updatedTarifs = [...updatedTarifs, newTarif];
             }
         }
-    
+
         setAddTarif(updatedTarifs);
         setEditShowAddTarifCategory(false);
         setSelectedTarif(null);
     };
-    
-        
+
+
 
     const deleteTarif = (index) => {
         setAddTarif(addTarif.filter((_, i) => i !== index));
@@ -191,9 +182,10 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
         setEditShowAddTarif(false);
     };
 
+
     const filteredRequestsTarif = addTarif.filter(request => {
         return (
-            request.tarifName.toLowerCase().includes(searchTarif.toLowerCase()) ||
+            request.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
             request.tarif_сategory_one_place.toLowerCase().includes(searchTarif.toLowerCase()) ||
             request.tarif_airline_one_place.toLowerCase().includes(searchTarif.toLowerCase()) ||
             request.tarif_сategory_two_place.toLowerCase().includes(searchTarif.toLowerCase()) ||
@@ -226,16 +218,21 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
                 </div>
             </div>
 
-            <InfoTableDataTarifs
-                toggleRequestSidebar={toggleEditTarifs}
-                toggleEditTarifsCategory={toggleEditTarifsCategory}
-                requests={filteredRequestsTarif}
-                openDeleteComponent={openDeleteComponent}
-                openDeleteComponentCategory={openDeleteComponentCategory}
-            />
+            {loading && <p>Loading...</p>}
+            {error && <p>Error: {error.message}</p>}
 
-            <CreateRequestTarif show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} />
-            <CreateRequestTarifCategory show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} />
+            {!loading && !error && data && (
+                <InfoTableDataTarifs
+                    toggleRequestSidebar={toggleEditTarifs}
+                    toggleEditTarifsCategory={toggleEditTarifsCategory}
+                    requests={filteredRequestsTarif}
+                    openDeleteComponent={openDeleteComponent}
+                    openDeleteComponentCategory={openDeleteComponentCategory}
+                />
+            )}
+
+            <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} />
+            <CreateRequestTarifCategory id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} />
 
             <EditRequestTarif show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} />
             <EditRequestTarifCategory show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} />
