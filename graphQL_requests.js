@@ -52,6 +52,7 @@ export const GET_HOTEL_ROOMS = gql`
         rooms {
           id
           name
+          places
         }
         tariffs {
           name
@@ -78,6 +79,7 @@ export const UPDATE_HOTEL = gql`
         rooms {
           id
           name
+          places
         }
         tariffs {
           name

@@ -6,12 +6,12 @@ import Sidebar from "../Sidebar/Sidebar";
 import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
-function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, uniqueCategories, tarifs, addTarif, setAddTarif }) {
+function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSubmit, uniqueCategories, tarifs, addTarif, setAddTarif, selectedNomer }) {
     const [formData, setFormData] = useState({
         nomerName: (nomer && nomer.name) || '',
-        category: uniqueCategories[0] || ''
+        category: uniqueCategories[0] || '',
+        places: (nomer && nomer.places) || 1
     });
-
 
     const sidebarRef = useRef();
 
@@ -19,6 +19,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, un
         if (show) {
             setFormData({
                 nomerName: (nomer && nomer.name) || '',
+                places: (nomer && nomer.places) || 1,
                 category: category || uniqueCategories[0] || ''
             });
         }
@@ -45,8 +46,14 @@ function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, un
         e.preventDefault();
 
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
-        
-        const existingCategoryForRooms = addTarif.find(tarif => tarif.name === formData.category && tarif.name === formData.category);
+
+        let roomName = selectedNomer.category.name;
+        let roomTariff = selectedNomer.category.tariffs.name;
+
+        const existingCategoryForRooms = addTarif.find(tarif =>
+            tarif.name.toLowerCase() === roomName.toLowerCase() &&
+            tarif.tariffs.name.toLowerCase() === roomTariff.toLowerCase()
+        );
 
         let response_update_room = await updateHotel({
             variables: {
@@ -56,6 +63,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, un
                         {
                             "id": nomer.id,
                             "name": nomerName,
+                            "places": Number(formData.places),
                             "categoryId": existingCategoryForRooms.id
                         }
                     ]
@@ -86,6 +94,9 @@ function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, un
                 <div className={classes.requestData}>
                     <label>Название номера</label>
                     <input type="text" name="nomerName" value={formData.nomerName} onChange={handleChange} placeholder="Пример: № 151" />
+
+                    <label>Количество мест в номере</label>
+                    <input type="number" name="places" value={formData.places} onChange={handleChange} placeholder="1" />
 
                     {/* <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>

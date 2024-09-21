@@ -3,7 +3,15 @@ import classes from './HotelShahmatka_tabComponent.module.css';
 import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent";
 import Filter from "../Filter/Filter";
 
+import { GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
 function HotelShahmatka_tabComponent({ children, id, ...props }) {
+
+    const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+        variables: { hotelId: id },
+    });
+
     const dataObject = [
         {
             room: '',
@@ -17,22 +25,29 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
         }
     ];
 
-    const allRooms = [
-        { room: '№121', places: 1 },
-        { room: '№122', places: 1 },
-        { room: '№221', places: 2 },
-        { room: '№222', places: 2 },
-    ];
+    const allRooms = data && data.hotel.categories.map((category, index) => {
+        return category.rooms.reduce((acc, item) => {
+            acc = {
+                room: item.name,
+                places: 1
+            };
+            return acc;
+        }, {});
+    });
+    
 
-    const data = [
-        { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-20', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№121', place: 1, start: '2024-08-10', startTime: '14:00', end: '2024-08-26', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№121', place: 1, start: '2024-08-26', startTime: '14:00', end: '2024-08-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№122', place: 1, start: '2024-08-03', startTime: '14:00', end: '2024-08-10', endTime: '10:00', client: 'Гочияев Р. Р.' },
-        { public: true, room: '№221', place: 1, start: '2024-08-12', startTime: '14:00', end: '2024-08-29', endTime: '10:00', client: 'Уртенов А. З.' },
-        { public: true, room: '№221', place: 2, start: '2024-08-10', startTime: '14:00', end: '2024-08-19', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№222', place: 1, start: '2024-08-12', startTime: '14:00', end: '2024-08-18', endTime: '10:00', client: 'Гочияев Р. Р.' },
-        { public: true, room: '№222', place: 2, start: '2024-07-12', startTime: '14:00', end: '2024-08-24', endTime: '10:00', client: 'Гочияев Р. Р.' },
+    // console.log(allRoomsTest)
+
+    // const allRooms = [
+    //     { room: '№121', places: 1 },
+    //     { room: '№122', places: 1 },
+    //     { room: '№221', places: 2 },
+    //     { room: '№222', places: 2 },
+    // ];
+
+    const dataInfo = [
+        // { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-20', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        // { public: true, room: '№122', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
     ];
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -59,11 +74,11 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
         }));
     }
 
-    const filteredRequests = allRooms.filter(request => {
+    const filteredRequests = data && allRooms.filter(request => {
         const matchesRoom = request.room.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesPlaces = selectQuery === '' || request.places === parseInt(selectQuery);
 
-        const matchingClients = data.filter(entry =>
+        const matchingClients = dataInfo.filter(entry =>
             entry.client.toLowerCase().includes(searchQuery.toLowerCase()) &&
             entry.room === request.room
         );
@@ -90,15 +105,20 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
                         <option value="2">2 - МЕСТНЫЕ</option>
                     </select>
 
-                    <Filter
+                    {/* <Filter
                         toggleSidebar={toggleSidebar}
                         handleChange={handleChange}
                         buttonTitle={'Добавить бронь'}
-                    />
+                    /> */}
                 </div>
             </div>
 
-            <HotelTablePageComponent allRooms={filteredRequests} data={data} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
+            {loading && <p>Loading...</p>}
+            {error && <p>Error: {error.message}</p>}
+
+            {!loading && !error && (
+                <HotelTablePageComponent allRooms={filteredRequests} data={dataInfo} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
+            )}
         </>
     );
 }

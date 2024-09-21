@@ -209,6 +209,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                         onClose={() => setShowEditNomer(false)}
                         nomer={selectedNomer.nomer}
                         category={selectedNomer.category}
+                        selectedNomer={selectedNomer}
                         onSubmit={handleEditNomer}
                         uniqueCategories={uniqueCategories}
                         addTarif={addTarif}

@@ -27,7 +27,7 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
                                     <div className={`${classes.InfoTable_BottomInfo__item___elem}`} key={index}>
                                         {elem.name}
                                         <div className={classes.infoTable_buttons}>
-                                            <img src="/editPassenger.png" alt="" onClick={() => toggleRequestEditNumber(elem, item.name)} />
+                                            <img src="/editPassenger.png" alt="" onClick={() => toggleRequestEditNumber(elem, item)} />
                                             <img src="/deletePassenger.png" alt="" onClick={() => openDeleteNomerComponent(elem, item.name)} />
                                         </div>
                                     </div>

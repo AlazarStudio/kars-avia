@@ -9,6 +9,7 @@ import { useMutation, useQuery } from "@apollo/client";
 function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniqueCategories, tarifs }) {
     const [formData, setFormData] = useState({
         nomerName: '',
+        places: 1,
         category: ''
     });
 
@@ -20,6 +21,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
     const resetForm = () => {
         setFormData({
             nomerName: '',
+            places: 1,
             category: uniqueCategories[0] || ''
         });
     };
@@ -59,6 +61,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
                     "rooms": [
                         {
                             "name": nomerName,
+                            "places": Number(formData.places),
                             "categoryId": existingCategoryForRooms.id
                         }
                     ]
@@ -93,6 +96,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
             };
         }
     }, [show]);
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -104,6 +108,9 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
                 <div className={classes.requestData}>
                     <label>Название номера</label>
                     <input type="text" name="nomerName" value={formData.nomerName} onChange={handleChange} placeholder="Пример: № 151" />
+
+                    <label>Количество мест в номере</label>
+                    <input type="number" name="places" value={formData.places} onChange={handleChange} placeholder="1" />
 
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
