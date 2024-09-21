@@ -206,12 +206,9 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
     const filteredRequestsTarif = addTarif.filter(request => {
         return (
             request.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.tarif_сategory_one_place.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.tarif_airline_one_place.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.tarif_сategory_two_place.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.tarif_airline_two_place.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.tarif_сategory_three_place.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.tarif_airline_three_place.toLowerCase().includes(searchTarif.toLowerCase())
+            request.category.some(room => room.name.toLowerCase().includes(searchTarif.toLowerCase())) ||
+            request.category.some(room => String(room.prices[0].amount).includes(searchTarif)) ||
+            request.category.some(room => String(room.prices[0].amountair).includes(searchTarif))
         );
     });
 

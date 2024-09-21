@@ -151,7 +151,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     const uniqueCategories = addTarif && addTarif.map(request => `${request.name} - ${request.tariffs.name}`);
 
     const filteredRequestsTarif = addTarif.filter(request => {
-        const matchesCategory = selectQuery === '' || request.name === selectQuery;
+        const matchesCategory = selectQuery === '' || (selectQuery.toLowerCase().includes(request.name.toLowerCase()) && selectQuery.toLowerCase().includes(request.tariffs.name.toLowerCase()));
         const matchesSearch = searchTarif === '' || request.rooms.some(room => room.name.toLowerCase().includes(searchTarif.toLowerCase()));
         return matchesCategory && matchesSearch;
     });
