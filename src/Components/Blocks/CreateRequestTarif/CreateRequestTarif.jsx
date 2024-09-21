@@ -52,6 +52,7 @@ function CreateRequestTarif({ show, onClose, id, addTarif, setAddTarif }) {
                 }
             }
         });
+        
         if (response_update_tarif) {
             setAddTarif(response_update_tarif.data.updateHotel.tariffs);
             resetForm();

@@ -30,6 +30,7 @@ export const GET_HOTEL_TARIFS = gql`
         id
         name
         category {
+          id
           name
           prices {
             amount
@@ -88,6 +89,22 @@ export const UPDATE_HOTEL_TARIF = gql`
           }
         }
       }
+    }
+  }
+`;
+
+export const DELETE_HOTEL_CATEGORY = gql`
+  mutation DeleteCategory($deleteCategoryId: ID!) {
+    deleteCategory(id: $deleteCategoryId) {
+      name
+    }
+  }
+`;
+
+export const DELETE_HOTEL_TARIFF = gql`
+  mutation Mutation($deleteTariffId: ID!) {
+    deleteTariff(id: $deleteTariffId) {
+      name
     }
   }
 `;

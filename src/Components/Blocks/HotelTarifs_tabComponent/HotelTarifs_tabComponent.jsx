@@ -9,8 +9,8 @@ import Filter from "../Filter/Filter";
 
 import { requestsTarifs } from "../../../requests";
 
-import { GET_HOTEL_TARIFS } from '../../../../graphQL_requests.js';
-import { useQuery } from "@apollo/client";
+import { GET_HOTEL_TARIFS, DELETE_HOTEL_CATEGORY, DELETE_HOTEL_TARIFF } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
 
 import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTarifCategory";
 
@@ -28,6 +28,9 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
     const [showDelete, setShowDelete] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
     const [searchTarif, setSearchTarif] = useState('');
+
+    const [deleteHotelCategory] = useMutation(DELETE_HOTEL_CATEGORY);
+    const [deleteHotelTarif] = useMutation(DELETE_HOTEL_TARIFF);
 
     useEffect(() => {
         if (data) {
@@ -136,17 +139,29 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
         setSelectedTarif(null);
     };
 
+    const deleteTarif = async (index, tarifID) => {
+        let response_update_tarif = await deleteHotelTarif({
+            variables: {
+                "deleteTariffId": tarifID
+            }
+        });
 
-
-    const deleteTarif = (index) => {
-        setAddTarif(addTarif.filter((_, i) => i !== index));
-        setShowDelete(false);
-        setEditShowAddTarif(false);
+        if (response_update_tarif) {
+            setAddTarif(addTarif.filter((_, i) => i !== index));
+            setShowDelete(false);
+            setEditShowAddTarif(false);
+        }
     };
 
-    const openDeleteComponent = (index) => {
+    const openDeleteComponent = (index, tarifID) => {
         setShowDelete(true);
-        setDeleteIndex(index);
+        setDeleteIndex({
+            type: 'deleteTarif',
+            data: {
+                index,
+                tarifID
+            }
+        });
         setEditShowAddTarif(false);
     };
 
@@ -158,6 +173,7 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
     const openDeleteComponentCategory = (category, tarif) => {
         setShowDelete(true);
         setDeleteIndex({
+            type: 'deleteCategory',
             data: {
                 category,
                 tarif
@@ -165,23 +181,30 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
         });
     };
 
-    const deleteTarifCategory = (category, tarif) => {
-        const updatedTarifs = addTarif.map(t => {
-            if (t.tarifName == tarif) {
-                const updatedCategories = t.categories.filter(cat => cat.type !== category.type);
-                return {
-                    tarifName: tarif,
-                    categories: updatedCategories
-                }
+    const deleteTarifCategory = async (category, tarif) => {
+        let response_update_category = await deleteHotelCategory({
+            variables: {
+                "deleteCategoryId": category.id
             }
-            return t;
         });
 
-        setAddTarif(updatedTarifs);
-        setShowDelete(false);
-        setEditShowAddTarif(false);
-    };
+        if (response_update_category) {
+            const updatedTarifs = addTarif.map(t => {
+                if (t.id == tarif.id) {
+                    const updatedCategories = t.category.filter(cat => cat.id !== category.id);
+                    return {
+                        name: tarif.name,
+                        category: updatedCategories
+                    }
+                }
+                return t;
+            });
 
+            setAddTarif(updatedTarifs);
+            setShowDelete(false);
+            setEditShowAddTarif(false);
+        }
+    };
 
     const filteredRequestsTarif = addTarif.filter(request => {
         return (
@@ -194,6 +217,7 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
             request.tarif_airline_three_place.toLowerCase().includes(searchTarif.toLowerCase())
         );
     });
+
     return (
         <>
             <div className={classes.section_searchAndFilter}>
@@ -240,9 +264,9 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
             {showDelete && (
                 <DeleteComponent
                     ref={deleteComponentRef}
-                    remove={() => !deleteIndex.data ? deleteTarif(deleteIndex) : deleteTarifCategory(deleteIndex.data.category, deleteIndex.data.tarif)}
+                    remove={() => deleteIndex.type == "deleteTarif" ? deleteTarif(deleteIndex.data.index, deleteIndex.data.tarifID) : deleteTarifCategory(deleteIndex.data.category, deleteIndex.data.tarif)}
                     close={closeDeleteComponent}
-                    title={`Вы действительно хотите удалить тариф?`}
+                    title={`Вы действительно хотите удалить ${deleteIndex.type == "deleteTarif" ? 'тариф' : 'категорию'}?`}
                 />
             )}
         </>

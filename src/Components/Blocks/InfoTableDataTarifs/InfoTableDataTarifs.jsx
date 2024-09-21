@@ -23,7 +23,7 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDel
 
                             <div className={classes.infoTable_buttons}>
                                 <img src="/editPassenger.png" alt="" onClick={() => { toggleRequestSidebar(item) }} />
-                                <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponent(index)} />
+                                <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponent(index, item.id)} />
                             </div>
 
                         </div>
@@ -36,8 +36,8 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDel
                                         <div className={`${classes.InfoTable_BottomInfo__item___elem} ${classes.w20}`}>{category.prices.length > 0 && category.prices[0].amountair} р / сутки</div>
                                     </div>
                                     <div className={classes.infoTableData_buttons}>
-                                        <img src="/editPassenger.png" alt="" onClick={() => toggleEditTarifsCategory(category, item.name)} />
-                                        <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponentCategory(category, item.name)} />
+                                        <img src="/editPassenger.png" alt="" onClick={() => toggleEditTarifsCategory(category, item)} />
+                                        <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponentCategory(category, item)} />
                                     </div>
                                 </div>
                             ))}
