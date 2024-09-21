@@ -2,11 +2,12 @@ import React from "react";
 import classes from './InfoTableDataCompany.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setChooseObject, ...props }) {
+function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setChooseObject, id, ...props }) {
     const handleObject = (item, index) => {
         setChooseObject({ ...item, index });
         toggleRequestSidebar();
     };
+    
 
     return (
         <InfoTable>

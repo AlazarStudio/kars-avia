@@ -94,7 +94,7 @@ const checkBookingConflict = (newBooking, existingBookings) => {
     return false;
 };
 
-const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, showAddBronForm }) => {
+const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, showAddBronForm, maxHeight }) => {
     const [state, dispatch] = useReducer(reducer, initialState(data, dataObject));
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -332,7 +332,7 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
     
     return (
         <div className={classes.tableData}>
-            <div className={classes.tableContainer} ref={tableContainerRef}>
+            <div className={classes.tableContainer} ref={tableContainerRef} style={{"max-height": maxHeight}}>
                 <table className={classes.hotelTable}>
                     <thead className={classes.stickyHeader}>
                         <tr>

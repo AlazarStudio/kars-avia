@@ -7,7 +7,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import CreateRequestCompanyHotel from "../CreateRequestCompanyHotel/CreateRequestCompanyHotel";
 import ExistRequestCompanyHotel from "../ExistRequestCompanyHotel/ExistRequestCompanyHotel";
 
-function HotelCompany_tabComponent({ children, ...props }) {
+function HotelCompany_tabComponent({ children, id, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [chooseObject, setChooseObject] = useState(null);
@@ -50,7 +50,7 @@ function HotelCompany_tabComponent({ children, ...props }) {
 
     const closeDeleteComponent = () => {
         setShowDelete(false);
-        setShowRequestSidebar(true); 
+        setShowRequestSidebar(true);
     };
 
     const [filterData, setFilterData] = useState({
@@ -104,18 +104,21 @@ function HotelCompany_tabComponent({ children, ...props }) {
             </div>
 
             <InfoTableDataCompany
+                id={id}
                 toggleRequestSidebar={toggleRequestSidebar}
                 requests={filteredRequests}
                 setChooseObject={setChooseObject}
             />
 
             <CreateRequestCompanyHotel
+                id={id}
                 show={showCreateSidebar}
                 onClose={toggleCreateSidebar}
                 addDispatcher={addDispatcher}
             />
 
             <ExistRequestCompanyHotel
+                id={id}
                 show={showRequestSidebar}
                 onClose={toggleRequestSidebar}
                 chooseObject={chooseObject}

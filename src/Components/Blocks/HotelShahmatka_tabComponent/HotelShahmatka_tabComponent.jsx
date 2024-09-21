@@ -25,18 +25,20 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
         }
     ];
 
-    const allRooms = data && data.hotel.categories.map((category, index) => {
-        return category.rooms.reduce((acc, item) => {
-            acc = {
-                room: item.name,
-                places: 1
-            };
-            return acc;
-        }, {});
-    });
-    
+    let allRooms = [];
 
-    // console.log(allRoomsTest)
+    data && data.hotel.categories.map((category, index) => {
+        return category.rooms.map((item) => (
+            allRooms.push({
+                room: `${item.name} - ${category.tariffs?.name}`,
+                places: item.places
+            })
+        ));
+    });
+
+    const placesArray = allRooms.map(room => room.places);
+    const uniquePlacesArray = [...new Set(placesArray)];
+    uniquePlacesArray.sort((a, b) => a - b);
 
     // const allRooms = [
     //     { room: '№121', places: 1 },
@@ -101,8 +103,9 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
                 <div className={classes.section_searchAndFilter_filter}>
                     <select onChange={handleSelect}>
                         <option value="">Показать все</option>
-                        <option value="1">1 - МЕСТНЫЕ</option>
-                        <option value="2">2 - МЕСТНЫЕ</option>
+                        {uniquePlacesArray.map((item, index) => (
+                            <option value={`${item}`} key={index}>{item} - МЕСТНЫЕ</option>
+                        ))}
                     </select>
 
                     {/* <Filter
@@ -117,7 +120,7 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
             {error && <p>Error: {error.message}</p>}
 
             {!loading && !error && (
-                <HotelTablePageComponent allRooms={filteredRequests} data={dataInfo} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
+                <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={dataInfo} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
             )}
         </>
     );

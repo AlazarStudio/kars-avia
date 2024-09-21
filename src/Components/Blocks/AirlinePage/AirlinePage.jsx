@@ -53,7 +53,7 @@ function AirlinePage({ children, id, ...props }) {
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <HotelShahmatka_tabComponent id={id} />
+                        {/* <HotelShahmatka_tabComponent id={id} /> */}
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
