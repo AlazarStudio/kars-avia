@@ -10,8 +10,8 @@ import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequ
 import EditRequestCategory from "../EditRequestCategory/EditRequestCategory";
 import EditRequestNomerFond from "../EditRequestNomerFond/EditRequestNomerFond";
 
-import { GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
-import { useQuery } from "@apollo/client";
+import { GET_HOTEL_ROOMS, DELETE_HOTEL_ROOM, DELETE_HOTEL_CATEGORY } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
 
 
 function HotelNomerFond_tabComponent({ children, id, ...props }) {
@@ -35,6 +35,9 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
     const [showEditNomer, setShowEditNomer] = useState(false);
     const [selectedNomer, setSelectedNomer] = useState({});
+
+    const [deleteHotelRoom] = useMutation(DELETE_HOTEL_ROOM);
+    const [deleteHotelCategory] = useMutation(DELETE_HOTEL_CATEGORY);
 
     useEffect(() => {
         if (data) {
@@ -85,32 +88,47 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         setSelectedCategory(null);
     }
 
-    const deleteTarif = (index) => {
-        setAddTarif(addTarif.filter((_, i) => i !== index));
-        setShowDelete(false);
-        setShowEditCategory(false);
+    const deleteTarif = async (item) => {
+        let response_update_category = await deleteHotelCategory({
+            variables: {
+                "deleteCategoryId": item.item.id
+            }
+        });
+        if (response_update_category) {
+            setAddTarif(addTarif.filter((_, i) => i !== item.index));
+            setShowDelete(false);
+            setShowEditCategory(false);
+        }
     };
 
     const openDeleteNomerComponent = (nomer, category) => {
-        setDeleteNomer({ nomer, category });
+        setDeleteNomer({ nomer, category, type: 'deleteRoom' });
         setShowDelete(true);
     };
 
-    const deleteNomerFromCategory = () => {
-        setAddTarif(prevTarifs => prevTarifs.map(tarif => {
-            if (tarif.name === deleteNomer.category) {
-                const updatedNumbers = tarif.rooms.filter(num => num.name !== deleteNomer.nomer.name);
-                return { ...tarif, rooms: updatedNumbers };
+    const deleteNomerFromCategory = async (roomInfo) => {
+        let response_update_room = await deleteHotelRoom({
+            variables: {
+                "deleteRoomId": roomInfo.nomer.id
             }
-            return tarif;
-        }));
-        setShowDelete(false);
-        setDeleteNomer(null);
+        });
+
+        if (response_update_room) {
+            setAddTarif(prevTarifs => prevTarifs.map(tarif => {
+                if (tarif.name === deleteNomer.category) {
+                    const updatedNumbers = tarif.rooms.filter(num => num.name !== deleteNomer.nomer.name);
+                    return { ...tarif, rooms: updatedNumbers };
+                }
+                return tarif;
+            }));
+            setShowDelete(false);
+            setDeleteNomer(null);
+        }
     };
 
-    const openDeleteComponent = (index) => {
+    const openDeleteComponent = (index, item) => {
         setShowDelete(true);
-        setDeleteIndex(index);
+        setDeleteIndex({ index, item });
         setShowEditCategory(false);
     };
 
@@ -126,34 +144,11 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     }
 
     const handleEditNomer = (updatedNomer, oldNomer, newCategory) => {
-        console.log(selectedNomer)
-        const updatedTarifs = addTarif.map(tarif => {
-            if (tarif.name === selectedNomer.category) {
-                const updatedNumbers = tarif.rooms.filter(n => n !== oldNomer);
-
-                if (newCategory === selectedNomer.category) {
-                    updatedNumbers.push({ name: updatedNomer });
-                    updatedNumbers.sort((a, b) => a.name.localeCompare(b.name));
-                    return { ...tarif, rooms: updatedNumbers };
-                }
-
-                return { ...tarif, rooms: updatedNumbers };
-            }
-
-            if (tarif.name === newCategory) {
-                const updatedNumbers = [...tarif.rooms, { name: updatedNomer }];
-                return { ...tarif, rooms: updatedNumbers };
-            }
-
-            return tarif;
-        });
-
-        setAddTarif(updatedTarifs);
         setShowEditNomer(false);
         setSelectedNomer({});
     };
 
-    const uniqueCategories = Array.from(new Set(addTarif.map(request => request.name)));
+    const uniqueCategories = addTarif && addTarif.map(request => `${request.name} - ${request.tariffs.name}`);
 
     const filteredRequestsTarif = addTarif.filter(request => {
         const matchesCategory = selectQuery === '' || request.name === selectQuery;
@@ -166,7 +161,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
             {loading && <p>Loading...</p>}
             {error && <p>Error: {error.message}</p>}
 
-            {!loading && !error && (
+            {!loading && !error && addTarif && (
                 <>
                     <div className={classes.section_searchAndFilter}>
                         <input
@@ -205,10 +200,10 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                     />
 
                     <CreateRequestNomerFond id={id} tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
-                    <CreateRequestCategoryNomer id={id} show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+                    {/* <CreateRequestCategoryNomer id={id} show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} /> */}
 
                     <EditRequestNomerFond
-                        id={id} 
+                        id={id}
                         tarifs={requestsTarifs}
                         show={showEditNomer}
                         onClose={() => setShowEditNomer(false)}
@@ -217,13 +212,14 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                         onSubmit={handleEditNomer}
                         uniqueCategories={uniqueCategories}
                         addTarif={addTarif}
+                        setAddTarif={setAddTarif}
                     />
                     <EditRequestCategory id={id} show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
 
                     {showDelete && (
                         <DeleteComponent
                             ref={deleteComponentRef}
-                            remove={deleteNomer ? deleteNomerFromCategory : () => deleteTarif(deleteIndex)}
+                            remove={deleteNomer ? () => deleteNomerFromCategory(deleteNomer) : () => deleteTarif(deleteIndex)}
                             close={closeDeleteComponent}
                             title={`Вы действительно хотите удалить ${deleteNomer ? 'номер' : 'категорию'}?`}
                         />

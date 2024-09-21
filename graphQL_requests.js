@@ -33,6 +33,7 @@ export const GET_HOTEL_TARIFS = gql`
           id
           name
           prices {
+            id
             amount
             amountair
           }
@@ -52,6 +53,9 @@ export const GET_HOTEL_ROOMS = gql`
           id
           name
         }
+        tariffs {
+          name
+        }
       }
     }
   }
@@ -68,8 +72,17 @@ export const GET_HOTEL_NAME = gql`
 export const UPDATE_HOTEL = gql`
   mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
     updateHotel(id: $updateHotelId, input: $input) {
-      id
-      name
+      categories {
+        id
+        name
+        rooms {
+          id
+          name
+        }
+        tariffs {
+          name
+        }
+      }
     }
   }
 `;
@@ -84,6 +97,7 @@ export const UPDATE_HOTEL_TARIF = gql`
           id
           name
           prices {
+            id
             amount
             amountair
           }
@@ -104,6 +118,14 @@ export const DELETE_HOTEL_CATEGORY = gql`
 export const DELETE_HOTEL_TARIFF = gql`
   mutation Mutation($deleteTariffId: ID!) {
     deleteTariff(id: $deleteTariffId) {
+      name
+    }
+  }
+`;
+
+export const DELETE_HOTEL_ROOM = gql`
+  mutation Mutation($deleteRoomId: ID!) {
+    deleteRoom(id: $deleteRoomId) {
       name
     }
   }

@@ -3,11 +3,13 @@ import classes from './EditRequestTarif.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function EditRequestTarif({ show, onClose, tarif, onSubmit }) {
-    const [formData, setFormData] = useState({
-        tarifName: '',
-        categories: [],
-    });
+import { UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
+function EditRequestTarif({ show, onClose, tarif, onSubmit, id, setAddTarif }) {
+    const [formData, setFormData] = useState({});
+
+    const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF);
 
     const sidebarRef = useRef();
 
@@ -32,10 +34,44 @@ function EditRequestTarif({ show, onClose, tarif, onSubmit }) {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(formData);
+
+        let response_update_tarif = await updateHotelTarif({
+            variables: {
+                updateHotelId: id,
+                input: {
+                    "tariffs": [
+                        {
+                            "id": formData.id,
+                            "name": formData.name
+                        }
+                    ]
+                }
+            }
+        });
+
+        if (response_update_tarif) {
+            onSubmit(response_update_tarif.data.updateHotel.tariffs);
+            resetForm();
+            onClose();
+        }
     };
+
+    useEffect(() => {
+        if (show) {
+            const handleClickOutside = (event) => {
+                if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+                    closeButton();
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }
+    }, [show]);
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -47,7 +83,7 @@ function EditRequestTarif({ show, onClose, tarif, onSubmit }) {
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Название</label>
-                    <input type="text" name="tarifName" value={formData.tarifName} onChange={handleChange} />
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} />
                 </div>
 
             </div>

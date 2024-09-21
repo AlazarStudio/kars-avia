@@ -70,10 +70,7 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
     }
 
     const handleEditTarif = (updatedTarif) => {
-        const updatedTarifs = addTarif.map(tarif =>
-            tarif === selectedTarif ? updatedTarif : tarif
-        );
-        setAddTarif(updatedTarifs);
+        setAddTarif(updatedTarif);
         setEditShowAddTarif(false);
         setSelectedTarif(null);
     }
@@ -258,8 +255,8 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
             <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} />
             <CreateRequestTarifCategory id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} />
 
-            <EditRequestTarif show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} />
-            <EditRequestTarifCategory show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} />
+            <EditRequestTarif id={id} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} />
+            <EditRequestTarifCategory id={id} setAddTarif={setAddTarif} show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} />
 
             {showDelete && (
                 <DeleteComponent

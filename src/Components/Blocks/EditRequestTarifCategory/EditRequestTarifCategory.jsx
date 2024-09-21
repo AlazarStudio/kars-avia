@@ -3,30 +3,22 @@ import classes from './EditRequestTarifCategory.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function EditRequestTarifCategory({ show, onClose, tarif, onSubmit, addTarif }) {
-    const [formData, setFormData] = useState({
-        tarifName: '',
-        categories: {
-            type: '',
-            price: '',
-            price_airline: '',
-        },
-    });
+import { UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
+function EditRequestTarifCategory({ show, onClose, tarif, onSubmit, addTarif, id, setAddTarif }) {
+    const [formData, setFormData] = useState({});
 
     const sidebarRef = useRef();
 
+    const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF);
+
     useEffect(() => {
         if (show && tarif) {
-            setFormData({
-                tarifName: tarif.data.tarif,
-                categories: {
-                    type: tarif.data.category.type || '',
-                    price: tarif.data.category.price || '',
-                    price_airline: tarif.data.category.price_airline || '',
-                },
-            });
+            setFormData(tarif.data);
         }
     }, [show, tarif]);
+
 
     const closeButton = () => {
         let success = confirm("Вы уверены, все несохраненные данные будут удалены");
@@ -37,59 +29,128 @@ function EditRequestTarifCategory({ show, onClose, tarif, onSubmit, addTarif }) 
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        
-        // Если изменяем одно из полей categories
-        if (name === 'type' || name === 'price' || name === 'price_airline') {
+    
+        if (name === 'tarifName') {
+            const selectedTarif = addTarif.find(tarif => tarif.name === value);
             setFormData(prevState => ({
                 ...prevState,
-                categories: {
-                    ...prevState.categories,
-                    [name]: value,
+                tarif: selectedTarif
+            }));
+        } else if (name === 'type') {
+            setFormData(prevState => ({
+                ...prevState,
+                category: {
+                    ...prevState.category,
+                    name: value,
+                },
+            }));
+        } else if (name === 'price' || name === 'price_airline') {
+            setFormData(prevState => ({
+                ...prevState,
+                category: {
+                    ...prevState.category,
+                    prices: [
+                        {
+                            ...prevState.category?.prices?.[0],
+                            [name === 'price' ? 'amount' : 'amountair']: value,
+                        }
+                    ],
                 },
             }));
         } else {
-            // Если изменяем другие поля, например tarifName
             setFormData(prevState => ({
                 ...prevState,
                 [name]: value,
             }));
         }
     };
+    
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(formData);
+
+        let response_update_category = await updateHotelTarif({
+            variables: {
+                updateHotelId: id,
+                input: {
+                    "categories": [
+                        {
+                            "name": formData.category.name,
+                            "id": formData.category.id
+                        }
+                    ]
+                }
+            }
+        });
+        
+        let response_update_prices = await updateHotelTarif({
+            variables: {
+                updateHotelId: id,
+                input: {
+                    "prices": [
+                        {
+                            "id": formData.category.prices[0].id,
+                            "amount": Number(formData.category.prices[0].amount),
+                            "amountair": Number(formData.category.prices[0].amountair),
+                            "categoryId": formData.category.id,
+                            "tariffId": formData.tarif.id
+                        }
+                    ]
+                }
+            }
+        });
+
+        if (response_update_category && response_update_prices) {
+            setAddTarif(response_update_prices.data.updateHotel.tariffs)
+            onClose();
+        }
     };
 
     const [tarifNames, setTarifNames] = useState([]);
 
     useEffect(() => {
-        const names = addTarif.map(tarif => tarif.tarifName);
+        const names = addTarif.map(tarif => tarif.name);
         setTarifNames(names);
     }, [addTarif]);
+
+    useEffect(() => {
+        if (show) {
+            const handleClickOutside = (event) => {
+                if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+                    closeButton();
+                }
+            };
+            document.addEventListener('mousedown', handleClickOutside);
+
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+            };
+        }
+    }, [show]);
+
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
                 <div className={classes.requestTitle_name}>Редактировать</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
+                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="close" /></div>
             </div>
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
-                    <label>Выберите тариф</label>
-                    <select name="tarifName" value={formData.tarifName} onChange={handleChange}>
+                    {/* <label>Выберите тариф</label>
+                    <select name="tarifName" value={formData?.tarif?.name} onChange={handleChange}>
                         <option value="">Выберите тариф</option>
                         {tarifNames.map((name, index) => (
                             <option key={index} value={name}>{name}</option>
                         ))}
-                    </select>
+                    </select> */}
 
                     <label>Тип номера</label>
                     <input
                         type="text"
                         name="type"
-                        value={formData.categories.type}
+                        value={formData?.category?.name || ''}
                         onChange={handleChange}
                         placeholder="Введите тип номера"
                     />
@@ -98,7 +159,7 @@ function EditRequestTarifCategory({ show, onClose, tarif, onSubmit, addTarif }) 
                     <input
                         type="text"
                         name="price"
-                        value={formData.categories.price}
+                        value={formData?.category?.prices?.[0]?.amount || ''}
                         onChange={handleChange}
                         placeholder="Введите стоимость"
                     />
@@ -107,7 +168,7 @@ function EditRequestTarifCategory({ show, onClose, tarif, onSubmit, addTarif }) 
                     <input
                         type="text"
                         name="price_airline"
-                        value={formData.categories.price_airline}
+                        value={formData?.category?.prices?.[0]?.amountair || ''}
                         onChange={handleChange}
                         placeholder="Введите стоимость для авиакомпании"
                     />

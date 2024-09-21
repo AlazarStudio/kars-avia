@@ -6,19 +6,12 @@ import Sidebar from "../Sidebar/Sidebar";
 import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
-function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, uniqueCategories, tarifs, addTarif }) {
+function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, uniqueCategories, tarifs, addTarif, setAddTarif }) {
     const [formData, setFormData] = useState({
         nomerName: (nomer && nomer.name) || '',
-        category: uniqueCategories[0] || '',
-        tarif: tarifs[0] || ''
+        category: uniqueCategories[0] || ''
     });
 
-    const [tarifNames, setTarifNames] = useState([]);
-
-    useEffect(() => {
-        const names = tarifs.map(tarif => tarif.tarifName);
-        setTarifNames(names);
-    }, [tarifs]);
 
     const sidebarRef = useRef();
 
@@ -26,8 +19,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, un
         if (show) {
             setFormData({
                 nomerName: (nomer && nomer.name) || '',
-                category: category || uniqueCategories[0] || '',
-                tarif: tarifs[0] || ''
+                category: category || uniqueCategories[0] || ''
             });
         }
     }, [show, nomer, category]);
@@ -53,8 +45,8 @@ function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, un
         e.preventDefault();
 
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
-
-        const existingCategoryForRooms = addTarif.find(tarif => tarif.name === formData.category);
+        
+        const existingCategoryForRooms = addTarif.find(tarif => tarif.name === formData.category && tarif.name === formData.category);
 
         let response_update_room = await updateHotel({
             variables: {
@@ -72,6 +64,12 @@ function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, un
         });
 
         if (response_update_room) {
+            const sortedTarifs = response_update_room.data.updateHotel.categories.map(tarif => ({
+                ...tarif,
+                rooms: [...tarif.rooms].sort((a, b) => a.name.localeCompare(b.name))
+            })).sort((a, b) => a.name.localeCompare(b.name));
+
+            setAddTarif(sortedTarifs);
             onSubmit(nomerName, nomer, formData.category);
             onClose();
         }
@@ -89,19 +87,12 @@ function EditRequestNomerFond({ show, id, onClose, nomer, category, onSubmit, un
                     <label>Название номера</label>
                     <input type="text" name="nomerName" value={formData.nomerName} onChange={handleChange} placeholder="Пример: № 151" />
 
-                    <label>Категория</label>
+                    {/* <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
                         {uniqueCategories.map(category => (
                             <option key={category} value={category}>{category}</option>
                         ))}
-                    </select>
-
-                    <label>Тариф</label>
-                    <select name="tarif" value={formData.tarif} onChange={handleChange}>
-                        {tarifNames.map(category => (
-                            <option key={category} value={category}>{category}</option>
-                        ))}
-                    </select>
+                    </select> */}
                 </div>
             </div>
 

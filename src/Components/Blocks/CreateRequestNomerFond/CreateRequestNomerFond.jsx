@@ -9,25 +9,18 @@ import { useMutation, useQuery } from "@apollo/client";
 function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniqueCategories, tarifs }) {
     const [formData, setFormData] = useState({
         nomerName: '',
-        category: '',
-        tarif: ''
+        category: ''
     });
 
-    const [tarifNames, setTarifNames] = useState([]);
     const [updateHotel] = useMutation(UPDATE_HOTEL);
 
-    useEffect(() => {
-        const names = tarifs.map(tarif => tarif.tarifName);
-        setTarifNames(names);
-    }, [tarifs]);
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
             nomerName: '',
-            category: uniqueCategories[0] || '',
-            tarif: tarifs[0].tarifName || ''
+            category: uniqueCategories[0] || ''
         });
     };
 
@@ -49,7 +42,14 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const existingCategoryForRooms = addTarif.find(tarif => tarif.name === formData.category);
+
+        let nameInfo = formData.category.split(' - ');
+
+        const existingCategoryForRooms = addTarif.find(tarif =>
+            tarif.name.toLowerCase() === nameInfo[0].toLowerCase() &&
+            tarif.tariffs.name.toLowerCase() === nameInfo[1].toLowerCase()
+        );
+
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
 
         let response_update_room = await updateHotel({
@@ -66,28 +66,13 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
             }
         });
 
-        if (response_update_room.data.updateHotel) {
-            setAddTarif(prevTarifs => {
-                const existingCategory = prevTarifs.find(tarif => tarif.name === formData.category);
+        if (response_update_room) {
+            const sortedTarifs = response_update_room.data.updateHotel.categories.map(tarif => ({
+                ...tarif,
+                rooms: [...tarif.rooms].sort((a, b) => a.name.localeCompare(b.name))
+            })).sort((a, b) => a.name.localeCompare(b.name));
 
-                if (existingCategory) {
-                    const updatedNumbers = [...existingCategory.rooms, { name: nomerName }].sort((a, b) => a.name.localeCompare(b.name));
-
-                    return prevTarifs.map(tarif =>
-                        tarif.name === formData.category
-                            ? { ...tarif, rooms: updatedNumbers }
-                            : tarif
-                    );
-                } else {
-                    return [
-                        ...prevTarifs,
-                        {
-                            name: formData.category,
-                            rooms: [nomerName]
-                        }
-                    ];
-                }
-            });
+            setAddTarif(sortedTarifs);
             resetForm();
             onClose();
         }
@@ -123,13 +108,6 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
                         {uniqueCategories.map(category => (
-                            <option key={category} value={category}>{category}</option>
-                        ))}
-                    </select>
-
-                    <label>Тариф</label>
-                    <select name="tarif" value={formData.tarif} onChange={handleChange}>
-                        {tarifNames.map(category => (
                             <option key={category} value={category}>{category}</option>
                         ))}
                     </select>
