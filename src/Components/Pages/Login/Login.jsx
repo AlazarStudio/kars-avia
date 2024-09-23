@@ -3,6 +3,7 @@ import { Button, TextField, Box, Typography, Container, Alert } from "@mui/mater
 
 import { SINGIN } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
+import { useNavigate } from "react-router-dom";
 
 function Login() {
     const [signIn] = useMutation(SINGIN);
@@ -10,6 +11,7 @@ function Login() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
+    const navigate = useNavigate(); 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,7 +30,7 @@ function Login() {
 
             document.cookie = `token=${token}; SameSite=Lax; Max-Age=3600`;
 
-            window.location.reload();
+            navigate("/");
         } catch (err) {
             setError("Ошибка авторизации. Проверьте логин или пароль.");
         }
@@ -45,7 +47,7 @@ function Login() {
                 }}
             >
                 <Typography component="h1" variant="h5" sx={{ fontWeight: 'bold' }}>
-                    Вход
+                    Вход в CRM Kars Avia
                 </Typography>
                 {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>

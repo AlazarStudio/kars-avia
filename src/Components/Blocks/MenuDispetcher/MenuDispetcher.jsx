@@ -62,7 +62,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
 
                 <Link className={`${classes.menu_items__elem}`} style={{ position: "absolute", bottom: "25px" }} onClick={
                     () => {
-                        let result = confirm("Вы уверены?");
+                        let result = confirm("Вы уверены что хотите выйти?");
                         if (result) {
                             document.cookie = "token=; Max-Age=0; Path=/;";
                         }
