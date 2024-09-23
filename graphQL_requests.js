@@ -2,7 +2,6 @@ import { gql } from "@apollo/client";
 
 export const server = 'http://192.168.0.112:4000';
 
-
 export const GET_REQUESTS = gql`
     query Request {
         requests {
@@ -264,6 +263,5 @@ export const DELETE_HOTEL_USER = gql`
     }
   }
 `;
-
 
 // Конец - зарпосы в гостиницу
