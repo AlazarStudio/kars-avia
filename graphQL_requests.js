@@ -1,6 +1,8 @@
 import { gql } from "@apollo/client";
 
-// Начало - зарпосы на гостиницы
+export const server = 'http://192.168.0.112:4000';
+
+// Начало - зарпосы в гостиницу
 
 export const GET_HOTEL = gql`
   query Hotel($hotelId: ID!) {
@@ -133,4 +135,58 @@ export const DELETE_HOTEL_ROOM = gql`
   }
 `;
 
-// Конец - зарпосы на гостиницы
+
+export const GET_HOTEL_USERS = gql`
+  query HotelUsers($hotelId: ID!) {
+    hotelUsers(hotelId: $hotelId) {
+      id
+      name
+      email
+      role
+      login
+      images
+    }
+  }
+`;
+
+export const CREATE_HOTEL_USER = gql`
+  mutation RegisterUser($input: RegisterUserInput!, $images: [Upload!]) {
+    registerUser(input: $input, images: $images) {
+      id
+      name
+      email
+      role
+      login
+      images
+    }
+  }
+`;
+
+export const UPDATE_HOTEL_USER = gql`
+  mutation Mutation($input: UpdateUserInput!, $images: [Upload!]) {
+    updateUser(input: $input, images: $images) {
+      id
+      name
+      email
+      role
+      login
+      images
+    }
+  }
+`;
+
+export const DELETE_HOTEL_USER = gql`
+  mutation Mutation($deleteUserId: ID!) {
+    deleteUser(id: $deleteUserId) {
+      id
+      name
+      email
+      role
+      login
+      images
+    }
+  }
+`;
+
+
+// Конец - зарпосы в гостиницу

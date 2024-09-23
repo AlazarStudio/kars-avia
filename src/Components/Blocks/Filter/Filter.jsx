@@ -11,7 +11,9 @@ function Filter({ children, toggleSidebar, handleChange, filterData, buttonTitle
                     <div className={classes.filter_title}>Фильтр:</div>
                     <select className={classes.filter_select} name="filterSelect" value={filterData.filterAirport} onChange={handleChange}>
                         <option value="">Показать все</option>
-                        {filterList.map((item, index) => <option key={index} value={item}>{item}</option>)}
+                        <option value="HOTELMODERATOR">Модератор</option>
+                        <option value="ADMIN">Администратор</option>
+                        <option value="HOTELUSER">Пользователь</option>
                     </select>
                 </>
             }

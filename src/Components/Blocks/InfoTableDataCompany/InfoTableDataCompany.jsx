@@ -2,12 +2,14 @@ import React from "react";
 import classes from './InfoTableDataCompany.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
+import { server } from '../../../../graphQL_requests.js';
+
 function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setChooseObject, id, ...props }) {
     const handleObject = (item, index) => {
         setChooseObject({ ...item, index });
         toggleRequestSidebar();
     };
-    
+
 
     return (
         <InfoTable>
@@ -28,13 +30,19 @@ function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setCho
                         <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={`/${item.avatar}`} alt="" />
+                                    <img src={`${item.images ? `${server}${item.images[0]}` : '/avatar1.png'}`} alt="" />
                                 </div>
-                                <div className={classes.InfoTable_data_elem_title}>{item.fio}</div>
+                                <div className={classes.InfoTable_data_elem_title}>
+                                    {item.name}
+                                </div>
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                            <div className={classes.InfoTable_data_elem_title}>{item.post}</div>
+                            <div className={classes.InfoTable_data_elem_title}>
+                                {item.role == 'HOTELMODERATOR' && 'Модератор'}
+                                {item.role == 'ADMIN' && 'Администратор'}
+                                {item.role == 'HOTELUSER' && 'Пользователь'}
+                            </div>
                         </div>
                     </div>
                 ))}

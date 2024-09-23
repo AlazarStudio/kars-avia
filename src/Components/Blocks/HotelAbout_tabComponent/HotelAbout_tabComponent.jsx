@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import classes from './HotelAbout_tabComponent.module.css';
 import { gql, useQuery, useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
-import { GET_HOTEL, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import {server, GET_HOTEL, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 
 
 function HotelAbout_tabComponent({ id }) {
@@ -70,7 +70,7 @@ function HotelAbout_tabComponent({ id }) {
                     <div className={classes.hotelAbout_top}>
                         <div className={classes.hotelAbout_top_complete}>
                             <div className={classes.hotelAbout_top_img}>
-                                <img src={`http://192.168.0.112:4000${hotel.images[0]}`} alt={hotel.name} />
+                                <img src={`${server}${hotel.images[0]}`} alt={hotel.name} />
                             </div>
                             <div className={classes.hotelAbout_top_title}>
                                 <div className={classes.hotelAbout_top_title_name}>{hotel.name}</div>

@@ -13,20 +13,22 @@ import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlaceme
 import FileUpload from "./Components/Blocks/FileUpload/FileUpload";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
+import { server } from '../graphQL_requests';
+
 const uploadLink = createUploadLink({
-  uri: 'http://192.168.0.112:4000/graphql',
+  uri: `${server}/graphql`,
 });
  
 const wsLink = new GraphQLWsLink(createClient({
   url: 'ws://192.168.0.112:4000/graphql',
   connectionParams: () => {
-    const session = JSON.parse(localStorage.getItem('session')) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVjMDFhNjk4MjEyNmU5YjlkOTNjOWIiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjY3NjA3OTh9.pUmBA3XmuUROXeHuiBO6EsntZkTo35_1t5Zpq3xagKs";
+    const session = JSON.parse(localStorage.getItem('session')) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVjMDFhNjk4MjEyNmU5YjlkOTNjOWIiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjcwODk3NTJ9.gJRYhTLk1osyD_gdOUURx5eraGUrNltfH1SCyJynSgA";
     // console.log(session);
     if (!session) {
       return {};
     }
     return {
-      Authorization: `${session.token}`,
+      Authorization: `Bearer ${session.token}`,
     };
   },
 }));

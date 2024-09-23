@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import classes from './HotelCompany_tabComponent.module.css';
 import Filter from "../Filter/Filter";
 import { requestsCompanyHotel } from "../../../requests";
@@ -7,7 +7,14 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import CreateRequestCompanyHotel from "../CreateRequestCompanyHotel/CreateRequestCompanyHotel";
 import ExistRequestCompanyHotel from "../ExistRequestCompanyHotel/ExistRequestCompanyHotel";
 
+import { GET_HOTEL_USERS, DELETE_HOTEL_USER } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery } from "@apollo/client";
+
 function HotelCompany_tabComponent({ children, id, ...props }) {
+    const { loading, error, data } = useQuery(GET_HOTEL_USERS, {
+        variables: { hotelId: id },
+    });
+
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [chooseObject, setChooseObject] = useState(null);
@@ -16,7 +23,13 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
 
     const deleteComponentRef = useRef();
 
-    const [companyData, setCompanyData] = useState(requestsCompanyHotel);
+    const [companyData, setCompanyData] = useState([]);
+
+    useEffect(() => {
+        if (data) {
+            setCompanyData(data.hotelUsers);
+        }
+    }, [data]);
 
     const addDispatcher = (newDispatcher) => {
         setCompanyData([...companyData, newDispatcher]);
@@ -28,10 +41,26 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
         setCompanyData(newData);
     };
 
-    const deleteDispatcher = (index) => {
-        setCompanyData(companyData.filter((_, i) => i !== index));
-        setShowDelete(false);
-        setShowRequestSidebar(false);
+    const [deleteHotelUser] = useMutation(DELETE_HOTEL_USER, {
+        context: {
+            headers: {
+                Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVjMDFhNjk4MjEyNmU5YjlkOTNjOWIiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjcwODk3NTJ9.gJRYhTLk1osyD_gdOUURx5eraGUrNltfH1SCyJynSgA`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const deleteDispatcher = async (index, userID) => {
+        let response_delete_user = await deleteHotelUser({
+            variables: {
+                "deleteUserId": userID
+            }
+        });
+        if (response_delete_user) {
+            setCompanyData(companyData.filter((_, i) => i !== index));
+            setShowDelete(false);
+            setShowRequestSidebar(false);
+        }
     };
 
     const toggleCreateSidebar = () => {
@@ -42,9 +71,10 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
         setShowRequestSidebar(!showRequestSidebar);
     };
 
-    const openDeleteComponent = (index) => {
+
+    const openDeleteComponent = async (index, userID) => {
         setShowDelete(true);
-        setDeleteIndex(index);
+        setDeleteIndex({index, userID});
         setShowRequestSidebar(false);
     };
 
@@ -73,16 +103,15 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
 
     const filteredRequests = companyData.filter(request => {
         return (
-            (filterData.filterSelect === '' || request.post.includes(filterData.filterSelect)) &&
+            (filterData.filterSelect === '' || request.role.includes(filterData.filterSelect)) &&
             (
-                request.fio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.post.toLowerCase().includes(searchQuery.toLowerCase())
+                request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.role.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
     });
 
-    let filterList = ['Модератор', 'Администратор'];
-
+    let filterList = ['Модератор', 'Администратор', 'Пользователь'];
     return (
         <>
             <div className={classes.section_searchAndFilter}>
@@ -103,12 +132,17 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
                 />
             </div>
 
-            <InfoTableDataCompany
-                id={id}
-                toggleRequestSidebar={toggleRequestSidebar}
-                requests={filteredRequests}
-                setChooseObject={setChooseObject}
-            />
+            {loading && <p>Loading...</p>}
+            {error && <p>Error: {error.message}</p>}
+
+            {!loading && !error && (
+                <InfoTableDataCompany
+                    id={id}
+                    toggleRequestSidebar={toggleRequestSidebar}
+                    requests={filteredRequests}
+                    setChooseObject={setChooseObject}
+                />
+            )}
 
             <CreateRequestCompanyHotel
                 id={id}
@@ -131,7 +165,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
             {showDelete && (
                 <DeleteComponent
                     ref={deleteComponentRef}
-                    remove={() => deleteDispatcher(deleteIndex)}
+                    remove={() => deleteDispatcher(deleteIndex.index, deleteIndex.userID)}
                     close={closeDeleteComponent}
                     title={`Вы действительно хотите удалить пользователя?`}
                 />
