@@ -2,6 +2,83 @@ import { gql } from "@apollo/client";
 
 export const server = 'http://192.168.0.112:4000';
 
+
+export const GET_REQUESTS = gql`
+    query Request {
+        requests {
+            id
+            fullName
+            position
+            gender
+            phoneNumber
+            arrival {
+            flight
+            date
+            time
+            }
+            departure {
+            flight
+            date
+            time
+            }
+            roomCategory
+            mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+            }
+            senderId
+            receiverId
+            createdAt
+            updatedAt
+            hotelId
+            roomNumber
+            airlineId
+            status
+            airportId
+        }
+    }
+`;
+
+export const REQUEST_CREATED_SUBSCRIPTION = gql`
+    subscription RequestCreated {
+        requestCreated {
+            id
+            fullName
+            position
+            gender
+            phoneNumber
+            arrival {
+                flight
+                date
+                time
+            }
+            departure {
+                flight
+                date
+                time
+            }
+            roomCategory
+            mealPlan {
+                included
+                breakfast
+                lunch
+                dinner
+            }
+            senderId
+            receiverId
+            createdAt
+            updatedAt
+            hotelId
+            roomNumber
+            airlineId
+            status
+            airportId
+        }
+    }
+`;
+
 // Начало - зарпосы в гостиницу
 
 export const GET_HOTEL = gql`
