@@ -10,25 +10,24 @@ import Non_Found_Page from "./Components/Pages/Non_Found_Page";
 import Layout from "./Components/Standart/Layout/Layout";
 import Placement from "./Components/Pages/Placement/Placement";
 import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlacement";
-import FileUpload from "./Components/Blocks/FileUpload/FileUpload";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-import { server } from '../graphQL_requests';
+import { server, getCookie } from '../graphQL_requests';
+
+const token = getCookie('token');
 
 const uploadLink = createUploadLink({
   uri: `${server}/graphql`,
 });
- 
+
 const wsLink = new GraphQLWsLink(createClient({
   url: 'ws://192.168.0.112:4000/graphql',
   connectionParams: () => {
-    const session = JSON.parse(localStorage.getItem('session')) || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVjMDFhNjk4MjEyNmU5YjlkOTNjOWIiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjcwODk3NTJ9.gJRYhTLk1osyD_gdOUURx5eraGUrNltfH1SCyJynSgA";
-    // console.log(session);
-    if (!session) {
+    if (!token) {
       return {};
     }
     return {
-      Authorization: `Bearer ${session.token}`,
+      Authorization: `Bearer ${token}`,
     };
   },
 }));
@@ -50,6 +49,7 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
 });
 
+
 function App() {
   return (
     <ApolloProvider client={client}>
@@ -59,7 +59,7 @@ function App() {
           <Route path="/:id" element={<Main_Page />} />
           <Route path="/hotels/:hotelID" element={<Main_Page />} />
           <Route path="/airlines/:airlineID" element={<Main_Page />} />
-          <Route path="/sendFile" element={<FileUpload />} />
+          {/* <Route path="/sendFile" element={<FileUpload />} /> */}
 
           {/* Резерв внутри заявки */}
           <Route path="/:id/reservePlacement/:idRequest" element={<ReservePlacement />} />

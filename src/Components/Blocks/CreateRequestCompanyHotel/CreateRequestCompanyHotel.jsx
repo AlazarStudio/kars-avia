@@ -3,10 +3,12 @@ import classes from './CreateRequestCompanyHotel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { server, CREATE_HOTEL_USER } from '../../../../graphQL_requests.js';
+import { getCookie, server, CREATE_HOTEL_USER } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({
         images: '',
         name: '',
@@ -58,7 +60,7 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
     const [uploadFile, { data, loading, error }] = useMutation(CREATE_HOTEL_USER, {
         context: {
             headers: {
-                Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVjMDFhNjk4MjEyNmU5YjlkOTNjOWIiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjcwODk3NTJ9.gJRYhTLk1osyD_gdOUURx5eraGUrNltfH1SCyJynSgA`,
+                Authorization: `Bearer ${token}`,
                 'Apollo-Require-Preflight': 'true',
             },
         },

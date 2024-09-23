@@ -7,10 +7,12 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import CreateRequestCompanyHotel from "../CreateRequestCompanyHotel/CreateRequestCompanyHotel";
 import ExistRequestCompanyHotel from "../ExistRequestCompanyHotel/ExistRequestCompanyHotel";
 
-import { GET_HOTEL_USERS, DELETE_HOTEL_USER } from '../../../../graphQL_requests.js';
+import { getCookie, GET_HOTEL_USERS, DELETE_HOTEL_USER } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 function HotelCompany_tabComponent({ children, id, ...props }) {
+    const token = getCookie('token');
+
     const { loading, error, data } = useQuery(GET_HOTEL_USERS, {
         variables: { hotelId: id },
     });
@@ -44,7 +46,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
     const [deleteHotelUser] = useMutation(DELETE_HOTEL_USER, {
         context: {
             headers: {
-                Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVjMDFhNjk4MjEyNmU5YjlkOTNjOWIiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjcwODk3NTJ9.gJRYhTLk1osyD_gdOUURx5eraGUrNltfH1SCyJynSgA`,
+                Authorization: `Bearer ${token}`,
                 'Apollo-Require-Preflight': 'true',
             },
         },

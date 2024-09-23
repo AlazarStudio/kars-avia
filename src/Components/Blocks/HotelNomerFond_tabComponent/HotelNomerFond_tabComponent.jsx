@@ -10,11 +10,13 @@ import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequ
 import EditRequestCategory from "../EditRequestCategory/EditRequestCategory";
 import EditRequestNomerFond from "../EditRequestNomerFond/EditRequestNomerFond";
 
-import { GET_HOTEL_ROOMS, DELETE_HOTEL_ROOM, DELETE_HOTEL_CATEGORY } from '../../../../graphQL_requests.js';
+import { getCookie, GET_HOTEL_ROOMS, DELETE_HOTEL_ROOM, DELETE_HOTEL_CATEGORY } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 
 function HotelNomerFond_tabComponent({ children, id, ...props }) {
+    const token = getCookie('token');
+
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: id },
     });
@@ -36,8 +38,22 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     const [showEditNomer, setShowEditNomer] = useState(false);
     const [selectedNomer, setSelectedNomer] = useState({});
 
-    const [deleteHotelRoom] = useMutation(DELETE_HOTEL_ROOM);
-    const [deleteHotelCategory] = useMutation(DELETE_HOTEL_CATEGORY);
+    const [deleteHotelRoom] = useMutation(DELETE_HOTEL_ROOM, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+    const [deleteHotelCategory] = useMutation(DELETE_HOTEL_CATEGORY, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
     useEffect(() => {
         if (data) {

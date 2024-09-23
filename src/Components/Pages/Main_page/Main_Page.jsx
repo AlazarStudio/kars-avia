@@ -10,9 +10,17 @@ import HotelPage from "../../Blocks/HotelPage/HotelPage";
 import AirlinesList from "../../Blocks/AirlinesList/AirlinesList";
 import AirlinePage from "../../Blocks/AirlinePage/AirlinePage";
 import Reports from "../../Blocks/Reports/Reports";
+import Login from "../Login/Login";
+import { getCookie } from '../../../../graphQL_requests.js';
 
 function Main_Page({ children, ...props }) {
     let { id, hotelID, airlineID } = useParams();
+
+    const token = getCookie('token');
+
+    if (!token) {
+        return <Login />;
+    }
 
     let pageClicked = hotelID ? 'hotels' : airlineID && 'airlines';
     return (

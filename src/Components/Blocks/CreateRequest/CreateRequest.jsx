@@ -3,6 +3,7 @@ import { gql, useMutation } from "@apollo/client";
 import classes from './CreateRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { getCookie } from "../../../../graphQL_requests";
 
 const CREATE_REQUEST_MUTATION = gql`
     mutation CreateRequest($input: CreateRequestInput!) {
@@ -67,7 +68,16 @@ function CreateRequest({ show, onClose }) {
         }
     });
 
-    const [createRequest, { loading, error, data }] = useMutation(CREATE_REQUEST_MUTATION);
+    const token = getCookie('token');
+
+    const [createRequest, { loading, error, data }] = useMutation(CREATE_REQUEST_MUTATION, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
     const sidebarRef = useRef();
 
@@ -111,7 +121,7 @@ function CreateRequest({ show, onClose }) {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-        
+
         if (type === 'checkbox') {
             setFormData(prevState => ({
                 ...prevState,
@@ -134,14 +144,14 @@ function CreateRequest({ show, onClose }) {
                 [name]: value
             }));
         }
-    
+
         if (formData.mealPlan.included === false) {
             formData.mealPlan.breakfast = false;
             formData.mealPlan.lunch = false;
             formData.mealPlan.dinner = false;
         }
     };
-    
+
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -205,7 +215,7 @@ function CreateRequest({ show, onClose }) {
                 <div className={classes.requestTitle_name}>Создать заявку</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
             </div>
-            
+
             <div className={classes.requestMiddle}>
                 <div className={classes.tabs}>
                     <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
@@ -216,13 +226,13 @@ function CreateRequest({ show, onClose }) {
                     <div className={classes.requestData}>
                         <label>ФИО</label>
                         <input type="text" name="fullName" placeholder="Иванов Иван Иванович" value={formData.fullName} onChange={handleChange} />
-                        
+
                         <label>Должность</label>
                         <input type="text" name="position" placeholder="Капитан" value={formData.position} onChange={handleChange} />
-                        
+
                         <label>Пол</label>
                         <input type="text" name="gender" placeholder="Пол" value={formData.gender} onChange={handleChange} />
-                        
+
                         <label>Номер телефона</label>
                         <input type="text" name="phoneNumber" placeholder="89094567432" value={formData.phoneNumber} onChange={handleChange} />
 
@@ -233,7 +243,7 @@ function CreateRequest({ show, onClose }) {
                             <option value="Аэропорт2">Аэропорт2</option>
                             <option value="Аэропорт3">Аэропорт3</option>
                         </select> */}
-                        
+
                         <label>Прибытие</label>
                         <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} />
                         <div className={classes.reis_info}>

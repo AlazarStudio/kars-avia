@@ -3,10 +3,12 @@ import classes from './EditRequestNomerFond.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { getCookie, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSubmit, uniqueCategories, tarifs, addTarif, setAddTarif, selectedNomer }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({
         nomerName: (nomer && nomer.name) || '',
         category: uniqueCategories[0] || '',
@@ -40,7 +42,14 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSu
         }));
     };
 
-    const [updateHotel] = useMutation(UPDATE_HOTEL);
+    const [updateHotel] = useMutation(UPDATE_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();

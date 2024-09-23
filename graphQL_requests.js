@@ -1,6 +1,26 @@
 import { gql } from "@apollo/client";
 
 export const server = 'http://192.168.0.112:4000';
+    
+export const getCookie = (name) => {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+};
+
+// Запросы получения пользователя
+
+export const SINGIN = gql`
+  mutation SignIn($input: SignInInput!) {
+    signIn(input: $input) {
+      token
+    }
+  }
+`;
+
+// Запросы получения пользователя
+
+// Запросы к заявкам на эстафету
 
 export const GET_REQUESTS = gql`
     query Request {
@@ -77,6 +97,8 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
         }
     }
 `;
+
+// Запросы к заявкам на эстафету
 
 // Начало - зарпосы в гостиницу
 

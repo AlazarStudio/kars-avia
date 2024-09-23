@@ -3,14 +3,16 @@ import classes from './ExistRequestCompanyHotel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { server, UPDATE_HOTEL_USER } from '../../../../graphQL_requests.js';
+import { getCookie, server, UPDATE_HOTEL_USER } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatcher, openDeleteComponent, filterList, id }) {
+    const token = getCookie('token');
+
     const [uploadFile, { data, loading, error }] = useMutation(UPDATE_HOTEL_USER, {
         context: {
             headers: {
-                Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2NmVjMDFhNjk4MjEyNmU5YjlkOTNjOWIiLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3MjcwODk3NTJ9.gJRYhTLk1osyD_gdOUURx5eraGUrNltfH1SCyJynSgA`,
+                Authorization: `Bearer ${token}`,
                 'Apollo-Require-Preflight': 'true',
             },
         },

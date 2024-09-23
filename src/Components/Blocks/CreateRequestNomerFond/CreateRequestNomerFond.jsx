@@ -3,17 +3,26 @@ import classes from './CreateRequestNomerFond.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { getCookie, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniqueCategories, tarifs }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({
         nomerName: '',
         places: 1,
         category: ''
     });
 
-    const [updateHotel] = useMutation(UPDATE_HOTEL);
+    const [updateHotel] = useMutation(UPDATE_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
 
     const sidebarRef = useRef();

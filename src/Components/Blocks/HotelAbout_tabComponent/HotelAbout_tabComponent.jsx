@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import classes from './HotelAbout_tabComponent.module.css';
 import { gql, useQuery, useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
-import {server, GET_HOTEL, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { server, getCookie, GET_HOTEL, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 
 
 function HotelAbout_tabComponent({ id }) {
+    const token = getCookie('token');
+
     const { loading, error, data } = useQuery(GET_HOTEL, {
         variables: { hotelId: id },
     });
@@ -13,7 +15,14 @@ function HotelAbout_tabComponent({ id }) {
     const [hotel, setHotel] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
 
-    const [updateHotel] = useMutation(UPDATE_HOTEL);
+    const [updateHotel] = useMutation(UPDATE_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
     useEffect(() => {
         if (data) {

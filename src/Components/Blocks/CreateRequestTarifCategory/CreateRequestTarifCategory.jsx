@@ -3,9 +3,11 @@ import classes from './CreateRequestTarifCategory.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
+import { getCookie, UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({
         tarifName: '',
         type: '',
@@ -13,7 +15,14 @@ function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif }
         price_airline: '',
     });
 
-    const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF);
+    const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
     const [tarifNames, setTarifNames] = useState([]);
     const sidebarRef = useRef();

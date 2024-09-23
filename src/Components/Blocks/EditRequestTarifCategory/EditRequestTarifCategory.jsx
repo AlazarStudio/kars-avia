@@ -3,15 +3,24 @@ import classes from './EditRequestTarifCategory.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
+import { getCookie, UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 function EditRequestTarifCategory({ show, onClose, tarif, onSubmit, addTarif, id, setAddTarif }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({});
 
     const sidebarRef = useRef();
 
-    const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF);
+    const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
     useEffect(() => {
         if (show && tarif) {

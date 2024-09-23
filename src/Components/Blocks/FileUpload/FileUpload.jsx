@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { gql, useMutation } from '@apollo/client';
+import { getCookie} from '../../../../graphQL_requests';
 
 const UPLOAD_FILE_MUTATION = gql`
   mutation Mutation($file: Upload!) {
@@ -13,10 +14,12 @@ const UPLOAD_FILE_MUTATION = gql`
 
 function FileUpload() {
   const [file, setFile] = useState(null);
+  const token = getCookie('token');
 
   const [uploadFile, { data, loading, error }] = useMutation(UPLOAD_FILE_MUTATION, {
     context: {
       headers: {
+        Authorization: `Bearer ${token}`,
         'Apollo-Require-Preflight': 'true',
       },
     },

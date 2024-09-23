@@ -9,12 +9,14 @@ import Filter from "../Filter/Filter";
 
 import { requestsTarifs } from "../../../requests";
 
-import { GET_HOTEL_TARIFS, DELETE_HOTEL_CATEGORY, DELETE_HOTEL_TARIFF } from '../../../../graphQL_requests.js';
+import { getCookie, GET_HOTEL_TARIFS, DELETE_HOTEL_CATEGORY, DELETE_HOTEL_TARIFF } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTarifCategory";
 
 function HotelTarifs_tabComponent({ children, id, ...props }) {
+    const token = getCookie('token');
+
     const { loading, error, data } = useQuery(GET_HOTEL_TARIFS, {
         variables: { hotelId: id },
     });
@@ -29,8 +31,22 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
     const [deleteIndex, setDeleteIndex] = useState(null);
     const [searchTarif, setSearchTarif] = useState('');
 
-    const [deleteHotelCategory] = useMutation(DELETE_HOTEL_CATEGORY);
-    const [deleteHotelTarif] = useMutation(DELETE_HOTEL_TARIFF);
+    const [deleteHotelCategory] = useMutation(DELETE_HOTEL_CATEGORY, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+    const [deleteHotelTarif] = useMutation(DELETE_HOTEL_TARIFF, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
     useEffect(() => {
         if (data) {

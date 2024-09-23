@@ -3,10 +3,12 @@ import classes from './EditRequestCategory.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { getCookie, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 function EditRequestCategory({ show, id, onClose, category, onSubmit }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({
         type: ''
     });
@@ -31,7 +33,14 @@ function EditRequestCategory({ show, id, onClose, category, onSubmit }) {
         setFormData({ [name]: value });
     };
 
-    const [updateHotel] = useMutation(UPDATE_HOTEL);
+    const [updateHotel] = useMutation(UPDATE_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
