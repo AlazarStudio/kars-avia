@@ -28,6 +28,7 @@ function Login() {
 
             let token = response_signIn && response_signIn.data.signIn.token;
 
+            // document.cookie = `token=${token}; HttpOnly; Secure; SameSite=Lax; Max-Age=3600`; // когда будет https и заливать куки из сервака
             document.cookie = `token=${token}; SameSite=Lax; Max-Age=3600`;
 
             navigate("/");

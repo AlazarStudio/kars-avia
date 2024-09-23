@@ -12,9 +12,14 @@ import Placement from "./Components/Pages/Placement/Placement";
 import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlacement";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-import { server, getCookie } from '../graphQL_requests';
+import { server, getCookie, decodeJWT } from '../graphQL_requests';
 
 const token = getCookie('token');
+
+// if (token) {
+//   const decode = decodeJWT(token);
+//   console.log(decode)
+// }
 
 const uploadLink = createUploadLink({
   uri: `${server}/graphql`,

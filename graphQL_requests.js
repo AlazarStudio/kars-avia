@@ -1,12 +1,27 @@
 import { gql } from "@apollo/client";
 
 export const server = 'http://192.168.0.112:4000';
-    
+
 export const getCookie = (name) => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
   if (parts.length === 2) return parts.pop().split(';').shift();
 };
+
+export const decodeJWT = (token) => {
+  const tokenParts = token.split('.');
+
+  if (tokenParts.length !== 3) {
+    throw new Error('Invalid JWT token');
+  }
+
+  const payloadBase64 = tokenParts[1];
+  const payloadDecoded = atob(payloadBase64);
+
+  const payloadObject = JSON.parse(payloadDecoded);
+
+  return payloadObject;
+}
 
 // Запросы получения пользователя
 
