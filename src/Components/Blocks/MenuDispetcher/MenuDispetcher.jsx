@@ -1,8 +1,17 @@
 import React from "react";
 import classes from './MenuDispetcher.module.css';
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function MenuDispetcher({ children, id, hotelID, ...props }) {
+    const navigate = useNavigate()
+    
+    const handleClick = () => {
+        let result = confirm("Вы уверены что хотите выйти?");
+        if (result) {
+            document.cookie = "token=; Max-Age=0; Path=/;";
+            navigate('/')
+        }
+    }
     return (
         <>
             <div className={classes.menu}>
@@ -60,16 +69,9 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                     </Link>
                 </div>
 
-                <Link className={`${classes.menu_items__elem}`} style={{ position: "absolute", bottom: "25px" }} onClick={
-                    () => {
-                        let result = confirm("Вы уверены что хотите выйти?");
-                        if (result) {
-                            document.cookie = "token=; Max-Age=0; Path=/;";
-                        }
-                    }
-                }>
+                <a className={`${classes.menu_items__elem}`} style={{ position: "absolute", bottom: "25px" }} onClick={handleClick}>
                     Выход из учетной записи
-                </Link>
+                </a>
             </div>
         </>
     );

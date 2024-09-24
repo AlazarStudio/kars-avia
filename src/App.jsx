@@ -23,6 +23,7 @@ const token = getCookie('token');
 
 const uploadLink = createUploadLink({
   uri: `${server}/graphql`,
+  // credentials: 'include',
 });
 
 const wsLink = new GraphQLWsLink(createClient({
@@ -46,7 +47,7 @@ const splitLink = split(
     );
   },
   wsLink,
-  uploadLink
+  uploadLink,
 );
 
 const client = new ApolloClient({

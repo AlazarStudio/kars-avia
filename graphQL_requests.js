@@ -5,7 +5,8 @@ export const server = 'http://192.168.0.112:4000';
 export const getCookie = (name) => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
+  const token = parts.pop().split(';').shift()
+  return token
 };
 
 export const decodeJWT = (token) => {
