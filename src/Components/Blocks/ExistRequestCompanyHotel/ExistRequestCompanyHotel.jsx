@@ -152,9 +152,9 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Должность</div>
                         <select name="role" value={formData.role} onChange={handleChange}>
-                            <option value="HOTELMODERATOR">Модератор</option>
-                            <option value="ADMIN">Администратор</option>
-                            <option value="HOTELUSER">Пользователь</option>
+                            {/* <option value="HOTELMODERATOR">Модератор</option> */}
+                            <option value="HOTELADMIN">Администратор</option>
+                            {/* <option value="HOTELUSER">Пользователь</option> */}
                         </select>
                     </div>
                     <div className={classes.requestDataInfo}>

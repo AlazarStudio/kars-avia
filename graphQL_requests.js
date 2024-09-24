@@ -117,6 +117,18 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
 
 // Начало - зарпосы в гостиницу
 
+export const CREATE_HOTEL = gql`
+  mutation Mutation($input: CreateHotelInput!, $images: [Upload!]) {
+    createHotel(input: $input, images: $images) {
+      images
+      name
+      city
+      address
+      quote
+    }
+  }
+`;
+
 export const GET_HOTEL = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {

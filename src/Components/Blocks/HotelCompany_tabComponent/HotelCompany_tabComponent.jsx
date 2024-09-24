@@ -113,7 +113,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
         );
     });
 
-    let filterList = ['Модератор', 'Администратор', 'Пользователь'];
+    // let filterList = ['Модератор', 'Администратор', 'Пользователь'];
     return (
         <>
             <div className={classes.section_searchAndFilter}>
@@ -129,7 +129,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
                     handleChange={handleChange}
                     filterData={filterData}
                     buttonTitle={'Добавить пользователя'}
-                    filterList={filterList}
+                    // filterList={filterList}
                     needDate={false}
                 />
             </div>
@@ -161,7 +161,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
                 updateDispatcher={updateDispatcher}
                 openDeleteComponent={openDeleteComponent}
                 deleteComponentRef={deleteComponentRef}
-                filterList={filterList}
+                // filterList={filterList}
             />
 
             {showDelete && (

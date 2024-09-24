@@ -136,9 +136,9 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
                     <label>Должность</label>
                     <select name="role" value={formData.role} onChange={handleChange}>
                         <option value="" disabled>Выберите должность</option>
-                        <option value="HOTELMODERATOR">Модератор</option>
-                        <option value="ADMIN">Администратор</option>
-                        <option value="HOTELUSER">Пользователь</option>
+                        {/* <option value="HOTELMODERATOR">Модератор</option> */}
+                        <option value="HOTELADMIN">Администратор</option>
+                        {/* <option value="HOTELUSER">Пользователь</option> */}
                     </select>
 
                     <label>Логин</label>
