@@ -1,19 +1,29 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import classes from './AirlinesList.module.css';
 import Filter from "../Filter/Filter";
 import { requestsAirlanes } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataAirlines from "../InfoTableDataAirlines/InfoTableDataAirlines";
 import CreateRequestAirline from "../CreateRequestAirline/CreateRequestAirline";
+import { GET_AIRLINES } from "../../../../graphQL_requests";
+import { useQuery } from "@apollo/client";
 
 function AirlinesList({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     
-    const [companyData, setCompanyData] = useState(requestsAirlanes);
+    const [companyData, setCompanyData] = useState([]);
+    const { loading, error, data } = useQuery(GET_AIRLINES);
 
-    const addHotel = (newHotel) => {
-        setCompanyData([...companyData, newHotel]);
+    useEffect(() => {
+        if (data && data.airlines) {
+            const sortedAirlines = [...data.airlines].sort((a, b) => a.name.localeCompare(b.name));
+            setCompanyData(sortedAirlines);
+        }
+    }, [data]);
+
+    const addHotel = (airline) => {
+        setCompanyData([...companyData, airline].sort((a, b) => a.name.localeCompare(b.name)));
     };
 
     const toggleCreateSidebar = () => {
@@ -45,7 +55,7 @@ function AirlinesList({ children, ...props }) {
     const filteredRequests = companyData.filter(request => {
         return (
             (
-                request.airlineName.toLowerCase().includes(searchQuery.toLowerCase())
+                request.name.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
     });
@@ -75,16 +85,20 @@ function AirlinesList({ children, ...props }) {
                         needDate={false}
                     />
                 </div>
+                
+                {loading && <p>Loading...</p>}
+                {error && <p>Error: {error.message}</p>}
+                {!loading && !error && (
+                    <InfoTableDataAirlines
+                        toggleRequestSidebar={toggleRequestSidebar}
+                        requests={filteredRequests}
+                    />
+                )}
 
-                <InfoTableDataAirlines 
-                    toggleRequestSidebar={toggleRequestSidebar} 
-                    requests={filteredRequests}  
-                />
-
-                <CreateRequestAirline 
-                    show={showCreateSidebar} 
-                    onClose={toggleCreateSidebar} 
-                    addHotel={addHotel} 
+                <CreateRequestAirline
+                    show={showCreateSidebar}
+                    onClose={toggleCreateSidebar}
+                    addHotel={addHotel}
                 />
             </div>
         </>

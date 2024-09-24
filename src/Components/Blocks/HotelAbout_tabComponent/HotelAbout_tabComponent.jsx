@@ -4,7 +4,6 @@ import { gql, useQuery, useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
 import { server, getCookie, GET_HOTEL, UPDATE_HOTEL, decodeJWT } from '../../../../graphQL_requests.js';
 
-
 function HotelAbout_tabComponent({ id }) {
     const [userRole, setUserRole] = useState();
     const token = getCookie('token');

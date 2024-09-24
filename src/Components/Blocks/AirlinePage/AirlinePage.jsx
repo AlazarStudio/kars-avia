@@ -4,15 +4,17 @@ import classes from './AirlinePage.module.css';
 import Header from "../Header/Header";
 import { Link } from "react-router-dom";
 
-import HotelTarifs_tabComponent from "../HotelTarifs_tabComponent/HotelTarifs_tabComponent";
-import HotelShahmatka_tabComponent from "../HotelShahmatka_tabComponent/HotelShahmatka_tabComponent";
 import AirlineCompany_tabComponent from "../AirlineCompany_tabComponent/AirlineCompany_tabComponent";
-import HotelCompany_tabComponent from "../HotelCompany_tabComponent/HotelCompany_tabComponent";
-import HotelAbout_tabComponent from "../HotelAbout_tabComponent/HotelAbout_tabComponent";
 import AirlineAbout_tabComponent from "../AirlineAbout_tabComponent/AirlineAbout_tabComponent";
+import { GET_AIRLINE } from "../../../../graphQL_requests";
+import { useQuery } from "@apollo/client";
 
 function AirlinePage({ children, id, ...props }) {
     const [selectedTab, setSelectedTab] = useState(0);
+
+    const { loading, error, data } = useQuery(GET_AIRLINE, {
+        variables: { airlineId: id },
+    });
 
     useEffect(() => {
         const savedTab = localStorage.getItem('selectedTab');
@@ -32,7 +34,7 @@ function AirlinePage({ children, id, ...props }) {
                     <Header>
                         <div className={classes.titleHeader}>
                             <Link to={`/airlines`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                            {id}
+                            {data && data.airline.name}
                         </div>
                     </Header>
                 </div>
@@ -57,7 +59,7 @@ function AirlinePage({ children, id, ...props }) {
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        <AirlineAbout_tabComponent airlineName={id} />
+                        <AirlineAbout_tabComponent id={id} />
                     </TabPanel>
                 </Tabs>
             </div>

@@ -10,6 +10,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
         if (result) {
             document.cookie = "token=; Max-Age=0; Path=/;";
             navigate('/')
+            window.location.reload()
         }
     }
     return (

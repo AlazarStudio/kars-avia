@@ -2,18 +2,23 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './CreateRequestAirline.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { CREATE_AIRLINE, getCookie } from "../../../../graphQL_requests";
+import { useMutation } from "@apollo/client";
 
 function CreateRequestAirline({ show, onClose, addHotel }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({
-        airlineName: '',
-        airlineImage: ''
+        name: '',
+        images: ''
     });
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
-            airlineName: '',
+            name: '',
+            images: ''
         });
     };
 
@@ -38,19 +43,46 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
         if (file) {
             setFormData(prevState => ({
                 ...prevState,
-                airlineImage: file.name
+                images: file // Сохраняем файл напрямую
             }));
         }
     };
 
-    const handleSubmit = (e) => {
+    const [uploadFile, { data, loading, error }] = useMutation(CREATE_AIRLINE, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        addHotel({
-            ...formData,
-            id: Date.now().toString()
-        });
-        resetForm();
-        onClose();
+
+        if (!formData.images) {
+            alert('Пожалуйста, выберите файл для загрузки');
+            return;
+        }
+
+        try {
+            let response_create_airline = await uploadFile({
+                variables: {
+                    input: {
+                        name: formData.name,
+                    },
+                    images: formData.images
+                }
+            });
+
+            if (response_create_airline) {
+                addHotel(response_create_airline.data.createAirline);
+                resetForm();
+                onClose();
+            }
+        } catch (e) {
+            console.error('Ошибка при загрузке файла:', e);
+        }
     };
 
     useEffect(() => {
@@ -81,10 +113,10 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Название</label>
-                    <input type="text" name="airlineName" placeholder="Гостиница Славянка"  onChange={handleChange} />
+                    <input type="text" name="name" placeholder="Гостиница Славянка" onChange={handleChange} />
 
                     <label>Картинка</label>
-                    <input type="file" name="airlineImage" onChange={handleFileChange} />
+                    <input type="file" name="images" onChange={handleFileChange} />
                 </div>
 
             </div>

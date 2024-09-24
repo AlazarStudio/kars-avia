@@ -92,8 +92,6 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         } catch (e) {
             console.error('Ошибка при загрузке файла:', e);
         }
-
-
     };
 
     useEffect(() => {

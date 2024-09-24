@@ -65,8 +65,6 @@ function HotelsList({ children, ...props }) {
         );
     });
 
-    // console.log(filteredRequests)
-
     let filterList = ['Москва', 'Санкт-Петербург'];
 
     return (

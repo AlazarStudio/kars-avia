@@ -24,6 +24,8 @@ export const decodeJWT = (token) => {
   return payloadObject;
 }
 
+// ----------------------------------------------------------------
+
 // Запросы получения пользователя
 
 export const SINGIN = gql`
@@ -35,6 +37,8 @@ export const SINGIN = gql`
 `;
 
 // Запросы получения пользователя
+
+// ----------------------------------------------------------------
 
 // Запросы к заявкам на эстафету
 
@@ -116,7 +120,9 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
 
 // Запросы к заявкам на эстафету
 
-// Начало - зарпосы в гостиницу
+// ----------------------------------------------------------------
+
+// Зарпосы в гостиницу
 
 export const CREATE_HOTEL = gql`
   mutation Mutation($input: CreateHotelInput!, $images: [Upload!]) {
@@ -327,4 +333,60 @@ export const DELETE_HOTEL_USER = gql`
   }
 `;
 
-// Конец - зарпосы в гостиницу
+// Зарпосы в гостиницу
+
+// ----------------------------------------------------------------
+
+// Зарпосы в авиакомпанию
+
+export const GET_AIRLINES = gql`
+  query Airlines {
+    airlines {
+      id
+      images
+      name
+    }
+  }
+`;
+
+export const CREATE_AIRLINE = gql`
+  mutation Mutation($input: CreateAirlineInput!, $images: [Upload!]) {
+    createAirline(input: $input, images: $images) {
+      images
+      name
+    }
+  }
+`;
+
+
+export const GET_AIRLINE = gql`
+  query Airline($airlineId: ID!) {
+    airline(id: $airlineId) {
+      id
+      name
+      country
+      city
+      address
+      index
+      email
+      number
+      inn
+      ogrn
+      rs
+      bank
+      bik
+      images
+    }
+  }
+`;
+
+export const UPDATE_AIRLINE = gql`
+  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
+    updateAirline(id: $updateAirlineId, input: $input) {
+      name
+      id
+    }
+  }
+`;
+
+// Зарпосы в авиакомпанию
