@@ -6,49 +6,25 @@ import { requestsHotels } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
 import { gql, useQuery } from "@apollo/client";
+import { GET_HOTELS } from "../../../../graphQL_requests";
 
 function HotelsList({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-
-    const GET_HOTELS = gql`
-        query Hotel {
-            hotels {
-                id
-                name
-                city
-                address
-                quote
-            }
-        }
-    `;
 
     const { loading, error, data } = useQuery(GET_HOTELS);
     const [companyData, setCompanyData] = useState([]);
 
     useEffect(() => {
         if (data && data.hotels) {
-            const sortedHotels = [...data.hotels].reverse();
-            let sorted = [];
-            sortedHotels.map((hotel) => {
-                sorted.push({
-                    id: hotel.id,
-                    hotelName: hotel.name,
-                    hotelCity: hotel.city,
-                    hotelAdress: hotel.address,
-                    hotelKvota: hotel.quote,
-                    // hotelImage: hotel.images
-                    hotelImage: 'hotelImage.png'
-                })
-            })
-
-            setCompanyData(sorted);
+            const sortedHotels = [...data.hotels].sort((a, b) => a.name.localeCompare(b.name));
+            setCompanyData(sortedHotels);
         }
     }, [data]);
 
 
     const addHotel = (newHotel) => {
-        setCompanyData([...companyData, newHotel]);
+        setCompanyData([...companyData, newHotel].sort((a, b) => a.name.localeCompare(b.name)));
     };
 
     const toggleCreateSidebar = () => {
@@ -79,12 +55,12 @@ function HotelsList({ children, ...props }) {
 
     const filteredRequests = companyData.filter(request => {
         return (
-            (filterData.filterSelect === '' || request.hotelCity.includes(filterData.filterSelect)) &&
+            (filterData.filterSelect === '' || request.city.includes(filterData.filterSelect)) &&
             (
-                request.hotelName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.hotelCity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.hotelAdress.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.hotelKvota.toLowerCase().includes(searchQuery.toLowerCase())
+                request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.quote.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
     });

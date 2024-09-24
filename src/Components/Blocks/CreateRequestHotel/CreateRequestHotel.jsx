@@ -2,24 +2,29 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './CreateRequestHotel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { CREATE_HOTEL, getCookie } from "../../../../graphQL_requests";
+import { useMutation } from "@apollo/client";
 
 function CreateRequestHotel({ show, onClose, addHotel }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({
-        hotelName: '',
-        hotelCity: '',
-        hotelAdress: '',
-        hotelKvota: '',
-        hotelImage: ''
+        name: '',
+        city: '',
+        address: '',
+        quote: '',
+        images: ''
     });
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
-            hotelName: '',
-            hotelCity: '',
-            hotelAdress: '',
-            hotelKvota: '',
+            name: '',
+            city: '',
+            address: '',
+            quote: '',
+            images: ''
         });
     };
 
@@ -44,19 +49,51 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         if (file) {
             setFormData(prevState => ({
                 ...prevState,
-                hotelImage: file.name
+                images: file // Сохраняем файл напрямую
             }));
         }
     };
 
-    const handleSubmit = (e) => {
+    const [uploadFile, { data, loading, error }] = useMutation(CREATE_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        addHotel({
-            ...formData,
-            id: Date.now().toString()
-        });
-        resetForm();
-        onClose();
+
+        if (!formData.images) {
+            alert('Пожалуйста, выберите файл для загрузки');
+            return;
+        }
+
+        try {
+            let response_create_hotel = await uploadFile({
+                variables: {
+                    input: {
+                        name: formData.name,
+                        city: formData.city,
+                        address: formData.address,
+                        quote: formData.quote
+                    },
+                    images: formData.images
+                }
+            });
+
+            if (response_create_hotel) {
+                addHotel(response_create_hotel.data.createHotel);
+                resetForm();
+                onClose();
+            }
+        } catch (e) {
+            console.error('Ошибка при загрузке файла:', e);
+        }
+
+
     };
 
     useEffect(() => {
@@ -87,19 +124,19 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Название</label>
-                    <input type="text" name="hotelName" placeholder="Гостиница Славянка"  onChange={handleChange} />
-                    
+                    <input type="text" name="name" placeholder="Гостиница Славянка" onChange={handleChange} />
+
                     <label>Город</label>
-                    <input type="text" name="hotelCity" placeholder="Москва"  onChange={handleChange} />
+                    <input type="text" name="city" placeholder="Москва" onChange={handleChange} />
 
                     <label>Адрес</label>
-                    <input type="text" name="hotelAdress" placeholder="ул. Лесная  147" onChange={handleChange} />
+                    <input type="text" name="address" placeholder="ул. Лесная  147" onChange={handleChange} />
 
                     <label>Квота</label>
-                    <input type="text" name="hotelKvota" placeholder="24" onChange={handleChange} />
+                    <input type="text" name="quote" placeholder="24" onChange={handleChange} />
 
                     <label>Картинка</label>
-                    <input type="file" name="hotelImage" onChange={handleFileChange} />
+                    <input type="file" name="images" onChange={handleFileChange} />
                 </div>
 
             </div>

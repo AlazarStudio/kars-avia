@@ -130,6 +130,19 @@ export const CREATE_HOTEL = gql`
   }
 `;
 
+export const GET_HOTELS = gql`
+  query Hotel {
+      hotels {
+          id
+          name
+          city
+          address
+          quote
+          images
+      }
+  }
+`;
+
 export const GET_HOTEL = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {

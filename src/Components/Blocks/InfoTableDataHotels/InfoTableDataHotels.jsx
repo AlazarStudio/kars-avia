@@ -2,13 +2,12 @@ import React from "react";
 import classes from './InfoTableDataHotels.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
+import { server } from "../../../../graphQL_requests";
 
 function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...props }) {
     const handleObject = (item, index) => {
         toggleRequestSidebar();
     };
-
-
 
     return (
         <InfoTable>
@@ -31,19 +30,19 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
                         <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={`/${item.hotelImage}`} alt="" />
+                                    <img src={`${server}${item.images}`} alt="" />
                                 </div>
-                                <div className={classes.InfoTable_data_elem_title}>{item.hotelName}</div>
+                                <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                            <div className={classes.InfoTable_data_elem_title}>{item.hotelCity}</div>
+                            <div className={classes.InfoTable_data_elem_title}>{item.city}</div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
-                            <div className={classes.InfoTable_data_elem_title}>{item.hotelAdress}</div>
+                            <div className={classes.InfoTable_data_elem_title}>{item.address}</div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                            <div className={classes.InfoTable_data_elem_title}>{item.hotelKvota}</div>
+                            <div className={classes.InfoTable_data_elem_title}>{item.quote}</div>
                         </div>
                     </Link>
                 ))}
