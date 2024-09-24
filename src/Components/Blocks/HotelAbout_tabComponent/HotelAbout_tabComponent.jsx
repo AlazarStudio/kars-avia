@@ -2,11 +2,16 @@ import React, { useEffect, useState } from "react";
 import classes from './HotelAbout_tabComponent.module.css';
 import { gql, useQuery, useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
-import { server, getCookie, GET_HOTEL, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
+import { server, getCookie, GET_HOTEL, UPDATE_HOTEL, decodeJWT } from '../../../../graphQL_requests.js';
 
 
 function HotelAbout_tabComponent({ id }) {
+    const [userRole, setUserRole] = useState();
     const token = getCookie('token');
+
+    useEffect(() => {
+        setUserRole(decodeJWT(token).role);
+    }, [token]);
 
     const { loading, error, data } = useQuery(GET_HOTEL, {
         variables: { hotelId: id },
@@ -54,7 +59,6 @@ function HotelAbout_tabComponent({ id }) {
                 });
                 alert('Данные успешно сохранены');
             } catch (err) {
-                console.error(err);
                 alert('Произошла ошибка при сохранении данных');
             }
         }
@@ -90,9 +94,11 @@ function HotelAbout_tabComponent({ id }) {
                             </div>
                         </div>
                         <div className={classes.hotelAbout_top_button}>
-                            <Button onClick={handleEditClick}>
-                                {isEditing ? "Сохранить" : "Редактировать"}
-                            </Button>
+                            {(userRole == 'SUPERADMIN' || userRole == 'HOTELADMIN' || userRole == 'DISPATCHERADMIN') &&
+                                <Button onClick={handleEditClick}>
+                                    {isEditing ? "Сохранить" : "Редактировать"}
+                                </Button>
+                            }
                         </div>
                     </div>
                     <div className={classes.hotelAbout_info}>
