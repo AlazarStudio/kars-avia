@@ -3,14 +3,14 @@ import classes from './EditRequestAirlineCompany.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function EditRequestAirlineCompany({ show, onClose, nomer, category, onSubmit, uniqueCategories }) {
+function EditRequestAirlineCompany({ show, onClose, nomer, category, onSubmit }) {
     const [formData, setFormData] = useState({
         avatar: nomer?.avatar || '',
         fio: nomer?.fio || '',
         post: nomer?.post || '',
         login: nomer?.login || '',
         password: nomer?.password || '',
-        category: category || uniqueCategories[0] || ''
+        category: category || ''
     });
 
     const sidebarRef = useRef();
@@ -23,10 +23,10 @@ function EditRequestAirlineCompany({ show, onClose, nomer, category, onSubmit, u
                 post: nomer?.post || '',
                 login: nomer?.login || '',
                 password: nomer?.password || '',
-                category: category || uniqueCategories[0] || ''
+                category: category || ''
             });
         }
-    }, [show, category, nomer, uniqueCategories]);
+    }, [show, category, nomer]);
 
     const closeButton = () => {
         let success = confirm("Вы уверены, что хотите закрыть? Все несохраненные данные будут потеряны.");
@@ -86,9 +86,9 @@ function EditRequestAirlineCompany({ show, onClose, nomer, category, onSubmit, u
 
                     <label>Отдел</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
-                        {uniqueCategories.map(category => (
+                        {/* {uniqueCategories.map(category => (
                             <option key={category} value={category}>{category}</option>
-                        ))}
+                        ))} */}
                     </select>
 
                     <label>Аватар</label>

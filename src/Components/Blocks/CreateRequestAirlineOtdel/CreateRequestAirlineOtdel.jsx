@@ -3,7 +3,7 @@ import classes from './CreateRequestAirlineOtdel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function CreateRequestAirlineOtdel({ show, onClose, addTarif, setAddTarif, uniqueCategories }) {
+function CreateRequestAirlineOtdel({ show, onClose, addTarif, setAddTarif }) {
     const [formData, setFormData] = useState({
         category: ''
     });

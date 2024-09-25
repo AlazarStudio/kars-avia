@@ -51,7 +51,7 @@ function AirlinePage({ children, id, ...props }) {
                     </TabList>
 
                     <TabPanel className={classes.tabPanel}>
-                        <AirlineCompany_tabComponent />
+                        <AirlineCompany_tabComponent id={id} />
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>

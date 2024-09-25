@@ -3,7 +3,7 @@ import classes from './CreateRequestAirlineCompany.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function CreateRequestAirlineCompany({ show, onClose, addTarif, setAddTarif, uniqueCategories }) {
+function CreateRequestAirlineCompany({ show, onClose, addTarif, setAddTarif }) {
     const [formData, setFormData] = useState({
         avatar: '',
         fio: '',
@@ -123,9 +123,9 @@ function CreateRequestAirlineCompany({ show, onClose, addTarif, setAddTarif, uni
 
                     <label>Отдел</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
-                        {uniqueCategories.map(category => (
+                        {/* {uniqueCategories.map(category => (
                             <option key={category} value={category}>{category}</option>
-                        ))}
+                        ))} */}
                     </select>
 
                     <label>Аватар</label>

@@ -358,7 +358,6 @@ export const CREATE_AIRLINE = gql`
   }
 `;
 
-
 export const GET_AIRLINE = gql`
   query Airline($airlineId: ID!) {
     airline(id: $airlineId) {
@@ -385,6 +384,27 @@ export const UPDATE_AIRLINE = gql`
     updateAirline(id: $updateAirlineId, input: $input) {
       name
       id
+    }
+  }
+`;
+
+export const GET_AIRLINE_COMPANY = gql`
+  query Query($airlineId: ID!) {
+    airline(id: $airlineId) {
+      name
+      department {
+        id
+        name
+        users {
+          id
+          name
+          role
+          images
+          email
+          login
+          password
+        }
+      }
     }
   }
 `;

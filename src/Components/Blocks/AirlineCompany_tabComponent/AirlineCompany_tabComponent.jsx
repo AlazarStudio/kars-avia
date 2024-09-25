@@ -9,8 +9,21 @@ import EditRequestAirlineOtdel from "../EditRequestAirlineOtdel/EditRequestAirli
 import EditRequestAirlineCompany from "../EditRequestAirlineCompany/EditRequestAirlineCompany";
 import InfoTableDataAirlineCompany from "../InfoTableDataAirlineCompany/InfoTableDataAirlineCompany";
 import CreateRequestAirlineOtdel from "../CreateRequestAirlineOtdel/CreateRequestAirlineOtdel";
+import { decodeJWT, GET_AIRLINE_COMPANY, getCookie } from "../../../../graphQL_requests";
+import { useQuery } from "@apollo/client";
 
-function AirlineCompany_tabComponent({ children, ...props }) {
+function AirlineCompany_tabComponent({ children, id, ...props }) {
+    const [userRole, setUserRole] = useState();
+    const token = getCookie('token');
+
+    useEffect(() => {
+        setUserRole(decodeJWT(token).role);
+    }, [token]);
+
+    const { loading, error, data } = useQuery(GET_AIRLINE_COMPANY, {
+        variables: { airlineId: id },
+    });
+
     const [addTarif, setAddTarif] = useState([]);
     const [showAddTarif, setShowAddTarif] = useState(false);
     const [showAddCategory, setshowAddCategory] = useState(false);
@@ -22,23 +35,26 @@ function AirlineCompany_tabComponent({ children, ...props }) {
 
     const [searchTarif, setSearchTarif] = useState('');
     const [selectQuery, setSelectQuery] = useState('');
-    const [showEditCategory, setShowEditCategory] = useState(false); // Новый стейт для редактирования категории
-    const [selectedCategory, setSelectedCategory] = useState(null); // Стейт для хранения выбранной категории
+    const [showEditCategory, setShowEditCategory] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState(null);
 
     const [showEditNomer, setShowEditNomer] = useState(false);
     const [selectedNomer, setSelectedNomer] = useState({});
 
     useEffect(() => {
-        const sortedTarifs = requestsAirlinesCompany.map(tarif => ({
-            ...tarif,
-            numbers: tarif.numbers.sort((a, b) => {
-                // Сортировка по ФИО (fio) сотрудников
-                return a.fio.localeCompare(b.fio);
-            })
-        })).sort((a, b) => a.type.localeCompare(b.type)); // Сортировка по названию отдела (type)
+        // const sortedTarifs = requestsAirlinesCompany.map(tarif => ({
+        //     ...tarif,
+        //     numbers: tarif.numbers.sort((a, b) => {
+        //         return a.fio.localeCompare(b.fio);
+        //     })
+        // })).sort((a, b) => a.type.localeCompare(b.type));
 
-        setAddTarif(sortedTarifs);
-    }, []);
+        if (data) {
+            setAddTarif(data.airline.department);
+        }
+    }, [data]);
+
+    console.log(addTarif)
 
     const handleSearchTarif = (e) => {
         setSearchTarif(e.target.value);
@@ -113,7 +129,6 @@ function AirlineCompany_tabComponent({ children, ...props }) {
 
     const handleEditNomer = (updatedNomer) => {
         const updatedTarifs = addTarif.map(tarif => {
-            // Если отдел не изменился, обновляем информацию о сотруднике
             if (tarif.type === selectedNomer.category && tarif.type === updatedNomer.category) {
                 return {
                     ...tarif,
@@ -121,7 +136,6 @@ function AirlineCompany_tabComponent({ children, ...props }) {
                 };
             }
 
-            // Если сотрудник перемещается в новый отдел, удаляем из старого отдела
             if (tarif.type === selectedNomer.category) {
                 return {
                     ...tarif,
@@ -129,7 +143,6 @@ function AirlineCompany_tabComponent({ children, ...props }) {
                 };
             }
 
-            // Добавляем сотрудника в новый отдел
             if (tarif.type === updatedNomer.category) {
                 return {
                     ...tarif,
@@ -140,7 +153,6 @@ function AirlineCompany_tabComponent({ children, ...props }) {
             return tarif;
         });
 
-        // Если новый отдел еще не существует, создаем его и добавляем туда сотрудника
         if (!updatedTarifs.some(tarif => tarif.type === updatedNomer.category)) {
             updatedTarifs.push({
                 type: updatedNomer.category,
@@ -155,20 +167,21 @@ function AirlineCompany_tabComponent({ children, ...props }) {
 
 
 
-    const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
+    // const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
 
     const filteredRequestsTarif = addTarif.filter(request => {
-        const matchesCategory = selectQuery === '' || request.type.toLowerCase().includes(selectQuery.toLowerCase());
-    
-        const matchesSearch = searchTarif === '' || 
-            request.type.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.numbers.some(number => 
-                number.fio.toLowerCase().includes(searchTarif.toLowerCase()) ||
-                number.post.toLowerCase().includes(searchTarif.toLowerCase())
+        const matchesCategory = selectQuery === '' || request.name.toLowerCase().includes(selectQuery.toLowerCase());
+
+        const matchesSearch = searchTarif === '' ||
+            request.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
+            request.department.some(number =>
+                number.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
+                number.role.toLowerCase().includes(searchTarif.toLowerCase())
             );
-    
+
         return matchesCategory && matchesSearch;
     });
+
 
     return (
         <>
@@ -193,17 +206,21 @@ function AirlineCompany_tabComponent({ children, ...props }) {
                     />
                 </div>
             </div>
+            {loading && <p>Loading...</p>}
+            {error && <p>Error: {error.message}</p>}
 
-            <InfoTableDataAirlineCompany
-                toggleRequestSidebar={toggleEditCategory}
-                toggleRequestEditNumber={toggleEditNomer}
-                requests={filteredRequestsTarif}
-                openDeleteComponent={openDeleteComponent}
-                openDeleteNomerComponent={openDeleteNomerComponent}
-            />
+            {!loading && !error && (
+                <InfoTableDataAirlineCompany
+                    toggleRequestSidebar={toggleEditCategory}
+                    toggleRequestEditNumber={toggleEditNomer}
+                    requests={filteredRequestsTarif}
+                    openDeleteComponent={openDeleteComponent}
+                    openDeleteNomerComponent={openDeleteNomerComponent}
+                />
+            )}
 
-            <CreateRequestAirlineCompany show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
-            <CreateRequestAirlineOtdel show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+            <CreateRequestAirlineCompany show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif}  />
+            <CreateRequestAirlineOtdel show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif}  />
 
             <EditRequestAirlineCompany
                 show={showEditNomer}
@@ -211,7 +228,7 @@ function AirlineCompany_tabComponent({ children, ...props }) {
                 nomer={selectedNomer.nomer}
                 category={selectedNomer.category}
                 onSubmit={handleEditNomer}
-                uniqueCategories={uniqueCategories}
+                // uniqueCategories={uniqueCategories}
             />
             <EditRequestAirlineOtdel show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
 
