@@ -352,6 +352,7 @@ export const GET_AIRLINES = gql`
 export const CREATE_AIRLINE = gql`
   mutation Mutation($input: CreateAirlineInput!, $images: [Upload!]) {
     createAirline(input: $input, images: $images) {
+      id
       images
       name
     }
@@ -457,4 +458,21 @@ export const UPDATE_AIRLINE_USER = gql`
     }
   }
 `;
+
+export const DELETE_AIRLINE_DEPARTMENT = gql`
+  mutation Mutation($deleteAirlineDepartmentId: ID!) {
+    deleteAirlineDepartment(id: $deleteAirlineDepartmentId) {
+      id
+    }
+  }
+`;
+
+export const DELETE_AIRLINE_MANAGER = gql`
+  mutation Mutation($deleteUserId: ID!) {
+    deleteUser(id: $deleteUserId) {
+      id
+    }
+  }
+`;
+
 // Зарпосы в авиакомпанию

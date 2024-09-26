@@ -57,9 +57,9 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                         }
                     }
                 });
-                alert('Данные успешно сохранены');
+                // alert('Данные успешно сохранены');
             } catch (err) {
-                alert('Произошла ошибка при сохранении данных');
+                console.error('Произошла ошибка при сохранении данных');
             }
         }
         setIsEditing(!isEditing);

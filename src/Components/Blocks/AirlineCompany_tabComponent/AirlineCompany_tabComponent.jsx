@@ -9,8 +9,8 @@ import EditRequestAirlineOtdel from "../EditRequestAirlineOtdel/EditRequestAirli
 import EditRequestAirlineCompany from "../EditRequestAirlineCompany/EditRequestAirlineCompany";
 import InfoTableDataAirlineCompany from "../InfoTableDataAirlineCompany/InfoTableDataAirlineCompany";
 import CreateRequestAirlineOtdel from "../CreateRequestAirlineOtdel/CreateRequestAirlineOtdel";
-import { decodeJWT, GET_AIRLINE_COMPANY, getCookie } from "../../../../graphQL_requests";
-import { useQuery } from "@apollo/client";
+import { decodeJWT, DELETE_AIRLINE_DEPARTMENT, DELETE_AIRLINE_MANAGER, GET_AIRLINE_COMPANY, getCookie } from "../../../../graphQL_requests";
+import { useMutation, useQuery } from "@apollo/client";
 
 function AirlineCompany_tabComponent({ children, id, ...props }) {
     const [userRole, setUserRole] = useState();
@@ -81,40 +81,79 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         setSelectedCategory(null);
     }
 
-    const deleteTarif = (index) => {
-        setAddTarif(addTarif.filter((_, i) => i !== index));
-        setShowDelete(false);
-        setShowEditCategory(false);
+    const [deleteAirlineDepartment] = useMutation(DELETE_AIRLINE_DEPARTMENT, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const deleteTarif = async (index, id) => {
+        try {
+            let request = await deleteAirlineDepartment({
+                variables: {
+                    "deleteAirlineDepartmentId": id
+                }
+            });
+
+            if (request) {
+                setAddTarif(addTarif.filter((_, i) => i !== index));
+                setShowDelete(false);
+                setShowEditCategory(false);
+            }
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    const openDeleteNomerComponent = (nomer, category) => {
-        setDeleteNomer({ nomer, category });
+    const openDeleteNomerComponent = (user, category) => {
+        setDeleteNomer({ user, category });
         setShowDelete(true);
     };
 
-    const deleteNomerFromCategory = () => {
-        console.log(deleteNomer)
-        
-        // setAddTarif(prevTarifs => prevTarifs.map(tarif => {
-        //     if (tarif.type === deleteNomer.category) {
-        //         const updatedNumbers = tarif.numbers.filter(num => num !== deleteNomer.nomer);
-        //         return { ...tarif, numbers: updatedNumbers };
-        //     }
-        //     return tarif;
-        // }));
-        setShowDelete(false);
-        setDeleteNomer(null);
+    const [deleteAirlineManager] = useMutation(DELETE_AIRLINE_MANAGER, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const deleteNomerFromCategory = async () => {
+        let request = await deleteAirlineManager({
+            variables: {
+                "deleteUserId": deleteNomer.user.id
+            }
+        });
+
+        if (request) {
+            setAddTarif(prevTarifs => {
+                return prevTarifs.map(tarif => {
+                    if (tarif.name === deleteNomer.category) {
+                        const updatedNumbers = tarif.users.filter(user => user.id !== deleteNomer.user.id);
+                        return { ...tarif, users: updatedNumbers };
+                    }
+                    return tarif;
+                });
+            });
+
+            setShowDelete(false);
+            setDeleteNomer(null);
+        }
     };
 
     const openDeleteComponent = (index, id) => {
         setShowDelete(true);
-        setDeleteIndex({index, id});
+        setDeleteIndex({ index, id });
         setShowEditCategory(false);
     };
 
     const closeDeleteComponent = () => {
         setShowDelete(false);
-        setShowEditCategory(true);
+        setShowEditCategory(false);
     };
 
     const toggleEditNomer = (user, department) => {
@@ -143,7 +182,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         return matchesCategory && matchesSearch;
     });
 
-    console.log(deleteIndex)
+    // console.log(deleteNomer)
     return (
         <>
             <div className={classes.section_searchAndFilter}>
@@ -156,14 +195,14 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
                 />
                 <div className={classes.section_searchAndFilter_filter}>
                     <Filter
-                        toggleSidebar={toggleTarifs}
-                        handleChange={''}
-                        buttonTitle={'Добавить аккаунт менеджера'}
-                    />
-                    <Filter
                         toggleSidebar={toggleCategory}
                         handleChange={''}
                         buttonTitle={'Добавить отдел'}
+                    />
+                    <Filter
+                        toggleSidebar={toggleTarifs}
+                        handleChange={''}
+                        buttonTitle={'Добавить аккаунт менеджера'}
                     />
                 </div>
             </div>

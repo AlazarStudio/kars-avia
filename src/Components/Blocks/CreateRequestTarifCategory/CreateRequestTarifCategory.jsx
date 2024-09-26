@@ -152,8 +152,8 @@ function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif }
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Выберите тариф</label>
-                    <select name="tarifName" value={formData.tarifName.id} onChange={handleChange}>
-                        <option value="">Выберите тариф</option>
+                    <select name="tarifName" value={formData.tarifName} onChange={handleChange}>
+                        <option value="" disabled>Выберите тариф</option>
                         {tarifNames.map((name, index) => (
                             <option key={index} value={name.id}>{name.name}</option>
                         ))}
@@ -170,7 +170,7 @@ function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif }
 
                     <label>Стоимость</label>
                     <input
-                        type="text"
+                        type="number"
                         name="price"
                         value={formData.price}
                         onChange={handleChange}
@@ -179,7 +179,7 @@ function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif }
 
                     <label>Стоимость для авиакомпании</label>
                     <input
-                        type="text"
+                        type="number"
                         name="price_airline"
                         value={formData.price_airline}
                         onChange={handleChange}
