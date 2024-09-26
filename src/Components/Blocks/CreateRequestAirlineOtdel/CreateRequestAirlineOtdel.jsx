@@ -2,8 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './CreateRequestAirlineOtdel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { CREATE_AIRLINE_DEPARTMERT, decodeJWT, getCookie } from "../../../../graphQL_requests";
+import { useMutation } from "@apollo/client";
 
-function CreateRequestAirlineOtdel({ show, onClose, addTarif, setAddTarif }) {
+function CreateRequestAirlineOtdel({ show, onClose, id, addTarif, setAddTarif }) {
+    const [userRole, setUserRole] = useState();
+    const token = getCookie('token');
+
+    useEffect(() => {
+        setUserRole(decodeJWT(token).role);
+    }, [token]);
+
     const [formData, setFormData] = useState({
         category: ''
     });
@@ -32,30 +41,40 @@ function CreateRequestAirlineOtdel({ show, onClose, addTarif, setAddTarif }) {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-
-        setAddTarif(prevTarifs => {
-            const categoryExists = prevTarifs.some(tarif => tarif.type === formData.category);
-
-            if (categoryExists) {
-                alert("Такая категория уже существует!");
-                return prevTarifs;
-            }
-
-            const updatedTarifs = [
-                ...prevTarifs,
-                {
-                    type: formData.category,
-                    numbers: []
+        try {
+            let request = await createAirlineDepartment({
+                variables: {
+                    "updateAirlineId": id,
+                    "input": {
+                        "department": [
+                            {
+                                "name": formData.category
+                            }
+                        ]
+                    }
                 }
-            ];
+            });
 
-            return updatedTarifs.sort((a, b) => parseInt(a.type) - parseInt(b.type));
-        });
+            if (request) {
+                setAddTarif(request.data.updateAirline.department.sort((a, b) => a.name.localeCompare(b.name)));
 
-        resetForm();
-        onClose();
+                resetForm();
+                onClose();
+            }
+        } catch (err) {
+            alert('Произошла ошибка при сохранении данных');
+        }
     };
 
     useEffect(() => {

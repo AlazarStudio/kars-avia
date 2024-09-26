@@ -2,31 +2,46 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './EditRequestAirlineCompany.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { getCookie, UPDATE_AIRLINE_USER } from "../../../../graphQL_requests";
+import { useMutation } from "@apollo/client";
 
-function EditRequestAirlineCompany({ show, onClose, nomer, category, onSubmit }) {
+function EditRequestAirlineCompany({ show, onClose, user, department, onSubmit, addTarif, id }) {
+    const token = getCookie('token');
+
+    const [uploadFile, { data, loading, error }] = useMutation(UPDATE_AIRLINE_USER, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
     const [formData, setFormData] = useState({
-        avatar: nomer?.avatar || '',
-        fio: nomer?.fio || '',
-        post: nomer?.post || '',
-        login: nomer?.login || '',
-        password: nomer?.password || '',
-        category: category || ''
+        images: null,
+        name: user?.name || '',
+        email: user?.email || '',
+        role: user?.role || '',
+        login: user?.login || '',
+        password: '',
+        department: department || ''
     });
 
     const sidebarRef = useRef();
 
     useEffect(() => {
-        if (show && nomer && category) {
+        if (show && user && department) {
             setFormData({
-                avatar: nomer?.avatar || '',
-                fio: nomer?.fio || '',
-                post: nomer?.post || '',
-                login: nomer?.login || '',
-                password: nomer?.password || '',
-                category: category || ''
+                images: null,
+                name: user?.name || '',
+                email: user?.email || '',
+                role: user?.role || '',
+                login: user?.login || '',
+                password: '',
+                department: department || ''
             });
         }
-    }, [show, category, nomer]);
+    }, [show, department, user]);
 
     const closeButton = () => {
         let success = confirm("Вы уверены, что хотите закрыть? Все несохраненные данные будут потеряны.");
@@ -48,16 +63,56 @@ function EditRequestAirlineCompany({ show, onClose, nomer, category, onSubmit })
         if (file) {
             setFormData(prevState => ({
                 ...prevState,
-                avatar: file.name
+                images: file
             }));
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(formData);
-        onClose();
+
+        try {
+            let response_update_user = await uploadFile({
+                variables: {
+                    input: {
+                        id: user.id,
+                        name: formData.name,
+                        email: formData.email,
+                        role: formData.role,
+                        login: formData.login,
+                        password: formData.password,
+                        airlineId: id,
+                        airlineDepartmentId: formData.department
+                    },
+                    images: formData.images
+                }
+            });
+
+            if (response_update_user) {
+                const updatedUser = response_update_user.data.updateUser;
+
+                const updatedTarif = addTarif.map(department => {
+                    if (department.name === formData.department) {
+                        return {
+                            ...department,
+                            users: department.users.map(user =>
+                                user.id === updatedUser.id
+                                    ? { ...user, ...updatedUser }
+                                    : user
+                            ).sort((a, b) => a.name.localeCompare(b.name))
+                        };
+                    }
+                    return department;
+                }).sort((a, b) => a.name.localeCompare(b.name));
+
+                onSubmit(updatedTarif);
+                onClose();
+            }
+        } catch (err) {
+            alert('Произошла ошибка при обновлении пользователя');
+        }
     };
+
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -69,13 +124,23 @@ function EditRequestAirlineCompany({ show, onClose, nomer, category, onSubmit })
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>ФИО</label>
-                    <input type="text" name="fio" value={formData.fio} onChange={handleChange} placeholder="Введите ФИО" />
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Введите ФИО" />
+
+                    <label>Почта</label>
+                    <input type="text" name="email" value={formData.email} onChange={handleChange} placeholder="Введите email" />
 
                     <label>Должность</label>
-                    <select name="post" value={formData.post} onChange={handleChange}>
+                    <select name="role" value={formData.role} onChange={handleChange}>
                         <option value="" disabled>Выберите должность</option>
                         <option value="Модератор">Модератор</option>
                         <option value="Администратор">Администратор</option>
+                    </select>
+
+                    <label>Отдел</label>
+                    <select name="department" value={formData.department} onChange={handleChange}>
+                        {addTarif.map((department, index) => (
+                            <option key={index} value={department.name}>{department.name}</option>
+                        ))}
                     </select>
 
                     <label>Логин</label>
@@ -84,15 +149,8 @@ function EditRequestAirlineCompany({ show, onClose, nomer, category, onSubmit })
                     <label>Пароль</label>
                     <input type="text" name="password" value={formData.password} onChange={handleChange} placeholder="Введите пароль" />
 
-                    <label>Отдел</label>
-                    <select name="category" value={formData.category} onChange={handleChange}>
-                        {/* {uniqueCategories.map(category => (
-                            <option key={category} value={category}>{category}</option>
-                        ))} */}
-                    </select>
-
                     <label>Аватар</label>
-                    <input type="file" name="avatar" onChange={handleFileChange} />
+                    <input type="file" name="images" onChange={handleFileChange} />
                 </div>
             </div>
 

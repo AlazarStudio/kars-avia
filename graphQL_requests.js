@@ -391,6 +391,42 @@ export const UPDATE_AIRLINE = gql`
 export const GET_AIRLINE_COMPANY = gql`
   query Query($airlineId: ID!) {
     airline(id: $airlineId) {
+      id
+      name
+      department {
+        id
+        name
+        users {
+          id
+          name
+          role
+          images
+          email
+          login
+        }
+      }
+    }
+  }
+`;
+
+export const CREATE_AIRLINE_USER = gql`
+  mutation RegisterUser($input: RegisterUserInput!, $images: [Upload!]) {
+    registerUser(input: $input, images: $images) {
+      id
+      images
+      name
+      role
+      login
+      password
+      email
+    }
+  }
+`;
+
+export const CREATE_AIRLINE_DEPARTMERT = gql`
+  mutation UpdateAirline($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
+    updateAirline(id: $updateAirlineId, input: $input) {
+      id
       name
       department {
         id
@@ -409,4 +445,16 @@ export const GET_AIRLINE_COMPANY = gql`
   }
 `;
 
+export const UPDATE_AIRLINE_USER = gql`
+  mutation UpdateUser($input: UpdateUserInput!, $images: [Upload!]) {
+    updateUser(input: $input, images: $images) {
+        id
+        name
+        email
+        role
+        login
+        images
+    }
+  }
+`;
 // Зарпосы в авиакомпанию

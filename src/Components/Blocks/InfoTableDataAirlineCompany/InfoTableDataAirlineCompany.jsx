@@ -4,7 +4,6 @@ import InfoTable from "../InfoTable/InfoTable";
 import { server } from "../../../../graphQL_requests";
 
 function InfoTableDataAirlineCompany({ children, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, ...props }) {
-
     return (
         <InfoTable>
             <div className={classes.bottom}>
@@ -19,7 +18,7 @@ function InfoTableDataAirlineCompany({ children, toggleRequestSidebar, requests,
 
                             <div className={classes.infoTable_buttons}>
                                 <img src="/editPassenger.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} />
-                                <img src="/deletePassenger.png" alt="Delete" onClick={() => openDeleteComponent(index)} />
+                                <img src="/deletePassenger.png" alt="Delete" onClick={() => openDeleteComponent(index, item.id)} />
                             </div>
 
                         </div>
@@ -32,11 +31,11 @@ function InfoTableDataAirlineCompany({ children, toggleRequestSidebar, requests,
                                         </div>
                                         <div className={classes.employeeInfo}>
                                             <div className={classes.employeeName}>{employee.name}</div>
-                                            <div className={classes.employeePost}>{employee.role}</div>
+                                            <div className={classes.employeePost}>{employee.role == 'AIRLINEADMIN' && 'Администратор'}</div>
                                         </div>
                                         <div className={classes.infoTable_buttons}>
-                                            <img src="/editPassenger.png" alt="Edit" onClick={() => toggleRequestEditNumber(employee, item.type)} />
-                                            <img src="/deletePassenger.png" alt="Delete" onClick={() => openDeleteNomerComponent(employee, item.type)} />
+                                            <img src="/editPassenger.png" alt="Edit" onClick={() => toggleRequestEditNumber(employee, item.name)} />
+                                            <img src="/deletePassenger.png" alt="Delete" onClick={() => openDeleteNomerComponent(employee, item.name)} />
                                         </div>
                                     </div>
                                 </div>

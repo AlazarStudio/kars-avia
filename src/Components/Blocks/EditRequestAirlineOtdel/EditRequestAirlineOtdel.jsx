@@ -2,8 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './EditRequestAirlineOtdel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { CREATE_AIRLINE_DEPARTMERT, decodeJWT, getCookie } from "../../../../graphQL_requests";
+import { useMutation } from "@apollo/client";
 
-function EditRequestAirlineOtdel({ show, onClose, category, onSubmit }) {
+function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
+    const [userRole, setUserRole] = useState();
+    const token = getCookie('token');
+
+    useEffect(() => {
+        setUserRole(decodeJWT(token).role);
+    }, [token]);
+
     const [formData, setFormData] = useState({
         type: ''
     });
@@ -12,7 +21,7 @@ function EditRequestAirlineOtdel({ show, onClose, category, onSubmit }) {
 
     useEffect(() => {
         if (show && category) {
-            setFormData({ type: category.type });
+            setFormData({ type: category.name });
         }
     }, [show, category]);
 
@@ -28,9 +37,44 @@ function EditRequestAirlineOtdel({ show, onClose, category, onSubmit }) {
         setFormData({ [name]: value });
     };
 
-    const handleSubmit = (e) => {
+    const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(formData);
+        try {
+            let request = await createAirlineDepartment({
+                variables: {
+                    "updateAirlineId": id,
+                    "input": {
+                        "department": [
+                            {
+                                id: category.id,
+                                name: formData.type
+                            }
+                        ]
+                    }
+                }
+            });
+
+            if (request) {
+                const sortedDepartments = request.data.updateAirline.department.map(department => ({
+                    ...department,
+                    users: department.users.sort((a, b) => a.name.localeCompare(b.name))
+                })).sort((a, b) => a.name.localeCompare(b.name));
+
+                onSubmit(sortedDepartments);
+            }
+        } catch (err) {
+            alert('Произошла ошибка при сохранении данных');
+        }
+
     };
 
     return (

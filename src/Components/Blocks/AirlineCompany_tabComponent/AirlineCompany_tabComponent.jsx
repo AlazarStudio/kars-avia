@@ -42,19 +42,15 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
     const [selectedNomer, setSelectedNomer] = useState({});
 
     useEffect(() => {
-        // const sortedTarifs = requestsAirlinesCompany.map(tarif => ({
-        //     ...tarif,
-        //     numbers: tarif.numbers.sort((a, b) => {
-        //         return a.fio.localeCompare(b.fio);
-        //     })
-        // })).sort((a, b) => a.type.localeCompare(b.type));
-
         if (data) {
-            setAddTarif(data.airline.department);
+            const sortedTarifs = data.airline.department.map(tarif => ({
+                ...tarif,
+                users: [...tarif.users].sort((a, b) => a.name.localeCompare(b.name))
+            })).sort((a, b) => a.name.localeCompare(b.name));
+
+            setAddTarif(sortedTarifs);
         }
     }, [data]);
-
-    console.log(addTarif)
 
     const handleSearchTarif = (e) => {
         setSearchTarif(e.target.value);
@@ -80,10 +76,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
     }
 
     const handleEditCategory = (updatedCategory) => {
-        const updatedTarifs = addTarif.map(tarif =>
-            tarif.type === selectedCategory.type ? { ...tarif, type: updatedCategory.type } : tarif
-        ).sort((a, b) => parseInt(a.type) - parseInt(b.type));
-        setAddTarif(updatedTarifs);
+        setAddTarif(updatedCategory);
         setShowEditCategory(false);
         setSelectedCategory(null);
     }
@@ -100,20 +93,22 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
     };
 
     const deleteNomerFromCategory = () => {
-        setAddTarif(prevTarifs => prevTarifs.map(tarif => {
-            if (tarif.type === deleteNomer.category) {
-                const updatedNumbers = tarif.numbers.filter(num => num !== deleteNomer.nomer);
-                return { ...tarif, numbers: updatedNumbers };
-            }
-            return tarif;
-        }));
+        console.log(deleteNomer)
+        
+        // setAddTarif(prevTarifs => prevTarifs.map(tarif => {
+        //     if (tarif.type === deleteNomer.category) {
+        //         const updatedNumbers = tarif.numbers.filter(num => num !== deleteNomer.nomer);
+        //         return { ...tarif, numbers: updatedNumbers };
+        //     }
+        //     return tarif;
+        // }));
         setShowDelete(false);
         setDeleteNomer(null);
     };
 
-    const openDeleteComponent = (index) => {
+    const openDeleteComponent = (index, id) => {
         setShowDelete(true);
-        setDeleteIndex(index);
+        setDeleteIndex({index, id});
         setShowEditCategory(false);
     };
 
@@ -122,50 +117,16 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         setShowEditCategory(true);
     };
 
-    const toggleEditNomer = (nomer, category) => {
-        setSelectedNomer({ nomer, category });
+    const toggleEditNomer = (user, department) => {
+        setSelectedNomer({ user, department });
         setShowEditNomer(true);
     }
 
     const handleEditNomer = (updatedNomer) => {
-        const updatedTarifs = addTarif.map(tarif => {
-            if (tarif.type === selectedNomer.category && tarif.type === updatedNomer.category) {
-                return {
-                    ...tarif,
-                    numbers: tarif.numbers.map(n => n.login === selectedNomer.nomer.login ? updatedNomer : n)
-                };
-            }
-
-            if (tarif.type === selectedNomer.category) {
-                return {
-                    ...tarif,
-                    numbers: tarif.numbers.filter(n => n.login !== selectedNomer.nomer.login)
-                };
-            }
-
-            if (tarif.type === updatedNomer.category) {
-                return {
-                    ...tarif,
-                    numbers: [...tarif.numbers, updatedNomer].sort((a, b) => a.fio.localeCompare(b.fio))
-                };
-            }
-
-            return tarif;
-        });
-
-        if (!updatedTarifs.some(tarif => tarif.type === updatedNomer.category)) {
-            updatedTarifs.push({
-                type: updatedNomer.category,
-                numbers: [updatedNomer]
-            });
-        }
-
-        setAddTarif(updatedTarifs);
+        setAddTarif(updatedNomer);
         setShowEditNomer(false);
         setSelectedNomer({});
     };
-
-
 
     // const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
 
@@ -174,15 +135,15 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
 
         const matchesSearch = searchTarif === '' ||
             request.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.department.some(number =>
-                number.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
-                number.role.toLowerCase().includes(searchTarif.toLowerCase())
+            request.users.some(user =>
+                user.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
+                user.role.toLowerCase().includes(searchTarif.toLowerCase())
             );
 
         return matchesCategory && matchesSearch;
     });
 
-
+    console.log(deleteIndex)
     return (
         <>
             <div className={classes.section_searchAndFilter}>
@@ -219,23 +180,25 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
                 />
             )}
 
-            <CreateRequestAirlineCompany show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif}  />
-            <CreateRequestAirlineOtdel show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif}  />
+            <CreateRequestAirlineCompany id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} />
+            <CreateRequestAirlineOtdel id={id} show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} />
 
             <EditRequestAirlineCompany
+                id={id}
                 show={showEditNomer}
                 onClose={() => setShowEditNomer(false)}
-                nomer={selectedNomer.nomer}
-                category={selectedNomer.category}
+                user={selectedNomer.user}
+                department={selectedNomer.department}
                 onSubmit={handleEditNomer}
-                // uniqueCategories={uniqueCategories}
+                addTarif={addTarif}
+            // uniqueCategories={uniqueCategories}
             />
-            <EditRequestAirlineOtdel show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
+            <EditRequestAirlineOtdel id={id} show={showEditCategory} onClose={() => setShowEditCategory(false)} category={selectedCategory} onSubmit={handleEditCategory} />
 
             {showDelete && (
                 <DeleteComponent
                     ref={deleteComponentRef}
-                    remove={deleteNomer ? deleteNomerFromCategory : () => deleteTarif(deleteIndex)}
+                    remove={deleteNomer ? deleteNomerFromCategory : () => deleteTarif(deleteIndex.index, deleteIndex.id)}
                     close={closeDeleteComponent}
                     title={`Вы действительно хотите удалить ${deleteNomer ? 'менеджера' : 'отдел'}?`}
                 />
