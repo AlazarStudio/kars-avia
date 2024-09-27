@@ -18,7 +18,7 @@ const reducer = (state, action) => {
     }
 };
 
-const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight }) => {
+const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCategoryUpdate, setSelectedStaff }) => {
     const [state, dispatch] = useReducer(reducer, initialState(dataObject, dataInfo));
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -32,6 +32,8 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight }) => {
             const newBookings = dataObject.map(item => ({
                 id: item.id,
                 name: item.name,
+                gender: item.gender,
+                number: item.number,
                 position: item.position,
             }));
             dispatch({ type: 'SET_BOOKINGS', payload: newBookings });
@@ -187,7 +189,11 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight }) => {
                         {state.bookings.map((staffMember) => (
                             <tr key={staffMember.id}>
                                 <td className={`${classes.stickyColumn}`}>
-                                    <div className={classes.staffInfo}>
+                                    <div className={classes.staffInfo} onClick={() => {
+                                        toggleCategoryUpdate()
+                                        setSelectedStaff(staffMember)
+                                        
+                                    }}>
                                         <b>{staffMember.name}</b> - {staffMember.position}
                                     </div>
                                 </td>
@@ -197,7 +203,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight }) => {
                     </tbody>
                 </table>
             </div>
-        </div>
+        </div >
     );
 };
 

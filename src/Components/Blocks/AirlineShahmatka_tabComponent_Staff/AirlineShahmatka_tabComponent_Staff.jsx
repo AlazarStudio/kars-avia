@@ -6,6 +6,7 @@ import { GET_AIRLINE_USERS } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 import AirlineTablePageComponent from "../AirlineTablePageComponent/AirlineTablePageComponent.jsx";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
+import UpdateRequestAirlineStaff from "../UpdateRequestAirlineStaff/UpdateRequestAirlineStaff.jsx";
 
 function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
@@ -22,9 +23,15 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     }, [data]);
 
     const [showAddCategory, setshowAddCategory] = useState(false);
-    
+    const [showUpdateCategory, setshowUpdateCategory] = useState(false);
+    const [selectedStaff, setSelectedStaff] = useState();
+
     const toggleCategory = () => {
         setshowAddCategory(!showAddCategory)
+    }
+
+    const toggleCategoryUpdate = () => {
+        setshowUpdateCategory(!showUpdateCategory)
     }
     // const dataObject = [
     //     {
@@ -98,7 +105,9 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
             request.name.toLowerCase().includes(searchQuery.toLowerCase())
 
         return matchesSearch;
-    });
+    }).sort((a, b) => a.name.localeCompare(b.name));
+
+    console.log(filteredRequests)
 
     return (
         <>
@@ -130,11 +139,12 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
             {error && <p>Error: {error.message}</p>}
 
             {!loading && !error && (
-                <AirlineTablePageComponent maxHeight={"635px"} dataObject={filteredRequests} dataInfo={dataInfo} />
+                <AirlineTablePageComponent toggleCategoryUpdate={toggleCategoryUpdate} maxHeight={"635px"} dataObject={filteredRequests} dataInfo={dataInfo} setSelectedStaff={setSelectedStaff} />
             )}
 
 
             <CreateRequestAirlineStaff id={id} show={showAddCategory} onClose={toggleCategory} addTarif={staff} setAddTarif={setStaff} />
+            <UpdateRequestAirlineStaff id={id} show={showUpdateCategory} onClose={toggleCategoryUpdate} selectedStaff={selectedStaff} setAddTarif={setStaff} />
         </>
     );
 }

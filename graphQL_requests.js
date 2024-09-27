@@ -502,4 +502,18 @@ export const GET_AIRLINE_USERS = gql`
     }
   }
 `;
+
+export const UPDATE_AIRLINE_STAFF = gql`
+  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
+    updateAirline(id: $updateAirlineId, input: $input) {
+      staff {
+        id
+        name
+        number
+        position
+        gender
+      }
+    }
+  }
+`;
 // Зарпосы в авиакомпанию
