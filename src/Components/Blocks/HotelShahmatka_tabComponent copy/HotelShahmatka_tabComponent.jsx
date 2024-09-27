@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import classes from './HotelShahmatka_tabComponent.module.css';
-import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent";
-import Filter from "../Filter/Filter";
+import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent.jsx";
+import Filter from "../Filter/Filter.jsx";
 
 import { GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
@@ -30,7 +30,7 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
     data && data.hotel.categories.map((category, index) => {
         return category.rooms.map((item) => (
             allRooms.push({
-                room: item.name,
+                room: `${item.name} - ${category.tariffs?.name}`,
                 places: item.places
             })
         ));

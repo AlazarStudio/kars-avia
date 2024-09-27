@@ -1,16 +1,16 @@
 import React, { useRef, useState } from "react";
-import classes from './HotelShahmatka_tabComponent.module.css';
-import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent";
-import Filter from "../Filter/Filter";
+import classes from './AirlineShahmatka_tabComponent_Staff.module.css';
+import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent.jsx";
+import Filter from "../Filter/Filter.jsx";
 
 import { GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
-function HotelShahmatka_tabComponent({ children, id, ...props }) {
+function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
-    const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
-        variables: { hotelId: id },
-    });
+    // const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+    //     variables: { hotelId: id },
+    // });
 
     const dataObject = [
         {
@@ -25,30 +25,34 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
         }
     ];
 
-    let allRooms = [];
+    // let allRooms = [];
 
-    data && data.hotel.categories.map((category, index) => {
-        return category.rooms.map((item) => (
-            allRooms.push({
-                room: item.name,
-                places: item.places
-            })
-        ));
-    });
+    // data && data.hotel.categories.map((category, index) => {
+    //     return category.rooms.map((item) => (
+    //         allRooms.push({
+    //             room: `${item.name} - ${category.tariffs?.name}`,
+    //             places: item.places
+    //         })
+    //     ));
+    // });
+
+    const allRooms = [
+        { room: '№121', places: 1 },
+        { room: '№122', places: 1 },
+        { room: '№221', places: 2 },
+        { room: '№222', places: 2 },
+        { room: '№223', places: 2 },
+        { room: '№224', places: 2 },
+        { room: '№225', places: 2 },
+        { room: '№226', places: 2 },
+    ];
 
     const placesArray = allRooms.map(room => room.places);
     const uniquePlacesArray = [...new Set(placesArray)];
     uniquePlacesArray.sort((a, b) => a - b);
 
-    // const allRooms = [
-    //     { room: '№121', places: 1 },
-    //     { room: '№122', places: 1 },
-    //     { room: '№221', places: 2 },
-    //     { room: '№222', places: 2 },
-    // ];
-
     const dataInfo = [
-        // { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-20', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-20', endTime: '10:00', client: 'Джатдоев А. С-А.' },
         // { public: true, room: '№122', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
     ];
 
@@ -76,7 +80,7 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
         }));
     }
 
-    const filteredRequests = data && allRooms.filter(request => {
+    const filteredRequests = allRooms.filter(request => {
         const matchesRoom = request.room.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesPlaces = selectQuery === '' || request.places === parseInt(selectQuery);
 
@@ -116,14 +120,14 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
                 </div>
             </div>
 
-            {loading && <p>Loading...</p>}
+            {/* {loading && <p>Loading...</p>}
             {error && <p>Error: {error.message}</p>}
 
-            {!loading && !error && (
+            {!loading && !error && ( */}
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={dataInfo} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
-            )}
+            {/* )} */}
         </>
     );
 }
 
-export default HotelShahmatka_tabComponent;
+export default AirlineShahmatka_tabComponent_Staff;

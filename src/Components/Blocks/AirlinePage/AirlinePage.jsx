@@ -8,6 +8,7 @@ import AirlineCompany_tabComponent from "../AirlineCompany_tabComponent/AirlineC
 import AirlineAbout_tabComponent from "../AirlineAbout_tabComponent/AirlineAbout_tabComponent";
 import { GET_AIRLINE } from "../../../../graphQL_requests";
 import { useQuery } from "@apollo/client";
+import AirlineShahmatka_tabComponent_Staff from "../AirlineShahmatka_tabComponent_Staff/AirlineShahmatka_tabComponent_Staff";
 
 function AirlinePage({ children, id, ...props }) {
     const [selectedTab, setSelectedTab] = useState(0);
@@ -55,7 +56,7 @@ function AirlinePage({ children, id, ...props }) {
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
-                        {/* <HotelShahmatka_tabComponent id={id} /> */}
+                        <AirlineShahmatka_tabComponent_Staff id={id} />
                     </TabPanel>
 
                     <TabPanel className={classes.tabPanel}>
