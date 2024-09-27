@@ -475,4 +475,17 @@ export const DELETE_AIRLINE_MANAGER = gql`
   }
 `;
 
+export const GET_AIRLINE_USERS = gql`
+  query AirlineUsers($airlineId: ID!) {
+    airline(id: $airlineId) {
+      staff {
+        id
+        name
+        gender
+        number
+        position
+      }
+    }
+  }
+`;
 // Зарпосы в авиакомпанию

@@ -1,29 +1,37 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import classes from './AirlineShahmatka_tabComponent_Staff.module.css';
-import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent.jsx";
 import Filter from "../Filter/Filter.jsx";
 
-import { GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
+import { GET_AIRLINE_USERS } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
+import AirlineTablePageComponent from "../AirlineTablePageComponent/AirlineTablePageComponent.jsx";
 
 function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
-    // const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
-    //     variables: { hotelId: id },
-    // });
+    const { loading, error, data } = useQuery(GET_AIRLINE_USERS, {
+        variables: { airlineId: id },
+    });
 
-    const dataObject = [
-        {
-            room: '',
-            place: '',
-            start: '',
-            startTime: '',
-            end: '',
-            endTime: '',
-            client: '',
-            public: false,
+    const [staff, setStaff] = useState([]);
+
+    useEffect(() => {
+        if (data) {
+            setStaff(data.airline.staff);
         }
-    ];
+    }, [data]);
+
+    // const dataObject = [
+    //     {
+    //         room: '',
+    //         place: '',
+    //         start: '',
+    //         startTime: '',
+    //         end: '',
+    //         endTime: '',
+    //         client: '',
+    //         public: false,
+    //     }
+    // ];
 
     // let allRooms = [];
 
@@ -36,24 +44,20 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     //     ));
     // });
 
-    const allRooms = [
-        { room: '№121', places: 1 },
-        { room: '№122', places: 1 },
-        { room: '№221', places: 2 },
-        { room: '№222', places: 2 },
-        { room: '№223', places: 2 },
-        { room: '№224', places: 2 },
-        { room: '№225', places: 2 },
-        { room: '№226', places: 2 },
-    ];
+    // const allRooms = [
+    //     { room: '№121', places: 1 },
+    //     { room: '№122', places: 1 },
+    //     { room: '№221', places: 2 },
+    //     { room: '№222', places: 2 },
+    // ];
 
-    const placesArray = allRooms.map(room => room.places);
-    const uniquePlacesArray = [...new Set(placesArray)];
-    uniquePlacesArray.sort((a, b) => a - b);
+    // const placesArray = allRooms.map(room => room.places);
+    // const uniquePlacesArray = [...new Set(placesArray)];
+    // uniquePlacesArray.sort((a, b) => a - b);
 
     const dataInfo = [
-        { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-20', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        // { public: true, room: '№122', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { start: '2024-09-21', startTime: '14:00', end: '2024-09-29', endTime: '10:00', clientID: 'fe2a8fb8-06e4-43bf-9887-3490071a2a5c' },
+        { start: '2024-09-11', startTime: '14:00', end: '2024-09-19', endTime: '10:00', clientID: '1b877aff-4b8b-46b6-8695-84cdfdc41e1f' },
     ];
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -80,19 +84,19 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         }));
     }
 
-    const filteredRequests = allRooms.filter(request => {
-        const matchesRoom = request.room.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesPlaces = selectQuery === '' || request.places === parseInt(selectQuery);
+    // const filteredRequests = allRooms.filter(request => {
+    //     const matchesRoom = request.room.toLowerCase().includes(searchQuery.toLowerCase());
+    //     const matchesPlaces = selectQuery === '' || request.places === parseInt(selectQuery);
 
-        const matchingClients = dataInfo.filter(entry =>
-            entry.client.toLowerCase().includes(searchQuery.toLowerCase()) &&
-            entry.room === request.room
-        );
+    //     const matchingClients = dataInfo.filter(entry =>
+    //         entry.client.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    //         entry.room === request.room
+    //     );
 
-        const matchesClient = matchingClients.length > 0;
+    //     const matchesClient = matchingClients.length > 0;
 
-        return (matchesRoom || matchesClient) && matchesPlaces;
-    });
+    //     return (matchesRoom || matchesClient) && matchesPlaces;
+    // });
 
     return (
         <>
@@ -105,27 +109,27 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
                     onChange={handleSearch}
                 />
                 <div className={classes.section_searchAndFilter_filter}>
-                    <select onChange={handleSelect}>
+                    {/* <select onChange={handleSelect}>
                         <option value="">Показать все</option>
                         {uniquePlacesArray.map((item, index) => (
                             <option value={`${item}`} key={index}>{item} - МЕСТНЫЕ</option>
                         ))}
-                    </select>
+                    </select> */}
 
-                    {/* <Filter
+                    <Filter
                         toggleSidebar={toggleSidebar}
                         handleChange={handleChange}
-                        buttonTitle={'Добавить бронь'}
-                    /> */}
+                        buttonTitle={'Добавить сотрудника'}
+                    />
                 </div>
             </div>
 
-            {/* {loading && <p>Loading...</p>}
+            {loading && <p>Loading...</p>}
             {error && <p>Error: {error.message}</p>}
 
-            {!loading && !error && ( */}
-                <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={dataInfo} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
-            {/* )} */}
+            {!loading && !error && (
+                <AirlineTablePageComponent maxHeight={"635px"} dataObject={staff} dataInfo={dataInfo}/>
+            )}
         </>
     );
 }
