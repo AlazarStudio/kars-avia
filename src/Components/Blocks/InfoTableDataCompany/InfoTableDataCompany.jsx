@@ -39,9 +39,7 @@ function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setCho
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_title}>
-                                {item.role == 'HOTELMODERATOR' && 'Модератор'}
-                                {item.role == 'ADMIN' && 'Администратор'}
-                                {item.role == 'HOTELUSER' && 'Пользователь'}
+                                {item.role}
                             </div>
                         </div>
                     </div>

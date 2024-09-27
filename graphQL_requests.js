@@ -122,7 +122,7 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
 
 // ----------------------------------------------------------------
 
-// Зарпосы в гостиницу
+// Запросы в гостиницу
 
 export const CREATE_HOTEL = gql`
   mutation Mutation($input: CreateHotelInput!, $images: [Upload!]) {
@@ -333,11 +333,11 @@ export const DELETE_HOTEL_USER = gql`
   }
 `;
 
-// Зарпосы в гостиницу
+// Запросы в гостиницу
 
 // ----------------------------------------------------------------
 
-// Зарпосы в авиакомпанию
+// Запросы в авиакомпанию
 
 export const GET_AIRLINES = gql`
   query Airlines {
@@ -525,4 +525,23 @@ export const DELETE_AIRLINE_STAFF = gql`
     }
   }
 `;
-// Зарпосы в авиакомпанию
+
+// Запросы в авиакомпанию
+
+// Запросы в компанию
+
+export const GET_DISPATCHERS = gql`
+  query Query {
+    dispatcherUsers {
+      id
+      name
+      images
+      role
+      email
+      login
+      password
+    }
+  }
+`;
+
+// Запросы в компанию

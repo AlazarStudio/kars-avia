@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import classes from './Сompany.module.css';
 import Filter from "../Filter/Filter";
 import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
@@ -7,17 +7,27 @@ import Header from "../Header/Header";
 import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
 import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
+import { useQuery } from "@apollo/client";
+import { GET_DISPATCHERS } from "../../../../graphQL_requests";
 
 function Company({ children, ...props }) {
+    const { loading, error, data } = useQuery(GET_DISPATCHERS);
+
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [chooseObject, setChooseObject] = useState(null);
     const [showDelete, setShowDelete] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
-    
+
     const deleteComponentRef = useRef();
-    
-    const [companyData, setCompanyData] = useState(requestsCompany);
+
+    const [companyData, setCompanyData] = useState([]);
+
+    useEffect(() => {
+        if (data) {
+            setCompanyData(data.dispatcherUsers)
+        }
+    }, [data]);
 
     const addDispatcher = (newDispatcher) => {
         setCompanyData([...companyData, newDispatcher]);
@@ -74,10 +84,10 @@ function Company({ children, ...props }) {
 
     const filteredRequests = companyData.filter(request => {
         return (
-            (filterData.filterSelect === '' || request.post.includes(filterData.filterSelect)) &&
+            (filterData.filterSelect === '' || request.role.includes(filterData.filterSelect)) &&
             (
-                request.fio.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.post.toLowerCase().includes(searchQuery.toLowerCase())
+                request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.role.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
     });
@@ -109,24 +119,24 @@ function Company({ children, ...props }) {
                     />
                 </div>
 
-                <InfoTableDataCompany 
-                    toggleRequestSidebar={toggleRequestSidebar} 
-                    requests={filteredRequests} 
-                    setChooseObject={setChooseObject} 
+                <InfoTableDataCompany
+                    toggleRequestSidebar={toggleRequestSidebar}
+                    requests={filteredRequests}
+                    setChooseObject={setChooseObject}
                 />
 
-                <CreateRequestCompany 
-                    show={showCreateSidebar} 
-                    onClose={toggleCreateSidebar} 
-                    addDispatcher={addDispatcher} 
+                <CreateRequestCompany
+                    show={showCreateSidebar}
+                    onClose={toggleCreateSidebar}
+                    addDispatcher={addDispatcher}
                 />
 
-                <ExistRequestCompany 
-                    show={showRequestSidebar} 
-                    onClose={toggleRequestSidebar} 
-                    chooseObject={chooseObject} 
-                    updateDispatcher={updateDispatcher} 
-                    openDeleteComponent={openDeleteComponent} 
+                <ExistRequestCompany
+                    show={showRequestSidebar}
+                    onClose={toggleRequestSidebar}
+                    chooseObject={chooseObject}
+                    updateDispatcher={updateDispatcher}
+                    openDeleteComponent={openDeleteComponent}
                     deleteComponentRef={deleteComponentRef}
                     filterList={filterList}
                 />

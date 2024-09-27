@@ -140,12 +140,14 @@
 .InfoTable_data_elem_avatar{
     width: 40px;
     height: 40px;
+    border-radius: 50px;
+    overflow: hidden;
 }
 
 .InfoTable_data_elem_avatar img{
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}
