@@ -5,6 +5,7 @@ import Filter from "../Filter/Filter.jsx";
 import { GET_AIRLINE_USERS } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 import AirlineTablePageComponent from "../AirlineTablePageComponent/AirlineTablePageComponent.jsx";
+import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 
 function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
@@ -20,6 +21,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         }
     }, [data]);
 
+    const [showAddCategory, setshowAddCategory] = useState(false);
+    
+    const toggleCategory = () => {
+        setshowAddCategory(!showAddCategory)
+    }
     // const dataObject = [
     //     {
     //         room: '',
@@ -56,8 +62,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     // uniquePlacesArray.sort((a, b) => a - b);
 
     const dataInfo = [
-        { start: '2024-09-21', startTime: '14:00', end: '2024-09-29', endTime: '10:00', clientID: 'fe2a8fb8-06e4-43bf-9887-3490071a2a5c' },
-        { start: '2024-09-11', startTime: '14:00', end: '2024-09-19', endTime: '10:00', clientID: '1b877aff-4b8b-46b6-8695-84cdfdc41e1f' },
+        { start: '2024-09-21', startTime: '14:00', end: '2024-09-29', endTime: '10:00', clientID: '66f68df2fa3cc14417aeab62' },
+        { start: '2024-09-11', startTime: '14:00', end: '2024-09-19', endTime: '10:00', clientID: '66f69b8e1e5d55111906de92' },
     ];
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -84,26 +90,22 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         }));
     }
 
-    // const filteredRequests = allRooms.filter(request => {
-    //     const matchesRoom = request.room.toLowerCase().includes(searchQuery.toLowerCase());
-    //     const matchesPlaces = selectQuery === '' || request.places === parseInt(selectQuery);
+    const filteredRequests = staff.filter(request => {
+        const matchesSearch = searchQuery === '' ||
+            // request.gender.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            // request.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            request.name.toLowerCase().includes(searchQuery.toLowerCase())
 
-    //     const matchingClients = dataInfo.filter(entry =>
-    //         entry.client.toLowerCase().includes(searchQuery.toLowerCase()) &&
-    //         entry.room === request.room
-    //     );
-
-    //     const matchesClient = matchingClients.length > 0;
-
-    //     return (matchesRoom || matchesClient) && matchesPlaces;
-    // });
+        return matchesSearch;
+    });
 
     return (
         <>
             <div className={classes.section_searchAndFilter}>
                 <input
                     type="text"
-                    placeholder="Поиск по номеру комнаты или ФИО клиента"
+                    placeholder="Поиск по ФИО сотрудника или должности"
                     style={{ 'width': '500px' }}
                     value={searchQuery}
                     onChange={handleSearch}
@@ -117,7 +119,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
                     </select> */}
 
                     <Filter
-                        toggleSidebar={toggleSidebar}
+                        toggleSidebar={toggleCategory}
                         handleChange={handleChange}
                         buttonTitle={'Добавить сотрудника'}
                     />
@@ -128,8 +130,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
             {error && <p>Error: {error.message}</p>}
 
             {!loading && !error && (
-                <AirlineTablePageComponent maxHeight={"635px"} dataObject={staff} dataInfo={dataInfo}/>
+                <AirlineTablePageComponent maxHeight={"635px"} dataObject={filteredRequests} dataInfo={dataInfo} />
             )}
+
+
+            <CreateRequestAirlineStaff id={id} show={showAddCategory} onClose={toggleCategory} addTarif={staff} setAddTarif={setStaff} />
         </>
     );
 }
