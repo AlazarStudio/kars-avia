@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './CreateRequestAirlineStaff.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { CREATE_AIRLINE_DEPARTMERT, decodeJWT, getCookie } from "../../../../graphQL_requests";
+import { CREATE_AIRLINE_STAFF, decodeJWT, getCookie } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 
 function CreateRequestAirlineStaff({ show, onClose, id, addTarif, setAddTarif }) {
@@ -14,14 +14,20 @@ function CreateRequestAirlineStaff({ show, onClose, id, addTarif, setAddTarif })
     }, [token]);
 
     const [formData, setFormData] = useState({
-        category: ''
+        name: '',
+        number: '',
+        position: '',
+        gender: '',
     });
 
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
-            category: ''
+            name: '',
+            number: '',
+            position: '',
+            gender: '',
         });
     };
 
@@ -41,7 +47,7 @@ function CreateRequestAirlineStaff({ show, onClose, id, addTarif, setAddTarif })
         }));
     };
 
-    const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
+    const [createAirlineStaff] = useMutation(CREATE_AIRLINE_STAFF, {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -53,13 +59,16 @@ function CreateRequestAirlineStaff({ show, onClose, id, addTarif, setAddTarif })
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            let request = await createAirlineDepartment({
+            let request = await createAirlineStaff({
                 variables: {
-                    "updateAirlineId": id,
-                    "input": {
-                        "department": [
+                    updateAirlineId: id,
+                    input: {
+                        staff: [
                             {
-                                "name": formData.category
+                                "name": formData.name,
+                                "number": formData.number,
+                                "position": formData.position,
+                                "gender": formData.gender,
                             }
                         ]
                     }
@@ -67,7 +76,7 @@ function CreateRequestAirlineStaff({ show, onClose, id, addTarif, setAddTarif })
             });
 
             if (request) {
-                setAddTarif(request.data.updateAirline.department.sort((a, b) => a.name.localeCompare(b.name)));
+                setAddTarif(request.data.updateAirline.staff.sort((a, b) => a.name.localeCompare(b.name)));
 
                 resetForm();
                 onClose();
@@ -93,6 +102,8 @@ function CreateRequestAirlineStaff({ show, onClose, id, addTarif, setAddTarif })
         }
     }, [show]);
 
+    let positions = ['КВС']
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -102,8 +113,26 @@ function CreateRequestAirlineStaff({ show, onClose, id, addTarif, setAddTarif })
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
-                    <label>Название</label>
-                    <input type="text" name="category" value={formData.category} onChange={handleChange} placeholder="Пример: Отдел продаж" />
+                    <label>ФИО</label>
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Пример: Иванов Иван Иванович" />
+
+                    <label>Номер телефона</label>
+                    <input type="text" name="number" value={formData.number} onChange={handleChange} placeholder="Пример: 89283521345" />
+
+                    <label>Должность</label>
+                    <select name="position" value={formData.position} onChange={handleChange}>
+                        <option value="" disabled>Выберите должность</option>
+                        {positions.map((pos, index) => (
+                            <option key={index} value={pos}>{pos}</option>
+                        ))}
+                    </select>
+
+                    <label>Пол</label>
+                    <select name="gender" value={formData.gender} onChange={handleChange}>
+                        <option value="" disabled>Выберите пол</option>
+                        <option value="Мужской">Мужской</option>
+                        <option value="Женский">Женский</option>
+                    </select>
                 </div>
             </div>
 

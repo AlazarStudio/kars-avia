@@ -446,6 +446,20 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
   }
 `;
 
+export const CREATE_AIRLINE_STAFF = gql`
+  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
+    updateAirline(id: $updateAirlineId, input: $input) {
+      staff {
+        id
+        name
+        number
+        position
+        gender
+      }
+    }
+  }
+`;
+
 export const UPDATE_AIRLINE_USER = gql`
   mutation UpdateUser($input: UpdateUserInput!, $images: [Upload!]) {
     updateUser(input: $input, images: $images) {
