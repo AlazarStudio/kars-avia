@@ -2,13 +2,20 @@ import React, { useEffect, useRef, useState } from "react";
 import classes from './AirlineShahmatka_tabComponent_Staff.module.css';
 import Filter from "../Filter/Filter.jsx";
 
-import { GET_AIRLINE_USERS } from '../../../../graphQL_requests.js';
+import { decodeJWT, DELETE_AIRLINE_STAFF, GET_AIRLINE_USERS, getCookie } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 import AirlineTablePageComponent from "../AirlineTablePageComponent/AirlineTablePageComponent.jsx";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import UpdateRequestAirlineStaff from "../UpdateRequestAirlineStaff/UpdateRequestAirlineStaff.jsx";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 
 function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
+    const [userRole, setUserRole] = useState();
+    const token = getCookie('token');
+
+    useEffect(() => {
+        setUserRole(decodeJWT(token).role);
+    }, [token]);
 
     const { loading, error, data } = useQuery(GET_AIRLINE_USERS, {
         variables: { airlineId: id },
@@ -25,6 +32,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     const [showAddCategory, setshowAddCategory] = useState(false);
     const [showUpdateCategory, setshowUpdateCategory] = useState(false);
     const [selectedStaff, setSelectedStaff] = useState();
+
+    const [showDelete, setShowDelete] = useState(false);
 
     const toggleCategory = () => {
         setshowAddCategory(!showAddCategory)
@@ -77,6 +86,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     const [selectQuery, setSelectQuery] = useState('');
     const [showAddBronForm, setShowAddBronForm] = useState(false);
 
+    const [deleteIndex, setDeleteIndex] = useState(null);
+
     const handleSearch = (e) => {
         setSearchQuery(e.target.value);
     }
@@ -107,7 +118,40 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         return matchesSearch;
     }).sort((a, b) => a.name.localeCompare(b.name));
 
-    console.log(filteredRequests)
+    const deleteComponentRef = useRef();
+
+    const closeDeleteComponent = () => {
+        setShowDelete(false);
+        setshowUpdateCategory(true);
+    };
+
+    const [deleteAirlineStaff] = useMutation(DELETE_AIRLINE_STAFF, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const deleteTarif = async (user) => {
+        console.log(user)
+        try {
+            let request = await deleteAirlineStaff({
+                variables: {
+                    "deleteAirlineStaffId": user.id
+                }
+            });
+
+            if (request) {
+                setStaff(staff.filter(staffMember => staffMember.id !== user.id));
+                setShowDelete(false);
+                setshowUpdateCategory(false);
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     return (
         <>
@@ -144,7 +188,16 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
 
             <CreateRequestAirlineStaff id={id} show={showAddCategory} onClose={toggleCategory} addTarif={staff} setAddTarif={setStaff} />
-            <UpdateRequestAirlineStaff id={id} show={showUpdateCategory} onClose={toggleCategoryUpdate} selectedStaff={selectedStaff} setAddTarif={setStaff} />
+            <UpdateRequestAirlineStaff id={id} setDeleteIndex={setDeleteIndex} show={showUpdateCategory} setShowDelete={setShowDelete} onClose={toggleCategoryUpdate} selectedStaff={selectedStaff} setAddTarif={setStaff} />
+
+            {showDelete && (
+                <DeleteComponent
+                    ref={deleteComponentRef}
+                    remove={() => deleteTarif(deleteIndex)}
+                    close={closeDeleteComponent}
+                    title={`Вы действительно хотите удалить сотрудника?`}
+                />
+            )}
         </>
     );
 }

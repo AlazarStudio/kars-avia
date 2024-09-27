@@ -5,7 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { decodeJWT, getCookie, UPDATE_AIRLINE_STAFF } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 
-function UpdateRequestAirlineStaff({ show, onClose, id, selectedStaff, setAddTarif }) {
+function UpdateRequestAirlineStaff({ show, onClose, id, selectedStaff, setAddTarif, setShowDelete, setDeleteIndex }) {
     const [userRole, setUserRole] = useState();
     const token = getCookie('token');
 
@@ -140,7 +140,11 @@ function UpdateRequestAirlineStaff({ show, onClose, id, selectedStaff, setAddTar
             </div>
 
             <div className={classes.requestButon}>
-                <Button type="submit" style={{"background-color": '#ff5151'}} onClick={""}>Удалить</Button>
+                <Button type="submit" style={{ "background-color": '#ff5151' }} onClick={() => {
+                    setDeleteIndex(selectedStaff)
+                    setShowDelete(true);
+                    onClose()
+                }}>Удалить</Button>
                 <Button type="submit" onClick={handleSubmit}>Изменить</Button>
             </div>
         </Sidebar>

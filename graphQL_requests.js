@@ -516,4 +516,13 @@ export const UPDATE_AIRLINE_STAFF = gql`
     }
   }
 `;
+
+export const DELETE_AIRLINE_STAFF = gql`
+  mutation DeleteAirlineStaff($deleteAirlineStaffId: ID!) {
+    deleteAirlineStaff(id: $deleteAirlineStaffId) {
+      id
+      name
+    }
+  }
+`;
 // Зарпосы в авиакомпанию
