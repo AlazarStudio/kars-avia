@@ -543,6 +543,22 @@ export const GET_DISPATCHERS = gql`
   }
 `;
 
+export const GET_DISPATCHER = gql`
+  query Query($userId: ID!) {
+    user(userId: $userId) {
+      name
+      role
+      images
+      login
+      email
+      hotelId
+      airlineId
+      dispatcher
+      airlineDepartmentId
+    }
+  }
+`;
+
 export const CREATE_DISPATCHER_USER = gql`
   mutation RegisterUser($input: RegisterUserInput!, $images: [Upload!]) {
     registerUser(input: $input, images: $images) {
