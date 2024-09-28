@@ -196,6 +196,17 @@ export const GET_AIRLINES_RELAY = gql`
   }
 `;
 
+export const GET_AIRPORTS_RELAY = gql`
+  query Airports {
+    airports {
+      id
+      name
+      city
+      code
+    }
+  }
+`;
+
 
 // Запросы к заявкам на эстафету
 

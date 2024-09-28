@@ -3,21 +3,27 @@ import { gql, useMutation, useQuery } from "@apollo/client";
 import classes from './CreateRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, getCookie } from "../../../../graphQL_requests";
+import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, getCookie } from "../../../../graphQL_requests";
 
 function CreateRequest({ show, onClose }) {
     const token = getCookie('token');
+
     const [userID, setUserID] = useState();
 
-    // Состояние для списка авиакомпаний
     const [airlines, setAirlines] = useState([]);
-    // Состояние для выбранной авиакомпании
     const [selectedAirline, setSelectedAirline] = useState(null);
 
-    // Используем useQuery для загрузки авиакомпаний
     const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
 
-    // let infoAirlines = useQuery(GET_AIRLINES_RELAY);
+    let infoAirports = useQuery(GET_AIRPORTS_RELAY);
+
+    const [airports, setAirports] = useState([]);
+
+    useEffect(() => {
+        if (infoAirports.data) {
+            setAirports(infoAirports.data?.airports || []);
+        }
+    }, [infoAirports]);
 
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState({
@@ -205,6 +211,9 @@ function CreateRequest({ show, onClose }) {
         onClose();
     };
 
+    const uniqueCities = [...new Set(airports.map(airport => airport.city.trim()))].sort((a, b) => a.localeCompare(b));
+    const filteredAirports = formData.city ? airports.filter(airport => airport.city.trim() === formData.city.trim()) : [];
+    
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -262,14 +271,25 @@ function CreateRequest({ show, onClose }) {
                         )}
 
                         <label>Город</label>
-                        <input type="text" name="city" placeholder="Введите город" value={formData.city} onChange={handleChange} />
+                        <select name="city" value={formData.city} onChange={handleChange}>
+                            <option value="" disabled>Выберите город</option>
+                            {uniqueCities.map(city => (
+                                <option key={city} value={city}>
+                                    {city}
+                                </option>
+                            ))}
+                        </select>
 
                         {formData.city && (
                             <>
                                 <label>Аэропорт</label>
                                 <select name="airportId" value={formData.airportId} onChange={handleChange} disabled={!formData.city}>
                                     <option value="" disabled>Выберите аэропорт</option>
-                                    <option value="66f7d68847408bb6ac6eb106">Абакан</option>
+                                    {filteredAirports.map(airport => (
+                                        <option key={airport.id} value={airport.id}>
+                                            {airport.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </>
                         )}
