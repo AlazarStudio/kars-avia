@@ -17,6 +17,8 @@ function CreateRequest({ show, onClose }) {
     // Используем useQuery для загрузки авиакомпаний
     const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
 
+    // let infoAirlines = useQuery(GET_AIRLINES_RELAY);
+
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState({
         fullName: '',
@@ -245,7 +247,7 @@ function CreateRequest({ show, onClose }) {
                                     ))}
                                 </select>
 
-                                {formData.fullName && <>
+                                {false && <>
                                     <label>Должность</label>
                                     <input type="text" name="position" value={formData.position} readOnly />
 
