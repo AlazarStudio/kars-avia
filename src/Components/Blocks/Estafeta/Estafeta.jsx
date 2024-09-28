@@ -25,7 +25,7 @@ function Estafeta({ children, ...props }) {
 
     useEffect(() => {
         if (subscriptionData) {
-            console.log('New subscription data received:', subscriptionData);
+            // console.log('New subscription data received:', subscriptionData);
             setRequests((prevRequests) => {
                 const newRequest = subscriptionData.requestCreated;
                 const isDuplicate = prevRequests.some(request => request.id === newRequest.id);

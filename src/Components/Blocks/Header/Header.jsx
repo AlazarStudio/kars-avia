@@ -18,9 +18,7 @@ function Header({ children, ...props }) {
     const { loading, error, data } = useQuery(GET_DISPATCHER, {
         variables: { userId: userID },
     });
-
-    console.log(userID, data)
-
+    
     const getFormattedDate = () => {
         const daysOfWeek = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
         const months = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];

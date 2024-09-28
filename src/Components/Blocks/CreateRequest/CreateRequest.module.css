@@ -107,4 +107,37 @@
     justify-content: flex-end;
 }
 
+.dropdownInputList{
+    position: relative;
+    width: 100%;
+}
+
+.dropdownInputList input{
+    width: 100%;
+}
+
+.dropdown {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px; /* Максимальная высота для 5 элементов */
+    overflow-y: auto;
+    position: absolute;
+    top: 38px;
+    width: 100%;
+    z-index: 1000;
+}
+
+.dropdown li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.dropdown li:hover {
+    background-color: #f0f0f0;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

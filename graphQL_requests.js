@@ -76,6 +76,15 @@ export const GET_REQUESTS = gql`
             airlineId
             status
             airportId
+            airline {
+              images
+              name
+            }
+            airport {
+              name
+              code
+              city
+            }
         }
     }
 `;
@@ -114,9 +123,79 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
             airlineId
             status
             airportId
+            airline {
+              images
+              name
+            }
+            airport {
+              name
+              code
+              city
+            }
         }
     }
 `;
+
+export const CREATE_REQUEST_MUTATION = gql`
+    mutation CreateRequest($input: CreateRequestInput!) {
+        createRequest(input: $input) {
+            id
+            fullName
+            position
+            gender
+            phoneNumber
+            airportId
+            arrival {
+                flight
+                date
+                time
+            }
+            departure {
+                flight
+                date
+                time
+            }
+            roomCategory
+            mealPlan {
+                included
+                breakfast
+                lunch
+                dinner
+            }
+            senderId
+            receiverId
+            hotelId
+            roomNumber
+            airlineId
+            status
+            airline {
+              images
+              name
+            }
+            airport {
+              name
+              code
+              city
+            }
+        }
+    }
+`;
+
+export const GET_AIRLINES_RELAY = gql`
+  query Airlines {
+    airlines {
+      id
+      name
+      staff {
+        name
+        position
+        gender
+        number
+      }
+    }
+  }
+`;
+
 
 // Запросы к заявкам на эстафету
 

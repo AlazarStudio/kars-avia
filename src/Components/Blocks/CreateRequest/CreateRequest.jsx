@@ -1,55 +1,28 @@
 import React, { useState, useRef, useEffect } from "react";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import classes from './CreateRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { getCookie } from "../../../../graphQL_requests";
-
-const CREATE_REQUEST_MUTATION = gql`
-    mutation CreateRequest($input: CreateRequestInput!) {
-        createRequest(input: $input) {
-            id
-            fullName
-            position
-            gender
-            phoneNumber
-            airportId
-            arrival {
-                flight
-                date
-                time
-            }
-            departure {
-                flight
-                date
-                time
-            }
-            roomCategory
-            mealPlan {
-                included
-                breakfast
-                lunch
-                dinner
-            }
-            senderId
-            receiverId
-            createdAt
-            updatedAt
-            hotelId
-            roomNumber
-            airlineId
-            status
-        }
-    }
-`;
+import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, getCookie } from "../../../../graphQL_requests";
 
 function CreateRequest({ show, onClose }) {
+    const token = getCookie('token');
+    const [userID, setUserID] = useState();
+
+    // Состояние для списка авиакомпаний
+    const [airlines, setAirlines] = useState([]);
+    // Состояние для выбранной авиакомпании
+    const [selectedAirline, setSelectedAirline] = useState(null);
+
+    // Используем useQuery для загрузки авиакомпаний
+    const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
+
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState({
         fullName: '',
         position: '',
         gender: '',
-        airportId: '66e2d407991c84395fe0e686',
+        airportId: '',
         arrivalRoute: '',
         arrivalDate: '',
         arrivalTime: '',
@@ -58,19 +31,30 @@ function CreateRequest({ show, onClose }) {
         departureTime: '',
         roomCategory: '',
         phoneNumber: '',
-        senderId: '66e19c40966092356462c369',
-        airlineId: '668fd12958c2631307ad65fb',
+        senderId: '',
+        airlineId: '',
         mealPlan: {
             included: true,
             breakfast: false,
             lunch: false,
             dinner: false,
-        }
+        },
+        city: ''
     });
 
-    const token = getCookie('token');
+    useEffect(() => {
+        if (token && data) {
+            setUserID(decodeJWT(token).userId);
+            setFormData({
+                ...formData,
+                senderId: decodeJWT(token).userId,
+            });
+            // Устанавливаем данные авиакомпаний из запроса
+            setAirlines(data.airlines);
+        }
+    }, [token, userID, data]);
 
-    const [createRequest, { loading, error, data }] = useMutation(CREATE_REQUEST_MUTATION, {
+    const [createRequest] = useMutation(CREATE_REQUEST_MUTATION, {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -87,7 +71,7 @@ function CreateRequest({ show, onClose }) {
             fullName: '',
             position: '',
             gender: '',
-            airportId: '66e2d407991c84395fe0e686',
+            airportId: '',
             arrivalRoute: '',
             arrivalDate: '',
             arrivalTime: '',
@@ -96,14 +80,15 @@ function CreateRequest({ show, onClose }) {
             departureTime: '',
             roomCategory: '',
             phoneNumber: '',
-            senderId: '66e19c40966092356462c369',
-            airlineId: '668fd12958c2631307ad65fb',
+            senderId: '',
+            airlineId: '',
             mealPlan: {
                 included: true,
                 breakfast: false,
                 lunch: false,
                 dinner: false,
-            }
+            },
+            city: ''
         });
     };
 
@@ -113,11 +98,11 @@ function CreateRequest({ show, onClose }) {
             resetForm();
             onClose();
         }
-    }
+    };
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
-    }
+    };
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -152,24 +137,34 @@ function CreateRequest({ show, onClose }) {
         }
     };
 
+    const handleAirlineChange = (e) => {
+        const selectedId = e.target.value;
+        const selectedAirline = airlines.find(airline => airline.id === selectedId);
+        setSelectedAirline(selectedAirline);
+        setFormData({
+            ...formData,
+            airlineId: selectedId,
+            fullName: '', // Сбрасываем имя сотрудника при смене авиакомпании
+            position: '',
+            gender: '',
+            phoneNumber: ''
+        });
+    };
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                closeButton();
-            }
-        };
+    const handleStaffChange = (e) => {
+        const selectedStaffName = e.target.value;
+        const selectedStaff = selectedAirline.staff.find(staff => staff.name === selectedStaffName);
 
-        if (show) {
-            document.addEventListener('mousedown', handleClickOutside);
-        } else {
-            document.removeEventListener('mousedown', handleClickOutside);
+        if (selectedStaff) {
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                fullName: selectedStaff.name,
+                position: selectedStaff.position,
+                gender: selectedStaff.gender,
+                phoneNumber: selectedStaff.number
+            }));
         }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [show, onClose]);
+    };
 
     const handleSubmit = async () => {
         const input = {
@@ -177,14 +172,14 @@ function CreateRequest({ show, onClose }) {
             position: formData.position,
             gender: formData.gender,
             phoneNumber: formData.phoneNumber,
-            airportId: formData.airportId, // Убедитесь, что это правильное поле
+            airportId: formData.airportId,
             arrival: {
-                flight: formData.arrivalRoute, // Поле должно называться "flight", а не "arrivalRoute"
+                flight: formData.arrivalRoute,
                 date: formData.arrivalDate,
                 time: formData.arrivalTime,
             },
             departure: {
-                flight: formData.departureRoute, // Поле должно называться "flight", а не "departureRoute"
+                flight: formData.departureRoute,
                 date: formData.departureDate,
                 time: formData.departureTime,
             },
@@ -201,7 +196,6 @@ function CreateRequest({ show, onClose }) {
 
         try {
             await createRequest({ variables: { input } });
-            // alert('Заявка успешно создана!');
         } catch (e) {
             console.error(e);
         }
@@ -224,25 +218,59 @@ function CreateRequest({ show, onClose }) {
 
                 {activeTab === 'Общая' && (
                     <div className={classes.requestData}>
-                        <label>ФИО</label>
-                        <input type="text" name="fullName" placeholder="Иванов Иван Иванович" value={formData.fullName} onChange={handleChange} />
+                        <label>Авиакомпания</label>
+                        <select name="airlineId" value={formData.airlineId} onChange={handleAirlineChange}>
+                            <option value="" disabled>Выберите авиакомпанию</option>
+                            {airlines.map(airline => (
+                                <option key={airline.id} value={airline.id}>
+                                    {airline.name}
+                                </option>
+                            ))}
+                        </select>
 
-                        <label>Должность</label>
-                        <input type="text" name="position" placeholder="Капитан" value={formData.position} onChange={handleChange} />
+                        {selectedAirline && (
+                            <>
+                                <label>Сотрудник авиакомпании</label>
+                                <select
+                                    name="fullName"
+                                    value={formData.fullName}
+                                    onChange={handleStaffChange}
+                                    disabled={!selectedAirline}
+                                >
+                                    <option value="" disabled>Выберите сотрудника</option>
+                                    {selectedAirline.staff.map(personal => (
+                                        <option key={personal.name} value={personal.name}>
+                                            {personal.name} ({personal.position})
+                                        </option>
+                                    ))}
+                                </select>
 
-                        <label>Пол</label>
-                        <input type="text" name="gender" placeholder="Пол" value={formData.gender} onChange={handleChange} />
+                                {formData.fullName && <>
+                                    <label>Должность</label>
+                                    <input type="text" name="position" value={formData.position} readOnly />
 
-                        <label>Номер телефона</label>
-                        <input type="text" name="phoneNumber" placeholder="89094567432" value={formData.phoneNumber} onChange={handleChange} />
+                                    <label>Пол</label>
+                                    <input type="text" name="gender" value={formData.gender} readOnly />
 
-                        {/* <label>Аэропорт</label>
-                        <select name="airport" value={formData.airport} onChange={handleChange}>
-                            <option value="" disabled>Выберите аэропорт</option>
-                            <option value="Аэропорт1">Аэропорт1</option>
-                            <option value="Аэропорт2">Аэропорт2</option>
-                            <option value="Аэропорт3">Аэропорт3</option>
-                        </select> */}
+                                    <label>Номер телефона</label>
+                                    <input type="text" name="phoneNumber" value={formData.phoneNumber} readOnly />
+                                </>
+                                }
+                            </>
+                        )}
+
+                        <label>Город</label>
+                        <input type="text" name="city" placeholder="Введите город" value={formData.city} onChange={handleChange} />
+
+                        {formData.city && (
+                            <>
+                                <label>Аэропорт</label>
+                                <select name="airportId" value={formData.airportId} onChange={handleChange} disabled={!formData.city}>
+                                    <option value="" disabled>Выберите аэропорт</option>
+                                    <option value="66f7d68847408bb6ac6eb106">Абакан</option>
+                                </select>
+                            </>
+                        )}
 
                         <label>Прибытие</label>
                         <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} />
@@ -267,6 +295,7 @@ function CreateRequest({ show, onClose }) {
 
                     </div>
                 )}
+
                 {activeTab === 'Доп. услуги' && (
                     <div className={classes.requestData}>
                         <label>Питание</label>
@@ -275,7 +304,7 @@ function CreateRequest({ show, onClose }) {
                             <option value={false}>Не включено</option>
                         </select>
 
-                        <div className={classes.checks} style={{ 'display': `${formData.mealPlan.included == true ? 'flex' : 'none'}` }}>
+                        <div className={classes.checks} style={{ 'display': `${formData.mealPlan.included === true ? 'flex' : 'none'}` }}>
                             <label>
                                 <input type="checkbox" name="breakfast" checked={formData.mealPlan.breakfast} onChange={handleChange} />
                                 Завтрак
