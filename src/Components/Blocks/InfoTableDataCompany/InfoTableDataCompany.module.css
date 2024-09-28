@@ -119,7 +119,7 @@
 }
 
 .bottom {
-    height: calc(100vh - 376px);
+    height: calc(100vh - 296px);
     overflow: hidden;
     overflow-y: scroll;
 }

@@ -539,7 +539,45 @@ export const GET_DISPATCHERS = gql`
       role
       email
       login
-      password
+    }
+  }
+`;
+
+export const CREATE_DISPATCHER_USER = gql`
+  mutation RegisterUser($input: RegisterUserInput!, $images: [Upload!]) {
+    registerUser(input: $input, images: $images) {
+      id
+      name
+      email
+      role
+      login
+      images
+    }
+  }
+`;
+
+export const UPDATE_DISPATCHER_USER = gql`
+  mutation Mutation($input: UpdateUserInput!, $images: [Upload!]) {
+    updateUser(input: $input, images: $images) {
+      id
+      name
+      email
+      role
+      login
+      images
+    }
+  }
+`;
+
+export const DELETE_DISPATCHER_USER = gql`
+  mutation Mutation($deleteUserId: ID!) {
+    deleteUser(id: $deleteUserId) {
+      id
+      name
+      email
+      role
+      login
+      images
     }
   }
 `;

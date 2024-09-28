@@ -90,7 +90,6 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
                     images: formData.images
                 }
             });
-            console.log(request)
             if (request) {
                 const newUser = {
                     id: request.data.registerUser.id, // Если возвращается ID созданного пользователя

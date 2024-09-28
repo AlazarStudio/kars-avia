@@ -20,7 +20,7 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
 
     const [formData, setFormData] = useState({
         id: '',
-        images: '',
+        images: null,
         name: '',
         email: '',
         role: '',
@@ -35,7 +35,7 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
         if (chooseObject) {
             setFormData({
                 id: chooseObject.id || '',
-                images: chooseObject.images || '',
+                images: null,
                 name: chooseObject.name || '',
                 email: chooseObject.email || '',
                 role: chooseObject.role || '',
@@ -86,7 +86,7 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
                     password: formData.password,
                     hotelId: id
                 },
-                images: formData.images.lastModified ? formData.images : null
+                images: formData.images
             }
         });
 

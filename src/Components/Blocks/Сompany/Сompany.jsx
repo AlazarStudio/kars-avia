@@ -7,10 +7,12 @@ import Header from "../Header/Header";
 import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
 import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
-import { useQuery } from "@apollo/client";
-import { GET_DISPATCHERS } from "../../../../graphQL_requests";
+import { useMutation, useQuery } from "@apollo/client";
+import { DELETE_DISPATCHER_USER, GET_DISPATCHERS, getCookie } from "../../../../graphQL_requests";
 
 function Company({ children, ...props }) {
+    const token = getCookie('token');
+
     const { loading, error, data } = useQuery(GET_DISPATCHERS);
 
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -25,24 +27,41 @@ function Company({ children, ...props }) {
 
     useEffect(() => {
         if (data) {
-            setCompanyData(data.dispatcherUsers)
+            const sortedDispatchers = [...data.dispatcherUsers].sort((a, b) => a.name.localeCompare(b.name));
+            setCompanyData(sortedDispatchers)
         }
     }, [data]);
 
     const addDispatcher = (newDispatcher) => {
-        setCompanyData([...companyData, newDispatcher]);
+        setCompanyData([...companyData, newDispatcher].sort((a, b) => a.name.localeCompare(b.name)));
     };
 
     const updateDispatcher = (updatedDispatcher, index) => {
         const newData = [...companyData];
         newData[index] = updatedDispatcher;
-        setCompanyData(newData);
+        setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
     };
 
-    const deleteDispatcher = (index) => {
-        setCompanyData(companyData.filter((_, i) => i !== index));
-        setShowDelete(false);
-        setShowRequestSidebar(false);
+    const [deleteDispatcherUser] = useMutation(DELETE_DISPATCHER_USER, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const deleteDispatcher = async (index, userID) => {
+        let response_delete_user = await deleteDispatcherUser({
+            variables: {
+                "deleteUserId": userID
+            }
+        });
+        if (response_delete_user) {
+            setCompanyData(companyData.filter((_, i) => i !== index));
+            setShowDelete(false);
+            setShowRequestSidebar(false);
+        }
     };
 
     const toggleCreateSidebar = () => {
@@ -53,9 +72,9 @@ function Company({ children, ...props }) {
         setShowRequestSidebar(!showRequestSidebar);
     };
 
-    const openDeleteComponent = (index) => {
+    const openDeleteComponent = (index, userID) => {
         setShowDelete(true);
-        setDeleteIndex(index);
+        setDeleteIndex({ index, userID });
         setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
     };
 
@@ -118,12 +137,16 @@ function Company({ children, ...props }) {
                         needDate={false}
                     />
                 </div>
+                {loading && <p>Loading...</p>}
+                {error && <p>Error: {error.message}</p>}
 
-                <InfoTableDataCompany
-                    toggleRequestSidebar={toggleRequestSidebar}
-                    requests={filteredRequests}
-                    setChooseObject={setChooseObject}
-                />
+                {!loading && !error && (
+                    <InfoTableDataCompany
+                        toggleRequestSidebar={toggleRequestSidebar}
+                        requests={filteredRequests}
+                        setChooseObject={setChooseObject}
+                    />
+                )}
 
                 <CreateRequestCompany
                     show={showCreateSidebar}
@@ -144,7 +167,7 @@ function Company({ children, ...props }) {
                 {showDelete && (
                     <DeleteComponent
                         ref={deleteComponentRef}
-                        remove={() => deleteDispatcher(deleteIndex)}
+                        remove={() => deleteDispatcher(deleteIndex.index, deleteIndex.userID)}
                         close={closeDeleteComponent}
                         title={`Вы действительно хотите удалить диспетчера?`}
                     />

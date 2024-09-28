@@ -2,27 +2,46 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './ExistRequestCompany.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { getCookie, server, UPDATE_DISPATCHER_USER } from "../../../../graphQL_requests";
+import { useMutation } from "@apollo/client";
 
 function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, openDeleteComponent, filterList }) {
+    const token = getCookie('token');
+
+    const [uploadFile, { data, loading, error }] = useMutation(UPDATE_DISPATCHER_USER, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
     const [formData, setFormData] = useState({
-        avatar: '',
-        fio: '',
-        post: '',
+        id: '',
+        images: null,
+        name: '',
+        email: '',
+        role: '',
         login: '',
         password: ''
     });
 
     const [index, setIndex] = useState(null);
+    const [showIMG, setShowIMG] = useState();
 
     useEffect(() => {
         if (chooseObject) {
             setFormData({
-                avatar: chooseObject.avatar || '',
-                fio: chooseObject.fio || '',
-                post: chooseObject.post || '',
+                id: chooseObject.id || '',
+                images: null,
+                name: chooseObject.name || '',
+                email: chooseObject.email || '',
+                role: chooseObject.role || '',
                 login: chooseObject.login || '',
                 password: chooseObject.password || ''
             });
+            setShowIMG(chooseObject.images)
             setIndex(chooseObject.index);
         }
     }, [chooseObject]);
@@ -49,14 +68,30 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
         if (file) {
             setFormData(prevState => ({
                 ...prevState,
-                avatar: file.name
+                images: file
             }));
         }
     };
 
-    const handleUpdate = () => {
-        updateDispatcher(formData, index);
-        onClose();
+    const handleUpdate = async () => {
+        let response_update_user = await uploadFile({
+            variables: {
+                input: {
+                    id: formData.id,
+                    name: formData.name,
+                    email: formData.email,
+                    role: formData.role,
+                    login: formData.login,
+                    password: formData.password,
+                },
+                images: formData.images
+            }
+        });
+
+        if (response_update_user) {
+            updateDispatcher(response_update_user.data.updateUser, index);
+            onClose();
+        }
     };
 
     useEffect(() => {
@@ -88,7 +123,7 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
                 <div className={classes.requestData}>
                     <div className={classes.requestDataInfo_img}>
                         <div className={classes.requestDataInfo_img_imgBlock}>
-                            <img src={`/${formData.avatar}`} alt="" />
+                            <img src={`${server}${showIMG}`} alt="" />
                         </div>
                     </div>
 
@@ -96,16 +131,28 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
                         <div className={classes.requestDataInfo_title}>ФИО</div>
                         <input
                             type="text"
-                            name="fio"
+                            name="name"
                             placeholder="Иванов Иван Иванович"
-                            value={formData.fio}
+                            value={formData.name}
+                            onChange={handleChange}
+                        />
+                    </div>
+
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Почта</div>
+                        <input
+                            type="text"
+                            name="email"
+                            placeholder="example@mail.ru"
+                            value={formData.email}
                             onChange={handleChange}
                         />
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Должность</div>
-                        <select name="post" value={formData.post} onChange={handleChange}>
-                            {filterList.map((item, index) => <option key={index} value={item}>{item}</option>)}
+                        <select name="role" value={formData.role} onChange={handleChange}>
+                            <option value="" disabled>Выберите должность</option>
+                            <option value="DISPATCHERADMIN">Администратор</option>
                         </select>
                     </div>
                     <div className={classes.requestDataInfo}>
@@ -132,7 +179,7 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
                         <div className={classes.requestDataInfo_title}>Аватар</div>
                         <input
                             type="file"
-                            name="avatar"
+                            name="images"
                             onChange={handleFileChange}
                         />
                     </div>
@@ -140,7 +187,7 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
             </div>
 
             <div className={classes.requestButon}>
-                <Button onClick={() => openDeleteComponent(index)} backgroundcolor={'#FF9C9C'}>Удалить <img src="/delete.png" alt="" /></Button>
+                <Button onClick={() => openDeleteComponent(index, formData.id)} backgroundcolor={'#FF9C9C'}>Удалить <img src="/delete.png" alt="" /></Button>
                 <Button onClick={handleUpdate} backgroundcolor={'#3CBC6726'} color={'#3B6C54'}>Изменить <img src="/editDispetcher.png" alt="" /></Button>
             </div>
 
