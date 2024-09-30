@@ -36,7 +36,8 @@
 
 .tabs {
     display: flex;
-    gap: 35px;
+    /* justify-content: space-between; */
+    gap: 20px;
     padding: 20px 40px;
 }
 
