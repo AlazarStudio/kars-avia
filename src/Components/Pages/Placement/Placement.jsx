@@ -4,32 +4,33 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Header from "../../Blocks/Header/Header"
 import HotelTable from "../../Blocks/HotelTable/HotelTable";
+import { useQuery } from "@apollo/client";
+import { GET_HOTEL_ROOMS } from "../../../../graphQL_requests";
 
 function Placement({ children, ...props }) {
     let { id, idHotel } = useParams();
 
-    
     const location = useLocation();
     const { dataObject } = location.state || [];
-    console.log(dataObject)
 
-    const allRooms = [
-        { room: '№121', places: 1 }, 
-        { room: '№122', places: 1 },
-        { room: '№221', places: 2 },
-        { room: '№222', places: 2 },
-    ];
+    const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+        variables: { hotelId: idHotel },
+    });
 
-    const data = [
-        { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№121', place: 1, start: '2024-09-10', startTime: '14:00', end: '2024-09-26', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№121', place: 1, start: '2024-09-26', startTime: '14:00', end: '2024-09-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№122', place: 1, start: '2024-09-03', startTime: '14:00', end: '2024-09-10', endTime: '10:00', client: 'Гочияев Р. Р.' },
-        { public: true, room: '№221', place: 1, start: '2024-09-12', startTime: '14:00', end: '2024-09-29', endTime: '10:00', client: 'Уртенов А. З.' },
-        { public: true, room: '№221', place: 2, start: '2024-09-10', startTime: '14:00', end: '2024-09-19', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№222', place: 1, start: '2024-09-12', startTime: '14:00', end: '2024-09-18', endTime: '10:00', client: 'Гочияев Р. Р.' },
-        { public: true, room: '№222', place: 2, start: '2024-09-12', startTime: '14:00', end: '2024-09-24', endTime: '10:00', client: 'Гочияев Р. Р.' },
-    ];
+    const allRooms = [];
+
+    data && data.hotel.categories.map((category, index) => {
+        return category.rooms.map((item) => (
+            allRooms.push({
+                room: item.name,
+                places: item.places
+            })
+        ));
+    });
+
+    allRooms.sort((a, b) => a.room.localeCompare(b.room));
+    
+    const dataInfo = [];
 
     return (
         <div className={classes.main}>
@@ -45,7 +46,7 @@ function Placement({ children, ...props }) {
                     </Header>
                 </div>
 
-                <HotelTable allRooms={allRooms} data={data} idHotel={idHotel} dataObject={dataObject} id={id}/>
+                <HotelTable allRooms={allRooms} data={dataInfo} idHotel={idHotel} dataObject={dataObject} id={id}/>
             </div>
 
         </div>

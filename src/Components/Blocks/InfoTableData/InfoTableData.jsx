@@ -3,22 +3,24 @@ import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { server } from "../../../../graphQL_requests";
 
-function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, ...props }) {
-    const handleObject = () => {
+function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, setChooseRequestID, ...props }) {
+    const handleObject = (id, arrival, departure, persone) => {
         setChooseObject([
             {
                 room: '',
                 place: '',
-                start: '',
-                startTime: '',
-                end: '',
-                endTime: '',
-                client: '',
+                start: arrival.date,
+                startTime: arrival.time,
+                end: departure.date,
+                endTime: departure.time,
+                client: persone.name,
                 public: false,
             }
         ])
+        setChooseRequestID(id)
         toggleRequestSidebar()
     }
+
     function convertToDate(timestamp) {
         const date = new Date(timestamp);
         return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
@@ -38,7 +40,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
 
             <div className={classes.bottom}>
                 {requests.map((item, index) => (
-                    <div className={classes.InfoTable_data} onClick={handleObject} key={index}>
+                    <div className={classes.InfoTable_data} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person)} key={index}>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>

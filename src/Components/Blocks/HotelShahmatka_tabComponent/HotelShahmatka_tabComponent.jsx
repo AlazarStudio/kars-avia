@@ -33,24 +33,16 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
                 room: item.name,
                 places: item.places
             })
-        ));
+        ))
     });
+
+    allRooms.sort((a, b) => a.room.localeCompare(b.room));
 
     const placesArray = allRooms.map(room => room.places);
     const uniquePlacesArray = [...new Set(placesArray)];
     uniquePlacesArray.sort((a, b) => a - b);
 
-    // const allRooms = [
-    //     { room: '№121', places: 1 },
-    //     { room: '№122', places: 1 },
-    //     { room: '№221', places: 2 },
-    //     { room: '№222', places: 2 },
-    // ];
-
-    const dataInfo = [
-        // { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-20', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        // { public: true, room: '№122', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-    ];
+    const dataInfo = [];
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectQuery, setSelectQuery] = useState('');

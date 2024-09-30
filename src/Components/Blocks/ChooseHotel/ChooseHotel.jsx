@@ -2,12 +2,27 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './ChooseHotel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { useQuery } from "@apollo/client";
+import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 
 function ChooseHotel({ show, onClose, chooseObject, id }) {
     const [formData, setFormData] = useState({
         city: '',
         hotel: '',
     });
+
+    const [hotels, setHotels] = useState([]);
+
+    let infoHotels = useQuery(GET_HOTELS_RELAY);
+
+    useEffect(() => {
+        if (infoHotels.data) {
+            setHotels(infoHotels.data?.hotels || []);
+        }
+    }, [infoHotels]);
+
+    const uniqueCities = [...new Set(hotels.map(hotel => hotel.city.trim()))].sort((a, b) => a.localeCompare(b));
+    const filteredAirports = (formData && formData.city) ? hotels.filter(hotel => hotel.city.trim() === formData.city.trim()) : [];
 
     const sidebarRef = useRef();
 
@@ -79,10 +94,20 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Город</label>
-                    <input type="text" name="city" placeholder="Введите город" value={formData.city} onChange={handleChange} />
+                    <select name="city" placeholder="Введите город" value={formData.city} onChange={handleChange}>
+                        <option value="">Выберите город</option>
+                        {uniqueCities.map((city, index) => (
+                            <option value={city} key={index}>{city}</option>
+                        ))}
+                    </select>
 
                     <label>Гостинница</label>
-                    <input type="text" name="hotel" placeholder="Введите название гостиницы" value={formData.hotel} onChange={handleChange} />
+                    <select name="hotel" placeholder="Введите название гостиницы" value={formData.hotel} onChange={handleChange}>
+                        <option value="">Выберите гостиницу</option>
+                        {filteredAirports.map((hotel, index) => (
+                            <option value={hotel.id} key={index}>{hotel.name}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 

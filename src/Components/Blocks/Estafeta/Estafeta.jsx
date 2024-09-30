@@ -42,6 +42,8 @@ function Estafeta({ children, ...props }) {
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const [chooseObject, setChooseObject] = useState([]);
 
+    const [chooseRequestID, setChooseRequestID] = useState();
+
     const toggleCreateSidebar = () => {
         setShowCreateSidebar(!showCreateSidebar);
     };
@@ -99,7 +101,6 @@ function Estafeta({ children, ...props }) {
     });
 
     let filterList = ['Азимут', 'S7 airlines', 'Северный ветер']
-
     return (
         <>
             <div className={classes.section}>
@@ -130,11 +131,11 @@ function Estafeta({ children, ...props }) {
                 {error && <p>Error: {error.message}</p>}
 
                 {!loading && !error && data && (
-                    <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} />
+                    <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID}/>
                 )}
 
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} />
+                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID}/>
                 <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
             </div>
         </>

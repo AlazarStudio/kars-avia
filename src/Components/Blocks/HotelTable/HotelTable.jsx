@@ -319,6 +319,11 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
     };
 
     const currentBooking = state.newBookings[state.currentBookingIndex];
+
+    function convertToDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
+    }
     return (
         <div className={classes.tableData}>
             <div className={classes.tableContainer} ref={tableContainerRef}>
@@ -389,14 +394,14 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                                 <div className={classes.formContainer_items_item_data}>
                                     <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
                                     <div className={classes.formContainer_items_item_data_info}>
-                                        <span> <img src="/calendar.png" alt="" />{currentBooking.start}</span>
+                                        <span> <img src="/calendar.png" alt="" />{convertToDate(currentBooking.start)}</span>
                                         <span> <img src="/time.png" alt="" />{currentBooking.startTime}</span>
                                     </div>
                                 </div>
                                 <div className={classes.formContainer_items_item_data}>
                                     <div className={classes.formContainer_items_item_data_name}>Отъезд</div>
                                     <div className={classes.formContainer_items_item_data_info}>
-                                        <span> <img src="/calendar.png" alt="" />{currentBooking.end}</span>
+                                        <span> <img src="/calendar.png" alt="" />{convertToDate(currentBooking.end)}</span>
                                         <span> <img src="/time.png" alt="" />{currentBooking.endTime}</span>
                                     </div>
                                 </div>
@@ -426,7 +431,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                                 </div>
 
                                 <div className={classes.formContainer_items_item_data_buttons}>
-                                    <button className={classes.anotherHotel}>Выбрать другое</button>
+                                    {/* <button className={classes.anotherHotel}>Выбрать другое</button> */}
                                     <button onClick={handleAddBooking}>Готово</button>
                                 </div>
 

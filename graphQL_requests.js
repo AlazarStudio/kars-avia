@@ -219,6 +219,65 @@ export const GET_AIRPORTS_RELAY = gql`
   }
 `;
 
+export const GET_HOTELS_RELAY = gql`
+  query Hotels {
+    hotels {
+      id
+      name
+      city
+    }
+  }
+`;
+
+export const GET_REQUEST = gql`
+    query Query($requestId: ID) {
+      request(id: $requestId) {
+          id
+          airportId
+          airport {
+            id
+            name
+            city
+            code
+          }
+          arrival {
+            flight
+            date
+            time
+          }
+          departure {
+            flight
+            date
+            time
+          }
+          roomCategory
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          senderId
+          receiverId
+          createdAt
+          updatedAt
+          hotelId
+          roomNumber
+          status
+          person {
+            id
+            name
+            number
+            position
+            gender
+          }
+          airline {
+            name
+            images
+          }
+      }
+    }
+`;
 
 // Запросы к заявкам на эстафету
 
