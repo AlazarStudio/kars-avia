@@ -322,7 +322,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
     function convertToDate(timestamp) {
         const date = new Date(timestamp);
-        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
+        return date.toLocaleDateString();
     }
     return (
         <div className={classes.tableData}>

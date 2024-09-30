@@ -32,6 +32,7 @@ function Login() {
             document.cookie = `token=${token}; SameSite=Lax; Max-Age=86400`;
 
             navigate("/");
+            window.location.reload()
         } catch (err) {
             setError("Ошибка авторизации. Проверьте логин или пароль.");
         }

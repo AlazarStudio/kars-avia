@@ -10,7 +10,7 @@ import { GET_AIRLINE } from "../../../../graphQL_requests";
 import { useQuery } from "@apollo/client";
 import AirlineShahmatka_tabComponent_Staff from "../AirlineShahmatka_tabComponent_Staff/AirlineShahmatka_tabComponent_Staff";
 
-function AirlinePage({ children, id, ...props }) {
+function AirlinePage({ children, id, user, ...props }) {
     const [selectedTab, setSelectedTab] = useState(0);
 
     const { loading, error, data } = useQuery(GET_AIRLINE, {
@@ -34,7 +34,7 @@ function AirlinePage({ children, id, ...props }) {
                 <div className={classes.section_top}>
                     <Header>
                         <div className={classes.titleHeader}>
-                            <Link to={`/airlines`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
+                            {user.role == "SUPERADMIN" && <Link to={`/airlines`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
                             {data && data.airline.name}
                         </div>
                     </Header>

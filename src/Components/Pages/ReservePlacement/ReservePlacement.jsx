@@ -13,7 +13,7 @@ import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
 import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 
-function ReservePlacement({ children, ...props }) {
+function ReservePlacement({ children, user, ...props }) {
     let { idRequest } = useParams();
 
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);

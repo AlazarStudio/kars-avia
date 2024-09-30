@@ -13,7 +13,7 @@ import Reports from "../../Blocks/Reports/Reports";
 import Login from "../Login/Login";
 import { getCookie } from '../../../../graphQL_requests.js';
 
-function Main_Page({ children, ...props }) {
+function Main_Page({ children, user, ...props }) {
     let { id, hotelID, airlineID } = useParams();
 
     const token = getCookie('token');
@@ -25,16 +25,32 @@ function Main_Page({ children, ...props }) {
     let pageClicked = hotelID ? 'hotels' : airlineID && 'airlines';
     return (
         <div className={classes.main}>
-            <MenuDispetcher id={id ? id : pageClicked} />
+            <MenuDispetcher id={id ? id : pageClicked} user={user} />
 
-            {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta />}
-            {(id == 'reserve') && <Reserve />}
-            {(id == 'company') && <Сompany />}
-            {(id == 'hotels') && <HotelsList />}
-            {(id == 'airlines') && <AirlinesList />}
-            {(id == 'reports') && <Reports />}
-            {(!id && hotelID) && <HotelPage id={hotelID} />}
-            {(!id && airlineID) && <AirlinePage id={airlineID} />}
+            {user.role == 'HOTELADMIN' &&
+                <>
+                    <HotelPage id={user.hotelId} user={user} />
+                </>
+            }
+
+            {user.role == 'AIRLINEADMIN' &&
+                <>
+                    <AirlinePage id={user.airlineId} user={user} />
+                </>
+            }
+
+            {user.role == 'SUPERADMIN' &&
+                <>
+                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user} />}
+                    {(id == 'reserve') && <Reserve user={user} />}
+                    {(id == 'company') && <Сompany user={user} />}
+                    {(id == 'hotels') && <HotelsList user={user} />}
+                    {(id == 'airlines') && <AirlinesList user={user} />}
+                    {(id == 'reports') && <Reports user={user} />}
+                    {(!id && hotelID) && <HotelPage id={hotelID} user={user} />}
+                    {(!id && airlineID) && <AirlinePage id={airlineID} user={user} />}
+                </>
+            }
         </div>
     );
 }
