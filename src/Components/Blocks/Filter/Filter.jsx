@@ -9,12 +9,10 @@ function Filter({ children, toggleSidebar, handleChange, filterData, buttonTitle
             {filterList &&
                 <>
                     <div className={classes.filter_title}>Фильтр:</div>
-                    <select className={classes.filter_select} name="filterSelect" value={filterData.filterAirport} onChange={handleChange}>
+                    {/* <select className={classes.filter_select} name="filterSelect" value={filterData.filterAirport} onChange={handleChange}>
                         <option value="">Показать все</option>
-                        {/* <option value="HOTELMODERATOR">Модератор</option> */}
                         <option value="DISPATCHERADMIN">Администратор</option>
-                        {/* <option value="HOTELUSER">Пользователь</option> */}
-                    </select>
+                    </select> */}
                 </>
             }
 

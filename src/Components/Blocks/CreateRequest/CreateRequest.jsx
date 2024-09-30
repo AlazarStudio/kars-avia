@@ -27,9 +27,7 @@ function CreateRequest({ show, onClose }) {
 
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState({
-        fullName: '',
-        position: '',
-        gender: '',
+        personId: '',
         airportId: '',
         arrivalRoute: '',
         arrivalDate: '',
@@ -37,8 +35,6 @@ function CreateRequest({ show, onClose }) {
         departureRoute: '',
         departureDate: '',
         departureTime: '',
-        roomCategory: '',
-        phoneNumber: '',
         senderId: '',
         airlineId: '',
         mealPlan: {
@@ -76,9 +72,7 @@ function CreateRequest({ show, onClose }) {
     const resetForm = () => {
         setActiveTab('Общая');
         setFormData({
-            fullName: '',
-            position: '',
-            gender: '',
+            personId: '',
             airportId: '',
             arrivalRoute: '',
             arrivalDate: '',
@@ -86,9 +80,7 @@ function CreateRequest({ show, onClose }) {
             departureRoute: '',
             departureDate: '',
             departureTime: '',
-            roomCategory: '',
-            phoneNumber: '',
-            senderId: '',
+            senderId: userID,
             airlineId: '',
             mealPlan: {
                 included: true,
@@ -152,34 +144,24 @@ function CreateRequest({ show, onClose }) {
         setFormData({
             ...formData,
             airlineId: selectedId,
-            fullName: '', // Сбрасываем имя сотрудника при смене авиакомпании
-            position: '',
-            gender: '',
-            phoneNumber: ''
+            personId: '', // Сбрасываем имя сотрудника при смене авиакомпании
         });
     };
 
     const handleStaffChange = (e) => {
         const selectedStaffName = e.target.value;
         const selectedStaff = selectedAirline.staff.find(staff => staff.name === selectedStaffName);
-
         if (selectedStaff) {
             setFormData(prevFormData => ({
                 ...prevFormData,
-                fullName: selectedStaff.name,
-                position: selectedStaff.position,
-                gender: selectedStaff.gender,
-                phoneNumber: selectedStaff.number
+                personId: selectedStaff.id
             }));
         }
     };
 
     const handleSubmit = async () => {
         const input = {
-            fullName: formData.fullName,
-            position: formData.position,
-            gender: formData.gender,
-            phoneNumber: formData.phoneNumber,
+            personId: formData.personId,
             airportId: formData.airportId,
             arrival: {
                 flight: formData.arrivalRoute,
@@ -191,7 +173,6 @@ function CreateRequest({ show, onClose }) {
                 date: formData.departureDate,
                 time: formData.departureTime,
             },
-            roomCategory: formData.roomCategory,
             mealPlan: {
                 included: formData.mealPlan.included,
                 breakfast: formData.mealPlan.breakfast,
@@ -244,7 +225,7 @@ function CreateRequest({ show, onClose }) {
                                 <label>Сотрудник авиакомпании</label>
                                 <select
                                     name="fullName"
-                                    value={formData.fullName}
+                                    value={formData.personId}
                                     onChange={handleStaffChange}
                                     disabled={!selectedAirline}
                                 >
@@ -255,18 +236,6 @@ function CreateRequest({ show, onClose }) {
                                         </option>
                                     ))}
                                 </select>
-
-                                {false && <>
-                                    <label>Должность</label>
-                                    <input type="text" name="position" value={formData.position} readOnly />
-
-                                    <label>Пол</label>
-                                    <input type="text" name="gender" value={formData.gender} readOnly />
-
-                                    <label>Номер телефона</label>
-                                    <input type="text" name="phoneNumber" value={formData.phoneNumber} readOnly />
-                                </>
-                                }
                             </>
                         )}
 
@@ -307,13 +276,6 @@ function CreateRequest({ show, onClose }) {
                             <input type="date" name="departureDate" value={formData.departureDate} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
                         </div>
-
-                        <label>Номер</label>
-                        <select name="roomCategory" value={formData.roomCategory} onChange={handleChange}>
-                            <option value="" disabled>Выберите номер</option>
-                            <option value="Одноместный">Одноместный</option>
-                            <option value="Двухместный">Двухместный</option>
-                        </select>
 
                     </div>
                 )}

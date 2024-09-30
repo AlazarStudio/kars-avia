@@ -45,46 +45,49 @@ export const SINGIN = gql`
 export const GET_REQUESTS = gql`
     query Request {
         requests {
+          id
+          airportId
+          airport {
             id
-            fullName
-            position
-            gender
-            phoneNumber
-            arrival {
+            name
+            city
+            code
+          }
+          arrival {
             flight
             date
             time
-            }
-            departure {
+          }
+          departure {
             flight
             date
             time
-            }
-            roomCategory
-            mealPlan {
+          }
+          roomCategory
+          mealPlan {
             included
             breakfast
             lunch
             dinner
-            }
-            senderId
-            receiverId
-            createdAt
-            updatedAt
-            hotelId
-            roomNumber
-            airlineId
-            status
-            airportId
-            airline {
-              images
-              name
-            }
-            airport {
-              name
-              code
-              city
-            }
+          }
+          senderId
+          receiverId
+          createdAt
+          updatedAt
+          hotelId
+          roomNumber
+          status
+          person {
+            id
+            name
+            number
+            position
+            gender
+          }
+          airline {
+            name
+            images
+          }
         }
     }
 `;
@@ -92,46 +95,49 @@ export const GET_REQUESTS = gql`
 export const REQUEST_CREATED_SUBSCRIPTION = gql`
     subscription RequestCreated {
         requestCreated {
+          id
+          airportId
+          airport {
             id
-            fullName
+            name
+            city
+            code
+          }
+          arrival {
+            flight
+            date
+            time
+          }
+          departure {
+            flight
+            date
+            time
+          }
+          roomCategory
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          senderId
+          receiverId
+          createdAt
+          updatedAt
+          hotelId
+          roomNumber
+          status
+          person {
+            id
+            name
+            number
             position
             gender
-            phoneNumber
-            arrival {
-                flight
-                date
-                time
-            }
-            departure {
-                flight
-                date
-                time
-            }
-            roomCategory
-            mealPlan {
-                included
-                breakfast
-                lunch
-                dinner
-            }
-            senderId
-            receiverId
-            createdAt
-            updatedAt
-            hotelId
-            roomNumber
-            airlineId
-            status
-            airportId
-            airline {
-              images
-              name
-            }
-            airport {
-              name
-              code
-              city
-            }
+          }
+          airline {
+            name
+            images
+          }
         }
     }
 `;
@@ -139,44 +145,49 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
 export const CREATE_REQUEST_MUTATION = gql`
     mutation CreateRequest($input: CreateRequestInput!) {
         createRequest(input: $input) {
+          id
+          airportId
+          airport {
             id
-            fullName
+            name
+            city
+            code
+          }
+          arrival {
+            flight
+            date
+            time
+          }
+          departure {
+            flight
+            date
+            time
+          }
+          roomCategory
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          senderId
+          receiverId
+          createdAt
+          updatedAt
+          hotelId
+          roomNumber
+          status
+          person {
+            id
+            name
+            number
             position
             gender
-            phoneNumber
-            airportId
-            arrival {
-                flight
-                date
-                time
-            }
-            departure {
-                flight
-                date
-                time
-            }
-            roomCategory
-            mealPlan {
-                included
-                breakfast
-                lunch
-                dinner
-            }
-            senderId
-            receiverId
-            hotelId
-            roomNumber
-            airlineId
-            status
-            airline {
-              images
-              name
-            }
-            airport {
-              name
-              code
-              city
-            }
+          }
+          airline {
+            name
+            images
+          }
         }
     }
 `;
@@ -187,6 +198,7 @@ export const GET_AIRLINES_RELAY = gql`
       id
       name
       staff {
+        id
         name
         position
         gender

@@ -9,11 +9,11 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
             {
                 room: '',
                 place: '',
-                start: '2024-07-26',
-                startTime: '14:00',
-                end: '2024-07-31',
-                endTime: '10:00',
-                client: 'Джатдоев А. С-А.',
+                start: '',
+                startTime: '',
+                end: '',
+                endTime: '',
+                client: '',
                 public: false,
             }
         ])
@@ -42,8 +42,8 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.fullName}</div>
-                                <div className={classes.InfoTable_data_elem_moreInfo}>{item.position}</div>
+                                <div className={classes.InfoTable_data_elem_title}>{item.person.name}</div>
+                                <div className={classes.InfoTable_data_elem_moreInfo}>{item.person.position}</div>
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w8}`}>{convertToDate(Number(item.createdAt))}</div>

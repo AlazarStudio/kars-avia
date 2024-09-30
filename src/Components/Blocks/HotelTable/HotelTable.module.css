@@ -23,11 +23,18 @@
     height: 45px;
     border-left: 1px solid #E4E4EF;
     border-top: 1px solid #E4E4EF;
-    /* border-bottom: 1px solid #E4E4EF; */
+    border-bottom: 1px solid #E4E4EF;
     font-family: Nunito Sans;
     font-size: 14px;
     line-height: 20px;
-    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* padding: 10px; */
+}
+
+.hotelTable th {
+    width: 30px !important;
 }
 
 .hotelTable th:nth-child(2) .topDayBlock{
@@ -46,7 +53,8 @@
 .hotelTable tbody th,
 .hotelTable tbody tr>td {
     border: 1px solid #E4E4EF;
-    border-left: none;
+    border-right: none;
+    border-top: none;
     background-color: #fff;
     /* padding: 10px; */
     width: 45px;
@@ -122,7 +130,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 180px;
+    width: 100%;
     height: 45px;
     font-family: Nunito Sans;
     font-size: 12px;
@@ -266,9 +274,8 @@
     font-size: 10px;
     font-weight: 400;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
+    flex-direction: column;
+    gap: 5px;
     color: #0057C3;
     width: 50%;
 }
@@ -287,11 +294,19 @@
     margin-bottom: 10px;
 }
 
+.formContainer_items_item_data_client input {
+    width: 100%;
+    height: 30px;
+    padding: 0 5px;
+    font-size: 12px;
+}
+
+.formContainer_items_item_data_info input,
 .formContainer_items_item_data_info select {
     width: 100%;
     height: 30px;
-    padding: 0;
     font-size: 12px;
+    padding: 0 5px;
 }
 
 .formContainer_items_item_data_buttons {
@@ -318,7 +333,7 @@
     background-color: white;
     width: 100%;
     height: 100%;
-    border-right: 1px solid #E4E4EF;
+    /* border-right: 1px solid #E4E4EF; */
     border-left: 1px solid #E4E4EF;
     padding: 10px;
 }
@@ -328,6 +343,7 @@
     top: 0;
     background-color: white;
     z-index: 2;
+    box-shadow: 0 0 5px #E4E4EF;
 }
 
 .loader{

@@ -7,25 +7,28 @@ import HotelTable from "../../Blocks/HotelTable/HotelTable";
 
 function Placement({ children, ...props }) {
     let { id, idHotel } = useParams();
+
+    
     const location = useLocation();
     const { dataObject } = location.state || [];
+    console.log(dataObject)
 
     const allRooms = [
-        { room: '№121', places: 1 },
+        { room: '№121', places: 1 }, 
         { room: '№122', places: 1 },
         { room: '№221', places: 2 },
         { room: '№222', places: 2 },
     ];
 
     const data = [
-        { public: true, room: '№121', place: 1, start: '2024-08-01', startTime: '14:00', end: '2024-08-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№121', place: 1, start: '2024-08-10', startTime: '14:00', end: '2024-08-26', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№121', place: 1, start: '2024-08-26', startTime: '14:00', end: '2024-08-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№122', place: 1, start: '2024-08-03', startTime: '14:00', end: '2024-08-10', endTime: '10:00', client: 'Гочияев Р. Р.' },
-        { public: true, room: '№221', place: 1, start: '2024-08-12', startTime: '14:00', end: '2024-08-29', endTime: '10:00', client: 'Уртенов А. З.' },
-        { public: true, room: '№221', place: 2, start: '2024-08-10', startTime: '14:00', end: '2024-08-19', endTime: '10:00', client: 'Джатдоев А. С-А.' },
-        { public: true, room: '№222', place: 1, start: '2024-08-12', startTime: '14:00', end: '2024-08-18', endTime: '10:00', client: 'Гочияев Р. Р.' },
-        { public: true, room: '№222', place: 2, start: '2024-07-12', startTime: '14:00', end: '2024-08-24', endTime: '10:00', client: 'Гочияев Р. Р.' },
+        { public: true, room: '№121', place: 1, start: '2024-09-01', startTime: '14:00', end: '2024-09-10', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№121', place: 1, start: '2024-09-10', startTime: '14:00', end: '2024-09-26', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№121', place: 1, start: '2024-09-26', startTime: '14:00', end: '2024-09-29', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№122', place: 1, start: '2024-09-03', startTime: '14:00', end: '2024-09-10', endTime: '10:00', client: 'Гочияев Р. Р.' },
+        { public: true, room: '№221', place: 1, start: '2024-09-12', startTime: '14:00', end: '2024-09-29', endTime: '10:00', client: 'Уртенов А. З.' },
+        { public: true, room: '№221', place: 2, start: '2024-09-10', startTime: '14:00', end: '2024-09-19', endTime: '10:00', client: 'Джатдоев А. С-А.' },
+        { public: true, room: '№222', place: 1, start: '2024-09-12', startTime: '14:00', end: '2024-09-18', endTime: '10:00', client: 'Гочияев Р. Р.' },
+        { public: true, room: '№222', place: 2, start: '2024-09-12', startTime: '14:00', end: '2024-09-24', endTime: '10:00', client: 'Гочияев Р. Р.' },
     ];
 
     return (

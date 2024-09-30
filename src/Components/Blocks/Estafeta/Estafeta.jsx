@@ -83,8 +83,8 @@ function Estafeta({ children, ...props }) {
             (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
             (filterData.filterDate === '' || convertToDate(Number(request.createdAt)) == filterData.filterDate) &&
             (
-                request.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                // request.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                // request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 // request.airline.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.airportId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.flight.toLowerCase().includes(searchQuery.toLowerCase()) ||

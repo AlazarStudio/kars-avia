@@ -87,7 +87,7 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
             </div>
 
             <div className={classes.requestButon}>
-                <Button link={`/${id}/placement/idHotel`} dataObject={chooseObject}>Разместить<img src="/user-check.png" alt="" /></Button>
+                <Button link={`/${id}/placement/${formData.hotel}`} dataObject={chooseObject}>Разместить<img src="/user-check.png" alt="" /></Button>
             </div>
         </Sidebar>
     );
