@@ -47,7 +47,7 @@ function Header({ children, ...props }) {
                         <div>{getFormattedDate()}</div>
                     </div>
                     <div className={classes.section_top_elems_profile}>
-                        <img src={data.user.images ? `${server}${data.user.images[0]}` :`/no-avatar.png`} alt="" />
+                        <img src={data.user?.images[0] ? `${server}${data.user?.images[0]}` :`/no-avatar.png`} alt="" />
                     </div>
                 </div>
             )}

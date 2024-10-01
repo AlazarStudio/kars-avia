@@ -82,7 +82,7 @@ function HotelsList({ children, user, ...props }) {
                         value={searchQuery}
                         onChange={handleSearch}
                     />
-                    {user.role == 'SUPERADMIN' &&
+                    {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                         <Filter
                             toggleSidebar={toggleCreateSidebar}
                             handleChange={handleChange}

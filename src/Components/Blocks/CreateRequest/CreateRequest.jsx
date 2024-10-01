@@ -38,7 +38,7 @@ function CreateRequest({ show, onClose }) {
         senderId: '',
         airlineId: '',
         mealPlan: {
-            included: true,
+            included: false,
             breakfast: false,
             lunch: false,
             dinner: false,

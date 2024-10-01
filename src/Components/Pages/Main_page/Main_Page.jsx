@@ -44,7 +44,7 @@ function Main_Page({ children, user, ...props }) {
                 </>
             }
 
-            {user.role == 'SUPERADMIN' &&
+            {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                 <>
                     {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user} />}
                     {(id == 'reserve') && <Reserve user={user} />}

@@ -137,7 +137,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                         </>
                     }
 
-                    {user.role == 'SUPERADMIN' &&
+                    {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                         <Link to={'/relay'} className={`${classes.menu_items__elem} ${(id == 'relay' || id == undefined) && classes.menu_items__activeElem}`}>
                             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.5875 5.24748C16.2319 1.60309 18.835 0.0412008 20.3969 1.60309C21.9589 3.16496 20.3969 5.76811 16.7526 9.41251C18.3144 12.0156 20.3969 18.2632 18.835 19.825C16.7526 21.9077 11.5463 13.5775 11.5463 13.5775L9.98438 15.1394C10.1579 16.7013 10.0885 20.0333 8.42249 20.8663C6.75648 21.6993 5.64581 18.4367 5.29873 16.7013C3.5633 16.3542 0.300701 15.2435 1.1337 13.5775C1.96672 11.9115 5.29873 11.8421 6.86062 12.0156L8.42249 10.4538C8.42249 10.4538 0.0924504 5.24748 2.17496 3.16496C3.73685 1.60309 9.98438 3.68559 12.5875 5.24748Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
@@ -145,7 +145,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                             Эстафета
                         </Link>
                     }
-                    {user.role == 'SUPERADMIN' &&
+                    {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                         <Link to={'/reserve'} className={`${classes.menu_items__elem} ${id == 'reserve' && classes.menu_items__activeElem}`}>
                             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M1.32714 3.28667C1.42238 2.46286 1.92238 1.78286 2.7319 1.60381C3.99476 1.32429 6.44286 1 11 1C15.5571 1 18.0048 1.32429 19.2681 1.60381C20.0776 1.78286 20.5776 2.46286 20.6729 3.28667C20.8176 4.53238 21 6.58381 21 9C21 13.5143 18.6176 17.7381 14.6038 19.8038C13.2629 20.4943 11.9543 21 11 21C10.0457 21 8.73714 20.4938 7.39619 19.8038C3.38238 17.7381 1 13.5143 1 9C1 6.58381 1.18238 4.53238 1.32714 3.28667Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
@@ -154,7 +154,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                             Резерв
                         </Link>
                     }
-                    {user.role == 'SUPERADMIN' &&
+                    {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                         <Link to={'/company'} className={`${classes.menu_items__elem} ${id == 'company' && classes.menu_items__activeElem}`}>
                             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M3.21313 16.5501V16.4572C3.21313 14.7462 4.60019 13.3591 6.31122 13.3591H15.6891C17.4001 13.3591 18.7872 14.7462 18.7872 16.4572V16.5501" stroke="var(--menu-gray)" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
@@ -178,7 +178,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                             Гостиницы
                         </Link>
                     }
-                    {user.role == 'SUPERADMIN' &&
+                    {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                         <Link to={'/airlines'} className={`${classes.menu_items__elem} ${id == 'airlines' && classes.menu_items__activeElem}`}>
                             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M10.1337 1.22253C9.32231 1.81456 8.19128 3.02877 7.89409 5.30609C7.97435 6.30237 8.06129 7.28527 8.14971 8.23044L1.6966 11.8605C1.24501 12.1144 0.965515 12.5921 0.965515 13.1101V13.9764C0.965561 14.4427 1.40382 14.7848 1.85619 14.6716L8.64141 12.9753C8.89464 15.2297 9.08865 16.7072 9.08865 16.7072L6.81128 18.8861C6.43458 19.2467 6.22159 19.7456 6.22168 20.2671V20.5853C6.22168 20.9202 6.55727 21.1511 6.87009 21.0316L11 19.4509L15.1294 21.0316C15.4424 21.1516 15.7784 20.9205 15.7783 20.5853V20.2671C15.7784 19.7456 15.5654 19.2467 15.1887 18.8861L12.9113 16.7072C12.9113 16.7072 13.1053 15.2297 13.3586 12.9753L20.1438 14.6716C20.5962 14.7848 21.0344 14.4427 21.0345 13.9764V13.1101C21.0345 12.5921 20.755 12.1144 20.3034 11.8605L13.8507 8.23044C13.9396 7.28481 14.0261 6.30237 14.1064 5.30609C13.8087 3.02877 12.6777 1.81456 11.8668 1.22253C11.3521 0.841514 10.6489 0.841514 10.1342 1.22253H10.1337Z" stroke="var(--menu-gray)" strokeLinejoin="round" />
@@ -186,7 +186,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                             Авиакомпании
                         </Link>
                     }
-                    {user.role == 'SUPERADMIN' &&
+                    {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                         <Link to={'/reports'} className={`${classes.menu_items__elem} ${id == 'reports' && classes.menu_items__activeElem}`}>
                             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M17.8163 7.1074C17.6555 6.65823 17.1064 5.47252 15.4018 3.80144C13.5955 2.03044 12.3447 1.53177 11.9552 1.40985C11.1787 1.38604 10.4019 1.37443 9.625 1.37502C6.754 1.37502 4.78225 1.52169 3.553 1.6624C2.54421 1.7779 1.78842 2.53461 1.6775 3.54386C1.53083 4.86844 1.375 7.09181 1.375 10.5417C1.375 13.9916 1.53129 16.2149 1.6775 17.5395C1.78842 18.5488 2.54421 19.3055 3.553 19.421C4.42292 19.5204 5.66454 19.6226 7.33333 19.6744" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />

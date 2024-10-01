@@ -159,13 +159,13 @@ function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif }
                         ))}
                     </select>
 
-                    <label>Название номера</label>
+                    <label>Название категории</label>
                     <input
                         type="text"
                         name="type"
                         value={formData.type}
                         onChange={handleChange}
-                        placeholder="Введите название номера"
+                        placeholder="Введите название категории"
                     />
 
                     <label>Стоимость</label>
