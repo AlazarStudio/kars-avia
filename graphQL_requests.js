@@ -88,6 +88,7 @@ export const GET_REQUESTS = gql`
             name
             images
           }
+          requestNumber
         }
     }
 `;
@@ -275,6 +276,7 @@ export const GET_REQUEST = gql`
             name
             images
           }
+          requestNumber
       }
     }
 `;

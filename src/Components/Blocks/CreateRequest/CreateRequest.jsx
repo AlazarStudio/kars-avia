@@ -149,15 +149,13 @@ function CreateRequest({ show, onClose }) {
     };
 
     const handleStaffChange = (e) => {
-        const selectedStaffName = e.target.value;
-        const selectedStaff = selectedAirline.staff.find(staff => staff.name === selectedStaffName);
-        if (selectedStaff) {
-            setFormData(prevFormData => ({
-                ...prevFormData,
-                personId: selectedStaff.id
-            }));
-        }
+        const selectedStaffId = e.target.value;
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            personId: selectedStaffId
+        }));
     };
+
 
     const handleSubmit = async () => {
         const input = {
@@ -194,7 +192,7 @@ function CreateRequest({ show, onClose }) {
 
     const uniqueCities = [...new Set(airports.map(airport => airport.city.trim()))].sort((a, b) => a.localeCompare(b));
     const filteredAirports = formData.city ? airports.filter(airport => airport.city.trim() === formData.city.trim()) : [];
-    
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -224,14 +222,14 @@ function CreateRequest({ show, onClose }) {
                             <>
                                 <label>Сотрудник авиакомпании</label>
                                 <select
-                                    name="fullName"
+                                    name="personId"
                                     value={formData.personId}
                                     onChange={handleStaffChange}
                                     disabled={!selectedAirline}
                                 >
                                     <option value="" disabled>Выберите сотрудника</option>
                                     {selectedAirline.staff.map(personal => (
-                                        <option key={personal.name} value={personal.name}>
+                                        <option key={personal.id} value={personal.id}>
                                             {personal.name} ({personal.position})
                                         </option>
                                     ))}

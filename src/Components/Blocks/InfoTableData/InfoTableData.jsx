@@ -46,7 +46,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
             <div className={classes.bottom}>
                 {requests.map((item, index) => (
                     <div className={classes.InfoTable_data} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person)} key={index}>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.split('-')[0]}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 <div className={classes.InfoTable_data_elem_title}>{item.person.name}</div>
