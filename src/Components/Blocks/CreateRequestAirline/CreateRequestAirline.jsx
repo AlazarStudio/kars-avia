@@ -106,14 +106,14 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Добавить гостиницу</div>
+                <div className={classes.requestTitle_name}>Добавить авиакомпанию</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
             </div>
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Название</label>
-                    <input type="text" name="name" placeholder="Гостиница Славянка" onChange={handleChange} />
+                    <input type="text" name="name" placeholder="Авиакомпания Азимут" onChange={handleChange} />
 
                     <label>Картинка</label>
                     <input type="file" name="images" onChange={handleFileChange} />

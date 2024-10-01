@@ -139,6 +139,7 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
             name
             images
           }
+          requestNumber
         }
     }
 `;
