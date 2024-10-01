@@ -74,7 +74,8 @@
 }
 
 .requestMiddle {
-    height: calc(100% - 90px - 87px);
+    /* height: calc(100% - 90px - 87px); */
+    height: calc(100% - 90px);
     overflow: hidden;
     overflow-y: scroll;
 }

@@ -3,7 +3,7 @@ import classes from './BronInfo.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function BronInfo({ show, onClose }) {
+function BronInfo({ show, onClose, data }) {
     const [activeTab, setActiveTab] = useState('Информация о бронировании');
 
     const sidebarRef = useRef();
@@ -34,44 +34,94 @@ function BronInfo({ show, onClose }) {
         };
     }, [show, onClose]);
 
+    function convertToDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
+    }
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Джатдоев А. С-А.</div>
+                <div className={classes.requestTitle_name}>Бронирование</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
             </div>
 
             <div className={classes.requestMiddle}>
-
                 <div className={classes.requestData}>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>ФИО</div>
-                        <div className={classes.requestDataInfo_desc}>Джатдоев Алим Сеит-Алиевич </div>
+                        <div className={classes.requestDataInfo_desc}>{data?.client?.name}</div>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Должность</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.client?.position}</div>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Пол</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.client?.gender}</div>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Номер телефона</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.client?.number}</div>
+                    </div>
+                    <hr />
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Аэропорт</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.request?.airport?.name} ( {data?.request?.airport?.code} )</div>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Город</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.request?.airport?.city}</div>
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Дата прибытия</div>
-                        <div className={classes.requestDataInfo_desc}>23.07.2024</div>
+                        <div className={classes.requestDataInfo_desc}>{convertToDate(data?.request?.arrival?.date)}</div>
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Время прибытия</div>
-                        <div className={classes.requestDataInfo_desc}>14:00</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.request?.arrival?.time}</div>
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Дата отъезда</div>
-                        <div className={classes.requestDataInfo_desc}>27.07.2024</div>
+                        <div className={classes.requestDataInfo_desc}>{convertToDate(data?.request?.departure?.date)}</div>
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Время отъезда</div>
-                        <div className={classes.requestDataInfo_desc}>10:00</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.request?.departure?.time}</div>
                     </div>
+
+                    <hr />
+
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Комната</div>
-                        <div className={classes.requestDataInfo_desc}>№121</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.room}</div>
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Место</div>
-                        <div className={classes.requestDataInfo_desc}>1</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.place}</div>
                     </div>
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Питание</div>
+                        <div className={classes.requestDataInfo_desc}>{data?.request?.mealPlan?.included ? 'Включено' : 'Не включено'}</div>
+                    </div>
+
+                    {data?.request?.mealPlan?.included &&
+                        <>
+                            <div className={classes.requestDataInfo}>
+                                <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                <div className={classes.requestDataInfo_desc}>{data?.request?.mealPlan?.breakfast ? 'Включено' : 'Не включено'}</div>
+                            </div>
+
+                            <div className={classes.requestDataInfo}>
+                                <div className={classes.requestDataInfo_title}>Обед</div>
+                                <div className={classes.requestDataInfo_desc}>{data?.request?.mealPlan?.lunch ? 'Включено' : 'Не включено'}</div>
+                            </div>
+
+                            <div className={classes.requestDataInfo}>
+                                <div className={classes.requestDataInfo_title}>Ужин</div>
+                                <div className={classes.requestDataInfo_desc}>{data?.request?.mealPlan?.dinner ? 'Включено' : 'Не включено'}</div>
+                            </div>
+                        </>
+                    }
                 </div>
             </div>
         </Sidebar>

@@ -279,6 +279,78 @@ export const GET_REQUEST = gql`
     }
 `;
 
+export const UPDATE_HOTEL_BRON = gql`
+  mutation Mutation($updateHotelId: ID!, $input: UpdateHotelInput!) {
+    updateHotel(id: $updateHotelId, input: $input) {
+      id
+      hotelChesses {
+        id
+        hotelId
+        public
+        start
+        startTime
+        end
+        endTime
+        clientId
+        requestId
+        place
+        room
+      }
+    }
+  }
+`;
+
+export const GET_BRONS_HOTEL = gql`
+  query Hotel($hotelId: ID!) {
+    hotel(id: $hotelId) {
+      name
+      hotelChesses {
+        public
+        start
+        startTime
+        end
+        endTime
+        place
+        room
+        client {
+          name
+          number
+          position
+          gender
+        }
+        request {
+          airport {
+            city
+            code
+            name
+          }
+          arrival {
+            date
+            flight
+            time
+          }
+          departure {
+            flight
+            date
+            time
+          }
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          airline {
+            name
+            images
+          }
+          status
+        }
+      }
+    }
+  }
+`;
+
 // Запросы к заявкам на эстафету
 
 // ----------------------------------------------------------------

@@ -3,7 +3,10 @@ import Booking from '../Booking/Booking';
 import classes from './HotelTable.module.css';
 import Button from '../../Standart/Button/Button';
 import BronInfo from '../BronInfo/BronInfo';
-import { LinearProgress, Box, Typography, CircularProgress  } from '@mui/material';
+import { LinearProgress, Box, Typography, CircularProgress } from '@mui/material';
+import { getCookie, UPDATE_HOTEL_BRON } from '../../../../graphQL_requests';
+import { useMutation } from '@apollo/client';
+import { Link } from 'react-router-dom';
 
 const initialState = (data, dataObject) => ({
     bookings: data || [],
@@ -38,7 +41,7 @@ const reducer = (state, action) => {
                     startTime: '',
                     end: '',
                     endTime: '',
-                    client: '',
+                    client: [],
                     public: false,
                 })),
                 conflict: false,
@@ -104,7 +107,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                 end: item.end,
                 endTime: item.endTime,
                 client: item.client,
-                public: item.public,
+                public: item.public
             }));
             dispatch({ type: 'SET_BOOKINGS', payload: [...state.bookings, ...newBookings] });
         }
@@ -192,7 +195,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
                         bookingElements.push(
                             <div
-                                key={isNew ? `new-${booking.client}-${colStart}` : booking.id}
+                                key={isNew ? `new-${booking.client.name}-${colStart}` : booking.id}
                                 className={`${classes.booking} ${endDate <= today && startDate <= today ? classes.booking_light : ''} ${state.conflict && isNew ? classes.booking_conflict : ''}`}
                                 style={{
                                     left: `${left}%`,
@@ -208,7 +211,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                                 }}
                                 onClick={toggleCreateSidebar}
                             >
-                                <Booking>{booking.client}</Booking>
+                                <Booking>{booking.client.name ? booking.client.name : booking.client}</Booking>
                             </div>
                         );
                     }
@@ -269,7 +272,19 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
         dispatch({ type: 'UPDATE_NEW_BOOKING', name, value, index });
     };
 
-    const handleAddBooking = () => {
+    const token = getCookie('token');
+
+    const [updateHotelBron] = useMutation(UPDATE_HOTEL_BRON, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+
+    const handleAddBooking = async () => {
         const booking = state.newBookings[state.currentBookingIndex];
 
         if (!booking.room || !booking.place || !booking.start || !booking.startTime || !booking.end || !booking.endTime || !booking.client) {
@@ -292,13 +307,41 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
         }
 
         let secundos = Math.round(Math.random() * 500) + 500;
-        
+
         setLoading(true);
 
-        setTimeout(() => {
-            dispatch({ type: 'ADD_BOOKING' });
-            setLoading(false);
-        }, secundos);
+        try {
+            let request = await updateHotelBron({
+                variables: {
+                    updateHotelId: booking.hotelId,
+                    input: {
+                        hotelChesses: [
+                            {
+                                clientId: booking.clientId,
+                                start: booking.start,
+                                startTime: booking.startTime,
+                                end: booking.end,
+                                endTime: booking.endTime,
+                                hotelId: booking.hotelId,
+                                requestId: booking.requestId,
+                                room: booking.room,
+                                place: Number(booking.place),
+                                public: true
+                            }
+                        ]
+                    }
+                }
+            });
+
+            if (request) {
+                setTimeout(() => {
+                    dispatch({ type: 'ADD_BOOKING' });
+                    setLoading(false);
+                }, secundos);
+            }
+        } catch (err) {
+            alert('Произошла ошибка при сохранении данных');
+        }
     };
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
@@ -389,7 +432,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                         <div className={classes.formContainer_items}>
                             <div className={classes.formContainer_items_item}>
                                 <div className={classes.formContainer_items_item_data}>
-                                    <div className={classes.formContainer_items_item_data_client}>{currentBooking.client}</div>
+                                    <div className={classes.formContainer_items_item_data_client}>{currentBooking.client.name}</div>
                                 </div>
                                 <div className={classes.formContainer_items_item_data}>
                                     <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
@@ -431,7 +474,8 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                                 </div>
 
                                 <div className={classes.formContainer_items_item_data_buttons}>
-                                    {/* <button className={classes.anotherHotel}>Выбрать другое</button> */}
+                                    {/* <Link to={`/${id}`} className={classes.anotherHotel}>Выбрать другой</Link> */}
+                                    {/* <button onClick={''}>Выбрать другой</button> */}
                                     <button onClick={handleAddBooking}>Готово</button>
                                 </div>
 
@@ -455,7 +499,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                     <Button link={`/${id}`}>Вернуться к заявкам</Button>
                 </div>
             )}
-             <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />
+            <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />
         </div >
     );
 };

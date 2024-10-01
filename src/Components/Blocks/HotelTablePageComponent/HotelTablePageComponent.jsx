@@ -13,11 +13,16 @@ const initialState = (data, dataObject) => ({
     totalBookings: dataObject.length || 0,
     conflict: false,
 });
-
+ 
 const reducer = (state, action) => {
     switch (action.type) {
         case 'SET_BOOKINGS':
             return { ...state, bookings: action.payload };
+        case 'SET_SELECTED_BOOKING':
+            return {
+                ...state,
+                selectedBooking: action.payload
+            };
         case 'UPDATE_NEW_BOOKING':
             const updatedBookings = state.newBookings.map((booking, index) =>
                 index === action.index ? { ...booking, [action.name]: action.value } : booking
@@ -202,7 +207,7 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
 
                         bookingElements.push(
                             <div
-                                key={isNew ? `new-${booking.client}-${colStart}` : booking.id}
+                                key={isNew ? `new-${booking.client.name}-${colStart}` : booking.id}
                                 className={`${classes.booking} ${endDate <= today && startDate <= today ? classes.booking_light : ''} ${state.conflict && isNew ? classes.booking_conflict : ''}`}
                                 style={{
                                     left: `${left}%`,
@@ -216,9 +221,9 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
                                     borderTopRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                     borderBottomRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                 }}
-                                onClick={toggleCreateSidebar}
+                                onClick={() => toggleCreateSidebar(booking)}
                             >
-                                <Booking>{booking.client}</Booking>
+                                <Booking>{booking.client.name}</Booking>
                             </div>
                         );
                     }
@@ -313,7 +318,7 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
-    const groupedRooms = allRooms.reduce((acc, room) => {
+    const groupedRooms = allRooms && allRooms.reduce((acc, room) => {
         const key = room.places;
         if (!acc[key]) {
             acc[key] = [];
@@ -324,7 +329,8 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
 
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
 
-    const toggleCreateSidebar = () => {
+    const toggleCreateSidebar = (booking) => {
+        dispatch({ type: 'SET_SELECTED_BOOKING', payload: booking });
         setShowCreateSidebar(!showCreateSidebar);
     };
 
@@ -469,7 +475,7 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
                     }
                 </div>
             ) : null}
-            <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />
+            <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} data={state.selectedBooking}/>
         </div >
     );
 };

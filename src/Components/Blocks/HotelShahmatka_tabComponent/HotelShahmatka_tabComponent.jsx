@@ -1,12 +1,11 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import classes from './HotelShahmatka_tabComponent.module.css';
 import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent";
-import Filter from "../Filter/Filter";
 
-import { GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
-import { useMutation, useQuery } from "@apollo/client";
+import { GET_BRONS_HOTEL, GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
+import { useQuery } from "@apollo/client";
 
-function HotelShahmatka_tabComponent({ children, id, ...props }) {
+function HotelShahmatka_tabComponent({ id }) {
 
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: id },
@@ -27,7 +26,7 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
 
     let allRooms = [];
 
-    data && data.hotel.categories.map((category, index) => {
+    data && data.hotel.categories.map((category) => {
         return category.rooms.map((item) => (
             allRooms.push({
                 room: item.name,
@@ -42,7 +41,17 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
     const uniquePlacesArray = [...new Set(placesArray)];
     uniquePlacesArray.sort((a, b) => a - b);
 
-    const dataInfo = [];
+    const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
+
+    const { loading: bronLoading, error: bronError, data: bronData } = useQuery(GET_BRONS_HOTEL, {
+        variables: { hotelId: id },
+    });
+
+    useEffect(() => {
+        if (bronData && bronData.hotel && bronData.hotel.hotelChesses) {
+            setHotelBronsInfo(bronData.hotel.hotelChesses);
+        }
+    }, [bronData]);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectQuery, setSelectQuery] = useState('');
@@ -57,23 +66,15 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
     }
 
     const toggleSidebar = () => {
-        setShowAddBronForm(!showAddBronForm)
+        setShowAddBronForm(!showAddBronForm);
     }
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFilterData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    }
-
-    const filteredRequests = data && allRooms.filter(request => {
+    const filteredRequests = allRooms.filter(request => {
         const matchesRoom = request.room.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesPlaces = selectQuery === '' || request.places === parseInt(selectQuery);
 
-        const matchingClients = dataInfo.filter(entry =>
-            entry.client.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        const matchingClients = hotelBronsInfo.filter(entry =>
+            entry.client.name && entry.client.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
             entry.room === request.room
         );
 
@@ -81,6 +82,10 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
 
         return (matchesRoom || matchesClient) && matchesPlaces;
     });
+
+
+    if (loading || bronLoading) return <p>Loading...</p>;
+    if (error || bronError) return <p>Error: {error ? error.message : bronError.message}</p>;
 
     return (
         <>
@@ -99,21 +104,17 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
                             <option value={`${item}`} key={index}>{item} - МЕСТНЫЕ</option>
                         ))}
                     </select>
-
-                    {/* <Filter
-                        toggleSidebar={toggleSidebar}
-                        handleChange={handleChange}
-                        buttonTitle={'Добавить бронь'}
-                    /> */}
                 </div>
             </div>
 
-            {loading && <p>Loading...</p>}
-            {error && <p>Error: {error.message}</p>}
+            {(hotelBronsInfo.length === 0) &&
+                <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={[]} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
+            }
 
-            {!loading && !error && (
-                <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={dataInfo} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
-            )}
+            {(hotelBronsInfo.length !== 0) &&
+                <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={hotelBronsInfo} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
+            }
+
         </>
     );
 }

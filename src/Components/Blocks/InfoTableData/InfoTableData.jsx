@@ -15,11 +15,16 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                 endTime: departure.time,
                 client: persone.name,
                 public: false,
+                clientId: persone.id,
+                hotelId: '',
+                requestId: id
             }
         ])
         setChooseRequestID(id)
         toggleRequestSidebar()
     }
+
+    // console.log(requests)
 
     function convertToDate(timestamp) {
         const date = new Date(timestamp);

@@ -66,6 +66,7 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
             }));
         }
     }
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {

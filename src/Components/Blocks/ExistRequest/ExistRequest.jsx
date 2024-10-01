@@ -117,7 +117,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
             {formData &&
                 <Sidebar show={show} sidebarRef={sidebarRef}>
                     <div className={classes.requestTitle}>
-                        <div className={classes.requestTitle_name}>Заявка №123MV077</div>
+                        <div className={classes.requestTitle_name}>Заявка</div>
                         <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
                     </div>
 
