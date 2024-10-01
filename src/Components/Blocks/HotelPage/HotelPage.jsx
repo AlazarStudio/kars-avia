@@ -39,7 +39,7 @@ function HotelPage({ children, id, user, ...props }) {
                 <div className={classes.section_top}>
                     <Header>
                         <div className={classes.titleHeader}>
-                            {user.role == "SUPERADMIN" && <Link to={`/hotels`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
+                            {(user.role == "SUPERADMIN" || user.role == "AIRLINEADMIN")  && <Link to={`/hotels`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
                             {data && data.hotel.name}
                         </div>
                     </Header>
@@ -107,6 +107,14 @@ function HotelPage({ children, id, user, ...props }) {
                                     <HotelAbout_tabComponent id={id} />
                                 </div>
                             }
+                        </>
+                    }
+                    {user.role == "AIRLINEADMIN" &&
+                        <>
+                            <div className={classes.tabPanel}>
+                                <HotelAbout_tabComponent id={id} />
+                            </div>
+
                         </>
                     }
                 </Tabs>

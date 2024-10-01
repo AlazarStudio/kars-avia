@@ -8,7 +8,7 @@ import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
 import { gql, useQuery } from "@apollo/client";
 import { GET_HOTELS } from "../../../../graphQL_requests";
 
-function HotelsList({ children, ...props }) {
+function HotelsList({ children, user, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
 
@@ -82,14 +82,16 @@ function HotelsList({ children, ...props }) {
                         value={searchQuery}
                         onChange={handleSearch}
                     />
-                    <Filter
-                        toggleSidebar={toggleCreateSidebar}
-                        handleChange={handleChange}
-                        filterData={filterData}
-                        buttonTitle={'Добавить гостиницу'}
-                        filterList={filterList}
-                        needDate={false}
-                    />
+                    {user.role == 'SUPERADMIN' &&
+                        <Filter
+                            toggleSidebar={toggleCreateSidebar}
+                            handleChange={handleChange}
+                            filterData={filterData}
+                            buttonTitle={'Добавить гостиницу'}
+                            filterList={filterList}
+                            needDate={false}
+                        />
+                    }
                 </div>
                 {loading && <p>Loading...</p>}
                 {error && <p>Error: {error.message}</p>}

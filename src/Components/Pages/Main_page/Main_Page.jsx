@@ -35,7 +35,12 @@ function Main_Page({ children, user, ...props }) {
 
             {user.role == 'AIRLINEADMIN' &&
                 <>
-                    <AirlinePage id={user.airlineId} user={user} />
+                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user} />}
+                    {(id == 'reserve') && <Reserve user={user} />}
+                    {(id == 'hotels') && <HotelsList user={user} />}
+                    {(id == 'airlineCompany' || id == 'airlineStaff' || id == 'airlineAbout') && <AirlinePage id={user.airlineId} user={user} />}
+                    {(!id && hotelID) && <HotelPage id={hotelID} user={user} />}
+                    {(!id && airlineID) && <AirlinePage id={airlineID} user={user} />}
                 </>
             }
 

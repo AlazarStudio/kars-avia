@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import classes from './AirlinePage.module.css';
 import Header from "../Header/Header";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import AirlineCompany_tabComponent from "../AirlineCompany_tabComponent/AirlineCompany_tabComponent";
 import AirlineAbout_tabComponent from "../AirlineAbout_tabComponent/AirlineAbout_tabComponent";
@@ -11,6 +11,8 @@ import { useQuery } from "@apollo/client";
 import AirlineShahmatka_tabComponent_Staff from "../AirlineShahmatka_tabComponent_Staff/AirlineShahmatka_tabComponent_Staff";
 
 function AirlinePage({ children, id, user, ...props }) {
+    let params = useParams();
+
     const [selectedTab, setSelectedTab] = useState(0);
 
     const { loading, error, data } = useQuery(GET_AIRLINE, {
@@ -40,29 +42,52 @@ function AirlinePage({ children, id, user, ...props }) {
                     </Header>
                 </div>
 
-                <Tabs
-                    className={classes.tabs}
-                    selectedIndex={selectedTab}
-                    onSelect={handleTabSelect}
-                >
-                    <TabList className={classes.tabList}>
-                        <Tab className={classes.tab}>Компания</Tab>
-                        <Tab className={classes.tab}>Сотрудники</Tab>
-                        <Tab className={classes.tab}>О авиакомпании</Tab>
-                    </TabList>
+                {user.role == "SUPERADMIN" &&
+                    <>
+                        <Tabs
+                            className={classes.tabs}
+                            selectedIndex={selectedTab}
+                            onSelect={handleTabSelect}
+                        >
+                            <TabList className={classes.tabList}>
+                                <Tab className={classes.tab}>Компания</Tab>
+                                <Tab className={classes.tab}>Сотрудники</Tab>
+                                <Tab className={classes.tab}>О авиакомпании</Tab>
+                            </TabList>
 
-                    <TabPanel className={classes.tabPanel}>
-                        <AirlineCompany_tabComponent id={id} />
-                    </TabPanel>
+                            <TabPanel className={classes.tabPanel}>
+                                <AirlineCompany_tabComponent id={id} />
+                            </TabPanel>
 
-                    <TabPanel className={classes.tabPanel}>
-                        <AirlineShahmatka_tabComponent_Staff id={id} />
-                    </TabPanel>
+                            <TabPanel className={classes.tabPanel}>
+                                <AirlineShahmatka_tabComponent_Staff id={id} />
+                            </TabPanel>
 
-                    <TabPanel className={classes.tabPanel}>
-                        <AirlineAbout_tabComponent id={id} />
-                    </TabPanel>
-                </Tabs>
+                            <TabPanel className={classes.tabPanel}>
+                                <AirlineAbout_tabComponent id={id} />
+                            </TabPanel>
+                        </Tabs>
+                    </>
+                }
+                {user.role == "AIRLINEADMIN" &&
+                    <>
+                        {(params.id == 'airlineCompany' || params.id == undefined) &&
+                            <div className={classes.tabPanel}>
+                                <AirlineCompany_tabComponent id={id} />
+                            </div>
+                        }
+                        {params.id == 'airlineStaff' &&
+                            <div className={classes.tabPanel}>
+                                <AirlineShahmatka_tabComponent_Staff id={id} />
+                            </div>
+                        }
+                        {params.id == 'airlineAbout' &&
+                            <div className={classes.tabPanel}>
+                                <AirlineAbout_tabComponent id={id} />
+                            </div>
+                        }
+                    </>
+                }
             </div>
         </>
     );
