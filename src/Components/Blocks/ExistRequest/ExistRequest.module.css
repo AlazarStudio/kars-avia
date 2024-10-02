@@ -175,7 +175,8 @@ select {
 }
 
 .requestData_message {
-    width: 80%;
+    width: fit-content;
+    max-width: 80%;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -183,15 +184,14 @@ select {
 
 .requestData_message_name {
     font-family: Nunito Sans;
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 21.82px;
+    font-size: 12px;
+    font-weight: 600;
     color: #545873;
 }
 
 .requestData_message_post {
     font-family: Nunito Sans;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 16.37px;
     color: #0057C3;
@@ -199,13 +199,20 @@ select {
 
 .requestData_message_text {
     background-color: #F6F6FC;
-    padding: 20px;
-    border-radius: 5px;
+    padding: 15px;
+    border-radius: 20px 20px 20px 0px;
     font-family: Nunito Sans;
     font-size: 14px;
-    font-weight: 400;
-    line-height: 19.1px;
+    font-weight: 500;
     color: #545873;
+}
+
+.requestData_message_text__name{
+    margin-bottom: 20px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .requestData_message_time {
@@ -232,6 +239,14 @@ select {
 .myMes .requestData_message_time {
     display: flex;
     justify-content: flex-end;
+}
+
+.myMes .requestData_message_text{
+    border-radius: 20px 20px 0px 20px;
+}
+
+.myMes .requestData_message_text__name{
+    display: none;
 }
 
 .sendBlock {
@@ -287,5 +302,6 @@ select {
     text-align: center;
     color: #545873;
 }
+
 
 @media (min-width: 0px) and (max-width: 1299px) {}

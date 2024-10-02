@@ -3,9 +3,9 @@ import classes from './ExistRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useQuery } from "@apollo/client";
-import { GET_REQUEST } from "../../../../graphQL_requests";
+import { GET_MESSAGES_HOTEL, GET_REQUEST } from "../../../../graphQL_requests";
 
-function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
+function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user }) {
     const { loading, error, data } = useQuery(GET_REQUEST, {
         variables: { requestId: chooseRequestID },
     });
@@ -33,8 +33,8 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
     const closeButton = () => {
         // let success = confirm("Вы уверены, все несохраненные данные будут удалены");
         // if (success) {
-            resetForm();
-            onClose();
+        resetForm();
+        onClose();
         // }
     }
 
@@ -116,6 +116,32 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
         const date = new Date(timestamp);
         return date.toLocaleDateString();
     }
+
+    const { loading: messageLoading, error: messageError, data: messageData } = useQuery(GET_MESSAGES_HOTEL, {
+        variables: { requestId: chooseRequestID },
+    });
+
+    const [messages, setMessages] = useState();
+
+    useEffect(() => {
+        if (messageData) {
+            setMessages(messageData.chats[0]?.messages);
+        }
+    }, [messageData]);
+
+    function convertToDateStamp(timestamp) {
+        const date = new Date(Number(timestamp));
+
+        // Извлекаем компоненты даты и времени
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Месяцы идут с 0, поэтому добавляем 1
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+
+        // Формируем строку в формате DD.MM.YYYY HH:MM
+        return `${day}.${month}.${year} ${hours}:${minutes}`;
+    }
     return (
         <>
             {formData &&
@@ -125,14 +151,14 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
                         <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
                     </div>
 
-                    <div className={classes.requestMiddle}>
+                    <div className={classes.requestMiddle}style={{height: formData.status == 'done' && 'calc(100vh - 90px)'}}>
                         <div className={classes.tabs}>
                             <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
                             <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
-                            {/* 
-                                <div className={`${classes.tab} ${activeTab === 'Комментарии' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Комментарии')}>Комментарии</div>
-                                <div className={`${classes.tab} ${activeTab === 'История' ? classes.activeTab : ''}`} onClick={() => handleTabChange('История')}>История</div> 
-                            */}
+
+                            <div className={`${classes.tab} ${activeTab === 'Комментарии' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Комментарии')}>Комментарии</div>
+                            <div className={`${classes.tab} ${activeTab === 'История' ? classes.activeTab : ''}`} onClick={() => handleTabChange('История')}>История</div>
+
                         </div>
 
                         {activeTab === 'Общая' && (
@@ -172,7 +198,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Номер комнаты</div>
-                                            <div className={classes.requestDataInfo_desc}>{formData.hotelChess.room}</div>
+                                            <div className={classes.requestDataInfo_desc}>{formData.hotelChess?.room}</div>
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Заезд</div>
@@ -223,11 +249,26 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
                             </div>
                         )}
 
-                        {/* 
+
                         {activeTab === 'Комментарии' && (
                             <div className={classes.requestData}>
-                                <div className={classes.requestData_messages}>
-                                    <div className={classes.requestData_date}>
+                                <div className={classes.requestData_messages} style={{height: formData.status == 'done' && 'calc(100vh - 240px)'}}>
+                                    {messages.map((message, index) => (
+                                        <div className={`${classes.requestData_message_full} ${message.sender.id == user.userId && classes.myMes}`} key={index}>
+                                            <div className={classes.requestData_message}>
+                                                <div className={classes.requestData_message_text}>
+                                                    <div className={classes.requestData_message_text__name}>
+                                                        <div className={classes.requestData_message_name}>{message.sender.name}</div>
+                                                        <div className={classes.requestData_message_post}>{message.sender.role}</div>
+                                                    </div>
+                                                    {message.text}
+                                                </div>
+                                                <div className={classes.requestData_message_time}>{convertToDateStamp(message.createdAt)}</div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* <div className={classes.requestData_date}>
                                         <div className={classes.requestData_date_info}>17 мая 2024</div>
                                     </div>
 
@@ -256,7 +297,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
                                             </div>
                                             <div className={classes.requestData_message_time}>17:27</div>
                                         </div>
-                                    </div>
+                                    </div> */}
 
                                     <div ref={messagesEndRef} />
                                 </div>
@@ -267,6 +308,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
                                 </div>
                             </div>
                         )}
+
                         {activeTab === 'История' && (
                             <div className={classes.requestData}>
                                 <div className={classes.logs}>
@@ -290,7 +332,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
                                 </div>
                             </div>
                         )}
-                         */}
+
                     </div>
                     {formData.status !== 'done' &&
                         <div className={classes.requestButon}>

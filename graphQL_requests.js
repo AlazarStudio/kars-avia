@@ -333,7 +333,7 @@ export const GET_REQUEST = gql`
             id
             name
           }
-          HotelChess {
+          hotelChess {
             room
             place
           }
@@ -408,6 +408,22 @@ export const GET_BRONS_HOTEL = gql`
           }
           status
           requestNumber
+        }
+      }
+    }
+  }
+`;
+
+export const GET_MESSAGES_HOTEL = gql`
+  query Requests($requestId: ID!) {
+    chats(requestId: $requestId) {
+      messages {
+        text
+        createdAt
+        sender {
+          id
+          name
+          role
         }
       }
     }

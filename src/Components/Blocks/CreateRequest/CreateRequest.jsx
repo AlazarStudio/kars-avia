@@ -10,6 +10,8 @@ function CreateRequest({ show, onClose }) {
 
     const [userID, setUserID] = useState();
 
+    const [isEdited, setIsEdited] = useState(false);
+
     const [airlines, setAirlines] = useState([]);
     const [selectedAirline, setSelectedAirline] = useState(null);
 
@@ -90,13 +92,20 @@ function CreateRequest({ show, onClose }) {
             },
             city: ''
         });
+        setIsEdited(false)
     };
 
-    const closeButton = () => {
-        let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-        if (success) {
+
+    const closeButton = () => {        
+        if (!isEdited) {
             resetForm();
             onClose();
+        } else {
+            let success = confirm("Вы уверены, все несохраненные данные будут удалены");
+            if (success) {
+                resetForm();
+                onClose();
+            }
         }
     };
 
@@ -106,6 +115,8 @@ function CreateRequest({ show, onClose }) {
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
+
+        setIsEdited(true)
 
         if (type === 'checkbox') {
             setFormData(prevState => ({
@@ -139,6 +150,9 @@ function CreateRequest({ show, onClose }) {
 
     const handleAirlineChange = (e) => {
         const selectedId = e.target.value;
+
+        setIsEdited(true)
+
         const selectedAirline = airlines.find(airline => airline.id === selectedId);
         setSelectedAirline(selectedAirline);
         setFormData({
@@ -150,6 +164,9 @@ function CreateRequest({ show, onClose }) {
 
     const handleStaffChange = (e) => {
         const selectedStaffId = e.target.value;
+
+        setIsEdited(true)
+
         setFormData(prevFormData => ({
             ...prevFormData,
             personId: selectedStaffId
@@ -188,6 +205,30 @@ function CreateRequest({ show, onClose }) {
         }
         resetForm();
         onClose();
+    };
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+                closeButton();
+            }
+        };
+
+        if (show) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [show, onClose, isEdited]);
+
+    const messagesEndRef = useRef(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const uniqueCities = [...new Set(airports.map(airport => airport.city.trim()))].sort((a, b) => a.localeCompare(b));

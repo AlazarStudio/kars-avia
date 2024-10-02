@@ -25,8 +25,6 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
         toggleRequestSidebar()
     }
 
-    console.log(requests)
-
     function convertToDate(timestamp) {
         const date = new Date(timestamp);
         return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате

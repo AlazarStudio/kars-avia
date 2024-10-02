@@ -512,7 +512,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                         </Box>
                     </Box>
                     <br />
-                    <Button link={`/${id}`}>Вернуться к заявкам</Button>
+                    <a href={`/${id}`}>Вернуться к заявкам</a>
                 </div>
             )}
             <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} />

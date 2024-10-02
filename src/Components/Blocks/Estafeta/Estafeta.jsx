@@ -8,50 +8,7 @@ import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
 
-import { useQuery, useSubscription } from "@apollo/client";
-import { GET_REQUESTS, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from "../../../../graphQL_requests"
-
-function Estafeta({ children, ...props }) {
-    const { loading, error, data } = useQuery(GET_REQUESTS);
-    const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION);
-    const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION);
-    const [requests, setRequests] = useState([]);
-
-    useEffect(() => {
-        if (data && data.requests) {
-            const sortedRequests = [...data.requests].reverse();
-            setRequests(sortedRequests);
-        }
-    }, [data]);
-
-    useEffect(() => {
-        if (subscriptionData) {
-            console.log('New subscription data received:', subscriptionData);
-            setRequests((prevRequests) => {
-                const newRequest = subscriptionData.requestCreated;
-                const isDuplicate = prevRequests.some(request => request.id === newRequest.id);
-                if (isDuplicate) {
-                    return prevRequests;
-                }
-                return [newRequest, ...prevRequests];
-            });
-        }
-        if (subscriptionUpdateData) {
-            // console.log('New subscription data received:', subscriptionUpdateData);
-            setRequests((prevRequests) => {
-                const newRequest = subscriptionUpdateData.requestCreated;
-                const isDuplicate = prevRequests.some(request => request.id === newRequest.id);
-                if (isDuplicate) {
-                    return prevRequests;
-                }
-                return [newRequest, ...prevRequests];
-            });
-        }
-    }, [
-        subscriptionData,
-        subscriptionUpdateData
-    ]);
-
+function Estafeta({ children, requests, loading, error, user, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
@@ -95,14 +52,15 @@ function Estafeta({ children, ...props }) {
         return date.toISOString().split('T')[0];
     }
 
-    const filteredRequests = requests.filter(request => {
+    const filteredRequests = requests && requests.filter(request => {
         return (
             (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
             (filterData.filterDate === '' || convertToDate(Number(request.createdAt)) == filterData.filterDate) &&
             (
-                // request.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                // request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                // request.airline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.person.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.person.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.person.gender.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.airportId.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.flight.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -141,16 +99,15 @@ function Estafeta({ children, ...props }) {
                         needDate={true}
                     />
                 </div>
-
                 {loading && <p>Loading...</p>}
                 {error && <p>Error: {error.message}</p>}
 
-                {!loading && !error && data && (
+                {!loading && !error && requests && (
                     <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
                 )}
 
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} />
+                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user}/>
                 <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
             </div>
         </>
