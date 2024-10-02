@@ -58,7 +58,7 @@
     display: flex;
     flex-direction: column;
     padding: 0 40px 20px;
-    gap: 15px;
+    gap: 10px;
 }
 
 .requestData label {
@@ -130,18 +130,16 @@ select {
 
 .requestDataInfo_title {
     font-family: Nunito Sans;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
-    line-height: 21.82px;
     width: 40%;
 }
 
 .requestDataInfo_desc {
     background-color: #9CA4D91A;
     font-family: Nunito Sans;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
-    line-height: 21.82px;
     width: 60%;
     padding: 10px 15px;
     border-radius: 5px;

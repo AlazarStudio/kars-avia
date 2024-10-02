@@ -516,7 +516,6 @@ export const DELETE_HOTEL_ROOM = gql`
   }
 `;
 
-
 export const GET_HOTEL_USERS = gql`
   query HotelUsers($hotelId: ID!) {
     hotelUsers(hotelId: $hotelId) {

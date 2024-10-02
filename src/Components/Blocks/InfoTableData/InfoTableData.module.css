@@ -3,10 +3,8 @@
 .InfoTable_data {
     display: flex;
     font-family: Inter;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
-    line-height: 19.36px;
-    text-align: center;
     margin-left: 8px;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
@@ -46,9 +44,8 @@
 
 .InfoTable_data_elem {
     font-family: Nunito Sans;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
-    line-height: 20px;
     color: var(--main-gray);
     width: 100%;
 }
@@ -59,6 +56,10 @@
 
 .w15 {
     width: 15%;
+}
+
+.w18 {
+    width: 18%;
 }
 
 .w12 {
@@ -93,7 +94,6 @@
     font-family: Nunito Sans;
     font-size: 12px;
     font-weight: 400;
-    line-height: 20px;
     display: flex;
     align-items: center;
     gap: 10px;
