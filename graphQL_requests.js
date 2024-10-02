@@ -144,6 +144,57 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
     }
 `;
 
+export const REQUEST_UPDATED_SUBSCRIPTION = gql`
+    subscription requestUpdated {
+        requestUpdated {
+          id
+          airportId
+          airport {
+            id
+            name
+            city
+            code
+          }
+          arrival {
+            flight
+            date
+            time
+          }
+          departure {
+            flight
+            date
+            time
+          }
+          roomCategory
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          senderId
+          receiverId
+          createdAt
+          updatedAt
+          hotelId
+          roomNumber
+          status
+          person {
+            id
+            name
+            number
+            position
+            gender
+          }
+          airline {
+            name
+            images
+          }
+          requestNumber
+        }
+    }
+`;
+
 export const CREATE_REQUEST_MUTATION = gql`
     mutation CreateRequest($input: CreateRequestInput!) {
         createRequest(input: $input) {
@@ -282,7 +333,7 @@ export const GET_REQUEST = gql`
             id
             name
           }
-          hotelChess {
+          HotelChess {
             room
             place
           }

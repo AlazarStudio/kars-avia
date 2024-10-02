@@ -8,12 +8,13 @@ import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
 
-import { useQuery, useSubscription} from "@apollo/client";
-import { GET_REQUESTS, REQUEST_CREATED_SUBSCRIPTION } from "../../../../graphQL_requests"
+import { useQuery, useSubscription } from "@apollo/client";
+import { GET_REQUESTS, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from "../../../../graphQL_requests"
 
 function Estafeta({ children, ...props }) {
     const { loading, error, data } = useQuery(GET_REQUESTS);
     const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION);
+    const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION);
     const [requests, setRequests] = useState([]);
 
     useEffect(() => {
@@ -25,7 +26,7 @@ function Estafeta({ children, ...props }) {
 
     useEffect(() => {
         if (subscriptionData) {
-            // console.log('New subscription data received:', subscriptionData);
+            console.log('New subscription data received:', subscriptionData);
             setRequests((prevRequests) => {
                 const newRequest = subscriptionData.requestCreated;
                 const isDuplicate = prevRequests.some(request => request.id === newRequest.id);
@@ -35,7 +36,21 @@ function Estafeta({ children, ...props }) {
                 return [newRequest, ...prevRequests];
             });
         }
-    }, [subscriptionData]);
+        if (subscriptionUpdateData) {
+            // console.log('New subscription data received:', subscriptionUpdateData);
+            setRequests((prevRequests) => {
+                const newRequest = subscriptionUpdateData.requestCreated;
+                const isDuplicate = prevRequests.some(request => request.id === newRequest.id);
+                if (isDuplicate) {
+                    return prevRequests;
+                }
+                return [newRequest, ...prevRequests];
+            });
+        }
+    }, [
+        subscriptionData,
+        subscriptionUpdateData
+    ]);
 
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -131,11 +146,11 @@ function Estafeta({ children, ...props }) {
                 {error && <p>Error: {error.message}</p>}
 
                 {!loading && !error && data && (
-                    <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID}/>
+                    <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
                 )}
 
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID}/>
+                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} />
                 <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
             </div>
         </>

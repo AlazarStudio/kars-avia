@@ -26,18 +26,16 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
         }
     }, [data]);
 
-    // console.log(formData)
-
     const resetForm = () => {
         setActiveTab('Общая');
     };
 
     const closeButton = () => {
-        let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-        if (success) {
+        // let success = confirm("Вы уверены, все несохраненные данные будут удалены");
+        // if (success) {
             resetForm();
             onClose();
-        }
+        // }
     }
 
     const handleTabChange = (tab) => {
@@ -116,7 +114,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
 
     function convertToDate(timestamp) {
         const date = new Date(timestamp);
-        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
+        return date.toLocaleDateString();
     }
     return (
         <>
@@ -294,13 +292,14 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
                         )}
                          */}
                     </div>
-
-                    <div className={classes.requestButon}>
-                        <Button onClick={() => {
-                            onClose();
-                            setShowChooseHotel(true)
-                        }}>Разместить<img src="/user-check.png" alt="" /></Button>
-                    </div>
+                    {formData.status !== 'done' &&
+                        <div className={classes.requestButon}>
+                            <Button onClick={() => {
+                                onClose();
+                                setShowChooseHotel(true)
+                            }}>Разместить<img src="/user-check.png" alt="" /></Button>
+                        </div>
+                    }
                 </Sidebar>
             }
         </>

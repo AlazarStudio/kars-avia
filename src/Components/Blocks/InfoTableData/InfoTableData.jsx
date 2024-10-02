@@ -25,7 +25,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
         toggleRequestSidebar()
     }
 
-    // console.log(requests)
+    console.log(requests)
 
     function convertToDate(timestamp) {
         const date = new Date(timestamp);
