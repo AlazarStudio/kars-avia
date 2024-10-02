@@ -58,7 +58,7 @@ function Placement({ children, ...props }) {
                     <Header>
                         <div className={classes.titleHeader}>
                             <Link to={`/${id}`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                            Заявка
+                            Заявка {dataObject[0].requestNumber}
                         </div>
                     </Header>
                 </div>

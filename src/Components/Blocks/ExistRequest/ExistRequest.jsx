@@ -26,6 +26,8 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
         }
     }, [data]);
 
+    // console.log(formData)
+
     const resetForm = () => {
         setActiveTab('Общая');
     };
@@ -112,6 +114,10 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
         }
     }, [activeTab]);
 
+    function convertToDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
+    }
     return (
         <>
             {formData &&
@@ -160,27 +166,23 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID }) {
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Номер заявки</div>
-                                            <div className={classes.requestDataInfo_desc}>Если размещен</div>
+                                            <div className={classes.requestDataInfo_desc}>{formData.requestNumber}</div>
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Гостиница</div>
-                                            <div className={classes.requestDataInfo_desc}>Если размещен</div>
+                                            <div className={classes.requestDataInfo_desc}>{formData.hotel.name}</div>
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Номер комнаты</div>
-                                            <div className={classes.requestDataInfo_desc}>Если размещен</div>
-                                        </div>
-                                        <div className={classes.requestDataInfo}>
-                                            <div className={classes.requestDataInfo_title}>Категория номера</div>
-                                            <div className={classes.requestDataInfo_desc}>Если размещен</div>
+                                            <div className={classes.requestDataInfo_desc}>{formData.hotelChess.room}</div>
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Заезд</div>
-                                            <div className={classes.requestDataInfo_desc}>Если размещен</div>
+                                            <div className={classes.requestDataInfo_desc}>{convertToDate(formData.arrival.date)} - {formData.arrival.time}</div>
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Выезд</div>
-                                            <div className={classes.requestDataInfo_desc}>Если размещен</div>
+                                            <div className={classes.requestDataInfo_desc}>{convertToDate(formData.departure.date)} - {formData.departure.time}</div>
                                         </div>
                                     </>
                                 }

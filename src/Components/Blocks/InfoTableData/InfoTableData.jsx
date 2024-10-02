@@ -4,7 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import { server } from "../../../../graphQL_requests";
 
 function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, setChooseRequestID, ...props }) {
-    const handleObject = (id, arrival, departure, persone) => {
+    const handleObject = (id, arrival, departure, persone, requestNumber) => {
         setChooseObject([
             {
                 room: '',
@@ -17,7 +17,8 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                 public: false,
                 clientId: persone.id,
                 hotelId: '',
-                requestId: id
+                requestId: id,
+                requestNumber: requestNumber
             }
         ])
         setChooseRequestID(id)
@@ -45,7 +46,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
 
             <div className={classes.bottom}>
                 {requests.map((item, index) => (
-                    <div className={classes.InfoTable_data} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person)} key={index}>
+                    <div className={classes.InfoTable_data} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)} key={index}>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.split('-')[0]}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>

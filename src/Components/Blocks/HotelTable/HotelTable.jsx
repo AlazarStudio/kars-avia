@@ -4,8 +4,8 @@ import classes from './HotelTable.module.css';
 import Button from '../../Standart/Button/Button';
 import BronInfo from '../BronInfo/BronInfo';
 import { LinearProgress, Box, Typography, CircularProgress } from '@mui/material';
-import { getCookie, UPDATE_HOTEL_BRON } from '../../../../graphQL_requests';
-import { useMutation } from '@apollo/client';
+import { GET_REQUEST, getCookie, UPDATE_HOTEL_BRON } from '../../../../graphQL_requests';
+import { useMutation, useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 
 const initialState = (data, dataObject) => ({
@@ -96,6 +96,18 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
     const currentDayRef = useRef(null);
     const tableContainerRef = useRef(null);
     const [loading, setLoading] = useState(false); // State for loading
+
+
+    const [bronDataInfo, setBronDataInfo] = useState();
+    const { data: bronData } = useQuery(GET_REQUEST, {
+        variables: { requestId: state.newBookings[0].requestId },
+    });
+
+    useEffect(() => {
+        if (bronData) {
+            setBronDataInfo(bronData.request.status)
+        }
+    }, [bronData]);
 
     useEffect(() => {
         if (dataObject) {
@@ -333,6 +345,8 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                 }
             });
 
+            // console.log(request)
+
             if (request) {
                 setTimeout(() => {
                     dispatch({ type: 'ADD_BOOKING' });
@@ -367,6 +381,8 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
         const date = new Date(timestamp);
         return date.toLocaleDateString();
     }
+
+    // console.log(currentBooking)
     return (
         <div className={classes.tableData}>
             <div className={classes.tableContainer} ref={tableContainerRef}>
@@ -411,7 +427,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                     </tbody>
                 </table>
             </div>
-            {currentBooking ? (
+            {currentBooking && bronDataInfo != 'done' ? (
                 <div className={classes.formContainer}>
                     <div className={classes.formContainer_title}>
                         Клиентов на заселение: {state.totalBookings} чел.
@@ -432,7 +448,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                         <div className={classes.formContainer_items}>
                             <div className={classes.formContainer_items_item}>
                                 <div className={classes.formContainer_items_item_data}>
-                                    <div className={classes.formContainer_items_item_data_client}>{currentBooking.client.name}</div>
+                                    <div className={classes.formContainer_items_item_data_client}>{currentBooking.client}</div>
                                 </div>
                                 <div className={classes.formContainer_items_item_data}>
                                     <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
@@ -488,10 +504,10 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                 <div className={classes.formContainer}>
                     <div className={classes.formContainer_title_success}>Все бронирования завершены!</div>
                     <Box sx={{ width: '100%', marginTop: 2 }}>
-                        <LinearProgress variant="determinate" value={((state.totalBookings - state.countBooking) / state.totalBookings) * 100} />
+                        <LinearProgress variant="determinate" value={bronDataInfo == 'done' ? 100 : ((state.totalBookings - state.countBooking) / state.totalBookings) * 100} />
                         <Box sx={{ display: 'flex', alignItems: 'center', marginTop: 1 }}>
                             <Box sx={{ minWidth: 35 }}>
-                                <Typography variant="body2" color="textSecondary">{`${Math.round(((state.totalBookings - state.countBooking) / state.totalBookings) * 100)}%`}</Typography>
+                                <Typography variant="body2" color="textSecondary">{bronDataInfo == 'done' ? `100%` : `${Math.round(((state.totalBookings - state.countBooking) / state.totalBookings) * 100)}%`}</Typography>
                             </Box>
                         </Box>
                     </Box>

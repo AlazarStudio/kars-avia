@@ -278,6 +278,14 @@ export const GET_REQUEST = gql`
             images
           }
           requestNumber
+          hotel {
+            id
+            name
+          }
+          hotelChess {
+            room
+            place
+          }
       }
     }
 `;
@@ -348,6 +356,7 @@ export const GET_BRONS_HOTEL = gql`
             images
           }
           status
+          requestNumber
         }
       }
     }
