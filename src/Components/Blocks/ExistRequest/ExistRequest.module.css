@@ -251,12 +251,46 @@ select {
 
 .sendBlock {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     gap: 10px;
 }
 
-.sendBlock input {
+.sendBlock_message{
+    width: fit-content;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0057C3;
+    border-radius: 50px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.sendBlock_message:hover {
+    opacity: 1;
+}
+
+.sendBlock img{
+    height: 100%;
+}
+
+.sendBlock textarea {
     width: 100%;
+    height: 40px;
+    outline: none;
+    padding: 10px;
+    cursor: pointer;
+    resize: none;
+    border-radius: 5px;
 }
 
 .historyDate {

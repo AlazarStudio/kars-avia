@@ -195,6 +195,21 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
     }
 `;
 
+export const REQUEST_MESSAGES_SUBSCRIPTION = gql`
+  subscription($chatId: ID!) {
+    messageSent(chatId: $chatId) {
+      id
+      text
+      sender {
+        id
+        name
+        role
+      }
+      createdAt
+    }
+  }
+`;
+
 export const CREATE_REQUEST_MUTATION = gql`
     mutation CreateRequest($input: CreateRequestInput!) {
         createRequest(input: $input) {
@@ -417,6 +432,7 @@ export const GET_BRONS_HOTEL = gql`
 export const GET_MESSAGES_HOTEL = gql`
   query Requests($requestId: ID!) {
     chats(requestId: $requestId) {
+      id
       messages {
         text
         createdAt
@@ -430,6 +446,20 @@ export const GET_MESSAGES_HOTEL = gql`
   }
 `;
 
+export const UPDATE_MESSAGE_BRON = gql`
+  mutation ($chatId: ID, $senderId: ID!, $text: String!) {
+    sendMessage(chatId: $chatId, senderId: $senderId, text: $text) {
+      id
+      text
+      sender {
+        id
+        name
+        role
+      }
+      createdAt
+    }
+  }
+`;
 // Запросы к заявкам на эстафету
 
 // ----------------------------------------------------------------

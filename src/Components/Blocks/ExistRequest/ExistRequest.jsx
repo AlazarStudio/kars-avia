@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './ExistRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { useQuery } from "@apollo/client";
-import { GET_MESSAGES_HOTEL, GET_REQUEST } from "../../../../graphQL_requests";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { GET_MESSAGES_HOTEL, GET_REQUEST, getCookie, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 
 function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user }) {
     const { loading, error, data } = useQuery(GET_REQUEST, {
@@ -125,9 +125,26 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
 
     useEffect(() => {
         if (messageData) {
-            setMessages(messageData.chats[0]?.messages);
+            setMessages(messageData.chats[0]);
         }
     }, [messageData]);
+
+    const { data: subscriptionData } = useSubscription(REQUEST_MESSAGES_SUBSCRIPTION, {
+        variables: { chatId: messages?.id },
+    });
+
+    useEffect(() => {
+        if (subscriptionData) {
+            setMessages(prevMessages => ({
+                ...prevMessages,
+                messages: [...prevMessages.messages, subscriptionData.messageSent] // Обращаемся к правильным данным из подписки
+            }));
+        }
+    }, [subscriptionData]);
+    
+    useEffect(() => {
+        scrollToBottom();
+    }, [messageData, messages, subscriptionData]);
 
     function convertToDateStamp(timestamp) {
         const date = new Date(Number(timestamp));
@@ -142,6 +159,56 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         // Формируем строку в формате DD.MM.YYYY HH:MM
         return `${day}.${month}.${year} ${hours}:${minutes}`;
     }
+
+    const [messageText, setMessageText] = useState({
+        text: '',
+        chatId: '',
+        senderId: ''
+    });
+
+    const handleTextareaChange = (e) => {
+        setMessageText({
+            senderId: user.userId,
+            chatId: messages.id,
+            text: e.target.value
+        });
+    };
+
+    const token = getCookie('token');
+
+    const [createRequest] = useMutation(UPDATE_MESSAGE_BRON, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const handleSubmitMessage = async () => {
+        if (messageText.text) {
+            try {
+                let request = await createRequest({
+                    variables: {
+                        chatId: messageText.chatId,
+                        senderId: messageText.senderId,
+                        text: messageText.text
+                    }
+                });
+
+                if (request) {
+                    setMessageText({
+                        text: '',
+                        chatId: '',
+                        senderId: ''
+                    });
+                }
+            } catch (err) {
+                alert('Произошла ошибка при сохранении данных');
+            }
+        }
+    };
+
     return (
         <>
             {formData &&
@@ -151,7 +218,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
                     </div>
 
-                    <div className={classes.requestMiddle}style={{height: formData.status == 'done' && 'calc(100vh - 90px)'}}>
+                    <div className={classes.requestMiddle} style={{ height: formData.status == 'done' && 'calc(100vh - 90px)' }}>
                         <div className={classes.tabs}>
                             <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
                             <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
@@ -252,8 +319,8 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
 
                         {activeTab === 'Комментарии' && (
                             <div className={classes.requestData}>
-                                <div className={classes.requestData_messages} style={{height: formData.status == 'done' && 'calc(100vh - 240px)'}}>
-                                    {messages.map((message, index) => (
+                                <div className={classes.requestData_messages} style={{ height: formData.status == 'done' && 'calc(100vh - 240px)' }}>
+                                    {messages.messages.map((message, index) => (
                                         <div className={`${classes.requestData_message_full} ${message.sender.id == user.userId && classes.myMes}`} key={index}>
                                             <div className={classes.requestData_message}>
                                                 <div className={classes.requestData_message_text}>
@@ -268,43 +335,16 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                         </div>
                                     ))}
 
-                                    {/* <div className={classes.requestData_date}>
-                                        <div className={classes.requestData_date_info}>17 мая 2024</div>
-                                    </div>
-
-                                    <div className={classes.requestData_message_full}>
-                                        <div className={classes.requestData_message}>
-                                            <div className={classes.requestData_message_name}>Марина </div>
-                                            <div className={classes.requestData_message_post}>Диспетчер KarsAvia </div>
-                                            <div className={classes.requestData_message_text}>
-                                                Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-                                                tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam,
-                                                quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                                                Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu
-                                                fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-                                                qui officia deserunt mollit anim id est laborum.
-                                            </div>
-                                            <div className={classes.requestData_message_time}>17:27</div>
-                                        </div>
-                                    </div>
-
-                                    <div className={`${classes.requestData_message_full} ${classes.myMes}`}>
-                                        <div className={classes.requestData_message}>
-                                            <div className={classes.requestData_message_name}>Алина </div>
-                                            <div className={classes.requestData_message_post}>Менеджер авиакомпании “Азимут”</div>
-                                            <div className={classes.requestData_message_text}>
-                                                Все правки внесены.
-                                            </div>
-                                            <div className={classes.requestData_message_time}>17:27</div>
-                                        </div>
-                                    </div> */}
-
                                     <div ref={messagesEndRef} />
                                 </div>
 
                                 <div className={classes.sendBlock}>
-                                    <input type="text" />
-                                    <Button>Отправить</Button>
+                                    <textarea
+                                        value={messageText.text} // привязка состояния к textarea
+                                        onChange={handleTextareaChange} // обработка изменения текста
+                                        placeholder="Введите сообщение"
+                                    />
+                                    <div className={classes.sendBlock_message} onClick={handleSubmitMessage}><img src="/message.png" alt="Отправить" /></div>
                                 </div>
                             </div>
                         )}
