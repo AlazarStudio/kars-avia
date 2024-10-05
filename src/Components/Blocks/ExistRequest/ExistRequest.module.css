@@ -207,7 +207,7 @@ select {
     color: #545873;
 }
 
-.requestData_message_text__name{
+.requestData_message_text__name {
     margin-bottom: 20px;
     font-size: 12px;
     display: flex;
@@ -241,11 +241,11 @@ select {
     justify-content: flex-end;
 }
 
-.myMes .requestData_message_text{
+.myMes .requestData_message_text {
     border-radius: 20px 20px 0px 20px;
 }
 
-.myMes .requestData_message_text__name{
+.myMes .requestData_message_text__name {
     display: none;
 }
 
@@ -256,7 +256,7 @@ select {
     gap: 10px;
 }
 
-.sendBlock_message{
+.sendBlock_message {
     width: fit-content;
     height: 40px;
     display: flex;
@@ -279,7 +279,7 @@ select {
     opacity: 1;
 }
 
-.sendBlock img{
+.sendBlock img {
     height: 100%;
 }
 
@@ -337,5 +337,12 @@ select {
     color: #545873;
 }
 
+.smiles {
+    position: relative;
+}
+
+.smiles .smilesBlock {
+    cursor: pointer;
+}
 
 @media (min-width: 0px) and (max-width: 1299px) {}

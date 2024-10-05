@@ -4,6 +4,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { GET_MESSAGES_HOTEL, GET_REQUEST, getCookie, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
+import Smiles from "../Smiles/Smiles";
 
 function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user }) {
     const { loading, error, data } = useQuery(GET_REQUEST, {
@@ -141,7 +142,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
             }));
         }
     }, [subscriptionData]);
-    
+
     useEffect(() => {
         scrollToBottom();
     }, [messageData, messages, subscriptionData]);
@@ -174,6 +175,14 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         });
     };
 
+    const handleSmileChange = (emoji) => {
+        setMessageText(prevState => ({
+            senderId: user.userId,
+            chatId: messages.id,
+            text: prevState.text + emoji
+        }));
+    };
+
     const token = getCookie('token');
 
     const [createRequest] = useMutation(UPDATE_MESSAGE_BRON, {
@@ -202,6 +211,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         chatId: '',
                         senderId: ''
                     });
+                    handleEmojiPickerShow()
                 }
             } catch (err) {
                 alert('Произошла ошибка при сохранении данных');
@@ -209,6 +219,11 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         }
     };
 
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
+    const handleEmojiPickerShow = async () => {
+        setShowEmojiPicker(!showEmojiPicker)
+    };
     return (
         <>
             {formData &&
@@ -339,9 +354,13 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                 </div>
 
                                 <div className={classes.sendBlock}>
+                                    <div className={classes.smiles}>
+                                        <div className={classes.smilesBlock} onClick={handleEmojiPickerShow}>😀</div>
+                                        {showEmojiPicker && <Smiles handleSmileChange={handleSmileChange} />}
+                                    </div>
                                     <textarea
-                                        value={messageText.text} // привязка состояния к textarea
-                                        onChange={handleTextareaChange} // обработка изменения текста
+                                        value={messageText.text}
+                                        onChange={handleTextareaChange}
                                         placeholder="Введите сообщение"
                                     />
                                     <div className={classes.sendBlock_message} onClick={handleSubmitMessage}><img src="/message.png" alt="Отправить" /></div>
