@@ -51,6 +51,7 @@ function Estafeta({ children, requests, loading, error, user, setPageInfo, total
         return date.toISOString().split('T')[0];
     }
 
+
     const filteredRequests = requests && requests.filter(request => {
         return (
             (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
@@ -130,7 +131,7 @@ function Estafeta({ children, requests, loading, error, user, setPageInfo, total
 
                 {!loading && !error && requests && (
                     <>
-                        <InfoTableData paginationHeight={totalPages == 1 && '295px'} toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
+                        <InfoTableData paginationHeight={totalPages == 1 && '295px'} toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} chooseRequestID={chooseRequestID} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
 
                         {totalPages > 1 &&
                             <div className={classes.pagination}>
@@ -140,7 +141,7 @@ function Estafeta({ children, requests, loading, error, user, setPageInfo, total
                     </>
                 )}
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
+                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
                 <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
             </div>
         </>

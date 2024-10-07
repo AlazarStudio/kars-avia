@@ -3,7 +3,7 @@ import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { server } from "../../../../graphQL_requests";
 
-function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, setChooseRequestID, paginationHeight, ...props }) {
+function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, chooseRequestID, setChooseRequestID, paginationHeight, ...props }) {
     const handleObject = (id, arrival, departure, persone, requestNumber) => {
         setChooseObject([
             {
@@ -42,9 +42,9 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                 <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Статус</div>
             </div>
 
-            <div className={classes.bottom} style={{height: `calc(100vh - ${paginationHeight})`}}>
+            <div className={classes.bottom} style={{ height: `calc(100vh - ${paginationHeight})` }}>
                 {requests.map((item, index) => (
-                    <div className={classes.InfoTable_data} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)} key={index}>
+                    <div className={`${classes.InfoTable_data} ${chooseRequestID == item.id && classes.InfoTable_data_active}`} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)} key={index}>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.split('-')[0]}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>
@@ -53,7 +53,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{convertToDate(Number(item.createdAt))}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`} style={{"padding": "0 10px" }}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`} style={{ "padding": "0 10px" }}>
                             <div className={classes.InfoTable_data_elem_img}>
                                 <img src={`${server}${item.airline.images[0]}`} alt="" />
                             </div>

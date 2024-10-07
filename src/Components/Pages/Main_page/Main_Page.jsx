@@ -24,7 +24,7 @@ function Main_Page({ children, user, ...props }) {
 
     const [pageInfo, setPageInfo] = useState({
         skip: Number(currentPage),
-        take: 20
+        take: 100
     });
 
     const { loading, error, data, refetch } = useQuery(GET_REQUESTS, {
@@ -58,8 +58,10 @@ function Main_Page({ children, user, ...props }) {
                 }
                 return prevRequests;
             });
+            
+            refetch();
         }
-    }, [subscriptionData, currentPage]);
+    }, [subscriptionData, currentPage, data]);
 
     useEffect(() => {
         if (data && data.requests.requests) {
@@ -67,7 +69,7 @@ function Main_Page({ children, user, ...props }) {
 
             if (currentPage === 0 && newRequests.length > 0) {
                 sortedRequests = [...newRequests, ...sortedRequests];
-                setNewRequests([]); 
+                setNewRequests([]);
             }
 
             setRequests(sortedRequests);
