@@ -12,7 +12,7 @@ import Placement from "./Components/Pages/Placement/Placement";
 import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlacement";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-import { server, getCookie, decodeJWT } from '../graphQL_requests';
+import { server, path, getCookie, decodeJWT } from '../graphQL_requests';
 
 function App() {
   const [user, setUser] = useState('');
@@ -31,7 +31,7 @@ function App() {
   });
 
   const wsLink = new GraphQLWsLink(createClient({
-    url: 'ws://192.168.0.112:4000/graphql',
+    url: `ws://${path}/graphql`,
     connectionParams: () => {
       if (!token) {
         return {};

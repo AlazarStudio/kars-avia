@@ -1,6 +1,8 @@
 import { gql } from "@apollo/client";
 
-export const server = 'http://192.168.0.112:4000';
+export const path = '192.168.0.112:4000';
+// export const path = '89.169.39.59:4000';
+export const server = `http://${path}`;
 
 export const getCookie = (name) => {
   const value = `; ${document.cookie}`;
