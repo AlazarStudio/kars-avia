@@ -45,54 +45,60 @@ export const SINGIN = gql`
 // Запросы к заявкам на эстафету
 
 export const GET_REQUESTS = gql`
-    query Request {
-        requests {
+  query Requests($pagination: PaginationInput) {
+    requests(pagination: $pagination) {
+      totalCount
+      totalPages
+      requests {
+        id
+        airportId
+        airport {
           id
-          airportId
-          airport {
-            id
-            name
-            city
-            code
-          }
-          arrival {
-            flight
-            date
-            time
-          }
-          departure {
-            flight
-            date
-            time
-          }
-          roomCategory
-          mealPlan {
-            included
-            breakfast
-            lunch
-            dinner
-          }
-          senderId
-          receiverId
-          createdAt
-          updatedAt
-          hotelId
-          roomNumber
-          status
-          person {
-            id
-            name
-            number
-            position
-            gender
-          }
-          airline {
-            name
-            images
-          }
-          requestNumber
+          name
+          city
+          code
         }
+        arrival {
+          flight
+          date
+          time
+        }
+        departure {
+          flight
+          date
+          time
+        }
+        roomCategory
+        mealPlan {
+          included
+          breakfast
+          lunch
+          dinner
+        }
+        senderId
+        receiverId
+        createdAt
+        updatedAt
+        hotelId
+        roomNumber
+        status
+        person {
+          id
+          name
+          number
+          position
+          gender
+        }
+        airline {
+          name
+          images
+        }
+        requestNumber
+      }
+      totalCount
     }
+}
+
 `;
 
 export const REQUEST_CREATED_SUBSCRIPTION = gql`

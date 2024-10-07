@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import classes from './Estafeta.module.css';
-import { Link } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import Filter from "../Filter/Filter";
 import InfoTableData from "../InfoTableData/InfoTableData";
 import CreateRequest from "../CreateRequest/CreateRequest";
@@ -8,12 +8,11 @@ import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
 
-function Estafeta({ children, requests, loading, error, user, ...props }) {
+function Estafeta({ children, requests, loading, error, user, setPageInfo, totalPages, pageNumber, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const [chooseObject, setChooseObject] = useState([]);
-
     const [chooseRequestID, setChooseRequestID] = useState();
 
     const toggleCreateSidebar = () => {
@@ -74,6 +73,33 @@ function Estafeta({ children, requests, loading, error, user, ...props }) {
     });
 
     let filterList = ['Азимут', 'S7 airlines', 'Северный ветер']
+
+    function renderPagination(totalPages) {
+        const paginationItems = [];
+
+        for (let i = 0; i < totalPages; i++) {
+            paginationItems.push(
+                <Link to={`?page=${i + 1}`}
+                    key={i}
+                    className={`${classes.paginationNumber} ${(i == pageNumber || (i == 0 && !pageNumber)) && classes.activePaginationNumber}`}
+                    onClick={() => {
+                        localStorage.setItem('currentPage', i + 1);
+
+                        setPageInfo(prevTarifs => {
+                            return { ...prevTarifs, skip: i };
+                        });
+
+                        // window.location.reload()
+                    }}
+                >
+                    {i + 1}
+                </Link>
+            );
+        }
+
+        return paginationItems;
+    }
+
     return (
         <>
             <div className={classes.section}>
@@ -103,11 +129,18 @@ function Estafeta({ children, requests, loading, error, user, ...props }) {
                 {error && <p>Error: {error.message}</p>}
 
                 {!loading && !error && requests && (
-                    <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
-                )}
+                    <>
+                        <InfoTableData paginationHeight={totalPages == 1 && '295px'} toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
 
+                        {totalPages > 1 &&
+                            <div className={classes.pagination}>
+                                {renderPagination(totalPages)}
+                            </div>
+                        }
+                    </>
+                )}
                 <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user}/>
+                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
                 <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
             </div>
         </>

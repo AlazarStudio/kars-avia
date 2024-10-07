@@ -4,6 +4,7 @@ import classes from './CreateRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, getCookie } from "../../../../graphQL_requests";
+import { useNavigate } from "react-router-dom";
 
 function CreateRequest({ show, onClose }) {
     const token = getCookie('token');
@@ -31,12 +32,12 @@ function CreateRequest({ show, onClose }) {
     const [formData, setFormData] = useState({
         personId: '',
         airportId: '',
-        arrivalRoute: '',
-        arrivalDate: '',
-        arrivalTime: '',
-        departureRoute: '',
-        departureDate: '',
-        departureTime: '',
+        arrivalRoute: '123123',
+        arrivalDate: '2024-10-09',
+        arrivalTime: '12:03',
+        departureRoute: 'werwe"',
+        departureDate: '2024-10-22',
+        departureTime: '12:03',
         senderId: '',
         airlineId: '',
         mealPlan: {
@@ -47,6 +48,25 @@ function CreateRequest({ show, onClose }) {
         },
         city: ''
     });
+    // const [formData, setFormData] = useState({
+    //     "personId": "66fc0c8bb999708ec331f6b5",
+    //     "airportId": "66fc02060dec6d0330c9a199",
+    //     "arrivalRoute": "123123",
+    //     "arrivalDate": "2024-10-09",
+    //     "arrivalTime": "12:03",
+    //     "departureRoute": "werwe",
+    //     "departureDate": "2024-10-22",
+    //     "departureTime": "12:03",
+    //     "senderId": "66fc0984b999708ec331f6b1",
+    //     "airlineId": "66fc0c31b999708ec331f6b2",
+    //     "mealPlan": {
+    //         "included": false,
+    //         "breakfast": false,
+    //         "lunch": false,
+    //         "dinner": false
+    //     },
+    //     "city": "Абакан"
+    // });
 
     useEffect(() => {
         if (token && data) {
@@ -76,12 +96,12 @@ function CreateRequest({ show, onClose }) {
         setFormData({
             personId: '',
             airportId: '',
-            arrivalRoute: '',
-            arrivalDate: '',
-            arrivalTime: '',
-            departureRoute: '',
-            departureDate: '',
-            departureTime: '',
+            arrivalRoute: '123123',
+            arrivalDate: '2024-10-09',
+            arrivalTime: '12:03',
+            departureRoute: 'werwe"',
+            departureDate: '2024-10-22',
+            departureTime: '12:03',
             senderId: userID,
             airlineId: '',
             mealPlan: {
@@ -96,7 +116,7 @@ function CreateRequest({ show, onClose }) {
     };
 
 
-    const closeButton = () => {        
+    const closeButton = () => {
         if (!isEdited) {
             resetForm();
             onClose();

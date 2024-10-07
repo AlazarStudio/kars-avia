@@ -3,7 +3,7 @@ import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { server } from "../../../../graphQL_requests";
 
-function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, setChooseRequestID, ...props }) {
+function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, setChooseRequestID, paginationHeight, ...props }) {
     const handleObject = (id, arrival, departure, persone, requestNumber) => {
         setChooseObject([
             {
@@ -42,7 +42,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                 <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Статус</div>
             </div>
 
-            <div className={classes.bottom}>
+            <div className={classes.bottom} style={{height: `calc(100vh - ${paginationHeight})`}}>
                 {requests.map((item, index) => (
                     <div className={classes.InfoTable_data} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)} key={index}>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.split('-')[0]}</div>

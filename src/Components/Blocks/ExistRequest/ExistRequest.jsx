@@ -118,7 +118,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         return date.toLocaleDateString();
     }
 
-    const { loading: messageLoading, error: messageError, data: messageData } = useQuery(GET_MESSAGES_HOTEL, {
+    const { loading: messageLoading, error: messageError, data: messageData, refetch: messageRefetch } = useQuery(GET_MESSAGES_HOTEL, {
         variables: { requestId: chooseRequestID },
     });
 
@@ -128,7 +128,8 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         if (messageData) {
             setMessages(messageData.chats[0]);
         }
-    }, [messageData]);
+        messageRefetch();
+    }, [messageData, messageRefetch]);
 
     const { data: subscriptionData } = useSubscription(REQUEST_MESSAGES_SUBSCRIPTION, {
         variables: { chatId: messages?.id },
@@ -211,7 +212,8 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         chatId: '',
                         senderId: ''
                     });
-                    handleEmojiPickerShow()
+
+                    setShowEmojiPicker(false)
                 }
             } catch (err) {
                 alert('Произошла ошибка при сохранении данных');

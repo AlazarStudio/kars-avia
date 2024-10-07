@@ -34,6 +34,8 @@
 .InfoTable_data_elem_img {
     width: 30px;
     height: 30px;
+    border-radius: 50px;
+    overflow: hidden;
 }
 
 .InfoTable_data_elem_img img {
@@ -116,9 +118,8 @@
     padding: 0 10px;
 }
 
-
 .bottom{
-    height: calc(100vh - 295px);
+    height: calc(100vh - 375px);
     overflow: hidden;
     overflow-y: scroll;
 }
