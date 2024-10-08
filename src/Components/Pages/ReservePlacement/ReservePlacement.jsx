@@ -84,7 +84,7 @@ function ReservePlacement({ children, user, ...props }) {
                     <Header>
                         <div className={classes.titleHeader}>
                             <Link to={'/reserve'} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                            Заявка №123MV077
+                            Заявка {idRequest}
                         </div>
                     </Header>
                 </div>

@@ -6,7 +6,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { GET_MESSAGES_HOTEL, GET_REQUEST, getCookie, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 import Smiles from "../Smiles/Smiles";
 
-function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID }) {
+function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID }) { 
     const { loading, error, data } = useQuery(GET_REQUEST, {
         variables: { requestId: chooseRequestID },
     });

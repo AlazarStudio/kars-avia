@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import classes from './Filter.module.css';
 import Button from "../../Standart/Button/Button";
 
-function Filter({ children, toggleSidebar, handleChange, filterData, buttonTitle, filterList, needDate,  pageNumber,...props }) {
+function Filter({ children, toggleSidebar, handleChange, filterData, buttonTitle, filterList, needDate,  pageNumberRelay,...props }) {
     return (
         <div className={classes.filter}>
 

@@ -6,7 +6,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, getCookie } from "../../../../graphQL_requests";
 import { useNavigate } from "react-router-dom";
 
-function CreateRequest({ show, onClose }) {
+function CreateRequest({ show, onClose }) { 
     const token = getCookie('token');
 
     const [userID, setUserID] = useState();

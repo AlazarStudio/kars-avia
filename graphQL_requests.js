@@ -96,7 +96,6 @@ export const GET_REQUESTS = gql`
         }
         requestNumber
       }
-      totalCount
     }
 }
 
@@ -471,6 +470,190 @@ export const UPDATE_MESSAGE_BRON = gql`
 `;
 
 // Запросы к заявкам на эстафету
+
+// ----------------------------------------------------------------
+
+// Запросы к заявкам на резерв
+
+export const CREATE_REQUEST_RESERVE_MUTATION = gql`
+  mutation CreateReserve($input: CreateReserveInput!) {
+    createReserve(input: $input) {
+      id
+      airport {
+        id
+        name
+        city
+        code
+      }
+      arrival {
+        flight
+        date
+        time
+      }
+      departure {
+        flight
+        date
+        time
+      }
+      mealPlan {
+        included
+        breakfast
+        lunch
+        dinner
+      }
+      senderId
+      createdAt
+      updatedAt
+      status
+      person {
+        id
+        name
+        number
+        position
+        gender
+      }
+      airline {
+        name
+        images
+      }
+    }
+  }
+`;
+
+export const GET_RESERVE_REQUESTS = gql`
+  query Query($pagination: PaginationInput) {
+    reserves(pagination: $pagination) {
+      totalCount
+      totalPages
+      reserves {
+        id
+        airport {
+          id
+          name
+          city
+          code
+        }
+        arrival {
+          flight
+          date
+          time
+        }
+        departure {
+          flight
+          date
+          time
+        }
+        mealPlan {
+          included
+          breakfast
+          lunch
+          dinner
+        }
+        senderId
+        createdAt
+        updatedAt
+        status
+        person {
+          id
+          name
+          number
+          position
+          gender
+        }
+        airline {
+          name
+          images
+        }
+        reserveNumber
+        passangerCount
+      }
+    }
+  }
+`;
+
+export const REQUEST_RESERVE_CREATED_SUBSCRIPTION = gql`
+  subscription ReserveCreated {
+    reserveCreated {
+      id
+      createdAt
+      updatedAt
+      airport {
+        id
+        name
+        city
+        code
+      }
+      airline {
+        id
+        name
+        images
+      }
+      senderId
+      arrival {
+        flight
+        date
+        time
+      }
+      departure {
+        flight
+        date
+        time
+      }
+      mealPlan {
+        included
+        breakfast
+        lunch
+        dinner
+      }
+      status
+      reserveNumber
+      passangerCount
+    }
+  }
+`;
+
+export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION = gql`
+  subscription ReserveUpdated {
+    reserveUpdated {
+      id
+      createdAt
+      updatedAt
+      airport {
+        id
+        name
+        city
+        code
+      }
+      airline {
+        id
+        name
+        images
+      }
+      senderId
+      arrival {
+        flight
+        date
+        time
+      }
+      departure {
+        flight
+        date
+        time
+      }
+      mealPlan {
+        included
+        breakfast
+        lunch
+        dinner
+      }
+      status
+      reserveNumber
+      passangerCount
+    }
+  }
+`;
+
+// Запросы к заявкам на резерв
 
 // ----------------------------------------------------------------
 

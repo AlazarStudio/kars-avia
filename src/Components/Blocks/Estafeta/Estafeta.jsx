@@ -7,8 +7,80 @@ import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
+import { GET_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
+import { useQuery, useSubscription } from "@apollo/client";
 
-function Estafeta({ children, requests, loading, error, user, setPageInfo, totalPages, pageNumber, ...props }) {
+function Estafeta({ children, user, ...props }) {
+    let pageNumberRelay = useLocation().search.split("=")[1];
+
+    let localPage = localStorage.getItem("currentPageRelay");
+
+    let currentPageRelay = localPage ? localPage - 1 : pageNumberRelay ? pageNumberRelay - 1 : 0
+
+    const [pageInfo, setPageInfo] = useState({
+        skip: Number(currentPageRelay),
+        take: 50
+    });
+
+    const { loading, error, data, refetch } = useQuery(GET_REQUESTS, {
+        variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
+    });
+    const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION);
+    const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION);
+
+    const [newRequests, setNewRequests] = useState([]);
+    const [requests, setRequests] = useState([]);
+    const [totalPages, setTotalPages] = useState();
+
+    useEffect(() => {
+        if (pageNumberRelay) {
+            localStorage.setItem('currentPageRelay', pageNumberRelay);
+        }
+    }, [pageNumberRelay]);
+
+    useEffect(() => {
+        if (subscriptionData) {
+            const newRequest = subscriptionData.requestCreated;
+
+            setRequests((prevRequests) => {
+                const exists = prevRequests.some(request => request.id === newRequest.id);
+                if (!exists) {
+                    if (currentPageRelay === 0) {
+                        return [newRequest, ...prevRequests];
+                    } else {
+                        setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
+                    }
+                }
+                return prevRequests;
+            });
+
+            refetch();
+        }
+    }, [subscriptionData, currentPageRelay, data]);
+
+    useEffect(() => {
+        if (data && data.requests.requests) {
+            let sortedRequests = [...data.requests.requests];
+
+            if (currentPageRelay === 0 && newRequests.length > 0) {
+                sortedRequests = [...newRequests, ...sortedRequests];
+                setNewRequests([]);
+            }
+
+            setRequests(sortedRequests);
+            setTotalPages(data.requests.totalPages);
+            refetch()
+        }
+    }, [data, currentPageRelay, newRequests]);
+
+    useEffect(() => {
+        if (subscriptionUpdateData) {
+            // console.log('New update subscription data received:', subscriptionUpdateData);
+            refetch();
+        }
+    }, [subscriptionUpdateData, refetch]);
+
+
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
@@ -82,7 +154,7 @@ function Estafeta({ children, requests, loading, error, user, setPageInfo, total
             paginationItems.push(
                 <Link to={`?page=${i + 1}`}
                     key={i}
-                    className={`${classes.paginationNumber} ${(i == pageNumber || (i == 0 && !pageNumber)) && classes.activePaginationNumber}`}
+                    className={`${classes.paginationNumber} ${(i == currentPageRelay || (i == 0 && !currentPageRelay)) && classes.activePaginationNumber}`}
                     onClick={() => {
                         localStorage.setItem('currentPageRelay', i + 1);
 
