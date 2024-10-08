@@ -268,6 +268,29 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                     <div className={classes.requestDataInfo_desc}>{formData.person.number}</div>
                                 </div>
 
+                                <div className={classes.requestDataTitle}>
+                                    Питание
+                                </div>
+                                <div className={classes.requestDataInfo}>
+                                    <div className={classes.requestDataInfo_title}>Питание</div>
+                                    <div className={classes.requestDataInfo_desc}>{formData.mealPlan.included ? 'Включено' : 'Не включено'}</div>
+                                </div>
+                                {formData.mealPlan.included && <>
+                                    <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                        <div className={classes.requestDataInfo_desc}>{formData.mealPlan.breakfast ? 'Включено' : 'Не включено'}</div>
+                                    </div>
+                                    <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Обед</div>
+                                        <div className={classes.requestDataInfo_desc}>{formData.mealPlan.lunch ? 'Включено' : 'Не включено'}</div>
+                                    </div>
+                                    <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Ужин</div>
+                                        <div className={classes.requestDataInfo_desc}>{formData.mealPlan.dinner ? 'Включено' : 'Не включено'}</div>
+                                    </div>
+                                </>
+                                }
+
                                 {formData.status !== 'created' &&
                                     <>
                                         <div className={classes.requestDataTitle}>
@@ -300,24 +323,22 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         {activeTab === 'Доп. услуги' && (
                             <div className={classes.requestData}>
                                 <div className={classes.requestDataTitle}>
-                                    Питание
+                                    Добавить питание
                                 </div>
-                                <div className={classes.requestDataInfo}>
-                                    <div className={classes.requestDataInfo_title}>Питание</div>
-                                    <div className={classes.requestDataInfo_desc}>{formData.mealPlan.included ? 'Включено' : 'Не включено'}</div>
-                                </div>
+
                                 <div className={classes.requestDataInfo}>
                                     <div className={classes.requestDataInfo_title}>Завтрак</div>
-                                    <div className={classes.requestDataInfo_desc}>{formData.mealPlan.breakfast ? 'Включено' : 'Не включено'}</div>
+                                    <input type="number" name="departureDate" placeholder="Количество" />
                                 </div>
                                 <div className={classes.requestDataInfo}>
                                     <div className={classes.requestDataInfo_title}>Обед</div>
-                                    <div className={classes.requestDataInfo_desc}>{formData.mealPlan.lunch ? 'Включено' : 'Не включено'}</div>
+                                    <input type="number" name="departureDate" placeholder="Количество" />
                                 </div>
                                 <div className={classes.requestDataInfo}>
                                     <div className={classes.requestDataInfo_title}>Ужин</div>
-                                    <div className={classes.requestDataInfo_desc}>{formData.mealPlan.dinner ? 'Включено' : 'Не включено'}</div>
+                                    <input type="number" name="departureDate" placeholder="Количество" />
                                 </div>
+
 
                                 {formData.status !== 'created' &&
                                     <>

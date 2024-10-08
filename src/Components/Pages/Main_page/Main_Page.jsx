@@ -24,7 +24,7 @@ function Main_Page({ children, user, ...props }) {
 
     const [pageInfo, setPageInfo] = useState({
         skip: Number(currentPage),
-        take: 100
+        take: 30
     });
 
     const { loading, error, data, refetch } = useQuery(GET_REQUESTS, {
