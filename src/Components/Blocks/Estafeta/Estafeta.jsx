@@ -84,7 +84,7 @@ function Estafeta({ children, requests, loading, error, user, setPageInfo, total
                     key={i}
                     className={`${classes.paginationNumber} ${(i == pageNumber || (i == 0 && !pageNumber)) && classes.activePaginationNumber}`}
                     onClick={() => {
-                        localStorage.setItem('currentPage', i + 1);
+                        localStorage.setItem('currentPageRelay', i + 1);
 
                         setPageInfo(prevTarifs => {
                             return { ...prevTarifs, skip: i };

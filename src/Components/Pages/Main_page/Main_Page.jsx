@@ -18,12 +18,12 @@ function Main_Page({ children, user, ...props }) {
     let pageNumber = useLocation().search.split("=")[1];
     let { id, hotelID, airlineID } = useParams();
 
-    let localPage = localStorage.getItem("currentPage");
+    let localPage = localStorage.getItem("currentPageRelay");
 
-    let currentPage = localPage ? localPage - 1 : pageNumber ? pageNumber - 1 : 0
+    let currentPageRelay = localPage ? localPage - 1 : pageNumber ? pageNumber - 1 : 0
 
     const [pageInfo, setPageInfo] = useState({
-        skip: Number(currentPage),
+        skip: Number(currentPageRelay),
         take: 30
     });
 
@@ -39,7 +39,7 @@ function Main_Page({ children, user, ...props }) {
 
     useEffect(() => {
         if (pageNumber) {
-            localStorage.setItem('currentPage', pageNumber);
+            localStorage.setItem('currentPageRelay', pageNumber);
         }
     }, [pageNumber]);
 
@@ -50,7 +50,7 @@ function Main_Page({ children, user, ...props }) {
             setRequests((prevRequests) => {
                 const exists = prevRequests.some(request => request.id === newRequest.id);
                 if (!exists) {
-                    if (currentPage === 0) {
+                    if (currentPageRelay === 0) {
                         return [newRequest, ...prevRequests];
                     } else {
                         setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
@@ -61,13 +61,13 @@ function Main_Page({ children, user, ...props }) {
             
             refetch();
         }
-    }, [subscriptionData, currentPage, data]);
+    }, [subscriptionData, currentPageRelay, data]);
 
     useEffect(() => {
         if (data && data.requests.requests) {
             let sortedRequests = [...data.requests.requests];
 
-            if (currentPage === 0 && newRequests.length > 0) {
+            if (currentPageRelay === 0 && newRequests.length > 0) {
                 sortedRequests = [...newRequests, ...sortedRequests];
                 setNewRequests([]);
             }
@@ -76,7 +76,7 @@ function Main_Page({ children, user, ...props }) {
             setTotalPages(data.requests.totalPages);
             refetch()
         }
-    }, [data, currentPage, newRequests]);
+    }, [data, currentPageRelay, newRequests]);
 
     useEffect(() => {
         if (subscriptionUpdateData) {
@@ -104,8 +104,7 @@ function Main_Page({ children, user, ...props }) {
 
             {user.role == 'AIRLINEADMIN' &&
                 <>
-                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta pageNumber={currentPage} totalPages={totalPages} setPageInfo={setPageInfo} user={user} requests={requests} loading={loading} error={error} />}
-
+                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta pageNumber={currentPageRelay} totalPages={totalPages} setPageInfo={setPageInfo} user={user} requests={requests} loading={loading} error={error} />}
                     {(id == 'reserve') && <Reserve user={user} />}
                     {(id == 'hotels') && <HotelsList user={user} />}
                     {(id == 'airlineCompany' || id == 'airlineStaff' || id == 'airlineAbout') && <AirlinePage id={user.airlineId} user={user} />}
@@ -117,7 +116,7 @@ function Main_Page({ children, user, ...props }) {
             {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                 <>
 
-                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta pageNumber={currentPage} totalPages={totalPages} setPageInfo={setPageInfo} user={user} requests={requests} loading={loading} error={error} />}
+                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta pageNumber={currentPageRelay} totalPages={totalPages} setPageInfo={setPageInfo} user={user} requests={requests} loading={loading} error={error} />}
                     {(id == 'reserve') && <Reserve user={user} />}
                     {(id == 'company') && <Сompany user={user} />}
                     {(id == 'hotels') && <HotelsList user={user} />}
