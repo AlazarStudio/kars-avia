@@ -39,6 +39,14 @@ export const SINGIN = gql`
   }
 `;
 
+export const SINGUP = gql`
+  mutation SignUp($input: SignUpInput!) {
+    signUp(input: $input) {
+      token
+    }
+  }
+`;
+
 // Запросы получения пользователя
 
 // ----------------------------------------------------------------

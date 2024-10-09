@@ -1,17 +1,41 @@
 import React, { useState } from "react";
 import { Button, TextField, Box, Typography, Container, Alert } from "@mui/material";
 
-import { SINGIN } from '../../../../graphQL_requests.js';
+import { SINGIN, SINGUP } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 
 function Login() {
     const [signIn] = useMutation(SINGIN);
+    const [signUp] = useMutation(SINGUP);
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState(null);
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
+
+    const handleSubmitSignUp = async (e) => {
+        e.preventDefault();
+
+        try {
+            let response_signIn = await signUp({
+                variables: {
+                    input: {
+                        login: "admin",
+                        password: "admin",
+                        name: "admin",
+                        email: "admin",
+                    }
+                }
+            });
+
+            alert('Success')
+            navigate("/");
+            window.location.reload()
+        } catch (err) {
+            setError("Ошибка авторизации. Проверьте логин или пароль.");
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -89,6 +113,18 @@ function Login() {
                         Войти
                     </Button>
                 </Box>
+
+                {/* <Box component="form" onSubmit={handleSubmitSignUp} noValidate sx={{ mt: 1 }}>
+                    <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        sx={{ mt: 2, height: '50px', fontWeight: 'bold' }}
+                    >
+                        Зарегистрировать Админа
+                    </Button>
+                </Box> */}
             </Box>
         </Container>
     );
