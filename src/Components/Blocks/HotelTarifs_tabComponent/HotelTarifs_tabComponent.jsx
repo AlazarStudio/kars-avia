@@ -14,7 +14,7 @@ import { useMutation, useQuery } from "@apollo/client";
 
 import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTarifCategory";
 
-function HotelTarifs_tabComponent({ children, id, ...props }) {
+function HotelTarifs_tabComponent({ children, id, user, ...props }) {
     const token = getCookie('token');
 
     const { loading, error, data } = useQuery(GET_HOTEL_TARIFS, {
@@ -262,14 +262,15 @@ function HotelTarifs_tabComponent({ children, id, ...props }) {
                     requests={filteredRequestsTarif}
                     openDeleteComponent={openDeleteComponent}
                     openDeleteComponentCategory={openDeleteComponentCategory}
+                    user={user}
                 />
             )}
 
             <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} />
-            <CreateRequestTarifCategory id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} />
+            <CreateRequestTarifCategory user={user} id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} />
 
             <EditRequestTarif id={id} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} />
-            <EditRequestTarifCategory id={id} setAddTarif={setAddTarif} show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} />
+            <EditRequestTarifCategory user={user} id={id} setAddTarif={setAddTarif} show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} />
 
             {showDelete && (
                 <DeleteComponent

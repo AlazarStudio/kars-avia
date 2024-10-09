@@ -5,7 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 
 import { getCookie, UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
-function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif }) {
+function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif, user }) {
     const token = getCookie('token');
 
     const [formData, setFormData] = useState({
@@ -168,23 +168,31 @@ function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif }
                         placeholder="Введите название категории"
                     />
 
-                    <label>Стоимость</label>
-                    <input
-                        type="number"
-                        name="price"
-                        value={formData.price}
-                        onChange={handleChange}
-                        placeholder="Введите стоимость"
-                    />
+                    {user?.role != "AIRLINEADMIN" &&
+                        <>
+                            <label>Стоимость</label>
+                            <input
+                                type="number"
+                                name="price"
+                                value={formData.price}
+                                onChange={handleChange}
+                                placeholder="Введите стоимость"
+                            />
+                        </>
+                    }
 
-                    <label>Стоимость для авиакомпании</label>
-                    <input
-                        type="number"
-                        name="price_airline"
-                        value={formData.price_airline}
-                        onChange={handleChange}
-                        placeholder="Введите стоимость для авиакомпании"
-                    />
+                    {user?.role != "HOTELADMIN" &&
+                        <>
+                            <label>Стоимость для авиакомпании</label>
+                            <input
+                                type="number"
+                                name="price_airline"
+                                value={formData.price_airline}
+                                onChange={handleChange}
+                                placeholder="Введите стоимость для авиакомпании"
+                            />
+                        </>
+                    }
                 </div>
             </div>
 

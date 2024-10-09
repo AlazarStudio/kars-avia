@@ -104,6 +104,7 @@ function HotelShahmatka_tabComponent({ id }) {
                             <option value={`${item}`} key={index}>{item} - МЕСТНЫЕ</option>
                         ))}
                     </select>
+                    {/* <div onClick={toggleSidebar}>Добавить бронь</div> */}
                 </div>
             </div>
 

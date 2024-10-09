@@ -148,6 +148,7 @@ function Estafeta({ children, user, ...props }) {
     let filterList = ['Азимут', 'S7 airlines', 'Северный ветер']
 
     function renderPagination(totalPages) {
+        // Поменять на react-paginate
         const paginationItems = [];
 
         for (let i = 0; i < totalPages; i++) {

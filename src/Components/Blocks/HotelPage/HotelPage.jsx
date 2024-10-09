@@ -64,7 +64,7 @@ function HotelPage({ children, id, user, ...props }) {
                             </TabPanel>
 
                             <TabPanel className={classes.tabPanel}>
-                                <HotelTarifs_tabComponent id={id} />
+                                <HotelTarifs_tabComponent id={id} user={user}/>
                             </TabPanel>
 
                             <TabPanel className={classes.tabPanel}>
@@ -89,7 +89,7 @@ function HotelPage({ children, id, user, ...props }) {
                             }
                             {params.id == 'hotelTarifs' &&
                                 <div className={classes.tabPanel}>
-                                    <HotelTarifs_tabComponent id={id} />
+                                    <HotelTarifs_tabComponent id={id} user={user}/>
                                 </div>
                             }
                             {params.id == 'hotelRooms' &&
