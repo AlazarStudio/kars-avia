@@ -130,6 +130,15 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
                     const left = (colStart - 1) * dayWidth + startOffset;
                     const width = (colEnd - colStart + 1) * dayWidth - endOffset - startOffset;
 
+                    function shortenString(str, maxLength) {
+                        if (str.length > maxLength) {
+                            return str.substring(0, maxLength) + '...';
+                        } else {
+                            return str;
+                        }
+                    }
+
+                    let strName = shortenString(`В ${hotelName} с ${startDate.toLocaleDateString()} по ${endDate.toLocaleDateString()}`, width >= 25 ? 100 : 25)
                     bookingElements.push(
                         <div
                             key={`${info.clientID}-${index}`}
@@ -144,7 +153,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
                                 borderRadius: '4px',
                             }}
                         >
-                            {`В отеле ${hotelName} с ${startDate.toLocaleDateString()} по ${endDate.toLocaleDateString()}`}
+                            {strName}
                         </div>
                     );
                 }
