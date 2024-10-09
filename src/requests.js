@@ -146,13 +146,13 @@ export const requestsCompany = [
 ]
 
 export const requestsReports = [
-    {
-        airline: 'Азимут',
-        airlineImg: 'azimut_preview.png',
-        dateFormirovania: '2024-08-15',
-        startDate: '2024-07-15',
-        endDate: '2024-08-15'
-    }
+    // {
+    //     airline: 'Азимут',
+    //     airlineImg: 'azimut_preview.png',
+    //     dateFormirovania: '2024-08-15',
+    //     startDate: '2024-07-15',
+    //     endDate: '2024-08-15'
+    // }
 ]
 
 export const requestsHotels = [

@@ -111,6 +111,7 @@ function ReservePlacement({ children, user, ...props }) {
                             setIdPassangerForUpdate={setIdPassangerForUpdate}
                             openDeletecomponent={openDeletecomponent}
                             toggleChooseHotel={toggleChooseHotel}
+                            user={user}
                         />
 
                         <AddNewPassenger

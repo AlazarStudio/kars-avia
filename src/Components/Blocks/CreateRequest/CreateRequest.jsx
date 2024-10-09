@@ -6,7 +6,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
 import { useNavigate } from "react-router-dom";
 
-function CreateRequest({ show, onClose }) {
+function CreateRequest({ show, onClose, user }) {
     const token = getCookie('token');
 
     const [userID, setUserID] = useState();
@@ -52,14 +52,20 @@ function CreateRequest({ show, onClose }) {
     useEffect(() => {
         if (token && data) {
             setUserID(decodeJWT(token).userId);
-            setFormData({
-                ...formData,
+            setFormData(prevFormData => ({
+                ...prevFormData,
                 senderId: decodeJWT(token).userId,
-            });
-            // Устанавливаем данные авиакомпаний из запроса
+                airlineId: user?.airlineId || prevFormData.airlineId, // Если есть user.airlineId, задаем его
+            }));
+
             setAirlines(data.airlines);
+
+            if (user?.airlineId) {
+                const selectedAirline = data.airlines.find(airline => airline.id === user.airlineId);
+                setSelectedAirline(selectedAirline);
+            }
         }
-    }, [token, userID, data]);
+    }, [token, userID, data, user]);
 
 
     const [warningMessage, setWarningMessage] = useState('');
@@ -308,7 +314,7 @@ function CreateRequest({ show, onClose }) {
             checkUserBrons();
         }
     }, [formData.arrivalDate, formData.arrivalTime, formData.departureDate, formData.departureTime, hotelBronsInfo]);
-    
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>

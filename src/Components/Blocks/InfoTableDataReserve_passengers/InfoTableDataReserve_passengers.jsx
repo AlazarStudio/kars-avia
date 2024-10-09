@@ -5,7 +5,7 @@ import Button from "../../Standart/Button/Button";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 
-function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, ...props }) {
+function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, ...props }) {
     const handleUpdate = (id) => {
         toggleUpdateSidebar()
         setIdPassangerForUpdate(id)
@@ -52,7 +52,9 @@ function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSide
                     <img src="/peopleCount.png" alt="" />
                     {placement.length} человек
                 </div>
-                <Button onClick={toggleChooseHotel}>Разместить <img src="/user-check.png" alt="" /></Button>
+                {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
+                    <Button onClick={toggleChooseHotel}>Разместить <img src="/user-check.png" alt="" /></Button>
+                }
             </div>
 
         </InfoTable>

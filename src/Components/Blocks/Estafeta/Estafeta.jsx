@@ -212,7 +212,7 @@ function Estafeta({ children, user, ...props }) {
                         }
                     </>
                 )}
-                <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} />
+                <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user}/>
                 <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
                 <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
             </div>

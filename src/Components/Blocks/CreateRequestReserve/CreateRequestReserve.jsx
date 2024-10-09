@@ -30,13 +30,15 @@ function CreateRequestReserve({ show, onClose, user }) {
     useEffect(() => {
         if (token) {
             setUserID(decodeJWT(token).userId);
-            setFormData({
-                ...formData,
+            setFormData(prevFormData => ({
+                ...prevFormData,
                 senderId: decodeJWT(token).userId,
-            });
+                airlineId: user?.airlineId || prevFormData.airlineId, // Если есть user.airlineId, задаем его
+            }));
         }
     }, [token, userID]);
 
+    console.log(formData)
     const sidebarRef = useRef();
 
     const resetForm = () => {
