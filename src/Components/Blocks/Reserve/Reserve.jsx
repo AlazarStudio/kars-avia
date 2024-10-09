@@ -119,13 +119,15 @@ function Reserve({ children, user, ...props }) {
             (filterData.filterDate === '' || request.date === filterData.filterDate) &&
             (
                 request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.aviacompany.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airport.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure_title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airline.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airport.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.arrival.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.arrival.time.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.departure.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.departure.time.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.passengers.length == searchQuery
+                Number(request.passengers.length) == searchQuery
             )
         );
     });

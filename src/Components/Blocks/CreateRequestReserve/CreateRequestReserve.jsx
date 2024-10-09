@@ -38,7 +38,6 @@ function CreateRequestReserve({ show, onClose, user }) {
         }
     }, [token, userID]);
 
-    console.log(formData)
     const sidebarRef = useRef();
 
     const resetForm = () => {

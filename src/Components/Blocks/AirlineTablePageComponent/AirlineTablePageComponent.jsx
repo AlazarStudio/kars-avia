@@ -138,7 +138,9 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
                         }
                     }
 
-                    let strName = shortenString(`В ${hotelName} с ${startDate.toLocaleDateString()} по ${endDate.toLocaleDateString()}`, width >= 25 ? 100 : 25)
+                    // let strName = shortenString(`В ${hotelName} с ${startDate.toLocaleDateString()} по ${endDate.toLocaleDateString()}`, width >= 25 ? 100 : 25)
+                    let strName = shortenString(`${hotelName}`, width >= 25 ? 100 : 25)
+
                     bookingElements.push(
                         <div
                             key={`${info.clientID}-${index}`}

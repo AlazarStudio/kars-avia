@@ -35,7 +35,7 @@ function InfoTableDataReserve({ children, requests, paginationHeight, ...props }
                             </div>
                             {item.airline?.name}
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{item.airport?.name}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{item.airport?.code}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 <div className={classes.InfoTable_data_elem_title}>{item.passangerCount ? item.passangerCount : 0}</div>
