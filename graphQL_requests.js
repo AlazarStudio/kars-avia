@@ -470,6 +470,22 @@ export const UPDATE_MESSAGE_BRON = gql`
   }
 `;
 
+export const GET_USER_BRONS = gql`
+  query AirlineStaff($airlineStaffId: ID!) {
+    airlineStaff(id: $airlineStaffId) {
+      hotelChess {
+        start
+        startTime
+        end
+        endTime
+        hotel {
+          name
+        }
+      }
+    }
+  }
+`;
+
 // Запросы к заявкам на эстафету
 
 // ----------------------------------------------------------------

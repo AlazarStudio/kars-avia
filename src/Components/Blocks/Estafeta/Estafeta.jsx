@@ -7,7 +7,7 @@ import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
-import { GET_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
+import { GET_REQUESTS, GET_USER_BRONS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
 import { useQuery, useSubscription } from "@apollo/client";
 
 function Estafeta({ children, user, ...props }) {
@@ -123,8 +123,6 @@ function Estafeta({ children, user, ...props }) {
         return date.toISOString().split('T')[0];
     }
 
-    console.log(requests)
-
     const filteredRequests = requests && requests.filter(request => {
         return (
             (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
@@ -165,8 +163,6 @@ function Estafeta({ children, user, ...props }) {
                         setPageInfo(prevTarifs => {
                             return { ...prevTarifs, skip: i };
                         });
-
-                        // window.location.reload()
                     }}
                 >
                     {i + 1}

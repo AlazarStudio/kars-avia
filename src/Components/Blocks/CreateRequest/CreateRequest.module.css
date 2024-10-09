@@ -140,4 +140,20 @@
     background-color: #f0f0f0;
 }
 
+.warningMessage {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    border-radius: 5px; 
+    font-size: 14px; 
+    margin: 10px 0; 
+    text-align: center; 
+}
+
+.warningMessage strong {
+    font-weight: bold; 
+}
+
+
 @media (min-width: 0px) and (max-width: 1299px) {}

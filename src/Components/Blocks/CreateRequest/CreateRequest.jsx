@@ -3,10 +3,10 @@ import { gql, useMutation, useQuery } from "@apollo/client";
 import classes from './CreateRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, getCookie } from "../../../../graphQL_requests";
+import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
 import { useNavigate } from "react-router-dom";
 
-function CreateRequest({ show, onClose }) { 
+function CreateRequest({ show, onClose }) {
     const token = getCookie('token');
 
     const [userID, setUserID] = useState();
@@ -61,6 +61,22 @@ function CreateRequest({ show, onClose }) {
         }
     }, [token, userID, data]);
 
+
+    const [warningMessage, setWarningMessage] = useState('');
+
+    const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
+
+    const { loading: bronLoading, error: bronError, data: bronData } = useQuery(GET_USER_BRONS, {
+        variables: { airlineStaffId: formData.personId },
+        skip: !formData.personId, // Пропускаем запрос, если personId нет
+    });
+
+    useEffect(() => {
+        if (formData.personId && bronData) {
+            setHotelBronsInfo(bronData.airlineStaff.hotelChess);
+        }
+    }, [bronData, formData.personId]);
+
     const [createRequest] = useMutation(CREATE_REQUEST_MUTATION, {
         context: {
             headers: {
@@ -94,8 +110,8 @@ function CreateRequest({ show, onClose }) {
             city: ''
         });
         setIsEdited(false)
+        setWarningMessage('')
     };
-
 
     const closeButton = () => {
         if (!isEdited) {
@@ -135,6 +151,18 @@ function CreateRequest({ show, onClose }) {
                     included: value === 'true'
                 }
             }));
+        } else if (name === 'airlineId') {
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: value,
+                personId: ''
+            }));
+        } else if (name === 'city') {
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: value,
+                airportId: ''
+            }));
         } else {
             setFormData(prevState => ({
                 ...prevState,
@@ -173,7 +201,6 @@ function CreateRequest({ show, onClose }) {
             personId: selectedStaffId
         }));
     };
-
 
     const handleSubmit = async () => {
         const input = {
@@ -235,6 +262,53 @@ function CreateRequest({ show, onClose }) {
     const uniqueCities = [...new Set(airports.map(airport => airport.city.trim()))].sort((a, b) => a.localeCompare(b));
     const filteredAirports = formData.city ? airports.filter(airport => airport.city.trim() === formData.city.trim()) : [];
 
+    function isOverlap(start1, end1, start2, end2) {
+        return (start1 < end2) && (start2 < end1);
+    }
+
+    function checkBookingOverlap(arrivalDate, arrivalTime, departureDate, departureTime, bronList) {
+        const arrivalDateTime = new Date(`${arrivalDate}T${arrivalTime}`);
+        const departureDateTime = new Date(`${departureDate}T${departureTime}`);
+
+        for (let bron of bronList) {
+            const bronStartDateTime = new Date(`${bron.start}T${bron.startTime}`);
+            const bronEndDateTime = new Date(`${bron.end}T${bron.endTime}`);
+
+            if (isOverlap(arrivalDateTime, departureDateTime, bronStartDateTime, bronEndDateTime)) {
+                return `В это время пользователь уже забронирован в отеле "${bron.hotel.name}" с ${convertToDate(bron.start)} ${bron.startTime} по ${convertToDate(bron.end)} ${bron.endTime}`;
+            }
+        }
+
+        return null; // Нет пересечений
+    }
+
+    function checkUserBrons() {
+        const overlapMessage = checkBookingOverlap(
+            formData.arrivalDate,
+            formData.arrivalTime,
+            formData.departureDate,
+            formData.departureTime,
+            hotelBronsInfo
+        );
+
+        if (overlapMessage) {
+            setWarningMessage(overlapMessage);
+        } else {
+            setWarningMessage('');
+        }
+    }
+
+    function convertToDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
+    }
+
+    useEffect(() => {
+        if (formData.arrivalDate && formData.arrivalTime && formData.departureDate && formData.departureTime) {
+            checkUserBrons();
+        }
+    }, [formData.arrivalDate, formData.arrivalTime, formData.departureDate, formData.departureTime, hotelBronsInfo]);
+    
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -250,6 +324,12 @@ function CreateRequest({ show, onClose }) {
 
                 {activeTab === 'Общая' && (
                     <div className={classes.requestData}>
+                        {warningMessage && (
+                            <div className={classes.warningMessage}>
+                                <strong>Внимание:</strong> {warningMessage}
+                            </div>
+                        )}
+
                         <label>Авиакомпания</label>
                         <select name="airlineId" value={formData.airlineId} onChange={handleAirlineChange}>
                             <option value="" disabled>Выберите авиакомпанию</option>
