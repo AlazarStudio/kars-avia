@@ -1,6 +1,7 @@
 import { gql } from "@apollo/client";
 
 export const path = '192.168.0.112:4000';
+// export const path = '94.233.240.251:4000';
 // export const path = '89.169.39.59:4000';
 
 export const server = `http://${path}`;
@@ -653,6 +654,52 @@ export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION = gql`
   }
 `;
 
+export const GET_RESERVE_REQUEST = gql`
+  query Reserve($reserveId: ID!) {
+    reserve(id: $reserveId) {
+      id
+      airport {
+        id
+        name
+        city
+        code
+      }
+      arrival {
+        flight
+        date
+        time
+      }
+      departure {
+        flight
+        date
+        time
+      }
+      mealPlan {
+        included
+        breakfast
+        lunch
+        dinner
+      }
+      senderId
+      createdAt
+      updatedAt
+      status
+      person {
+        id
+        name
+        number
+        position
+        gender
+      }
+      airline {
+        name
+        images
+      }
+      reserveNumber
+    }
+  }
+`;
+
 // Запросы к заявкам на резерв
 
 // ----------------------------------------------------------------
@@ -1056,6 +1103,27 @@ export const DELETE_AIRLINE_STAFF = gql`
     deleteAirlineStaff(id: $deleteAirlineStaffId) {
       id
       name
+    }
+  }
+`;
+
+export const GET_STAFF_HOTELS = gql`
+  query AirlineStaffs($airlineStaffsId: ID!) {
+    airlineStaffs(id: $airlineStaffsId) {
+      name
+      number
+      position
+      gender
+      hotelChess {
+        start
+        startTime
+        end
+        endTime
+        clientId
+        hotel {
+          name
+        }
+      }
     }
   }
 `;

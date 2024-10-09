@@ -105,7 +105,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
     useEffect(() => {
         if (bronData) {
-            setBronDataInfo(bronData.request.status)
+            setBronDataInfo(bronData.request?.status)
         }
     }, [bronData]);
 
@@ -221,7 +221,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                                     borderTopRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                     borderBottomRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                 }}
-                                onClick={toggleCreateSidebar}
+                                // onClick={toggleCreateSidebar}
                             >
                                 <Booking>{booking.client.name ? booking.client.name : booking.client}</Booking>
                             </div>
@@ -295,7 +295,6 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
         },
     });
 
-
     const handleAddBooking = async () => {
         const booking = state.newBookings[state.currentBookingIndex];
 
@@ -322,7 +321,9 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
         setLoading(true);
 
-        try {
+        console.log(booking)
+
+        // try {
             let request = await updateHotelBron({
                 variables: {
                     updateHotelId: booking.hotelId,
@@ -345,7 +346,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                 }
             });
 
-            // console.log(request)
+            console.log(request)
 
             if (request) {
                 setTimeout(() => {
@@ -353,9 +354,9 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                     setLoading(false);
                 }, secundos);
             }
-        } catch (err) {
-            alert('Произошла ошибка при сохранении данных');
-        }
+        // } catch (err) {
+        //     alert('Произошла ошибка при сохранении данных');
+        // }
     };
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];

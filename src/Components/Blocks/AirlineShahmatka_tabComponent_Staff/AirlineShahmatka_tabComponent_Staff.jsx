@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import classes from './AirlineShahmatka_tabComponent_Staff.module.css';
 import Filter from "../Filter/Filter.jsx";
 
-import { decodeJWT, DELETE_AIRLINE_STAFF, GET_AIRLINE_USERS, getCookie } from '../../../../graphQL_requests.js';
+import { decodeJWT, DELETE_AIRLINE_STAFF, GET_AIRLINE_USERS, GET_BRONS_HOTEL, GET_STAFF_HOTELS, getCookie } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 import AirlineTablePageComponent from "../AirlineTablePageComponent/AirlineTablePageComponent.jsx";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
@@ -29,6 +29,18 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         }
     }, [data]);
 
+    const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
+
+    const { loading: bronLoading, error: bronError, data: bronData } = useQuery(GET_STAFF_HOTELS, {
+        variables: { airlineStaffsId: id },
+    });
+
+    useEffect(() => {
+        if (bronData && bronData.airlineStaffs) {
+            setHotelBronsInfo(bronData.airlineStaffs);
+        }
+    }, [bronData]);
+
     const [showAddCategory, setshowAddCategory] = useState(false);
     const [showUpdateCategory, setshowUpdateCategory] = useState(false);
     const [selectedStaff, setSelectedStaff] = useState();
@@ -42,46 +54,18 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     const toggleCategoryUpdate = () => {
         setshowUpdateCategory(!showUpdateCategory)
     }
-    // const dataObject = [
-    //     {
-    //         room: '',
-    //         place: '',
-    //         start: '',
-    //         startTime: '',
-    //         end: '',
-    //         endTime: '',
-    //         client: '',
-    //         public: false,
-    //     }
-    // ];
 
-    // let allRooms = [];
-
-    // data && data.hotel.categories.map((category, index) => {
-    //     return category.rooms.map((item) => (
-    //         allRooms.push({
-    //             room: `${item.name} - ${category.tariffs?.name}`,
-    //             places: item.places
-    //         })
-    //     ));
-    // });
-
-    // const allRooms = [
-    //     { room: '№121', places: 1 },
-    //     { room: '№122', places: 1 },
-    //     { room: '№221', places: 2 },
-    //     { room: '№222', places: 2 },
-    // ];
-
-    // const placesArray = allRooms.map(room => room.places);
-    // const uniquePlacesArray = [...new Set(placesArray)];
-    // uniquePlacesArray.sort((a, b) => a - b);
-
-    const dataInfo = [
-        // { start: '2024-09-21', startTime: '14:00', end: '2024-09-29', endTime: '10:00', clientID: '66f68df2fa3cc14417aeab62' },
-        // { start: '2024-09-11', startTime: '14:00', end: '2024-09-19', endTime: '10:00', clientID: '66f69b8e1e5d55111906de92' },
-    ];
-
+    const dataInfo = hotelBronsInfo && hotelBronsInfo.flatMap(person =>
+        person.hotelChess.map(hotel => ({
+            start: hotel.start,
+            startTime: hotel.startTime,
+            end: hotel.end,
+            endTime: hotel.endTime,
+            clientID: hotel.clientId,
+            hotelName: hotel.hotel.name
+        }))
+    );
+    
     const [searchQuery, setSearchQuery] = useState('');
     const [selectQuery, setSelectQuery] = useState('');
     const [showAddBronForm, setShowAddBronForm] = useState(false);
@@ -153,6 +137,9 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         }
     };
 
+    if (loading || bronLoading) return <p>Loading...</p>;
+    if (error || bronError) return <p>Error: {error ? error.message : bronError.message}</p>;
+
     return (
         <>
             <div className={classes.section_searchAndFilter}>
@@ -179,13 +166,14 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
                 </div>
             </div>
 
-            {loading && <p>Loading...</p>}
-            {error && <p>Error: {error.message}</p>}
 
-            {!loading && !error && (
+            {(hotelBronsInfo.length === 0) &&
+                <AirlineTablePageComponent toggleCategoryUpdate={toggleCategoryUpdate} maxHeight={"635px"} dataObject={filteredRequests} dataInfo={[]} setSelectedStaff={setSelectedStaff} />
+            }
+
+            {(hotelBronsInfo.length !== 0) &&
                 <AirlineTablePageComponent toggleCategoryUpdate={toggleCategoryUpdate} maxHeight={"635px"} dataObject={filteredRequests} dataInfo={dataInfo} setSelectedStaff={setSelectedStaff} />
-            )}
-
+            }
 
             <CreateRequestAirlineStaff id={id} show={showAddCategory} onClose={toggleCategory} addTarif={staff} setAddTarif={setStaff} />
             <UpdateRequestAirlineStaff id={id} setDeleteIndex={setDeleteIndex} show={showUpdateCategory} setShowDelete={setShowDelete} onClose={toggleCategoryUpdate} selectedStaff={selectedStaff} setAddTarif={setStaff} />

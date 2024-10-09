@@ -123,6 +123,7 @@ function Estafeta({ children, user, ...props }) {
         return date.toISOString().split('T')[0];
     }
 
+    console.log(requests)
 
     const filteredRequests = requests && requests.filter(request => {
         return (
@@ -133,7 +134,9 @@ function Estafeta({ children, user, ...props }) {
                 request.person.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.person.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.person.gender.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airportId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airline.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airport.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.flight.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.arrival.time.toLowerCase().includes(searchQuery.toLowerCase()) ||

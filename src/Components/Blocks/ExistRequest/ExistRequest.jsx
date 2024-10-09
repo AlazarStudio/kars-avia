@@ -302,7 +302,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Гостиница</div>
-                                            <div className={classes.requestDataInfo_desc}>{formData.hotel.name}</div>
+                                            <div className={classes.requestDataInfo_desc}>{formData.hotel?.name}</div>
                                         </div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Номер комнаты</div>

@@ -12,9 +12,26 @@ import AddNewPassenger from "../../Blocks/AddNewPassenger/AddNewPassenger";
 import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
 import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
+import { useQuery } from "@apollo/client";
+import { GET_RESERVE_REQUEST } from "../../../../graphQL_requests";
 
 function ReservePlacement({ children, user, ...props }) {
     let { idRequest } = useParams();
+
+    const [request, setRequest] = useState([]);
+    const [placement, setPlacement] = useState([]);
+
+    const { loading, error, data } = useQuery(GET_RESERVE_REQUEST, {
+        variables: { reserveId: idRequest },
+    });
+
+    useEffect(() => {
+        if (data && data.reserve) {
+            setRequest(data?.reserve || []);
+            setPlacement(data?.reserve.person || []); // Теперь мы используем person как массив пассажиров
+        }
+    }, [data]);
+
 
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
 
@@ -42,14 +59,6 @@ function ReservePlacement({ children, user, ...props }) {
 
     const [idPassangerForUpdate, setIdPassangerForUpdate] = useState();
 
-    const [placement, setPlacement] = useState([]);
-
-    useEffect(() => {
-        if (requestsReserve[idRequest]) {
-            setPlacement(requestsReserve[idRequest].passengers);
-        }
-    }, [idRequest, requestsReserve]);
-
     const addPassenger = (newPassenger) => {
         setPlacement(prevPlacement => [...prevPlacement, newPassenger]);
     };
@@ -69,7 +78,6 @@ function ReservePlacement({ children, user, ...props }) {
         closeDeletecomponent()
     };
 
-
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const toggleChooseHotel = () => {
         setShowChooseHotel(!showChooseHotel);
@@ -84,7 +92,7 @@ function ReservePlacement({ children, user, ...props }) {
                     <Header>
                         <div className={classes.titleHeader}>
                             <Link to={'/reserve'} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                            Заявка {idRequest}
+                            Заявка {request.reserveNumber}
                         </div>
                     </Header>
                 </div>
@@ -92,36 +100,39 @@ function ReservePlacement({ children, user, ...props }) {
                 <div className={classes.section_searchAndFilter}>
                     <Button onClick={toggleCreateSidebar}>Добавить пассажира</Button>
                 </div>
+                {loading && <p>Loading...</p>}
+                {error && <p>Error: {error.message}</p>}
 
-                <InfoTableDataReserve_passengers
-                    placement={placement}
-                    toggleUpdateSidebar={toggleUpdateSidebar}
-                    setIdPassangerForUpdate={setIdPassangerForUpdate}
-                    openDeletecomponent={openDeletecomponent}
-                    toggleChooseHotel={toggleChooseHotel}
-                />
+                {!loading && !error && request && (
+                    <>
+                        <InfoTableDataReserve_passengers
+                            placement={placement ? placement : []}
+                            toggleUpdateSidebar={toggleUpdateSidebar}
+                            setIdPassangerForUpdate={setIdPassangerForUpdate}
+                            openDeletecomponent={openDeletecomponent}
+                            toggleChooseHotel={toggleChooseHotel}
+                        />
 
-                <AddNewPassenger
-                    show={showCreateSidebar}
-                    onClose={toggleCreateSidebar}
-                    onAddPassenger={addPassenger}
-                    start={requestsReserve[idRequest].arrival_date}
-                    startTime={requestsReserve[idRequest].arrival_time}
-                    end={requestsReserve[idRequest].departure_date}
-                    endTime={requestsReserve[idRequest].departure_time}
-                />
+                        <AddNewPassenger
+                            show={showCreateSidebar}
+                            onClose={toggleCreateSidebar}
+                            onAddPassenger={addPassenger}
+                            request={request}
+                        />
 
-                <UpdatePassanger
-                    show={showUpdateSidebar}
-                    onClose={toggleUpdateSidebar}
-                    placement={placement[idPassangerForUpdate]}
-                    idPassangerForUpdate={idPassangerForUpdate}
-                    updatePassenger={updatePassenger}
-                />
+                        <UpdatePassanger
+                            show={showUpdateSidebar}
+                            onClose={toggleUpdateSidebar}
+                            placement={placement ? placement[idPassangerForUpdate] : []}
+                            idPassangerForUpdate={idPassangerForUpdate}
+                            updatePassenger={updatePassenger}
+                        />
 
-                <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={placement} id={'reserve'} />
+                        <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={placement} id={'reserve'} />
 
-                {showDelete && <DeleteComponent remove={removePassenger} index={idDelete} close={closeDeletecomponent} title={`Вы действительно хотите удалить пассажира? `} />}
+                        {showDelete && <DeleteComponent remove={removePassenger} index={idDelete} close={closeDeletecomponent} title={`Вы действительно хотите удалить пассажира? `} />}
+                    </>
+                )}
             </div>
 
         </div>

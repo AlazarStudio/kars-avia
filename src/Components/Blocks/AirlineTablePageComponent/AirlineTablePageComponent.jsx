@@ -79,12 +79,21 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
         const cells = [];
         const bookingElements = [];
 
+        let staffFlightInfo = state.flightInfo.filter(info => info.clientID === staffMember.id);
+
+        staffFlightInfo = staffFlightInfo.sort((a, b) => {
+            const durationA = new Date(a.end) - new Date(a.start);
+            const durationB = new Date(b.end) - new Date(b.start);
+            return durationA - durationB;
+        });
+
         for (let i = 1; i <= daysInMonth; i++) {
             const isToday = i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
             const isHighlighted = i === highlightedDay;
             cells.push(
                 <td
                     key={i}
+                    style={{ height: `${staffFlightInfo.length ? `${staffFlightInfo.length * (35 + staffFlightInfo.length - 1) + 10}px` : '45px'}` }}
                     className={`${isToday ? classes.currentDay : ''} ${isHighlighted ? classes.highlightedDay : ''}`}
                     onMouseEnter={() => setHighlightedDay(i)}
                     onMouseLeave={() => setHighlightedDay(null)}
@@ -92,10 +101,8 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
             );
         }
 
-        // Найти информацию о полетах для этого сотрудника по id
-        const staffFlightInfo = state.flightInfo.find(info => info.clientID === staffMember.id);
-        if (staffFlightInfo) {
-            const { start, end, startTime, endTime } = staffFlightInfo;
+        staffFlightInfo.forEach((info, index) => {
+            const { start, end, startTime, endTime, hotelName } = info;
             const startDate = new Date(start);
             const endDate = new Date(end);
 
@@ -112,44 +119,43 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
                     const colStart = Math.max(startDay, 1);
                     const colEnd = Math.min(endDay, daysInMonth);
 
-                    const startFlightTime = getTimeHours(startTime);
-                    const endFlightTime = getTimeHours(endTime);
-
                     const dayWidth = 100 / daysInMonth;
-                    const startOffset = startDate.getMonth() === currentMonth ? (startFlightTime / 24) * dayWidth : 0;
-                    const endOffset = endDate.getMonth() === currentMonth ? ((24 - endFlightTime) / 24) * dayWidth : 0;
+
+                    const startTimeNew = getTimeHours(startTime);
+                    const endTimeNew = getTimeHours(endTime);
+
+                    const startOffset = startDate.getMonth() === currentMonth ? (startTimeNew / 24) * dayWidth : 0;
+                    const endOffset = endDate.getMonth() === currentMonth ? ((24 - endTimeNew) / 24) * dayWidth : 0;
 
                     const left = (colStart - 1) * dayWidth + startOffset;
-                    const width = ((colEnd - colStart + 1) * dayWidth) - startOffset - endOffset;
+                    const width = (colEnd - colStart + 1) * dayWidth - endOffset - startOffset;
 
                     bookingElements.push(
                         <div
-                            key={staffFlightInfo.clientID}
-                            className={`${classes.booking} ${endDate <= today && startDate <= today ? classes.booking_light : ''}`}
+                            key={`${info.clientID}-${index}`}
+                            className={classes.booking}
                             style={{
                                 left: `${left}%`,
                                 width: `${width}%`,
-                                top: `50%`,
-                                transform: `translateY(-50%)`,
+                                top: '5px',
+                                transform: `translateY(${index * (staffFlightInfo.length + 35)}px)`,
+                                zIndex: staffFlightInfo.length - index,
                                 backgroundColor: '#9FD923',
-                                borderTopLeftRadius: startDate.getMonth() === currentMonth ? '4px' : '0',
-                                borderBottomLeftRadius: startDate.getMonth() === currentMonth ? '4px' : '0',
-                                borderTopRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
-                                borderBottomRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
+                                borderRadius: '4px',
                             }}
                         >
-                            {`Полёт с ${startDate.toLocaleDateString()} по ${endDate.toLocaleDateString()}`}
+                            {`В отеле ${hotelName} с ${startDate.toLocaleDateString()} по ${endDate.toLocaleDateString()}`}
                         </div>
                     );
                 }
             }
-        }
+        });
 
         return (
-            <td colSpan={daysInMonth} className={classes.bookingCell}>
+            <td colSpan={daysInMonth} className={classes.bookingCell} style={{ height: `${staffFlightInfo.length * 35 + 10}px ` }} >
                 {cells}
                 {bookingElements}
-            </td>
+            </td >
         );
     };
 
@@ -192,7 +198,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
                                     <div className={classes.staffInfo} onClick={() => {
                                         toggleCategoryUpdate()
                                         setSelectedStaff(staffMember)
-                                        
+
                                     }}>
                                         <b>{staffMember.name}</b> - {staffMember.position}
                                     </div>

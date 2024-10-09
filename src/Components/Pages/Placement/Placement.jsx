@@ -18,6 +18,8 @@ function Placement({ children, ...props }) {
         hotelId: idHotel
     }));
 
+    // console.log(updatedDataObject)
+
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: idHotel },
     });

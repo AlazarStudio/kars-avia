@@ -3,36 +3,51 @@ import classes from './AddNewPassenger.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-function AddNewPassenger({ show, onClose, onAddPassenger, ...props }) {
+function AddNewPassenger({ show, onClose, onAddPassenger, request, ...props }) {
     const [formData, setFormData] = useState({
         client: '',
         sex: '',
         phone: '',
-        start: props.start,
-        startTime: props.startTime,
-        end: props.end,
-        endTime: props.endTime,
+        start: '',
+        startTime: '',
+        end: '',
+        endTime: '',
         room: '',
         place: '',
+        requestId: '',
         public: false,
     });
 
-    const sidebarRef = useRef();
+    useEffect(() => {
+        if (request.arrival && request.departure) {
+            setFormData((prevFormData) => ({
+                ...prevFormData,
+                start: request.arrival.date,
+                startTime: request.arrival.time,
+                end: request.departure.date,
+                endTime: request.departure.time,
+                requestId: request.id,
+            }));
+        }
+    }, [request]);
 
     const resetForm = () => {
         setFormData({
             client: '',
             sex: '',
             phone: '',
-            start: props.start,
-            startTime: props.startTime,
-            end: props.end,
-            endTime: props.endTime,
             room: '',
             place: '',
+            requestId: formData.requestId,
             public: false,
+            start: formData.start,
+            startTime: formData.startTime,
+            end: formData.end,
+            endTime: formData.endTime
         });
     };
+
+    const sidebarRef = useRef();
 
     const closeButton = () => {
         let success = confirm("Вы уверены, все несохраненные данные будут удалены");

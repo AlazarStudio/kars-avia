@@ -6,7 +6,6 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 
 function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, ...props }) {
-    
     const handleUpdate = (id) => {
         toggleUpdateSidebar()
         setIdPassangerForUpdate(id)
@@ -43,11 +42,10 @@ function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSide
                             <img src="/editPassenger.png" alt="" onClick={() => handleUpdate(index)} />
                             <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(index)} />
                         </div>
-
-                        
                     </div>
                 ))}
             </div>
+
 
             <div className={classes.counting}>
                 <div className={classes.countingPeople}>
@@ -59,7 +57,7 @@ function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSide
 
         </InfoTable>
 
-        
+
     );
 }
 
