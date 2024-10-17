@@ -775,6 +775,14 @@ export const GET_HOTEL = gql`
   }
 `;
 
+export const GET_HOTEL_CITY = gql`
+  query Hotel($hotelId: ID!) {
+    hotel(id: $hotelId) {
+      city
+    }
+  }
+`;
+
 export const GET_HOTEL_TARIFS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {

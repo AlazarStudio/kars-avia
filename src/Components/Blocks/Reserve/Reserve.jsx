@@ -5,11 +5,11 @@ import CreateRequestReserve from "../CreateRequestReserve/CreateRequestReserve";
 import { requestsReserve } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataReserve from "../InfoTableDataReserve/InfoTableDataReserve";
-import { GET_RESERVE_REQUESTS, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION } from "../../../../graphQL_requests";
+import { GET_HOTEL_CITY, GET_HOTEL_TARIFS, GET_RESERVE_REQUESTS, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import { Link, useLocation } from "react-router-dom";
 
-function Reserve({ children, user, ...props }) {
+function Reserve({ children, user, idHotel, ...props }) {
     let pageNumberReserve = useLocation().search.split("=")[1];
     let localPage = localStorage.getItem("currentPageReserve");
     let currentPageReserve = localPage ? localPage - 1 : pageNumberReserve ? pageNumberReserve - 1 : 0;
@@ -122,24 +122,41 @@ function Reserve({ children, user, ...props }) {
         setSearchQuery(e.target.value);
     };
 
-    const filteredRequests = requests && requests.filter(request => {
-        return (
-            (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
-            (filterData.filterDate === '' || request.date === filterData.filterDate) &&
-            (
-                request.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airline.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airport.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival.time.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure.time.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                Number(request.passengers.length) == searchQuery
-            )
-        );
+    // console.log(requests)idHotel
+
+    const [hotelCity, setHotelCity] = useState();
+
+    const { loading: hotelLoading, error: hotelError, data: hotelData } = useQuery(GET_HOTEL_CITY, {
+        variables: { hotelId: idHotel },
     });
+
+    useEffect(() => {
+        if (hotelData) {
+            setHotelCity(hotelData.hotel.city);
+        }
+    }, [hotelData]);
+
+    const filteredRequests = requests && requests.filter(request => {
+        const matchesSelect = filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect);
+        const matchesDate = filterData.filterDate === '' || request.date === filterData.filterDate;
+        const matchesSearchQuery = [
+            request.id.toLowerCase(),
+            request.airport.city.toLowerCase(),
+            request.airline.name.toLowerCase(),
+            request.airport.name.toLowerCase(),
+            request.airport.code.toLowerCase(),
+            request.arrival.date.toLowerCase(),
+            request.arrival.time.toLowerCase(),
+            request.departure.date.toLowerCase(),
+            request.departure.time.toLowerCase(),
+            request.status.toLowerCase()
+        ].some(field => field.includes(searchQuery.toLowerCase()));
+
+        const matchesCity = hotelCity ? request.airport.city.toLowerCase() === hotelCity.toLowerCase() : true;
+
+        return matchesCity && matchesSelect && matchesDate && matchesSearchQuery;
+    });
+
 
     let filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
 

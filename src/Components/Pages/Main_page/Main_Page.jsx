@@ -30,7 +30,7 @@ function Main_Page({ children, user, ...props }) {
             {user.role == 'HOTELADMIN' &&
                 <>
 
-                    {(id == 'reserveRequests') && <Reserve user={user} />}
+                    {(id == 'reserveRequests') && <Reserve user={user} idHotel={user.hotelId} />}
                     {(id != 'reserveRequests') && <HotelPage id={user.hotelId} user={user} />}
                 </>
             }

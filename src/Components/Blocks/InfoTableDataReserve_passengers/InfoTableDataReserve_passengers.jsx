@@ -52,9 +52,9 @@ function InfoTableDataReserve_passengers({ children, placement, toggleUpdateSide
                     <img src="/peopleCount.png" alt="" />
                     {placement.length} человек
                 </div>
-                {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
+                {/* {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                     <Button onClick={toggleChooseHotel}>Разместить <img src="/user-check.png" alt="" /></Button>
-                }
+                } */}
             </div>
 
         </InfoTable>
