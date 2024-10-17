@@ -41,10 +41,10 @@ function CreateRequest({ show, onClose, user }) {
         senderId: '',
         airlineId: '',
         mealPlan: {
-            included: false,
-            breakfast: false,
-            lunch: false,
-            dinner: false,
+            included: true,
+            breakfast: true,
+            lunch: true,
+            dinner: true,
         },
         city: ''
     });

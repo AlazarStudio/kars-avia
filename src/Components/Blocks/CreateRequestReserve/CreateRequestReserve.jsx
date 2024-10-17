@@ -18,6 +18,7 @@ function CreateRequestReserve({ show, onClose, user }) {
         arrivalTime: '',
         departureDate: '',
         departureTime: '',
+        passangerCount: '',
         mealPlan: {
             included: false,
             breakfast: false,
@@ -50,6 +51,7 @@ function CreateRequestReserve({ show, onClose, user }) {
             arrivalTime: '',
             departureDate: '',
             departureTime: '',
+            passangerCount: '',
             mealPlan: {
                 included: false,
                 breakfast: false,
@@ -226,6 +228,9 @@ function CreateRequestReserve({ show, onClose, user }) {
                         </>
                     )}
 
+                    <label>Количество людей на заселение</label>
+                    <input type="number" name="passangerCount" placeholder="100" value={formData.passangerCount} onChange={handleChange} />
+
                     <label>Рейс</label>
                     <input type="text" name="route" placeholder="Рейс" value={formData.route} onChange={handleChange} />
 
@@ -240,6 +245,7 @@ function CreateRequestReserve({ show, onClose, user }) {
                         <input type="date" name="departureDate" value={formData.departureDate} onChange={handleChange} placeholder="Дата" />
                         <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
                     </div>
+
 
                     <label>Питание</label>
                     <select name="included" value={formData.mealPlan.included} onChange={handleChange}>

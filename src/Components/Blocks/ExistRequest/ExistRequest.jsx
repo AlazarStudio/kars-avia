@@ -6,7 +6,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { GET_MESSAGES_HOTEL, GET_REQUEST, getCookie, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 import Smiles from "../Smiles/Smiles";
 
-function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID }) { 
+function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID }) {
     const { loading, error, data } = useQuery(GET_REQUEST, {
         variables: { requestId: chooseRequestID },
     });
@@ -227,6 +227,50 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
     const handleEmojiPickerShow = async () => {
         setShowEmojiPicker(!showEmojiPicker)
     };
+
+    function calculateMeals(formData) {
+        const mealsPerDay = {
+            breakfast: { start: 7, end: 10 }, // Завтрак с 7 до 10 утра
+            lunch: { start: 12, end: 15 },    // Обед с 12 до 15 дня
+            dinner: { start: 18, end: 21 }    // Ужин с 18 до 21 вечера
+        };
+
+        let breakfasts = 0;
+        let lunches = 0;
+        let dinners = 0;
+
+        let startDateTime = new Date(`${formData.arrival.date}T${formData.arrival.time}`);
+        let endDateTime = new Date(`${formData.departure.date}T${formData.departure.time}`);
+
+        // Считаем количество приёмов пищи в день заезда
+        const arrivalHours = startDateTime.getHours();
+        if (arrivalHours <= mealsPerDay.breakfast.end) breakfasts++;
+        if (arrivalHours <= mealsPerDay.lunch.end) lunches++;
+        if (arrivalHours <= mealsPerDay.dinner.end) dinners++;
+
+        // Считаем количество приёмов пищи в день отъезда
+        const departureHours = endDateTime.getHours();
+        if (departureHours >= mealsPerDay.breakfast.start) breakfasts++;
+        if (departureHours >= mealsPerDay.lunch.start) lunches++;
+        if (departureHours >= mealsPerDay.dinner.start) dinners++;
+
+        // Определяем количество полных дней между датами
+        let currentDateTime = new Date(startDateTime);
+        currentDateTime.setHours(0, 0, 0, 0); // Устанавливаем время на начало дня следующего дня после заезда
+        currentDateTime.setDate(currentDateTime.getDate() + 1); // Переход на следующий день после дня заезда
+
+        const fullDaysCount = (endDateTime - currentDateTime) / (1000 * 60 * 60 * 24);
+
+        // Считаем полные дни между датами
+        if (fullDaysCount >= 1) {
+            breakfasts += Math.floor(fullDaysCount);
+            lunches += Math.floor(fullDaysCount);
+            dinners += Math.floor(fullDaysCount);
+        }
+
+        return { breakfasts, lunches, dinners };
+    }
+
     return (
         <>
             {formData &&
@@ -239,8 +283,10 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                     <div className={classes.requestMiddle} style={{ height: formData.status == 'done' && 'calc(100vh - 90px)' }}>
                         <div className={classes.tabs}>
                             <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
-                            <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
 
+                            {formData.status !== 'created' &&
+                                <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
+                            }
                             <div className={`${classes.tab} ${activeTab === 'Комментарии' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Комментарии')}>Комментарии</div>
                             <div className={`${classes.tab} ${activeTab === 'История' ? classes.activeTab : ''}`} onClick={() => handleTabChange('История')}>История</div>
 
@@ -275,20 +321,22 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                     <div className={classes.requestDataInfo_title}>Питание</div>
                                     <div className={classes.requestDataInfo_desc}>{formData.mealPlan.included ? 'Включено' : 'Не включено'}</div>
                                 </div>
-                                {formData.mealPlan.included && <>
-                                    <div className={classes.requestDataInfo}>
-                                        <div className={classes.requestDataInfo_title}>Завтрак</div>
-                                        <div className={classes.requestDataInfo_desc}>{formData.mealPlan.breakfast ? 'Включено' : 'Не включено'}</div>
-                                    </div>
-                                    <div className={classes.requestDataInfo}>
-                                        <div className={classes.requestDataInfo_title}>Обед</div>
-                                        <div className={classes.requestDataInfo_desc}>{formData.mealPlan.lunch ? 'Включено' : 'Не включено'}</div>
-                                    </div>
-                                    <div className={classes.requestDataInfo}>
-                                        <div className={classes.requestDataInfo_title}>Ужин</div>
-                                        <div className={classes.requestDataInfo_desc}>{formData.mealPlan.dinner ? 'Включено' : 'Не включено'}</div>
-                                    </div>
-                                </>
+
+                                {formData.mealPlan.included && formData.status !== 'created' &&
+                                    <>
+                                        <div className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                            <div className={classes.requestDataInfo_desc}>{calculateMeals(formData).breakfasts}</div>
+                                        </div>
+                                        <div className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title}>Обед</div>
+                                            <div className={classes.requestDataInfo_desc}>{calculateMeals(formData).lunches}</div>
+                                        </div>
+                                        <div className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title}>Ужин</div>
+                                            <div className={classes.requestDataInfo_desc}>{calculateMeals(formData).dinners}</div>
+                                        </div>
+                                    </>
                                 }
 
                                 {formData.status !== 'created' &&
@@ -322,26 +370,27 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         )}
                         {activeTab === 'Доп. услуги' && (
                             <div className={classes.requestData}>
-                                <div className={classes.requestDataTitle}>
-                                    Добавить питание
-                                </div>
-
-                                <div className={classes.requestDataInfo}>
-                                    <div className={classes.requestDataInfo_title}>Завтрак</div>
-                                    <input type="number" name="departureDate" placeholder="Количество" />
-                                </div>
-                                <div className={classes.requestDataInfo}>
-                                    <div className={classes.requestDataInfo_title}>Обед</div>
-                                    <input type="number" name="departureDate" placeholder="Количество" />
-                                </div>
-                                <div className={classes.requestDataInfo}>
-                                    <div className={classes.requestDataInfo_title}>Ужин</div>
-                                    <input type="number" name="departureDate" placeholder="Количество" />
-                                </div>
-
-
                                 {formData.status !== 'created' &&
                                     <>
+                                        <div className={classes.requestDataTitle}>
+                                            Добавить питание
+                                        </div>
+
+                                        <div className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                            <input type="number" name="departureDate" placeholder="Количество" />
+                                        </div>
+                                        <div className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title}>Обед</div>
+                                            <input type="number" name="departureDate" placeholder="Количество" />
+                                        </div>
+                                        <div className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title}>Ужин</div>
+                                            <input type="number" name="departureDate" placeholder="Количество" />
+                                        </div>
+
+
+
                                         <div className={classes.requestDataTitle}>
                                             Продление
                                         </div>
