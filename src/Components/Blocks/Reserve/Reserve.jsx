@@ -39,7 +39,6 @@ function Reserve({ children, user, ...props }) {
     useEffect(() => {
         if (subscriptionData) {
             const newRequest = subscriptionData.reserveCreated;
-            console.log(newRequest)
 
             setRequests((prevRequests) => {
                 const exists = prevRequests.some(request => request.id === newRequest.id);
@@ -65,6 +64,16 @@ function Reserve({ children, user, ...props }) {
                 sortedRequests = [...newRequests, ...sortedRequests];
                 setNewRequests([]);
             }
+
+            sortedRequests.sort((a, b) => {
+                if (a.status === "done" && b.status !== "done") {
+                    return 1;
+                }
+                if (a.status !== "done" && b.status === "done") {
+                    return -1;
+                }
+                return 0;
+            });
 
             setRequests(sortedRequests);
             setTotalPages(data.reserves.totalPages);
@@ -134,7 +143,7 @@ function Reserve({ children, user, ...props }) {
 
     let filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
 
-    function renderPagination(totalPages) {        
+    function renderPagination(totalPages) {
         // Поменять на react-paginate
         const paginationItems = [];
 

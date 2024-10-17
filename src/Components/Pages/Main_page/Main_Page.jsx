@@ -2,7 +2,7 @@ import React from "react";
 import classes from './Main_Page.module.css';
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Estafeta from "../../Blocks/Estafeta/Estafeta";
-import {  useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Reserve from "../../Blocks/Reserve/Reserve";
 import Сompany from "../../Blocks/Сompany/Сompany";
 import HotelsList from "../../Blocks/HotelsList/HotelsList";
@@ -29,7 +29,9 @@ function Main_Page({ children, user, ...props }) {
 
             {user.role == 'HOTELADMIN' &&
                 <>
-                    <HotelPage id={user.hotelId} user={user} />
+
+                    {(id == 'reserveRequests') && <Reserve user={user} />}
+                    {(id != 'reserveRequests') && <HotelPage id={user.hotelId} user={user} />}
                 </>
             }
 
@@ -47,7 +49,7 @@ function Main_Page({ children, user, ...props }) {
             {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
                 <>
 
-                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user}/>}
+                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user} />}
                     {(id == 'reserve') && <Reserve user={user} />}
                     {(id == 'company') && <Сompany user={user} />}
                     {(id == 'hotels') && <HotelsList user={user} />}

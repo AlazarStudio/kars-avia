@@ -44,7 +44,8 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
 
             <div className={classes.bottom} style={{ height: `calc(100vh - ${paginationHeight})` }}>
                 {requests.map((item, index) => (
-                    <div className={`${classes.InfoTable_data} ${chooseRequestID == item.id && classes.InfoTable_data_active}`} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)} key={index}>
+                    <div className={`${classes.InfoTable_data} ${chooseRequestID == item.id && classes.InfoTable_data_active}`} style={{ opacity: item.status == 'done' && '0.5' }} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)} key={index}>
+                        {item.status == 'created' && <div className={classes.newRequest}></div>}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.split('-')[0]}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>

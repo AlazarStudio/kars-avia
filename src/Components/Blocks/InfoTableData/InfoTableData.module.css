@@ -8,11 +8,13 @@
     transition: all 0.2s ease-in-out;
     cursor: pointer;
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
+    position: relative;
 }
 
 .InfoTable_data:hover,
 .InfoTable_data_active {
     background-color: var(--hover-gray);
+    opacity: 1 !important;
 }
 
 .InfoTable_title {
@@ -122,6 +124,15 @@
     height: calc(100vh - 295px);
     overflow: hidden;
     overflow-y: scroll;
+}
+
+.newRequest {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background-color: red;
+    border-radius: 50px;
+    top: 10px;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

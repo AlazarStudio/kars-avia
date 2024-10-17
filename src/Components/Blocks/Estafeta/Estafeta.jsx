@@ -67,6 +67,16 @@ function Estafeta({ children, user, ...props }) {
                 setNewRequests([]);
             }
 
+            sortedRequests.sort((a, b) => {
+                if (a.status === "done" && b.status !== "done") {
+                    return 1;
+                }
+                if (a.status !== "done" && b.status === "done") {
+                    return -1;
+                }
+                return 0;
+            });
+
             setRequests(sortedRequests);
             setTotalPages(data.requests.totalPages);
             refetch()
@@ -212,7 +222,7 @@ function Estafeta({ children, user, ...props }) {
                         }
                     </>
                 )}
-                <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user}/>
+                <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
                 <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
                 <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
             </div>
