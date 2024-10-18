@@ -141,18 +141,18 @@ function Reserve({ children, user, idHotel, ...props }) {
         const matchesDate = filterData.filterDate === '' || request.date === filterData.filterDate;
         const matchesSearchQuery = [
             request.id.toLowerCase(),
-            request.airport.city.toLowerCase(),
-            request.airline.name.toLowerCase(),
-            request.airport.name.toLowerCase(),
-            request.airport.code.toLowerCase(),
-            request.arrival.date.toLowerCase(),
-            request.arrival.time.toLowerCase(),
-            request.departure.date.toLowerCase(),
-            request.departure.time.toLowerCase(),
-            request.status.toLowerCase()
+            request.airport?.city.toLowerCase(),
+            request.airline?.name.toLowerCase(),
+            request.airport?.name.toLowerCase(),
+            request.airport?.code.toLowerCase(),
+            request.arrival?.date.toLowerCase(),
+            request.arrival?.time.toLowerCase(),
+            request.departure?.date.toLowerCase(),
+            request.departure?.time.toLowerCase(),
+            request.status?.toLowerCase()
         ].some(field => field.includes(searchQuery.toLowerCase()));
 
-        const matchesCity = hotelCity ? request.airport.city.toLowerCase() === hotelCity.toLowerCase() : true;
+        const matchesCity = hotelCity ? request.airport?.city.toLowerCase() === hotelCity.toLowerCase() : true;
 
         return matchesCity && matchesSelect && matchesDate && matchesSearchQuery;
     });

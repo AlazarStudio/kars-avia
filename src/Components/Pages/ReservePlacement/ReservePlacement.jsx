@@ -13,7 +13,7 @@ import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
 import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 import { useQuery } from "@apollo/client";
-import { GET_RESERVE_REQUEST } from "../../../../graphQL_requests";
+import { GET_HOTELS_RELAY, GET_RESERVE_REQUEST } from "../../../../graphQL_requests";
 
 function ReservePlacement({ children, user, ...props }) {
     let { idRequest } = useParams();
@@ -28,7 +28,7 @@ function ReservePlacement({ children, user, ...props }) {
     useEffect(() => {
         if (data && data.reserve) {
             setRequest(data?.reserve || []);
-            setPlacement(data?.reserve.person || []); // Теперь мы используем person как массив пассажиров
+            setPlacement(data?.reserve.person || []);
         }
     }, [data]);
 
@@ -83,6 +83,51 @@ function ReservePlacement({ children, user, ...props }) {
         setShowChooseHotel(!showChooseHotel);
     };
 
+    const [formData, setFormData] = useState({
+        city: '',
+        hotel: '',
+    });
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        if (type === 'checkbox') {
+            setFormData(prevState => ({
+                ...prevState,
+                meals: {
+                    ...prevState.meals,
+                    [name]: checked
+                }
+            }));
+        } else if (name === 'included') {
+            setFormData(prevState => ({
+                ...prevState,
+                meals: {
+                    ...prevState.meals,
+                    included: value
+                }
+            }));
+        } else {
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: value
+            }));
+        }
+    }
+
+    const [hotels, setHotels] = useState([]);
+
+    let infoHotels = useQuery(GET_HOTELS_RELAY);
+
+    useEffect(() => {
+        if (infoHotels.data) {
+            setHotels(infoHotels.data?.hotels || []);
+        }
+    }, [infoHotels]);
+
+    const uniqueCities = [...new Set(hotels.map(hotel => hotel.city.trim()))].sort((a, b) => a.localeCompare(b));
+    const filteredAirports = (formData && formData.city) ? hotels.filter(hotel => hotel.city.trim() === formData.city.trim()) : [];
+
+    console.log(request?.airport?.city)
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />
@@ -98,6 +143,23 @@ function ReservePlacement({ children, user, ...props }) {
                 </div>
 
                 <div className={classes.section_searchAndFilter}>
+                    <div className={classes.filterCityAndHotel}>
+                        <select name="city" placeholder="Введите город" value={formData.city} onChange={handleChange}>
+                            <option value="">Выберите город</option>
+                            {uniqueCities.map((city, index) => (
+                                <option value={city} key={index}>{city}</option>
+                            ))}
+                        </select>
+                        {formData.city &&
+                            <select name="hotel" placeholder="Введите название гостиницы" value={formData.hotel} onChange={handleChange}>
+                                <option value="">Выберите гостиницу</option>
+                                {filteredAirports.map((hotel, index) => (
+                                    <option value={hotel.id} key={index}>{hotel.name}</option>
+                                ))}
+                            </select>
+                        }
+                    </div>
+
                     <Button onClick={toggleCreateSidebar}>Добавить пассажира</Button>
                 </div>
                 {loading && <p>Loading...</p>}
