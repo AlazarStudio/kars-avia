@@ -109,9 +109,9 @@ function CreateRequest({ show, onClose, user }) {
             airlineId: '',
             mealPlan: {
                 included: true,
-                breakfast: false,
-                lunch: false,
-                dinner: false,
+                breakfast: true,
+                lunch: true,
+                dinner: true,
             },
             city: ''
         });
@@ -224,9 +224,9 @@ function CreateRequest({ show, onClose, user }) {
             },
             mealPlan: {
                 included: formData.mealPlan.included,
-                breakfast: formData.mealPlan.breakfast,
-                lunch: formData.mealPlan.lunch,
-                dinner: formData.mealPlan.dinner,
+                // breakfast: formData.mealPlan.breakfast,
+                // lunch: formData.mealPlan.lunch,
+                // dinner: formData.mealPlan.dinner,
             },
             senderId: formData.senderId,
             airlineId: formData.airlineId,

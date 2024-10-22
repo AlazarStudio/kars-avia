@@ -23,12 +23,17 @@
 
 .InfoTable_title_elem,
 .InfoTable_data_elem {
-    padding: 20px 0px;
+    padding: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     border-right: 1px solid #E4E4EF;
+}
+
+.InfoTable_data_elem input,
+.InfoTable_data_elem select {
+    width: 100%;
 }
 
 .InfoTable_data_elem_img {
@@ -75,6 +80,16 @@
     width: 20%;
 }
 
+.w35 {
+    width: 35%;
+}
+
+.w100 {
+    width: 100%;
+    justify-content: space-between;
+    padding-left: 20px;
+}
+
 .w12:last-child {
     border-right: none;
 }
@@ -114,7 +129,7 @@
 }
 
 .bottom {
-    height: calc(100vh - 376px);
+    height: calc(100vh - 356px);
     overflow: hidden;
     overflow-y: scroll;
 }
@@ -142,6 +157,14 @@
     line-height: 19.36px;
     gap: 15px;
     color: #545873;
+}
+
+.stickyHeader {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 5;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

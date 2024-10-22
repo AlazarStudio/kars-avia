@@ -167,9 +167,9 @@ function CreateRequestReserve({ show, onClose, user }) {
             },
             mealPlan: {
                 included: formData.mealPlan.included,
-                breakfast: formData.mealPlan.breakfast,
-                lunch: formData.mealPlan.lunch,
-                dinner: formData.mealPlan.dinner,
+                // breakfast: formData.mealPlan.breakfast,
+                // lunch: formData.mealPlan.lunch,
+                // dinner: formData.mealPlan.dinner,
             },
             senderId: formData.senderId,
             airlineId: formData.airlineId,

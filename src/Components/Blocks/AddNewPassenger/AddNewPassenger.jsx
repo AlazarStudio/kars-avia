@@ -2,55 +2,36 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './AddNewPassenger.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { useQuery } from "@apollo/client";
+import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 
-function AddNewPassenger({ show, onClose, onAddPassenger, request, ...props }) {
+function AddNewPassenger({ show, onClose, request }) {
     const [formData, setFormData] = useState({
-        client: '',
-        sex: '',
-        phone: '',
-        start: '',
-        startTime: '',
-        end: '',
-        endTime: '',
-        room: '',
-        place: '',
-        requestId: '',
-        public: false,
+        passengers: '',
+        city: '',
+        hotel: '',
+        requestId: ''
     });
 
     useEffect(() => {
-        if (request.arrival && request.departure) {
-            setFormData((prevFormData) => ({
-                ...prevFormData,
-                start: request.arrival.date,
-                startTime: request.arrival.time,
-                end: request.departure.date,
-                endTime: request.departure.time,
-                requestId: request.id,
-            }));
+        if (request) {
+            setFormData({ ...formData, requestId: request.id });
         }
     }, [request]);
 
     const resetForm = () => {
         setFormData({
-            client: '',
-            sex: '',
-            phone: '',
-            room: '',
-            place: '',
-            requestId: formData.requestId,
-            public: false,
-            start: formData.start,
-            startTime: formData.startTime,
-            end: formData.end,
-            endTime: formData.endTime
+            ...formData,
+            passengers: '',
+            city: '',
+            hotel: '',
         });
     };
 
     const sidebarRef = useRef();
 
     const closeButton = () => {
-        let success = confirm("Вы уверены, все несохраненные данные будут удалены");
+        let success = confirm("Вы уверены, все несохраненные данные будут удалены?");
         if (success) {
             resetForm();
             onClose();
@@ -66,7 +47,6 @@ function AddNewPassenger({ show, onClose, onAddPassenger, request, ...props }) {
     };
 
     const handleSubmit = () => {
-        onAddPassenger(formData);
         resetForm();
         onClose();
     };
@@ -87,34 +67,54 @@ function AddNewPassenger({ show, onClose, onAddPassenger, request, ...props }) {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [show, onClose]);
+    }, [show]);
 
+    const { data } = useQuery(GET_HOTELS_RELAY);
+    const hotels = data?.hotels || [];
+    const uniqueCities = [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
+    const filteredHotels = formData.city ? hotels.filter(hotel => hotel.city.trim() === formData.city.trim()) : [];
+
+    // console.log(formData)
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Добавить пассажира</div>
+                <div className={classes.requestTitle_name}>Добавить гостиницу</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
             </div>
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
-                    <label>ФИО</label>
-                    <input type="text" name="client" placeholder="Иванов Иван Иванович" value={formData.client} onChange={handleChange} />
-
-                    <label>Пол</label>
-                    <select name="sex" value={formData.sex} onChange={handleChange}>
-                        <option value="" disabled>Выберите пол</option>
-                        <option value="Мужской">Мужской</option>
-                        <option value="Женский">Женский</option>
+                    <label>Город</label>
+                    <select name="city" value={formData.city} onChange={handleChange}>
+                        <option value="">Выберите город</option>
+                        {uniqueCities.map((city, index) => (
+                            <option value={city} key={index}>{city}</option>
+                        ))}
                     </select>
-
-                    <label>Телефон</label>
-                    <input type="text" name="phone" placeholder="89094567899" value={formData.phone} onChange={handleChange} />
+                    {formData.city &&
+                        <>
+                            <label>Гостиница</label>
+                            <select name="hotel" value={formData.hotel} onChange={handleChange}>
+                                <option value="">Выберите гостиницу</option>
+                                {filteredHotels.map((hotel, index) => (
+                                    <option value={hotel.id} key={index}>{hotel.name}</option>
+                                ))}
+                            </select>
+                        </>
+                    }
+                    <label>Количество пассажиров</label>
+                    <input
+                        type="number"
+                        name="passengers"
+                        placeholder="Пример: 30"
+                        value={formData.passengers}
+                        onChange={handleChange}
+                    />
                 </div>
             </div>
 
             <div className={classes.requestButon}>
-                <Button onClick={handleSubmit}>Добавить пассажира</Button>
+                <Button onClick={handleSubmit}>Добавить гостиницу</Button>
             </div>
         </Sidebar>
     );

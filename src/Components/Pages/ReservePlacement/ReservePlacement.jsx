@@ -18,6 +18,23 @@ import { GET_HOTELS_RELAY, GET_RESERVE_REQUEST } from "../../../../graphQL_reque
 function ReservePlacement({ children, user, ...props }) {
     let { idRequest } = useParams();
 
+    let placementPassengers = [
+        {
+            hotel: {
+                name: 'Отель 1',
+                passengers: [],
+                person: [],
+            }
+        },
+        {
+            hotel: {
+                name: 'Отель 2',
+                passengers: [],
+                person: [],
+            }
+        }
+    ]
+
     const [request, setRequest] = useState([]);
     const [placement, setPlacement] = useState([]);
 
@@ -28,7 +45,8 @@ function ReservePlacement({ children, user, ...props }) {
     useEffect(() => {
         if (data && data.reserve) {
             setRequest(data?.reserve || []);
-            setPlacement(data?.reserve.person || []);
+            // setPlacement(data?.reserve.person || []);
+            setPlacement(placementPassengers);
         }
     }, [data]);
 
@@ -114,20 +132,6 @@ function ReservePlacement({ children, user, ...props }) {
         }
     }
 
-    const [hotels, setHotels] = useState([]);
-
-    let infoHotels = useQuery(GET_HOTELS_RELAY);
-
-    useEffect(() => {
-        if (infoHotels.data) {
-            setHotels(infoHotels.data?.hotels || []);
-        }
-    }, [infoHotels]);
-
-    const uniqueCities = [...new Set(hotels.map(hotel => hotel.city.trim()))].sort((a, b) => a.localeCompare(b));
-    const filteredAirports = (formData && formData.city) ? hotels.filter(hotel => hotel.city.trim() === formData.city.trim()) : [];
-
-    console.log(request?.airport?.city)
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />
@@ -143,24 +147,15 @@ function ReservePlacement({ children, user, ...props }) {
                 </div>
 
                 <div className={classes.section_searchAndFilter}>
-                    <div className={classes.filterCityAndHotel}>
-                        <select name="city" placeholder="Введите город" value={formData.city} onChange={handleChange}>
-                            <option value="">Выберите город</option>
-                            {uniqueCities.map((city, index) => (
-                                <option value={city} key={index}>{city}</option>
-                            ))}
-                        </select>
-                        {formData.city &&
-                            <select name="hotel" placeholder="Введите название гостиницы" value={formData.hotel} onChange={handleChange}>
-                                <option value="">Выберите гостиницу</option>
-                                {filteredAirports.map((hotel, index) => (
-                                    <option value={hotel.id} key={index}>{hotel.name}</option>
-                                ))}
-                            </select>
-                        }
-                    </div>
+                    <input
+                        type="text"
+                        placeholder="Поиск"
+                        style={{ 'width': '500px' }}
+                    // value={searchQuery}
+                    // onChange={handleSearch}
+                    />
 
-                    <Button onClick={toggleCreateSidebar}>Добавить пассажира</Button>
+                    <Button onClick={toggleCreateSidebar}>Добавить гостиницу</Button>
                 </div>
                 {loading && <p>Loading...</p>}
                 {error && <p>Error: {error.message}</p>}
@@ -169,17 +164,18 @@ function ReservePlacement({ children, user, ...props }) {
                     <>
                         <InfoTableDataReserve_passengers
                             placement={placement ? placement : []}
+                            setPlacement={setPlacement}
                             toggleUpdateSidebar={toggleUpdateSidebar}
                             setIdPassangerForUpdate={setIdPassangerForUpdate}
                             openDeletecomponent={openDeletecomponent}
                             toggleChooseHotel={toggleChooseHotel}
                             user={user}
+                            request={request}
                         />
 
                         <AddNewPassenger
                             show={showCreateSidebar}
                             onClose={toggleCreateSidebar}
-                            onAddPassenger={addPassenger}
                             request={request}
                         />
 
