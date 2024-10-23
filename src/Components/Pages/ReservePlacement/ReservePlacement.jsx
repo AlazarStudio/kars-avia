@@ -132,6 +132,38 @@ function ReservePlacement({ children, user, ...props }) {
         }
     }
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const handleSearch = (e) => {
+        setSearchQuery(e.target.value);
+    };
+
+    const filteredPlacement = placement
+        .map((item) => {
+            const filteredPassengers = item.hotel.passengers.filter((passenger) =>
+                passenger.passenger.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            const filteredPersons = item.hotel.person.filter((person) =>
+                person.passenger.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            const isHotelMatch = item.hotel.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+            if (filteredPassengers.length > 0 || filteredPersons.length > 0 || isHotelMatch) {
+                return {
+                    ...item,
+                    hotel: {
+                        ...item.hotel,
+                        passengers: filteredPassengers,
+                        person: filteredPersons,
+                    },
+                };
+            }
+
+            return null;
+        })
+        .filter((item) => item !== null);
+
+
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />
@@ -150,10 +182,11 @@ function ReservePlacement({ children, user, ...props }) {
                     <input
                         type="text"
                         placeholder="Поиск"
-                        style={{ 'width': '500px' }}
-                    // value={searchQuery}
-                    // onChange={handleSearch}
+                        style={{ width: '500px' }}
+                        value={searchQuery}
+                        onChange={handleSearch}
                     />
+
 
                     <Button onClick={toggleCreateSidebar}>Добавить гостиницу</Button>
                 </div>
@@ -163,7 +196,7 @@ function ReservePlacement({ children, user, ...props }) {
                 {!loading && !error && request && (
                     <>
                         <InfoTableDataReserve_passengers
-                            placement={placement ? placement : []}
+                            placement={filteredPlacement}
                             setPlacement={setPlacement}
                             toggleUpdateSidebar={toggleUpdateSidebar}
                             setIdPassangerForUpdate={setIdPassangerForUpdate}

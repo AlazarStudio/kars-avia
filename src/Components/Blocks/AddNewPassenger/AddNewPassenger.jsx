@@ -82,7 +82,15 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
     const { data } = useQuery(GET_HOTELS_RELAY);
     const hotels = data?.hotels || [];
     const uniqueCities = [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
-    const filteredHotels = formData.city ? hotels.filter(hotel => hotel.city.trim() === formData.city.trim()) : [];
+
+    // Получаем ID отелей, которые уже добавлены в заявку
+    const addedHotelIds = placement.map((item) => item.hotel.name);
+
+    // Фильтруем список отелей по выбранному городу
+    const filteredHotels = formData.city
+        ? hotels.filter((hotel) => hotel.city.trim() === formData.city.trim())
+        : [];
+
 
     // console.log(formData)
     return (
@@ -101,17 +109,24 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
                             <option value={city} key={index}>{city}</option>
                         ))}
                     </select>
-                    {formData.city &&
+                    {formData.city && (
                         <>
                             <label>Гостиница</label>
                             <select name="hotel" value={formData.hotel} onChange={handleChange}>
                                 <option value="">Выберите гостиницу</option>
                                 {filteredHotels.map((hotel, index) => (
-                                    <option value={hotel.id} key={index}>{hotel.name}</option>
+                                    <option
+                                        value={hotel.id}
+                                        key={index}
+                                        disabled={addedHotelIds.includes(hotel.id)}
+                                    >
+                                        {hotel.name} {addedHotelIds.includes(hotel.id) ? '(уже добавлен)' : ''}
+                                    </option>
                                 ))}
                             </select>
                         </>
-                    }
+                    )}
+
                     <label>Количество пассажиров</label>
                     <input
                         type="number"
