@@ -17,24 +17,6 @@ import { GET_HOTELS_RELAY, GET_RESERVE_REQUEST } from "../../../../graphQL_reque
 
 function ReservePlacement({ children, user, ...props }) {
     let { idRequest } = useParams();
-
-    let placementPassengers = [
-        {
-            hotel: {
-                name: 'Отель 1',
-                passengers: [],
-                person: [],
-            }
-        },
-        {
-            hotel: {
-                name: 'Отель 2',
-                passengers: [],
-                person: [],
-            }
-        }
-    ]
-
     const [request, setRequest] = useState([]);
     const [placement, setPlacement] = useState([]);
 
@@ -45,8 +27,7 @@ function ReservePlacement({ children, user, ...props }) {
     useEffect(() => {
         if (data && data.reserve) {
             setRequest(data?.reserve || []);
-            // setPlacement(data?.reserve.person || []);
-            setPlacement(placementPassengers);
+            setPlacement(data?.reserve.person || []);
         }
     }, [data]);
 
@@ -171,12 +152,15 @@ function ReservePlacement({ children, user, ...props }) {
                             toggleChooseHotel={toggleChooseHotel}
                             user={user}
                             request={request}
+                            airline={request.airline}
                         />
 
                         <AddNewPassenger
                             show={showCreateSidebar}
                             onClose={toggleCreateSidebar}
                             request={request}
+                            placement={placement ? placement : []}
+                            setPlacement={setPlacement}
                         />
 
                         <UpdatePassanger

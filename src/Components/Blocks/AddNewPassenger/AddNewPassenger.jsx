@@ -5,7 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { useQuery } from "@apollo/client";
 import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 
-function AddNewPassenger({ show, onClose, request }) {
+function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
     const [formData, setFormData] = useState({
         passengers: '',
         city: '',
@@ -47,6 +47,16 @@ function AddNewPassenger({ show, onClose, request }) {
     };
 
     const handleSubmit = () => {
+        setPlacement([...placement, {
+            hotel: {
+                name: formData.hotel,
+                passengersCount: formData.passengers,
+                city: formData.city,
+                requestId: formData.requestId,
+                passengers: [],
+                person: [],
+            }
+        }])
         resetForm();
         onClose();
     };

@@ -3,15 +3,23 @@ import classes from './InfoTableDataReserve_passengers.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
 
-function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, request }) {
+function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, request, airline }) {
     const [editingId, setEditingId] = useState(null);
     const [editedData, setEditedData] = useState({});
-    const [isAddingNew, setIsAddingNew] = useState(false);
-    const [newGuestData, setNewGuestData] = useState({
+    const [isAddingNewPassenger, setIsAddingNewPassenger] = useState(false);
+    const [isAddingNewPerson, setIsAddingNewPerson] = useState(false);
+    const [newPassengerData, setNewPassengerData] = useState({
         passenger: '',
         gender: '',
         phone: '',
         type: 'Пассажир',
+        order: ''
+    });
+    const [newPersonData, setNewPersonData] = useState({
+        passenger: '',
+        gender: '',
+        phone: '',
+        type: 'Сотрудник',
         order: ''
     });
     const [currentHotelIndex, setCurrentHotelIndex] = useState(null);
@@ -57,26 +65,21 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         setEditedData({});
     };
 
-    const handleAddNew = () => {
+    const handleAddNewPassenger = () => {
         if (currentHotelIndex === null) return;
 
         setPlacement((prevPlacement) => {
             const updatedPlacement = [...prevPlacement];
             const hotel = updatedPlacement[currentHotelIndex];
 
-            const newGuest = { ...newGuestData, id: Date.now(), order: hotel.hotel?.passengers?.length + hotel.hotel?.person?.length + 1 };
-
-            if (newGuest.type === 'Пассажир') {
-                hotel.hotel.passengers.push(newGuest);
-            } else {
-                hotel.hotel.person.push(newGuest);
-            }
+            const newPassenger = { ...newPassengerData, id: Date.now(), order: hotel.hotel?.passengers?.length + hotel.hotel?.person?.length + 1 };
+            hotel.hotel.passengers.push(newPassenger);
 
             return updatedPlacement;
         });
 
-        setIsAddingNew(false);
-        setNewGuestData({
+        setIsAddingNewPassenger(false);
+        setNewPassengerData({
             passenger: '',
             gender: '',
             phone: '',
@@ -86,8 +89,43 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         setCurrentHotelIndex(null);
     };
 
-    const startAddingNew = (hotelIndex) => {
-        setIsAddingNew(true);
+    const handleAddNewPerson = () => {
+        if (currentHotelIndex === null) return;
+
+        setPlacement((prevPlacement) => {
+            const updatedPlacement = [...prevPlacement];
+            const hotel = updatedPlacement[currentHotelIndex];
+
+            const newPerson = { ...newPersonData, id: Date.now(), order: hotel.hotel?.passengers?.length + hotel.hotel?.person?.length + 1 };
+            hotel.hotel.person.push(newPerson);
+
+            return updatedPlacement;
+        });
+
+        setIsAddingNewPerson(false);
+        setNewPersonData({
+            passenger: '',
+            gender: '',
+            phone: '',
+            type: 'Сотрудник',
+            order: ''
+        });
+        setCurrentHotelIndex(null);
+    };
+
+    const startAddingNewPassenger = (hotelIndex) => {
+        setIsAddingNewPassenger(true);
+        setIsAddingNewPerson(false);
+        setCurrentHotelIndex(hotelIndex);
+
+        setTimeout(() => {
+            newGuestRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    };
+
+    const startAddingNewPerson = (hotelIndex) => {
+        setIsAddingNewPerson(true);
+        setIsAddingNewPassenger(false);
         setCurrentHotelIndex(hotelIndex);
 
         setTimeout(() => {
@@ -108,7 +146,13 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         ];
     };
 
-    console.log(request)
+    const getTotalGuests = () => {
+        return placement.reduce((total, item) => {
+            return total + getAllGuests(item.hotel).length;
+        }, 0);
+    };
+
+    console.log(airline)
     return (
         <InfoTable>
             <div className={classes.InfoTable_title}>
@@ -125,8 +169,15 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                     <React.Fragment key={hotelIndex}>
                         <div className={`${classes.InfoTable_data} ${classes.stickyHeader}`}>
                             <div className={`${classes.InfoTable_data_elem} ${classes.w100}`}>
-                                <b>{item.hotel.name}</b> {getAllGuests(item.hotel).length} гостей из 30
-                                <Button onClick={() => startAddingNew(hotelIndex)}>Добавить гостя</Button>
+                                <div className={classes.blockInfoShow}>
+                                    <b>{item.hotel.name}</b>
+                                    {getAllGuests(item.hotel).length} гостей из {item.hotel.passengersCount}
+                                </div>
+
+                                <div className={classes.blockInfoShow}>
+                                    <Button onClick={() => startAddingNewPassenger(hotelIndex)}><img src="/plus.png" alt="" /> Пассажир</Button>
+                                    <Button onClick={() => startAddingNewPerson(hotelIndex)}><img src="/plus.png" alt="" /> Сотрудник</Button>
+                                </div>
                             </div>
                         </div>
                         {getAllGuests(item.hotel).sort((a, b) => a.order - b.order).map((guest, index) => (
@@ -183,21 +234,21 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                 </div>
                             </div>
                         ))}
-                        {isAddingNew && currentHotelIndex === hotelIndex && (
+                        {(isAddingNewPassenger && currentHotelIndex === hotelIndex) && (
                             <div className={classes.InfoTable_data} ref={newGuestRef}>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
                                     <input
                                         type="text"
-                                        placeholder="ФИО"
-                                        value={newGuestData.passenger}
-                                        onChange={(e) => setNewGuestData({ ...newGuestData, passenger: e.target.value })}
+                                        placeholder="ФИО пассажира"
+                                        value={newPassengerData.passenger}
+                                        onChange={(e) => setNewPassengerData({ ...newPassengerData, passenger: e.target.value })}
                                     />
                                 </div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                                     <select
-                                        value={newGuestData.gender}
-                                        onChange={(e) => setNewGuestData({ ...newGuestData, gender: e.target.value })}
+                                        value={newPassengerData.gender}
+                                        onChange={(e) => setNewPassengerData({ ...newPassengerData, gender: e.target.value })}
                                     >
                                         <option value="">Выберите пол</option>
                                         <option value="Мужской">Мужской</option>
@@ -208,21 +259,46 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                     <input
                                         type="text"
                                         placeholder="Номер телефона"
-                                        value={newGuestData.phone}
-                                        onChange={(e) => setNewGuestData({ ...newGuestData, phone: e.target.value })}
+                                        value={newPassengerData.phone}
+                                        onChange={(e) => setNewPassengerData({ ...newPassengerData, phone: e.target.value })}
+                                    />
+                                </div>
+                                <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                                    <Button onClick={handleAddNewPassenger}>Добавить пассажира</Button>
+                                </div>
+                            </div>
+                        )}
+                        {(isAddingNewPerson && currentHotelIndex === hotelIndex) && (
+                            <div className={classes.InfoTable_data} ref={newGuestRef}>
+                                <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
+                                <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
+                                    <input
+                                        type="text"
+                                        placeholder="ФИО сотрудника"
+                                        value={newPersonData.passenger}
+                                        onChange={(e) => setNewPersonData({ ...newPersonData, passenger: e.target.value })}
                                     />
                                 </div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                                     <select
-                                        value={newGuestData.type}
-                                        onChange={(e) => setNewGuestData({ ...newGuestData, type: e.target.value })}
+                                        value={newPersonData.gender}
+                                        onChange={(e) => setNewPersonData({ ...newPersonData, gender: e.target.value })}
                                     >
-                                        <option value="Пассажир">Пассажир</option>
-                                        <option value="Сотрудник">Сотрудник</option>
+                                        <option value="">Выберите пол</option>
+                                        <option value="Мужской">Мужской</option>
+                                        <option value="Женский">Женский</option>
                                     </select>
                                 </div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                    <Button onClick={handleAddNew}>Добавить</Button>
+                                    <input
+                                        type="text"
+                                        placeholder="Номер телефона"
+                                        value={newPersonData.phone}
+                                        onChange={(e) => setNewPersonData({ ...newPersonData, phone: e.target.value })}
+                                    />
+                                </div>
+                                <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                                    <Button onClick={handleAddNewPerson}>Добавить сотрудника</Button>
                                 </div>
                             </div>
                         )}
@@ -233,7 +309,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
             <div className={classes.counting}>
                 <div className={classes.countingPeople}>
                     <img src="/peopleCount.png" alt="" />
-                    {placement.length} отелей
+                    {placement.length} отелей, {getTotalGuests()} из 100 гостей
                 </div>
             </div>
         </InfoTable>
