@@ -1,7 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import classes from './InfoTableDataReserve_passengers.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
+import { GET_AIRLINES_RELAY } from "../../../../graphQL_requests";
+import { useQuery } from "@apollo/client";
 
 function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, request, airline }) {
     const [editingId, setEditingId] = useState(null);
@@ -152,7 +154,18 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         }, 0);
     };
 
-    console.log(airline)
+    const [selectedAirline, setSelectedAirline] = useState(null);
+    const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
+
+    useEffect(() => {
+        if (data) {
+            if (airline) {
+                const selectedAirline = data.airlines.find(airline => airline.id === airline.id);
+                setSelectedAirline(selectedAirline.staff);
+            }
+        }
+    }, [data, airline]);
+
     return (
         <InfoTable>
             <div className={classes.InfoTable_title}>
@@ -185,11 +198,33 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
                                     {editingId === guest.id ? (
-                                        <input
-                                            type="text"
-                                            value={editedData.passenger || ''}
-                                            onChange={(e) => handleChange('passenger', e.target.value)}
-                                        />
+                                        guest.type === 'Сотрудник' ? (
+                                            <select
+                                                value={editedData.passenger || ''}
+                                                onChange={(e) => {
+                                                    const selectedName = e.target.value;
+                                                    const selectedStaff = selectedAirline.find((staff) => staff.name === selectedName);
+
+                                                    setEditedData({
+                                                        ...editedData,
+                                                        passenger: selectedName,
+                                                        gender: selectedStaff?.gender || '',
+                                                        phone: selectedStaff?.number || '',
+                                                    });
+                                                }}
+                                            >
+                                                <option value="">Выберите сотрудника</option>
+                                                {selectedAirline.map((staff) => (
+                                                    <option key={staff.id} value={staff.name}>{staff.name}</option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={editedData.passenger || ''}
+                                                onChange={(e) => handleChange('passenger', e.target.value)}
+                                            />
+                                        )
                                     ) : (
                                         guest.passenger
                                     )}
@@ -228,7 +263,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                     ) : (
                                         <>
                                             <img src="/editPassenger.png" alt="" onClick={() => handleEdit(guest.id, guest)} />
-                                            <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(guest.id)} />
+                                            <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(guest)} />
                                         </>
                                     )}
                                 </div>
@@ -272,12 +307,25 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                             <div className={classes.InfoTable_data} ref={newGuestRef}>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
-                                    <input
-                                        type="text"
-                                        placeholder="ФИО сотрудника"
+                                    <select
                                         value={newPersonData.passenger}
-                                        onChange={(e) => setNewPersonData({ ...newPersonData, passenger: e.target.value })}
-                                    />
+                                        onChange={(e) => {
+                                            const selectedName = e.target.value;
+                                            const selectedStaff = selectedAirline.find((staff) => staff.name === selectedName);
+
+                                            setNewPersonData({
+                                                ...newPersonData,
+                                                passenger: selectedName,
+                                                gender: selectedStaff?.gender || '',
+                                                phone: selectedStaff?.number || '',
+                                            });
+                                        }}
+                                    >
+                                        <option value="">Выберите сотрудника</option>
+                                        {selectedAirline.map((staff) => (
+                                            <option key={staff.id} value={staff.name}>{staff.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                                     <select

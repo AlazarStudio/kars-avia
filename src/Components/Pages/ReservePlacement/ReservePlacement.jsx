@@ -70,12 +70,31 @@ function ReservePlacement({ children, user, ...props }) {
         );
     };
 
-    const removePassenger = (index) => {
-        setPlacement(prevPlacement =>
-            prevPlacement.filter((_, i) => i !== index)
+    const removePassenger = (guest) => {
+        setPlacement((prevPlacement) =>
+            prevPlacement.map((item) => {
+                // Копируем отель, чтобы изменить его списки
+                const updatedHotel = { ...item.hotel };
+
+                // Проверяем тип гостя и обновляем соответствующий массив
+                if (guest.type === 'Пассажир') {
+                    updatedHotel.passengers = updatedHotel.passengers.filter(
+                        (passenger) => passenger.id !== guest.id
+                    );
+                } else if (guest.type === 'Сотрудник') {
+                    updatedHotel.person = updatedHotel.person.filter(
+                        (person) => person.id !== guest.id
+                    );
+                }
+
+                // Возвращаем обновленный отель в массиве размещений
+                return { ...item, hotel: updatedHotel };
+            })
         );
-        closeDeletecomponent()
+
+        closeDeletecomponent();
     };
+
 
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const toggleChooseHotel = () => {
@@ -173,7 +192,7 @@ function ReservePlacement({ children, user, ...props }) {
 
                         <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={placement} id={'reserve'} />
 
-                        {showDelete && <DeleteComponent remove={removePassenger} index={idDelete} close={closeDeletecomponent} title={`Вы действительно хотите удалить пассажира? `} />}
+                        {showDelete && <DeleteComponent remove={removePassenger} index={idDelete} close={closeDeletecomponent} title={`Вы действительно хотите удалить гостя? `} />}
                     </>
                 )}
             </div>
