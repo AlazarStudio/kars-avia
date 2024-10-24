@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 
-// export const path = '192.168.0.112:4000';
-export const path = '89.169.39.59:4000';
+export const path = '192.168.0.112:4000';
+// export const path = '89.169.39.59:4000';
 
 export const server = `http://${path}`;
 
@@ -589,7 +589,7 @@ export const GET_RESERVE_REQUESTS = gql`
           images
         }
         reserveNumber
-        passangerCount
+        passengerCount
       }
     }
   }
@@ -631,7 +631,7 @@ export const REQUEST_RESERVE_CREATED_SUBSCRIPTION = gql`
       }
       status
       reserveNumber
-      passangerCount
+      passengerCount
     }
   }
 `;
@@ -672,7 +672,7 @@ export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION = gql`
       }
       status
       reserveNumber
-      passangerCount
+      passengerCount
     }
   }
 `;
@@ -720,6 +720,15 @@ export const GET_RESERVE_REQUEST = gql`
         images
       }
       reserveNumber
+      passengerCount
+    }
+  }
+`;
+
+export const ADD_HOTEL_TO_RESERVE = gql`
+  mutation AddHotelToReserve($reservationId: ID!, $hotelId: ID!, $capacity: Int!) {
+    addHotelToReserve(reservationId: $reservationId, hotelId: $hotelId, capacity: $capacity) {
+      id
     }
   }
 `;

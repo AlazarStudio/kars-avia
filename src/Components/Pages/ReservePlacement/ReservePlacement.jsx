@@ -162,8 +162,6 @@ function ReservePlacement({ children, user, ...props }) {
             return null;
         })
         .filter((item) => item !== null);
-
-
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />

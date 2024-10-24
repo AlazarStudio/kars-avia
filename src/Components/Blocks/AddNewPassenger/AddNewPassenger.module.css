@@ -49,7 +49,7 @@
     border-bottom: 5px solid transparent
 }
 
-.activeTab{
+.activeTab {
     border-bottom: 5px solid #54587380;
 }
 
@@ -60,32 +60,33 @@
     gap: 15px;
 }
 
-.requestData label{
+.requestData label {
     display: flex;
     gap: 15px;
 }
 
-.requestData input, select{
+.requestData input,
+select {
     height: 38px;
     outline: none;
     padding: 0 10px;
     cursor: pointer;
 }
 
-.requestMiddle{
+.requestMiddle {
     height: calc(100% - 90px - 87px);
     overflow: hidden;
     overflow-y: scroll;
 }
 
-.reis_info{
+.reis_info {
     display: flex;
     justify-content: space-between;
     width: 100%;
     gap: 10px;
 }
 
-.reis_info input{
+.reis_info input {
     width: 50%;
 }
 
@@ -94,16 +95,31 @@
     justify-content: space-between;
 }
 
-.checks label{
+.checks label {
     display: flex;
     flex-direction: row;
     align-items: center;
     cursor: pointer;
 }
 
-.requestButon{
+.requestButon {
     display: flex;
     justify-content: flex-end;
+}
+
+.warningMessage {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 14px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.warningMessage strong {
+    font-weight: bold;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

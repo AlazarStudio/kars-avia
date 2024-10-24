@@ -395,7 +395,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
             <div className={classes.counting}>
                 <div className={classes.countingPeople}>
                     <img src="/peopleCount.png" alt="" />
-                    {placement.length} отелей, {getTotalGuests()} из 100 гостей
+                    {placement.length} отелей, {getTotalGuests()} из {request.passengerCount} гостей
                 </div>
             </div>
         </InfoTable>

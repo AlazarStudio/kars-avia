@@ -7,7 +7,15 @@ import { GET_MESSAGES_HOTEL, GET_REQUEST, getCookie, REQUEST_MESSAGES_SUBSCRIPTI
 import Smiles from "../Smiles/Smiles";
 
 function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID }) {
+    const token = getCookie('token');
+
     const { loading, error, data } = useQuery(GET_REQUEST, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
         variables: { requestId: chooseRequestID },
     });
 
@@ -185,7 +193,6 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         }));
     };
 
-    const token = getCookie('token');
 
     const [createRequest] = useMutation(UPDATE_MESSAGE_BRON, {
         context: {

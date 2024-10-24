@@ -18,7 +18,7 @@ function CreateRequestReserve({ show, onClose, user }) {
         arrivalTime: '',
         departureDate: '',
         departureTime: '',
-        passangerCount: '',
+        passengerCount: '',
         mealPlan: {
             included: false,
             breakfast: false,
@@ -51,7 +51,7 @@ function CreateRequestReserve({ show, onClose, user }) {
             arrivalTime: '',
             departureDate: '',
             departureTime: '',
-            passangerCount: '',
+            passengerCount: '',
             mealPlan: {
                 included: false,
                 breakfast: false,
@@ -173,7 +173,7 @@ function CreateRequestReserve({ show, onClose, user }) {
             },
             senderId: formData.senderId,
             airlineId: formData.airlineId,
-            families: []
+            passengerCount: Number(formData.passengerCount),
         };
 
         try {
@@ -229,7 +229,7 @@ function CreateRequestReserve({ show, onClose, user }) {
                     )}
 
                     <label>Количество людей на заселение</label>
-                    <input type="number" name="passangerCount" placeholder="100" value={formData.passangerCount} onChange={handleChange} />
+                    <input type="number" name="passengerCount" placeholder="100" value={formData.passengerCount} onChange={handleChange} />
 
                     <label>Рейс</label>
                     <input type="text" name="route" placeholder="Рейс" value={formData.route} onChange={handleChange} />

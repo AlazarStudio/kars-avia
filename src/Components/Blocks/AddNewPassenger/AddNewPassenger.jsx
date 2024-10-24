@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './AddNewPassenger.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { useQuery } from "@apollo/client";
-import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
+import { useMutation, useQuery } from "@apollo/client";
+import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../graphQL_requests";
 
 function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
+    const token = getCookie('token');
+
     const [formData, setFormData] = useState({
         passengers: '',
         city: '',
@@ -38,27 +40,65 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
         }
     };
 
+    const [error, setError] = useState('');
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    };
+        const maxCount = request.passengerCount;
 
-    const handleSubmit = () => {
-        setPlacement([...placement, {
-            hotel: {
-                name: formData.hotel,
-                passengersCount: formData.passengers,
-                city: formData.city,
-                requestId: formData.requestId,
-                passengers: [],
-                person: [],
+        if (value > maxCount) {
+            setError(`Максимальное количество пассажиров - ${maxCount}`);
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: maxCount
+            }));
+        } else {
+            setError('');
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: value
+            }));
+        }
+    }
+
+    const [createRequest] = useMutation(ADD_HOTEL_TO_RESERVE, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const handleSubmit = async () => {
+        try {
+            let reserverAddHotel = await createRequest({
+                variables: {
+                    reservationId: formData.requestId,
+                    hotelId: formData.hotel,
+                    capacity: Number(formData.passengers)
+                }
+            });
+
+            if (reserverAddHotel.data) {
+                setPlacement([...placement, {
+                    hotel: {
+                        name: formData.hotel,
+                        passengersCount: formData.passengers,
+                        city: formData.city,
+                        requestId: formData.requestId,
+                        passengers: [],
+                        person: [],
+                    }
+                }])
+
+                resetForm();
+                onClose();
             }
-        }])
-        resetForm();
-        onClose();
+        } catch (e) {
+            console.error(e);
+        }
+
+
     };
 
     useEffect(() => {
@@ -102,6 +142,13 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
+                    {error &&
+                        <>
+                            <div className={classes.warningMessage}>
+                                <strong>Внимание:</strong> <br /> {error}
+                            </div>
+                        </>
+                    }
                     <label>Город</label>
                     <select name="city" value={formData.city} onChange={handleChange}>
                         <option value="">Выберите город</option>
@@ -132,9 +179,12 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
                         type="number"
                         name="passengers"
                         placeholder="Пример: 30"
+                        min="1"
+                        max={request.passengerCount}
                         value={formData.passengers}
                         onChange={handleChange}
                     />
+
                 </div>
             </div>
 
