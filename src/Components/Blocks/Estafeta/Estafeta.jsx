@@ -25,6 +25,7 @@ function Estafeta({ children, user, ...props }) {
     const { loading, error, data, refetch } = useQuery(GET_REQUESTS, {
         variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
     });
+
     const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION);
     const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION);
 

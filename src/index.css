@@ -34,7 +34,8 @@ main {
     padding-bottom: 80px;
 }
 
-input, select{
+input,
+select {
     height: 40px;
     border: 1px solid var(--text-gray);
     outline: none;
@@ -91,6 +92,13 @@ input[type="file"] {
     height: 10px;
     border-radius: 50%;
     background-color: var(--text-gray);
+}
+
+.opened {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: rgb(125, 107, 255);
 }
 
 .react-tabs__tab--selected {

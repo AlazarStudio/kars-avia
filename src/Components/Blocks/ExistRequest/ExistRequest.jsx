@@ -131,7 +131,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         variables: { requestId: chooseRequestID },
     });
 
-    const [messages, setMessages] = useState();
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         if (messageData) {
@@ -291,7 +291,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         <div className={classes.tabs}>
                             <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
 
-                            {formData.status !== 'created' &&
+                            {formData.status !== 'created' && formData.status !== 'opened' &&
                                 <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
                             }
                             <div className={`${classes.tab} ${activeTab === 'Комментарии' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Комментарии')}>Комментарии</div>
@@ -329,7 +329,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                     <div className={classes.requestDataInfo_desc}>{formData.mealPlan.included ? 'Включено' : 'Не включено'}</div>
                                 </div>
 
-                                {formData.mealPlan.included && formData.status !== 'created' &&
+                                {formData.mealPlan.included && formData.status !== 'created' && formData.status !== 'opened' &&
                                     <>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Завтрак</div>
@@ -346,7 +346,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                     </>
                                 }
 
-                                {formData.status !== 'created' &&
+                                {formData.status !== 'created' && formData.status !== 'opened' &&
                                     <>
                                         <div className={classes.requestDataTitle}>
                                             Информация о заявке
@@ -377,7 +377,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         )}
                         {activeTab === 'Доп. услуги' && (
                             <div className={classes.requestData}>
-                                {formData.status !== 'created' &&
+                                {formData.status !== 'created' && formData.status !== 'opened' &&
                                     <>
                                         <div className={classes.requestDataTitle}>
                                             Добавить питание
@@ -415,7 +415,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         {activeTab === 'Комментарии' && (
                             <div className={classes.requestData}>
                                 <div className={classes.requestData_messages} style={{ height: formData.status == 'done' && 'calc(100vh - 240px)' }}>
-                                    {messages.messages.map((message, index) => (
+                                    {messages?.messages.map((message, index) => (
                                         <div className={`${classes.requestData_message_full} ${message.sender.id == user.userId && classes.myMes}`} key={index}>
                                             <div className={classes.requestData_message}>
                                                 <div className={classes.requestData_message_text}>

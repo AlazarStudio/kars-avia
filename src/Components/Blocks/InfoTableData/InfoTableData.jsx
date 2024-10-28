@@ -83,6 +83,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                             <div className={classes.InfoTable_data_elem_position}>
                                 <div className={item.status}></div>
                                 {item.status == 'created' && 'Создан'}
+                                {item.status == 'opened' && 'Открыт'}
                                 {item.status == 'processing' && 'В обработке'}
                                 {item.status == 'cancelled' && 'Отменен'}
                                 {item.status == 'done' && 'Готово'}
