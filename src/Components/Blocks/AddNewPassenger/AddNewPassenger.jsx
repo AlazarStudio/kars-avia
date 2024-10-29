@@ -80,25 +80,12 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
             });
 
             if (reserverAddHotel.data) {
-                setPlacement([...placement, {
-                    hotel: {
-                        name: formData.hotel,
-                        passengersCount: formData.passengers,
-                        city: formData.city,
-                        requestId: formData.requestId,
-                        passengers: [],
-                        person: [],
-                    }
-                }])
-
                 resetForm();
                 onClose();
             }
         } catch (e) {
             console.error(e);
         }
-
-
     };
 
     useEffect(() => {
@@ -130,7 +117,6 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
     const filteredHotels = formData.city
         ? hotels.filter((hotel) => hotel.city.trim() === formData.city.trim())
         : [];
-
 
     // console.log(formData)
     return (

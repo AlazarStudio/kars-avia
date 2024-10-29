@@ -12,24 +12,121 @@ import AddNewPassenger from "../../Blocks/AddNewPassenger/AddNewPassenger";
 import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
 import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
-import { useQuery } from "@apollo/client";
-import { GET_HOTELS_RELAY, GET_RESERVE_REQUEST } from "../../../../graphQL_requests";
+import { useQuery, useSubscription } from "@apollo/client";
+import { GET_HOTELS_RELAY, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS } from "../../../../graphQL_requests";
 
 function ReservePlacement({ children, user, ...props }) {
     let { idRequest } = useParams();
     const [request, setRequest] = useState([]);
     const [placement, setPlacement] = useState([]);
 
-    const { loading, error, data } = useQuery(GET_RESERVE_REQUEST, {
+    const { data: subscriptionData } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION);
+    const { data: subscriptionDataPerson } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS);
+
+    const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUEST, {
         variables: { reserveId: idRequest },
     });
 
+    const { loading: loadingHotel, error: errorHotel, data: dataHotel, refetch: refetchHotel } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+        variables: { reservationHotelsId: idRequest },
+    });
+
     useEffect(() => {
-        if (data && data.reserve) {
-            setRequest(data?.reserve || []);
-            setPlacement(data?.reserve.person || []);
+        if (data && data.reserve && dataHotel) {
+            setRequest(data.reserve);
+
+            const transformedData = dataHotel.reservationHotels.map(item => ({
+                hotel: {
+                    id: item.hotel.id,
+                    name: item.hotel.name,
+                    passengersCount: item.capacity.toString(),
+                    city: item.hotel.city,
+                    requestId: item.reserve.id,
+                    passengers: item.passengers.map((passenger, index) => ({
+                        name: passenger.name || "не указано",
+                        gender: passenger.gender || "не указано",
+                        number: passenger.number || "не указано",
+                        type: passenger.type || "не указано",
+                        order: index + 1,
+                        id: passenger.id || `id-${index}`
+                    })),
+                    person: item.person
+                }
+            }));
+
+            setPlacement(transformedData);
+
+            // Обработка подписки для новой гостиницы
+            if (subscriptionData) {
+                const newHotelData = {
+                    hotel: {
+                        id: subscriptionData.reserveHotel.hotel.id,
+                        name: subscriptionData.reserveHotel.hotel.name,
+                        passengersCount: subscriptionData.reserveHotel.capacity.toString(),
+                        city: subscriptionData.reserveHotel.hotel.city,
+                        requestId: subscriptionData.reserveHotel.reserve.id,
+                        passengers: subscriptionData.reserveHotel.passengers.map((passenger, index) => ({
+                            name: passenger.name || "не указано",
+                            gender: passenger.gender || "не указано",
+                            number: passenger.number || "не указано",
+                            type: passenger.type || "не указано",
+                            order: index + 1,
+                            id: passenger.id || `id-${index}`
+                        })),
+                        person: subscriptionData.reserveHotel.person
+                    }
+                };
+
+                setPlacement(prevPlacement => {
+                    const isDuplicate = prevPlacement.some(item => item.hotel.id === newHotelData.hotel.id);
+                    return isDuplicate ? prevPlacement : [...prevPlacement, newHotelData];
+                });
+            }
+
+            // Обработка подписки для сотрудников и пассажиров
+            if (subscriptionDataPerson) {
+                const { reservePersons } = subscriptionDataPerson;
+                const hotelId = reservePersons.reserveHotel.id;
+
+                setPlacement(prevPlacement =>
+                    prevPlacement.map(hotelData => {
+                        if (hotelData.hotel.id === hotelId) {
+                            return {
+                                ...hotelData,
+                                hotel: {
+                                    ...hotelData.hotel,
+                                    passengers: [
+                                        ...hotelData.hotel.passengers,
+                                        ...reservePersons.passengers.map((passenger, index) => ({
+                                            name: passenger.name || "не указано",
+                                            gender: passenger.gender || "не указано",
+                                            number: passenger.number || "не указано",
+                                            type: passenger.type || "не указано",
+                                            order: hotelData.hotel.passengers.length + index + 1,
+                                            id: passenger.id || `id-${index}`
+                                        }))
+                                    ],
+                                    person: [
+                                        ...hotelData.hotel.person,
+                                        ...reservePersons.person.map(person => ({
+                                            id: person.id,
+                                            name: person.name,
+                                            number: person.number || "не указано",
+                                            gender: person.gender || "не указано"
+                                        }))
+                                    ]
+                                }
+                            };
+                        }
+                        return hotelData;
+                    })
+                );
+            }
+
+            refetch();
+            refetchHotel();
         }
-    }, [data]);
+    }, [data, dataHotel, subscriptionData, subscriptionDataPerson]);
 
 
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -71,6 +168,7 @@ function ReservePlacement({ children, user, ...props }) {
     };
 
     const removePassenger = (guest) => {
+        console.log(guest)
         setPlacement((prevPlacement) =>
             prevPlacement.map((item) => {
                 // Копируем отель, чтобы изменить его списки
@@ -140,10 +238,10 @@ function ReservePlacement({ children, user, ...props }) {
     const filteredPlacement = placement
         .map((item) => {
             const filteredPassengers = item.hotel.passengers.filter((passenger) =>
-                passenger.passenger.toLowerCase().includes(searchQuery.toLowerCase())
+                passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
             const filteredPersons = item.hotel.person.filter((person) =>
-                person.passenger.toLowerCase().includes(searchQuery.toLowerCase())
+                person.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
 
             const isHotelMatch = item.hotel.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -162,6 +260,7 @@ function ReservePlacement({ children, user, ...props }) {
             return null;
         })
         .filter((item) => item !== null);
+
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />

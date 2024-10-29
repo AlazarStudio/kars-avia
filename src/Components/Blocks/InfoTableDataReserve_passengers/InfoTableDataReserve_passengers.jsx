@@ -2,27 +2,31 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './InfoTableDataReserve_passengers.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
-import { GET_AIRLINES_RELAY } from "../../../../graphQL_requests";
-import { useQuery } from "@apollo/client";
+import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINES_RELAY, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
 function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, request, airline }) {
+    const token = getCookie('token');
+
     const [editingId, setEditingId] = useState(null);
     const [editedData, setEditedData] = useState({});
     const [isAddingNewPassenger, setIsAddingNewPassenger] = useState(false);
     const [isAddingNewPerson, setIsAddingNewPerson] = useState(false);
+    const [currentHotelID, setCurrentHotelID] = useState(null);
     const [newPassengerData, setNewPassengerData] = useState({
-        passenger: '',
+        name: '',
         gender: '',
-        phone: '',
+        number: '',
         type: 'Пассажир',
         order: ''
     });
     const [newPersonData, setNewPersonData] = useState({
-        passenger: '',
+        name: '',
         gender: '',
-        phone: '',
+        number: '',
         type: 'Сотрудник',
-        order: ''
+        order: '',
+        id: ''
     });
     const [currentHotelIndex, setCurrentHotelIndex] = useState(null);
 
@@ -51,8 +55,8 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
             const hotel = updatedPlacement[hotelIndex];
 
             if (editedData.type === 'Пассажир') {
-                hotel.hotel.passengers = hotel.hotel.passengers.map((passenger) =>
-                    passenger.id === editingId ? { ...passenger, ...editedData } : passenger
+                hotel.hotel.passengers = hotel.hotel.passengers.map((name) =>
+                    name.id === editingId ? { ...name, ...editedData } : name
                 );
             } else {
                 hotel.hotel.person = hotel.hotel.person.map((person) =>
@@ -67,68 +71,104 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         setEditedData({});
     };
 
-    const handleAddNewPassenger = () => {
-        if (currentHotelIndex === null) return;
+    const [createRequestPassenger] = useMutation(ADD_PASSENGER_TO_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
-        setPlacement((prevPlacement) => {
-            const updatedPlacement = [...prevPlacement];
-            const hotel = updatedPlacement[currentHotelIndex];
+    const handleAddNewPassenger = async () => {
+        try {
+            if (currentHotelIndex === null) return;
 
-            const newPassenger = { ...newPassengerData, id: Date.now(), order: hotel.hotel?.passengers?.length + hotel.hotel?.person?.length + 1 };
-            hotel.hotel.passengers.push(newPassenger);
+            let reserverAddHotelPassenger = await createRequestPassenger({
+                variables: {
+                    hotelId: currentHotelID,
+                    input: {
+                        name: newPassengerData.name,
+                        number: newPassengerData.number,
+                        gender: newPassengerData.gender
+                    },
+                    reservationId: request.id
+                }
+            });
 
-            return updatedPlacement;
-        });
+            if (reserverAddHotelPassenger.data) {
+                setIsAddingNewPassenger(false);
+                setNewPassengerData({
+                    name: '',
+                    gender: '',
+                    number: '',
+                    type: 'Пассажир',
+                    order: ''
+                });
 
-        setIsAddingNewPassenger(false);
-        setNewPassengerData({
-            passenger: '',
-            gender: '',
-            phone: '',
-            type: 'Пассажир',
-            order: ''
-        });
-        setCurrentHotelIndex(null);
+                setCurrentHotelIndex(null);
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const handleAddNewPerson = () => {
-        if (currentHotelIndex === null) return;
+    const [createRequest] = useMutation(ADD_PERSON_TO_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
-        setPlacement((prevPlacement) => {
-            const updatedPlacement = [...prevPlacement];
-            const hotel = updatedPlacement[currentHotelIndex];
+    const handleAddNewPerson = async () => {
+        try {
+            if (currentHotelIndex === null) return;
 
-            const newPerson = { ...newPersonData, id: Date.now(), order: hotel.hotel?.passengers?.length + hotel.hotel?.person?.length + 1 };
-            hotel.hotel.person.push(newPerson);
+            let reserverAddHotel = await createRequest({
+                variables: {
+                    input: {
+                        hotelId: currentHotelID,
+                        personId: newPersonData.id,
+                        reservationId: request.id
+                    }
+                }
+            });
 
-            return updatedPlacement;
-        });
-
-        setIsAddingNewPerson(false);
-        setNewPersonData({
-            passenger: '',
-            gender: '',
-            phone: '',
-            type: 'Сотрудник',
-            order: ''
-        });
-        setCurrentHotelIndex(null);
+            if (reserverAddHotel.data) {
+                setIsAddingNewPerson(false);
+                setNewPersonData({
+                    name: '',
+                    gender: '',
+                    number: '',
+                    type: 'Сотрудник',
+                    order: '',
+                    id: ''
+                });
+                setCurrentHotelIndex(null);
+            }
+        } catch (e) {
+            console.error(e);
+        }
     };
 
-    const startAddingNewPassenger = (hotelIndex) => {
+    const startAddingNewPassenger = (hotelIndex, hotelID) => {
         setIsAddingNewPassenger(true);
         setIsAddingNewPerson(false);
         setCurrentHotelIndex(hotelIndex);
+        setCurrentHotelID(hotelID)
 
         setTimeout(() => {
             newGuestRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }, 100);
     };
 
-    const startAddingNewPerson = (hotelIndex) => {
+    const startAddingNewPerson = (hotelIndex, hotelID) => {
         setIsAddingNewPerson(true);
         setIsAddingNewPassenger(false);
         setCurrentHotelIndex(hotelIndex);
+        setCurrentHotelID(hotelID)
 
         setTimeout(() => {
             newGuestRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -137,8 +177,8 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
 
     const getAllGuests = (hotel) => {
         return [
-            ...hotel.passengers.map((passenger) => ({
-                ...passenger,
+            ...hotel.passengers.map((name) => ({
+                ...name,
                 type: 'Пассажир',
             })),
             ...hotel.person.map((person) => ({
@@ -168,40 +208,17 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
 
     // Получаем имена сотрудников, которые уже добавлены в текущем отеле
     const addedStaffNames = placement
-        .flatMap(item => item.hotel.person.map(person => person.passenger));
+        .flatMap(item => item.hotel.person.map(person => person.name));
 
-    const handleChangePerson = (hotelIndex, personId, selectedName) => {
+    const handleChangePerson = (field, value, selectedName) => {
         const selectedStaff = selectedAirline.find((staff) => staff.name === selectedName);
 
-        setPlacement((prevPlacement) => {
-            return prevPlacement.map((item, index) => {
-                const updatedHotel = { ...item.hotel };
-
-                // Если это текущий отель, обновляем данные сотрудника
-                if (index === hotelIndex) {
-                    updatedHotel.person = updatedHotel.person.map((person) => {
-                        if (person.id === personId) {
-                            return {
-                                ...person,
-                                passenger: selectedName,
-                                gender: selectedStaff?.gender || '',
-                                phone: selectedStaff?.number || '',
-                            };
-                        }
-                        return person;
-                    });
-                } else {
-                    // Удаляем сотрудника из всех остальных отелей, если он уже был там добавлен
-                    updatedHotel.person = updatedHotel.person.filter(
-                        (person) => person.passenger !== selectedName
-                    );
-                }
-
-                return { ...item, hotel: updatedHotel };
-            });
-        });
-
-        setEditingId(null); // Закрываем режим редактирования
+        setEditedData((prev) => ({
+            ...prev,
+            name: selectedStaff.name,
+            gender: selectedStaff.gender,
+            number: selectedStaff.number,
+        }));
     };
 
     return (
@@ -226,8 +243,8 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                 </div>
 
                                 <div className={classes.blockInfoShow}>
-                                    <Button onClick={() => startAddingNewPassenger(hotelIndex)}><img src="/plus.png" alt="" /> Пассажир</Button>
-                                    <Button onClick={() => startAddingNewPerson(hotelIndex)}><img src="/plus.png" alt="" /> Сотрудник</Button>
+                                    {request.reserveForPerson == false && getAllGuests(item.hotel).length < item.hotel.passengersCount && <Button onClick={() => startAddingNewPassenger(hotelIndex, item.hotel.id)}><img src="/plus.png" alt="" /> Пассажир</Button>}
+                                    {request.reserveForPerson == true && getAllGuests(item.hotel).length < item.hotel.passengersCount && <Button onClick={() => startAddingNewPerson(hotelIndex, item.hotel.id)}><img src="/plus.png" alt="" /> Сотрудник</Button>}
                                 </div>
                             </div>
                         </div>
@@ -239,25 +256,29 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                         editingId === guest.id ? (
                                             guest.type === 'Сотрудник' ? (
                                                 <select
-                                                    value={editedData.passenger || ''}
+                                                    value={editedData.name || ''}
                                                     onChange={(e) => handleChangePerson(hotelIndex, guest.id, e.target.value)}
                                                 >
                                                     <option value="">Выберите сотрудника</option>
                                                     {selectedAirline.map((staff) => (
-                                                        <option key={staff.id} value={staff.name}>
-                                                            {staff.name}
+                                                        <option
+                                                            key={staff.id}
+                                                            value={staff.name}
+                                                            disabled={addedStaffNames.includes(staff.name)}
+                                                        >
+                                                            {staff.name} {addedStaffNames.includes(staff.name) ? '(уже добавлен)' : ''}
                                                         </option>
                                                     ))}
                                                 </select>
                                             ) : (
                                                 <input
                                                     type="text"
-                                                    value={editedData.passenger || ''}
-                                                    onChange={(e) => handleChange('passenger', e.target.value)}
+                                                    value={editedData.name || ''}
+                                                    onChange={(e) => handleChange('name', e.target.value)}
                                                 />
                                             )
                                         ) : (
-                                            guest.passenger
+                                            guest.name
                                         )
                                     }
                                 </div>
@@ -266,6 +287,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                         <select
                                             value={editedData.gender || ''}
                                             onChange={(e) => handleChange('gender', e.target.value)}
+                                            disabled
                                         >
                                             <option value="">Выберите пол</option>
                                             <option value="Мужской">Мужской</option>
@@ -279,11 +301,12 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                     {editingId === guest.id ? (
                                         <input
                                             type="text"
-                                            value={editedData.phone || ''}
-                                            onChange={(e) => handleChange('phone', e.target.value)}
+                                            value={editedData.number || ''}
+                                            onChange={(e) => handleChange('number', e.target.value)}
+                                            disabled
                                         />
                                     ) : (
-                                        guest.phone || '-'
+                                        guest.number || '-'
                                     )}
                                 </div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
@@ -294,13 +317,14 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                         <Button onClick={() => handleSave(hotelIndex)}>Сохранить</Button>
                                     ) : (
                                         <>
-                                            <img src="/editPassenger.png" alt="" onClick={() => handleEdit(guest.id, guest)} />
+                                            {request.reserveForPerson == false && <img src="/editPassenger.png" alt="" onClick={() => handleEdit(guest.id, guest)} />}
                                             <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(guest)} />
                                         </>
                                     )}
                                 </div>
                             </div>
                         ))}
+
                         {(isAddingNewPassenger && currentHotelIndex === hotelIndex) && (
                             <div className={classes.InfoTable_data} ref={newGuestRef}>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
@@ -308,8 +332,8 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                     <input
                                         type="text"
                                         placeholder="ФИО пассажира"
-                                        value={newPassengerData.passenger}
-                                        onChange={(e) => setNewPassengerData({ ...newPassengerData, passenger: e.target.value })}
+                                        value={newPassengerData.name}
+                                        onChange={(e) => setNewPassengerData({ ...newPassengerData, name: e.target.value })}
                                     />
                                 </div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
@@ -326,8 +350,8 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                     <input
                                         type="text"
                                         placeholder="Номер телефона"
-                                        value={newPassengerData.phone}
-                                        onChange={(e) => setNewPassengerData({ ...newPassengerData, phone: e.target.value })}
+                                        value={newPassengerData.number}
+                                        onChange={(e) => setNewPassengerData({ ...newPassengerData, number: e.target.value })}
                                     />
                                 </div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
@@ -340,16 +364,17 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
                                     <select
-                                        value={newPersonData.passenger}
+                                        value={newPersonData.name}
                                         onChange={(e) => {
                                             const selectedName = e.target.value;
                                             const selectedStaff = selectedAirline.find((staff) => staff.name === selectedName);
 
                                             setNewPersonData({
                                                 ...newPersonData,
-                                                passenger: selectedName,
+                                                name: selectedName,
                                                 gender: selectedStaff?.gender || '',
-                                                phone: selectedStaff?.number || '',
+                                                number: selectedStaff?.number || '',
+                                                id: selectedStaff?.id || ''
                                             });
                                         }}
                                     >
@@ -379,8 +404,8 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                     <input
                                         type="text"
                                         placeholder="Номер телефона"
-                                        value={newPersonData.phone}
-                                        onChange={(e) => setNewPersonData({ ...newPersonData, phone: e.target.value })}
+                                        value={newPersonData.number}
+                                        onChange={(e) => setNewPersonData({ ...newPersonData, number: e.target.value })}
                                     />
                                 </div>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>

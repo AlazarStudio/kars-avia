@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 
-export const path = '192.168.0.112:4000';
-// export const path = '89.169.39.59:4000';
+// export const path = '192.168.0.112:4000';
+export const path = '89.169.39.59:4000';
 
 export const server = `http://${path}`;
 
@@ -721,6 +721,7 @@ export const GET_RESERVE_REQUEST = gql`
       }
       reserveNumber
       passengerCount
+      reserveForPerson
     }
   }
 `;
@@ -728,6 +729,102 @@ export const GET_RESERVE_REQUEST = gql`
 export const ADD_HOTEL_TO_RESERVE = gql`
   mutation AddHotelToReserve($reservationId: ID!, $hotelId: ID!, $capacity: Int!) {
     addHotelToReserve(reservationId: $reservationId, hotelId: $hotelId, capacity: $capacity) {
+      id
+    }
+  }
+`;
+
+export const GET_RESERVE_REQUEST_HOTELS = gql`
+  query ReservationHotels($reservationHotelsId: ID!) {
+    reservationHotels(id: $reservationHotelsId) {
+      id
+      hotel {
+        id
+        name
+        city
+      }
+      passengers {
+        id
+        name
+        number
+        gender
+      }
+      capacity
+      person {
+        id
+        name
+        number
+        gender
+      }
+      reserve {
+        id
+      }
+    }
+  }
+`;
+
+export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION = gql`
+  subscription ReserveHotel {
+    reserveHotel {
+      id
+      hotel {
+        id
+        name
+        city
+      }
+      passengers {
+        id
+        name
+        number
+        gender
+      }
+      capacity
+      person {
+        id
+        name
+        number
+        gender
+      }
+      reserve {
+        id
+      }
+    }
+  }
+`;
+
+export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS = gql`
+  subscription ReservePersons {
+    reservePersons {
+      reserveHotel {
+        id
+      }
+      passengers {
+        id
+        name
+        number
+        gender
+      }
+      person {
+        id
+        name
+        number
+        gender
+      }
+    }
+  }
+`;
+
+export const ADD_PERSON_TO_HOTEL = gql`
+  mutation AssignPersonToHotel($input: assignPersonInput!) {
+    assignPersonToHotel(input: $input) {
+      id
+    }
+  }
+`;
+
+export const ADD_PASSENGER_TO_HOTEL = gql`
+  mutation Mutation($reservationId: ID!, $input: PassengerInput!, $hotelId: ID!) {
+    addPassengerToReserve(reservationId: $reservationId, input: $input, hotelId: $hotelId) {
       id
     }
   }

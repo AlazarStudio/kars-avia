@@ -10,6 +10,7 @@ function CreateRequestReserve({ show, onClose, user }) {
     const [userID, setUserID] = useState();
 
     const [formData, setFormData] = useState({
+        reserveForPerson: '',
         airlineId: '',
         city: '',
         airportId: '',
@@ -43,6 +44,7 @@ function CreateRequestReserve({ show, onClose, user }) {
 
     const resetForm = () => {
         setFormData({
+            reserveForPerson: '',
             airlineId: '',
             city: '',
             airportId: '',
@@ -58,7 +60,7 @@ function CreateRequestReserve({ show, onClose, user }) {
                 lunch: false,
                 dinner: false,
             },
-            senderId: ''
+            senderId: userID
         });
     };
 
@@ -73,7 +75,12 @@ function CreateRequestReserve({ show, onClose, user }) {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
 
-        if (type === 'checkbox') {
+        if (name === 'reserveForPerson') {
+            setFormData(prevState => ({
+                ...prevState,
+                [name]: value === 'true' // Преобразуем строку в boolean
+            }));
+        } else if (type === 'checkbox') {
             setFormData(prevState => ({
                 ...prevState,
                 mealPlan: {
@@ -174,6 +181,7 @@ function CreateRequestReserve({ show, onClose, user }) {
             senderId: formData.senderId,
             airlineId: formData.airlineId,
             passengerCount: Number(formData.passengerCount),
+            reserveForPerson: formData.reserveForPerson
         };
 
         try {
@@ -194,6 +202,14 @@ function CreateRequestReserve({ show, onClose, user }) {
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
+
+                    <label>Тип заявки</label>
+                    <select name="reserveForPerson" value={formData.reserveForPerson} onChange={handleChange}>
+                        <option value="" disabled>Выберите тип</option>
+                        <option value={true}>Заявка для экипажа</option>
+                        <option value={false}>Заявка для пассажиров</option>
+                    </select>
+
                     <label>Авиакомпания</label>
                     <select name="airlineId" value={formData.airlineId} onChange={handleChange}>
                         <option value="" disabled>Выберите авиакомпанию</option>
