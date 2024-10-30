@@ -168,7 +168,6 @@ function ReservePlacement({ children, user, ...props }) {
     };
 
     const removePassenger = (guest) => {
-        console.log(guest)
         setPlacement((prevPlacement) =>
             prevPlacement.map((item) => {
                 // Копируем отель, чтобы изменить его списки
@@ -269,7 +268,7 @@ function ReservePlacement({ children, user, ...props }) {
                 <div className={classes.section_top}>
                     <Header>
                         <div className={classes.titleHeader}>
-                            <Link to={'/reserve'} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
+                            <Link to={user.role == 'HOTELADMIN' ? '/reserveRequests' : '/reserve'} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
                             Заявка {request.reserveNumber}
                         </div>
                     </Header>

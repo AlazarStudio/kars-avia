@@ -446,8 +446,8 @@ export const GET_BRONS_HOTEL = gql`
 `;
 
 export const GET_MESSAGES_HOTEL = gql`
-  query Requests($requestId: ID!) {
-    chats(requestId: $requestId) {
+  query Requests($requestId: ID!, $reserveId: ID) {
+    chats(requestId: $requestId, reserveId: $reserveId) {
       id
       messages {
         text

@@ -4,6 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
 import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINES_RELAY, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import Message from "../Message/Message";
 
 function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, request, airline }) {
     const token = getCookie('token');
@@ -429,8 +430,8 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                 </div>
             </InfoTable>
 
-            <div style={{ width: '500px', backgroundColor: '#fff', borderRadius: '8px', padding: '10px' }}>
-                чат
+            <div style={{ width: '500px', backgroundColor: '#fff', borderRadius: '8px', padding: '20px' }}>
+                <Message activeTab={"Комментарий"} chooseRequestID={''} chooseReserveID={request.id} token={token} user={user} chatPadding={'0'} chatHeight={'615px'} />
             </div>
         </div>
     );
