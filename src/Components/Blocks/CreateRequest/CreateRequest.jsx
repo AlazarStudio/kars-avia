@@ -5,6 +5,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
 import { useNavigate } from "react-router-dom";
+import DropDownList from "../DropDownList/DropDownList";
 
 function CreateRequest({ show, onClose, user }) {
     const token = getCookie('token');
@@ -306,7 +307,7 @@ function CreateRequest({ show, onClose, user }) {
 
     function convertToDate(timestamp) {
         const date = new Date(timestamp);
-        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
+        return date.toLocaleDateString();
     }
 
     useEffect(() => {
@@ -337,55 +338,68 @@ function CreateRequest({ show, onClose, user }) {
                         )}
 
                         <label>Авиакомпания</label>
-                        <select name="airlineId" value={formData.airlineId} onChange={handleAirlineChange}>
-                            <option value="" disabled>Выберите авиакомпанию</option>
-                            {airlines.map(airline => (
-                                <option key={airline.id} value={airline.id}>
-                                    {airline.name}
-                                </option>
-                            ))}
-                        </select>
+
+                        <DropDownList
+                            placeholder={'Введите авиакомпанию'}
+                            options={airlines.map(airline => airline.name)}
+                            initialValue={selectedAirline?.name || ""}
+                            onSelect={(value) => {
+                                const selectedAirline = airlines.find(airline => airline.name === value);
+                                setSelectedAirline(selectedAirline);
+                                setFormData(prevFormData => ({
+                                    ...prevFormData,
+                                    airlineId: selectedAirline?.id || ""
+                                }));
+                            }}
+                        />
 
                         {selectedAirline && (
                             <>
                                 <label>Сотрудник авиакомпании</label>
-                                <select
-                                    name="personId"
-                                    value={formData.personId}
-                                    onChange={handleStaffChange}
-                                    disabled={!selectedAirline}
-                                >
-                                    <option value="" disabled>Выберите сотрудника</option>
-                                    {selectedAirline.staff.map(personal => (
-                                        <option key={personal.id} value={personal.id}>
-                                            {personal.name} ({personal.position})
-                                        </option>
-                                    ))}
-                                </select>
+                                <DropDownList
+                                    placeholder={'Введите сотрудника'}
+                                    options={selectedAirline.staff.map(person => person.name)}
+                                    initialValue={selectedAirline.staff.find(person => person.id === formData.personId)?.name || ""}
+                                    onSelect={(value) => {
+                                        const selectedPerson = selectedAirline.staff.find(person => person.name === value);
+                                        setFormData(prevFormData => ({
+                                            ...prevFormData,
+                                            personId: selectedPerson?.id || ""
+                                        }));
+                                    }}
+                                />
                             </>
                         )}
 
                         <label>Город</label>
-                        <select name="city" value={formData.city} onChange={handleChange}>
-                            <option value="" disabled>Выберите город</option>
-                            {uniqueCities.map(city => (
-                                <option key={city} value={city}>
-                                    {city}
-                                </option>
-                            ))}
-                        </select>
+                        <DropDownList
+                            placeholder={'Введите город'}
+                            options={uniqueCities}
+                            initialValue={formData.city}
+                            onSelect={(value) => {
+                                setFormData(prevFormData => ({
+                                    ...prevFormData,
+                                    city: value,
+                                    airportId: ""
+                                }));
+                            }}
+                        />
 
                         {formData.city && (
                             <>
                                 <label>Аэропорт</label>
-                                <select name="airportId" value={formData.airportId} onChange={handleChange} disabled={!formData.city}>
-                                    <option value="" disabled>Выберите аэропорт</option>
-                                    {filteredAirports.map(airport => (
-                                        <option key={airport.id} value={airport.id}>
-                                            {airport.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                <DropDownList
+                                    placeholder={'Введите аэропорт'}
+                                    options={filteredAirports.map(airport => airport.name)}
+                                    initialValue={filteredAirports.find(airport => airport.id === formData.airportId)?.name || ""}
+                                    onSelect={(value) => {
+                                        const selectedAirport = filteredAirports.find(airport => airport.name === value);
+                                        setFormData(prevFormData => ({
+                                            ...prevFormData,
+                                            airportId: selectedAirport?.id || ""
+                                        }));
+                                    }}
+                                />
                             </>
                         )}
 

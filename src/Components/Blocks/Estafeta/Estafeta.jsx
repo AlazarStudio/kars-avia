@@ -9,6 +9,7 @@ import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
 import { GET_AIRLINE, GET_AIRLINES_RELAY, GET_REQUESTS, GET_USER_BRONS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
 import { useQuery, useSubscription } from "@apollo/client";
+import DropDownList from "../DropDownList/DropDownList.jsx";
 
 function Estafeta({ children, user, ...props }) {
     let pageNumberRelay = useLocation().search.split("=")[1];
@@ -170,7 +171,6 @@ function Estafeta({ children, user, ...props }) {
 
         return matchesAirline && matchesSelect && matchesDate && matchesSearchQuery;
     });
-
 
     let filterList = ['Азимут', 'S7 airlines', 'Северный ветер']
 
