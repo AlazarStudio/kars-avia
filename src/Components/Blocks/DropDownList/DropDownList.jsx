@@ -77,3 +77,56 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect 
 }
 
 export default DropDownList;
+
+
+/*
+
+<DropDownList
+    placeholder={'Введите авиакомпанию'}
+    options={airlines.map(airline => airline.name)}
+    initialValue={selectedAirline?.name || ""}
+    onSelect={(value) => {
+        const selectedAirline = airlines.find(airline => airline.name === value);
+        setSelectedAirline(selectedAirline);
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            airlineId: selectedAirline?.id || ""
+        }));
+    }}
+/>
+
+Параметры DropDownList
+placeholder={'Введите авиакомпанию'}:
+
+Отвечает за текст-подсказку в поле ввода, когда оно пустое.
+В этом случае, если поле ввода не содержит значения, в нем будет отображаться текст "Введите авиакомпанию".
+options={airlines.map(airline => airline.name)}:
+
+Передает в DropDownList массив опций для выпадающего списка.
+airlines.map(airline => airline.name) создает массив, содержащий только названия авиакомпаний из полного массива airlines.
+Этот массив будет использоваться для отображения доступных вариантов авиакомпаний в выпадающем списке.
+initialValue={selectedAirline?.name || ""}:
+
+Устанавливает начальное значение поля ввода в DropDownList.
+Если selectedAirline задан, selectedAirline?.name установит его имя как начальное значение.
+Если selectedAirline отсутствует (например, при первой загрузке), используется пустая строка "", чтобы поле было пустым.
+onSelect={(value) => { ... }}:
+
+Обработчик события, который вызывается при выборе значения из выпадающего списка.
+В данном случае value — это выбранное название авиакомпании.
+Внутри onSelect происходит следующее:
+const selectedAirline = airlines.find(airline => airline.name === value);
+
+Находит объект авиакомпании в массиве airlines, название которой (airline.name) совпадает с выбранным value.
+selectedAirline будет содержать полную информацию об авиакомпании, а не только название.
+setSelectedAirline(selectedAirline);
+
+Обновляет selectedAirline, сохраняя выбранный объект авиакомпании для дальнейшего использования.
+Это позволит, например, отобразить информацию о сотрудниках данной авиакомпании.
+setFormData(prevFormData => ({ ...prevFormData, airlineId: selectedAirline?.id || "" }));
+
+Обновляет состояние formData, добавляя или изменяя поле airlineId на ID выбранной авиакомпании.
+Используется запись ...prevFormData для сохранения предыдущих значений полей формы.
+airlineId: selectedAirline?.id || "" устанавливает airlineId в ID выбранной авиакомпании, или в пустую строку, если selectedAirline отсутствует.
+
+*/
