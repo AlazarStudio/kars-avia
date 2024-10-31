@@ -13,10 +13,10 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
         <InfoTable>
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Название</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w50}`}>Название</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Город</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Адрес</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Квота</div>
+                {/* <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Квота</div> */}
             </div>
 
             <div className={classes.bottom}>
@@ -27,10 +27,10 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
                         key={index}
                     >
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w50}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={`${server}${item.images}`} alt="" />
+                                    <img src={item.images.length != 0 ? `${server}${item.images}` : '/no-avatar.png'} alt="" />
                                 </div>
                                 <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
@@ -41,9 +41,9 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
                         <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
                             <div className={classes.InfoTable_data_elem_title}>{item.address}</div>
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                        {/* <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_title}>{item.quote}</div>
-                        </div>
+                        </div> */}
                     </Link>
                 ))}
             </div>

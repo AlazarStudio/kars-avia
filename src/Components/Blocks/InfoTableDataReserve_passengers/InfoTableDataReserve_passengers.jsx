@@ -223,6 +223,11 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
     };
 
     // console.log(placement)
+    // Получаем список отелей для отображения
+    const filteredPlacement = user.hotelId
+        ? placement.filter(item => item.hotel.id === user.hotelId)
+        : placement;
+
 
     return (
         // Сделать отдельную компоненту для чата
@@ -237,8 +242,8 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                     <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Действия</div>
                 </div>
 
-                <div className={classes.bottom}>
-                    {placement.map((item, hotelIndex) => (
+                <div className={classes.bottom} style={{ height: user.role == 'HOTELADMIN' && 'calc(100vh)' }}>
+                    {filteredPlacement.map((item, hotelIndex) => (
                         <React.Fragment key={hotelIndex}>
                             <div className={`${classes.InfoTable_data} ${classes.stickyHeader}`}>
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w100}`}>
@@ -322,7 +327,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                             <Button onClick={() => handleSave(hotelIndex)}>Сохранить</Button>
                                         ) : (
                                             <>
-                                                {request.reserveForPerson == false && <img src="/editPassenger.png" alt="" onClick={() => handleEdit(guest.id, guest)} />}
+                                                {/* {request.reserveForPerson == false && <img src="/editPassenger.png" alt="" onClick={() => handleEdit(guest.id, guest)} />} */}
                                                 <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(guest)} />
                                             </>
                                         )}
@@ -422,17 +427,17 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                     ))}
                 </div>
 
-                <div className={classes.counting}>
+                {user.role != "HOTELADMIN" && <div className={classes.counting}>
                     <div className={classes.countingPeople}>
                         <img src="/peopleCount.png" alt="" />
                         {placement.length} отелей, {getTotalGuests()} из {request.passengerCount} гостей
                     </div>
-                </div>
+                </div>}
             </InfoTable>
 
-            <div style={{ width: '500px', backgroundColor: '#fff', borderRadius: '8px', padding: '20px' }}>
+            {user.role != "HOTELADMIN" && <div style={{ width: '500px', backgroundColor: '#fff', borderRadius: '8px', padding: '20px' }}>
                 <Message activeTab={"Комментарий"} chooseRequestID={''} chooseReserveID={request.id} token={token} user={user} chatPadding={'0'} chatHeight={'615px'} />
-            </div>
+            </div>}
         </div>
     );
 }

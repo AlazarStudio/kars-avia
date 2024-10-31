@@ -59,4 +59,10 @@
     width: 200px;
 }
 
+.btnsReserve {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

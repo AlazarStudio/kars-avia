@@ -1,11 +1,14 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import classes from './AddNewPassenger.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../graphQL_requests";
 
-function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
+function AddNewPassenger({ show, onClose, request, placement, setPlacement, user }) {
+    const [city, setCity] = useState("");
+    const [hotel, setHotel] = useState(user.hotelId);
+
     const token = getCookie('token');
 
     const [formData, setFormData] = useState({
@@ -15,18 +18,12 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
         requestId: ''
     });
 
-    useEffect(() => {
-        if (request) {
-            setFormData({ ...formData, requestId: request.id });
-        }
-    }, [request]);
-
     const resetForm = () => {
         setFormData({
-            ...formData,
             passengers: '',
-            city: '',
-            hotel: '',
+            city: city, // Используем значение из состояния `city`
+            hotel: hotel,
+            requestId: ''
         });
     };
 
@@ -108,21 +105,33 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
 
     const { data } = useQuery(GET_HOTELS_RELAY);
     const hotels = data?.hotels || [];
-    const uniqueCities = [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
+    const uniqueCities = useMemo(() => {
+        return [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
+    }, [data]);
 
-    // Получаем ID отелей, которые уже добавлены в заявку
+    useEffect(() => {
+        if (request && request.airport && uniqueCities.length > 0) {  // Добавляем проверку request.airport
+            const selectedCity = uniqueCities.includes(request.airport.city) ? request.airport.city : "";
+            setCity(selectedCity);
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                requestId: request.id,
+                city: selectedCity,
+                hotel: hotel
+            }));
+        }
+    }, [request, uniqueCities]);
+
+
     const addedHotelIds = placement.map((item) => item.hotel.name);
-
-    // Фильтруем список отелей по выбранному городу
     const filteredHotels = formData.city
         ? hotels.filter((hotel) => hotel.city.trim() === formData.city.trim())
         : [];
 
-    // console.log(formData)
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Добавить гостиницу</div>
+                <div className={classes.requestTitle_name}>{user.role == 'HOTELADMIN' ? 'Выбрать количество' : 'Добавить гостиницу'}</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
             </div>
 
@@ -135,8 +144,8 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
                             </div>
                         </>
                     }
-                    <label>Город</label>
-                    <select name="city" value={formData.city} onChange={handleChange}>
+                    {user.role != 'HOTELADMIN' && <label>Город</label>}
+                    <select hidden={user.role == 'HOTELADMIN' && true} name="city" value={formData.city} onChange={handleChange}>
                         <option value="">Выберите город</option>
                         {uniqueCities.map((city, index) => (
                             <option value={city} key={index}>{city}</option>
@@ -144,8 +153,8 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
                     </select>
                     {formData.city && (
                         <>
-                            <label>Гостиница</label>
-                            <select name="hotel" value={formData.hotel} onChange={handleChange}>
+                            {user.role != 'HOTELADMIN' && <label>Гостиница</label>}
+                            <select hidden={user.role == 'HOTELADMIN' && true} name="hotel" value={formData.hotel} onChange={handleChange}>
                                 <option value="">Выберите гостиницу</option>
                                 {filteredHotels.map((hotel, index) => (
                                     <option
@@ -175,7 +184,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement }) {
             </div>
 
             <div className={classes.requestButon}>
-                <Button onClick={handleSubmit}>Добавить гостиницу</Button>
+                <Button onClick={handleSubmit}>{user.role == 'HOTELADMIN' ? 'Выбрать количество гостей' : 'Добавить гостиницу'}</Button>
             </div>
         </Sidebar>
     );

@@ -14,11 +14,15 @@ import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 import { useQuery, useSubscription } from "@apollo/client";
 import { GET_HOTELS_RELAY, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS } from "../../../../graphQL_requests";
+import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
+import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 
 function ReservePlacement({ children, user, ...props }) {
     let { idRequest } = useParams();
     const [request, setRequest] = useState([]);
     const [placement, setPlacement] = useState([]);
+
+    const [showCreateSidebarHotel, setShowCreateSidebarHotel] = useState(false);
 
     const { data: subscriptionData } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION);
     const { data: subscriptionDataPerson } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS);
@@ -260,6 +264,9 @@ function ReservePlacement({ children, user, ...props }) {
         })
         .filter((item) => item !== null);
 
+    const toggleCreateSidebarHotel = () => {
+        setShowCreateSidebarHotel(!showCreateSidebarHotel);
+    };
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />
@@ -283,8 +290,13 @@ function ReservePlacement({ children, user, ...props }) {
                         onChange={handleSearch}
                     />
 
+                    <div className={classes.btnsReserve}>
+                        {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Добавить новую гостиницу</Button>}
 
-                    <Button onClick={toggleCreateSidebar}>Добавить гостиницу</Button>
+                        <Button onClick={toggleCreateSidebar}>
+                            {user.role == 'HOTELADMIN' ? 'Выбрать количество гостей' : 'Добавить гостиницу'}
+                        </Button>
+                    </div>
                 </div>
                 {loading && <p>Loading...</p>}
                 {error && <p>Error: {error.message}</p>}
@@ -309,6 +321,7 @@ function ReservePlacement({ children, user, ...props }) {
                             request={request}
                             placement={placement ? placement : []}
                             setPlacement={setPlacement}
+                            user={user}
                         />
 
                         <UpdatePassanger
@@ -317,6 +330,11 @@ function ReservePlacement({ children, user, ...props }) {
                             placement={placement ? placement[idPassangerForUpdate] : []}
                             idPassangerForUpdate={idPassangerForUpdate}
                             updatePassenger={updatePassenger}
+                        />
+
+                        <CreateRequestHotelReserve
+                            show={showCreateSidebarHotel}
+                            onClose={toggleCreateSidebarHotel}
                         />
 
                         <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={placement} id={'reserve'} />

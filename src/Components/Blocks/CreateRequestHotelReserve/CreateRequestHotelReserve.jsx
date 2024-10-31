@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import classes from './CreateRequestHotel.module.css';
+import classes from './CreateRequestHotelReserve.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_HOTEL, GET_AIRPORTS_RELAY, getCookie } from "../../../../graphQL_requests";
 import { useMutation, useQuery } from "@apollo/client";
 
-function CreateRequestHotel({ show, onClose, addHotel }) {
+function CreateRequestHotelReserve({ show, onClose }) {
     const token = getCookie('token');
 
     const [formData, setFormData] = useState({
@@ -66,10 +66,10 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!formData.images) {
-            alert('Пожалуйста, выберите файл для загрузки');
-            return;
-        }
+        // if (!formData.images) {
+        //     alert('Пожалуйста, выберите файл для загрузки');
+        //     return;
+        // }
 
         try {
             let response_create_hotel = await uploadFile({
@@ -77,17 +77,18 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                     input: {
                         name: formData.name,
                         city: formData.city,
-                        address: formData.address,
-                        quote: formData.quote
+                        // address: formData.address,
+                        // quote: formData.quote
                     },
-                    images: formData.images
+                    // images: formData.images
                 }
             });
 
             if (response_create_hotel) {
-                addHotel(response_create_hotel.data.createHotel);
+                alert('Гостиница добавлена успешно');
                 resetForm();
                 onClose();
+                location.reload();
             }
         } catch (e) {
             console.error('Ошибка при загрузке файла:', e);
@@ -146,14 +147,14 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                         ))}
                     </select>
 
-                    <label>Адрес</label>
+                    {/* <label>Адрес</label>
                     <input type="text" name="address" placeholder="ул. Лесная  147" onChange={handleChange} />
 
                     <label>Квота</label>
                     <input type="text" name="quote" placeholder="24" onChange={handleChange} />
 
                     <label>Картинка</label>
-                    <input type="file" name="images" onChange={handleFileChange} />
+                    <input type="file" name="images" onChange={handleFileChange} /> */}
                 </div>
 
             </div>
@@ -165,4 +166,4 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
     );
 }
 
-export default CreateRequestHotel;
+export default CreateRequestHotelReserve;
