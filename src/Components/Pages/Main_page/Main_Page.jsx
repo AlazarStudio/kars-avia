@@ -23,6 +23,7 @@ function Main_Page({ children, user, ...props }) {
     }
 
     let pageClicked = hotelID ? 'hotels' : airlineID && 'airlines';
+
     return (
         <div className={classes.main}>
             <MenuDispetcher id={id ? id : pageClicked} user={user} />

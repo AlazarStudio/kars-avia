@@ -7,7 +7,7 @@ import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
-import { GET_REQUESTS, GET_USER_BRONS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
+import { GET_AIRLINE, GET_AIRLINES_RELAY, GET_REQUESTS, GET_USER_BRONS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
 import { useQuery, useSubscription } from "@apollo/client";
 
 function Estafeta({ children, user, ...props }) {
@@ -134,28 +134,43 @@ function Estafeta({ children, user, ...props }) {
         return date.toISOString().split('T')[0];
     }
 
-    const filteredRequests = requests && requests.filter(request => {
-        return (
-            (filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect)) &&
-            (filterData.filterDate === '' || convertToDate(Number(request.createdAt)) == filterData.filterDate) &&
-            (
-                request.person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.person.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.person.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.person.gender.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airline.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airport.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airport.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival.flight.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.arrival.time.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure.flight.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure.date.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.departure.time.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.status.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-        );
+    const [airlineName, setAirlineName] = useState();
+
+    const { loading: airlineLoading, error: airlineError, data: airlineData } = useQuery(GET_AIRLINE, {
+        variables: { airlineId: user.airlineId },
     });
+
+    useEffect(() => {
+        if (airlineData) {
+            setAirlineName(airlineData.airline.name);
+        }
+    }, [airlineData]);
+
+    const filteredRequests = requests && requests.filter(request => {
+        const matchesSelect = filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect);
+        const matchesDate = filterData.filterDate === '' || convertToDate(Number(request.createdAt)) === filterData.filterDate;
+        const matchesSearchQuery = [
+            request.person.name.toLowerCase(),
+            request.person.number.toLowerCase(),
+            request.person.position.toLowerCase(),
+            request.person.gender.toLowerCase(),
+            request.airline.name.toLowerCase(),
+            request.airport.name.toLowerCase(),
+            request.airport.code.toLowerCase(),
+            request.arrival.flight.toLowerCase(),
+            request.arrival.date.toLowerCase(),
+            request.arrival.time.toLowerCase(),
+            request.departure.flight.toLowerCase(),
+            request.departure.date.toLowerCase(),
+            request.departure.time.toLowerCase(),
+            request.status.toLowerCase()
+        ].some(field => field.includes(searchQuery.toLowerCase()));
+
+        const matchesAirline = airlineName ? request.airline.name.toLowerCase() === airlineName.toLowerCase() : true;
+
+        return matchesAirline && matchesSelect && matchesDate && matchesSearchQuery;
+    });
+
 
     let filterList = ['Азимут', 'S7 airlines', 'Северный ветер']
 

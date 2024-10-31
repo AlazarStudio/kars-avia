@@ -5,7 +5,7 @@ import CreateRequestReserve from "../CreateRequestReserve/CreateRequestReserve";
 import { requestsReserve } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataReserve from "../InfoTableDataReserve/InfoTableDataReserve";
-import { GET_HOTEL_CITY, GET_HOTEL_TARIFS, GET_RESERVE_REQUESTS, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION } from "../../../../graphQL_requests";
+import { GET_AIRLINE, GET_HOTEL_CITY, GET_HOTEL_TARIFS, GET_RESERVE_REQUESTS, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import { Link, useLocation } from "react-router-dom";
 
@@ -122,8 +122,6 @@ function Reserve({ children, user, idHotel, ...props }) {
         setSearchQuery(e.target.value);
     };
 
-    // console.log(requests)idHotel
-
     const [hotelCity, setHotelCity] = useState();
 
     const { loading: hotelLoading, error: hotelError, data: hotelData } = useQuery(GET_HOTEL_CITY, {
@@ -135,6 +133,18 @@ function Reserve({ children, user, idHotel, ...props }) {
             setHotelCity(hotelData.hotel.city);
         }
     }, [hotelData]);
+
+    const [airlineName, setAirlineName] = useState();
+
+    const { loading: airlineLoading, error: airlineError, data: airlineData } = useQuery(GET_AIRLINE, {
+        variables: { airlineId: user.airlineId },
+    });
+
+    useEffect(() => {
+        if (airlineData) {
+            setAirlineName(airlineData.airline.name);
+        }
+    }, [airlineData]);
 
     const filteredRequests = requests && requests.filter(request => {
         const matchesSelect = filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect);
@@ -154,7 +164,9 @@ function Reserve({ children, user, idHotel, ...props }) {
 
         const matchesCity = hotelCity ? request.airport?.city.toLowerCase() === hotelCity.toLowerCase() : true;
 
-        return matchesCity && matchesSelect && matchesDate && matchesSearchQuery;
+        const matchesAirline = airlineName ? request.airline.name.toLowerCase() === airlineName.toLowerCase() : true;
+
+        return matchesCity && matchesSelect && matchesDate && matchesSearchQuery && matchesAirline;
     });
 
 
