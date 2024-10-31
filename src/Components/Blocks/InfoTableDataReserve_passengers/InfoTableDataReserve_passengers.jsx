@@ -328,7 +328,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                                         ) : (
                                             <>
                                                 {/* {request.reserveForPerson == false && <img src="/editPassenger.png" alt="" onClick={() => handleEdit(guest.id, guest)} />} */}
-                                                <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(guest)} />
+                                                <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(guest, item)} />
                                             </>
                                         )}
                                     </div>

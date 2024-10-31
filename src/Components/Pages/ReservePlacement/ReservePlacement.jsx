@@ -12,8 +12,8 @@ import AddNewPassenger from "../../Blocks/AddNewPassenger/AddNewPassenger";
 import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
 import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
-import { useQuery, useSubscription } from "@apollo/client";
-import { GET_HOTELS_RELAY, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS } from "../../../../graphQL_requests";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { DELETE_PASSENGER_FROM_HOTEL, DELETE_PERSON_FROM_HOTEL, GET_HOTELS_RELAY, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS, getCookie } from "../../../../graphQL_requests";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 
@@ -41,6 +41,7 @@ function ReservePlacement({ children, user, ...props }) {
 
             const transformedData = dataHotel.reservationHotels.map(item => ({
                 hotel: {
+                    reservationHotelId: item.id,
                     id: item.hotel.id,
                     name: item.hotel.name,
                     passengersCount: item.capacity.toString(),
@@ -64,6 +65,7 @@ function ReservePlacement({ children, user, ...props }) {
             if (subscriptionData) {
                 const newHotelData = {
                     hotel: {
+                        reservationHotelId: item.id,
                         id: subscriptionData.reserveHotel.hotel.id,
                         name: subscriptionData.reserveHotel.hotel.name,
                         passengersCount: subscriptionData.reserveHotel.capacity.toString(),
@@ -148,9 +150,9 @@ function ReservePlacement({ children, user, ...props }) {
     const [idDelete, setIdDelete] = useState();
     const [showDelete, setshowDelete] = useState(false);
 
-    const openDeletecomponent = (index) => {
+    const openDeletecomponent = (guest, hotel) => {
         setshowDelete(true);
-        setIdDelete(index)
+        setIdDelete({ guest, hotel })
     };
 
     const closeDeletecomponent = () => {
@@ -171,31 +173,60 @@ function ReservePlacement({ children, user, ...props }) {
         );
     };
 
-    const removePassenger = (guest) => {
-        setPlacement((prevPlacement) =>
-            prevPlacement.map((item) => {
-                // Копируем отель, чтобы изменить его списки
-                const updatedHotel = { ...item.hotel };
+    const token = getCookie('token');
 
-                // Проверяем тип гостя и обновляем соответствующий массив
-                if (guest.type === 'Пассажир') {
-                    updatedHotel.passengers = updatedHotel.passengers.filter(
-                        (passenger) => passenger.id !== guest.id
-                    );
-                } else if (guest.type === 'Сотрудник') {
-                    updatedHotel.person = updatedHotel.person.filter(
-                        (person) => person.id !== guest.id
-                    );
+    const [deletePersonFromHotel] = useMutation(DELETE_PERSON_FROM_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const [deletePassengerFromHotel] = useMutation(DELETE_PASSENGER_FROM_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const removePassenger = async (guest) => {
+        if (guest.guest.type == 'Сотрудник') {
+            try {
+                let deletePerson = await deletePersonFromHotel({
+                    variables: {
+                        reserveHotelId: guest.hotel.hotel.reservationHotelId,
+                        airlinePersonalId: guest.guest.id,
+                    }
+                });
+
+                if (deletePerson.data) {
+                    closeDeletecomponent();
                 }
+            } catch (e) {
+                console.error(e);
+            }
+        }
 
-                // Возвращаем обновленный отель в массиве размещений
-                return { ...item, hotel: updatedHotel };
-            })
-        );
+        if (guest.guest.type == 'Пассажир') {
+            try {
+                let deletePassenger = await deletePassengerFromHotel({
+                    variables: {
+                        deletePassengerFromReserveId: guest.guest.id,
+                    }
+                });
 
-        closeDeletecomponent();
+                if (deletePassenger.data) {
+                    closeDeletecomponent();
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
     };
-
 
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const toggleChooseHotel = () => {

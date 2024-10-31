@@ -830,6 +830,22 @@ export const ADD_PASSENGER_TO_HOTEL = gql`
   }
 `;
 
+export const DELETE_PERSON_FROM_HOTEL = gql`
+  mutation Mutation($reserveHotelId: ID!, $airlinePersonalId: ID!) {
+    dissociatePersonFromHotel(reserveHotelId: $reserveHotelId, airlinePersonalId: $airlinePersonalId) {
+      id
+    }
+  }
+`;
+
+export const DELETE_PASSENGER_FROM_HOTEL = gql`
+  mutation DeletePassengerFromReserve($deletePassengerFromReserveId: ID!) {
+    deletePassengerFromReserve(id: $deletePassengerFromReserveId) {
+      id
+    }
+  }
+`;
+
 // Запросы к заявкам на резерв
 
 // ----------------------------------------------------------------
