@@ -493,6 +493,39 @@ export const GET_USER_BRONS = gql`
   }
 `;
 
+export const GET_LOGS = gql`
+  query Query($requestId: ID) {
+    request(id: $requestId) {
+      logs {
+        id
+        action
+        description
+        oldData
+        newData
+        createdAt
+        user {
+          name
+          role
+        }
+      }
+      person {
+        name
+        position
+      }
+      airport {
+        name
+      }
+      id
+      arrival {
+        flight
+      }
+      hotel {
+        name
+      }
+    }
+  }
+`;
+
 // Запросы к заявкам на эстафету
 
 // ----------------------------------------------------------------

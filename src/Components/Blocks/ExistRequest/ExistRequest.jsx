@@ -3,7 +3,7 @@ import classes from './ExistRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
-import { GET_MESSAGES_HOTEL, GET_REQUEST, getCookie, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
+import { GET_LOGS, GET_MESSAGES_HOTEL, GET_REQUEST, getCookie, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 import Smiles from "../Smiles/Smiles";
 import Message from "../Message/Message";
 
@@ -20,8 +20,22 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         variables: { requestId: chooseRequestID },
     });
 
+
+    const { loading: loadingLogs, error: errorLogs, data: dataLogs } = useQuery(GET_LOGS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+        variables: { requestId: chooseRequestID },
+    });
+
+
+
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState();
+    const [logsData, setLogsData] = useState();
 
     const [formDataExtend, setFormDataExtend] = useState({
         departureDate: '',
@@ -34,7 +48,10 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         if (data && data.request) {
             setFormData(data?.request);
         }
-    }, [data]);
+        if (dataLogs && dataLogs.request) {
+            setLogsData(dataLogs?.request);
+        }
+    }, [data, dataLogs]);
 
     const resetForm = () => {
         setActiveTab('Общая');
@@ -111,9 +128,23 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         };
     }, [show, onClose]);
 
+    function getJsonParce(data) {
+        return JSON.parse(data);
+    }
+
     function convertToDate(timestamp) {
-        const date = new Date(timestamp);
+        const date = new Date(Number(timestamp));
         return date.toLocaleDateString();
+    }
+
+    function convertToTime(timestamp) {
+        const date = new Date(Number(timestamp));
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+
+    function formatDate(dateString) {
+        const [year, month, day] = dateString.split('-'); // Разбиваем строку на год, месяц и день
+        return `${day}.${month}.${year}`; // Переставляем части
     }
 
     function calculateMeals(formData) {
@@ -300,23 +331,39 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         {activeTab === 'История' && (
                             <div className={classes.requestData}>
                                 <div className={classes.logs}>
-                                    <div className={classes.historyDate}>
-                                        24 апреля 2024
-                                    </div>
-
-                                    <div className={classes.historyLog}>
-                                        15:24 <span>Марина</span> Изменил(а) время прибытия с <span>17.05.2024, 13:00</span> на <span>18.05.2024, 13:00</span>
-                                    </div>
-                                    <div className={classes.historyLog}>
-                                        15:24 <span>Марина</span> Изменил(а) время прибытия с <span>18.05.2024, 13:00</span> на <span>19.05.2024, 13:00</span>
-                                    </div>
-
-                                    <div className={classes.historyDate}>
-                                        Сегодня
-                                    </div>
-                                    <div className={classes.historyLog}>
-                                        15:24 <span>Марина</span> Изменил(а) время прибытия с <span>17.05.2024, 13:00</span> на <span>18.05.2024, 13:00</span>
-                                    </div>
+                                    {[...logsData.logs].reverse().map((log, index) => (
+                                        <>
+                                            <div className={classes.historyDate}>
+                                                {convertToDate(log.createdAt)} {convertToTime(log.createdAt)}
+                                            </div>
+                                            <div className={classes.historyLog}
+                                                dangerouslySetInnerHTML={{
+                                                    __html:
+                                                        log.action === 'create_request'
+                                                            ?
+                                                            `
+                                                                Пользователь <span>${log.user.name}</span> 
+                                                                создал заявку <br /><span>№${getJsonParce(log.newData).requestNumber} </span>
+                                                                для <span>${logsData.person.position} ${logsData.person.name}</span>
+                                                                в аэропорт <span>${logsData.airport.name}</span>
+                                                            `
+                                                            :
+                                                            log.action === 'updateHotelChess'
+                                                                ?
+                                                                `
+                                                                Пользователь <span>${log.user.name}</span> 
+                                                                создал бронь в отель <span>${logsData.hotel.name}</span>
+                                                                для <span>${logsData.person.position} ${logsData.person.name}</span> 
+                                                                в номер <span>${getJsonParce(log.newData).room}</span> 
+                                                                место <span>${getJsonParce(log.newData).place}</span>
+                                                                c <span>${formatDate(getJsonParce(log.newData).start)}</span> 
+                                                                по <span>${formatDate(getJsonParce(log.newData).end)}</span>
+                                                                `
+                                                                :
+                                                                'неизвестный action'
+                                                }}></div >
+                                        </>
+                                    ))}
                                 </div>
                             </div>
                         )}
@@ -330,7 +377,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                             }}>Разместить<img src="/user-check.png" alt="" /></Button>
                         </div>
                     }
-                </Sidebar>
+                </Sidebar >
             }
         </>
     );
