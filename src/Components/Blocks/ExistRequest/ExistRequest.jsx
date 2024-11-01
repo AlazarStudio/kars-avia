@@ -199,7 +199,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
                     </div>
 
-                    <div className={classes.requestMiddle} style={{ height: formData.status == 'done' && 'calc(100vh - 90px)' }}>
+                    <div className={classes.requestMiddle} style={{ height: formData.status == 'done' ? 'calc(100vh - 90px)' : activeTab != 'Общая' && 'calc(100vh - 90px)' }}>
                         <div className={classes.tabs}>
                             <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
 
@@ -287,6 +287,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                 }
                             </div>
                         )}
+
                         {activeTab === 'Доп. услуги' && (
                             <div className={classes.requestData}>
                                 {formData.status !== 'created' && formData.status !== 'opened' &&
@@ -322,7 +323,6 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                 }
                             </div>
                         )}
-
 
                         {activeTab === 'Комментарии' && (
                             <Message activeTab={activeTab} chooseRequestID={chooseRequestID} chooseReserveID={''} formData={formData} token={token} user={user} />
@@ -376,7 +376,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         )}
 
                     </div>
-                    {(formData.status !== 'done' && (user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN')) &&
+                    {(formData.status !== 'done' && activeTab === 'Общая' && (user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN')) &&
                         <div className={classes.requestButon}>
                             <Button onClick={() => {
                                 onClose();
