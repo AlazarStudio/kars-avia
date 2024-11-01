@@ -106,3 +106,22 @@ input[type="file"] {
     color: #545873;
     opacity: 1;
 }
+
+.previous,
+.next {
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 8px 12px;
+    color: #333;
+    transition: color 0.3s ease;
+}
+
+.previous:hover,
+.next:hover {
+    color: var(--menu-bg);
+}
+
+.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}

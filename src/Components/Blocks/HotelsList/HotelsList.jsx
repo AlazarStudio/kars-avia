@@ -70,9 +70,7 @@ function HotelsList({ children, user, ...props }) {
     return (
         <>
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>Гостиницы</Header>
-                </div>
+                <Header>Гостиницы</Header>
 
                 <div className={classes.section_searchAndFilter}>
                     <input

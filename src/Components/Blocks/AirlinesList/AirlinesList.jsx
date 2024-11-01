@@ -11,7 +11,7 @@ import { useQuery } from "@apollo/client";
 function AirlinesList({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-    
+
     const [companyData, setCompanyData] = useState([]);
     const { loading, error, data } = useQuery(GET_AIRLINES);
 
@@ -65,9 +65,7 @@ function AirlinesList({ children, ...props }) {
     return (
         <>
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>Авиакомпании</Header>
-                </div>
+                <Header>Авиакомпании</Header>
 
                 <div className={classes.section_searchAndFilter}>
                     <input
@@ -85,7 +83,7 @@ function AirlinesList({ children, ...props }) {
                         needDate={false}
                     />
                 </div>
-                
+
                 {loading && <p>Loading...</p>}
                 {error && <p>Error: {error.message}</p>}
                 {!loading && !error && (

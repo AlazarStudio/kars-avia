@@ -33,14 +33,12 @@ function AirlinePage({ children, id, user, ...props }) {
     return (
         <>
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>
-                        <div className={classes.titleHeader}>
-                            {user.role == "SUPERADMIN" && <Link to={`/airlines`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
-                            {data && data.airline.name}
-                        </div>
-                    </Header>
-                </div>
+                <Header>
+                    <div className={classes.titleHeader}>
+                        {user.role == "SUPERADMIN" && <Link to={`/airlines`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
+                        {data && data.airline.name}
+                    </div>
+                </Header>
 
                 {user.role == "SUPERADMIN" &&
                     <>

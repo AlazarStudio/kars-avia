@@ -2,7 +2,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 25px 40px;
+    padding: 20px 20px 20px 30px;
     border-bottom: 1px solid #54587380;
 }
 
@@ -10,7 +10,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 25px 40px;
+    padding: 20px 20px 20px 30px;
     border-top: 1px solid #54587380;
 }
 
@@ -36,8 +36,8 @@
 
 .tabs {
     display: flex;
-    gap: 35px;
-    padding: 20px 40px;
+    gap: 30px;
+    padding: 20px 20px 20px 30px;
 }
 
 .tab {
@@ -49,43 +49,44 @@
     border-bottom: 5px solid transparent
 }
 
-.activeTab{
+.activeTab {
     border-bottom: 5px solid #54587380;
 }
 
 .requestData {
     display: flex;
     flex-direction: column;
-    padding: 20px 40px;
+    padding: 20px 20px 20px 30px;
     gap: 15px;
 }
 
-.requestData label{
+.requestData label {
     display: flex;
     gap: 15px;
 }
 
-.requestData input, select{
+.requestData input,
+select {
     height: 38px;
     outline: none;
     padding: 0 10px;
     cursor: pointer;
 }
 
-.requestMiddle{
-    height: calc(100% - 90px - 87px);
+.requestMiddle {
+    height: calc(100% - 90px - 71px);
     overflow: hidden;
     overflow-y: scroll;
 }
 
-.reis_info{
+.reis_info {
     display: flex;
     justify-content: space-between;
     width: 100%;
     gap: 10px;
 }
 
-.reis_info input{
+.reis_info input {
     width: 50%;
 }
 
@@ -94,14 +95,14 @@
     justify-content: space-between;
 }
 
-.checks label{
+.checks label {
     display: flex;
     flex-direction: row;
     align-items: center;
     cursor: pointer;
 }
 
-.requestButon{
+.requestButon {
     display: flex;
     justify-content: flex-end;
 }

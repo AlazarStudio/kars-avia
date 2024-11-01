@@ -17,9 +17,9 @@ function Reports({ children, ...props }) {
     const [chooseObject, setChooseObject] = useState(null);
     const [showDelete, setShowDelete] = useState(false);
     const [deleteIndex, setDeleteIndex] = useState(null);
-    
+
     const deleteComponentRef = useRef();
-    
+
     const [companyData, setCompanyData] = useState(requestsReports);
 
     const addDispatcher = (newDispatcher) => {
@@ -91,9 +91,7 @@ function Reports({ children, ...props }) {
     return (
         <>
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>Отчеты</Header>
-                </div>
+                <Header>Отчеты</Header>
 
                 <div className={classes.section_searchAndFilter}>
                     <input
@@ -113,19 +111,19 @@ function Reports({ children, ...props }) {
                     />
                 </div>
 
-                <InfoTableDataReports 
-                    toggleRequestSidebar={toggleRequestSidebar} 
-                    requests={filteredRequests} 
-                    setChooseObject={setChooseObject} 
-                    openDeleteComponent={openDeleteComponent}                     
+                <InfoTableDataReports
+                    toggleRequestSidebar={toggleRequestSidebar}
+                    requests={filteredRequests}
+                    setChooseObject={setChooseObject}
+                    openDeleteComponent={openDeleteComponent}
                 />
 
-                <CreateRequestReport 
-                    show={showCreateSidebar} 
-                    onClose={toggleCreateSidebar} 
-                    addDispatcher={addDispatcher} 
+                <CreateRequestReport
+                    show={showCreateSidebar}
+                    onClose={toggleCreateSidebar}
+                    addDispatcher={addDispatcher}
                 />
-{/* 
+                {/* 
                 <ExistRequestReport 
                     show={showRequestSidebar} 
                     onClose={toggleRequestSidebar} 

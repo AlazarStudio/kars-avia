@@ -164,7 +164,7 @@ function Reserve({ children, user, idHotel, ...props }) {
 
         const matchesCity = hotelCity ? request.airport?.city.toLowerCase() === hotelCity.toLowerCase() : true;
 
-        const matchesAirline = airlineName ? request.airline.name.toLowerCase() === airlineName.toLowerCase() : true;
+        const matchesAirline = airlineName ? request.airline?.name.toLowerCase() === airlineName.toLowerCase() : true;
 
         return matchesCity && matchesSelect && matchesDate && matchesSearchQuery && matchesAirline;
     });
@@ -200,9 +200,7 @@ function Reserve({ children, user, idHotel, ...props }) {
     return (
         <>
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>Резерв</Header>
-                </div>
+                <Header>Резерв</Header>
 
                 <div className={classes.section_searchAndFilter}>
                     <input

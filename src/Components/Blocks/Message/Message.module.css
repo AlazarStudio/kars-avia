@@ -2,7 +2,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 25px 40px;
+    padding: 20px 20px 20px 30px;
     border-bottom: 1px solid #54587380;
 }
 
@@ -10,7 +10,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 25px 40px;
+    padding: 20px 20px 20px 30px;
     border-top: 1px solid #54587380;
 }
 
@@ -38,7 +38,7 @@
     display: flex;
     /* justify-content: space-between; */
     gap: 20px;
-    padding: 20px 40px;
+    padding: 20px 20px 20px 30px;
 }
 
 .tab {
@@ -57,7 +57,7 @@
 .requestData {
     display: flex;
     flex-direction: column;
-    padding: 0 40px 20px;
+    padding: 0px 20px 20px 30px;
     gap: 10px;
     position: relative;
 }
@@ -76,7 +76,7 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100% - 90px - 87px);
+    height: calc(100% - 90px - 71px);
     overflow: hidden;
     overflow-y: scroll;
 }
@@ -312,7 +312,7 @@ select {
 .logs {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 30px;
     align-items: center;
     height: 600px;
     overflow: hidden;

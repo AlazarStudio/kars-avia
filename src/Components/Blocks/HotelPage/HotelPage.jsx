@@ -36,14 +36,12 @@ function HotelPage({ children, id, user, ...props }) {
         <>
 
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>
-                        <div className={classes.titleHeader}>
-                            {(user.role == "SUPERADMIN" || user.role == "AIRLINEADMIN")  && <Link to={`/hotels`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
-                            {data && data.hotel.name}
-                        </div>
-                    </Header>
-                </div>
+                <Header>
+                    <div className={classes.titleHeader}>
+                        {(user.role == "SUPERADMIN" || user.role == "AIRLINEADMIN") && <Link to={`/hotels`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
+                        {data && data.hotel.name}
+                    </div>
+                </Header>
                 <Tabs
                     className={classes.tabs}
                     selectedIndex={selectedTab}
@@ -64,7 +62,7 @@ function HotelPage({ children, id, user, ...props }) {
                             </TabPanel>
 
                             <TabPanel className={classes.tabPanel}>
-                                <HotelTarifs_tabComponent id={id} user={user}/>
+                                <HotelTarifs_tabComponent id={id} user={user} />
                             </TabPanel>
 
                             <TabPanel className={classes.tabPanel}>
@@ -89,7 +87,7 @@ function HotelPage({ children, id, user, ...props }) {
                             }
                             {params.id == 'hotelTarifs' &&
                                 <div className={classes.tabPanel}>
-                                    <HotelTarifs_tabComponent id={id} user={user}/>
+                                    <HotelTarifs_tabComponent id={id} user={user} />
                                 </div>
                             }
                             {params.id == 'hotelRooms' &&

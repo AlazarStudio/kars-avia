@@ -18,7 +18,7 @@ function Header({ children, ...props }) {
     const { loading, error, data } = useQuery(GET_DISPATCHER, {
         variables: { userId: userID },
     });
-    
+
     const getFormattedDate = () => {
         const daysOfWeek = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
         const months = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
@@ -31,7 +31,7 @@ function Header({ children, ...props }) {
     };
 
     return (
-        <>
+        <div className={classes.section_top}>
             <div className={classes.section_top_title}>{children}</div>
 
             {loading && <p>Loading...</p>}
@@ -47,11 +47,11 @@ function Header({ children, ...props }) {
                         <div>{getFormattedDate()}</div>
                     </div>
                     <div className={classes.section_top_elems_profile}>
-                        <img src={data.user?.images[0] ? `${server}${data.user?.images[0]}` :`/no-avatar.png`} alt="" />
+                        <img src={data.user?.images[0] ? `${server}${data.user?.images[0]}` : `/no-avatar.png`} alt="" />
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 }
 

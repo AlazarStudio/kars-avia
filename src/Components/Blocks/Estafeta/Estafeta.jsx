@@ -1,248 +1,188 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import classes from './Estafeta.module.css';
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Filter from "../Filter/Filter";
 import InfoTableData from "../InfoTableData/InfoTableData";
 import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
-import { GET_AIRLINE, GET_AIRLINES_RELAY, GET_REQUESTS, GET_USER_BRONS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
+import { GET_REQUESTS, GET_AIRLINE, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
 import { useQuery, useSubscription } from "@apollo/client";
-import DropDownList from "../DropDownList/DropDownList.jsx";
+import ReactPaginate from 'react-paginate';
 
-function Estafeta({ children, user, ...props }) {
-    let pageNumberRelay = useLocation().search.split("=")[1];
+// Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
+function Estafeta({ user }) {
+    const location = useLocation();
+    const navigate = useNavigate();
 
-    let localPage = localStorage.getItem("currentPageRelay");
+    // Инициализация текущей страницы на основе параметров URL или по умолчанию
+    const pageNumberRelay = new URLSearchParams(location.search).get("page");
+    const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
 
-    let currentPageRelay = localPage ? localPage - 1 : pageNumberRelay ? pageNumberRelay - 1 : 0
-
+    // Состояние для хранения информации о странице (для пагинации)
     const [pageInfo, setPageInfo] = useState({
-        skip: Number(currentPageRelay),
-        take: 50
+        skip: currentPageRelay,
+        take: 20
     });
 
+    // Запрос на получение списка заявок с использованием параметров пагинации
     const { loading, error, data, refetch } = useQuery(GET_REQUESTS, {
         variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
     });
 
+    // Подписки для отслеживания создания и обновления заявок
     const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION);
     const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION);
 
+    // Локальное состояние для хранения новых заявок и всех заявок
     const [newRequests, setNewRequests] = useState([]);
     const [requests, setRequests] = useState([]);
     const [totalPages, setTotalPages] = useState();
 
-    useEffect(() => {
-        if (pageNumberRelay) {
-            localStorage.setItem('currentPageRelay', pageNumberRelay);
-        }
-    }, [pageNumberRelay]);
-
+    // Обработка данных подписки на создание заявок: добавление новых заявок в список
     useEffect(() => {
         if (subscriptionData) {
             const newRequest = subscriptionData.requestCreated;
-
             setRequests((prevRequests) => {
                 const exists = prevRequests.some(request => request.id === newRequest.id);
-                if (!exists) {
-                    if (currentPageRelay === 0) {
-                        return [newRequest, ...prevRequests];
-                    } else {
-                        setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
-                    }
+                if (!exists && currentPageRelay === 0) {
+                    return [newRequest, ...prevRequests];
+                } else if (!exists) {
+                    setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
                 }
                 return prevRequests;
             });
-
-            refetch();
         }
-    }, [subscriptionData, currentPageRelay, data]);
+    }, [subscriptionData, currentPageRelay]);
 
+    // Обновление списка заявок на основе данных запроса и новых заявок
     useEffect(() => {
         if (data && data.requests.requests) {
             let sortedRequests = [...data.requests.requests];
-
             if (currentPageRelay === 0 && newRequests.length > 0) {
                 sortedRequests = [...newRequests, ...sortedRequests];
                 setNewRequests([]);
             }
 
-            sortedRequests.sort((a, b) => {
-                if (a.status === "done" && b.status !== "done") {
-                    return 1;
-                }
-                if (a.status !== "done" && b.status === "done") {
-                    return -1;
-                }
-                return 0;
-            });
-
+            sortedRequests.sort((a, b) => a.status === "done" ? 1 : -1);
             setRequests(sortedRequests);
             setTotalPages(data.requests.totalPages);
-            refetch()
         }
     }, [data, currentPageRelay, newRequests]);
 
+    // Обновление данных при получении новой информации по подписке на обновление заявок
     useEffect(() => {
-        if (subscriptionUpdateData) {
-            // console.log('New update subscription data received:', subscriptionUpdateData);
-            refetch();
-        }
-    }, [subscriptionUpdateData, refetch]);
+        if (subscriptionUpdateData) refetch();
+    }, [subscriptionUpdateData]);
 
-
+    // Управление состоянием боковых панелей для создания и просмотра заявок
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const [chooseObject, setChooseObject] = useState([]);
     const [chooseRequestID, setChooseRequestID] = useState();
 
-    const toggleCreateSidebar = () => {
-        setShowCreateSidebar(!showCreateSidebar);
-    };
+    // Функции для переключения видимости боковых панелей
+    const toggleCreateSidebar = () => setShowCreateSidebar(!showCreateSidebar);
+    const toggleRequestSidebar = () => setShowRequestSidebar(!showRequestSidebar);
+    const toggleChooseHotel = () => setShowChooseHotel(!showChooseHotel);
 
-    const toggleRequestSidebar = () => {
-        setShowRequestSidebar(!showRequestSidebar);
-    };
-
-    const toggleChooseHotel = () => {
-        setShowChooseHotel(!showChooseHotel);
-    };
-
-    const [filterData, setFilterData] = useState({
-        filterSelect: '',
-        filterDate: '',
-    });
-
+    // Состояние фильтра и строки поиска для фильтрации заявок
+    const [filterData, setFilterData] = useState({ filterSelect: '', filterDate: '' });
     const [searchQuery, setSearchQuery] = useState('');
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFilterData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    }
+    const handleChange = (e) => setFilterData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const handleSearch = (e) => setSearchQuery(e.target.value);
 
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
-    }
-
-    function convertToDate(timestamp) {
-        const date = new Date(timestamp);
-        return date.toISOString().split('T')[0];
-    }
-
+    // Запрос для получения имени авиакомпании пользователя
     const [airlineName, setAirlineName] = useState();
-
-    const { loading: airlineLoading, error: airlineError, data: airlineData } = useQuery(GET_AIRLINE, {
-        variables: { airlineId: user.airlineId },
-    });
+    const { data: airlineData } = useQuery(GET_AIRLINE, { variables: { airlineId: user.airlineId } });
 
     useEffect(() => {
-        if (airlineData) {
-            setAirlineName(airlineData.airline.name);
-        }
+        if (airlineData) setAirlineName(airlineData.airline.name);
     }, [airlineData]);
 
-    const filteredRequests = requests && requests.filter(request => {
-        const matchesSelect = filterData.filterSelect === '' || request.aviacompany.includes(filterData.filterSelect);
-        const matchesDate = filterData.filterDate === '' || convertToDate(Number(request.createdAt)) === filterData.filterDate;
-        const matchesSearchQuery = [
-            request.person.name.toLowerCase(),
-            request.person.number.toLowerCase(),
-            request.person.position.toLowerCase(),
-            request.person.gender.toLowerCase(),
-            request.airline.name.toLowerCase(),
-            request.airport.name.toLowerCase(),
-            request.airport.code.toLowerCase(),
-            request.arrival.flight.toLowerCase(),
-            request.arrival.date.toLowerCase(),
-            request.arrival.time.toLowerCase(),
-            request.departure.flight.toLowerCase(),
-            request.departure.date.toLowerCase(),
-            request.departure.time.toLowerCase(),
-            request.status.toLowerCase()
-        ].some(field => field.includes(searchQuery.toLowerCase()));
+    // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
+    const filteredRequests = useMemo(() => {
+        return requests.filter(request => {
+            const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
+            const matchesDate = !filterData.filterDate || convertToDate(Number(request.createdAt)) === filterData.filterDate;
+            const matchesSearch = searchQuery.toLowerCase();
+            const matchesAirline = airlineName ? request.airline.name.toLowerCase() === airlineName.toLowerCase() : true;
 
-        const matchesAirline = airlineName ? request.airline.name.toLowerCase() === airlineName.toLowerCase() : true;
+            const searchFields = [
+                request.person.name, request.person.number, request.person.position,
+                request.person.gender, request.airline.name, request.airport.name,
+                request.airport.code, request.arrival.flight, request.arrival.date,
+                request.arrival.time, request.departure.flight, request.departure.date,
+                request.departure.time, request.status
+            ];
 
-        return matchesAirline && matchesSelect && matchesDate && matchesSearchQuery;
-    });
+            return matchesAirline && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
+        });
+    }, [requests, filterData, searchQuery, airlineName]);
 
-    let filterList = ['Азимут', 'S7 airlines', 'Северный ветер']
+    const filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
 
-    function renderPagination(totalPages) {
-        // Поменять на react-paginate
-        const paginationItems = [];
-
-        for (let i = 0; i < totalPages; i++) {
-            paginationItems.push(
-                <Link to={`?page=${i + 1}`}
-                    key={i}
-                    className={`${classes.paginationNumber} ${(i == currentPageRelay || (i == 0 && !currentPageRelay)) && classes.activePaginationNumber}`}
-                    onClick={() => {
-                        localStorage.setItem('currentPageRelay', i + 1);
-
-                        setPageInfo(prevTarifs => {
-                            return { ...prevTarifs, skip: i };
-                        });
-                    }}
-                >
-                    {i + 1}
-                </Link>
-            );
-        }
-
-        return paginationItems;
-    }
+    // Обработчик для изменения текущей страницы при клике на элементы пагинации
+    const handlePageClick = (event) => {
+        const selectedPage = event.selected;
+        setPageInfo(prev => ({ ...prev, skip: selectedPage }));
+        navigate(`?page=${selectedPage + 1}`);
+    };
 
     return (
-        <>
-            <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>Эстафета</Header>
-                </div>
-
-                <div className={classes.section_searchAndFilter}>
-                    <input
-                        type="text"
-                        placeholder="Поиск"
-                        style={{ 'width': '500px' }}
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    />
-
-                    <Filter
-                        toggleSidebar={toggleCreateSidebar}
-                        handleChange={handleChange}
-                        filterData={filterData}
-                        buttonTitle={'Создать заявку'}
-                        filterList={filterList}
-                        needDate={true}
-                    />
-                </div>
-                {loading && <p>Loading...</p>}
-                {error && <p>Error: {error.message}</p>}
-
-                {!loading && !error && requests && (
-                    <>
-                        <InfoTableData paginationHeight={totalPages == 1 && '295px'} toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} chooseRequestID={chooseRequestID} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
-
-                        {totalPages > 1 &&
-                            <div className={classes.pagination}>
-                                {renderPagination(totalPages)}
-                            </div>
-                        }
-                    </>
-                )}
-                <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
-                <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
-                <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
+        <div className={classes.section}>
+            <Header>Эстафета</Header>
+            <div className={classes.section_searchAndFilter}>
+                <input
+                    type="text"
+                    placeholder="Поиск"
+                    style={{ width: '500px' }}
+                    value={searchQuery}
+                    onChange={handleSearch}
+                />
+                <Filter
+                    toggleSidebar={toggleCreateSidebar}
+                    handleChange={handleChange}
+                    filterData={filterData}
+                    buttonTitle={'Создать заявку'}
+                    filterList={filterList}
+                    needDate={true}
+                />
             </div>
-        </>
+            {loading && <p>Loading...</p>}
+            {error && <p>Error: {error.message}</p>}
+
+            {/* Отображение таблицы заявок и компонентов пагинации */}
+            {!loading && !error && requests && (
+                <>
+                    <InfoTableData paginationHeight={totalPages === 1 ? '295px' : undefined} toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} chooseRequestID={chooseRequestID} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
+                    {totalPages > 1 && (
+                        <div className={classes.pagination}>
+                            <ReactPaginate
+                                previousLabel={'←'}
+                                nextLabel={'→'}
+                                breakLabel={'...'}
+                                pageCount={totalPages}
+                                marginPagesDisplayed={2}
+                                pageRangeDisplayed={5}
+                                onPageChange={handlePageClick}
+                                forcePage={currentPageRelay}
+                                containerClassName={classes.pagination}
+                                activeClassName={classes.activePaginationNumber}
+                                pageLinkClassName={classes.paginationNumber}
+                            />
+                        </div>
+                    )}
+                </>
+            )}
+            {/* Боковые панели для создания и выбора заявок */}
+            <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
+            <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
+            <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
+        </div>
     );
 }
 

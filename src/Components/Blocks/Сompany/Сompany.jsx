@@ -116,9 +116,7 @@ function Company({ children, ...props }) {
     return (
         <>
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>Компания</Header>
-                </div>
+                <Header>Компания</Header>
 
                 <div className={classes.section_searchAndFilter}>
                     <input

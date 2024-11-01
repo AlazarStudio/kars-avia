@@ -35,7 +35,7 @@
 .delete_btns {
     display: flex;
     justify-content: space-between;
-    gap: 25px;
+    gap: 30px;
     width: 100%;
 }
 

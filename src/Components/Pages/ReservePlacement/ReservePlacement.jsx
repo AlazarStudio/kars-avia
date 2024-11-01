@@ -18,6 +18,8 @@ import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHot
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 
 function ReservePlacement({ children, user, ...props }) {
+    const token = getCookie('token');
+
     let { idRequest } = useParams();
     const [request, setRequest] = useState([]);
     const [placement, setPlacement] = useState([]);
@@ -28,6 +30,12 @@ function ReservePlacement({ children, user, ...props }) {
     const { data: subscriptionDataPerson } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS);
 
     const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUEST, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
         variables: { reserveId: idRequest },
     });
 
@@ -173,8 +181,6 @@ function ReservePlacement({ children, user, ...props }) {
         );
     };
 
-    const token = getCookie('token');
-
     const [deletePersonFromHotel] = useMutation(DELETE_PERSON_FROM_HOTEL, {
         context: {
             headers: {
@@ -303,14 +309,12 @@ function ReservePlacement({ children, user, ...props }) {
             <MenuDispetcher id={'reserve'} />
 
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>
-                        <div className={classes.titleHeader}>
-                            <Link to={user.role == 'HOTELADMIN' ? '/reserveRequests' : '/reserve'} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                            Заявка {request.reserveNumber}
-                        </div>
-                    </Header>
-                </div>
+                <Header>
+                    <div className={classes.titleHeader}>
+                        <Link to={user.role == 'HOTELADMIN' ? '/reserveRequests' : '/reserve'} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
+                        Заявка {request.reserveNumber}
+                    </div>
+                </Header>
 
                 <div className={classes.section_searchAndFilter}>
                     <input

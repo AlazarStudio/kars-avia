@@ -56,14 +56,12 @@ function Placement({ children, ...props }) {
             <MenuDispetcher id={id} />
 
             <div className={classes.section}>
-                <div className={classes.section_top}>
-                    <Header>
-                        <div className={classes.titleHeader}>
-                            <Link to={`/${id}`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                            Заявка {dataObject[0].requestNumber}
-                        </div>
-                    </Header>
-                </div>
+                <Header>
+                    <div className={classes.titleHeader}>
+                        <Link to={`/${id}`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
+                        Заявка {dataObject[0].requestNumber}
+                    </div>
+                </Header>
 
                 {(hotelBronsInfo.length === 0) &&
                     <HotelTable allRooms={allRooms} data={[]} idHotel={idHotel} dataObject={updatedDataObject} id={id} />
