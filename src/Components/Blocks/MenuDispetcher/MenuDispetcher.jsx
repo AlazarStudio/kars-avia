@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import classes from './MenuDispetcher.module.css';
 import { Link, useNavigate } from "react-router-dom";
-import { decodeJWT, getCookie } from "../../../../graphQL_requests";
+import { decodeJWT, GET_AIRLINE, GET_HOTEL_CITY, GET_REQUESTS, GET_RESERVE_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_RESERVE_CREATED_SUBSCRIPTION } from "../../../../graphQL_requests";
 import { Tab, TabList } from "react-tabs";
+import { useQuery, useSubscription } from "@apollo/client";
 
 function MenuDispetcher({ children, id, hotelID, ...props }) {
     const token = getCookie('token');
@@ -17,6 +18,12 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
 
     const navigate = useNavigate()
 
+    const [reserves, setReserves] = useState([]);
+    const [requests, setRequests] = useState([]);
+
+    const [newReserves, setNewReserves] = useState([]);
+    const [newRequests, setNewRequests] = useState([]);
+
     const handleClick = () => {
         let result = confirm("Вы уверены что хотите выйти?");
         if (result) {
@@ -25,6 +32,125 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
             window.location.reload()
         }
     }
+
+    const [hotelCity, setHotelCity] = useState();
+
+    const { loading: hotelLoading, error: hotelError, data: hotelData } = useQuery(GET_HOTEL_CITY, {
+        variables: { hotelId: user.hotelId },
+    });
+
+    useEffect(() => {
+        if (hotelData) {
+            setHotelCity(hotelData.hotel.city);
+        }
+    }, [hotelData]);
+
+    const [airlineName, setAirlineName] = useState();
+
+    const { loading: airlineLoading, error: airlineError, data: airlineData } = useQuery(GET_AIRLINE, {
+        variables: { airlineId: user.airlineId },
+    });
+
+    useEffect(() => {
+        if (airlineData) {
+            setAirlineName(airlineData.airline.name);
+        }
+    }, [airlineData]);
+
+    const [allCreatedReserves, setAllCreatedReserves] = useState(0);
+    const [allCreatedRequests, setAllCreatedRequests] = useState(0);
+
+    const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
+        variables: { pagination: { skip: 0, take: 999999999 } },
+    });
+
+    const { loading: loadingRequest, error: errorRequest, data: dataRequest, refetch: refetchRequest } = useQuery(GET_REQUESTS, {
+        variables: { pagination: { skip: 0, take: 999999999 } },
+    });
+
+    const { data: subscriptionData } = useSubscription(REQUEST_RESERVE_CREATED_SUBSCRIPTION);
+    const { data: subscriptionDataRequest } = useSubscription(REQUEST_CREATED_SUBSCRIPTION);
+
+    useEffect(() => {
+        if (subscriptionData) {
+            const newReserve = subscriptionData.reserveCreated;
+
+            setReserves((prevRequests) => {
+                const exists = prevRequests.some(request => request.id === newReserve.id);
+                if (!exists) {
+                    setNewReserves((prevNewRequests) => [newReserve, ...prevNewRequests]);
+                }
+                return prevRequests;
+            });
+
+            refetch();
+        }
+
+        if (subscriptionDataRequest) {
+            const newRequest = subscriptionDataRequest.requestCreated;
+
+            setRequests((prevRequests) => {
+                const exists = prevRequests.some(request => request.id === newRequest.id);
+                if (!exists) {
+                    setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
+                }
+                return prevRequests;
+            });
+
+            refetchRequest();
+        }
+    }, [subscriptionData, subscriptionDataRequest, hotelCity, airlineName, data, dataRequest]);
+
+
+    useEffect(() => {
+        if (data && data.reserves.reserves) {
+            let sortedRequests = [...data.reserves.reserves];
+
+            if (newReserves.length > 0) {
+                sortedRequests = [...newReserves, ...sortedRequests];
+                setNewReserves([]);
+            }
+
+            setReserves(sortedRequests);
+
+            setAllCreatedReserves(
+                sortedRequests.filter(
+                    (request) =>
+                        request.status === "created" &&
+                        (user.hotelId ? request.airport?.city === hotelCity : true) &&
+                        (user.airlineId ? request.airline?.name === airlineName : true)
+                ).length
+            );
+
+            refetch();
+        }
+
+        if (dataRequest && dataRequest.requests.requests) {
+            let sortedRequests = [...dataRequest.requests.requests];
+
+            if (newRequests.length > 0) {
+                sortedRequests = [...newRequests, ...sortedRequests];
+                setNewRequests([]);
+            }
+
+            // Удаляем дубли
+            const uniqueRequests = sortedRequests.filter((request, index, self) =>
+                index === self.findIndex((r) => r.id === request.id)
+            );
+
+            setRequests(uniqueRequests);
+
+            setAllCreatedRequests(
+                uniqueRequests.filter(
+                    (request) =>
+                        request.status === "created" &&
+                        (user.hotelId ? request.airport?.city === hotelCity : true) &&
+                        (user.airlineId ? request.airline?.name === airlineName : true)
+                ).length
+            );
+        }
+    }, [data, dataRequest, hotelCity, airlineName, newReserves, newRequests]);
+
     return (
         <>
             <div className={classes.menu}>
@@ -39,6 +165,13 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                                     <path d="M3.92857 9.23704C4.45656 10.3876 5.04991 11.5071 5.70571 12.5899C5.95762 12.998 6.42143 13.1675 6.85381 13.0251C7.68095 12.7537 8.68619 12.1775 10.4457 11.5275C10.2886 12.4799 10.1757 13.4137 10.1071 14.0504C10.0595 14.4937 10.3724 14.8885 10.7743 14.7961C11.129 14.7147 11.9519 14.177 12.1905 14.0504C12.5071 13.8818 12.7381 13.5837 12.8857 13.2361C13.3424 12.1495 13.7445 11.0409 14.0905 9.91418C15.2919 9.42704 16.3571 9.1218 17.5405 8.56656C18.1167 8.29656 18.341 7.55037 17.9395 7.02704C17.361 6.27323 16.4238 5.36942 15.2176 5.29275C12.61 5.12656 9.80952 7.91751 7.54952 9.25894C7.54952 9.25894 6.67714 8.48561 5.70571 7.82037C5.56524 7.72418 5.39762 7.68656 5.23666 7.73227C5.06285 7.7818 4.46428 8.16561 4.18714 8.31323C3.87333 8.47989 3.77476 8.89704 3.92857 9.23704Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                                 Заявки с резерва
+
+                                {
+                                    allCreatedReserves > 0 &&
+                                    <div className={classes.countRequests}>
+                                        {allCreatedReserves}
+                                    </div>
+                                }
                             </Link>
                             <Link to={'/hotelChess'} className={`${classes.menu_items__elem} ${(id == 'hotelChess' || id == undefined) && classes.menu_items__activeElem}`}>
                                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -98,6 +231,13 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                                     <path d="M12.5875 5.24748C16.2319 1.60309 18.835 0.0412008 20.3969 1.60309C21.9589 3.16496 20.3969 5.76811 16.7526 9.41251C18.3144 12.0156 20.3969 18.2632 18.835 19.825C16.7526 21.9077 11.5463 13.5775 11.5463 13.5775L9.98438 15.1394C10.1579 16.7013 10.0885 20.0333 8.42249 20.8663C6.75648 21.6993 5.64581 18.4367 5.29873 16.7013C3.5633 16.3542 0.300701 15.2435 1.1337 13.5775C1.96672 11.9115 5.29873 11.8421 6.86062 12.0156L8.42249 10.4538C8.42249 10.4538 0.0924504 5.24748 2.17496 3.16496C3.73685 1.60309 9.98438 3.68559 12.5875 5.24748Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                                 Эстафета
+
+                                {
+                                    allCreatedRequests > 0 &&
+                                    <div className={classes.countRequests}>
+                                        {allCreatedRequests}
+                                    </div>
+                                }
                             </Link>
                             <Link to={'/reserve'} className={`${classes.menu_items__elem} ${id == 'reserve' && classes.menu_items__activeElem}`}>
                                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -105,6 +245,13 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                                     <path d="M3.92857 9.23704C4.45656 10.3876 5.04991 11.5071 5.70571 12.5899C5.95762 12.998 6.42143 13.1675 6.85381 13.0251C7.68095 12.7537 8.68619 12.1775 10.4457 11.5275C10.2886 12.4799 10.1757 13.4137 10.1071 14.0504C10.0595 14.4937 10.3724 14.8885 10.7743 14.7961C11.129 14.7147 11.9519 14.177 12.1905 14.0504C12.5071 13.8818 12.7381 13.5837 12.8857 13.2361C13.3424 12.1495 13.7445 11.0409 14.0905 9.91418C15.2919 9.42704 16.3571 9.1218 17.5405 8.56656C18.1167 8.29656 18.341 7.55037 17.9395 7.02704C17.361 6.27323 16.4238 5.36942 15.2176 5.29275C12.61 5.12656 9.80952 7.91751 7.54952 9.25894C7.54952 9.25894 6.67714 8.48561 5.70571 7.82037C5.56524 7.72418 5.39762 7.68656 5.23666 7.73227C5.06285 7.7818 4.46428 8.16561 4.18714 8.31323C3.87333 8.47989 3.77476 8.89704 3.92857 9.23704Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
                                 Резерв
+
+                                {
+                                    allCreatedReserves > 0 &&
+                                    <div className={classes.countRequests}>
+                                        {allCreatedReserves}
+                                    </div>
+                                }
                             </Link>
                             <Link to={'/hotels'} className={`${classes.menu_items__elem} ${id == 'hotels' && classes.menu_items__activeElem}`}>
                                 <svg width="22" height="19" viewBox="0 0 22 19" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -150,6 +297,13 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                                 <path d="M12.5875 5.24748C16.2319 1.60309 18.835 0.0412008 20.3969 1.60309C21.9589 3.16496 20.3969 5.76811 16.7526 9.41251C18.3144 12.0156 20.3969 18.2632 18.835 19.825C16.7526 21.9077 11.5463 13.5775 11.5463 13.5775L9.98438 15.1394C10.1579 16.7013 10.0885 20.0333 8.42249 20.8663C6.75648 21.6993 5.64581 18.4367 5.29873 16.7013C3.5633 16.3542 0.300701 15.2435 1.1337 13.5775C1.96672 11.9115 5.29873 11.8421 6.86062 12.0156L8.42249 10.4538C8.42249 10.4538 0.0924504 5.24748 2.17496 3.16496C3.73685 1.60309 9.98438 3.68559 12.5875 5.24748Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             Эстафета
+
+                            {
+                                allCreatedRequests > 0 &&
+                                <div className={classes.countRequests}>
+                                    {allCreatedRequests}
+                                </div>
+                            }
                         </Link>
                     }
                     {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
@@ -159,6 +313,13 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                                 <path d="M3.92857 9.23704C4.45656 10.3876 5.04991 11.5071 5.70571 12.5899C5.95762 12.998 6.42143 13.1675 6.85381 13.0251C7.68095 12.7537 8.68619 12.1775 10.4457 11.5275C10.2886 12.4799 10.1757 13.4137 10.1071 14.0504C10.0595 14.4937 10.3724 14.8885 10.7743 14.7961C11.129 14.7147 11.9519 14.177 12.1905 14.0504C12.5071 13.8818 12.7381 13.5837 12.8857 13.2361C13.3424 12.1495 13.7445 11.0409 14.0905 9.91418C15.2919 9.42704 16.3571 9.1218 17.5405 8.56656C18.1167 8.29656 18.341 7.55037 17.9395 7.02704C17.361 6.27323 16.4238 5.36942 15.2176 5.29275C12.61 5.12656 9.80952 7.91751 7.54952 9.25894C7.54952 9.25894 6.67714 8.48561 5.70571 7.82037C5.56524 7.72418 5.39762 7.68656 5.23666 7.73227C5.06285 7.7818 4.46428 8.16561 4.18714 8.31323C3.87333 8.47989 3.77476 8.89704 3.92857 9.23704Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                             Резерв
+
+                            {
+                                allCreatedReserves > 0 &&
+                                <div className={classes.countRequests}>
+                                    {allCreatedReserves}
+                                </div>
+                            }
                         </Link>
                     }
                     {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&

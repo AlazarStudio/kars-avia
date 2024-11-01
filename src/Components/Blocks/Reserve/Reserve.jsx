@@ -65,16 +65,6 @@ function Reserve({ children, user, idHotel, ...props }) {
                 setNewRequests([]);
             }
 
-            sortedRequests.sort((a, b) => {
-                if (a.status === "done" && b.status !== "done") {
-                    return 1;
-                }
-                if (a.status !== "done" && b.status === "done") {
-                    return -1;
-                }
-                return 0;
-            });
-
             setRequests(sortedRequests);
             setTotalPages(data.reserves.totalPages);
             refetch();

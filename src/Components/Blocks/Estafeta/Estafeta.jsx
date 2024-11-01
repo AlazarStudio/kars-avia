@@ -69,7 +69,6 @@ function Estafeta({ user }) {
                 setNewRequests([]);
             }
 
-            // sortedRequests.sort((a, b) => a.status === "done" ? 1 : -1);
             setRequests(sortedRequests);
             setTotalPages(data.requests.totalPages);
         }
