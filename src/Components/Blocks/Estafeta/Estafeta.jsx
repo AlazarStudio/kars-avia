@@ -54,7 +54,8 @@ function Estafeta({ user }) {
                 return prevRequests;
             });
         }
-    }, [subscriptionData, currentPageRelay]);
+        refetch()
+    }, [subscriptionData, currentPageRelay, refetch]);
 
     // Обновление списка заявок на основе данных запроса и новых заявок
     useEffect(() => {
@@ -74,7 +75,7 @@ function Estafeta({ user }) {
     // Обновление данных при получении новой информации по подписке на обновление заявок
     useEffect(() => {
         if (subscriptionUpdateData) refetch();
-    }, [subscriptionUpdateData]);
+    }, [subscriptionUpdateData, refetch]);
 
     // Управление состоянием боковых панелей для создания и просмотра заявок
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
