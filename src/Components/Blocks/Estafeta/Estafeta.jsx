@@ -26,7 +26,7 @@ function Estafeta({ user }) {
     // Состояние для хранения информации о странице (для пагинации)
     const [pageInfo, setPageInfo] = useState({
         skip: currentPageRelay,
-        take: 20
+        take: 50
     });
 
     // Запрос на получение списка заявок с использованием параметров пагинации
