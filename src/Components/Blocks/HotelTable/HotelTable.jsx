@@ -321,7 +321,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
         setLoading(true);
 
-        // console.log(booking)
+        console.log(booking)
 
         try {
             let request = await updateHotelBron({

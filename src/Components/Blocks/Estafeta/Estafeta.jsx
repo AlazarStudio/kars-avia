@@ -179,7 +179,7 @@ function Estafeta({ user }) {
                             previousLabel={'←'}
                             nextLabel={'→'}
                             breakLabel={'...'}
-                            pageCount={totalPages}
+                            pageCount={totalPages == 0 ? 1 : totalPages}
                             marginPagesDisplayed={2}
                             pageRangeDisplayed={5}
                             onPageChange={handlePageClick}
