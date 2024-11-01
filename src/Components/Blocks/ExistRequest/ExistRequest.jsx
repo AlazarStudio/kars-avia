@@ -360,7 +360,14 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                                                 по <span>${formatDate(getJsonParce(log.newData).end)}</span>
                                                                 `
                                                                 :
-                                                                'неизвестный action'
+                                                                log.action === 'open_request'
+                                                                    ?
+                                                                    `
+                                                                        Пользователь <span>${log.user.name}</span> 
+                                                                        первый открыл заявку <br /> <span>№${getJsonParce(log.description).requestNumber}</span>
+                                                                    `
+                                                                    :
+                                                                    'неизвестный action'
                                                 }}></div >
                                         </>
                                     ))}

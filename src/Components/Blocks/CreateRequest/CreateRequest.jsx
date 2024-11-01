@@ -97,6 +97,7 @@ function CreateRequest({ show, onClose, user }) {
 
     const resetForm = () => {
         setActiveTab('Общая');
+        setSelectedAirline('');
         setFormData({
             personId: '',
             airportId: '',
@@ -286,7 +287,7 @@ function CreateRequest({ show, onClose, user }) {
             }
         }
 
-        return null; // Нет пересечений
+        return null;
     }
 
     function checkUserBrons() {
@@ -350,6 +351,7 @@ function CreateRequest({ show, onClose, user }) {
                                     ...prevFormData,
                                     airlineId: selectedAirline?.id || ""
                                 }));
+                                setIsEdited(true)
                             }}
                         />
 
@@ -366,6 +368,7 @@ function CreateRequest({ show, onClose, user }) {
                                             ...prevFormData,
                                             personId: selectedPerson?.id || ""
                                         }));
+                                        setIsEdited(true)
                                     }}
                                 />
                             </>
@@ -382,6 +385,7 @@ function CreateRequest({ show, onClose, user }) {
                                     city: value,
                                     airportId: ""
                                 }));
+                                setIsEdited(true)
                             }}
                         />
 
@@ -398,6 +402,7 @@ function CreateRequest({ show, onClose, user }) {
                                             ...prevFormData,
                                             airportId: selectedAirport?.id || ""
                                         }));
+                                        setIsEdited(true)
                                     }}
                                 />
                             </>
