@@ -5,14 +5,17 @@ import Button from "../../Standart/Button/Button";
 function Filter({ children, toggleSidebar, handleChange, handleStatusChange, filterData, buttonTitle, filterList, needDate, pageNumberRelay, ...props }) {
     return (
         <div className={classes.filter}>
-            <div className={classes.filter_title}>Состояние:</div>
-            <select className={classes.filter_select} onChange={handleStatusChange} defaultValue="created">
-                <option value="all">Все заявки</option>
-                <option value="created">Создан</option>
-                <option value="opened">В обработке</option>
-                <option value="cancelled">Отменен</option>
-                <option value="done">Размещен</option>
-            </select>
+            {handleStatusChange &&
+                <>
+                    <div className={classes.filter_title}>Состояние:</div>
+                    <select className={classes.filter_select} onChange={handleStatusChange} defaultValue="created / opened">
+                        <option value="all">Все заявки</option>
+                        <option value="created / opened">Создан / В обработке</option>
+                        <option value="cancelled">Отменен</option>
+                        <option value="done">Размещен</option>
+                    </select>
+                </>
+            }
 
             {filterList &&
                 <>

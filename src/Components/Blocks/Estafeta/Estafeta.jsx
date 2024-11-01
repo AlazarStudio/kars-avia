@@ -20,6 +20,9 @@ function Estafeta({ user }) {
     const pageNumberRelay = new URLSearchParams(location.search).get("page");
     const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
 
+    // Состояние для фильтрации по статусу
+    const [statusFilter, setStatusFilter] = useState("created / opened"); // по умолчанию "в обработке"
+
     // Состояние для хранения информации о странице (для пагинации)
     const [pageInfo, setPageInfo] = useState({
         skip: currentPageRelay,
@@ -28,7 +31,7 @@ function Estafeta({ user }) {
 
     // Запрос на получение списка заявок с использованием параметров пагинации
     const { loading, error, data, refetch } = useQuery(GET_REQUESTS, {
-        variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
+        variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take, status: statusFilter.split(" / ") } },
     });
 
     // Подписки для отслеживания создания и обновления заявок
@@ -39,9 +42,6 @@ function Estafeta({ user }) {
     const [newRequests, setNewRequests] = useState([]);
     const [requests, setRequests] = useState([]);
     const [totalPages, setTotalPages] = useState();
-
-    // Состояние для фильтрации по статусу
-    const [statusFilter, setStatusFilter] = useState("created"); // по умолчанию "в обработке"
 
     // Обработка данных подписки на создание заявок: добавление новых заявок в список
     useEffect(() => {
@@ -112,7 +112,7 @@ function Estafeta({ user }) {
     // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
     const filteredRequests = useMemo(() => {
         return requests.filter(request => {
-            const matchesStatus = statusFilter === "all" || request.status === statusFilter;
+            // const matchesStatus = statusFilter === "all" || statusFilter.includes(request.status);
             const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
             const matchesDate = !filterData.filterDate || convertToDate(Number(request.createdAt)) === filterData.filterDate;
             const matchesSearch = searchQuery.toLowerCase();
@@ -125,10 +125,11 @@ function Estafeta({ user }) {
                 request.arrival.time, request.departure.flight, request.departure.date,
                 request.departure.time, request.status
             ];
-
-            return matchesStatus && matchesAirline && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
+            // matchesStatus && 
+            // statusFilter
+            return matchesAirline && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
         });
-    }, [requests, filterData, searchQuery, airlineName, statusFilter]);
+    }, [requests, filterData, searchQuery, airlineName]);
 
     const filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
 
