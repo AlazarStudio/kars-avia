@@ -277,6 +277,7 @@ function ReservePlacement({ children, user, ...props }) {
 
     const filteredPlacement = placement
         .map((item) => {
+
             const filteredPassengers = item.hotel.passengers.filter((passenger) =>
                 passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
@@ -301,9 +302,17 @@ function ReservePlacement({ children, user, ...props }) {
         })
         .filter((item) => item !== null);
 
+    const [showChooseHotels, setShowChooseHotels] = useState(0);
+
+    useEffect(() => {
+        const totalPassengers = placement.reduce((acc, item) => acc + Number(item.hotel.passengersCount), 0);
+        setShowChooseHotels(totalPassengers);
+    }, [placement]);
+
     const toggleCreateSidebarHotel = () => {
         setShowCreateSidebarHotel(!showCreateSidebarHotel);
     };
+
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />
@@ -329,7 +338,7 @@ function ReservePlacement({ children, user, ...props }) {
                         {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Добавить новую гостиницу</Button>}
 
                         <Button onClick={toggleCreateSidebar}>
-                            {user.role == 'HOTELADMIN' ? 'Выбрать количество гостей' : 'Добавить гостиницу'}
+                            {user.role == 'HOTELADMIN' ? 'Выбрать количество пассажиров' : 'Добавить гостиницу'}
                         </Button>
                     </div>
                 </div>
@@ -357,6 +366,8 @@ function ReservePlacement({ children, user, ...props }) {
                             placement={placement ? placement : []}
                             setPlacement={setPlacement}
                             user={user}
+                            showChooseHotels={showChooseHotels}
+                            setShowChooseHotels={setShowChooseHotels}
                         />
 
                         <UpdatePassanger

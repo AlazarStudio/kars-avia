@@ -5,7 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../graphQL_requests";
 
-function AddNewPassenger({ show, onClose, request, placement, setPlacement, user }) {
+function AddNewPassenger({ show, onClose, request, placement, setPlacement, user, showChooseHotels }) {
     const [city, setCity] = useState("");
     const [hotel, setHotel] = useState(user.hotelId);
 
@@ -41,12 +41,13 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
     const handleChange = (e) => {
         const { name, value } = e.target;
         const maxCount = request.passengerCount;
+        const maxCountChoose = request.passengerCount - showChooseHotels;
 
         if (value > maxCount) {
-            setError(`Максимальное количество пассажиров - ${maxCount}`);
+            setError(`Максимальное количество пассажиров - ${maxCount}. Другие гостиницы уже выбрали ${showChooseHotels} пассажиров. Вы можете выбрать не более ${maxCountChoose} пассажиров`);
             setFormData(prevState => ({
                 ...prevState,
-                [name]: maxCount
+                [name]: maxCountChoose
             }));
         } else {
             setError('');
@@ -175,7 +176,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
                         name="passengers"
                         placeholder="Пример: 30"
                         min="1"
-                        max={request.passengerCount}
+                        max={request.passengerCount - showChooseHotels}
                         value={formData.passengers}
                         onChange={handleChange}
                     />
@@ -184,7 +185,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
             </div>
 
             <div className={classes.requestButon}>
-                <Button onClick={handleSubmit}>{user.role == 'HOTELADMIN' ? 'Выбрать количество гостей' : 'Добавить гостиницу'}</Button>
+                <Button onClick={handleSubmit}>{user.role == 'HOTELADMIN' ? 'Добавить' : 'Добавить гостиницу'}</Button>
             </div>
         </Sidebar>
     );
