@@ -73,7 +73,7 @@ function ReservePlacement({ children, user, ...props }) {
             if (subscriptionData) {
                 const newHotelData = {
                     hotel: {
-                        reservationHotelId: item.id,
+                        reservationHotelId: subscriptionData.reserveHotel.id,
                         id: subscriptionData.reserveHotel.hotel.id,
                         name: subscriptionData.reserveHotel.hotel.name,
                         passengersCount: subscriptionData.reserveHotel.capacity.toString(),
