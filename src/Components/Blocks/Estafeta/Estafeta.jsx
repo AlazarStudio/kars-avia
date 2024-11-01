@@ -40,6 +40,9 @@ function Estafeta({ user }) {
     const [requests, setRequests] = useState([]);
     const [totalPages, setTotalPages] = useState();
 
+    // Состояние для фильтрации по статусу
+    const [statusFilter, setStatusFilter] = useState("created"); // по умолчанию "в обработке"
+
     // Обработка данных подписки на создание заявок: добавление новых заявок в список
     useEffect(() => {
         if (subscriptionData) {
@@ -77,6 +80,9 @@ function Estafeta({ user }) {
         if (subscriptionUpdateData) refetch();
     }, [subscriptionUpdateData, refetch]);
 
+    // Обновление состояния фильтрации по статусу
+    const handleStatusChange = (e) => setStatusFilter(e.target.value);
+
     // Управление состоянием боковых панелей для создания и просмотра заявок
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -107,6 +113,7 @@ function Estafeta({ user }) {
     // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
     const filteredRequests = useMemo(() => {
         return requests.filter(request => {
+            const matchesStatus = statusFilter === "all" || request.status === statusFilter;
             const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
             const matchesDate = !filterData.filterDate || convertToDate(Number(request.createdAt)) === filterData.filterDate;
             const matchesSearch = searchQuery.toLowerCase();
@@ -120,9 +127,9 @@ function Estafeta({ user }) {
                 request.departure.time, request.status
             ];
 
-            return matchesAirline && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
+            return matchesStatus && matchesAirline && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
         });
-    }, [requests, filterData, searchQuery, airlineName]);
+    }, [requests, filterData, searchQuery, airlineName, statusFilter]);
 
     const filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
 
@@ -157,6 +164,7 @@ function Estafeta({ user }) {
                     buttonTitle={'Создать заявку'}
                     filterList={filterList}
                     needDate={true}
+                    handleStatusChange={handleStatusChange} // передаем обработчик изменения статуса
                 />
             </div>
             {loading && <p>Loading...</p>}
@@ -165,24 +173,22 @@ function Estafeta({ user }) {
             {/* Отображение таблицы заявок и компонентов пагинации */}
             {!loading && !error && requests && (
                 <>
-                    <InfoTableData paginationHeight={totalPages === 1 ? '295px' : undefined} toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} chooseRequestID={chooseRequestID} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
-                    {totalPages > 1 && (
-                        <div className={classes.pagination}>
-                            <ReactPaginate
-                                previousLabel={'←'}
-                                nextLabel={'→'}
-                                breakLabel={'...'}
-                                pageCount={totalPages}
-                                marginPagesDisplayed={2}
-                                pageRangeDisplayed={5}
-                                onPageChange={handlePageClick}
-                                forcePage={currentPageRelay}
-                                containerClassName={classes.pagination}
-                                activeClassName={classes.activePaginationNumber}
-                                pageLinkClassName={classes.paginationNumber}
-                            />
-                        </div>
-                    )}
+                    <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} chooseRequestID={chooseRequestID} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
+                    <div className={classes.pagination}>
+                        <ReactPaginate
+                            previousLabel={'←'}
+                            nextLabel={'→'}
+                            breakLabel={'...'}
+                            pageCount={totalPages}
+                            marginPagesDisplayed={2}
+                            pageRangeDisplayed={5}
+                            onPageChange={handlePageClick}
+                            forcePage={currentPageRelay}
+                            containerClassName={classes.pagination}
+                            activeClassName={classes.activePaginationNumber}
+                            pageLinkClassName={classes.paginationNumber}
+                        />
+                    </div>
                 </>
             )}
             {/* Боковые панели для создания и выбора заявок */}

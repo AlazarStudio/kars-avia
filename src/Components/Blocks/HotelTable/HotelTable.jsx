@@ -221,7 +221,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                                     borderTopRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                     borderBottomRightRadius: endDate.getMonth() === currentMonth ? '4px' : '0',
                                 }}
-                                // onClick={toggleCreateSidebar}
+                            // onClick={toggleCreateSidebar}
                             >
                                 <Booking>{booking.client.name ? booking.client.name : booking.client}</Booking>
                             </div>
@@ -321,9 +321,9 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
         setLoading(true);
 
-        console.log(booking)
+        // console.log(booking)
 
-        // try {
+        try {
             let request = await updateHotelBron({
                 variables: {
                     updateHotelId: booking.hotelId,
@@ -354,9 +354,9 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                     setLoading(false);
                 }, secundos);
             }
-        // } catch (err) {
-        //     alert('Произошла ошибка при сохранении данных');
-        // }
+        } catch (err) {
+            console.log('Произошла ошибка при сохранении данных', err);
+        }
     };
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
