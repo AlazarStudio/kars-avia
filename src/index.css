@@ -66,7 +66,7 @@ input[type="file"] {
 }
 
 
-.processing {
+.opened {
     width: 10px;
     height: 10px;
     border-radius: 50%;
@@ -94,12 +94,13 @@ input[type="file"] {
     background-color: var(--text-gray);
 }
 
+/* 
 .opened {
     width: 10px;
     height: 10px;
     border-radius: 50%;
     background-color: rgb(125, 107, 255);
-}
+} */
 
 .react-tabs__tab--selected {
     background-color: #E4E4EF;

@@ -56,10 +56,9 @@ function InfoTableDataReserve({ children, requests, paginationHeight, ...props }
                             <div className={classes.InfoTable_data_elem_position}>
                                 <div className={item.status}></div>
                                 {item.status == 'created' && 'Создан'}
-                                {item.status == 'opened' && 'Открыт'}
-                                {item.status == 'processing' && 'В обработке'}
+                                {item.status == 'opened' && 'В обработке'}
                                 {item.status == 'cancelled' && 'Отменен'}
-                                {item.status == 'done' && 'Готово'}
+                                {item.status == 'done' && 'Размещен'}
                             </div>
                         </div>
                     </Link>

@@ -65,7 +65,7 @@ function Estafeta({ user }) {
                 setNewRequests([]);
             }
 
-            sortedRequests.sort((a, b) => a.status === "done" ? 1 : -1);
+            // sortedRequests.sort((a, b) => a.status === "done" ? 1 : -1);
             setRequests(sortedRequests);
             setTotalPages(data.requests.totalPages);
         }
@@ -131,6 +131,12 @@ function Estafeta({ user }) {
         setPageInfo(prev => ({ ...prev, skip: selectedPage }));
         navigate(`?page=${selectedPage + 1}`);
     };
+
+    // Конвертация времени создания из милисекунд в дату
+    function convertToDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
+    }
 
     return (
         <div className={classes.section}>
