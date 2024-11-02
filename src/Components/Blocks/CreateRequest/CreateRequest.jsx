@@ -13,6 +13,7 @@ function CreateRequest({ show, onClose, user }) {
     const [isEdited, setIsEdited] = useState(false);  // Флаг, указывающий, были ли изменения в форме
     const [airlines, setAirlines] = useState([]);  // Список авиакомпаний
     const [selectedAirline, setSelectedAirline] = useState(null);  // Выбранная авиакомпания
+    const sidebarRef = useRef();
 
     // Запрос данных авиакомпаний и аэропортов
     const { data } = useQuery(GET_AIRLINES_RELAY);
@@ -204,8 +205,21 @@ function CreateRequest({ show, onClose, user }) {
         }
     }, [formData.arrivalDate, formData.arrivalTime, formData.departureDate, formData.departureTime, hotelBronsInfo, checkBookingOverlap]);
 
+    // Клик вне боковой панели закрывает её
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+                closeButton();
+            }
+        };
+
+        if (show) document.addEventListener('mousedown', handleClickOutside);
+        else document.removeEventListener('mousedown', handleClickOutside);
+
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [show, closeButton]);
     return (
-        <Sidebar show={show} sidebarRef={useRef(null)}>
+        <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
                 <div className={classes.requestTitle_name}>Создать заявку</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>

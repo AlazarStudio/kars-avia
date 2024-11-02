@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import classes from './DropDownList.module.css';
 
-function DropDownList({ options, initialValue = "", searchable = true, onSelect }) {
+function DropDownList({ options, initialValue = "", searchable = true, onSelect, placeholder }) {
     const [searchTerm, setSearchTerm] = useState(initialValue);
     const [isOpen, setIsOpen] = useState(false);
     const searchRef = useRef(null);
@@ -50,7 +50,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect 
                 value={searchTerm}
                 onChange={handleInputChange}
                 onFocus={handleFocus}
-                placeholder="Поиск..."
+                placeholder={placeholder}
                 disabled={!searchable}
             />
             {isOpen && (

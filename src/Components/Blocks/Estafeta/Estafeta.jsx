@@ -41,7 +41,7 @@ function Estafeta({ user }) {
     // Локальное состояние для хранения новых заявок и всех заявок
     const [newRequests, setNewRequests] = useState([]);
     const [requests, setRequests] = useState([]);
-    const [totalPages, setTotalPages] = useState();
+    const [totalPages, setTotalPages] = useState(1);
 
     // Обработка данных подписки на создание заявок: добавление новых заявок в список
     useEffect(() => {
@@ -80,7 +80,7 @@ function Estafeta({ user }) {
     }, [subscriptionUpdateData, refetch]);
 
     // Обновление состояния фильтрации по статусу
-    const handleStatusChange = (e) => setStatusFilter(e.target.value);
+    const handleStatusChange = (value) => setStatusFilter(value);
 
     // Управление состоянием боковых панелей для создания и просмотра заявок
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -176,7 +176,7 @@ function Estafeta({ user }) {
                             previousLabel={'←'}
                             nextLabel={'→'}
                             breakLabel={'...'}
-                            pageCount={totalPages == 0 ? 1 : totalPages}
+                            pageCount={totalPages}
                             marginPagesDisplayed={2}
                             pageRangeDisplayed={5}
                             onPageChange={handlePageClick}

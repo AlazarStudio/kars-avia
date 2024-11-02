@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 function Button({ children, timeLeft, dataObject, ...props }) {
     const buttonStyles = {
+        minWidth: props.minwidth,
         width: props.width,
         height: props.height,
         cursor: props.cursor,
