@@ -153,7 +153,7 @@ function EditRequestAirlineCompany({ show, onClose, user, department, onSubmit, 
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Сохранить изменения</Button>
             </div>
         </Sidebar>

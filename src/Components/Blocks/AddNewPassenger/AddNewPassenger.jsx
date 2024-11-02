@@ -184,7 +184,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button onClick={handleSubmit}>{user.role == 'HOTELADMIN' ? 'Добавить' : 'Добавить гостиницу'}</Button>
             </div>
         </Sidebar>

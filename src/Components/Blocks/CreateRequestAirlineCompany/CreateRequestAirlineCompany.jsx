@@ -100,7 +100,7 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
                     login: request.data.registerUser.login,
                     password: request.data.registerUser.password
                 };
-                
+
                 const updatedTarifs = addTarif.map(department => {
                     if (department.id === formData.department) {
                         const updatedUsers = [...department.users, newUser].sort((a, b) => a.name.localeCompare(b.name));
@@ -111,7 +111,7 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
                     }
                     return department;
                 });
-    
+
                 setAddTarif(updatedTarifs);
                 resetForm();
                 onClose();
@@ -180,7 +180,7 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Добавить</Button>
             </div>
         </Sidebar>

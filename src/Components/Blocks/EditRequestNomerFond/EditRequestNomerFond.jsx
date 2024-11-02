@@ -116,7 +116,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSu
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Сохранить изменения</Button>
             </div>
         </Sidebar>

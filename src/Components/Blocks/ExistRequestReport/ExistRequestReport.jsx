@@ -134,7 +134,7 @@ function ExistRequestReport({ show, onClose, chooseObject, updateDispatcher, ope
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button onClick={() => openDeleteComponent(index)} backgroundcolor={'#FF9C9C'}>Удалить <img src="/delete.png" alt="" /></Button>
                 <Button onClick={handleUpdate} backgroundcolor={'#3CBC6726'} color={'#3B6C54'}>Изменить <img src="/editDispetcher.png" alt="" /></Button>
             </div>

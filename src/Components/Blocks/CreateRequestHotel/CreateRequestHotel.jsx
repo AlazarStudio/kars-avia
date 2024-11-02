@@ -158,7 +158,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
 
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Добавить</Button>
             </div>
         </Sidebar>

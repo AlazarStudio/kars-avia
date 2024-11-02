@@ -6,7 +6,7 @@
     border-bottom: 1px solid #54587380;
 }
 
-.requestButon {
+.requestButton {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -102,13 +102,13 @@ select {
     cursor: pointer;
 }
 
-.requestButon {
+.requestButton {
     display: flex;
     justify-content: space-between;
     gap: 30px;
 }
 
-.requestButon a {
+.requestButton a {
     width: 50%;
 }
 

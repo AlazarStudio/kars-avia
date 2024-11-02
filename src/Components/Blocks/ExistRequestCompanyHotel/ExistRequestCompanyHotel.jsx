@@ -73,7 +73,7 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
             }));
         }
     };
-    
+
     const handleUpdate = async () => {
         let response_update_user = await uploadFile({
             variables: {
@@ -188,7 +188,7 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button onClick={() => openDeleteComponent(index, formData.id)} backgroundcolor={'#FF9C9C'}>Удалить <img src="/delete.png" alt="" /></Button>
                 <Button onClick={handleUpdate} backgroundcolor={'#3CBC6726'} color={'#3B6C54'}>Изменить <img src="/editDispetcher.png" alt="" /></Button>
             </div>

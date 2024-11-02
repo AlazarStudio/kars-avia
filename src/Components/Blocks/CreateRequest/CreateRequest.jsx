@@ -1,34 +1,25 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import classes from './CreateRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
-import { useNavigate } from "react-router-dom";
 import DropDownList from "../DropDownList/DropDownList";
 
+// Компонент для создания новой заявки
 function CreateRequest({ show, onClose, user }) {
     const token = getCookie('token');
-
     const [userID, setUserID] = useState();
+    const [isEdited, setIsEdited] = useState(false);  // Флаг, указывающий, были ли изменения в форме
+    const [airlines, setAirlines] = useState([]);  // Список авиакомпаний
+    const [selectedAirline, setSelectedAirline] = useState(null);  // Выбранная авиакомпания
 
-    const [isEdited, setIsEdited] = useState(false);
+    // Запрос данных авиакомпаний и аэропортов
+    const { data } = useQuery(GET_AIRLINES_RELAY);
+    const infoAirports = useQuery(GET_AIRPORTS_RELAY);
+    const [airports, setAirports] = useState([]);  // Список аэропортов
 
-    const [airlines, setAirlines] = useState([]);
-    const [selectedAirline, setSelectedAirline] = useState(null);
-
-    const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
-
-    let infoAirports = useQuery(GET_AIRPORTS_RELAY);
-
-    const [airports, setAirports] = useState([]);
-
-    useEffect(() => {
-        if (infoAirports.data) {
-            setAirports(infoAirports.data?.airports || []);
-        }
-    }, [infoAirports]);
-
+    // Состояние активной вкладки и данных формы
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState({
         personId: '',
@@ -50,15 +41,35 @@ function CreateRequest({ show, onClose, user }) {
         city: ''
     });
 
+    const [warningMessage, setWarningMessage] = useState('');  // Предупреждение при пересечении бронирования
+    const [hotelBronsInfo, setHotelBronsInfo] = useState([]);  // Информация о бронировании пользователя
+
+    // Запрос данных о бронированиях пользователя
+    const { data: bronData } = useQuery(GET_USER_BRONS, {
+        variables: { airlineStaffId: formData.personId },
+        skip: !formData.personId,
+    });
+
+    // Вычисляем уникальные города из списка аэропортов, используя memo
+    const uniqueCities = useMemo(() => [...new Set(airports.map(airport => airport.city.trim()))].sort(), [airports]);
+
+    // Обновление списка аэропортов при изменении данных
+    useEffect(() => {
+        if (infoAirports.data) {
+            setAirports(infoAirports.data.airports || []);
+        }
+    }, [infoAirports.data]);
+
+    // Обновление ID пользователя и других начальных данных при наличии токена и данных
     useEffect(() => {
         if (token && data) {
-            setUserID(decodeJWT(token).userId);
+            const userId = decodeJWT(token).userId;
+            setUserID(userId);
             setFormData(prevFormData => ({
                 ...prevFormData,
-                senderId: decodeJWT(token).userId,
-                airlineId: user?.airlineId || prevFormData.airlineId, // Если есть user.airlineId, задаем его
+                senderId: userId,
+                airlineId: user?.airlineId || prevFormData.airlineId,
             }));
-
             setAirlines(data.airlines);
 
             if (user?.airlineId) {
@@ -66,24 +77,16 @@ function CreateRequest({ show, onClose, user }) {
                 setSelectedAirline(selectedAirline);
             }
         }
-    }, [token, userID, data, user]);
+    }, [token, data, user]);
 
-
-    const [warningMessage, setWarningMessage] = useState('');
-
-    const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
-
-    const { loading: bronLoading, error: bronError, data: bronData } = useQuery(GET_USER_BRONS, {
-        variables: { airlineStaffId: formData.personId },
-        skip: !formData.personId, // Пропускаем запрос, если personId нет
-    });
-
+    // Обновление информации о бронировании при изменении ID сотрудника
     useEffect(() => {
         if (formData.personId && bronData) {
             setHotelBronsInfo(bronData.airlineStaff.hotelChess);
         }
     }, [bronData, formData.personId]);
 
+    // Мутация для создания новой заявки
     const [createRequest] = useMutation(CREATE_REQUEST_MUTATION, {
         context: {
             headers: {
@@ -93,11 +96,10 @@ function CreateRequest({ show, onClose, user }) {
         },
     });
 
-    const sidebarRef = useRef();
-
-    const resetForm = () => {
+    // Сброс формы к начальному состоянию
+    const resetForm = useCallback(() => {
         setActiveTab('Общая');
-        setSelectedAirline('');
+        setSelectedAirline(null);
         setFormData({
             personId: '',
             airportId: '',
@@ -117,208 +119,93 @@ function CreateRequest({ show, onClose, user }) {
             },
             city: ''
         });
-        setIsEdited(false)
-        setWarningMessage('')
-    };
+        setIsEdited(false);
+        setWarningMessage('');
+    }, [userID]);
 
-    const closeButton = () => {
-        if (!isEdited) {
+    // Закрытие формы с проверкой на несохраненные изменения
+    const closeButton = useCallback(() => {
+        if (!isEdited || confirm("Вы уверены, все несохраненные данные будут удалены")) {
             resetForm();
             onClose();
-        } else {
-            let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-            if (success) {
-                resetForm();
-                onClose();
-            }
         }
-    };
+    }, [isEdited, resetForm, onClose]);
 
-    const handleTabChange = (tab) => {
-        setActiveTab(tab);
-    };
-
-    const handleChange = (e) => {
+    // Обработчик изменений в полях формы
+    const handleChange = useCallback((e) => {
         const { name, value, type, checked } = e.target;
-
-        setIsEdited(true)
-
-        if (type === 'checkbox') {
-            setFormData(prevState => ({
-                ...prevState,
-                mealPlan: {
-                    ...prevState.mealPlan,
-                    [name]: checked
-                }
-            }));
-        } else if (name === 'included') {
-            setFormData(prevState => ({
-                ...prevState,
-                mealPlan: {
-                    ...prevState.mealPlan,
-                    included: value === 'true'
-                }
-            }));
-        } else if (name === 'airlineId') {
-            setFormData(prevState => ({
-                ...prevState,
-                [name]: value,
-                personId: ''
-            }));
-        } else if (name === 'city') {
-            setFormData(prevState => ({
-                ...prevState,
-                [name]: value,
-                airportId: ''
-            }));
-        } else {
-            setFormData(prevState => ({
-                ...prevState,
-                [name]: value
-            }));
-        }
-
-        if (formData.mealPlan.included === false) {
-            formData.mealPlan.breakfast = false;
-            formData.mealPlan.lunch = false;
-            formData.mealPlan.dinner = false;
-        }
-    };
-
-    const handleAirlineChange = (e) => {
-        const selectedId = e.target.value;
-
-        setIsEdited(true)
-
-        const selectedAirline = airlines.find(airline => airline.id === selectedId);
-        setSelectedAirline(selectedAirline);
-        setFormData({
-            ...formData,
-            airlineId: selectedId,
-            personId: '', // Сбрасываем имя сотрудника при смене авиакомпании
+        setIsEdited(true);
+        setFormData(prevState => {
+            if (type === 'checkbox') {
+                return {
+                    ...prevState,
+                    mealPlan: {
+                        ...prevState.mealPlan,
+                        [name]: checked,
+                    },
+                };
+            } else {
+                return {
+                    ...prevState,
+                    [name]: value,
+                    mealPlan: name === 'included' ? { ...prevState.mealPlan, included: value === 'true' } : prevState.mealPlan,
+                };
+            }
         });
-    };
+    }, []);
 
-    const handleStaffChange = (e) => {
-        const selectedStaffId = e.target.value;
+    // Обработчик переключения вкладок
+    const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
-        setIsEdited(true)
-
-        setFormData(prevFormData => ({
-            ...prevFormData,
-            personId: selectedStaffId
-        }));
-    };
-
+    // Отправка формы на сервер
     const handleSubmit = async () => {
         const input = {
             personId: formData.personId,
             airportId: formData.airportId,
-            arrival: {
-                flight: formData.arrivalRoute,
-                date: formData.arrivalDate,
-                time: formData.arrivalTime,
-            },
-            departure: {
-                flight: formData.departureRoute,
-                date: formData.departureDate,
-                time: formData.departureTime,
-            },
-            mealPlan: {
-                included: formData.mealPlan.included,
-                // breakfast: formData.mealPlan.breakfast,
-                // lunch: formData.mealPlan.lunch,
-                // dinner: formData.mealPlan.dinner,
-            },
+            arrival: { flight: formData.arrivalRoute, date: formData.arrivalDate, time: formData.arrivalTime },
+            departure: { flight: formData.departureRoute, date: formData.departureDate, time: formData.departureTime },
+            mealPlan: { included: formData.mealPlan.included },
             senderId: formData.senderId,
             airlineId: formData.airlineId,
         };
 
         try {
             await createRequest({ variables: { input } });
-        } catch (e) {
-            console.error(e);
+            resetForm();
+            onClose();
+        } catch (error) {
+            console.error(error);
         }
-        resetForm();
-        onClose();
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                closeButton();
-            }
-        };
-
-        if (show) {
-            document.addEventListener('mousedown', handleClickOutside);
-        } else {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [show, onClose, isEdited]);
-
-    const messagesEndRef = useRef(null);
-
-    const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
-
-    const uniqueCities = [...new Set(airports.map(airport => airport.city.trim()))].sort((a, b) => a.localeCompare(b));
-    const filteredAirports = formData.city ? airports.filter(airport => airport.city.trim() === formData.city.trim()) : [];
-
-    function isOverlap(start1, end1, start2, end2) {
-        return (start1 < end2) && (start2 < end1);
-    }
-
-    function checkBookingOverlap(arrivalDate, arrivalTime, departureDate, departureTime, bronList) {
+    // Проверка на пересечение бронирований
+    const checkBookingOverlap = useCallback((arrivalDate, arrivalTime, departureDate, departureTime, bronList) => {
         const arrivalDateTime = new Date(`${arrivalDate}T${arrivalTime}`);
         const departureDateTime = new Date(`${departureDate}T${departureTime}`);
 
-        for (let bron of bronList) {
-            const bronStartDateTime = new Date(`${bron.start}T${bron.startTime}`);
-            const bronEndDateTime = new Date(`${bron.end}T${bron.endTime}`);
+        return bronList.some(bron => {
+            const bronStart = new Date(`${bron.start}T${bron.startTime}`);
+            const bronEnd = new Date(`${bron.end}T${bron.endTime}`);
+            return arrivalDateTime < bronEnd && bronStart < departureDateTime;
+        });
+    }, []);
 
-            if (isOverlap(arrivalDateTime, departureDateTime, bronStartDateTime, bronEndDateTime)) {
-                return `В это время пользователь уже забронирован в отеле "${bron.hotel.name}" с ${convertToDate(bron.start)} ${bron.startTime} по ${convertToDate(bron.end)} ${bron.endTime}`;
-            }
-        }
-
-        return null;
-    }
-
-    function checkUserBrons() {
-        const overlapMessage = checkBookingOverlap(
-            formData.arrivalDate,
-            formData.arrivalTime,
-            formData.departureDate,
-            formData.departureTime,
-            hotelBronsInfo
-        );
-
-        if (overlapMessage) {
-            setWarningMessage(overlapMessage);
-        } else {
-            setWarningMessage('');
-        }
-    }
-
-    function convertToDate(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString();
-    }
-
+    // Обновление предупреждения при изменении дат и времени
     useEffect(() => {
         if (formData.arrivalDate && formData.arrivalTime && formData.departureDate && formData.departureTime) {
-            checkUserBrons();
+            const overlap = checkBookingOverlap(
+                formData.arrivalDate,
+                formData.arrivalTime,
+                formData.departureDate,
+                formData.departureTime,
+                hotelBronsInfo
+            );
+            setWarningMessage(overlap ? 'Пересечение с существующим бронированием' : '');
         }
-    }, [formData.arrivalDate, formData.arrivalTime, formData.departureDate, formData.departureTime, hotelBronsInfo]);
+    }, [formData.arrivalDate, formData.arrivalTime, formData.departureDate, formData.departureTime, hotelBronsInfo, checkBookingOverlap]);
 
     return (
-        <Sidebar show={show} sidebarRef={sidebarRef}>
+        <Sidebar show={show} sidebarRef={useRef(null)}>
             <div className={classes.requestTitle}>
                 <div className={classes.requestTitle_name}>Создать заявку</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
@@ -330,18 +217,14 @@ function CreateRequest({ show, onClose, user }) {
                     <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
                 </div>
 
+                {/* Вкладка "Общая" */}
                 {activeTab === 'Общая' && (
                     <div className={classes.requestData}>
-                        {warningMessage && (
-                            <div className={classes.warningMessage}>
-                                <strong>Внимание:</strong> {warningMessage}
-                            </div>
-                        )}
+                        {warningMessage && <div className={classes.warningMessage}>{warningMessage}</div>}
 
                         <label>Авиакомпания</label>
-
                         <DropDownList
-                            placeholder={'Введите авиакомпанию'}
+                            placeholder="Введите авиакомпанию"
                             options={airlines.map(airline => airline.name)}
                             initialValue={selectedAirline?.name || ""}
                             onSelect={(value) => {
@@ -351,7 +234,7 @@ function CreateRequest({ show, onClose, user }) {
                                     ...prevFormData,
                                     airlineId: selectedAirline?.id || ""
                                 }));
-                                setIsEdited(true)
+                                setIsEdited(true);
                             }}
                         />
 
@@ -359,7 +242,7 @@ function CreateRequest({ show, onClose, user }) {
                             <>
                                 <label>Сотрудник авиакомпании</label>
                                 <DropDownList
-                                    placeholder={'Введите сотрудника'}
+                                    placeholder="Введите сотрудника"
                                     options={selectedAirline.staff.map(person => person.name)}
                                     initialValue={selectedAirline.staff.find(person => person.id === formData.personId)?.name || ""}
                                     onSelect={(value) => {
@@ -368,7 +251,7 @@ function CreateRequest({ show, onClose, user }) {
                                             ...prevFormData,
                                             personId: selectedPerson?.id || ""
                                         }));
-                                        setIsEdited(true)
+                                        setIsEdited(true);
                                     }}
                                 />
                             </>
@@ -376,7 +259,7 @@ function CreateRequest({ show, onClose, user }) {
 
                         <label>Город</label>
                         <DropDownList
-                            placeholder={'Введите город'}
+                            placeholder="Введите город"
                             options={uniqueCities}
                             initialValue={formData.city}
                             onSelect={(value) => {
@@ -385,7 +268,7 @@ function CreateRequest({ show, onClose, user }) {
                                     city: value,
                                     airportId: ""
                                 }));
-                                setIsEdited(true)
+                                setIsEdited(true);
                             }}
                         />
 
@@ -393,16 +276,16 @@ function CreateRequest({ show, onClose, user }) {
                             <>
                                 <label>Аэропорт</label>
                                 <DropDownList
-                                    placeholder={'Введите аэропорт'}
-                                    options={filteredAirports.map(airport => airport.name)}
-                                    initialValue={filteredAirports.find(airport => airport.id === formData.airportId)?.name || ""}
+                                    placeholder="Введите аэропорт"
+                                    options={airports.filter(airport => airport.city.trim() === formData.city.trim()).map(airport => airport.name)}
+                                    initialValue={airports.find(airport => airport.id === formData.airportId)?.name || ""}
                                     onSelect={(value) => {
-                                        const selectedAirport = filteredAirports.find(airport => airport.name === value);
+                                        const selectedAirport = airports.find(airport => airport.name === value);
                                         setFormData(prevFormData => ({
                                             ...prevFormData,
                                             airportId: selectedAirport?.id || ""
                                         }));
-                                        setIsEdited(true)
+                                        setIsEdited(true);
                                     }}
                                 />
                             </>
@@ -421,10 +304,10 @@ function CreateRequest({ show, onClose, user }) {
                             <input type="date" name="departureDate" value={formData.departureDate} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
                         </div>
-
                     </div>
                 )}
 
+                {/* Вкладка "Доп. услуги" */}
                 {activeTab === 'Доп. услуги' && (
                     <div className={classes.requestData}>
                         <label>Питание</label>
@@ -433,7 +316,7 @@ function CreateRequest({ show, onClose, user }) {
                             <option value={false}>Не включено</option>
                         </select>
 
-                        <div className={classes.checks} style={{ 'display': `${formData.mealPlan.included === true ? 'flex' : 'none'}` }}>
+                        <div className={classes.checks} style={{ display: formData.mealPlan.included ? 'flex' : 'none' }}>
                             <label>
                                 <input type="checkbox" name="breakfast" checked={formData.mealPlan.breakfast} onChange={handleChange} />
                                 Завтрак
@@ -451,7 +334,7 @@ function CreateRequest({ show, onClose, user }) {
                 )}
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button onClick={handleSubmit}>Создать заявку</Button>
             </div>
         </Sidebar>

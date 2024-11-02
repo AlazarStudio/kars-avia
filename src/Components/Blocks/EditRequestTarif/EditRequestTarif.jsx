@@ -97,7 +97,7 @@ function EditRequestTarif({ show, onClose, tarif, onSubmit, id, setAddTarif }) {
 
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Изменить</Button>
             </div>
         </Sidebar>

@@ -1,36 +1,44 @@
-import React from "react";
+import React, { useCallback } from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { server } from "../../../../graphQL_requests";
 
-function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObject, chooseRequestID, setChooseRequestID, paginationHeight, ...props }) {
-    const handleObject = (id, arrival, departure, persone, requestNumber) => {
-        setChooseObject([
-            {
-                room: '',
-                place: '',
-                start: arrival.date,
-                startTime: arrival.time,
-                end: departure.date,
-                endTime: departure.time,
-                client: persone.name,
-                public: false,
-                clientId: persone.id,
-                hotelId: '',
-                requestId: id,
-                requestNumber: requestNumber
-            }
-        ])
-        setChooseRequestID(id)
-        toggleRequestSidebar()
-    }
+// Основная таблица с данными о заявках
+function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, chooseRequestID, setChooseRequestID }) {
+    // Функция для установки выбранного объекта и переключения боковой панели
+    const handleObject = useCallback((id, arrival, departure, person, requestNumber) => {
+        setChooseObject([{
+            room: '',
+            place: '',
+            start: arrival.date,
+            startTime: arrival.time,
+            end: departure.date,
+            endTime: departure.time,
+            client: person.name,
+            public: false,
+            clientId: person.id,
+            hotelId: '',
+            requestId: id,
+            requestNumber
+        }]);
+        setChooseRequestID(id);
+        toggleRequestSidebar();
+    }, [setChooseObject, setChooseRequestID, toggleRequestSidebar]);
 
-    function convertToDate(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
-    }
+    // Функция для преобразования временной метки в читаемую дату
+    const convertToDate = (timestamp) => new Date(timestamp).toLocaleDateString();
+
+    // Массив статусов для улучшения читаемости
+    const statusLabels = {
+        created: 'Создан',
+        opened: 'В обработке',
+        cancelled: 'Отменен',
+        done: 'Размещен'
+    };
+
     return (
-        <InfoTable >
+        <InfoTable>
+            {/* Заголовки колонок */}
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>№</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>ФИО</div>
@@ -42,10 +50,16 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                 <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Статус</div>
             </div>
 
+            {/* Данные о заявках */}
             <div className={classes.bottom}>
                 {requests.map((item, index) => (
-                    <div className={`${classes.InfoTable_data} ${chooseRequestID == item.id && classes.InfoTable_data_active}`} style={{ opacity: item.status == 'done' && '0.5' }} onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)} key={index}>
-                        {item.status == 'created' && <div className={classes.newRequest}></div>}
+                    <div
+                        className={`${classes.InfoTable_data} ${chooseRequestID === item.id && classes.InfoTable_data_active}`}
+                        style={{ opacity: item.status === 'done' ? 0.5 : 1 }}
+                        onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
+                        key={index}
+                    >
+                        {item.status === 'created' && <div className={classes.newRequest}></div>}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.split('-')[0]}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>
@@ -54,7 +68,7 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{convertToDate(Number(item.createdAt))}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`} style={{ "padding": "0 10px" }}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`} style={{ padding: "0 10px" }}>
                             <div className={classes.InfoTable_data_elem_img}>
                                 <img src={`${server}${item.airline.images[0]}`} alt="" />
                             </div>
@@ -82,15 +96,11 @@ function InfoTableData({ children, toggleRequestSidebar, requests, setChooseObje
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
                             <div className={classes.InfoTable_data_elem_position}>
                                 <div className={item.status}></div>
-                                {item.status == 'created' && 'Создан'}
-                                {item.status == 'opened' && 'В обработке'}
-                                {item.status == 'cancelled' && 'Отменен'}
-                                {item.status == 'done' && 'Размещен'}
+                                {statusLabels[item.status]}
                             </div>
                         </div>
                     </div>
                 ))}
-
             </div>
         </InfoTable>
     );

@@ -139,7 +139,7 @@ function UpdateRequestAirlineStaff({ show, onClose, id, selectedStaff, setAddTar
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" style={{ "background-color": '#ff5151' }} onClick={() => {
                     setDeleteIndex(selectedStaff)
                     setShowDelete(true);

@@ -45,7 +45,7 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
         const year = today.getFullYear();
         const month = String(today.getMonth() + 1).padStart(2, '0'); // Месяцы в JavaScript начинаются с 0
         const day = String(today.getDate()).padStart(2, '0');
-    
+
         return `${year}-${month}-${day}`;
     };
 
@@ -111,7 +111,7 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
 
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Добавить</Button>
             </div>
         </Sidebar>

@@ -115,8 +115,8 @@ function UpdatePassanger({ show, onClose, onAddPassenger, placement, idPassanger
 
                     <label>Прибытие</label>
                     <div className={classes.reis_info}>
-                        <input  type="date" name="start" value={formData.start} onChange={handleChange} placeholder="Дата" />
-                        <input  type="time" name="startTime" value={formData.startTime} onChange={handleChange} placeholder="Время" />
+                        <input type="date" name="start" value={formData.start} onChange={handleChange} placeholder="Дата" />
+                        <input type="time" name="startTime" value={formData.startTime} onChange={handleChange} placeholder="Время" />
                     </div>
 
                     <label>Отъезд</label>
@@ -127,7 +127,7 @@ function UpdatePassanger({ show, onClose, onAddPassenger, placement, idPassanger
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button onClick={handleSubmit}>Редактировать пассажира</Button>
             </div>
         </Sidebar>

@@ -91,7 +91,7 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Изменить</Button>
             </div>
         </Sidebar>

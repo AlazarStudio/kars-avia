@@ -51,7 +51,7 @@ function EditRequestCategory({ show, id, onClose, category, onSubmit }) {
                 input: {
                     "categories": [
                         {
-                            "name": formData.type, 
+                            "name": formData.type,
                             "id": category.id
                         }
                     ]
@@ -79,7 +79,7 @@ function EditRequestCategory({ show, id, onClose, category, onSubmit }) {
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Изменить</Button>
             </div>
         </Sidebar>

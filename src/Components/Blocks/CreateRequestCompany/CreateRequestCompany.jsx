@@ -158,7 +158,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
 
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Добавить</Button>
             </div>
         </Sidebar>

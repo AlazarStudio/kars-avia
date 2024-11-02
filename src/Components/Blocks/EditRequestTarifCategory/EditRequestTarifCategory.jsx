@@ -192,7 +192,7 @@ function EditRequestTarifCategory({ show, onClose, tarif, onSubmit, addTarif, id
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Изменить</Button>
             </div>
         </Sidebar>

@@ -196,7 +196,7 @@ function CreateRequestTarifCategory({ show, id, onClose, addTarif, setAddTarif, 
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Добавить категорию</Button>
             </div>
         </Sidebar>

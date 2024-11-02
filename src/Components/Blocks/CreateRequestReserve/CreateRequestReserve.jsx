@@ -288,7 +288,7 @@ function CreateRequestReserve({ show, onClose, user }) {
                 </div>
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button onClick={handleSubmit}>Создать заявку</Button>
             </div>
         </Sidebar>

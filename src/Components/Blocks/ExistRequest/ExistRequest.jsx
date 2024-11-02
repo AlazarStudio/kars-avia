@@ -377,7 +377,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
 
                     </div>
                     {(formData.status !== 'done' && activeTab === 'Общая' && (user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN')) &&
-                        <div className={classes.requestButon}>
+                        <div className={classes.requestButton}>
                             <Button onClick={() => {
                                 onClose();
                                 setShowChooseHotel(true)

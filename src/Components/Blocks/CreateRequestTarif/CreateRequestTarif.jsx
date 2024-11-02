@@ -61,7 +61,7 @@ function CreateRequestTarif({ show, onClose, id, addTarif, setAddTarif }) {
                 }
             }
         });
-        
+
         if (response_update_tarif) {
             setAddTarif(response_update_tarif.data.updateHotel.tariffs);
             resetForm();
@@ -100,7 +100,7 @@ function CreateRequestTarif({ show, onClose, id, addTarif, setAddTarif }) {
 
             </div>
 
-            <div className={classes.requestButon}>
+            <div className={classes.requestButton}>
                 <Button type="submit" onClick={handleSubmit}>Добавить</Button>
             </div>
         </Sidebar>
