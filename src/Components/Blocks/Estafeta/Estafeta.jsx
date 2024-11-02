@@ -112,7 +112,6 @@ function Estafeta({ user }) {
     // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
     const filteredRequests = useMemo(() => {
         return requests.filter(request => {
-            // const matchesStatus = statusFilter === "all" || statusFilter.includes(request.status);
             const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
             const matchesDate = !filterData.filterDate || convertToDate(Number(request.createdAt)) === filterData.filterDate;
             const matchesSearch = searchQuery.toLowerCase();
@@ -125,8 +124,6 @@ function Estafeta({ user }) {
                 request.arrival.time, request.departure.flight, request.departure.date,
                 request.departure.time, request.status
             ];
-            // matchesStatus && 
-            // statusFilter
             return matchesAirline && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
         });
     }, [requests, filterData, searchQuery, airlineName]);

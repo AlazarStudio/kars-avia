@@ -37,6 +37,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
 
     const { loading: hotelLoading, error: hotelError, data: hotelData } = useQuery(GET_HOTEL_CITY, {
         variables: { hotelId: user.hotelId },
+        fetchPolicy: "no-cache",
     });
 
     useEffect(() => {
@@ -49,6 +50,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
 
     const { loading: airlineLoading, error: airlineError, data: airlineData } = useQuery(GET_AIRLINE, {
         variables: { airlineId: user.airlineId },
+        fetchPolicy: "no-cache",
     });
 
     useEffect(() => {
@@ -62,10 +64,12 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
 
     const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
         variables: { pagination: { skip: 0, take: 999999999 } },
+        fetchPolicy: "no-cache",
     });
 
     const { loading: loadingRequest, error: errorRequest, data: dataRequest, refetch: refetchRequest } = useQuery(GET_REQUESTS, {
         variables: { pagination: { skip: 0, take: 999999999 } },
+        fetchPolicy: "no-cache",
     });
 
     const { data: subscriptionData } = useSubscription(REQUEST_RESERVE_CREATED_SUBSCRIPTION);
