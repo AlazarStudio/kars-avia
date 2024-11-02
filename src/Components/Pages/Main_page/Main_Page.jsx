@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import classes from './Main_Page.module.css';
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Estafeta from "../../Blocks/Estafeta/Estafeta";
@@ -13,53 +13,63 @@ import Reports from "../../Blocks/Reports/Reports";
 import Login from "../Login/Login";
 import { getCookie } from '../../../../graphQL_requests.js';
 
-function Main_Page({ children, user, ...props }) {
-    let { id, hotelID, airlineID } = useParams();
+function Main_Page({ user }) {
+    // Получаем параметры из URL
+    const { id, hotelID, airlineID } = useParams();
 
+    // Проверка наличия токена, чтобы определить, залогинен ли пользователь
     const token = getCookie('token');
-
     if (!token) {
         return <Login />;
     }
 
-    let pageClicked = hotelID ? 'hotels' : airlineID && 'airlines';
+    // Вычисляем текущую страницу на основе параметров
+    const pageClicked = useMemo(() => hotelID ? 'hotels' : airlineID ? 'airlines' : '', [hotelID, airlineID]);
 
     return (
         <div className={classes.main}>
-            <MenuDispetcher id={id ? id : pageClicked} user={user} />
+            {/* Меню диспетчера, которое отображается на всех страницах */}
+            <MenuDispetcher id={id || pageClicked} user={user} />
 
-            {user.role == 'HOTELADMIN' &&
+            {/* Контент для роли Hotel Admin */}
+            {user.role === 'HOTELADMIN' && (
                 <>
-
-                    {(id == 'reserveRequests') && <Reserve user={user} idHotel={user.hotelId} />}
-                    {(id != 'reserveRequests') && <HotelPage id={user.hotelId} user={user} />}
+                    {/* Показывает страницу резервирования заявок, если id соответствует 'reserveRequests' */}
+                    {id === 'reserveRequests' ? (
+                        <Reserve user={user} idHotel={user.hotelId} />
+                    ) : (
+                        <HotelPage id={user.hotelId} user={user} />
+                    )}
                 </>
-            }
+            )}
 
-            {user.role == 'AIRLINEADMIN' &&
+            {/* Контент для роли Airline Admin */}
+            {user.role === 'AIRLINEADMIN' && (
                 <>
-                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user} />}
-                    {(id == 'reserve') && <Reserve user={user} />}
-                    {(id == 'hotels') && <HotelsList user={user} />}
-                    {(id == 'airlineCompany' || id == 'airlineStaff' || id == 'airlineAbout') && <AirlinePage id={user.airlineId} user={user} />}
-                    {(!id && hotelID) && <HotelPage id={hotelID} user={user} />}
-                    {(!id && airlineID) && <AirlinePage id={airlineID} user={user} />}
+                    {(id === 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user} />}
+                    {id === 'reserve' && <Reserve user={user} />}
+                    {id === 'hotels' && <HotelsList user={user} />}
+                    {(id === 'airlineCompany' || id === 'airlineStaff' || id === 'airlineAbout') && (
+                        <AirlinePage id={user.airlineId} user={user} />
+                    )}
+                    {!id && hotelID && <HotelPage id={hotelID} user={user} />}
+                    {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
                 </>
-            }
+            )}
 
-            {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
+            {/* Контент для ролей Super Admin и Dispatcher Admin */}
+            {(user.role === 'SUPERADMIN' || user.role === 'DISPATCHERADMIN') && (
                 <>
-
-                    {(id == 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user} />}
-                    {(id == 'reserve') && <Reserve user={user} />}
-                    {(id == 'company') && <Сompany user={user} />}
-                    {(id == 'hotels') && <HotelsList user={user} />}
-                    {(id == 'airlines') && <AirlinesList user={user} />}
-                    {(id == 'reports') && <Reports user={user} />}
-                    {(!id && hotelID) && <HotelPage id={hotelID} user={user} />}
-                    {(!id && airlineID) && <AirlinePage id={airlineID} user={user} />}
+                    {(id === 'relay' || (!id && !hotelID && !airlineID)) && <Estafeta user={user} />}
+                    {id === 'reserve' && <Reserve user={user} />}
+                    {id === 'company' && <Сompany user={user} />}
+                    {id === 'hotels' && <HotelsList user={user} />}
+                    {id === 'airlines' && <AirlinesList user={user} />}
+                    {id === 'reports' && <Reports user={user} />}
+                    {!id && hotelID && <HotelPage id={hotelID} user={user} />}
+                    {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
                 </>
-            }
+            )}
         </div>
     );
 }
