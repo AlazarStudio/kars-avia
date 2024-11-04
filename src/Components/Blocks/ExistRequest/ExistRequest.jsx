@@ -3,7 +3,7 @@ import classes from './ExistRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
-import { GET_LOGS, GET_REQUEST, getCookie } from "../../../../graphQL_requests";
+import { GET_LOGS, GET_REQUEST, getCookie, SAVE_HANDLE_EXTEND_MUTATION, SAVE_MEALS_MUTATION } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 
 function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID }) {
@@ -65,6 +65,33 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         const { name, value } = e.target;
         setFormDataExtend(prevState => ({ ...prevState, [name]: value }));
     }, []);
+
+    const [handleExtend] = useMutation(SAVE_HANDLE_EXTEND_MUTATION, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const handleExtendChangeRequest = async () => {
+        try {
+            await handleExtend({
+                variables: {
+                    input: {
+                        requestId: chooseRequestID,
+                        newEnd: formDataExtend.departureDate,
+                        newEndTime: formDataExtend.departureTime
+                    }
+                }
+            });
+            alert('Изменения сохранены');
+        } catch (error) {
+            console.error('Ошибка при сохранении:', error);
+            alert('Ошибка при сохранении');
+        }
+    };
 
     // Клик вне боковой панели закрывает её
     useEffect(() => {
@@ -171,23 +198,33 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
     };
 
     // Сохранение изменений в питании
-    // const [saveMeals] = useMutation(SAVE_MEALS_MUTATION);
+    const [saveMeals] = useMutation(SAVE_MEALS_MUTATION, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const cleanedMealData = mealData.map(({ __typename, ...rest }) => rest);
 
     const handleSaveMeals = async () => {
-        console.log(mealData)
-        // try {
-        //     await saveMeals({
-        //         variables: {
-        //             requestId: chooseRequestID,
-        //             meals: mealData
-        //         },
-        //         context: { headers: { Authorization: `Bearer ${token}` } }
-        //     });
-        //     alert('Изменения сохранены');
-        // } catch (error) {
-        //     console.error('Ошибка при сохранении:', error);
-        //     alert('Ошибка при сохранении');
-        // }
+        console.log(cleanedMealData, chooseRequestID)
+        try {
+            await saveMeals({
+                variables: {
+                    input: {
+                        requestId: chooseRequestID,
+                        dailyMeals: cleanedMealData
+                    }
+                }
+            });
+            alert('Изменения сохранены');
+        } catch (error) {
+            console.error('Ошибка при сохранении:', error);
+            alert('Ошибка при сохранении');
+        }
     };
 
     return (
@@ -249,7 +286,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                             <input type="date" name="departureDate" value={formDataExtend.departureDate} onChange={handleExtendChange} placeholder="Дата" />
                                             <input type="time" name="departureTime" value={formDataExtend.departureTime} onChange={handleExtendChange} placeholder="Время" />
                                         </div>
-                                        <Button>Продлить</Button>
+                                        <Button onClick={handleExtendChangeRequest}>Продлить</Button>
                                     </>
                                 }
                             </div>

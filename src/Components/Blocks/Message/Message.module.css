@@ -151,7 +151,7 @@ select {
 }
 
 .requestData_messages {
-    height: calc(100vh - 230px);
+    height: calc(100vh - 330px);
     overflow: hidden;
     overflow-y: scroll;
     display: flex;

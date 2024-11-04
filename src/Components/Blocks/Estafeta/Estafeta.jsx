@@ -78,7 +78,8 @@ function Estafeta({ user }) {
             setRequests(sortedRequests);
             setTotalPages(data.requests.totalPages);
         }
-    }, [data, currentPageRelay, newRequests]);
+        refetch();
+    }, [data, currentPageRelay, newRequests, refetch]);
 
     // Обновление данных при получении новой информации по подписке на обновление заявок
     useEffect(() => {

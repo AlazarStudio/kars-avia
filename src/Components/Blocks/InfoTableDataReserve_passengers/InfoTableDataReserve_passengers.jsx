@@ -436,7 +436,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
             </InfoTable>
 
             {user.role != "HOTELADMIN" && <div style={{ width: '500px', backgroundColor: '#fff', borderRadius: '8px', padding: '20px' }}>
-                <Message activeTab={"Комментарий"} chooseRequestID={''} chooseReserveID={request.id} token={token} user={user} chatPadding={'0'} chatHeight={'615px'} />
+                <Message activeTab={"Комментарий"} chooseRequestID={''} chooseReserveID={request.id} token={token} user={user} chatPadding={'0'} chatHeight={'calc(100vh - 330px)'} />
             </div>}
         </div>
     );

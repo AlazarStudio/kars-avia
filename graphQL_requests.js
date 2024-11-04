@@ -187,6 +187,12 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
             breakfast
             lunch
             dinner
+            dailyMeals {
+              breakfast
+              date
+              dinner
+              lunch
+            }
           }
           senderId
           receiverId
@@ -531,6 +537,60 @@ export const GET_LOGS = gql`
     }
   }
 `;
+
+export const SAVE_MEALS_MUTATION = gql`
+  mutation ModifyDailyMeals($input: ModifyDailyMealsInput!) {
+    modifyDailyMeals(input: $input) {
+      included
+      breakfast
+      lunch
+      dinner
+      dailyMeals {
+        date
+        breakfast
+        lunch
+        dinner
+      }
+    }
+  }
+`;
+
+export const SAVE_HANDLE_EXTEND_MUTATION = gql`
+  mutation ExtendRequestDates($input: ExtendRequestDatesInput!) {
+    extendRequestDates(input: $input) {
+      arrival {
+        flight
+        date
+        time
+      }
+      departure {
+        flight
+        date
+        time
+      }
+      hotelChess {
+        start
+        startTime
+        end
+        endTime
+        room
+      }
+      mealPlan {
+        included
+        breakfast
+        lunch
+        dinner
+        dailyMeals {
+          date
+          breakfast
+          lunch
+          dinner
+        }
+      }
+    }
+  }
+`;
+
 
 // Запросы к заявкам на эстафету
 
