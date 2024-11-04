@@ -24,6 +24,7 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
                 <>
                     <div className={classes.filter_title}>Состояние:</div>
                     <DropDownList
+                        width={'200px'}
                         placeholder="Выберите состояние"
                         options={statusOptions.map(option => option.label)}
                         initialValue={statusOptions.find(option => option.value === "created / opened")?.label}
