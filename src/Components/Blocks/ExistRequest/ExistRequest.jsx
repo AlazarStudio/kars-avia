@@ -6,11 +6,11 @@ import { useMutation, useQuery } from "@apollo/client";
 import { GET_LOGS, GET_REQUEST, getCookie, SAVE_HANDLE_EXTEND_MUTATION, SAVE_MEALS_MUTATION } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 
-function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID }) {
+function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID, totalMeals }) {
     const token = getCookie('token');
 
     // Запросы данных о заявке и логе
-    const { data } = useQuery(GET_REQUEST, {
+    const { data, refetch } = useQuery(GET_REQUEST, {
         context: { headers: { Authorization: `Bearer ${token}`, 'Apollo-Require-Preflight': 'true' } },
         variables: { requestId: chooseRequestID },
     });
@@ -22,7 +22,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState(null);
     const [logsData, setLogsData] = useState(null);
-    const [formDataExtend, setFormDataExtend] = useState({ departureDate: '', departureTime: '' });
+    const [formDataExtend, setFormDataExtend] = useState({ departureName: '', departureDate: '', departureTime: '' });
     const sidebarRef = useRef();
 
     // Обновление состояния при изменении данных запроса
@@ -82,11 +82,13 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                     input: {
                         requestId: chooseRequestID,
                         newEnd: formDataExtend.departureDate,
-                        newEndTime: formDataExtend.departureTime
+                        newEndTime: formDataExtend.departureTime,
+                        // departureFlight: formDataExtend.departureName
                     }
                 }
             });
             alert('Изменения сохранены');
+            await refetch(); // Обновляем данные после изменения
         } catch (error) {
             console.error('Ошибка при сохранении:', error);
             alert('Ошибка при сохранении');
@@ -113,38 +115,6 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
     const convertToDate = (timestamp) => new Date(Number(timestamp)).toLocaleDateString();
     const convertToTime = (timestamp) => new Date(Number(timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const formatDate = (dateString) => dateString.split('-').reverse().join('.');
-
-    // Расчёт количества приёмов пищи
-    const calculateMeals = useCallback((formData) => {
-        const mealsPerDay = {
-            breakfast: { start: 7, end: 10 },
-            lunch: { start: 12, end: 15 },
-            dinner: { start: 18, end: 21 },
-        };
-
-        let breakfasts = 0, lunches = 0, dinners = 0;
-        const startDateTime = new Date(`${formData.arrival.date}T${formData.arrival.time}`);
-        const endDateTime = new Date(`${formData.departure.date}T${formData.departure.time}`);
-        const arrivalHours = startDateTime.getHours();
-
-        if (arrivalHours <= mealsPerDay.breakfast.end) breakfasts++;
-        if (arrivalHours <= mealsPerDay.lunch.end) lunches++;
-        if (arrivalHours <= mealsPerDay.dinner.end) dinners++;
-
-        const departureHours = endDateTime.getHours();
-        if (departureHours >= mealsPerDay.breakfast.start) breakfasts++;
-        if (departureHours >= mealsPerDay.lunch.start) lunches++;
-        if (departureHours >= mealsPerDay.dinner.start) dinners++;
-
-        const fullDaysCount = Math.floor((endDateTime - startDateTime) / (1000 * 60 * 60 * 24));
-        if (fullDaysCount >= 1) {
-            breakfasts += fullDaysCount;
-            lunches += fullDaysCount;
-            dinners += fullDaysCount;
-        }
-
-        return { breakfasts, lunches, dinners };
-    }, []);
 
     // Функция для генерации HTML-описания для логов
     function getLogDescription(log, logsData) {
@@ -210,7 +180,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
     const cleanedMealData = mealData.map(({ __typename, ...rest }) => rest);
 
     const handleSaveMeals = async () => {
-        console.log(cleanedMealData, chooseRequestID)
+        // console.log(cleanedMealData, chooseRequestID);
         try {
             await saveMeals({
                 variables: {
@@ -221,6 +191,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                 }
             });
             alert('Изменения сохранены');
+            await refetch(); // Обновляем данные после сохранения изменений в питании
         } catch (error) {
             console.error('Ошибка при сохранении:', error);
             alert('Ошибка при сохранении');
@@ -283,6 +254,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                     <>
                                         <div className={classes.requestDataTitle}>Продление</div>
                                         <div className={classes.reis_info}>
+                                            <input type="text" name="departureName" value={formDataExtend.departureName} onChange={handleExtendChange} placeholder="Номер рейса" />
                                             <input type="date" name="departureDate" value={formDataExtend.departureDate} onChange={handleExtendChange} placeholder="Дата" />
                                             <input type="time" name="departureTime" value={formDataExtend.departureTime} onChange={handleExtendChange} placeholder="Время" />
                                         </div>
