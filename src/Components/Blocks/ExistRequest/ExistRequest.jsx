@@ -206,7 +206,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         <div className={`${classes.tab} ${activeTab === 'История' ? classes.activeTab : ''}`} onClick={() => handleTabChange('История')}>История</div>
                     </div>
 
-                    <div className={classes.requestMiddle} style={{ height: activeTab === 'Комментарии' && 'calc(100vh - 79px - 67px)' }}>
+                    <div className={classes.requestMiddle} style={{ height: (activeTab === 'Комментарии' || formData.status !== 'created') && 'calc(100vh - 79px - 67px)' }}>
                         {/* Вкладка "Общая" */}
                         {activeTab === 'Общая' && (
                             <div className={classes.requestData}>
