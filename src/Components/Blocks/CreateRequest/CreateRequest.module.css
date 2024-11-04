@@ -3,7 +3,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 20px 20px 30px;
-    border-bottom: 1px solid #54587380;
 }
 
 .requestButton {
@@ -35,9 +34,12 @@
 }
 
 .tabs {
+    width: 100%;
     display: flex;
     gap: 20px;
     padding: 20px 20px 20px 30px;
+    background-color: #fff;
+    box-shadow: 0 0 1px #545873c5;
 }
 
 .tab {
@@ -56,7 +58,7 @@
 .requestData {
     display: flex;
     flex-direction: column;
-    padding: 0 40px;
+    padding: 20px 30px;
     gap: 15px;
     margin-bottom: 20px;
 }
@@ -75,7 +77,7 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100% - 90px - 71px);
+    height: calc(100vh - 79px - 67px - 81px);
     overflow: hidden;
     overflow-y: scroll;
 }
@@ -104,6 +106,10 @@ select {
 }
 
 .requestButton {
+    position: fixed;
+    bottom: 0;
+    background-color: #fff;
+    width: 100%;
     display: flex;
     justify-content: flex-end;
 }

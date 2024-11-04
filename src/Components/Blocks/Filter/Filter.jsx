@@ -3,7 +3,7 @@ import classes from './Filter.module.css';
 import Button from "../../Standart/Button/Button";
 import DropDownList from "../DropDownList/DropDownList";
 
-function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, buttonTitle, filterList, needDate, ...props }) {
+function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, buttonTitle, filterList, needDate, filterLocalData, ...props }) {
     // Опции для выбора состояния
     const statusOptions = useMemo(() => [
         { label: "Все заявки", value: "all" },
@@ -18,16 +18,18 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
         { label: "Администратор", value: "DISPATCHERADMIN" }
     ], []);
 
+    let filter = filterLocalData || "created / opened"
+
     return (
         <div className={classes.filter}>
             {handleStatusChange && (
                 <>
-                    <div className={classes.filter_title}>Состояние:</div>
+                    <div className={classes.filter_title}>Статус:</div>
                     <DropDownList
                         width={'200px'}
                         placeholder="Выберите состояние"
                         options={statusOptions.map(option => option.label)}
-                        initialValue={statusOptions.find(option => option.value === "created / opened")?.label}
+                        initialValue={statusOptions.find(option => option.value === filter)?.label}
                         onSelect={(value) => {
                             const selectedOption = statusOptions.find(option => option.label === value);
                             handleStatusChange(selectedOption?.value || "");

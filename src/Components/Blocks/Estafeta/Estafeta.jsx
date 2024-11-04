@@ -20,8 +20,10 @@ function Estafeta({ user }) {
     const pageNumberRelay = new URLSearchParams(location.search).get("page");
     const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
 
-    // Состояние для фильтрации по статусу
-    const [statusFilter, setStatusFilter] = useState("created / opened"); // по умолчанию "в обработке"
+    // Состояние для фильтрации по статусу. Получаем фильтр из localStorage или устанавливаем значение по умолчанию
+    const [statusFilter, setStatusFilter] = useState(() => {
+        return localStorage.getItem("statusFilter") || "created / opened";
+    });
 
     // Состояние для хранения информации о странице (для пагинации)
     const [pageInfo, setPageInfo] = useState({
@@ -43,22 +45,26 @@ function Estafeta({ user }) {
     const [requests, setRequests] = useState([]);
     const [totalPages, setTotalPages] = useState(1);
 
-    // Обработка данных подписки на создание заявок: добавление новых заявок в список
+    // Обработка данных подписки на создание заявок с проверкой статуса
     useEffect(() => {
         if (subscriptionData) {
             const newRequest = subscriptionData.requestCreated;
-            setRequests((prevRequests) => {
-                const exists = prevRequests.some(request => request.id === newRequest.id);
-                if (!exists && currentPageRelay === 0) {
-                    return [newRequest, ...prevRequests];
-                } else if (!exists) {
-                    setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
-                }
-                return prevRequests;
-            });
+            const statusMatchesFilter = statusFilter.split(" / ").includes(newRequest.status);
+
+            if (statusMatchesFilter) {
+                setRequests((prevRequests) => {
+                    const exists = prevRequests.some(request => request.id === newRequest.id);
+                    if (!exists && currentPageRelay === 0) {
+                        return [newRequest, ...prevRequests];
+                    } else if (!exists) {
+                        setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
+                    }
+                    return prevRequests;
+                });
+            }
+            refetch();
         }
-        refetch()
-    }, [subscriptionData, currentPageRelay, refetch]);
+    }, [subscriptionData, currentPageRelay, refetch, statusFilter]);
 
     // Обновление списка заявок на основе данных запроса и новых заявок
     useEffect(() => {
@@ -80,7 +86,10 @@ function Estafeta({ user }) {
     }, [subscriptionUpdateData, refetch]);
 
     // Обновление состояния фильтрации по статусу
-    const handleStatusChange = (value) => setStatusFilter(value);
+    const handleStatusChange = (value) => {
+        setStatusFilter(value);
+        localStorage.setItem("statusFilter", value);
+    };
 
     // Управление состоянием боковых панелей для создания и просмотра заявок
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -161,6 +170,7 @@ function Estafeta({ user }) {
                     buttonTitle={'Создать заявку'}
                     filterList={filterList}
                     needDate={true}
+                    filterLocalData={localStorage.getItem("statusFilter")}
                     handleStatusChange={handleStatusChange} // передаем обработчик изменения статуса
                 />
             </div>

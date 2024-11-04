@@ -340,6 +340,12 @@ export const GET_REQUEST = gql`
             breakfast
             lunch
             dinner
+            dailyMeals {
+              breakfast
+              date
+              dinner
+              lunch
+            }
           }
           senderId
           receiverId

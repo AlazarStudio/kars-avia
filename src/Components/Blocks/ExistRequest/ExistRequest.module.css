@@ -3,7 +3,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 20px 20px 30px;
-    border-bottom: 1px solid #54587380;
 }
 
 .requestButton {
@@ -35,10 +34,15 @@
 }
 
 .tabs {
+    width: 100%;
     display: flex;
     /* justify-content: space-between; */
     gap: 20px;
     padding: 20px 20px 20px 30px;
+    /* position: fixed; */
+    background-color: #fff;
+    box-shadow: 0 0 1px #545873c5;
+    z-index: 9999999;
 }
 
 .tab {
@@ -57,7 +61,7 @@
 .requestData {
     display: flex;
     flex-direction: column;
-    padding: 0px 20px 20px 30px;
+    padding: 20px 30px;
     gap: 10px;
 }
 
@@ -75,7 +79,7 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100% - 90px - 71px);
+    height: calc(100vh - 79px - 67px - 81px);
     overflow: hidden;
     overflow-y: scroll;
 }
@@ -104,9 +108,12 @@ select {
 }
 
 .requestButton {
+    position: fixed;
+    bottom: 0;
+    background-color: #fff;
+    width: 100%;
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
 }
 
 .requestButton a {
@@ -343,6 +350,21 @@ select {
 
 .smiles .smilesBlock {
     cursor: pointer;
+}
+
+.mealInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mealInfoDate {
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 24.2px;
+    color: var(--main-gray);
+    padding: 10px 0;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

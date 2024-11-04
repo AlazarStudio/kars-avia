@@ -183,13 +183,19 @@ function CreateRequest({ show, onClose, user }) {
     const checkBookingOverlap = useCallback((arrivalDate, arrivalTime, departureDate, departureTime, bronList) => {
         const arrivalDateTime = new Date(`${arrivalDate}T${arrivalTime}`);
         const departureDateTime = new Date(`${departureDate}T${departureTime}`);
+        let existBronList
 
         return bronList.some(bron => {
             const bronStart = new Date(`${bron.start}T${bron.startTime}`);
             const bronEnd = new Date(`${bron.end}T${bron.endTime}`);
-            return arrivalDateTime < bronEnd && bronStart < departureDateTime;
-        });
+            if (arrivalDateTime < bronEnd && bronStart < departureDateTime) {
+                existBronList = bron
+            }
+            return (arrivalDateTime < bronEnd && bronStart < departureDateTime);
+        }), existBronList;
     }, []);
+
+    const convertToDate_Date = (timestamp) => new Date(timestamp).toLocaleDateString();
 
     // Обновление предупреждения при изменении дат и времени
     useEffect(() => {
@@ -201,7 +207,7 @@ function CreateRequest({ show, onClose, user }) {
                 formData.departureTime,
                 hotelBronsInfo
             );
-            setWarningMessage(overlap ? 'Пересечение с существующим бронированием' : '');
+            setWarningMessage(overlap ? ` В это время сотрудник уже забронирован в отеле "${overlap.hotel.name}" с ${convertToDate_Date(overlap.start)} ${overlap.startTime} по ${convertToDate_Date(overlap.end)} ${overlap.endTime};` : '');
         }
     }, [formData.arrivalDate, formData.arrivalTime, formData.departureDate, formData.departureTime, hotelBronsInfo, checkBookingOverlap]);
 
@@ -225,11 +231,12 @@ function CreateRequest({ show, onClose, user }) {
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
             </div>
 
+            <div className={classes.tabs}>
+                <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
+                <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
+            </div>
+
             <div className={classes.requestMiddle}>
-                <div className={classes.tabs}>
-                    <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
-                    <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
-                </div>
 
                 {/* Вкладка "Общая" */}
                 {activeTab === 'Общая' && (

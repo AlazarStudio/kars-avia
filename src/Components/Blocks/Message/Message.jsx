@@ -17,7 +17,7 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
         setShowScrollButton(false);
     };
 
-    const { loading, error, data } = useQuery(GET_MESSAGES_HOTEL, {
+    const { loading, error, data, refetch } = useQuery(GET_MESSAGES_HOTEL, {
         variables: {
             requestId: chooseRequestID,
             reserveId: chooseReserveID
@@ -36,7 +36,8 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
                 setIsInitialLoad(false);
             }
         }
-    }, [data, isInitialLoad]);
+        refetch()
+    }, [data, isInitialLoad, refetch]);
 
     const { data: subscriptionData } = useSubscription(REQUEST_MESSAGES_SUBSCRIPTION, {
         variables: { chatId: messages?.id },
@@ -188,8 +189,8 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
                                             <div className={classes.requestData_message_post}>{message.sender.role}</div>
                                         </div>
                                         {message.text}
+                                        <div className={classes.requestData_message_time}>{convertToDateStamp(message.createdAt)}</div>
                                     </div>
-                                    <div className={classes.requestData_message_time}>{convertToDateStamp(message.createdAt)}</div>
                                 </div>
                             </div>
                         ))}
@@ -208,7 +209,8 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
                             <div className={classes.smilesBlock} onClick={handleEmojiPickerShow}>😀</div>
                             {showEmojiPicker && <Smiles handleSmileChange={handleSmileChange} />}
                         </div>
-                        <textarea
+                        <input
+                            type="text"
                             value={messageText.text}
                             onChange={handleTextareaChange}
                             placeholder="Введите сообщение"

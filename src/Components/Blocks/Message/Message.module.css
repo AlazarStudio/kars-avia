@@ -156,7 +156,8 @@ select {
     overflow-y: scroll;
     display: flex;
     flex-direction: column;
-    gap: 30px;
+    gap: 10px;
+    padding-top: 10px;
 }
 
 .requestData_date {
@@ -181,6 +182,7 @@ select {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    position: relative;
 }
 
 .requestData_message_name {
@@ -200,12 +202,15 @@ select {
 
 .requestData_message_text {
     background-color: #F6F6FC;
-    padding: 15px;
+    padding: 10px 15px;
     border-radius: 20px 20px 20px 0px;
     font-family: Nunito Sans;
     font-size: 14px;
     font-weight: 500;
     color: #545873;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
 
 .requestData_message_text__name {
@@ -218,10 +223,10 @@ select {
 
 .requestData_message_time {
     font-family: Nunito Sans;
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 10px;
+    font-weight: 400;
     line-height: 16.37px;
-    color: #545873;
+    color: #0057C3;
 }
 
 .requestData_message_full {
@@ -284,7 +289,7 @@ select {
     height: 100%;
 }
 
-.sendBlock textarea {
+.sendBlock input {
     width: 100%;
     height: 40px;
     outline: none;
@@ -380,7 +385,5 @@ select {
     font-weight: bold;
 }
 
-
-@media (min-width: 0px) and (max-width: 1299px) {}
 
 @media (min-width: 0px) and (max-width: 1299px) {}
