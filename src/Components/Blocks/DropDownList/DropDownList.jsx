@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import classes from './DropDownList.module.css';
 
-function DropDownList({ options, initialValue = "", searchable = true, onSelect, placeholder }) {
+function DropDownList({ options, initialValue = "", searchable = true, onSelect, placeholder, width = "200px" }) {
     const [searchTerm, setSearchTerm] = useState(initialValue);
     const [isOpen, setIsOpen] = useState(false);
     const searchRef = useRef(null);
@@ -43,7 +43,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
     const filteredOptions = options.filter(option => option.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
-        <div className={classes.dropdown} ref={searchRef}>
+        <div className={classes.dropdown} ref={searchRef} style={{ width: width }}>
             <input
                 type="text"
                 className={classes.search}
