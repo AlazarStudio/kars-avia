@@ -83,7 +83,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         requestId: chooseRequestID,
                         newEnd: formDataExtend.departureDate,
                         newEndTime: formDataExtend.departureTime,
-                        // departureFlight: formDataExtend.departureName
+                        newEndName: formDataExtend.departureName
                     }
                 }
             });
