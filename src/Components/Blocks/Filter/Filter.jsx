@@ -7,9 +7,10 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
     // Опции для выбора состояния
     const statusOptions = useMemo(() => [
         { label: "Все заявки", value: "all" },
+        { label: "Готов к архиву", value: "archiving" },
         { label: "Создан / В обработке", value: "created / opened" },
         { label: "Отменен", value: "cancelled" },
-        { label: "Размещен", value: "done" }
+        { label: "Размещен", value: "done" },
     ], []);
 
     // Опции для фильтрации по роли
