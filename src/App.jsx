@@ -67,7 +67,6 @@ function App() {
           <Route path="/:id" element={<Main_Page user={user} />} />
           <Route path="/hotels/:hotelID" element={<Main_Page user={user} />} />
           <Route path="/airlines/:airlineID" element={<Main_Page user={user} />} />
-          {/* <Route path="/sendFile" element={<FileUpload />} /> */}
 
           {/* Резерв внутри заявки */}
           <Route path="/:id/reservePlacement/:idRequest" element={<ReservePlacement user={user} />} />

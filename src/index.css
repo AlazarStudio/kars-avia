@@ -94,6 +94,23 @@ input[type="file"] {
     background-color: var(--text-gray);
 }
 
+.archiving {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #d6a570;
+    /* мягкий оттенок коричневого */
+}
+
+.archived {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #a0a0a0;
+    /* тёмно-серый для архивных */
+}
+
+
 /* 
 .opened {
     width: 10px;

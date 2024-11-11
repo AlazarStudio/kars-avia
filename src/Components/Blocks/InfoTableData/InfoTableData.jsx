@@ -33,6 +33,8 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
         created: 'Создан',
         opened: 'В обработке',
         cancelled: 'Отменен',
+        archiving: 'Готов к архиву',
+        archived: 'Архив',
         done: 'Размещен'
     };
 
