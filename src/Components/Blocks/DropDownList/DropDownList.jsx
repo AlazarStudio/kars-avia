@@ -40,7 +40,9 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
         setIsOpen(true);
     };
 
-    const filteredOptions = options.filter(option => option.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredOptions = searchable
+        ? options.filter(option => option.toLowerCase().includes(searchTerm.toLowerCase()))
+        : options;
 
     return (
         <div className={classes.dropdown} ref={searchRef} style={{ width: width ? width : '100%' }}>
@@ -51,7 +53,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
                 onChange={handleInputChange}
                 onFocus={handleFocus}
                 placeholder={placeholder}
-                disabled={!searchable}
+            // disabled={!searchable}
             />
             {isOpen && (
                 <ul className={classes.dropdownList}>
@@ -77,6 +79,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
 }
 
 export default DropDownList;
+
 
 
 /*

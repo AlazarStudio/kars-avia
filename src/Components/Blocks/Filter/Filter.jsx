@@ -28,6 +28,7 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
                     <DropDownList
                         width={'200px'}
                         placeholder="Выберите состояние"
+                        searchable={false}
                         options={statusOptions.map(option => option.label)}
                         initialValue={statusOptions.find(option => option.value === filter)?.label}
                         onSelect={(value) => {
