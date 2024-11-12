@@ -17,12 +17,6 @@ function Main_Page({ user }) {
     // Получаем параметры из URL
     const { id, hotelID, airlineID } = useParams();
 
-    // Проверка наличия токена, чтобы определить, залогинен ли пользователь
-    const token = getCookie('token');
-    if (!token) {
-        return <Login />;
-    }
-
     // Вычисляем текущую страницу на основе параметров
     const pageClicked = useMemo(() => hotelID ? 'hotels' : airlineID ? 'airlines' : '', [hotelID, airlineID]);
 
