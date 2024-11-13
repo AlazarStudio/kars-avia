@@ -3,7 +3,7 @@ import classes from './ExistRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
-import { GET_LOGS, GET_REQUEST, getCookie, SAVE_HANDLE_EXTEND_MUTATION, SAVE_MEALS_MUTATION } from "../../../../graphQL_requests";
+import { CHANGE_TO_ARCHIVE, convertToDate, GET_LOGS, GET_REQUEST, getCookie, SAVE_HANDLE_EXTEND_MUTATION, SAVE_MEALS_MUTATION } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 
 function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID, totalMeals }) {
@@ -81,8 +81,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                 variables: {
                     input: {
                         requestId: chooseRequestID,
-                        newEnd: formDataExtend.departureDate,
-                        newEndTime: formDataExtend.departureTime,
+                        newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
                         newEndName: formDataExtend.departureName
                     }
                 }
@@ -111,9 +110,6 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
 
     // Вспомогательные функции для преобразования данных
     const getJsonParce = (data) => JSON.parse(data);
-    const convertToDate_Date = (timestamp) => new Date(timestamp).toLocaleDateString();
-    const convertToDate = (timestamp) => new Date(Number(timestamp)).toLocaleDateString();
-    const convertToTime = (timestamp) => new Date(Number(timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const formatDate = (dateString) => dateString.split('-').reverse().join('.');
 
     // Функция для генерации HTML-описания для логов
@@ -198,6 +194,31 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
         }
     };
 
+    // Изменение архивного
+    const [changeToArchive] = useMutation(CHANGE_TO_ARCHIVE, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
+    });
+
+    const handleСhangeToArchive = async () => {
+        try {
+            await changeToArchive({
+                variables: {
+                    archivingRequstId: chooseRequestID
+                }
+            });
+            alert('Изменения сохранены');
+            await refetch();
+            onClose();
+        } catch (error) {
+            console.error('Ошибка при сохранении:', error);
+            alert('Ошибка при сохранении');
+        }
+    };
+
     return (
         <>
             {formData &&
@@ -214,7 +235,12 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                         <div className={`${classes.tab} ${activeTab === 'История' ? classes.activeTab : ''}`} onClick={() => handleTabChange('История')}>История</div>
                     </div>
 
-                    <div className={classes.requestMiddle} style={{ height: (activeTab === 'Комментарии' || formData.status !== 'created') && 'calc(100vh - 79px - 67px)' }}>
+                    <div className={classes.requestMiddle} style={{
+                        height:
+                            (activeTab === 'Комментарии' || formData.status !== 'created')
+                            &&
+                            'calc(100vh - 79px - 67px)'
+                    }}>
                         {/* Вкладка "Общая" */}
                         {activeTab === 'Общая' && (
                             <div className={classes.requestData}>
@@ -244,13 +270,13 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                         <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Номер заявки</div><div className={classes.requestDataInfo_desc}>{formData.requestNumber}</div></div>
                                         <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Гостиница</div><div className={classes.requestDataInfo_desc}>{formData.hotel?.name}</div></div>
                                         <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Номер комнаты</div><div className={classes.requestDataInfo_desc}>{formData.hotelChess?.room}</div></div>
-                                        <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Заезд</div><div className={classes.requestDataInfo_desc}>{convertToDate_Date(formData.arrival.date)} - {formData.arrival.time}</div></div>
-                                        <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Выезд</div><div className={classes.requestDataInfo_desc}>{convertToDate_Date(formData.departure.date)} - {formData.departure.time}</div></div>
+                                        <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Заезд</div><div className={classes.requestDataInfo_desc}>{convertToDate(formData.arrival.date)} - {convertToDate(formData.arrival.date, true)}</div></div>
+                                        <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Выезд</div><div className={classes.requestDataInfo_desc}>{convertToDate(formData.departure.date)} - {convertToDate(formData.departure.date, true)}</div></div>
                                     </>
                                 }
 
                                 {/* Продление */}
-                                {formData.status !== 'created' && formData.status !== 'opened' &&
+                                {formData.status !== 'archived' && formData.status !== 'created' && formData.status !== 'opened' && formData.status !== 'archiving' &&
                                     <>
                                         <div className={classes.requestDataTitle}>Продление</div>
                                         <div className={classes.reis_info}>
@@ -260,6 +286,11 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                         </div>
                                         <Button onClick={handleExtendChangeRequest}>Продлить</Button>
                                     </>
+                                }
+
+                                {/* Продление */}
+                                {formData.status == 'archiving' && formData.status !== 'opened' &&
+                                    <Button onClick={handleСhangeToArchive}>Отправить в архив</Button>
                                 }
                             </div>
                         )}
@@ -271,7 +302,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
 
                                 {mealData.map((dailyMeal, index) => (
                                     <div key={index} className={classes.mealInfo}>
-                                        <div className={classes.mealInfoDate}>{convertToDate_Date(dailyMeal.date)}</div>
+                                        <div className={classes.mealInfoDate}>{convertToDate(dailyMeal.date)}</div>
                                         <div className={classes.requestDataInfo}>
                                             <div className={classes.requestDataInfo_title}>Завтрак</div>
                                             <input
@@ -280,6 +311,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                                 name="breakfastCount"
                                                 placeholder="Количество"
                                                 value={dailyMeal.breakfast}
+                                                disabled={formData.status !== 'archived' && true}
                                                 onChange={(e) => handleMealChange(index, 'breakfast', e.target.value)}
                                             />
                                         </div>
@@ -291,6 +323,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                                 name="lunchCount"
                                                 placeholder="Количество"
                                                 value={dailyMeal.lunch}
+                                                disabled={formData.status !== 'archived' && true}
                                                 onChange={(e) => handleMealChange(index, 'lunch', e.target.value)}
                                             />
                                         </div>
@@ -302,12 +335,13 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                                 name="dinnerCount"
                                                 placeholder="Количество"
                                                 value={dailyMeal.dinner}
+                                                disabled={formData.status !== 'archived' && true}
                                                 onChange={(e) => handleMealChange(index, 'dinner', e.target.value)}
                                             />
                                         </div>
                                     </div>
                                 ))}
-                                <Button onClick={handleSaveMeals}>Сохранить</Button>
+                                {formData.status !== 'archived' && <Button onClick={handleSaveMeals}>Сохранить</Button>}
                             </div>
                         )}
 
@@ -323,7 +357,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                     {[...logsData.logs].reverse().map((log, index) => (
                                         <>
                                             <div className={classes.historyDate} key={index}>
-                                                {convertToDate(log.createdAt)} {convertToTime(log.createdAt)}
+                                                {convertToDate(log.createdAt)} {convertToDate(log.createdAt, true)}
                                             </div>
                                             <div
                                                 className={classes.historyLog}
@@ -339,7 +373,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                     </div>
 
                     {/* Кнопка для размещения заявки */}
-                    {(formData.status !== 'done' && activeTab === 'Общая' && (user.role === 'SUPERADMIN' || user.role === 'DISPATCHERADMIN')) && (
+                    {(formData.status !== 'archived' && formData.status !== 'done' && formData.status !== 'archiving' && activeTab === 'Общая' && (user.role === 'SUPERADMIN' || user.role === 'DISPATCHERADMIN')) && (
                         <div className={classes.requestButton}>
                             <Button onClick={() => {
                                 onClose();
@@ -347,7 +381,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                             }}>Разместить<img src="/user-check.png" alt="" /></Button>
                         </div>
                     )}
-                </Sidebar>
+                </Sidebar >
             }
         </>
     );

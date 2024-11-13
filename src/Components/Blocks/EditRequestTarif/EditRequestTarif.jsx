@@ -9,7 +9,19 @@ import { useMutation, useQuery } from "@apollo/client";
 function EditRequestTarif({ show, onClose, tarif, onSubmit, id, setAddTarif }) {
     const token = getCookie('token');
 
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState({
+        name: '',
+        price: '',
+        type: '',
+    });
+
+    const resetForm = () => {
+        setFormData({
+            name: '',
+            price: '',
+            type: '',
+        });
+    };
 
     const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
         context: {
@@ -24,7 +36,12 @@ function EditRequestTarif({ show, onClose, tarif, onSubmit, id, setAddTarif }) {
 
     useEffect(() => {
         if (show && tarif) {
-            setFormData(tarif);
+            setFormData({
+                ...formData,
+                name: tarif.name,
+                price: tarif.price,
+                type: tarif.type,
+            });
         }
     }, [show, tarif]);
 
@@ -45,23 +62,42 @@ function EditRequestTarif({ show, onClose, tarif, onSubmit, id, setAddTarif }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        let dataSend
+
+        if (formData.type == 1) {
+            dataSend = {
+                priceOneCategory: Number(formData.price),
+            }
+        }
+
+        if (formData.type == 2) {
+            dataSend = {
+                priceTwoCategory: Number(formData.price),
+            }
+        }
 
         let response_update_tarif = await updateHotelTarif({
             variables: {
                 updateHotelId: id,
-                input: {
-                    "tariffs": [
-                        {
-                            "id": formData.id,
-                            "name": formData.name
-                        }
-                    ]
-                }
+                input: dataSend
             }
         });
 
         if (response_update_tarif) {
-            onSubmit(response_update_tarif.data.updateHotel.tariffs);
+            onSubmit(
+                [
+                    {
+                        name: 'Одноместный',
+                        price: response_update_tarif.data.updateHotel.priceOneCategory,
+                        type: 1
+                    },
+                    {
+                        name: 'Двухместный',
+                        price: response_update_tarif.data.updateHotel.priceTwoCategory,
+                        type: 2
+                    },
+                ]
+            );
             resetForm();
             onClose();
         }
@@ -91,8 +127,10 @@ function EditRequestTarif({ show, onClose, tarif, onSubmit, id, setAddTarif }) {
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
-                    <label>Название</label>
+                    <label>Название категории</label>
                     <input type="text" name="name" value={formData.name} onChange={handleChange} />
+                    <label>Цена категории</label>
+                    <input type="text" name="price" value={formData.price} onChange={handleChange} />
                 </div>
 
             </div>

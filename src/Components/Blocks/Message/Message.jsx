@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import classes from './Message.module.css';
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Smiles from "../Smiles/Smiles";
-import { GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
+import { convertToDate, GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 
 function Message({ children, activeTab, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, ...props }) {
     const messagesEndRef = useRef(null);
@@ -94,16 +94,6 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
         };
     }, [newMessagesCount]);
 
-    function convertToDateStamp(timestamp) {
-        const date = new Date(Number(timestamp));
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${day}.${month}.${year} ${hours}:${minutes}`;
-    }
-
     const [messageText, setMessageText] = useState({
         text: '',
         chatId: '',
@@ -189,7 +179,7 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
                                             <div className={classes.requestData_message_post}>{message.sender.role}</div>
                                         </div>
                                         {message.text}
-                                        <div className={classes.requestData_message_time}>{convertToDateStamp(message.createdAt)}</div>
+                                        <div className={classes.requestData_message_time}>{convertToDate(message.createdAt)} {convertToDate(message.createdAt, true)}</div>
                                     </div>
                                 </div>
                             </div>

@@ -195,7 +195,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                                     <path d="M20.231 9.46143H14.8464C14.4216 9.46143 14.0771 9.80585 14.0771 10.2307V13.3076C14.0771 13.7324 14.4216 14.0768 14.8464 14.0768H20.231C20.6558 14.0768 21.0002 13.7324 21.0002 13.3076V10.2307C21.0002 9.80585 20.6558 9.46143 20.231 9.46143Z" stroke="var(--menu-gray)" stroke-linecap="round" stroke-linejoin="round" />
                                     <path d="M18.6922 9.46158V6.38465C18.6922 5.97665 18.53 5.58528 18.2416 5.29674C17.9531 5.00836 17.5617 4.84619 17.1537 4.84619H5.61523" stroke="var(--menu-gray)" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
-                                Тарифы
+                                Цены
                             </Link>
                             <Link to={'/hotelRooms'} className={`${classes.menu_items__elem} ${(id == 'hotelRooms') && classes.menu_items__activeElem}`}>
                                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -26,14 +26,12 @@ function HotelShahmatka_tabComponent({ id }) {
 
     let allRooms = [];
 
-    data && data.hotel.categories.map((category) => {
-        return category.rooms.map((item) => (
-            allRooms.push({
-                room: item.name,
-                places: item.places
-            })
-        ))
-    });
+    data && data.hotel.rooms.map((item) => (
+        allRooms.push({
+            room: item.name,
+            places: item.places
+        })
+    ));
 
     allRooms.sort((a, b) => a.room.localeCompare(b.room));
 

@@ -145,6 +145,7 @@
     justify-content: flex-end;
     align-items: center;
     gap: 30px;
+    height: 97px;
 }
 
 .countingPeople {
@@ -176,6 +177,13 @@
 .blockInfoShow img {
     width: 12px;
     height: 12px;
+}
+
+.allGuestsAccess {
+    background-color: #0057C3;
+    color: #fff;
+    padding: 0 10px;
+    height: 100%;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

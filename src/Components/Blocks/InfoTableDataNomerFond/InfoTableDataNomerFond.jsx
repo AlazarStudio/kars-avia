@@ -12,13 +12,13 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
                             className={classes.InfoTable_data}
                         >
                             <div className={`${classes.InfoTable_data_elem}`}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.name} - Тариф "{item.tariffs.name}"</div>
+                                <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
 
-                            <div className={classes.infoTable_buttons}>
+                            {/* <div className={classes.infoTable_buttons}>
                                 <img src="/editPassenger.png" alt="" onClick={() => toggleRequestSidebar(item)} />
                                 <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponent(index, item)} />
-                            </div>
+                            </div> */}
 
                         </div>
                         <div className={classes.InfoTable_BottomInfo}>

@@ -163,12 +163,13 @@ function CreateRequest({ show, onClose, user }) {
         const input = {
             personId: formData.personId,
             airportId: formData.airportId,
-            arrival: { flight: formData.arrivalRoute, date: formData.arrivalDate, time: formData.arrivalTime },
-            departure: { flight: formData.departureRoute, date: formData.departureDate, time: formData.departureTime },
+            arrival: { flight: formData.arrivalRoute, date: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00` },
+            departure: { flight: formData.departureRoute, date: `${formData.departureDate}T${formData.departureTime}:00+00:00` },
             mealPlan: { included: formData.mealPlan.included },
             senderId: formData.senderId,
             airlineId: formData.airlineId,
         };
+        console.log(input)
 
         try {
             await createRequest({ variables: { input } });

@@ -152,9 +152,7 @@ function Reserve({ children, user, idHotel, ...props }) {
             request.airport?.name.toLowerCase(),
             request.airport?.code.toLowerCase(),
             request.arrival?.date.toLowerCase(),
-            request.arrival?.time.toLowerCase(),
             request.departure?.date.toLowerCase(),
-            request.departure?.time.toLowerCase(),
             request.status?.toLowerCase()
         ].some(field => field.includes(searchQuery.toLowerCase()));
 
@@ -178,6 +176,7 @@ function Reserve({ children, user, idHotel, ...props }) {
                         onChange={handleSearch}
                     />
                     <Filter
+                        user={user}
                         toggleSidebar={toggleCreateSidebar}
                         handleChange={handleChange}
                         filterData={filterData}

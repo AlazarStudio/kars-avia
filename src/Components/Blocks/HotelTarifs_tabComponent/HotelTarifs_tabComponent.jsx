@@ -50,7 +50,18 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
 
     useEffect(() => {
         if (data) {
-            setAddTarif(data.hotel.tariffs);
+            setAddTarif([
+                {
+                    name: 'Одноместный',
+                    price: data.hotel.priceOneCategory,
+                    type: 1
+                },
+                {
+                    name: 'Двухместный',
+                    price: data.hotel.priceTwoCategory,
+                    type: 2
+                },
+            ]);
         }
     }, [data]);
 
@@ -222,15 +233,13 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
     const filteredRequestsTarif = addTarif.filter(request => {
         return (
             request.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
-            request.category.some(room => room.name.toLowerCase().includes(searchTarif.toLowerCase())) ||
-            request.category.some(room => String(room.prices[0].amount).includes(searchTarif)) ||
-            request.category.some(room => String(room.prices[0].amountair).includes(searchTarif))
+            String(request.price).toLowerCase().includes(searchTarif.toLowerCase())
         );
     });
 
     return (
         <>
-            <div className={classes.section_searchAndFilter}>
+            {/* <div className={classes.section_searchAndFilter}>
                 <input
                     type="text"
                     placeholder="Поиск по тарифам"
@@ -250,7 +259,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
                         buttonTitle={'Добавить категорию'}
                     />
                 </div>
-            </div>
+            </div> */}
 
             {loading && <p>Loading...</p>}
             {error && <p>Error: {error.message}</p>}
@@ -266,20 +275,20 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
                 />
             )}
 
-            <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} />
-            <CreateRequestTarifCategory user={user} id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} />
+            {/* <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
+            {/* <CreateRequestTarifCategory user={user} id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
 
             <EditRequestTarif id={id} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} />
-            <EditRequestTarifCategory user={user} id={id} setAddTarif={setAddTarif} show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} />
+            {/* <EditRequestTarifCategory user={user} id={id} setAddTarif={setAddTarif} show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} /> */}
 
-            {showDelete && (
+            {/* {showDelete && (
                 <DeleteComponent
                     ref={deleteComponentRef}
                     remove={() => deleteIndex.type == "deleteTarif" ? deleteTarif(deleteIndex.data.index, deleteIndex.data.tarifID) : deleteTarifCategory(deleteIndex.data.category, deleteIndex.data.tarif)}
                     close={closeDeleteComponent}
                     title={`Вы действительно хотите удалить ${deleteIndex.type == "deleteTarif" ? 'тариф' : 'категорию'}?`}
                 />
-            )}
+            )} */}
         </>
     );
 }

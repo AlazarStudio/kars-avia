@@ -11,6 +11,10 @@
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
 }
 
+.InfoTable_data:last-child {
+    box-shadow: 0px -1px 0px 0px #e4e4ef00 inset;
+}
+
 /* .InfoTable_data:hover {
     background-color: var(--hover-gray);
 } */
@@ -118,7 +122,8 @@
 }
 
 .bottom {
-    height: calc(100vh - 296px);
+    max-height: calc(100vh - 296px);
+    height: fit-content;
     overflow: hidden;
     overflow-y: scroll;
 }
@@ -134,7 +139,7 @@
 
 .InfoTable_data_elem_title {
     text-align: left;
-    color: #9E9E9E;
+    /* color: #9E9E9E; */
 }
 
 .InfoTable_data_elem_avatar {
@@ -157,8 +162,8 @@
     padding: 20px;
     width: 100%;
     justify-content: space-between;
-    align-items: center;  
-    transition: all 0.3s ease-in-out;  
+    align-items: center;
+    transition: all 0.3s ease-in-out;
     position: relative;
     margin-left: 8px;
 }
@@ -184,17 +189,17 @@
     gap: 20px;
 }
 
-.infoTable_buttons img{
+.infoTable_buttons img {
     cursor: pointer;
 }
 
-.infoTableData_items{
+.infoTableData_items {
     position: relative;
     display: flex;
     width: 100%;
 }
 
-.infoTableData_buttons{
+.infoTableData_buttons {
     position: absolute;
     right: 28px;
     width: 60px;
@@ -205,15 +210,15 @@
     transition: all 0.3s ease-in-out;
 }
 
-.InfoTable_BottomInfo__item:hover .infoTableData_buttons{
+.InfoTable_BottomInfo__item:hover .infoTableData_buttons {
     opacity: 1;
 }
 
-.InfoTable_BottomInfo__item:hover{
+.InfoTable_BottomInfo__item:hover {
     background-color: var(--hover-gray);
 }
 
-.infoTableData_buttons img{
+.infoTableData_buttons img {
     cursor: pointer;
 }
 

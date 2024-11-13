@@ -2,9 +2,10 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './InfoTableDataReserve_passengers.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
-import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINES_RELAY, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests";
+import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINES_RELAY, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, getCookie, UPDATE_RESERVE } from "../../../../graphQL_requests";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Message from "../Message/Message";
+import { useNavigate } from "react-router-dom";
 
 function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, request, airline }) {
     const token = getCookie('token');
@@ -80,6 +81,38 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
             },
         },
     });
+
+    const [updateReserve] = useMutation(UPDATE_RESERVE, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
+
+    const navigate = useNavigate();
+
+    const [showButton, setShowButton] = useState(true);
+
+    const handleUpdateReserve = async () => {
+        try {
+            let reserverUpdateReserve = await updateReserve({
+                variables: {
+                    updateReserveId: request.id,
+                    input: {
+                        status: "done",
+                    }
+                }
+            });
+
+            setShowButton(false)
+        } catch (e) {
+            console.error(e);
+        }
+
+        navigate('/reserve');
+    };
 
     const handleAddNewPassenger = async () => {
         try {
@@ -228,10 +261,9 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         ? placement.filter(item => item.hotel.id === user.hotelId)
         : placement;
 
-
     return (
         // Сделать отдельную компоненту для чата
-        <div style={{ display: 'flex', gap: '20px' }}>
+        <div style={{ display: 'flex', gap: '20px', height: '100%' }}>
             <InfoTable>
                 <div className={classes.InfoTable_title}>
                     <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>№</div>
@@ -431,12 +463,20 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                     <div className={classes.countingPeople}>
                         <img src="/peopleCount.png" alt="" />
                         {placement.length} отелей, {getTotalGuests()} из {request.passengerCount} гостей
+
+                        {
+                            (getTotalGuests() == request.passengerCount && request.status != 'done' && showButton) &&
+                            <Button onClick={handleUpdateReserve}>Все гости размещены</Button>
+                        }
+
+                        {!showButton && <div>Все гости успешно размещены</div>}
+                        {getTotalGuests() == request.passengerCount && request.status == 'done' && <div>Все гости успешно размещены</div>}
                     </div>
                 </div>}
             </InfoTable>
 
             {user.role != "HOTELADMIN" && <div style={{ width: '500px', backgroundColor: '#fff', borderRadius: '8px', padding: '20px' }}>
-                <Message activeTab={"Комментарий"} chooseRequestID={''} chooseReserveID={request.id} token={token} user={user} chatPadding={'0'} chatHeight={'calc(100vh - 330px)'} />
+                <Message activeTab={"Комментарий"} chooseRequestID={''} chooseReserveID={request.id} token={token} user={user} chatPadding={'0'} chatHeight={'calc(100vh - 290px)'} />
             </div>}
         </div>
     );

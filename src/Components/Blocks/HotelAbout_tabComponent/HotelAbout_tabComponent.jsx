@@ -51,8 +51,23 @@ function HotelAbout_tabComponent({ id }) {
                             index: hotel.index,
                             inn: hotel.inn,
                             number: hotel.number,
+                            link: hotel.link,
+                            description: hotel.description,
                             ogrn: hotel.ogrn,
                             rs: hotel.rs,
+                            breakfast: {
+                                start: hotel.breakfast.start,
+                                end: hotel.breakfast.end
+                            },
+                            lunch:
+                            {
+                                start: hotel.lunch.start,
+                                end: hotel.lunch.end
+                            },
+                            dinner: {
+                                start: hotel.dinner.start,
+                                end: hotel.dinner.end
+                            }
                         }
                     }
                 });
@@ -66,11 +81,43 @@ function HotelAbout_tabComponent({ id }) {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setHotel({
-            ...hotel,
-            [name]: value,
+
+        setHotel((prevHotel) => {
+            // Проверяем, начинается ли name с "breakfast", "lunch" или "dinner"
+            if (name.startsWith("breakfast")) {
+                return {
+                    ...prevHotel,
+                    breakfast: {
+                        ...prevHotel.breakfast,
+                        [name.replace("breakfast", "").toLowerCase()]: value,
+                    },
+                };
+            } else if (name.startsWith("lunch")) {
+                return {
+                    ...prevHotel,
+                    lunch: {
+                        ...prevHotel.lunch,
+                        [name.replace("lunch", "").toLowerCase()]: value,
+                    },
+                };
+            } else if (name.startsWith("dinner")) {
+                return {
+                    ...prevHotel,
+                    dinner: {
+                        ...prevHotel.dinner,
+                        [name.replace("dinner", "").toLowerCase()]: value,
+                    },
+                };
+            } else {
+                // Для остальных полей
+                return {
+                    ...prevHotel,
+                    [name]: value,
+                };
+            }
         });
     };
+
 
     return (
         <>
@@ -87,8 +134,18 @@ function HotelAbout_tabComponent({ id }) {
                             <div className={classes.hotelAbout_top_title}>
                                 <div className={classes.hotelAbout_top_title_name}>{hotel.name}</div>
                                 <div className={classes.hotelAbout_top_title_desc}>
-                                    <img src="/map.png" alt="" />
-                                    {hotel.city}, {hotel.address}
+                                    {hotel.city && hotel.city &&
+                                        <>
+                                            <img src="/map.png" alt="" />
+                                            {hotel.city}, {hotel.address}
+                                        </>
+                                    }
+                                    {hotel.link &&
+                                        <>
+                                            <img src="/web.png" alt="" />
+                                            <a href={`${/^(https?:\/\/)/.test(hotel.link) ? hotel.link : 'https://' + hotel.link}`} target="_blank">{hotel.link}</a>
+                                        </>
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -100,7 +157,84 @@ function HotelAbout_tabComponent({ id }) {
                             }
                         </div>
                     </div>
+
                     <div className={classes.hotelAbout_info}>
+                        <div className={classes.hotelAbout_info_block_meal}>
+                            <div className={classes.hotelAbout_info_label}>Расписание питания</div>
+                            <div className={classes.hotelAbout_info_item}>
+                                <label>Завтрак</label>
+                                <div className={classes.mealTime}>
+                                    <label>с</label>
+                                    <input
+                                        type="time"
+                                        name="breakfastStart"
+                                        value={hotel.breakfast.start || ""}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className={classes.hotelAbout_info_input}
+                                    />
+
+                                    <label>до</label>
+                                    <input
+                                        type="time"
+                                        name="breakfastEnd"
+                                        value={hotel.breakfast.end || ""}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className={classes.hotelAbout_info_input}
+                                    />
+                                </div>
+                            </div>
+                            <div className={classes.hotelAbout_info_item}>
+                                <label>Обед</label>
+                                <div className={classes.mealTime}>
+                                    <label>с</label>
+                                    <input
+                                        type="time"
+                                        name="lunchStart"
+                                        value={hotel.lunch.start || ""}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className={classes.hotelAbout_info_input}
+                                    />
+
+                                    <label>до</label>
+                                    <input
+                                        type="time"
+                                        name="lunchEnd"
+                                        value={hotel.lunch.end || ""}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className={classes.hotelAbout_info_input}
+                                    />
+                                </div>
+                            </div>
+                            <div className={classes.hotelAbout_info_item}>
+                                <label>Ужин</label>
+                                <div className={classes.mealTime}>
+                                    <label>с</label>
+                                    <input
+                                        type="time"
+                                        name="dinnerStart"
+                                        value={hotel.dinner.start || ""}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className={classes.hotelAbout_info_input}
+                                    />
+
+                                    <label>до</label>
+                                    <input
+                                        type="time"
+                                        name="dinnerEnd"
+                                        value={hotel.dinner.end || ""}
+                                        onChange={handleChange}
+                                        disabled={!isEditing}
+                                        className={classes.hotelAbout_info_input}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className={classes.hotelAbout_info_block}>
                             <div className={classes.hotelAbout_info_label}>Адрес</div>
                             <div className={classes.hotelAbout_info_item}>
@@ -147,7 +281,8 @@ function HotelAbout_tabComponent({ id }) {
                                     className={classes.hotelAbout_info_input}
                                 />
                             </div>
-
+                        </div>
+                        <div className={classes.hotelAbout_info_block}>
                             <div className={classes.hotelAbout_info_label}>Контакты</div>
                             <div className={classes.hotelAbout_info_item}>
                                 <label>Почта</label>
@@ -166,6 +301,17 @@ function HotelAbout_tabComponent({ id }) {
                                     type="tel"
                                     name="number"
                                     value={hotel.number || ""}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                    className={classes.hotelAbout_info_input}
+                                />
+                            </div>
+                            <div className={classes.hotelAbout_info_item}>
+                                <label>Ссылка</label>
+                                <input
+                                    type="tel"
+                                    name="link"
+                                    value={hotel.link || ""}
                                     onChange={handleChange}
                                     disabled={!isEditing}
                                     className={classes.hotelAbout_info_input}
@@ -224,6 +370,32 @@ function HotelAbout_tabComponent({ id }) {
                                     type="text"
                                     name="bik"
                                     value={hotel.bik || ""}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                    className={classes.hotelAbout_info_input}
+                                />
+                            </div>
+                        </div>
+                        <div className={classes.hotelAbout_info_block}>
+                            <div className={classes.hotelAbout_info_label}>Информация об отеле</div>
+
+                            <div className={classes.hotelAbout_info_item}>
+                                <label>Название отеля</label>
+                                <input
+                                    type="tel"
+                                    name="name"
+                                    value={hotel.name || ""}
+                                    onChange={handleChange}
+                                    disabled={!isEditing}
+                                    className={classes.hotelAbout_info_input}
+                                />
+                            </div>
+                            <div className={classes.hotelAbout_info_item_info}>
+                                <label>Описание</label>
+                                <textarea
+                                    type="text"
+                                    name="description"
+                                    value={hotel.description || ""}
                                     onChange={handleChange}
                                     disabled={!isEditing}
                                     className={classes.hotelAbout_info_input}

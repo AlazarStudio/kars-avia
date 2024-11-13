@@ -12,7 +12,7 @@ function HotelsList({ children, user, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
 
-    const { loading, error, data } = useQuery(GET_HOTELS);
+    const { loading, error, data, refetch } = useQuery(GET_HOTELS);
     const [companyData, setCompanyData] = useState([]);
 
     useEffect(() => {
@@ -20,8 +20,10 @@ function HotelsList({ children, user, ...props }) {
             const sortedHotels = [...data.hotels].sort((a, b) => a.name.localeCompare(b.name));
             setCompanyData(sortedHotels);
         }
-    }, [data]);
+        refetch()
+    }, [data, refetch]);
 
+    console.log(companyData)
 
     const addHotel = (newHotel) => {
         setCompanyData([...companyData, newHotel].sort((a, b) => a.name.localeCompare(b.name)));

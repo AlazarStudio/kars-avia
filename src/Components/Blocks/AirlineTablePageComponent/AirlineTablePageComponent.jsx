@@ -1,6 +1,7 @@
 import React, { useReducer, useEffect, useState, useRef } from 'react';
 import classes from './AirlineTablePageComponent.module.css';
 import { CircularProgress } from '@mui/material';
+import { convertToDate } from '../../../../graphQL_requests';
 
 const initialState = (data, dataInfo) => ({
     bookings: data || [],
@@ -121,8 +122,11 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
 
                     const dayWidth = 100 / daysInMonth;
 
-                    const startTimeNew = getTimeHours(startTime);
-                    const endTimeNew = getTimeHours(endTime);
+                    let getStartTime = convertToDate(start, true)
+                    let getEndTime = convertToDate(end, true)
+
+                    const startTimeNew = getTimeHours(getStartTime);
+                    const endTimeNew = getTimeHours(getEndTime);
 
                     const startOffset = startDate.getMonth() === currentMonth ? (startTimeNew / 24) * dayWidth : 0;
                     const endOffset = endDate.getMonth() === currentMonth ? ((24 - endTimeNew) / 24) * dayWidth : 0;

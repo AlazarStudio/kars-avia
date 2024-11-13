@@ -49,7 +49,7 @@ function AirlinePage({ children, id, user, ...props }) {
                         >
                             <TabList className={classes.tabList}>
                                 <Tab className={classes.tab}>Компания</Tab>
-                                <Tab className={classes.tab}>Сотрудники</Tab>
+                                <Tab className={classes.tab}>Экипаж</Tab>
                                 <Tab className={classes.tab}>О авиакомпании</Tab>
                             </TabList>
 

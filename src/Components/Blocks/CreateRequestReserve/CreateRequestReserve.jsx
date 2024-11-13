@@ -164,13 +164,11 @@ function CreateRequestReserve({ show, onClose, user }) {
             airportId: formData.airportId,
             arrival: {
                 flight: formData.route,
-                date: formData.arrivalDate,
-                time: formData.arrivalTime,
+                date: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00`
             },
             departure: {
                 flight: formData.route,
-                date: formData.departureDate,
-                time: formData.departureTime,
+                date: `${formData.departureDate}T${formData.departureTime}:00+00:00`
             },
             mealPlan: {
                 included: formData.mealPlan.included,

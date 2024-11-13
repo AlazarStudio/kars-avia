@@ -1,7 +1,7 @@
 import { gql } from "@apollo/client";
 
-// export const path = '192.168.0.112:4000';
-export const path = '89.169.39.59:4000';
+export const path = '192.168.0.113:4000';
+// export const path = '89.169.39.59:4000';
 
 export const server = `http://${path}`;
 
@@ -25,6 +25,23 @@ export const decodeJWT = (token) => {
   const payloadObject = JSON.parse(payloadDecoded);
 
   return payloadObject;
+}
+
+export function convertToDate(dateString, includeTime = false) {
+  const date = new Date(dateString);
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const year = date.getUTCFullYear();
+
+  let formattedDate = `${day}.${month}.${year}`;
+
+  if (includeTime) {
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    formattedDate = ` ${hours}:${minutes}`;
+  }
+
+  return formattedDate;
 }
 
 // ----------------------------------------------------------------
@@ -70,12 +87,10 @@ export const GET_REQUESTS = gql`
         arrival {
           flight
           date
-          time
         }
         departure {
           flight
           date
-          time
         }
         roomCategory
         mealPlan {
@@ -109,6 +124,59 @@ export const GET_REQUESTS = gql`
 
 `;
 
+export const GET_REQUESTS_ARCHIVED = gql`
+  query RequestArchive($pagination: PaginationInput) {
+    requestArchive(pagination: $pagination) {
+      totalCount
+        totalPages
+        requests {
+          id
+          airportId
+          airport {
+            id
+            name
+            city
+            code
+          }
+          arrival {
+            flight
+            date
+          }
+          departure {
+            flight
+            date
+          }
+          roomCategory
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          senderId
+          receiverId
+          createdAt
+          updatedAt
+          hotelId
+          roomNumber
+          status
+          person {
+            id
+            name
+            number
+            position
+            gender
+          }
+          airline {
+            name
+            images
+          }
+          requestNumber
+        }
+    }
+  }
+`;
+
 export const REQUEST_CREATED_SUBSCRIPTION = gql`
     subscription RequestCreated {
         requestCreated {
@@ -123,12 +191,10 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
           arrival {
             flight
             date
-            time
           }
           departure {
             flight
             date
-            time
           }
           roomCategory
           mealPlan {
@@ -174,12 +240,10 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
           arrival {
             flight
             date
-            time
           }
           departure {
             flight
             date
-            time
           }
           roomCategory
           mealPlan {
@@ -246,12 +310,10 @@ export const CREATE_REQUEST_MUTATION = gql`
           arrival {
             flight
             date
-            time
           }
           departure {
             flight
             date
-            time
           }
           roomCategory
           mealPlan {
@@ -333,12 +395,10 @@ export const GET_REQUEST = gql`
           arrival {
             flight
             date
-            time
           }
           departure {
             flight
             date
-            time
           }
           roomCategory
           mealPlan {
@@ -393,9 +453,7 @@ export const UPDATE_HOTEL_BRON = gql`
         hotelId
         public
         start
-        startTime
         end
-        endTime
         clientId
         requestId
         place
@@ -412,9 +470,7 @@ export const GET_BRONS_HOTEL = gql`
       hotelChesses {
         public
         start
-        startTime
         end
-        endTime
         place
         room
         client {
@@ -432,12 +488,10 @@ export const GET_BRONS_HOTEL = gql`
           arrival {
             date
             flight
-            time
           }
           departure {
             flight
             date
-            time
           }
           mealPlan {
             included
@@ -494,9 +548,7 @@ export const GET_USER_BRONS = gql`
     airlineStaff(id: $airlineStaffId) {
       hotelChess {
         start
-        startTime
         end
-        endTime
         hotel {
           name
         }
@@ -561,18 +613,14 @@ export const SAVE_HANDLE_EXTEND_MUTATION = gql`
       arrival {
         flight
         date
-        time
       }
       departure {
         flight
         date
-        time
       }
       hotelChess {
         start
-        startTime
         end
-        endTime
         room
       }
       mealPlan {
@@ -587,6 +635,14 @@ export const SAVE_HANDLE_EXTEND_MUTATION = gql`
           dinner
         }
       }
+    }
+  }
+`;
+
+export const CHANGE_TO_ARCHIVE = gql`
+  mutation Mutation($archivingRequstId: ID!) {
+    archivingRequst(id: $archivingRequstId) {
+      id
     }
   }
 `;
@@ -611,12 +667,10 @@ export const CREATE_REQUEST_RESERVE_MUTATION = gql`
       arrival {
         flight
         date
-        time
       }
       departure {
         flight
         date
-        time
       }
       mealPlan {
         included
@@ -659,12 +713,10 @@ export const GET_RESERVE_REQUESTS = gql`
         arrival {
           flight
           date
-          time
         }
         departure {
           flight
           date
-          time
         }
         mealPlan {
           included
@@ -715,12 +767,10 @@ export const REQUEST_RESERVE_CREATED_SUBSCRIPTION = gql`
       arrival {
         flight
         date
-        time
       }
       departure {
         flight
         date
-        time
       }
       mealPlan {
         included
@@ -756,12 +806,10 @@ export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION = gql`
       arrival {
         flight
         date
-        time
       }
       departure {
         flight
         date
-        time
       }
       mealPlan {
         included
@@ -789,12 +837,10 @@ export const GET_RESERVE_REQUEST = gql`
       arrival {
         flight
         date
-        time
       }
       departure {
         flight
         date
-        time
       }
       mealPlan {
         included
@@ -945,6 +991,14 @@ export const DELETE_PASSENGER_FROM_HOTEL = gql`
   }
 `;
 
+export const UPDATE_RESERVE = gql`
+  mutation Mutation($updateReserveId: ID!, $input: UpdateReserveInput!) {
+    updateReserve(id: $updateReserveId, input: $input) {
+      id
+    }
+  }
+`;
+
 // Запросы к заявкам на резерв
 
 // ----------------------------------------------------------------
@@ -954,6 +1008,7 @@ export const DELETE_PASSENGER_FROM_HOTEL = gql`
 export const CREATE_HOTEL = gql`
   mutation Mutation($input: CreateHotelInput!, $images: [Upload!]) {
     createHotel(input: $input, images: $images) {
+      id
       images
       name
       city
@@ -993,6 +1048,20 @@ export const GET_HOTEL = gql`
       bank
       bik
       images
+      link
+      description
+      breakfast {
+        start
+        end
+      }
+      lunch {
+        start
+        end
+      }
+      dinner {
+        start
+        end
+      }
     }
   }
 `;
@@ -1008,19 +1077,8 @@ export const GET_HOTEL_CITY = gql`
 export const GET_HOTEL_TARIFS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
-      tariffs {
-        id
-        name
-        category {
-          id
-          name
-          prices {
-            id
-            amount
-            amountair
-          }
-        }
-      }
+      priceOneCategory
+      priceTwoCategory
     }
   }
 `;
@@ -1028,17 +1086,11 @@ export const GET_HOTEL_TARIFS = gql`
 export const GET_HOTEL_ROOMS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
-      categories {
+      rooms {
         id
         name
-        rooms {
-          id
-          name
-          places
-        }
-        tariffs {
-          name
-        }
+        category
+        places
       }
     }
   }
@@ -1055,17 +1107,23 @@ export const GET_HOTEL_NAME = gql`
 export const UPDATE_HOTEL = gql`
   mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
     updateHotel(id: $updateHotelId, input: $input) {
-      categories {
+      rooms {
         id
         name
-        rooms {
-          id
-          name
-          places
-        }
-        tariffs {
-          name
-        }
+        category
+        places
+      }
+      breakfast {
+        start
+        end
+      }
+      lunch {
+        start
+        end
+      }
+      dinner {
+        start
+        end
       }
     }
   }
@@ -1074,19 +1132,8 @@ export const UPDATE_HOTEL = gql`
 export const UPDATE_HOTEL_TARIF = gql`
   mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
     updateHotel(id: $updateHotelId, input: $input) {
-      tariffs {
-        id
-        name
-        category {
-          id
-          name
-          prices {
-            id
-            amount
-            amountair
-          }
-        }
-      }
+      priceOneCategory
+      priceTwoCategory
     }
   }
 `;
@@ -1122,6 +1169,7 @@ export const GET_HOTEL_USERS = gql`
       name
       email
       role
+      position
       login
       images
     }
@@ -1148,6 +1196,7 @@ export const UPDATE_HOTEL_USER = gql`
       name
       email
       role
+      position
       login
       images
     }
@@ -1369,9 +1418,7 @@ export const GET_STAFF_HOTELS = gql`
       gender
       hotelChess {
         start
-        startTime
         end
-        endTime
         clientId
         hotel {
           name

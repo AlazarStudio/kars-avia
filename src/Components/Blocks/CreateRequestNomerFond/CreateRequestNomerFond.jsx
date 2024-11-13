@@ -11,7 +11,6 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
 
     const [formData, setFormData] = useState({
         nomerName: '',
-        places: 1,
         category: ''
     });
 
@@ -30,7 +29,6 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
     const resetForm = () => {
         setFormData({
             nomerName: '',
-            places: 1,
             category: uniqueCategories[0] || ''
         });
     };
@@ -54,24 +52,16 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        let nameInfo = formData.category.split(' - ');
-
-        const existingCategoryForRooms = addTarif.find(tarif =>
-            tarif.name.toLowerCase() === nameInfo[0].toLowerCase() &&
-            tarif.tariffs.name.toLowerCase() === nameInfo[1].toLowerCase()
-        );
-
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
 
         let response_update_room = await updateHotel({
             variables: {
                 updateHotelId: id,
                 input: {
-                    "rooms": [
+                    rooms: [
                         {
-                            "name": nomerName,
-                            "places": Number(formData.places),
-                            "categoryId": existingCategoryForRooms.id
+                            name: nomerName,
+                            category: formData.category
                         }
                     ]
                 }
@@ -79,10 +69,24 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
         });
 
         if (response_update_room) {
-            const sortedTarifs = response_update_room.data.updateHotel.categories.map(tarif => ({
-                ...tarif,
-                rooms: [...tarif.rooms].sort((a, b) => a.name.localeCompare(b.name))
-            })).sort((a, b) => a.name.localeCompare(b.name));
+            const sortedTarifs = Object.values(
+                response_update_room.data.updateHotel.rooms
+                    .reduce((acc, room) => {
+                        if (!acc[room.category]) {
+                            acc[room.category] = {
+                                name: room.category === 'onePlace' ? 'Одноместный' : room.category === 'twoPlace' ? 'Двухместный' : '',
+                                origName: room.category,
+                                rooms: []
+                            };
+                        }
+                        acc[room.category].rooms.push(room);
+                        return acc;
+                    }, {})
+            );
+
+            sortedTarifs.forEach(category => {
+                category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+            });
 
             setAddTarif(sortedTarifs);
             resetForm();
@@ -118,13 +122,10 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
                     <label>Название номера</label>
                     <input type="text" name="nomerName" value={formData.nomerName} onChange={handleChange} placeholder="Пример: № 151" />
 
-                    <label>Количество мест в номере</label>
-                    <input type="number" name="places" value={formData.places} onChange={handleChange} placeholder="1" />
-
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
                         {uniqueCategories.map(category => (
-                            <option key={category} value={category}>{category}</option>
+                            <option key={category} value={category}>{category == 'onePlace' ? 'Одноместный' : category == 'twoPlace' ? 'Двухместный' : ''}</option>
                         ))}
                     </select>
                 </div>

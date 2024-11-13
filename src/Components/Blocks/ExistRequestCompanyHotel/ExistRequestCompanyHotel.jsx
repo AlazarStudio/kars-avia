@@ -24,6 +24,7 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
         name: '',
         email: '',
         role: '',
+        position: '',
         login: '',
         password: ''
     });
@@ -39,6 +40,7 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
                 name: chooseObject.name || '',
                 email: chooseObject.email || '',
                 role: chooseObject.role || '',
+                position: chooseObject.position || '',
                 login: chooseObject.login || '',
                 password: chooseObject.password || ''
             });
@@ -82,6 +84,7 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
                     name: formData.name,
                     email: formData.email,
                     role: formData.role,
+                    position: formData.position,
                     login: formData.login,
                     password: formData.password,
                     hotelId: id
@@ -150,11 +153,16 @@ function ExistRequestCompanyHotel({ show, onClose, chooseObject, updateDispatche
                         />
                     </div>
                     <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>Должность</div>
+                        <div className={classes.requestDataInfo_title}>Роль</div>
                         <select name="role" value={formData.role} onChange={handleChange}>
-                            {/* <option value="HOTELMODERATOR">Модератор</option> */}
-                            <option value="HOTELADMIN">Администратор</option>
-                            {/* <option value="HOTELUSER">Пользователь</option> */}
+                            <option value="HOTELADMIN">HOTELADMIN</option>
+                        </select>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Должность</div>
+                        <select name="position" value={formData.position} onChange={handleChange}>
+                            <option value="Модератор">Модератор</option>
+                            <option value="Администратор">Администратор</option>
                         </select>
                     </div>
                     <div className={classes.requestDataInfo}>

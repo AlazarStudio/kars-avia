@@ -14,6 +14,7 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
         name: '',
         email: '',
         role: '',
+        position: '',
         login: '',
         password: ''
     });
@@ -26,6 +27,7 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
             name: '',
             email: '',
             role: '',
+            position: '',
             login: '',
             password: ''
         });
@@ -81,6 +83,7 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
                         name: formData.name,
                         email: formData.email,
                         role: formData.role,
+                        position: formData.position,
                         login: formData.login,
                         password: formData.password,
                         hotelId: id
@@ -133,12 +136,19 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
                     <label>Почта</label>
                     <input type="email" name="email" placeholder="example@mail.ru" value={formData.email} onChange={handleChange} />
 
-                    <label>Должность</label>
+                    <label>Роль</label>
                     <select name="role" value={formData.role} onChange={handleChange}>
-                        <option value="" disabled>Выберите должность</option>
+                        <option value="" disabled>Выберите роль</option>
                         {/* <option value="HOTELMODERATOR">Модератор</option> */}
-                        <option value="HOTELADMIN">Администратор</option>
+                        <option value="HOTELADMIN">HOTELADMIN</option>
                         {/* <option value="HOTELUSER">Пользователь</option> */}
+                    </select>
+
+                    <label>Должность</label>
+                    <select name="position" value={formData.position} onChange={handleChange}>
+                        <option value="" disabled>Выберите должность</option>
+                        <option value="Модератор">Модератор</option>
+                        <option value="Администратор">Администратор</option>
                     </select>
 
                     <label>Логин</label>

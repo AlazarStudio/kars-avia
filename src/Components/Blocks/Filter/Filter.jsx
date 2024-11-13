@@ -3,15 +3,32 @@ import classes from './Filter.module.css';
 import Button from "../../Standart/Button/Button";
 import DropDownList from "../DropDownList/DropDownList";
 
-function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, buttonTitle, filterList, needDate, filterLocalData, ...props }) {
+function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, buttonTitle, filterList, needDate, filterLocalData, user, ...props }) {
     // Опции для выбора состояния
-    const statusOptions = useMemo(() => [
-        { label: "Все заявки", value: "all" },
-        { label: "Готов к архиву", value: "archiving" },
-        { label: "Создан / В обработке", value: "created / opened" },
-        { label: "Отменен", value: "cancelled" },
-        { label: "Размещен", value: "done" },
-    ], []);
+    let filterListShow
+
+    if (user.role === 'SUPERADMIN' || user.role === 'DISPATCHERADMIN' || user.role === 'AIRLINEADMIN') {
+        filterListShow = [
+            { label: "Все заявки", value: "all" },
+            { label: "Создан / В обработке", value: "created / opened" },
+            { label: "Размещен", value: "done" },
+            { label: "Готов к архиву", value: "archiving" },
+            { label: "Архивные", value: "archived" },
+            { label: "Отменен", value: "cancelled" },
+        ]
+    }
+
+    if (user.role === 'HOTELADMIN') {
+        filterListShow = [
+            { label: "Все заявки", value: "all" },
+            { label: "Создан / В обработке", value: "created / opened" },
+            { label: "Размещен", value: "done" },
+            { label: "Готов к архиву", value: "archiving" },
+            { label: "Отменен", value: "cancelled" },
+        ]
+    }
+
+    const statusOptions = useMemo(() => filterListShow, []);
 
     // Опции для фильтрации по роли
     const filterOptions = useMemo(() => [

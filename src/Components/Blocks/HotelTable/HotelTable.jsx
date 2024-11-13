@@ -4,7 +4,7 @@ import classes from './HotelTable.module.css';
 import Button from '../../Standart/Button/Button';
 import BronInfo from '../BronInfo/BronInfo';
 import { LinearProgress, Box, Typography, CircularProgress } from '@mui/material';
-import { GET_REQUEST, getCookie, UPDATE_HOTEL_BRON } from '../../../../graphQL_requests';
+import { convertToDate, GET_REQUEST, getCookie, UPDATE_HOTEL_BRON } from '../../../../graphQL_requests';
 import { useMutation, useQuery } from '@apollo/client';
 import { Link } from 'react-router-dom';
 
@@ -38,9 +38,7 @@ const reducer = (state, action) => {
                     room: '',
                     place: '',
                     start: '',
-                    startTime: '',
                     end: '',
-                    endTime: '',
                     client: [],
                     public: false,
                 })),
@@ -66,13 +64,13 @@ const reducer = (state, action) => {
 };
 
 const checkBookingConflict = (newBooking, existingBookings) => {
-    const newStart = new Date(newBooking.start + 'T' + newBooking.startTime);
-    const newEnd = new Date(newBooking.end + 'T' + newBooking.endTime);
+    const newStart = new Date(newBooking.start);
+    const newEnd = new Date(newBooking.end);
 
     for (const booking of existingBookings) {
         if (booking.room === newBooking.room && booking.place == newBooking.place) {
-            const existingStart = new Date(booking.start + 'T' + booking.startTime);
-            const existingEnd = new Date(booking.end + 'T' + booking.endTime);
+            const existingStart = new Date(booking.start);
+            const existingEnd = new Date(booking.end);
 
             if (
                 (newStart >= existingStart && newStart < existingEnd) ||
@@ -114,10 +112,8 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
             const newBookings = dataObject.map(item => ({
                 room: item.room,
                 place: item.place,
-                start: item.start,
-                startTime: item.startTime,
-                end: item.end,
-                endTime: item.endTime,
+                start: convertToDate(item.start),
+                end: convertToDate(item.end),
                 client: item.client,
                 public: item.public
             }));
@@ -195,8 +191,11 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                         const colStart = Math.max(startDay, 1);
                         const colEnd = Math.min(endDay, daysInMonth);
 
-                        const startTime = getTimeHours(booking.startTime);
-                        const endTime = getTimeHours(booking.endTime);
+                        let getStartTime = convertToDate(booking.start, true)
+                        let getEndTime = convertToDate(booking.end, true)
+
+                        const startTime = getTimeHours(getStartTime);
+                        const endTime = getTimeHours(getEndTime);
 
                         const dayWidth = 100 / daysInMonth;
                         const startOffset = startDate.getMonth() === currentMonth ? (startTime / 24) * dayWidth : 0;
@@ -298,15 +297,18 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
     const handleAddBooking = async () => {
         const booking = state.newBookings[state.currentBookingIndex];
 
-        if (!booking.room || !booking.place || !booking.start || !booking.startTime || !booking.end || !booking.endTime || !booking.client) {
+        if (!booking.room || !booking.place || !booking.start || !booking.end || !booking.client) {
             alert('Пожалуйста, заполните все поля.');
             return;
         }
 
+        let getStartTime = convertToDate(booking.start, true)
+        let getEndTime = convertToDate(booking.end, true)
+
         const startDate = new Date(booking.start);
         const endDate = new Date(booking.end);
-        const startTime = getTimeHours(booking.startTime);
-        const endTime = getTimeHours(booking.endTime);
+        const startTime = getTimeHours(getStartTime);
+        const endTime = getTimeHours(getEndTime);
 
         if (endDate < startDate || (endDate.getTime() === startDate.getTime() && endTime <= startTime)) {
             alert('Время окончания должно быть позже времени начала.');
@@ -332,9 +334,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                             {
                                 clientId: booking.clientId,
                                 start: booking.start,
-                                startTime: booking.startTime,
                                 end: booking.end,
-                                endTime: booking.endTime,
                                 hotelId: booking.hotelId,
                                 requestId: booking.requestId,
                                 room: booking.room,
@@ -378,10 +378,10 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
     const currentBooking = state.newBookings[state.currentBookingIndex];
 
-    function convertToDate(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString();
-    }
+    // function convertToDate(timestamp) {
+    //     const date = new Date(timestamp);
+    //     return date.toLocaleDateString();
+    // }
 
     // console.log(currentBooking)
     return (
@@ -455,14 +455,14 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                                     <div className={classes.formContainer_items_item_data_name}>Прибытие</div>
                                     <div className={classes.formContainer_items_item_data_info}>
                                         <span> <img src="/calendar.png" alt="" />{convertToDate(currentBooking.start)}</span>
-                                        <span> <img src="/time.png" alt="" />{currentBooking.startTime}</span>
+                                        <span> <img src="/time.png" alt="" />{convertToDate(currentBooking.start, true)}</span>
                                     </div>
                                 </div>
                                 <div className={classes.formContainer_items_item_data}>
                                     <div className={classes.formContainer_items_item_data_name}>Отъезд</div>
                                     <div className={classes.formContainer_items_item_data_info}>
                                         <span> <img src="/calendar.png" alt="" />{convertToDate(currentBooking.end)}</span>
-                                        <span> <img src="/time.png" alt="" />{currentBooking.endTime}</span>
+                                        <span> <img src="/time.png" alt="" />{convertToDate(currentBooking.end, true)}</span>
                                     </div>
                                 </div>
 

@@ -57,15 +57,28 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
     useEffect(() => {
         if (data) {
-            const sortedTarifs = data.hotel.categories.map(tarif => ({
-                ...tarif,
-                rooms: [...tarif.rooms].sort((a, b) => a.name.localeCompare(b.name))
-            })).sort((a, b) => a.name.localeCompare(b.name));
+            const sortedTarifs = Object.values(
+                data.hotel.rooms
+                    .reduce((acc, room) => {
+                        if (!acc[room.category]) {
+                            acc[room.category] = {
+                                name: room.category === 'onePlace' ? 'Одноместный' : room.category === 'twoPlace' ? 'Двухместный' : '',
+                                origName: room.category,
+                                rooms: []
+                            };
+                        }
+                        acc[room.category].rooms.push(room);
+                        return acc;
+                    }, {})
+            );
+
+            sortedTarifs.forEach(category => {
+                category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+            });
 
             setAddTarif(sortedTarifs);
         }
     }, [data]);
-
 
     const handleSearchTarif = (e) => {
         setSearchTarif(e.target.value);
@@ -164,10 +177,11 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         setSelectedNomer({});
     };
 
-    const uniqueCategories = addTarif && addTarif.map(request => `${request.name} - ${request.tariffs.name}`);
+    const uniqueCategories = addTarif && addTarif.map(request => `${request.origName}`);
 
+    // Надо починить не работает
     const filteredRequestsTarif = addTarif.filter(request => {
-        const matchesCategory = selectQuery === '' || (selectQuery.toLowerCase().includes(request.name.toLowerCase()) && selectQuery.toLowerCase().includes(request.tariffs.name.toLowerCase()));
+        const matchesCategory = selectQuery === '' || request.name.toLowerCase().includes(selectQuery.toLowerCase());
         const matchesSearch = searchTarif === '' || request.rooms.some(room => room.name.toLowerCase().includes(searchTarif.toLowerCase()));
         return matchesCategory && matchesSearch;
     });
@@ -199,11 +213,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                                 handleChange={''}
                                 buttonTitle={'Добавить номер'}
                             />
-                            {/* <Filter
-                                toggleSidebar={toggleCategory}
-                                handleChange={''}
-                                buttonTitle={'Добавить Категорию'}
-                            /> */}
                         </div>
                     </div>
 
@@ -216,7 +225,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                     />
 
                     <CreateRequestNomerFond id={id} tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
-                    {/* <CreateRequestCategoryNomer id={id} show={showAddCategory} onClose={toggleCategory} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} /> */}
 
                     <EditRequestNomerFond
                         id={id}

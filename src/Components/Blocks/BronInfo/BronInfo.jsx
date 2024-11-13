@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './BronInfo.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { convertToDate } from "../../../../graphQL_requests";
 
 function BronInfo({ show, onClose, data }) {
     const [activeTab, setActiveTab] = useState('Информация о бронировании');
@@ -34,10 +35,6 @@ function BronInfo({ show, onClose, data }) {
         };
     }, [show, onClose]);
 
-    function convertToDate(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
-    }
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -78,7 +75,7 @@ function BronInfo({ show, onClose, data }) {
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Время прибытия</div>
-                        <div className={classes.requestDataInfo_desc}>{data?.request?.arrival?.time}</div>
+                        <div className={classes.requestDataInfo_desc}>{convertToDate(data?.request?.arrival?.date, true)}</div>
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Дата отъезда</div>
@@ -86,7 +83,7 @@ function BronInfo({ show, onClose, data }) {
                     </div>
                     <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>Время отъезда</div>
-                        <div className={classes.requestDataInfo_desc}>{data?.request?.departure?.time}</div>
+                        <div className={classes.requestDataInfo_desc}>{convertToDate(data?.request?.departure?.date, true)}</div>
                     </div>
 
                     <hr />

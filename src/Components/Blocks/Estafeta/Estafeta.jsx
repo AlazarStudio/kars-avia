@@ -7,12 +7,13 @@ import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
-import { GET_REQUESTS, GET_AIRLINE, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION } from '../../../../graphQL_requests.js';
+import { GET_REQUESTS, GET_AIRLINE, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, GET_REQUESTS_ARCHIVED, getCookie } from '../../../../graphQL_requests.js';
 import { useQuery, useSubscription } from "@apollo/client";
 import ReactPaginate from 'react-paginate';
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 function Estafeta({ user }) {
+    const token = getCookie('token');
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -31,8 +32,15 @@ function Estafeta({ user }) {
         take: 50
     });
 
+    const query = statusFilter === "archived" ? GET_REQUESTS_ARCHIVED : GET_REQUESTS;
+
     // Запрос на получение списка заявок с использованием параметров пагинации
-    const { loading, error, data, refetch } = useQuery(GET_REQUESTS, {
+    const { loading, error, data, refetch } = useQuery(query, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take, status: statusFilter.split(" / ") } },
     });
 
@@ -68,7 +76,7 @@ function Estafeta({ user }) {
 
     // Обновление списка заявок на основе данных запроса и новых заявок
     useEffect(() => {
-        if (data && data.requests.requests) {
+        if (data && data.requests?.requests) {
             let sortedRequests = [...data.requests.requests];
             if (currentPageRelay === 0 && newRequests.length > 0) {
                 sortedRequests = [...newRequests, ...sortedRequests];
@@ -77,6 +85,16 @@ function Estafeta({ user }) {
 
             setRequests(sortedRequests);
             setTotalPages(data.requests.totalPages);
+        }
+        if (data && data.requestArchive?.requests) {
+            let sortedRequests = [...data.requestArchive.requests];
+            if (currentPageRelay === 0 && newRequests.length > 0) {
+                sortedRequests = [...newRequests, ...sortedRequests];
+                setNewRequests([]);
+            }
+
+            setRequests(sortedRequests);
+            setTotalPages(data.requestArchive.totalPages);
         }
         refetch();
     }, [data, currentPageRelay, newRequests, refetch]);
@@ -128,11 +146,18 @@ function Estafeta({ user }) {
             const matchesAirline = airlineName ? request.airline.name.toLowerCase() === airlineName.toLowerCase() : true;
 
             const searchFields = [
-                request.person.name, request.person.number, request.person.position,
-                request.person.gender, request.airline.name, request.airport.name,
-                request.airport.code, request.arrival.flight, request.arrival.date,
-                request.arrival.time, request.departure.flight, request.departure.date,
-                request.departure.time, request.status
+                request.person.name,
+                request.person.number,
+                request.person.position,
+                request.person.gender,
+                request.airline.name,
+                request.airport.name,
+                request.airport.code,
+                request.arrival.flight,
+                request.arrival.date,
+                request.departure.flight,
+                request.departure.date,
+                request.status
             ];
             return matchesAirline && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
         });
@@ -165,6 +190,7 @@ function Estafeta({ user }) {
                     onChange={handleSearch}
                 />
                 <Filter
+                    user={user}
                     toggleSidebar={toggleCreateSidebar}
                     handleChange={handleChange}
                     filterData={filterData}

@@ -2,14 +2,9 @@ import React from "react";
 import classes from './InfoTableDataReserve.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { server } from "../../../../graphQL_requests";
+import { convertToDate, server } from "../../../../graphQL_requests";
 
 function InfoTableDataReserve({ children, requests, paginationHeight, ...props }) {
-
-    function convertToDate(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
-    }
     return (
         <InfoTable >
             <div className={classes.InfoTable_title}>
@@ -29,14 +24,14 @@ function InfoTableDataReserve({ children, requests, paginationHeight, ...props }
                         {item.status == 'created' && <div className={classes.newRequest}></div>}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.reserveNumber.split('-')[0]}</div>
 
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w8}`}>{convertToDate(Number(item.createdAt))}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w8}`}>{convertToDate(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_img}>
                                 <img src={`${server}${item.airline?.images[0]}`} alt="" />
                             </div>
                             {item.airline?.name}
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{item.airport?.code}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{item.airport?.city} ({item.airport?.code})</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 <div className={classes.InfoTable_data_elem_title}>{item.passengerCount ? item.passengerCount : 0}</div>
@@ -44,12 +39,12 @@ function InfoTableDataReserve({ children, requests, paginationHeight, ...props }
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
-                                <div className={classes.InfoTable_data_elem_title}>{convertToDate(item.arrival.date)} - {item.arrival.time}</div>
+                                <div className={classes.InfoTable_data_elem_title}>{convertToDate(item.arrival.date)} - {convertToDate(item.arrival.date, true)}</div>
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
-                                <div className={classes.InfoTable_data_elem_title}>{convertToDate(item.departure.date)} - {item.departure.time}</div>
+                                <div className={classes.InfoTable_data_elem_title}>{convertToDate(item.departure.date)} - {convertToDate(item.departure.date, true)}</div>
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>

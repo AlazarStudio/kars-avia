@@ -16,6 +16,7 @@ function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setCho
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>ФИО</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Должность</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Уровень доступа</div>
             </div>
 
@@ -35,6 +36,11 @@ function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setCho
                                 <div className={classes.InfoTable_data_elem_title}>
                                     {item.name}
                                 </div>
+                            </div>
+                        </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                            <div className={classes.InfoTable_data_elem_title}>
+                                {item.position}
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>

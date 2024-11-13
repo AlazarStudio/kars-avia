@@ -18,22 +18,18 @@ function Placement({ children, ...props }) {
         hotelId: idHotel
     }));
 
-    // console.log(updatedDataObject)
-
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: idHotel },
     });
 
     const allRooms = [];
 
-    data && data.hotel.categories.map((category, index) => {
-        return category.rooms.map((item) => (
-            allRooms.push({
-                room: item.name,
-                places: item.places
-            })
-        ));
-    });
+    data && data.hotel.rooms.map((item) => (
+        allRooms.push({
+            room: item.name,
+            places: item.places
+        })
+    ));
 
     allRooms.sort((a, b) => a.room.localeCompare(b.room));
 

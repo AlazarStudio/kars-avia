@@ -4,6 +4,7 @@ import classes from './HotelTablePageComponent.module.css';
 import Button from '../../Standart/Button/Button';
 import BronInfo from '../BronInfo/BronInfo';
 import { LinearProgress, Box, Typography, CircularProgress } from '@mui/material';
+import { convertToDate } from '../../../../graphQL_requests';
 
 const initialState = (data, dataObject) => ({
     bookings: data || [],
@@ -13,7 +14,7 @@ const initialState = (data, dataObject) => ({
     totalBookings: dataObject.length || 0,
     conflict: false,
 });
- 
+
 const reducer = (state, action) => {
     switch (action.type) {
         case 'SET_BOOKINGS':
@@ -40,9 +41,7 @@ const reducer = (state, action) => {
                     room: '',
                     place: '',
                     start: '',
-                    startTime: '',
                     end: '',
-                    endTime: '',
                     client: '',
                     public: false,
                 })),
@@ -62,9 +61,7 @@ const reducer = (state, action) => {
                     room: '',
                     place: '',
                     start: '',
-                    startTime: '',
                     end: '',
-                    endTime: '',
                     client: '',
                     public: false,
                 })),
@@ -78,13 +75,13 @@ const reducer = (state, action) => {
 };
 
 const checkBookingConflict = (newBooking, existingBookings) => {
-    const newStart = new Date(newBooking.start + 'T' + newBooking.startTime);
-    const newEnd = new Date(newBooking.end + 'T' + newBooking.endTime);
+    const newStart = new Date(newBooking.start);
+    const newEnd = new Date(newBooking.end);
 
     for (const booking of existingBookings) {
         if (booking.room === newBooking.room && booking.place == newBooking.place) {
-            const existingStart = new Date(booking.start + 'T' + booking.startTime);
-            const existingEnd = new Date(booking.end + 'T' + booking.endTime);
+            const existingStart = new Date(booking.start);
+            const existingEnd = new Date(booking.end);
 
             if (
                 (newStart >= existingStart && newStart < existingEnd) ||
@@ -115,9 +112,7 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
                 room: item.room,
                 place: item.place,
                 start: item.start,
-                startTime: item.startTime,
                 end: item.end,
-                endTime: item.endTime,
                 client: item.client,
                 public: item.public,
             }));
@@ -195,8 +190,11 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
                         const colStart = Math.max(startDay, 1);
                         const colEnd = Math.min(endDay, daysInMonth);
 
-                        const startTime = getTimeHours(booking.startTime);
-                        const endTime = getTimeHours(booking.endTime);
+                        let getStartTime = convertToDate(booking.start, true)
+                        let getEndTime = convertToDate(booking.end, true)
+
+                        const startTime = getTimeHours(getStartTime);
+                        const endTime = getTimeHours(getEndTime);
 
                         const dayWidth = 100 / daysInMonth;
                         const startOffset = startDate.getMonth() === currentMonth ? (startTime / 24) * dayWidth : 0;
@@ -292,6 +290,7 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
             return;
         }
 
+
         const startDate = new Date(booking.start);
         const endDate = new Date(booking.end);
         const startTime = getTimeHours(booking.startTime);
@@ -335,10 +334,10 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
     };
 
     const currentBooking = state.newBookings[state.currentBookingIndex];
-    
+
     return (
         <div className={classes.tableData}>
-            <div className={classes.tableContainer} ref={tableContainerRef} style={{"max-height": maxHeight}}>
+            <div className={classes.tableContainer} ref={tableContainerRef} style={{ "max-height": maxHeight }}>
                 <table className={classes.hotelTable}>
                     <thead className={classes.stickyHeader}>
                         <tr>
@@ -475,7 +474,7 @@ const HotelTablePageComponent = ({ allRooms, data, idHotel, dataObject, id, show
                     }
                 </div>
             ) : null}
-            <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} data={state.selectedBooking}/>
+            <BronInfo show={showCreateSidebar} onClose={toggleCreateSidebar} data={state.selectedBooking} />
         </div >
     );
 };
