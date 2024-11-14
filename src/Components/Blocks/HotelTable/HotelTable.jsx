@@ -323,8 +323,6 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
         setLoading(true);
 
-        console.log(booking)
-
         try {
             let request = await updateHotelBron({
                 variables: {
@@ -346,8 +344,6 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                 }
             });
 
-            console.log(request)
-
             if (request) {
                 setTimeout(() => {
                     dispatch({ type: 'ADD_BOOKING' });
@@ -355,7 +351,7 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
                 }, secundos);
             }
         } catch (err) {
-            console.log('Произошла ошибка при сохранении данных', err);
+            console.error('Произошла ошибка при сохранении данных', err);
         }
     };
 
@@ -382,8 +378,6 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
     //     const date = new Date(timestamp);
     //     return date.toLocaleDateString();
     // }
-
-    // console.log(currentBooking)
     return (
         <div className={classes.tableData}>
             <div className={classes.tableContainer} ref={tableContainerRef}>

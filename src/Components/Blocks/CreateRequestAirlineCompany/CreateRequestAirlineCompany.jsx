@@ -121,8 +121,6 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
         }
     };
 
-    // console.log(formData)
-
     useEffect(() => {
         if (show) {
             resetForm();

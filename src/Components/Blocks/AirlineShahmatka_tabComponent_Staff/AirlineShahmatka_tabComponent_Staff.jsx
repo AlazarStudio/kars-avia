@@ -65,7 +65,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
             hotelName: hotel.hotel.name
         }))
     );
-    
+
     const [searchQuery, setSearchQuery] = useState('');
     const [selectQuery, setSelectQuery] = useState('');
     const [showAddBronForm, setShowAddBronForm] = useState(false);
@@ -119,7 +119,6 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     });
 
     const deleteTarif = async (user) => {
-        console.log(user)
         try {
             let request = await deleteAirlineStaff({
                 variables: {

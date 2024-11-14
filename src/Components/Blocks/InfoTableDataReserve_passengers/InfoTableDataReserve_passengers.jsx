@@ -255,7 +255,6 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         }));
     };
 
-    // console.log(placement)
     // Получаем список отелей для отображения
     const filteredPlacement = user.hotelId
         ? placement.filter(item => item.hotel.id === user.hotelId)

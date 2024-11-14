@@ -89,7 +89,6 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
             });
 
             if (response_create_user) {
-                console.log(response_create_user.data.registerUser)
                 addDispatcher(response_create_user.data.registerUser);
                 resetForm();
                 onClose();
@@ -122,8 +121,6 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, [show, onClose]);
-
-    // console.log(formData)
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>

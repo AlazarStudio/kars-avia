@@ -10,7 +10,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery } from "@apollo/client";
 import { DELETE_DISPATCHER_USER, GET_DISPATCHERS, getCookie } from "../../../../graphQL_requests";
 
-function Company({ children, ...props }) {
+function Company({ children, user, ...props }) {
     const token = getCookie('token');
 
     const { loading, error, data } = useQuery(GET_DISPATCHERS);

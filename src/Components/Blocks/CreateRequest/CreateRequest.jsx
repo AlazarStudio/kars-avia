@@ -169,7 +169,6 @@ function CreateRequest({ show, onClose, user }) {
             senderId: formData.senderId,
             airlineId: formData.airlineId,
         };
-        console.log(input)
 
         try {
             await createRequest({ variables: { input } });

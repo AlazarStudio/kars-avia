@@ -151,7 +151,7 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
                 }
             } catch (err) {
                 alert('Произошла ошибка при сохранении данных', err);
-                console.log(err);
+                console.error(err);
             }
         }
     };

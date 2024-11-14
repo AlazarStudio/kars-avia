@@ -181,8 +181,6 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
 
         return matchesCategory && matchesSearch;
     });
-
-    // console.log(deleteNomer)
     return (
         <>
             <div className={classes.section_searchAndFilter}>

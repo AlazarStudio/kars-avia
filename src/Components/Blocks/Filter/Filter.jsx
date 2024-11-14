@@ -7,7 +7,7 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
     // Опции для выбора состояния
     let filterListShow
 
-    if (user.role === 'SUPERADMIN' || user.role === 'DISPATCHERADMIN' || user.role === 'AIRLINEADMIN') {
+    if (user && user?.role === 'SUPERADMIN' || user?.role === 'DISPATCHERADMIN' || user?.role === 'AIRLINEADMIN') {
         filterListShow = [
             { label: "Все заявки", value: "all" },
             { label: "Создан / В обработке", value: "created / opened" },
@@ -18,7 +18,7 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
         ]
     }
 
-    if (user.role === 'HOTELADMIN') {
+    if (user && user?.role === 'HOTELADMIN') {
         filterListShow = [
             { label: "Все заявки", value: "all" },
             { label: "Создан / В обработке", value: "created / opened" },

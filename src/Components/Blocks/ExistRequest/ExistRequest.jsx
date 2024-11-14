@@ -176,7 +176,6 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
     const cleanedMealData = mealData.map(({ __typename, ...rest }) => rest);
 
     const handleSaveMeals = async () => {
-        // console.log(cleanedMealData, chooseRequestID);
         try {
             await saveMeals({
                 variables: {
