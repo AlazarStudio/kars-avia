@@ -18,6 +18,7 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
         name: '',
         email: '',
         role: '',
+        position: '',
         login: '',
         password: '',
         department: '',
@@ -31,6 +32,7 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
             name: '',
             email: '',
             role: '',
+            position: '',
             login: '',
             password: '',
             department: '',
@@ -80,6 +82,7 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
                     input: {
                         name: formData.name,
                         role: formData.role,
+                        position: formData.position,
                         airlineId: id,
                         email: formData.email,
                         hotelId: null,
@@ -95,6 +98,7 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
                     id: request.data.registerUser.id, // Если возвращается ID созданного пользователя
                     name: request.data.registerUser.name,
                     role: request.data.registerUser.role,
+                    position: request.data.registerUser.position,
                     images: request.data.registerUser.images,
                     email: request.data.registerUser.email,
                     login: request.data.registerUser.login,
@@ -152,11 +156,17 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
                     <label>Почта</label>
                     <input type="text" name="email" value={formData.email} onChange={handleChange} placeholder="Введите email" />
 
-                    <label>Должность</label>
+                    <label>Роль</label>
                     <select name="role" value={formData.role} onChange={handleChange}>
+                        <option value="" disabled>Выберите роль</option>
+                        <option value="AIRLINEADMIN">AIRLINEADMIN</option>
+                    </select>
+
+                    <label>Должность</label>
+                    <select name="position" value={formData.position} onChange={handleChange}>
                         <option value="" disabled>Выберите должность</option>
-                        {/* <option value="Модератор">Модератор</option> */}
-                        <option value="AIRLINEADMIN">Администратор</option>
+                        <option value="Модератор">Модератор</option>
+                        <option value="Администратор">Администратор</option>
                     </select>
 
                     <label>Логин</label>

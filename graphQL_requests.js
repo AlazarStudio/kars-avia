@@ -1183,6 +1183,7 @@ export const CREATE_HOTEL_USER = gql`
       name
       email
       role
+      position
       login
       images
     }
@@ -1284,6 +1285,7 @@ export const GET_AIRLINE_COMPANY = gql`
           id
           name
           role
+          position
           images
           email
           login
@@ -1300,6 +1302,7 @@ export const CREATE_AIRLINE_USER = gql`
       images
       name
       role
+      position
       login
       password
       email
@@ -1350,6 +1353,7 @@ export const UPDATE_AIRLINE_USER = gql`
         name
         email
         role
+        position
         login
         images
     }
@@ -1439,6 +1443,7 @@ export const GET_DISPATCHERS = gql`
       name
       images
       role
+      position
       email
       login
     }
@@ -1450,6 +1455,7 @@ export const GET_DISPATCHER = gql`
     user(userId: $userId) {
       name
       role
+      position
       images
       login
       email
@@ -1468,6 +1474,7 @@ export const CREATE_DISPATCHER_USER = gql`
       name
       email
       role
+      position
       login
       images
     }
@@ -1481,6 +1488,7 @@ export const UPDATE_DISPATCHER_USER = gql`
       name
       email
       role
+      position
       login
       images
     }

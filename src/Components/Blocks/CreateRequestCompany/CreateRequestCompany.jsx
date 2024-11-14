@@ -13,6 +13,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
         name: '',
         email: '',
         role: '',
+        position: '',
         login: '',
         password: ''
     });
@@ -25,6 +26,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
             name: '',
             email: '',
             role: '',
+            position: '',
             login: '',
             password: ''
         });
@@ -80,6 +82,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
                         name: formData.name,
                         email: formData.email,
                         role: formData.role,
+                        position: formData.position,
                         login: formData.login,
                         password: formData.password,
                         dispatcher: true
@@ -136,11 +139,18 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
                     <label>Почта</label>
                     <input type="text" name="email" placeholder="example@mail.ru" value={formData.email} onChange={handleChange} />
 
-                    <label>Должность</label>
+                    <label>Роль</label>
                     <select name="role" value={formData.role} onChange={handleChange}>
-                        <option value="" disabled>Выберите должность</option>
+                        <option value="" disabled>Выберите роль</option>
                         {/* <option value="Модератор">Модератор</option> */}
-                        <option value="DISPATCHERADMIN">Администратор</option>
+                        <option value="DISPATCHERADMIN">DISPATCHERADMIN</option>
+                    </select>
+
+                    <label>Должность</label>
+                    <select name="position" value={formData.position} onChange={handleChange}>
+                        <option value="" disabled>Выберите должность</option>
+                        <option value="Модератор">Модератор</option>
+                        <option value="Администратор">Администратор</option>
                     </select>
 
                     <label>Логин</label>

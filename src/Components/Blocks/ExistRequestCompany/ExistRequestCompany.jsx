@@ -23,6 +23,7 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
         name: '',
         email: '',
         role: '',
+        position: '',
         login: '',
         password: ''
     });
@@ -38,6 +39,7 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
                 name: chooseObject.name || '',
                 email: chooseObject.email || '',
                 role: chooseObject.role || '',
+                position: chooseObject.position || '',
                 login: chooseObject.login || '',
                 password: chooseObject.password || ''
             });
@@ -81,6 +83,7 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
                     name: formData.name,
                     email: formData.email,
                     role: formData.role,
+                    position: formData.position,
                     login: formData.login,
                     password: formData.password,
                 },
@@ -149,10 +152,18 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
                         />
                     </div>
                     <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>Должность</div>
+                        <div className={classes.requestDataInfo_title}>Роль</div>
                         <select name="role" value={formData.role} onChange={handleChange}>
+                            <option value="" disabled>Выберите роль</option>
+                            <option value="DISPATCHERADMIN">DISPATCHERADMIN</option>
+                        </select>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>Должность</div>
+                        <select name="position" value={formData.position} onChange={handleChange}>
                             <option value="" disabled>Выберите должность</option>
-                            <option value="DISPATCHERADMIN">Администратор</option>
+                            <option value="Модератор">Модератор</option>
+                            <option value="Администратор">Администратор</option>
                         </select>
                     </div>
                     <div className={classes.requestDataInfo}>

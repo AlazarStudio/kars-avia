@@ -59,8 +59,8 @@ function HotelsList({ children, user, ...props }) {
             (
                 request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.quote.toLowerCase().includes(searchQuery.toLowerCase())
+                request.address.toLowerCase().includes(searchQuery.toLowerCase())
+                // request.quote.toLowerCase().includes(searchQuery.toLowerCase())
             )
         );
     });

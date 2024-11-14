@@ -23,13 +23,12 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
         },
     });
 
-
     const sidebarRef = useRef();
 
     const resetForm = () => {
         setFormData({
             nomerName: '',
-            category: uniqueCategories[0] || ''
+            category: ''
         });
     };
 
@@ -124,9 +123,11 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
 
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
-                        {uniqueCategories.map(category => (
-                            <option key={category} value={category}>{category == 'onePlace' ? 'Одноместный' : category == 'twoPlace' ? 'Двухместный' : ''}</option>
-                        ))}
+                        {/* {uniqueCategories.map(category => ( */}
+                        <option value={''} disabled>Выберите категорию</option>
+                        <option value={"onePlace"}>Одноместный</option>
+                        <option value={"twoPlace"}>Двухместный</option>
+                        {/* ))} */}
                     </select>
                 </div>
             </div>

@@ -22,6 +22,7 @@ function EditRequestAirlineCompany({ show, onClose, user, department, onSubmit, 
         name: user?.name || '',
         email: user?.email || '',
         role: user?.role || '',
+        position: user?.position || '',
         login: user?.login || '',
         password: '',
         department: department || ''
@@ -36,6 +37,7 @@ function EditRequestAirlineCompany({ show, onClose, user, department, onSubmit, 
                 name: user?.name || '',
                 email: user?.email || '',
                 role: user?.role || '',
+                position: user?.position || '',
                 login: user?.login || '',
                 password: '',
                 department: department || ''
@@ -79,6 +81,7 @@ function EditRequestAirlineCompany({ show, onClose, user, department, onSubmit, 
                         name: formData.name,
                         email: formData.email,
                         role: formData.role,
+                        position: formData.position,
                         login: formData.login,
                         password: formData.password,
                         airlineId: id,
@@ -129,10 +132,17 @@ function EditRequestAirlineCompany({ show, onClose, user, department, onSubmit, 
                     <label>Почта</label>
                     <input type="text" name="email" value={formData.email} onChange={handleChange} placeholder="Введите email" />
 
-                    <label>Должность</label>
+                    <label>Роль</label>
                     <select name="role" value={formData.role} onChange={handleChange}>
                         <option value="" disabled>Выберите должность</option>
-                        <option value="AIRLINEADMIN">Администратор</option>
+                        <option value="AIRLINEADMIN">AIRLINEADMIN</option>
+                    </select>
+
+                    <label>Должность</label>
+                    <select name="position" value={formData.position} onChange={handleChange}>
+                        <option value="" disabled>Выберите должность</option>
+                        <option value="Модератор">Модератор</option>
+                        <option value="Администратор">Администратор</option>
                     </select>
 
                     <label>Отдел</label>
