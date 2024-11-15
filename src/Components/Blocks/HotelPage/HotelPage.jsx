@@ -38,7 +38,7 @@ function HotelPage({ children, id, user, ...props }) {
             <div className={classes.section}>
                 <Header>
                     <div className={classes.titleHeader}>
-                        {(user.role == "SUPERADMIN" || user.role == "AIRLINEADMIN") && <Link to={`/hotels`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
+                        {(user.role == "SUPERADMIN" || user.role == "AIRLINEADMIN" || user.role == "DISPATCHERADMIN") && <Link to={`/hotels`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
                         {data && data.hotel.name}
                     </div>
                 </Header>
@@ -47,7 +47,7 @@ function HotelPage({ children, id, user, ...props }) {
                     selectedIndex={selectedTab}
                     onSelect={handleTabSelect}
                 >
-                    {user.role == "SUPERADMIN" &&
+                    {(user.role == "SUPERADMIN" || user.role == "DISPATCHERADMIN") &&
                         <>
                             <TabList className={classes.tabList}>
                                 <Tab className={classes.tab}>Шахматка</Tab>

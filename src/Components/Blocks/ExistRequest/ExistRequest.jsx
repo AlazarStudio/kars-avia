@@ -310,7 +310,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                                 name="breakfastCount"
                                                 placeholder="Количество"
                                                 value={dailyMeal.breakfast}
-                                                disabled={formData.status !== 'archived' && true}
+                                                // disabled={formData.status !== 'archived' && true}
                                                 onChange={(e) => handleMealChange(index, 'breakfast', e.target.value)}
                                             />
                                         </div>
@@ -322,7 +322,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                                 name="lunchCount"
                                                 placeholder="Количество"
                                                 value={dailyMeal.lunch}
-                                                disabled={formData.status !== 'archived' && true}
+                                                // disabled={formData.status !== 'archived' && true}
                                                 onChange={(e) => handleMealChange(index, 'lunch', e.target.value)}
                                             />
                                         </div>
@@ -334,7 +334,7 @@ function ExistRequest({ show, onClose, setShowChooseHotel, chooseRequestID, user
                                                 name="dinnerCount"
                                                 placeholder="Количество"
                                                 value={dailyMeal.dinner}
-                                                disabled={formData.status !== 'archived' && true}
+                                                // disabled={formData.status !== 'archived' && true}
                                                 onChange={(e) => handleMealChange(index, 'dinner', e.target.value)}
                                             />
                                         </div>
