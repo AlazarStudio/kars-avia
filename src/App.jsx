@@ -16,6 +16,7 @@ import Non_Found_Page from "./Components/Pages/Non_Found_Page";
 import Layout from "./Components/Standart/Layout/Layout";
 import Placement from "./Components/Pages/Placement/Placement";
 import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlacement";
+import NewPlacement from "./Components/Blocks/NewPlacement/NewPlacement";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
 import { server, path, getCookie, decodeJWT } from "../graphQL_requests";
@@ -90,7 +91,14 @@ function App() {
               path="/:id/placement/:idHotel"
               element={<Placement user={user} />}
             />
+
+            <Route
+              path="/newPlacement"
+              element={<NewPlacement />}
+            />
+
             <Route path="*" element={<Non_Found_Page />} />
+
           </Route>
         ) : (
           <>
