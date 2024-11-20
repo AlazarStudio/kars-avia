@@ -87,6 +87,13 @@ const NewPlacement = () => {
     return (
         <DndContext onDragEnd={handleDragEnd}>
             <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
+                <Timeline
+                    currentMonth={currentMonth}
+                    setCurrentMonth={setCurrentMonth}
+                    dayWidth={DAY_WIDTH}
+                    weekendColor={WEEKEND_COLOR}
+                    monthColor={MONTH_COLOR}
+                />
                 <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
                     <Box
                         sx={{
@@ -98,14 +105,7 @@ const NewPlacement = () => {
                             zIndex: 2,
                         }}
                     >
-                        <Box
-                            sx={{
-                                height: '81px',
-                                borderBottom: '1px solid #ddd',
-                                borderRight: '1px solid #ddd',
-                                backgroundColor: '#f5f5f5',
-                            }}
-                        />
+
                         {rooms.map((room, index) => (
                             <Box
                                 key={index}
@@ -133,13 +133,6 @@ const NewPlacement = () => {
                         ref={scrollContainerRef}
                     >
                         <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
-                            <Timeline
-                                currentMonth={currentMonth}
-                                setCurrentMonth={setCurrentMonth}
-                                dayWidth={DAY_WIDTH}
-                                weekendColor={WEEKEND_COLOR}
-                                monthColor={MONTH_COLOR}
-                            />
                             <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
 
                             {rooms.map((room) => (

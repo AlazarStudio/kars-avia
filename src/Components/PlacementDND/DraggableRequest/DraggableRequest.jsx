@@ -31,6 +31,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth }) => {
         color: "white",
         fontSize: "11px",
         zIndex: isDragging ? 10 : 2,
+        userSelect: 'none',
         cursor: "move",
         transform: transform
             ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
