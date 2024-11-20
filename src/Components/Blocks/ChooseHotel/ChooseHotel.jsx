@@ -21,7 +21,7 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
     }, [hotelsLoading, hotelsData]);
 
     // Получаем уникальные города и фильтруем отели по выбранному городу
-    const uniqueCities = useMemo(() => [...new Set(hotels.map(hotel => hotel.city.trim()))].sort(), [hotels]);
+    const uniqueCities = useMemo(() => [...new Set(hotels.map(hotel => hotel.city?.trim()))].sort(), [hotels]);
     const filteredHotels = useMemo(() => {
         return formData.city ? hotels.filter(hotel => hotel.city.trim() === formData.city.trim()) : [];
     }, [formData.city, hotels]);
