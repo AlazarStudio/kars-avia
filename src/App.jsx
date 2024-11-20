@@ -92,6 +92,11 @@ function App() {
               element={<Placement user={user} />}
             />
 
+            <Route
+              path="/newPlacement"
+              element={<NewPlacement />}
+            />
+
             <Route path="*" element={<Non_Found_Page />} />
 
           </Route>
