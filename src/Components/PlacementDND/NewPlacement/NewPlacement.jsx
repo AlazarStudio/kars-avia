@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { Box, Typography } from '@mui/material';
 import RoomRow from '../RoomRow/RoomRow';
 import Timeline from '../Timeline/Timeline';
@@ -11,9 +11,11 @@ const WEEKEND_COLOR = '#efefef';
 const MONTH_COLOR = '#ddd';
 
 const NewPlacement = () => {
-    const rooms = [
-        "101", "102", "103", "104", "105", "106", "107", "108", "109", "110"
-    ];
+    const rooms = useMemo(() => [
+        "101", "102", "103", "104", "105", "106", "107", "108", "109", "110",
+        "201", "202", "203", "204", "205", "206", "207", "208", "209", "210",
+        "301", "302", "303", "304", "305", "306", "307", "308", "309", "310",
+    ], []);
 
     const scrollContainerRef = useRef(null);
 
@@ -84,7 +86,7 @@ const NewPlacement = () => {
 
     return (
         <DndContext onDragEnd={handleDragEnd}>
-            <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '800px', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
+            <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
                 <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
                     <Box
                         sx={{
