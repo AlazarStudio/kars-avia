@@ -11,7 +11,10 @@ const WEEKEND_COLOR = '#efefef';
 const MONTH_COLOR = '#ddd';
 
 const NewPlacement = () => {
-    const rooms = ["101", "102", "103", "104", "105", "106", "107", "108"];
+    const rooms = [
+        "101", "102", "103", "104", "105", "106", "107", "108", "109", "110"
+    ];
+
     const scrollContainerRef = useRef(null);
 
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
@@ -45,11 +48,34 @@ const NewPlacement = () => {
         const newRoom = over.id;
 
         if (draggedRequest.room !== newRoom) {
-            setRequests((prevRequests) =>
-                prevRequests.map((request) =>
-                    request.id === draggedRequest.id ? { ...request, room: newRoom } : request
-                )
-            );
+            const draggedStartDate = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}`);
+            const draggedEndDate = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}`);
+
+            // Проверка пересечений в новой комнате
+            const hasConflict = requests.some((request) => {
+                if (request.room === newRoom && request.id !== draggedRequest.id) {
+                    const existingStartDate = new Date(`${request.checkInDate}T${request.checkInTime}`);
+                    const existingEndDate = new Date(`${request.checkOutDate}T${request.checkOutTime}`);
+                    return (
+                        (draggedStartDate >= existingStartDate && draggedStartDate < existingEndDate) || // Начало новой брони внутри существующей
+                        (draggedEndDate > existingStartDate && draggedEndDate <= existingEndDate) || // Конец новой брони внутри существующей
+                        (draggedStartDate <= existingStartDate && draggedEndDate >= existingEndDate) // Новая бронь полностью охватывает существующую
+                    );
+                }
+                return false;
+            });
+
+            if (!hasConflict) {
+                // Только если конфликтов нет, обновляем состояние
+                setRequests((prevRequests) =>
+                    prevRequests.map((request) =>
+                        request.id === draggedRequest.id ? { ...request, room: newRoom } : request
+                    )
+                );
+            } else {
+                // Логика, если есть конфликт
+                console.warn("Конфликт бронирования!");
+            }
         }
     };
 
@@ -58,11 +84,11 @@ const NewPlacement = () => {
 
     return (
         <DndContext onDragEnd={handleDragEnd}>
-            <Box sx={{ position: "relative", height: '100vh', overflow: 'hidden' }}>
-                <Box sx={{ display: 'flex', position: 'relative' }}>
+            <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '800px', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
+                <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
                     <Box
                         sx={{
-                            position: 'sticky',
+                            // position: 'sticky',
                             left: 0,
                             top: 0,
                             minWidth: '100px',
@@ -101,10 +127,10 @@ const NewPlacement = () => {
                     </Box>
 
                     <Box
-                        sx={{ overflowX: 'hidden', width: containerWidth }}
+                        sx={{ width: `${containerWidth}px` }}
                         ref={scrollContainerRef}
                     >
-                        <Box sx={{ width: `${containerWidth}px` }}>
+                        <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
                             <Timeline
                                 currentMonth={currentMonth}
                                 setCurrentMonth={setCurrentMonth}
