@@ -36,7 +36,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest }) 
         top: "2px",
         left: `${checkInOffset}px`,
         width: `${duration}px`,
-        height: "25px",
+        height: "35px",
         backgroundColor: "#439846",
         border: "1px solid #439846",
         borderRadius: "4px",

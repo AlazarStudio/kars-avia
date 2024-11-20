@@ -119,7 +119,7 @@ const NewPlacement = () => {
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    height: '30px',
+                                    height: '40px',
                                     borderBottom: '1px solid #ddd',
                                     borderRight: '1px solid #ddd',
                                     backgroundColor: '#f5f5f5',

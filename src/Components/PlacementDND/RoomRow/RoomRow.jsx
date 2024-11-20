@@ -21,7 +21,7 @@ const RoomRow = memo(({ dayWidth, weekendColor, monthColor, room, requests, curr
                 display: "flex",
                 position: "relative",
                 borderBottom: "1px solid #ddd",
-                height: "30px",
+                height: "40px",
             }}
         >
             {daysInMonth.map((day, index) => (
