@@ -40,6 +40,14 @@ const NewPlacement = () => {
         },
     ]);
 
+    const handleUpdateRequest = (updatedRequest) => {
+        setRequests((prevRequests) =>
+            prevRequests.map((req) =>
+                req.id === updatedRequest.id ? updatedRequest : req
+            )
+        );
+    };
+
     const handleDragEnd = (event) => {
         const { active, over } = event;
 
@@ -143,6 +151,7 @@ const NewPlacement = () => {
                                     room={room}
                                     requests={requests.filter((req) => req.room === room)}
                                     currentMonth={currentMonth}
+                                    onUpdateRequest={handleUpdateRequest}
                                 />
                             ))}
                         </Box>
