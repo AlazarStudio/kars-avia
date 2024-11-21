@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest }) => {
+const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
     });
@@ -33,11 +33,11 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest }) 
 
     const style = {
         position: "absolute",
-        top: "2px",
+        top: `${position * 40 + 2}px`, // Смещение для каждой заявки в двухместной комнате
         left: `${checkInOffset}px`,
         width: `${duration}px`,
         height: "35px",
-        backgroundColor: "#439846",
+        backgroundColor: isDragging ? "#3b7a3b" : "#439846",
         border: "1px solid #439846",
         borderRadius: "4px",
         display: "flex",
@@ -45,7 +45,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest }) 
         justifyContent: "space-between",
         color: "white",
         fontSize: "11px",
-        zIndex: 2,
+        zIndex: isDragging ? 10 : 2,
         userSelect: "none",
         cursor: isDragging ? "grabbing" : "grab",
         transform: transform
@@ -89,7 +89,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest }) 
             >
                 <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
             </Box>
-            {/* Центральная область для перемещения */}
+            {/* Центральная область для перетаскивания */}
             <Box
                 ref={setNodeRef}
                 {...listeners}

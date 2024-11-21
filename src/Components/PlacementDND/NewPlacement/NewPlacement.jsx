@@ -12,8 +12,16 @@ const MONTH_COLOR = '#ddd';
 
 const NewPlacement = () => {
     const rooms = useMemo(() => [
-        "101", "102", "103", "104", "105", "106", "107", "108", "109", "110",
-        "201", "202", "203", "204", "205", "206", "207", "208", "209", "210"
+        { id: "101", type: "single" },
+        { id: "102", type: "double" },
+        { id: "103", type: "single" },
+        { id: "104", type: "double" },
+        { id: "105", type: "single" },
+        { id: "106", type: "double" },
+        { id: "107", type: "single" },
+        { id: "108", type: "double" },
+        { id: "109", type: "single" },
+        { id: "110", type: "double" },
     ], []);
 
     const scrollContainerRef = useRef(null);
@@ -60,36 +68,45 @@ const NewPlacement = () => {
             const draggedStartDate = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}`);
             const draggedEndDate = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}`);
 
-            // Проверка пересечений в новой комнате
+            const targetRoom = rooms.find((room) => room.id === newRoom);
+            const isDouble = targetRoom.type === "double";
+
+            // Проверка пересечений
             const hasConflict = requests.some((request) => {
                 if (request.room === newRoom && request.id !== draggedRequest.id) {
                     const existingStartDate = new Date(`${request.checkInDate}T${request.checkInTime}`);
                     const existingEndDate = new Date(`${request.checkOutDate}T${request.checkOutTime}`);
-                    return (
-                        (draggedStartDate >= existingStartDate && draggedStartDate < existingEndDate) || // Начало новой брони внутри существующей
-                        (draggedEndDate > existingStartDate && draggedEndDate <= existingEndDate) || // Конец новой брони внутри существующей
-                        (draggedStartDate <= existingStartDate && draggedEndDate >= existingEndDate) // Новая бронь полностью охватывает существующую
-                    );
+
+                    if (!isDouble) {
+                        // Проверка для одноместной комнаты
+                        return (
+                            (draggedStartDate >= existingStartDate && draggedStartDate < existingEndDate) ||
+                            (draggedEndDate > existingStartDate && draggedEndDate <= existingEndDate) ||
+                            (draggedStartDate <= existingStartDate && draggedEndDate >= existingEndDate)
+                        );
+                    }
+
+                    // Проверка для двухместной комнаты (максимум 2 заявки)
+                    const overlappingRequests = requests.filter((req) => req.room === newRoom);
+                    return overlappingRequests.length >= 2;
                 }
                 return false;
             });
 
             if (!hasConflict) {
-                // Только если конфликтов нет, обновляем состояние
                 setRequests((prevRequests) =>
                     prevRequests.map((request) =>
                         request.id === draggedRequest.id ? { ...request, room: newRoom } : request
                     )
                 );
             } else {
-                // Логика, если есть конфликт
                 console.warn("Конфликт бронирования!");
             }
         }
     };
 
-    const daysInMonth = differenceInDays(endOfMonth(currentMonth), currentMonth) + 1; // Количество дней в месяце
-    const containerWidth = daysInMonth * DAY_WIDTH; // Общая ширина контейнера
+    const daysInMonth = differenceInDays(endOfMonth(currentMonth), currentMonth) + 1;
+    const containerWidth = daysInMonth * DAY_WIDTH;
 
     return (
         <DndContext onDragEnd={handleDragEnd}>
@@ -104,7 +121,6 @@ const NewPlacement = () => {
                 <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
                     <Box
                         sx={{
-                            // position: 'sticky',
                             left: 0,
                             top: 0,
                             minWidth: '100px',
@@ -112,14 +128,13 @@ const NewPlacement = () => {
                             zIndex: 2,
                         }}
                     >
-
                         {rooms.map((room, index) => (
                             <Box
                                 key={index}
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    height: '40px',
+                                    height: room.type == 'double' ? '80px' : '40px',
                                     borderBottom: '1px solid #ddd',
                                     borderRight: '1px solid #ddd',
                                     backgroundColor: '#f5f5f5',
@@ -129,7 +144,7 @@ const NewPlacement = () => {
                                     variant="body1"
                                     sx={{ textAlign: 'center', width: '100%', fontSize: '14px' }}
                                 >
-                                    {room}
+                                    {room.id}
                                 </Typography>
                             </Box>
                         ))}
@@ -144,12 +159,12 @@ const NewPlacement = () => {
 
                             {rooms.map((room) => (
                                 <RoomRow
-                                    key={room}
+                                    key={room.id}
                                     dayWidth={DAY_WIDTH}
                                     weekendColor={WEEKEND_COLOR}
                                     monthColor={MONTH_COLOR}
                                     room={room}
-                                    requests={requests.filter((req) => req.room === room)}
+                                    requests={requests.filter((req) => req.room === room.id)}
                                     currentMonth={currentMonth}
                                     onUpdateRequest={handleUpdateRequest}
                                 />

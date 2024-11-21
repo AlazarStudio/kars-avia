@@ -6,13 +6,15 @@ import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
 const RoomRow = memo(({ dayWidth, weekendColor, monthColor, room, requests, currentMonth, onUpdateRequest }) => {
     const { setNodeRef } = useDroppable({
-        id: room,
+        id: room.id,
     });
 
     const daysInMonth = eachDayOfInterval({
         start: startOfMonth(currentMonth),
         end: endOfMonth(currentMonth),
     });
+
+    const isDouble = room.type === "double";
 
     return (
         <Box
@@ -21,7 +23,7 @@ const RoomRow = memo(({ dayWidth, weekendColor, monthColor, room, requests, curr
                 display: "flex",
                 position: "relative",
                 borderBottom: "1px solid #ddd",
-                height: "40px",
+                height: isDouble ? "80px" : "40px",
             }}
         >
             {daysInMonth.map((day, index) => (
@@ -35,17 +37,19 @@ const RoomRow = memo(({ dayWidth, weekendColor, monthColor, room, requests, curr
                 />
             ))}
 
-            {requests.map((request) => (
+            {requests.map((request, index) => (
                 <DraggableRequest
                     key={request.id}
                     request={request}
                     dayWidth={dayWidth}
                     currentMonth={currentMonth}
                     onUpdateRequest={onUpdateRequest}
+                    position={isDouble ? index : 0}
                 />
             ))}
         </Box>
     );
 });
+
 
 export default RoomRow;
