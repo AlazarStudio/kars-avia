@@ -35,7 +35,7 @@ function App() {
 
   const wsLink = new GraphQLWsLink(
     createClient({
-      url: `ws://${path}/graphql`,
+      url: `wss://${path}/graphql`,
       connectionParams: () => {
         if (!token) {
           return {};

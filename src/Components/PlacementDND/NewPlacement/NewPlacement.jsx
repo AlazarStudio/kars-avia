@@ -36,16 +36,18 @@ const NewPlacement = () => {
             checkInTime: "14:00",
             checkOutDate: "2024-11-25",
             checkOutTime: "12:00",
+            status: "Забронирован",
             guest: "Иванов Иван Иванович"
         },
         {
             id: 2,
             room: "102",
             position: 0,
-            checkInDate: "2024-11-26",
-            checkInTime: "14:00",
+            checkInDate: "2024-11-25",
+            checkInTime: "16:00",
             checkOutDate: "2024-12-08",
             checkOutTime: "15:00",
+            status: "Продлен",
             guest: "Петров Петр Петрович"
         },
         {
@@ -54,10 +56,33 @@ const NewPlacement = () => {
             position: 1,
             checkInDate: "2024-11-22",
             checkInTime: "14:00",
-            checkOutDate: "2024-12-08",
+            checkOutDate: "2024-11-28",
             checkOutTime: "15:00",
+            status: "Сокращен",
             guest: "Петров Петр Петрович"
-        }
+        },
+        {
+            id: 4,
+            room: "101",
+            position: 0,
+            checkInDate: "2024-11-25",
+            checkInTime: "14:00",
+            checkOutDate: "2024-11-30",
+            checkOutTime: "12:00",
+            status: "Забронирован",
+            guest: "Иванов Иван Иванович"
+        },
+        {
+            id: 5,
+            room: "104",
+            position: 0,
+            checkInDate: "2024-11-16",
+            checkInTime: "14:00",
+            checkOutDate: "2024-11-25",
+            checkOutTime: "12:00",
+            status: "Забронирован",
+            guest: "Иванов Иван Иванович"
+        },
     ]);
 
     const handleUpdateRequest = (updatedRequest) => {
