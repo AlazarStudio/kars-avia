@@ -136,7 +136,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         maxWidth: 'none',
                         backgroundColor: '#ffffff',
                         color: '#000',
-                        boxShadow: '0 5px 10px rgba(0, 0, 0, 0.3)',
+                        boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.3)',
                         fontSize: '11px',
                         padding: '10px 15px',
                     },
