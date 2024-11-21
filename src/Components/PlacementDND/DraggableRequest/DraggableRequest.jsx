@@ -3,9 +3,13 @@ import { Box } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position }) => {
+const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
+        data: {
+            position: request.position,
+            roomId: request.room,
+        },
     });
 
     const startDate = startOfMonth(currentMonth);
@@ -14,6 +18,29 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
 
     const checkInOffset = (differenceInMilliseconds(checkIn, startDate) / (24 * 60 * 60 * 1000)) * dayWidth;
     const duration = (differenceInMilliseconds(checkOut, checkIn) / (24 * 60 * 60 * 1000)) * dayWidth;
+
+    const isOverlap = (updatedRequest) => {
+        const roomRequests = allRequests.filter((req) => req.room === updatedRequest.room);
+
+        // Проверяем пересечения с каждой заявкой в той же комнате
+        return roomRequests.some((otherRequest) => {
+            if (otherRequest.id === updatedRequest.id) return false; // Пропускаем текущую заявку
+
+            const otherCheckIn = new Date(`${otherRequest.checkInDate}T${otherRequest.checkInTime}`);
+            const otherCheckOut = new Date(`${otherRequest.checkOutDate}T${otherRequest.checkOutTime}`);
+
+            const isTimeOverlap =
+                !(
+                    otherCheckOut <= new Date(`${updatedRequest.checkInDate}T${updatedRequest.checkInTime}`) ||
+                    otherCheckIn >= new Date(`${updatedRequest.checkOutDate}T${updatedRequest.checkOutTime}`)
+                );
+
+            // Если это двухместная комната, проверяем позицию
+            const isPositionConflict = otherRequest.position === updatedRequest.position;
+
+            return isTimeOverlap && isPositionConflict;
+        });
+    };
 
     const handleResize = (type, deltaDays) => {
         const updatedRequest = { ...request };
@@ -28,12 +55,17 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             updatedRequest.checkOutDate = newCheckOut.toISOString().split("T")[0];
         }
 
+        if (isOverlap(updatedRequest)) {
+            console.warn("Накладывание запрещено!");
+            return;
+        }
+
         onUpdateRequest(updatedRequest);
     };
 
     const style = {
         position: "absolute",
-        top: `${position * 40 + 2}px`, // Смещение для каждой заявки в двухместной комнате
+        top: `${position * 40 + 2}px`,
         left: `${checkInOffset}px`,
         width: `${duration}px`,
         height: "35px",
@@ -52,7 +84,6 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
             : undefined,
     };
-
     return (
         <Box sx={style}>
             {/* Левая ручка для изменения начала */}

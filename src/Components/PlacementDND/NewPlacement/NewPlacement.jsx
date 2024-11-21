@@ -1,14 +1,14 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { Box, Typography } from '@mui/material';
-import RoomRow from '../RoomRow/RoomRow';
-import Timeline from '../Timeline/Timeline';
-import CurrentTimeIndicator from '../CurrentTimeIndicator/CurrentTimeIndicator';
-import { startOfMonth, addMonths, differenceInDays, endOfMonth } from 'date-fns';
-import { DndContext } from '@dnd-kit/core';
+import React, { useMemo, useRef, useState } from "react";
+import { Box, Typography } from "@mui/material";
+import RoomRow from "../RoomRow/RoomRow";
+import Timeline from "../Timeline/Timeline";
+import CurrentTimeIndicator from "../CurrentTimeIndicator/CurrentTimeIndicator";
+import { startOfMonth, addMonths, differenceInDays, endOfMonth } from "date-fns";
+import { DndContext } from "@dnd-kit/core";
 
 const DAY_WIDTH = 30;
-const WEEKEND_COLOR = '#efefef';
-const MONTH_COLOR = '#ddd';
+const WEEKEND_COLOR = "#efefef";
+const MONTH_COLOR = "#ddd";
 
 const NewPlacement = () => {
     const rooms = useMemo(() => [
@@ -31,6 +31,7 @@ const NewPlacement = () => {
         {
             id: 1,
             room: "101",
+            position: 0,
             checkInDate: "2024-11-19",
             checkInTime: "14:00",
             checkOutDate: "2024-11-25",
@@ -40,12 +41,23 @@ const NewPlacement = () => {
         {
             id: 2,
             room: "102",
-            checkInDate: "2024-11-22",
+            position: 0,
+            checkInDate: "2024-11-26",
             checkInTime: "14:00",
             checkOutDate: "2024-12-08",
             checkOutTime: "15:00",
             guest: "Петров Петр Петрович"
         },
+        {
+            id: 3,
+            room: "102",
+            position: 1,
+            checkInDate: "2024-11-22",
+            checkInTime: "14:00",
+            checkOutDate: "2024-12-08",
+            checkOutTime: "15:00",
+            guest: "Петров Петр Петрович"
+        }
     ]);
 
     const handleUpdateRequest = (updatedRequest) => {
@@ -62,47 +74,86 @@ const NewPlacement = () => {
         if (!over) return;
 
         const draggedRequest = requests.find((req) => req.id === parseInt(active.id));
-        const newRoom = over.id;
+        const targetRoomId = over.id;
 
-        if (draggedRequest.room !== newRoom) {
-            const draggedStartDate = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}`);
-            const draggedEndDate = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}`);
+        if (!draggedRequest) return;
 
-            const targetRoom = rooms.find((room) => room.id === newRoom);
+        if (draggedRequest.room === targetRoomId) {
+            // Перемещение внутри одной комнаты
+            const targetPosition = parseInt(over.data.current?.position || 0);
+
+            if (draggedRequest.position !== targetPosition) {
+                setRequests((prevRequests) =>
+                    prevRequests.map((request) => {
+                        if (request.room === targetRoomId) {
+                            if (request.id === draggedRequest.id) {
+                                return { ...request, position: targetPosition };
+                            } else if (request.position === targetPosition) {
+                                return { ...request, position: draggedRequest.position };
+                            }
+                        }
+                        return request;
+                    })
+                );
+            }
+        } else {
+            // Перемещение между комнатами
+            const targetRoom = rooms.find((room) => room.id === targetRoomId);
             const isDouble = targetRoom.type === "double";
 
-            // Проверка пересечений
-            const hasConflict = requests.some((request) => {
-                if (request.room === newRoom && request.id !== draggedRequest.id) {
-                    const existingStartDate = new Date(`${request.checkInDate}T${request.checkInTime}`);
-                    const existingEndDate = new Date(`${request.checkOutDate}T${request.checkOutTime}`);
+            const overlappingRequests = requests.filter(
+                (req) =>
+                    req.room === targetRoomId &&
+                    !(
+                        new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
+                        new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
+                    )
+            );
 
-                    if (!isDouble) {
-                        // Проверка для одноместной комнаты
-                        return (
-                            (draggedStartDate >= existingStartDate && draggedStartDate < existingEndDate) ||
-                            (draggedEndDate > existingStartDate && draggedEndDate <= existingEndDate) ||
-                            (draggedStartDate <= existingStartDate && draggedEndDate >= existingEndDate)
-                        );
-                    }
+            if (overlappingRequests.length > (isDouble ? 1 : 0)) {
+                console.warn("Место занято в целевой комнате!");
+                return;
+            }
 
-                    // Проверка для двухместной комнаты (максимум 2 заявки)
-                    const overlappingRequests = requests.filter((req) => req.room === newRoom);
-                    return overlappingRequests.length >= 2;
-                }
-                return false;
-            });
+            if (isDouble) {
+                const occupiedPositions = overlappingRequests.map((req) => req.position);
+                const newPosition = occupiedPositions.includes(0) ? 1 : 0;
 
-            if (!hasConflict) {
                 setRequests((prevRequests) =>
-                    prevRequests.map((request) =>
-                        request.id === draggedRequest.id ? { ...request, room: newRoom } : request
+                    prevRequests.map((req) =>
+                        req.id === draggedRequest.id
+                            ? { ...req, room: targetRoomId, position: newPosition }
+                            : req
                     )
                 );
             } else {
-                console.warn("Конфликт бронирования!");
+                setRequests((prevRequests) =>
+                    prevRequests.map((req) =>
+                        req.id === draggedRequest.id
+                            ? { ...req, room: targetRoomId, position: 0 }
+                            : req
+                    )
+                );
             }
         }
+    };
+
+    const handleDeleteRequest = (id) => {
+        setRequests((prevRequests) => {
+            const deletedRequest = prevRequests.find((req) => req.id === id);
+            if (deletedRequest) {
+                const updatedRequests = prevRequests.filter((req) => req.id !== id);
+
+                if (deletedRequest.room) {
+                    return updatedRequests.map((req) =>
+                        req.room === deletedRequest.room && req.position > deletedRequest.position
+                            ? { ...req, position: req.position - 1 }
+                            : req
+                    );
+                }
+            }
+            return prevRequests;
+        });
     };
 
     const daysInMonth = differenceInDays(endOfMonth(currentMonth), currentMonth) + 1;
@@ -134,7 +185,7 @@ const NewPlacement = () => {
                                 sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    height: room.type == 'double' ? '80px' : '40px',
+                                    height: room.type === 'double' ? '80px' : '40px',
                                     borderBottom: '1px solid #ddd',
                                     borderRight: '1px solid #ddd',
                                     backgroundColor: '#f5f5f5',
@@ -165,6 +216,7 @@ const NewPlacement = () => {
                                     monthColor={MONTH_COLOR}
                                     room={room}
                                     requests={requests.filter((req) => req.room === room.id)}
+                                    allRequests={requests} // Передаем все заявки
                                     currentMonth={currentMonth}
                                     onUpdateRequest={handleUpdateRequest}
                                 />
