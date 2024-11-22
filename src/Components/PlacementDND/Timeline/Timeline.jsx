@@ -69,7 +69,7 @@ const Timeline = memo(({ currentMonth, setCurrentMonth, dayWidth, weekendColor, 
                 </Box>
 
                 {/* Дни месяца */}
-                <Box sx={{ display: "flex", height: "40px" }}>
+                <Box sx={{ display: "flex", height: "30px" }}>
                     {daysInMonth.map((day, index) => {
                         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                         const isCurrentDay = isToday(day);
