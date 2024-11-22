@@ -49,7 +49,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         justifyContent: "space-between",
         color: "white",
         fontSize: "11px",
-        zIndex: isDragging ? 10 : 2,
+        zIndex: isDragging ? 50 : 2,
         userSelect: "none",
         cursor: isDragging ? "grabbing" : "grab",
         transform: transform
