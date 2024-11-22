@@ -135,23 +135,29 @@ const NewPlacement = () => {
                     )
             );
 
-            if (overlappingRequests.length > (isDouble ? 1 : 0)) {
-                console.warn("Место занято в целевой комнате!");
-                return;
-            }
+            const occupiedPositions = overlappingRequests.map((req) => req.position);
 
             if (isDouble) {
-                const occupiedPositions = overlappingRequests.map((req) => req.position);
-                const newPosition = occupiedPositions.includes(0) ? 1 : 0;
+                const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
+
+                if (availablePosition === undefined) {
+                    console.warn("Место занято в целевой комнате!");
+                    return;
+                }
 
                 setRequests((prevRequests) =>
                     prevRequests.map((req) =>
                         req.id === draggedRequest.id
-                            ? { ...req, room: targetRoomId, position: newPosition }
+                            ? { ...req, room: targetRoomId, position: availablePosition }
                             : req
                     )
                 );
             } else {
+                if (overlappingRequests.length > 0) {
+                    console.warn("Место занято в целевой комнате!");
+                    return;
+                }
+
                 setRequests((prevRequests) =>
                     prevRequests.map((req) =>
                         req.id === draggedRequest.id
