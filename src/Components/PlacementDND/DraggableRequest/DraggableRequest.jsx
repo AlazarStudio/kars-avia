@@ -103,6 +103,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
 
     const tooltipStyleBlock = { display: 'flex', justifyContent: 'space-between', fontSize: '12px' };
     const tooltipStyleText = { width: '130px', display: 'block' };
+
     return (
         !isDragging ?
             <Tooltip
