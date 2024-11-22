@@ -71,6 +71,19 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Проверяем обязательные поля
+        const requiredFields = ['name', 'email', 'role', 'position', 'login', 'password'];
+        const emptyFields = requiredFields.filter((field) => !formData[field]?.trim());
+
+        if (emptyFields.length > 0) {
+            alert('Пожалуйста, заполните все обязательные поля.');
+            return;
+        }
+
+        if (!formData.images) {
+            alert('Пожалуйста, выберите файл для загрузки.');
+            return;
+        }
         if (!formData.images) {
             alert('Пожалуйста, выберите файл для загрузки');
             return;

@@ -103,6 +103,16 @@ const NewPlacement = () => {
 
         if (!draggedRequest) return;
 
+        // Проверка на "текущую заявку" — нельзя перемещать
+        // const now = new Date();
+        // const checkIn = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}`);
+        // const checkOut = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}`);
+
+        // if (now >= checkIn && now < checkOut) {
+        //     console.warn("Эту заявку нельзя переместить, она уже активна!");
+        //     return;
+        // }
+
         if (draggedRequest.room === targetRoomId) {
             // Перемещение внутри одной комнаты
             const targetPosition = parseInt(over.data.current?.position || 0);

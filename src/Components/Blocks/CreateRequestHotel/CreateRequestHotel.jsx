@@ -66,6 +66,16 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Проверяем, заполнены ли все поля
+        if (!formData.name.trim() ||
+            !formData.city.trim() ||
+            !formData.address.trim() ||
+            !formData.quote.trim() ||
+            !formData.images) {
+            alert('Пожалуйста, заполните все поля!');
+            return;
+        }
+
         if (!formData.images) {
             alert('Пожалуйста, выберите файл для загрузки');
             return;

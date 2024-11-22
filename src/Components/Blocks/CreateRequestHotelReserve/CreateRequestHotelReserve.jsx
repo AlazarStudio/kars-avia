@@ -63,9 +63,24 @@ function CreateRequestHotelReserve({ show, onClose }) {
         },
     });
 
+    const isFormValid = () => {
+        return (
+            formData.name &&
+            formData.city
+            // Если понадобятся другие поля, можно добавить их сюда:
+            // formData.address &&
+            // formData.quote &&
+            // formData.images
+        );
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        if (!isFormValid()) {
+            alert("Пожалуйста, заполните все обязательные поля.");
+            return;
+        }
         // if (!formData.images) {
         //     alert('Пожалуйста, выберите файл для загрузки');
         //     return;

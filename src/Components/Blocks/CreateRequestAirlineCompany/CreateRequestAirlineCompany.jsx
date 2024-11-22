@@ -76,6 +76,21 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Проверяем обязательные поля
+        const requiredFields = ['name', 'email', 'role', 'position', 'login', 'password', 'department'];
+        const emptyFields = requiredFields.filter((field) => !formData[field]?.trim());
+
+        if (emptyFields.length > 0) {
+            alert('Пожалуйста, заполните все обязательные поля.');
+            return;
+        }
+
+        if (!formData.images) {
+            alert('Пожалуйста, загрузите файл аватара.');
+            return;
+        }
+
         try {
             let request = await createAirlineUser({
                 variables: {

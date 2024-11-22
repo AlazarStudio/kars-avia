@@ -158,8 +158,26 @@ function CreateRequest({ show, onClose, user }) {
     // Обработчик переключения вкладок
     const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
+    const isFormValid = () => {
+        return (
+            formData.personId &&
+            formData.airportId &&
+            formData.arrivalRoute &&
+            formData.arrivalDate &&
+            formData.arrivalTime &&
+            formData.departureRoute &&
+            formData.departureDate &&
+            formData.departureTime
+        );
+    };
+
     // Отправка формы на сервер
     const handleSubmit = async () => {
+        if (!isFormValid()) {
+            alert("Пожалуйста, заполните все обязательные поля.");
+            return;
+        }
+
         const input = {
             personId: formData.personId,
             airportId: formData.airportId,

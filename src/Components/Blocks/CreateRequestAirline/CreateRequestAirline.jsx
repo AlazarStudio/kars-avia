@@ -60,6 +60,17 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Проверка на заполненность полей
+        if (!formData.name.trim()) {
+            alert('Пожалуйста, введите название авиакомпании.');
+            return;
+        }
+
+        if (!formData.images) {
+            alert('Пожалуйста, выберите файл для загрузки.');
+            return;
+        }
+
         if (!formData.images) {
             alert('Пожалуйста, выберите файл для загрузки');
             return;

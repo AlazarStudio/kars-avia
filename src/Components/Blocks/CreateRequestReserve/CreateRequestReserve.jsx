@@ -159,7 +159,27 @@ function CreateRequestReserve({ show, onClose, user }) {
         },
     });
 
+    const isFormValid = () => {
+        return (
+            formData.airportId &&
+            formData.route &&
+            formData.arrivalDate &&
+            formData.arrivalTime &&
+            formData.departureDate &&
+            formData.departureTime &&
+            formData.passengerCount && // Убедиться, что количество пассажиров указано
+            formData.senderId &&
+            formData.airlineId &&
+            formData.reserveForPerson
+        );
+    };
+
     const handleSubmit = async () => {
+        if (!isFormValid()) {
+            alert("Пожалуйста, заполните все обязательные поля.");
+            return;
+        }
+
         const input = {
             airportId: formData.airportId,
             arrival: {

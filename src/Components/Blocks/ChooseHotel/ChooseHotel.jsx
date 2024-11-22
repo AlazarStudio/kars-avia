@@ -91,11 +91,13 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
                 </div>
             </div>
 
-            <div className={classes.requestButton}>
-                <Button link={`/${id}/placement/${formData.hotel}`} dataObject={chooseObject}>
-                    Разместить <img src="/user-check.png" alt="" />
-                </Button>
-            </div>
+            {formData.city && formData.hotel &&
+                <div className={classes.requestButton}>
+                    <Button link={`/${id}/placement/${formData.hotel}`} dataObject={chooseObject} disabled={true}>
+                        Разместить <img src="/user-check.png" alt="" />
+                    </Button>
+                </div>
+            }
         </Sidebar>
     );
 }

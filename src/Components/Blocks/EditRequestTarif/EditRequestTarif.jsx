@@ -62,6 +62,14 @@ function EditRequestTarif({ show, onClose, tarif, onSubmit, id, setAddTarif }) {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        console.log(formData)
+        // Проверяем, заполнены ли все поля
+        if (!formData.name.trim() || !formData.price.trim() || !formData.type) {
+            alert('Пожалуйста, заполните все поля!');
+            return;
+        }
+
         let dataSend
 
         if (formData.type == 1) {
@@ -128,7 +136,7 @@ function EditRequestTarif({ show, onClose, tarif, onSubmit, id, setAddTarif }) {
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Название категории</label>
-                    <input type="text" name="name" value={formData.name} onChange={handleChange} />
+                    <input type="text" name="name" value={formData.name} onChange={handleChange} disabled />
                     <label>Цена категории</label>
                     <input type="text" name="price" value={formData.price} onChange={handleChange} />
                 </div>

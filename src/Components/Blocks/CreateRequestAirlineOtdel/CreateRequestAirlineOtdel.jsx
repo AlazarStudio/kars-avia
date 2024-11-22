@@ -52,6 +52,13 @@ function CreateRequestAirlineOtdel({ show, onClose, id, addTarif, setAddTarif })
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Проверка на заполненность поля
+        if (!formData.category.trim()) {
+            alert('Пожалуйста, введите название отдела.');
+            return;
+        }
+
         try {
             let request = await createAirlineDepartment({
                 variables: {

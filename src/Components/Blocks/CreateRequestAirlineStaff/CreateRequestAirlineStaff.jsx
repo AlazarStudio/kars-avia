@@ -58,6 +58,16 @@ function CreateRequestAirlineStaff({ show, onClose, id, addTarif, setAddTarif })
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Проверка на заполненность полей
+        const requiredFields = ['name', 'number', 'position', 'gender'];
+        const emptyFields = requiredFields.filter((field) => !formData[field]?.trim());
+
+        if (emptyFields.length > 0) {
+            alert('Пожалуйста, заполните все обязательные поля.');
+            return;
+        }
+
         try {
             let request = await createAirlineStaff({
                 variables: {

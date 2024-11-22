@@ -51,6 +51,12 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+
+        if (!formData.nomerName.trim() || !formData.category) {
+            alert("Пожалуйста, заполните все поля формы перед отправкой.");
+            return;
+        }
+
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
 
         let response_update_room = await updateHotel({
@@ -92,6 +98,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
             onClose();
         }
     };
+
 
     useEffect(() => {
         if (show) {

@@ -67,7 +67,21 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         },
     });
 
+    const isFormValid = () => {
+        return (
+            formData.passengers &&
+            formData.city &&
+            formData.hotel &&
+            formData.requestId
+        );
+    };
+
     const handleSubmit = async () => {
+        if (!isFormValid()) {
+            alert("Пожалуйста, заполните все обязательные поля.");
+            return;
+        }
+
         try {
             let reserverAddHotel = await createRequest({
                 variables: {

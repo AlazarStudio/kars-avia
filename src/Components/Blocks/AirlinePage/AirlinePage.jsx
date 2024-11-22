@@ -35,12 +35,12 @@ function AirlinePage({ children, id, user, ...props }) {
             <div className={classes.section}>
                 <Header>
                     <div className={classes.titleHeader}>
-                        {user.role == "SUPERADMIN" && <Link to={`/airlines`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
+                        {(user.role === 'SUPERADMIN' || user.role === 'DISPATCHERADMIN') && <Link to={`/airlines`} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>}
                         {data && data.airline.name}
                     </div>
                 </Header>
 
-                {user.role == "SUPERADMIN" &&
+                {(user.role === 'SUPERADMIN' || user.role === 'DISPATCHERADMIN') &&
                     <>
                         <Tabs
                             className={classes.tabs}
