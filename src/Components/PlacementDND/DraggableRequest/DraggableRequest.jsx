@@ -104,50 +104,140 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     const tooltipStyleBlock = { display: 'flex', justifyContent: 'space-between', fontSize: '12px' };
     const tooltipStyleText = { width: '130px', display: 'block' };
     return (
-        <Tooltip
-            title={
-                <Box>
-                    <Typography variant="subtitle2" style={tooltipStyleBlock}>
-                        <strong style={tooltipStyleText}>Клиент:</strong> {request.guest}
-                    </Typography>
-                    <Typography variant="subtitle2" style={tooltipStyleBlock}>
-                        <strong style={tooltipStyleText}>Бронирование:</strong> {request.id}
-                    </Typography>
-                    <Typography variant="body2" style={tooltipStyleBlock}>
-                        <strong style={tooltipStyleText}>Комната:</strong> {request.room}
-                    </Typography>
-                    <Typography variant="body2" style={tooltipStyleBlock}>
-                        <strong style={tooltipStyleText}>Дата заезда:</strong> {new Date(request.checkInDate).toLocaleDateString()}
-                    </Typography>
-                    <Typography variant="body2" style={tooltipStyleBlock}>
-                        <strong style={tooltipStyleText}>Дата выезда:</strong> {new Date(request.checkOutDate).toLocaleDateString()}
-                    </Typography>
-                    <Typography variant="body2" style={tooltipStyleBlock}>
-                        <strong style={tooltipStyleText}>Статус:</strong> {request.status}
-                    </Typography>
+        !isDragging ?
+            <Tooltip
+                title={
+                    <Box>
+                        <Typography variant="subtitle2" style={tooltipStyleBlock}>
+                            <strong style={tooltipStyleText}>Клиент:</strong> {request.guest}
+                        </Typography>
+                        <Typography variant="subtitle2" style={tooltipStyleBlock}>
+                            <strong style={tooltipStyleText}>Бронирование:</strong> {request.id}
+                        </Typography>
+                        <Typography variant="body2" style={tooltipStyleBlock}>
+                            <strong style={tooltipStyleText}>Комната:</strong> {request.room}
+                        </Typography>
+                        <Typography variant="body2" style={tooltipStyleBlock}>
+                            <strong style={tooltipStyleText}>Дата заезда:</strong> {new Date(request.checkInDate).toLocaleDateString()}
+                        </Typography>
+                        <Typography variant="body2" style={tooltipStyleBlock}>
+                            <strong style={tooltipStyleText}>Дата выезда:</strong> {new Date(request.checkOutDate).toLocaleDateString()}
+                        </Typography>
+                        <Typography variant="body2" style={tooltipStyleBlock}>
+                            <strong style={tooltipStyleText}>Статус:</strong> {request.status}
+                        </Typography>
+                    </Box>
+                }
+                arrow
+                placement="right"
+                componentsProps={{
+                    tooltip: {
+                        sx: {
+                            width: 'fit-content',
+                            maxWidth: 'none',
+                            backgroundColor: '#ffffff',
+                            color: '#000',
+                            boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.3)',
+                            fontSize: '11px',
+                            padding: '10px 15px',
+                        },
+                    },
+                    arrow: {
+                        sx: {
+                            color: '#ffffff',
+                        },
+                    },
+                }}
+            >
+                <Box sx={style}>
+                    {/* Левая ручка для изменения начала */}
+                    <Box
+                        onMouseDown={(e) => {
+                            const startX = e.clientX;
+
+                            const handleMouseMove = (event) => {
+                                const deltaX = event.clientX - startX;
+                                const deltaDays = Math.round(deltaX / dayWidth);
+                                if (deltaDays !== 0) {
+                                    handleResize("start", deltaDays);
+                                }
+                            };
+
+                            const handleMouseUp = () => {
+                                document.removeEventListener("mousemove", handleMouseMove);
+                                document.removeEventListener("mouseup", handleMouseUp);
+                            };
+
+                            document.addEventListener("mousemove", handleMouseMove);
+                            document.addEventListener("mouseup", handleMouseUp);
+                        }}
+                        sx={{
+                            width: "10px",
+                            height: "100%",
+                            cursor: "ew-resize",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: '23px',
+                            userSelect: 'none'
+                        }}
+                    >
+                        <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                    </Box>
+                    {/* Центральная область для перетаскивания */}
+                    <Box
+                        ref={setNodeRef}
+                        {...listeners}
+                        {...attributes}
+                        sx={{
+                            flex: 1,
+                            height: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "grab",
+                            zIndex: 1,
+                        }}
+                    >
+                        {request.guest}
+                    </Box>
+                    {/* Правая ручка для изменения конца */}
+                    <Box
+                        onMouseDown={(e) => {
+                            const startX = e.clientX;
+
+                            const handleMouseMove = (event) => {
+                                const deltaX = event.clientX - startX;
+                                const deltaDays = Math.round(deltaX / dayWidth);
+                                if (deltaDays !== 0) {
+                                    handleResize("end", deltaDays);
+                                }
+                            };
+
+                            const handleMouseUp = () => {
+                                document.removeEventListener("mousemove", handleMouseMove);
+                                document.removeEventListener("mouseup", handleMouseUp);
+                            };
+
+                            document.addEventListener("mousemove", handleMouseMove);
+                            document.addEventListener("mouseup", handleMouseUp);
+                        }}
+                        sx={{
+                            width: "10px",
+                            height: "100%",
+                            cursor: "ew-resize",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: '23px',
+                            userSelect: 'none'
+                        }}
+                    >
+                        <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                    </Box>
                 </Box>
-            }
-            arrow
-            placement="right"
-            componentsProps={{
-                tooltip: {
-                    sx: {
-                        width: 'fit-content',
-                        maxWidth: 'none',
-                        backgroundColor: '#ffffff',
-                        color: '#000',
-                        boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.3)',
-                        fontSize: '11px',
-                        padding: '10px 15px',
-                    },
-                },
-                arrow: {
-                    sx: {
-                        color: '#ffffff',
-                    },
-                },
-            }}
-        >
+            </Tooltip >
+            :
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
                 <Box
@@ -235,7 +325,6 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
                 </Box>
             </Box>
-        </Tooltip >
     );
 };
 
