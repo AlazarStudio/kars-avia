@@ -260,23 +260,29 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         padding: "8px",
                         zIndex: 1000,
                         pointerEvents: "none",
-                        minWidth: '300px',
+                        minWidth: '350px',
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '5px'
                     }}
                 >
                     <Typography variant="body2">
-                        <div style={styleToolTip}>Гость: <b>{request.guest}</b></div>
+                        <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
                     </Typography>
                     <Typography variant="body2">
-                        <div style={styleToolTip}>Статус: <b>{request.status}</b></div>
+                        <div style={styleToolTip}> Комната: <b>{request.room}</b></div>
                     </Typography>
                     <Typography variant="body2">
-                        <div style={styleToolTip}>Заселение: <b>{convertToDate(request.checkInDate)} {request.checkInTime}</b></div>
+                        <div style={styleToolTip}> Гость: <b>{request.guest}</b></div>
                     </Typography>
                     <Typography variant="body2">
-                        <div style={styleToolTip}>Выселение: <b>{convertToDate(request.checkOutDate)} {request.checkOutTime}</b></div>
+                        <div style={styleToolTip}> Статус: <b>{request.status}</b></div>
+                    </Typography>
+                    <Typography variant="body2">
+                        <div style={styleToolTip}> Заселение: <b>{convertToDate(request.checkInDate)} {request.checkInTime}</b></div>
+                    </Typography>
+                    <Typography variant="body2">
+                        <div style={styleToolTip}> Выселение: <b>{convertToDate(request.checkOutDate)} {request.checkOutTime}</b></div>
                     </Typography>
                 </Box>
             )}
