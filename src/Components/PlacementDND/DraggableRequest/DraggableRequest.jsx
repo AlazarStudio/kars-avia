@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests }) => {
+const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -11,6 +11,8 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             roomId: request.room,
         },
     });
+
+    const [changes, setChanges] = useState([]);
 
     const startDate = startOfMonth(currentMonth);
     const checkIn = new Date(`${request.checkInDate}T${request.checkInTime}`);
@@ -57,6 +59,19 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             : undefined,
     };
 
+    const [originalRequest, setOriginalRequest] = useState(null); // Для хранения исходного состояния
+
+    const handleResizeStart = () => {
+        // Сохраняем исходные данные при начале изменения
+        setOriginalRequest({ ...request });
+    };
+
+    const handleResizeEnd = (updatedRequest) => {
+        // Передаём обновлённую заявку в модальное окно
+        onOpenModal(updatedRequest);
+    };
+
+
     const handleResize = (type, deltaDays) => {
         const updatedRequest = { ...request };
 
@@ -70,14 +85,15 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             updatedRequest.checkOutDate = newCheckOut.toISOString().split("T")[0];
         }
 
-        // Проверяем наложения (логика осталась прежней)
         if (isOverlap(updatedRequest)) {
             console.warn("Накладывание запрещено!");
-            return;
+            return request; // Возвращаем исходную заявку, если есть наложение
         }
 
         onUpdateRequest(updatedRequest);
+        return updatedRequest;
     };
+
 
     const isOverlap = (updatedRequest) => {
         const roomRequests = allRequests.filter((req) => req.room === updatedRequest.room);
@@ -101,62 +117,19 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         });
     };
 
-    const tooltipStyleBlock = { display: 'flex', justifyContent: 'space-between', fontSize: '12px' };
-    const tooltipStyleText = { width: '130px', display: 'block' };
     return (
-        // <Tooltip
-        //     title={
-        //         <Box>
-        //             <Typography variant="subtitle2" style={tooltipStyleBlock}>
-        //                 <strong style={tooltipStyleText}>Клиент:</strong> {request.guest}
-        //             </Typography>
-        //             <Typography variant="subtitle2" style={tooltipStyleBlock}>
-        //                 <strong style={tooltipStyleText}>Бронирование:</strong> {request.id}
-        //             </Typography>
-        //             <Typography variant="body2" style={tooltipStyleBlock}>
-        //                 <strong style={tooltipStyleText}>Комната:</strong> {request.room}
-        //             </Typography>
-        //             <Typography variant="body2" style={tooltipStyleBlock}>
-        //                 <strong style={tooltipStyleText}>Дата заезда:</strong> {new Date(request.checkInDate).toLocaleDateString()}
-        //             </Typography>
-        //             <Typography variant="body2" style={tooltipStyleBlock}>
-        //                 <strong style={tooltipStyleText}>Дата выезда:</strong> {new Date(request.checkOutDate).toLocaleDateString()}
-        //             </Typography>
-        //             <Typography variant="body2" style={tooltipStyleBlock}>
-        //                 <strong style={tooltipStyleText}>Статус:</strong> {request.status}
-        //             </Typography>
-        //         </Box>
-        //     }
-        //     arrow
-        //     placement="right"
-        //     componentsProps={{
-        //         tooltip: {
-        //             sx: {
-        //                 width: 'fit-content',
-        //                 maxWidth: 'none',
-        //                 backgroundColor: '#ffffff',
-        //                 color: '#000',
-        //                 boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.3)',
-        //                 fontSize: '11px',
-        //                 padding: '10px 15px',
-        //             },
-        //         },
-        //         arrow: {
-        //             sx: {
-        //                 color: '#ffffff',
-        //             },
-        //         },
-        //     }}
-        // >
         <Box sx={style}>
             {/* Левая ручка для изменения начала */}
             <Box
                 onMouseDown={(e) => {
                     const startX = e.clientX;
+                    let deltaDays = 0;
+
+                    handleResizeStart();
 
                     const handleMouseMove = (event) => {
                         const deltaX = event.clientX - startX;
-                        const deltaDays = Math.round(deltaX / dayWidth);
+                        deltaDays = Math.round(deltaX / dayWidth); // Обновляем deltaDays
                         if (deltaDays !== 0) {
                             handleResize("start", deltaDays);
                         }
@@ -165,6 +138,10 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     const handleMouseUp = () => {
                         document.removeEventListener("mousemove", handleMouseMove);
                         document.removeEventListener("mouseup", handleMouseUp);
+
+                        // Передаём deltaDays в handleResize для обновления заявки
+                        const updatedRequest = handleResize("start", deltaDays);
+                        handleResizeEnd(updatedRequest); // Передаём обновлённую заявку
                     };
 
                     document.addEventListener("mousemove", handleMouseMove);
@@ -204,10 +181,13 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             <Box
                 onMouseDown={(e) => {
                     const startX = e.clientX;
+                    let deltaDays = 0;
+
+                    handleResizeStart();
 
                     const handleMouseMove = (event) => {
                         const deltaX = event.clientX - startX;
-                        const deltaDays = Math.round(deltaX / dayWidth);
+                        deltaDays = Math.round(deltaX / dayWidth);
                         if (deltaDays !== 0) {
                             handleResize("end", deltaDays);
                         }
@@ -216,6 +196,10 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     const handleMouseUp = () => {
                         document.removeEventListener("mousemove", handleMouseMove);
                         document.removeEventListener("mouseup", handleMouseUp);
+
+                        // Получаем обновлённую заявку
+                        const updatedRequest = handleResize("end", deltaDays);
+                        handleResizeEnd(updatedRequest);
                     };
 
                     document.addEventListener("mousemove", handleMouseMove);
@@ -235,7 +219,6 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
             </Box>
         </Box>
-        // </Tooltip >
     );
 };
 

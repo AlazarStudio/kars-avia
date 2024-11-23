@@ -5,6 +5,7 @@ import Timeline from "../Timeline/Timeline";
 import CurrentTimeIndicator from "../CurrentTimeIndicator/CurrentTimeIndicator";
 import { startOfMonth, addMonths, differenceInDays, endOfMonth } from "date-fns";
 import { DndContext } from "@dnd-kit/core";
+import EditRequestModal from "../EditRequestModal/EditRequestModal";
 
 const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
@@ -25,6 +26,10 @@ const NewPlacement = () => {
     ], []);
 
     const scrollContainerRef = useRef(null);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editableRequest, setEditableRequest] = useState(null);
+    const [originalRequest, setOriginalRequest] = useState(null);
 
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
     const [requests, setRequests] = useState([
@@ -103,16 +108,6 @@ const NewPlacement = () => {
 
         if (!draggedRequest) return;
 
-        // Проверка на "текущую заявку" — нельзя перемещать
-        // const now = new Date();
-        // const checkIn = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}`);
-        // const checkOut = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}`);
-
-        // if (now >= checkIn && now < checkOut) {
-        //     console.warn("Эту заявку нельзя переместить, она уже активна!");
-        //     return;
-        // }
-
         if (draggedRequest.room === targetRoomId) {
             // Перемещение внутри одной комнаты
             const targetPosition = parseInt(over.data.current?.position || 0);
@@ -179,94 +174,119 @@ const NewPlacement = () => {
         }
     };
 
-    const handleDeleteRequest = (id) => {
-        setRequests((prevRequests) => {
-            const deletedRequest = prevRequests.find((req) => req.id === id);
-            if (deletedRequest) {
-                const updatedRequests = prevRequests.filter((req) => req.id !== id);
 
-                if (deletedRequest.room) {
-                    return updatedRequests.map((req) =>
-                        req.room === deletedRequest.room && req.position > deletedRequest.position
-                            ? { ...req, position: req.position - 1 }
-                            : req
-                    );
-                }
-            }
-            return prevRequests;
-        });
+    const handleOpenModal = (request) => {
+        setEditableRequest(request); // Сохраняем обновлённую заявку
+        setIsModalOpen(true);
     };
+
+
+    const handleSaveChanges = (updatedRequest) => {
+        // Сохраняем изменения заявки
+        setRequests((prevRequests) =>
+            prevRequests.map((req) =>
+                req.id === updatedRequest.id ? updatedRequest : req
+            )
+        );
+        handleCloseModal();
+    };
+
+    const handleCloseModal = () => {
+        if (originalRequest) {
+            setRequests((prevRequests) =>
+                prevRequests.map((req) =>
+                    req.id === originalRequest.id ? originalRequest : req
+                )
+            );
+        }
+        setOriginalRequest(null); // Сбрасываем оригинальную заявку
+        setEditableRequest(null);
+        setIsModalOpen(false);
+    };
+
 
     const daysInMonth = differenceInDays(endOfMonth(currentMonth), currentMonth) + 1;
     const containerWidth = daysInMonth * DAY_WIDTH;
 
     return (
-        <DndContext onDragEnd={handleDragEnd}>
-            <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
-                <Timeline
-                    currentMonth={currentMonth}
-                    setCurrentMonth={setCurrentMonth}
-                    dayWidth={DAY_WIDTH}
-                    weekendColor={WEEKEND_COLOR}
-                    monthColor={MONTH_COLOR}
-                />
-                <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
-                    <Box
-                        sx={{
-                            left: 0,
-                            top: 0,
-                            minWidth: '100px',
-                            backgroundColor: '#f5f5f5',
-                            zIndex: 2,
-                        }}
-                    >
-                        {rooms.map((room, index) => (
-                            <Box
-                                key={index}
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    height: room.type === 'double' ? '80px' : '40px',
-                                    borderBottom: '1px solid #ddd',
-                                    borderRight: '1px solid #ddd',
-                                    backgroundColor: '#f5f5f5',
-                                }}
-                            >
-                                <Typography
-                                    variant="body1"
-                                    sx={{ textAlign: 'center', width: '100%', fontSize: '14px' }}
+        <>
+            <DndContext onDragEnd={handleDragEnd}>
+                <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
+                    <Timeline
+                        currentMonth={currentMonth}
+                        setCurrentMonth={setCurrentMonth}
+                        dayWidth={DAY_WIDTH}
+                        weekendColor={WEEKEND_COLOR}
+                        monthColor={MONTH_COLOR}
+                    />
+                    <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
+                        <Box
+                            sx={{
+                                left: 0,
+                                top: 0,
+                                minWidth: '100px',
+                                backgroundColor: '#f5f5f5',
+                                zIndex: 2,
+                            }}
+                        >
+                            {rooms.map((room, index) => (
+                                <Box
+                                    key={index}
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        height: room.type === 'double' ? '80px' : '40px',
+                                        borderBottom: '1px solid #ddd',
+                                        borderRight: '1px solid #ddd',
+                                        backgroundColor: '#f5f5f5',
+                                    }}
                                 >
-                                    {room.id}
-                                </Typography>
-                            </Box>
-                        ))}
-                    </Box>
-
-                    <Box
-                        sx={{ width: `${containerWidth}px` }}
-                        ref={scrollContainerRef}
-                    >
-                        <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
-                            <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
-
-                            {rooms.map((room) => (
-                                <RoomRow
-                                    key={room.id}
-                                    dayWidth={DAY_WIDTH}
-                                    weekendColor={WEEKEND_COLOR}
-                                    monthColor={MONTH_COLOR}
-                                    room={room}
-                                    requests={requests.filter((req) => req.room === room.id)}
-                                    allRequests={requests} // Передаем все заявки
-                                    currentMonth={currentMonth}
-                                    onUpdateRequest={handleUpdateRequest}
-                                />
+                                    <Typography
+                                        variant="body1"
+                                        sx={{ textAlign: 'center', width: '100%', fontSize: '14px' }}
+                                    >
+                                        {room.id}
+                                    </Typography>
+                                </Box>
                             ))}
+                        </Box>
+
+                        <Box
+                            sx={{ width: `${containerWidth}px` }}
+                            ref={scrollContainerRef}
+                        >
+                            <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
+                                <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
+
+                                {rooms.map((room) => (
+                                    <RoomRow
+                                        key={room.id}
+                                        dayWidth={DAY_WIDTH}
+                                        weekendColor={WEEKEND_COLOR}
+                                        monthColor={MONTH_COLOR}
+                                        room={room}
+                                        requests={requests.filter((req) => req.room === room.id)}
+                                        allRequests={requests} // Передаем все заявки
+                                        currentMonth={currentMonth}
+                                        onUpdateRequest={handleUpdateRequest}
+                                        onOpenModal={handleOpenModal} // Прокидываем в RoomRow
+                                    />
+                                ))}
+                            </Box>
                         </Box>
                     </Box>
                 </Box>
-            </Box>
-        </DndContext>
+            </DndContext>
+
+            {/* Модальное окно для редактирования заявки */}
+            <EditRequestModal
+                isOpen={isModalOpen}
+                onClose={handleCloseModal}
+                onSave={handleSaveChanges}
+                request={editableRequest} // Передаём заявку
+            />
+
+        </>
     );
 };
 
