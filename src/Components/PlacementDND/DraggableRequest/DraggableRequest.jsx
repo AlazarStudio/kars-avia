@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
+import { convertToDate } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
 const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal }) => {
@@ -42,7 +43,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         height: "35px",
         backgroundColor: backgroundColor,
         border: `1px solid ${borderColor}`,
-        borderRadius: "4px",
+        borderRadius: "3px",
         display: "flex",
         alignItems: "center",
         textAlign: 'center',
@@ -130,6 +131,12 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
 
     const handleDragStart = () => setTooltipVisible(false); // Скрыть Tooltip при начале перетаскивания
     const handleDragEnd = () => setTooltipVisible(false); // Можно восстановить видимость после завершения
+
+    let styleToolTip = {
+        display: 'flex',
+        justifyContent: 'space-between',
+        fontSize: '14px',
+    }
 
     return (
         <>
@@ -253,19 +260,23 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         padding: "8px",
                         zIndex: 1000,
                         pointerEvents: "none",
+                        minWidth: '300px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '5px'
                     }}
                 >
                     <Typography variant="body2">
-                        Гость: {request.guest}
+                        <div style={styleToolTip}>Гость: <b>{request.guest}</b></div>
                     </Typography>
                     <Typography variant="body2">
-                        Статус: {request.status}
+                        <div style={styleToolTip}>Статус: <b>{request.status}</b></div>
                     </Typography>
                     <Typography variant="body2">
-                        Заселение: {request.checkInDate} {request.checkInTime}
+                        <div style={styleToolTip}>Заселение: <b>{convertToDate(request.checkInDate)} {request.checkInTime}</b></div>
                     </Typography>
                     <Typography variant="body2">
-                        Выселение: {request.checkOutDate} {request.checkOutTime}
+                        <div style={styleToolTip}>Выселение: <b>{convertToDate(request.checkOutDate)} {request.checkOutTime}</b></div>
                     </Typography>
                 </Box>
             )}
