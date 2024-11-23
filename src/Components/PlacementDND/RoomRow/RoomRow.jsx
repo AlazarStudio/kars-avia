@@ -4,7 +4,7 @@ import { eachDayOfInterval, startOfMonth, endOfMonth, isWeekend, isToday } from 
 import { useDroppable } from "@dnd-kit/core";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
-const RoomRow = memo(({ dayWidth, weekendColor, monthColor, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests }) => {
+const RoomRow = memo(({ dayWidth, weekendColor, monthColor, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal }) => {
     const { setNodeRef } = useDroppable({
         id: room.id,
     });
@@ -49,6 +49,7 @@ const RoomRow = memo(({ dayWidth, weekendColor, monthColor, room, requests, curr
                         onOpenModal={onOpenModal} // Прокидываем в DraggableRequest
                         allRequests={allRequests} // Передаем все заявки
                         position={request.position}
+                        isDraggingGlobal={isDraggingGlobal}
                     />
                 ))}
 

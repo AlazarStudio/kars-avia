@@ -90,6 +90,9 @@ const NewPlacement = () => {
         },
     ]);
 
+    // Глобальное состояние перетаскивания
+    const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
+
     const handleUpdateRequest = (updatedRequest) => {
         setRequests((prevRequests) =>
             prevRequests.map((req) =>
@@ -99,6 +102,8 @@ const NewPlacement = () => {
     };
 
     const handleDragEnd = (event) => {
+        setIsDraggingGlobal(false);
+
         const { active, over } = event;
 
         if (!over) return;
@@ -211,7 +216,7 @@ const NewPlacement = () => {
 
     return (
         <>
-            <DndContext onDragEnd={handleDragEnd}>
+            <DndContext onDragStart={() => setIsDraggingGlobal(true)} onDragEnd={handleDragEnd}>
                 <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
                     <Timeline
                         currentMonth={currentMonth}
@@ -270,6 +275,7 @@ const NewPlacement = () => {
                                         allRequests={requests} // Передаем все заявки
                                         currentMonth={currentMonth}
                                         onUpdateRequest={handleUpdateRequest}
+                                        isDraggingGlobal={isDraggingGlobal}
                                         onOpenModal={handleOpenModal} // Прокидываем в RoomRow
                                     />
                                 ))}

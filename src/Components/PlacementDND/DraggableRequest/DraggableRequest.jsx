@@ -3,7 +3,7 @@ import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal }) => {
+const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -11,8 +11,6 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             roomId: request.room,
         },
     });
-
-    const [changes, setChanges] = useState([]);
 
     const startDate = startOfMonth(currentMonth);
     const checkIn = new Date(`${request.checkInDate}T${request.checkInTime}`);
@@ -60,8 +58,6 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     };
 
     const originalRequestRef = useRef(null);
-
-    // const [originalRequest, setOriginalRequest] = useState(123); // Для хранения исходного состояния
 
     const handleResizeStart = () => {
         // Сохраняем исходные данные синхронно
@@ -119,108 +115,161 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         });
     };
 
+    const [tooltipVisible, setTooltipVisible] = useState(false);
+    const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+
+    const handleMouseEnter = () => {
+        if (!isDraggingGlobal) setTooltipVisible(true);
+    };
+    const handleMouseLeave = () => setTooltipVisible(false);
+    const handleMouseMove = (e) => {
+        if (!isDraggingGlobal) {
+            setTooltipPosition({ x: e.clientX + 10, y: e.clientY + 10 });
+        }
+    };
+
+    const handleDragStart = () => setTooltipVisible(false); // Скрыть Tooltip при начале перетаскивания
+    const handleDragEnd = () => setTooltipVisible(false); // Можно восстановить видимость после завершения
+
     return (
-        <Box sx={style}>
-            {/* Левая ручка для изменения начала */}
-            <Box
-                onMouseDown={(e) => {
-                    const startX = e.clientX;
-                    let deltaDays = 0;
+        <>
+            <Box sx={style}>
+                {/* Левая ручка для изменения начала */}
+                <Box
+                    onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        let deltaDays = 0;
 
-                    handleResizeStart();
+                        handleResizeStart();
 
-                    const handleMouseMove = (event) => {
-                        const deltaX = event.clientX - startX;
-                        deltaDays = Math.round(deltaX / dayWidth); // Обновляем deltaDays
-                        if (deltaDays !== 0) {
-                            handleResize("start", deltaDays);
-                        }
-                    };
+                        const handleMouseMove = (event) => {
+                            const deltaX = event.clientX - startX;
+                            deltaDays = Math.round(deltaX / dayWidth); // Обновляем deltaDays
+                            if (deltaDays !== 0) {
+                                handleResize("start", deltaDays);
+                            }
+                        };
 
-                    const handleMouseUp = () => {
-                        document.removeEventListener("mousemove", handleMouseMove);
-                        document.removeEventListener("mouseup", handleMouseUp);
+                        const handleMouseUp = () => {
+                            document.removeEventListener("mousemove", handleMouseMove);
+                            document.removeEventListener("mouseup", handleMouseUp);
 
-                        // Передаём deltaDays в handleResize для обновления заявки
-                        const updatedRequest = handleResize("start", deltaDays);
-                        handleResizeEnd(updatedRequest); // Передаём обновлённую заявку
-                    };
+                            // Передаём deltaDays в handleResize для обновления заявки
+                            const updatedRequest = handleResize("start", deltaDays);
+                            handleResizeEnd(updatedRequest); // Передаём обновлённую заявку
+                        };
 
-                    document.addEventListener("mousemove", handleMouseMove);
-                    document.addEventListener("mouseup", handleMouseUp);
-                }}
-                sx={{
-                    width: "10px",
-                    height: "100%",
-                    cursor: "ew-resize",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: '23px',
-                    userSelect: 'none'
-                }}
-            >
-                <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                        document.addEventListener("mousemove", handleMouseMove);
+                        document.addEventListener("mouseup", handleMouseUp);
+                    }}
+                    sx={{
+                        width: "10px",
+                        height: "100%",
+                        cursor: "ew-resize",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: '23px',
+                        userSelect: 'none'
+                    }}
+                >
+                    <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                </Box>
+                {/* Центральная область для перетаскивания */}
+                <Box
+                    ref={setNodeRef}
+                    {...listeners}
+                    {...attributes}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
+                    onMouseMove={handleMouseMove}
+                    onMouseDown={handleDragStart}
+                    onMouseUp={handleDragEnd}
+                    sx={{
+                        flex: 1,
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "grab",
+                        zIndex: 1,
+                    }}
+                >
+                    {request.guest}
+                </Box>
+                {/* Правая ручка для изменения конца */}
+                <Box
+                    onMouseDown={(e) => {
+                        const startX = e.clientX;
+                        let deltaDays = 0;
+
+                        handleResizeStart();
+
+                        const handleMouseMove = (event) => {
+                            const deltaX = event.clientX - startX;
+                            deltaDays = Math.round(deltaX / dayWidth);
+                            if (deltaDays !== 0) {
+                                handleResize("end", deltaDays);
+                            }
+                        };
+
+                        const handleMouseUp = () => {
+                            document.removeEventListener("mousemove", handleMouseMove);
+                            document.removeEventListener("mouseup", handleMouseUp);
+
+                            // Получаем обновлённую заявку
+                            const updatedRequest = handleResize("end", deltaDays);
+                            handleResizeEnd(updatedRequest);
+                        };
+
+                        document.addEventListener("mousemove", handleMouseMove);
+                        document.addEventListener("mouseup", handleMouseUp);
+                    }}
+                    sx={{
+                        width: "10px",
+                        height: "100%",
+                        cursor: "ew-resize",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        height: '23px',
+                        userSelect: 'none'
+                    }}
+                >
+                    <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                </Box>
             </Box>
-            {/* Центральная область для перетаскивания */}
-            <Box
-                ref={setNodeRef}
-                {...listeners}
-                {...attributes}
-                sx={{
-                    flex: 1,
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "grab",
-                    zIndex: 1,
-                }}
-            >
-                {request.guest}
-            </Box>
-            {/* Правая ручка для изменения конца */}
-            <Box
-                onMouseDown={(e) => {
-                    const startX = e.clientX;
-                    let deltaDays = 0;
 
-                    handleResizeStart();
-
-                    const handleMouseMove = (event) => {
-                        const deltaX = event.clientX - startX;
-                        deltaDays = Math.round(deltaX / dayWidth);
-                        if (deltaDays !== 0) {
-                            handleResize("end", deltaDays);
-                        }
-                    };
-
-                    const handleMouseUp = () => {
-                        document.removeEventListener("mousemove", handleMouseMove);
-                        document.removeEventListener("mouseup", handleMouseUp);
-
-                        // Получаем обновлённую заявку
-                        const updatedRequest = handleResize("end", deltaDays);
-                        handleResizeEnd(updatedRequest);
-                    };
-
-                    document.addEventListener("mousemove", handleMouseMove);
-                    document.addEventListener("mouseup", handleMouseUp);
-                }}
-                sx={{
-                    width: "10px",
-                    height: "100%",
-                    cursor: "ew-resize",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: '23px',
-                    userSelect: 'none'
-                }}
-            >
-                <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
-            </Box>
-        </Box>
+            {tooltipVisible && (
+                <Box
+                    sx={{
+                        position: "fixed",
+                        top: `${tooltipPosition.y}px`,
+                        left: `${tooltipPosition.x}px`,
+                        backgroundColor: "white",
+                        border: "1px solid #ccc",
+                        borderRadius: "4px",
+                        boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
+                        padding: "8px",
+                        zIndex: 1000,
+                        pointerEvents: "none",
+                    }}
+                >
+                    <Typography variant="body2">
+                        Гость: {request.guest}
+                    </Typography>
+                    <Typography variant="body2">
+                        Статус: {request.status}
+                    </Typography>
+                    <Typography variant="body2">
+                        Заселение: {request.checkInDate} {request.checkInTime}
+                    </Typography>
+                    <Typography variant="body2">
+                        Выселение: {request.checkOutDate} {request.checkOutTime}
+                    </Typography>
+                </Box>
+            )}
+        </>
     );
 };
 
