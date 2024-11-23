@@ -175,20 +175,21 @@ const NewPlacement = () => {
     };
 
 
-    const handleOpenModal = (request) => {
-        setEditableRequest(request); // Сохраняем обновлённую заявку
+    const handleOpenModal = (request, originalRequest) => {
+        setOriginalRequest(originalRequest)
+        setEditableRequest(request);
         setIsModalOpen(true);
     };
 
 
     const handleSaveChanges = (updatedRequest) => {
-        // Сохраняем изменения заявки
         setRequests((prevRequests) =>
             prevRequests.map((req) =>
                 req.id === updatedRequest.id ? updatedRequest : req
             )
         );
-        handleCloseModal();
+        setOriginalRequest(null);
+        setIsModalOpen(false);
     };
 
     const handleCloseModal = () => {
@@ -199,7 +200,7 @@ const NewPlacement = () => {
                 )
             );
         }
-        setOriginalRequest(null); // Сбрасываем оригинальную заявку
+        setOriginalRequest(null);
         setEditableRequest(null);
         setIsModalOpen(false);
     };

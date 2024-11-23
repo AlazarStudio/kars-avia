@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
@@ -59,17 +59,19 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             : undefined,
     };
 
-    const [originalRequest, setOriginalRequest] = useState(null); // Для хранения исходного состояния
+    const originalRequestRef = useRef(null);
+
+    // const [originalRequest, setOriginalRequest] = useState(123); // Для хранения исходного состояния
 
     const handleResizeStart = () => {
-        // Сохраняем исходные данные при начале изменения
-        setOriginalRequest({ ...request });
+        // Сохраняем исходные данные синхронно
+        originalRequestRef.current = { ...request };
     };
 
     const handleResizeEnd = (updatedRequest) => {
         // Передаём обновлённую заявку в модальное окно
-        onOpenModal(updatedRequest);
-    };
+        onOpenModal(updatedRequest, originalRequestRef.current);
+    }
 
 
     const handleResize = (type, deltaDays) => {
