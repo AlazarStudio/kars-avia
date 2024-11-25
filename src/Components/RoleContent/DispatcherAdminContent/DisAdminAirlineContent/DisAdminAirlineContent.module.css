@@ -1,0 +1,32 @@
+.tabList {
+  display: flex;
+  padding: 0;
+  list-style-type: none;
+  margin-bottom: 40px;
+}
+
+.tab {
+  font-size: 16px;
+  padding: 10px 20px;
+  margin-right: 5px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background-color: #E4E4EF;
+  color: #545873;
+  opacity: 0.5;
+  transition: all 0.3s ease-in-out;
+  outline: none;
+}
+
+.tab:hover {
+  background-color: #E4E4EF;
+  color: #545873;
+  opacity: 1;
+}
+
+.tabPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
