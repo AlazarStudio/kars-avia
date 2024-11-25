@@ -173,7 +173,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                                     </div>
                                 }
                             </Link>
-                            <Link to={'/hotelChess'} className={`${classes.menu_items__elem} ${(id == 'hotelChess' || id == undefined) && classes.menu_items__activeElem}`}>
+                            <Link to={'/hotelChess'} className={`${classes.menu_items__elem} ${(id == 'hotelChess' || id == undefined || !id) && classes.menu_items__activeElem}`}>
                                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <g clip-path="url(#clip0_777_5618)">
                                         <path d="M3.78446 20.378C2.61342 20.2826 1.71738 19.3866 1.62204 18.2155C1.50196 16.736 1.375 14.3752 1.375 11C1.375 7.62483 1.50196 5.26396 1.62204 3.78446C1.71738 2.61342 2.61342 1.71738 3.78446 1.62204C5.26396 1.50196 7.62483 1.375 11 1.375C14.3752 1.375 16.736 1.50196 18.2155 1.62204C19.3866 1.71738 20.2826 2.61342 20.378 3.78446C20.498 5.26396 20.625 7.62483 20.625 11C20.625 14.3752 20.498 16.736 20.378 18.2155C20.2826 19.3866 19.3866 20.2826 18.2155 20.378C16.736 20.498 14.3752 20.625 11 20.625C7.62483 20.625 5.26396 20.498 3.78446 20.378Z" stroke="var(--menu-gray)" stroke-linecap="round" stroke-linejoin="round" />
@@ -226,7 +226,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
 
                     {user.role == 'AIRLINEADMIN' &&
                         <>
-                            <Link to={'/relay'} className={`${classes.menu_items__elem} ${(id == 'relay' || id == undefined) && classes.menu_items__activeElem}`}>
+                            <Link to={'/relay'} className={`${classes.menu_items__elem} ${(id == 'relay' || id == undefined || !id) && classes.menu_items__activeElem}`}>
                                 <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M12.5875 5.24748C16.2319 1.60309 18.835 0.0412008 20.3969 1.60309C21.9589 3.16496 20.3969 5.76811 16.7526 9.41251C18.3144 12.0156 20.3969 18.2632 18.835 19.825C16.7526 21.9077 11.5463 13.5775 11.5463 13.5775L9.98438 15.1394C10.1579 16.7013 10.0885 20.0333 8.42249 20.8663C6.75648 21.6993 5.64581 18.4367 5.29873 16.7013C3.5633 16.3542 0.300701 15.2435 1.1337 13.5775C1.96672 11.9115 5.29873 11.8421 6.86062 12.0156L8.42249 10.4538C8.42249 10.4538 0.0924504 5.24748 2.17496 3.16496C3.73685 1.60309 9.98438 3.68559 12.5875 5.24748Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
@@ -292,7 +292,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
                     }
 
                     {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
-                        <Link to={'/relay'} className={`${classes.menu_items__elem} ${(id == 'relay' || id == undefined) && classes.menu_items__activeElem}`}>
+                        <Link to={'/relay'} className={`${classes.menu_items__elem} ${(id == 'relay' || id == undefined || !id) && classes.menu_items__activeElem}`}>
                             <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M12.5875 5.24748C16.2319 1.60309 18.835 0.0412008 20.3969 1.60309C21.9589 3.16496 20.3969 5.76811 16.7526 9.41251C18.3144 12.0156 20.3969 18.2632 18.835 19.825C16.7526 21.9077 11.5463 13.5775 11.5463 13.5775L9.98438 15.1394C10.1579 16.7013 10.0885 20.0333 8.42249 20.8663C6.75648 21.6993 5.64581 18.4367 5.29873 16.7013C3.5633 16.3542 0.300701 15.2435 1.1337 13.5775C1.96672 11.9115 5.29873 11.8421 6.86062 12.0156L8.42249 10.4538C8.42249 10.4538 0.0924504 5.24748 2.17496 3.16496C3.73685 1.60309 9.98438 3.68559 12.5875 5.24748Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
