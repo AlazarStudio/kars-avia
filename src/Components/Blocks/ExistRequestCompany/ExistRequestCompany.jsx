@@ -162,8 +162,11 @@ function ExistRequestCompany({ show, onClose, chooseObject, updateDispatcher, op
                         <div className={classes.requestDataInfo_title}>Должность</div>
                         <select name="position" value={formData.position} onChange={handleChange}>
                             <option value="" disabled>Выберите должность</option>
-                            <option value="Модератор">Модератор</option>
-                            <option value="Администратор">Администратор</option>
+                            <option value="Руководитель службы размещения">Руководитель службы размещения </option>
+                            <option value="Суточный диспетчер">Суточный диспетчер</option>
+                            <option value="Дневной диспетчер">Дневной диспетчер</option>
+                            <option value="Коммерческий директор">Коммерческий директор</option>
+                            <option value="Региональный руководитель">Региональный руководитель</option>
                         </select>
                     </div>
                     <div className={classes.requestDataInfo}>

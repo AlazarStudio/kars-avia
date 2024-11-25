@@ -141,8 +141,9 @@ function EditRequestAirlineCompany({ show, onClose, user, department, onSubmit, 
                     <label>Должность</label>
                     <select name="position" value={formData.position} onChange={handleChange}>
                         <option value="" disabled>Выберите должность</option>
-                        <option value="Модератор">Модератор</option>
-                        <option value="Администратор">Администратор</option>
+                        <option value="Директор">Директор</option>
+                        <option value="Заместитель директора">Заместитель директора</option>
+                        <option value="Сотрудник">Сотрудник</option>
                     </select>
 
                     <label>Отдел</label>

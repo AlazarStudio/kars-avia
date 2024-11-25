@@ -180,8 +180,9 @@ function CreateRequestAirlineCompany({ show, onClose, id, addTarif, setAddTarif 
                     <label>Должность</label>
                     <select name="position" value={formData.position} onChange={handleChange}>
                         <option value="" disabled>Выберите должность</option>
-                        <option value="Модератор">Модератор</option>
-                        <option value="Администратор">Администратор</option>
+                        <option value="Директор">Директор</option>
+                        <option value="Заместитель директора">Заместитель директора</option>
+                        <option value="Сотрудник">Сотрудник</option>
                     </select>
 
                     <label>Логин</label>

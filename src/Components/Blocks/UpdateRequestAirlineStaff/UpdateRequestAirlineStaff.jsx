@@ -105,7 +105,16 @@ function UpdateRequestAirlineStaff({ show, onClose, id, selectedStaff, setAddTar
         }
     }, [show]);
 
-    let positions = ['КВС']
+    let positions = [
+        'КЭ (Капитан Эскадрильи)',
+        'КВС (Командир воздушного судна)',
+        'ВП (Второй пилот)',
+        'СПБ ( Старший бортпроводник)',
+        'ИБП ( Инструктор-бортпроводник)',
+        'БП (бортпроводник)',
+        'КЭ ( Капитан Эскадрильи)',
+        'Инженер',
+    ]
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
