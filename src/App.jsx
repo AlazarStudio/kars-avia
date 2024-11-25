@@ -27,7 +27,6 @@ function App() {
   const { user } = useAuth();
 
   const token = getCookie('token')
-  // 123456
 
   const uploadLink = createUploadLink({
     uri: `${server}/graphql`,
