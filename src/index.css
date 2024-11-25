@@ -73,7 +73,7 @@ input[type="file"] {
     background-color: #ffbd97;
 }
 
-.cancelled {
+.canceled {
     width: 10px;
     height: 10px;
     border-radius: 50%;
