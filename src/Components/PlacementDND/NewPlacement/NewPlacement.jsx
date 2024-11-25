@@ -10,6 +10,7 @@ import EditRequestModal from "../EditRequestModal/EditRequestModal";
 const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
+// check
 
 const NewPlacement = () => {
     const rooms = useMemo(() => [
