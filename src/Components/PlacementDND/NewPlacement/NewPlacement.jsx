@@ -7,6 +7,7 @@ import { startOfMonth, addMonths, differenceInDays, endOfMonth } from "date-fns"
 import { DndContext } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
+import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
 
 const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
@@ -31,6 +32,9 @@ const NewPlacement = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editableRequest, setEditableRequest] = useState(null);
     const [originalRequest, setOriginalRequest] = useState(null);
+
+    const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState(null);
 
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
     const [requests, setRequests] = useState([
@@ -112,7 +116,6 @@ const NewPlacement = () => {
         },
     ]);
 
-
     // Глобальное состояние перетаскивания
     const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
 
@@ -159,53 +162,26 @@ const NewPlacement = () => {
         const occupiedPositions = overlappingRequests.map((req) => req.position);
 
         if (newRequests.includes(draggedRequest)) {
-            if (isDouble) {
-                const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
-                if (availablePosition === undefined) {
-                    console.warn("Места заняты в двухместной комнате!");
-                    return;
-                }
+            // Добавляем заявку в шахматку со статусом "Ожидает"
+            const newRequest = {
+                ...draggedRequest,
+                room: targetRoomId,
+                position: 0, // Начальная позиция
+                status: "Ожидает",
+            };
 
-                setRequests((prevRequests) => [
-                    ...prevRequests,
-                    { ...draggedRequest, room: targetRoomId, position: availablePosition },
-                ]);
-            } else {
-                if (occupiedPositions.length > 0) {
-                    console.warn("Место занято в однокомнатной комнате!");
-                    return;
-                }
+            setRequests((prevRequests) => [...prevRequests, newRequest]);
 
-                setRequests((prevRequests) => [
-                    ...prevRequests,
-                    { ...draggedRequest, room: targetRoomId, position: 0 },
-                ]);
-            }
-
+            // Удаляем заявку из блока "Новые заявки"
             setNewRequests((prevNewRequests) =>
                 prevNewRequests.filter((req) => req.id !== draggedRequest.id)
             );
-        } else {
-            // Обработка перемещения существующих заявок
-            if (draggedRequest.room === targetRoomId) {
-                // Перемещение внутри одной комнаты
-                const targetPosition = parseInt(over.data.current?.position || 0);
 
-                if (draggedRequest.position !== targetPosition) {
-                    setRequests((prevRequests) =>
-                        prevRequests.map((request) => {
-                            if (request.room === targetRoomId) {
-                                if (request.id === draggedRequest.id) {
-                                    return { ...request, position: targetPosition };
-                                } else if (request.position === targetPosition) {
-                                    return { ...request, position: draggedRequest.position };
-                                }
-                            }
-                            return request;
-                        })
-                    );
-                }
-            } else {
+            // Открываем модальное окно для подтверждения
+            setSelectedRequest(newRequest);
+            setIsConfirmModalOpen(true);
+        } else {
+            if (newRequests.includes(draggedRequest)) {
                 if (isDouble) {
                     const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
                     if (availablePosition === undefined) {
@@ -213,38 +189,84 @@ const NewPlacement = () => {
                         return;
                     }
 
-                    setRequests((prevRequests) =>
-                        prevRequests.map((req) =>
-                            req.id === draggedRequest.id
-                                ? { ...req, room: targetRoomId, position: availablePosition }
-                                : req
-                        )
-                    );
+                    setRequests((prevRequests) => [
+                        ...prevRequests,
+                        { ...draggedRequest, room: targetRoomId, position: availablePosition },
+                    ]);
                 } else {
                     if (occupiedPositions.length > 0) {
                         console.warn("Место занято в однокомнатной комнате!");
                         return;
                     }
 
-                    setRequests((prevRequests) =>
-                        prevRequests.map((req) =>
-                            req.id === draggedRequest.id
-                                ? { ...req, room: targetRoomId, position: 0 }
-                                : req
-                        )
-                    );
+                    setRequests((prevRequests) => [
+                        ...prevRequests,
+                        { ...draggedRequest, room: targetRoomId, position: 0 },
+                    ]);
+                }
+
+                setNewRequests((prevNewRequests) =>
+                    prevNewRequests.filter((req) => req.id !== draggedRequest.id)
+                );
+            } else {
+                // Обработка перемещения существующих заявок
+                if (draggedRequest.room === targetRoomId) {
+                    // Перемещение внутри одной комнаты                   
+                    const targetPosition = parseInt(over.data.current?.position || 0);
+
+                    if (draggedRequest.position !== targetPosition) {
+                        setRequests((prevRequests) =>
+                            prevRequests.map((request) => {
+                                if (request.room === targetRoomId) {
+                                    if (request.id === draggedRequest.id) {
+                                        return { ...request, position: targetPosition };
+                                    } else if (request.position === targetPosition) {
+                                        return { ...request, position: draggedRequest.position };
+                                    }
+                                }
+                                return request;
+                            })
+                        );
+                    }
+                } else {
+                    if (isDouble) {
+                        const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
+                        if (availablePosition === undefined) {
+                            console.warn("Места заняты в двухместной комнате!");
+                            return;
+                        }
+
+                        setRequests((prevRequests) =>
+                            prevRequests.map((req) =>
+                                req.id === draggedRequest.id
+                                    ? { ...req, room: targetRoomId, position: availablePosition, status: "Перенесен" }
+                                    : req
+                            )
+                        );
+                    } else {
+                        if (occupiedPositions.length > 0) {
+                            console.warn("Место занято в однокомнатной комнате!");
+                            return;
+                        }
+
+                        setRequests((prevRequests) =>
+                            prevRequests.map((req) =>
+                                req.id === draggedRequest.id
+                                    ? { ...req, room: targetRoomId, position: 0, status: "Перенесен" }
+                                    : req
+                            )
+                        );
+                    }
                 }
             }
         }
     };
-
 
     const handleOpenModal = (request, originalRequest) => {
         setOriginalRequest(originalRequest)
         setEditableRequest(request);
         setIsModalOpen(true);
     };
-
 
     const handleSaveChanges = (updatedRequest) => {
         setRequests((prevRequests) =>
@@ -269,9 +291,38 @@ const NewPlacement = () => {
         setIsModalOpen(false);
     };
 
-
     const daysInMonth = differenceInDays(endOfMonth(currentMonth), currentMonth) + 1;
     const containerWidth = daysInMonth * DAY_WIDTH;
+
+    const handleConfirmBooking = (request) => {
+        setSelectedRequest(request); // Устанавливаем заявку для подтверждения
+        setIsConfirmModalOpen(true); // Открываем модальное окно
+    };
+
+    const confirmBooking = (request) => {
+        setRequests((prevRequests) => [
+            ...prevRequests,
+            {
+                ...request,
+                status: "Забронирован", // Устанавливаем статус
+                position: 0, // Начальная позиция
+            },
+        ]);
+
+        // Удаляем заявку из блока новых заявок
+        setNewRequests((prevNewRequests) =>
+            prevNewRequests.filter((req) => req.id !== request.id)
+        );
+
+        setIsConfirmModalOpen(false); // Закрываем модальное окно
+        setSelectedRequest(null); // Сбрасываем выбранную заявку
+    };
+
+    const handleCancelBooking = () => {
+        setIsConfirmModalOpen(false);
+        setSelectedRequest(null);
+    };
+
 
     return (
         <>
@@ -374,6 +425,13 @@ const NewPlacement = () => {
                 onClose={handleCloseModal}
                 onSave={handleSaveChanges}
                 request={editableRequest} // Передаём заявку
+            />
+
+            <ConfirmBookingModal
+                isOpen={isConfirmModalOpen}
+                onClose={handleCancelBooking}
+                onConfirm={confirmBooking}
+                request={selectedRequest}
             />
 
         </>

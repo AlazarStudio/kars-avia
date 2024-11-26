@@ -28,6 +28,8 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 return { backgroundColor: "#2196f3", borderColor: "#1976d2" }; // Синий для "Продлен"
             case "Сокращен":
                 return { backgroundColor: "#f44336", borderColor: "#d32f2f" }; // Красный для "Сокращен"
+            case "Перенесен":
+                return { backgroundColor: "#ff9800", borderColor: "#f57c00" }; // Красный для "Сокращен"
             default:
                 return { backgroundColor: "#9e9e9e", borderColor: "#757575" }; // Серый для остальных
         }
@@ -70,7 +72,6 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         onOpenModal(updatedRequest, originalRequestRef.current);
     }
 
-
     const handleResize = (type, deltaDays) => {
         const updatedRequest = { ...request };
 
@@ -78,13 +79,25 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             const newCheckIn = new Date(checkIn);
             newCheckIn.setDate(newCheckIn.getDate() + deltaDays);
             updatedRequest.checkInDate = newCheckIn.toISOString().split("T")[0];
+
+            // Проверяем, если дата заезда сдвигается позже - статус "Сокращен"
+            if (deltaDays > 0) {
+                updatedRequest.status = "Сокращен";
+            }
         } else if (type === "end") {
             const newCheckOut = new Date(checkOut);
             newCheckOut.setDate(newCheckOut.getDate() + deltaDays);
             updatedRequest.checkOutDate = newCheckOut.toISOString().split("T")[0];
+
+            // Если дата выезда увеличивается - статус "Продлен"
+            if (deltaDays > 0) {
+                updatedRequest.status = "Продлен";
+            } else if (deltaDays < 0) {
+                updatedRequest.status = "Сокращен";
+            }
         }
 
-        // Проверяем пересечения после изменения размера
+        // Проверяем пересечения
         if (isOverlap(updatedRequest)) {
             console.warn("Изменение размера заявки недопустимо: пересечение с другой заявкой!");
             return request; // Возвращаем исходную заявку, если есть пересечение
@@ -93,6 +106,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         onUpdateRequest(updatedRequest);
         return updatedRequest;
     };
+
 
     const isOverlap = (updatedRequest) => {
         const roomRequests = allRequests.filter((req) => req.room === updatedRequest.room);
