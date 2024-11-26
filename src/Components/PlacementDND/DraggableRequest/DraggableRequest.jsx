@@ -284,9 +284,11 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     <Typography variant="body2">
                         <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
                     </Typography>
-                    <Typography variant="body2">
-                        <div style={styleToolTip}> Комната: <b>{request.room}</b></div>
-                    </Typography>
+                    {request.room &&
+                        <Typography variant="body2">
+                            <div style={styleToolTip}> Комната: <b>{request.room}</b></div>
+                        </Typography>
+                    }
                     <Typography variant="body2">
                         <div style={styleToolTip}> Гость: <b>{request.guest}</b></div>
                     </Typography>
