@@ -127,6 +127,34 @@ const NewPlacement = () => {
         );
     };
 
+    const handleConfirmRequest = () => {
+        if (selectedRequest) {
+            setRequests((prevRequests) => {
+                const existingRequestIndex = prevRequests.findIndex(
+                    (req) => req.id === selectedRequest.id
+                );
+
+                if (existingRequestIndex !== -1) {
+                    // Если заявка уже существует, обновляем её
+                    const updatedRequests = [...prevRequests];
+                    updatedRequests[existingRequestIndex] = {
+                        ...selectedRequest,
+                        status: "Забронирован", // Обновляем статус
+                    };
+                    return updatedRequests;
+                } else {
+                    // Если заявки нет, добавляем её
+                    return [...prevRequests, { ...selectedRequest, status: "Забронирован" }];
+                }
+            });
+
+            // Закрываем модальное окно и сбрасываем выбранную заявку
+            setSelectedRequest(null);
+            setIsConfirmModalOpen(false);
+        }
+    };
+
+
     const handleDragEnd = (event) => {
         setIsDraggingGlobal(false);
 
@@ -162,26 +190,80 @@ const NewPlacement = () => {
         const occupiedPositions = overlappingRequests.map((req) => req.position);
 
         if (newRequests.includes(draggedRequest)) {
-            // Добавляем заявку в шахматку со статусом "Ожидает"
-            const newRequest = {
-                ...draggedRequest,
-                room: targetRoomId,
-                position: 0, // Начальная позиция
-                status: "Ожидает",
-            };
+            // Если это новая заявка
+            if (isDouble) {
+                // Проверяем доступные позиции для двухместной комнаты
+                const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
 
-            setRequests((prevRequests) => [...prevRequests, newRequest]);
+                if (availablePosition === undefined) {
+                    console.warn("Все позиции заняты в этой комнате!");
+                    return;
+                }
 
-            // Удаляем заявку из блока "Новые заявки"
-            setNewRequests((prevNewRequests) =>
-                prevNewRequests.filter((req) => req.id !== draggedRequest.id)
-            );
+                const newRequest = {
+                    ...draggedRequest,
+                    room: targetRoomId,
+                    position: availablePosition,
+                    status: "Ожидает",
+                };
 
-            // Открываем модальное окно для подтверждения
-            setSelectedRequest(newRequest);
-            setIsConfirmModalOpen(true);
+                setRequests((prevRequests) => [...prevRequests, newRequest]);
+
+                // Удаляем из блока "Новые заявки"
+                setNewRequests((prevNewRequests) =>
+                    prevNewRequests.filter((req) => req.id !== draggedRequest.id)
+                );
+
+                // Открываем модальное окно для подтверждения
+                setSelectedRequest(newRequest);
+                setIsConfirmModalOpen(true);
+            } else {
+                // Для одноместной комнаты
+                if (occupiedPositions.length > 0) {
+                    console.warn("Место занято в однокомнатной комнате!");
+                    return;
+                }
+
+                const newRequest = {
+                    ...draggedRequest,
+                    room: targetRoomId,
+                    position: 0,
+                    status: "Ожидает",
+                };
+
+                setRequests((prevRequests) => [...prevRequests, newRequest]);
+
+                // Удаляем из блока "Новые заявки"
+                setNewRequests((prevNewRequests) =>
+                    prevNewRequests.filter((req) => req.id !== draggedRequest.id)
+                );
+
+                // Открываем модальное окно для подтверждения
+                setSelectedRequest(newRequest);
+                setIsConfirmModalOpen(true);
+            }
         } else {
-            if (newRequests.includes(draggedRequest)) {
+            // Перемещение существующих заявок
+            if (draggedRequest.room === targetRoomId) {
+                // Перемещение внутри одной комнаты
+                const targetPosition = parseInt(over.data.current?.position || 0);
+
+                if (draggedRequest.position !== targetPosition) {
+                    setRequests((prevRequests) =>
+                        prevRequests.map((request) => {
+                            if (request.room === targetRoomId) {
+                                if (request.id === draggedRequest.id) {
+                                    return { ...request, position: targetPosition };
+                                } else if (request.position === targetPosition) {
+                                    return { ...request, position: draggedRequest.position };
+                                }
+                            }
+                            return request;
+                        })
+                    );
+                }
+            } else {
+                // Перемещение между комнатами
                 if (isDouble) {
                     const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
                     if (availablePosition === undefined) {
@@ -189,74 +271,26 @@ const NewPlacement = () => {
                         return;
                     }
 
-                    setRequests((prevRequests) => [
-                        ...prevRequests,
-                        { ...draggedRequest, room: targetRoomId, position: availablePosition },
-                    ]);
+                    setRequests((prevRequests) =>
+                        prevRequests.map((req) =>
+                            req.id === draggedRequest.id
+                                ? { ...req, room: targetRoomId, position: availablePosition, status: "Перенесен" }
+                                : req
+                        )
+                    );
                 } else {
                     if (occupiedPositions.length > 0) {
                         console.warn("Место занято в однокомнатной комнате!");
                         return;
                     }
 
-                    setRequests((prevRequests) => [
-                        ...prevRequests,
-                        { ...draggedRequest, room: targetRoomId, position: 0 },
-                    ]);
-                }
-
-                setNewRequests((prevNewRequests) =>
-                    prevNewRequests.filter((req) => req.id !== draggedRequest.id)
-                );
-            } else {
-                // Обработка перемещения существующих заявок
-                if (draggedRequest.room === targetRoomId) {
-                    // Перемещение внутри одной комнаты                   
-                    const targetPosition = parseInt(over.data.current?.position || 0);
-
-                    if (draggedRequest.position !== targetPosition) {
-                        setRequests((prevRequests) =>
-                            prevRequests.map((request) => {
-                                if (request.room === targetRoomId) {
-                                    if (request.id === draggedRequest.id) {
-                                        return { ...request, position: targetPosition };
-                                    } else if (request.position === targetPosition) {
-                                        return { ...request, position: draggedRequest.position };
-                                    }
-                                }
-                                return request;
-                            })
-                        );
-                    }
-                } else {
-                    if (isDouble) {
-                        const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
-                        if (availablePosition === undefined) {
-                            console.warn("Места заняты в двухместной комнате!");
-                            return;
-                        }
-
-                        setRequests((prevRequests) =>
-                            prevRequests.map((req) =>
-                                req.id === draggedRequest.id
-                                    ? { ...req, room: targetRoomId, position: availablePosition, status: "Перенесен" }
-                                    : req
-                            )
-                        );
-                    } else {
-                        if (occupiedPositions.length > 0) {
-                            console.warn("Место занято в однокомнатной комнате!");
-                            return;
-                        }
-
-                        setRequests((prevRequests) =>
-                            prevRequests.map((req) =>
-                                req.id === draggedRequest.id
-                                    ? { ...req, room: targetRoomId, position: 0, status: "Перенесен" }
-                                    : req
-                            )
-                        );
-                    }
+                    setRequests((prevRequests) =>
+                        prevRequests.map((req) =>
+                            req.id === draggedRequest.id
+                                ? { ...req, room: targetRoomId, position: 0, status: "Перенесен" }
+                                : req
+                        )
+                    );
                 }
             }
         }
@@ -319,6 +353,20 @@ const NewPlacement = () => {
     };
 
     const handleCancelBooking = () => {
+        if (selectedRequest) {
+            // Удаляем заявку из шахматки
+            setRequests((prevRequests) =>
+                prevRequests.filter((req) => req.id !== selectedRequest.id)
+            );
+
+            // Возвращаем заявку в блок "Новые заявки" с обнулением поля room
+            setNewRequests((prevNewRequests) => [
+                ...prevNewRequests,
+                { ...selectedRequest, room: null, position: null },
+            ]);
+        }
+
+        // Закрываем модальное окно
         setIsConfirmModalOpen(false);
         setSelectedRequest(null);
     };
@@ -370,7 +418,7 @@ const NewPlacement = () => {
                                 </Box>
 
                                 <Box
-                                    sx={{ width: `${containerWidth}px` }}
+                                    sx={{ width: `${containerWidth} px` }}
                                     ref={scrollContainerRef}
                                 >
                                     <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
@@ -397,30 +445,32 @@ const NewPlacement = () => {
                         </Box>
                     </Box>
 
-                    <Box sx={{ width: "300px", padding: "10px", backgroundColor: "#f9f9f9" }}>
-                        <Typography variant="h6" sx={{ textAlign: "center", marginBottom: "10px" }}>
-                            Новые заявки
-                        </Typography>
+                    {newRequests?.length > 0 &&
+                        <Box sx={{ width: "300px", padding: "10px", backgroundColor: "#f9f9f9" }}>
+                            <Typography variant="h6" sx={{ textAlign: "center", marginBottom: "10px" }}>
+                                Новые заявки
+                            </Typography>
 
-                        <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
-                            {newRequests.map((request) => (
-                                <DraggableRequest
-                                    key={request.id}
-                                    request={request}
-                                    dayWidth={DAY_WIDTH}
-                                    currentMonth={currentMonth}
-                                    onUpdateRequest={handleUpdateRequest}
-                                    allRequests={requests}
-                                    isDraggingGlobal={isDraggingGlobal}
-                                />
-                            ))}
+                            <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
+                                {newRequests.map((request) => (
+                                    <DraggableRequest
+                                        key={request.id}
+                                        request={request}
+                                        dayWidth={DAY_WIDTH}
+                                        currentMonth={currentMonth}
+                                        onUpdateRequest={handleUpdateRequest}
+                                        allRequests={requests}
+                                        isDraggingGlobal={isDraggingGlobal}
+                                    />
+                                ))}
+                            </Box>
                         </Box>
-                    </Box>
+                    }
                 </Box>
-            </DndContext>
+            </DndContext >
 
             {/* Модальное окно для редактирования заявки */}
-            <EditRequestModal
+            < EditRequestModal
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onSave={handleSaveChanges}

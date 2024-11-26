@@ -3,7 +3,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography }
 
 const ConfirmBookingModal = ({ isOpen, onClose, onConfirm, request }) => {
     return (
-        <Dialog open={isOpen} onClose={onClose}>
+        <Dialog open={isOpen} onClose={onClose} disableScrollLock={true}>
             <DialogTitle>Подтверждение бронирования</DialogTitle>
             <DialogContent>
                 <Typography variant="body1">

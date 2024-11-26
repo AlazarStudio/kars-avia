@@ -29,7 +29,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             case "Сокращен":
                 return { backgroundColor: "#f44336", borderColor: "#d32f2f" }; // Красный для "Сокращен"
             case "Перенесен":
-                return { backgroundColor: "#ff9800", borderColor: "#f57c00" }; // Красный для "Сокращен"
+                return { backgroundColor: "#ff9800", borderColor: "#e9831a" }; // Красный для "Сокращен"
             default:
                 return { backgroundColor: "#9e9e9e", borderColor: "#757575" }; // Серый для остальных
         }
