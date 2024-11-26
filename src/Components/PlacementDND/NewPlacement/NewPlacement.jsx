@@ -127,34 +127,6 @@ const NewPlacement = () => {
         );
     };
 
-    const handleConfirmRequest = () => {
-        if (selectedRequest) {
-            setRequests((prevRequests) => {
-                const existingRequestIndex = prevRequests.findIndex(
-                    (req) => req.id === selectedRequest.id
-                );
-
-                if (existingRequestIndex !== -1) {
-                    // Если заявка уже существует, обновляем её
-                    const updatedRequests = [...prevRequests];
-                    updatedRequests[existingRequestIndex] = {
-                        ...selectedRequest,
-                        status: "Забронирован", // Обновляем статус
-                    };
-                    return updatedRequests;
-                } else {
-                    // Если заявки нет, добавляем её
-                    return [...prevRequests, { ...selectedRequest, status: "Забронирован" }];
-                }
-            });
-
-            // Закрываем модальное окно и сбрасываем выбранную заявку
-            setSelectedRequest(null);
-            setIsConfirmModalOpen(false);
-        }
-    };
-
-
     const handleDragEnd = (event) => {
         setIsDraggingGlobal(false);
 
@@ -207,9 +179,13 @@ const NewPlacement = () => {
                     status: "Ожидает",
                 };
 
-                setRequests((prevRequests) => [...prevRequests, newRequest]);
+                setRequests((prevRequests) => {
+                    // Удаляем заявку со статусом "Ожидает", если она уже есть
+                    const filteredRequests = prevRequests.filter((req) => req.id !== draggedRequest.id);
+                    return [...filteredRequests, newRequest];
+                });
 
-                // Удаляем из блока "Новые заявки"
+                // Удаляем заявку из блока "Новые заявки"
                 setNewRequests((prevNewRequests) =>
                     prevNewRequests.filter((req) => req.id !== draggedRequest.id)
                 );
@@ -231,7 +207,14 @@ const NewPlacement = () => {
                     status: "Ожидает",
                 };
 
-                setRequests((prevRequests) => [...prevRequests, newRequest]);
+                setRequests((prevRequests) => {
+                    const exists = prevRequests.some((req) => req.id === newRequest.id);
+                    if (exists) {
+                        console.warn(`Заявка с id ${newRequest.id} уже существует в массиве requests!`);
+                        return prevRequests;
+                    }
+                    return [...prevRequests, newRequest];
+                });
 
                 // Удаляем из блока "Новые заявки"
                 setNewRequests((prevNewRequests) =>
@@ -328,22 +311,16 @@ const NewPlacement = () => {
     const daysInMonth = differenceInDays(endOfMonth(currentMonth), currentMonth) + 1;
     const containerWidth = daysInMonth * DAY_WIDTH;
 
-    const handleConfirmBooking = (request) => {
-        setSelectedRequest(request); // Устанавливаем заявку для подтверждения
-        setIsConfirmModalOpen(true); // Открываем модальное окно
-    };
-
     const confirmBooking = (request) => {
-        setRequests((prevRequests) => [
-            ...prevRequests,
-            {
-                ...request,
-                status: "Забронирован", // Устанавливаем статус
-                position: 0, // Начальная позиция
-            },
-        ]);
+        setRequests((prevRequests) => {
+            return prevRequests.map((req) =>
+                req.id === request.id
+                    ? { ...req, status: "Забронирован" } // Меняем статус существующей заявки
+                    : req
+            );
+        });
 
-        // Удаляем заявку из блока новых заявок
+        // Удаляем заявку из блока "Новые заявки", если она там есть
         setNewRequests((prevNewRequests) =>
             prevNewRequests.filter((req) => req.id !== request.id)
         );
@@ -351,6 +328,7 @@ const NewPlacement = () => {
         setIsConfirmModalOpen(false); // Закрываем модальное окно
         setSelectedRequest(null); // Сбрасываем выбранную заявку
     };
+
 
     const handleCancelBooking = () => {
         if (selectedRequest) {
