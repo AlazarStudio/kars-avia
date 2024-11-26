@@ -6,6 +6,7 @@ import CurrentTimeIndicator from "../CurrentTimeIndicator/CurrentTimeIndicator";
 import { startOfMonth, addMonths, differenceInDays, endOfMonth } from "date-fns";
 import { DndContext } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
+import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
 const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
@@ -90,6 +91,28 @@ const NewPlacement = () => {
         },
     ]);
 
+    const [newRequests, setNewRequests] = useState([
+        {
+            id: 6,
+            checkInDate: "2024-11-30",
+            checkInTime: "14:00",
+            checkOutDate: "2024-12-05",
+            checkOutTime: "12:00",
+            status: "Ожидает",
+            guest: "Сидоров Сидор Сидорович",
+        },
+        {
+            id: 7,
+            checkInDate: "2024-12-01",
+            checkInTime: "14:00",
+            checkOutDate: "2024-12-16",
+            checkOutTime: "12:00",
+            status: "Ожидает",
+            guest: "Кузнецов Алексей Иванович",
+        },
+    ]);
+
+
     // Глобальное состояние перетаскивания
     const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
 
@@ -106,75 +129,111 @@ const NewPlacement = () => {
 
         const { active, over } = event;
 
-        if (!over) return;
+        if (!over) return; // Если дроп происходит вне шахматки, ничего не делаем
 
-        const draggedRequest = requests.find((req) => req.id === parseInt(active.id));
-        const targetRoomId = over.id;
+        const draggedRequest =
+            newRequests.find((req) => req.id === parseInt(active.id)) ||
+            requests.find((req) => req.id === parseInt(active.id));
 
         if (!draggedRequest) return;
 
-        if (draggedRequest.room === targetRoomId) {
-            // Перемещение внутри одной комнаты
-            const targetPosition = parseInt(over.data.current?.position || 0);
+        const targetRoomId = over?.id;
 
-            if (draggedRequest.position !== targetPosition) {
-                setRequests((prevRequests) =>
-                    prevRequests.map((request) => {
-                        if (request.room === targetRoomId) {
-                            if (request.id === draggedRequest.id) {
-                                return { ...request, position: targetPosition };
-                            } else if (request.position === targetPosition) {
-                                return { ...request, position: draggedRequest.position };
-                            }
-                        }
-                        return request;
-                    })
-                );
-            }
-        } else {
-            // Перемещение между комнатами
-            const targetRoom = rooms.find((room) => room.id === targetRoomId);
-            const isDouble = targetRoom.type === "double";
+        if (!targetRoomId) {
+            console.error("Целевая комната не определена!");
+            return;
+        }
 
-            const overlappingRequests = requests.filter(
-                (req) =>
-                    req.room === targetRoomId &&
-                    !(
-                        new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
-                        new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
-                    )
-            );
+        const targetRoom = rooms.find((room) => room.id === targetRoomId);
+        const isDouble = targetRoom?.type === "double";
 
-            const occupiedPositions = overlappingRequests.map((req) => req.position);
+        const overlappingRequests = requests.filter(
+            (req) =>
+                req.room === targetRoomId &&
+                !(
+                    new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
+                    new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
+                )
+        );
 
+        const occupiedPositions = overlappingRequests.map((req) => req.position);
+
+        if (newRequests.includes(draggedRequest)) {
             if (isDouble) {
                 const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
-
                 if (availablePosition === undefined) {
-                    console.warn("Место занято в целевой комнате!");
+                    console.warn("Места заняты в двухместной комнате!");
                     return;
                 }
 
-                setRequests((prevRequests) =>
-                    prevRequests.map((req) =>
-                        req.id === draggedRequest.id
-                            ? { ...req, room: targetRoomId, position: availablePosition }
-                            : req
-                    )
-                );
+                setRequests((prevRequests) => [
+                    ...prevRequests,
+                    { ...draggedRequest, room: targetRoomId, position: availablePosition },
+                ]);
             } else {
-                if (overlappingRequests.length > 0) {
-                    console.warn("Место занято в целевой комнате!");
+                if (occupiedPositions.length > 0) {
+                    console.warn("Место занято в однокомнатной комнате!");
                     return;
                 }
 
-                setRequests((prevRequests) =>
-                    prevRequests.map((req) =>
-                        req.id === draggedRequest.id
-                            ? { ...req, room: targetRoomId, position: 0 }
-                            : req
-                    )
-                );
+                setRequests((prevRequests) => [
+                    ...prevRequests,
+                    { ...draggedRequest, room: targetRoomId, position: 0 },
+                ]);
+            }
+
+            setNewRequests((prevNewRequests) =>
+                prevNewRequests.filter((req) => req.id !== draggedRequest.id)
+            );
+        } else {
+            // Обработка перемещения существующих заявок
+            if (draggedRequest.room === targetRoomId) {
+                // Перемещение внутри одной комнаты
+                const targetPosition = parseInt(over.data.current?.position || 0);
+
+                if (draggedRequest.position !== targetPosition) {
+                    setRequests((prevRequests) =>
+                        prevRequests.map((request) => {
+                            if (request.room === targetRoomId) {
+                                if (request.id === draggedRequest.id) {
+                                    return { ...request, position: targetPosition };
+                                } else if (request.position === targetPosition) {
+                                    return { ...request, position: draggedRequest.position };
+                                }
+                            }
+                            return request;
+                        })
+                    );
+                }
+            } else {
+                if (isDouble) {
+                    const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
+                    if (availablePosition === undefined) {
+                        console.warn("Места заняты в двухместной комнате!");
+                        return;
+                    }
+
+                    setRequests((prevRequests) =>
+                        prevRequests.map((req) =>
+                            req.id === draggedRequest.id
+                                ? { ...req, room: targetRoomId, position: availablePosition }
+                                : req
+                        )
+                    );
+                } else {
+                    if (occupiedPositions.length > 0) {
+                        console.warn("Место занято в однокомнатной комнате!");
+                        return;
+                    }
+
+                    setRequests((prevRequests) =>
+                        prevRequests.map((req) =>
+                            req.id === draggedRequest.id
+                                ? { ...req, room: targetRoomId, position: 0 }
+                                : req
+                        )
+                    );
+                }
             }
         }
     };
@@ -217,69 +276,93 @@ const NewPlacement = () => {
     return (
         <>
             <DndContext onDragStart={() => setIsDraggingGlobal(true)} onDragEnd={handleDragEnd}>
-                <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
-                    <Timeline
-                        currentMonth={currentMonth}
-                        setCurrentMonth={setCurrentMonth}
-                        dayWidth={DAY_WIDTH}
-                        weekendColor={WEEKEND_COLOR}
-                        monthColor={MONTH_COLOR}
-                    />
-                    <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
-                        <Box
-                            sx={{
-                                left: 0,
-                                top: 0,
-                                minWidth: '100px',
-                                backgroundColor: '#f5f5f5',
-                                zIndex: 2,
-                            }}
-                        >
-                            {rooms.map((room, index) => (
+                <Box sx={{ display: 'flex' }}>
+                    <Box sx={{ flex: '1 1 auto', overflow: 'hidden' }}>
+                        <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
+                            <Timeline
+                                currentMonth={currentMonth}
+                                setCurrentMonth={setCurrentMonth}
+                                dayWidth={DAY_WIDTH}
+                                weekendColor={WEEKEND_COLOR}
+                                monthColor={MONTH_COLOR}
+                            />
+                            <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
                                 <Box
-                                    key={index}
                                     sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        height: room.type === 'double' ? '80px' : '40px',
-                                        borderBottom: '1px solid #ddd',
-                                        borderRight: '1px solid #ddd',
+                                        left: 0,
+                                        top: 0,
+                                        minWidth: '100px',
                                         backgroundColor: '#f5f5f5',
+                                        zIndex: 2,
                                     }}
                                 >
-                                    <Typography
-                                        variant="body1"
-                                        sx={{ textAlign: 'center', width: '100%', fontSize: '14px' }}
-                                    >
-                                        {room.id}
-                                    </Typography>
+                                    {rooms.map((room, index) => (
+                                        <Box
+                                            key={index}
+                                            sx={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                height: room.type === 'double' ? '80px' : '40px',
+                                                borderBottom: '1px solid #ddd',
+                                                borderRight: '1px solid #ddd',
+                                                backgroundColor: '#f5f5f5',
+                                            }}
+                                        >
+                                            <Typography
+                                                variant="body1"
+                                                sx={{ textAlign: 'center', width: '100%', fontSize: '14px' }}
+                                            >
+                                                {room.id}
+                                            </Typography>
+                                        </Box>
+                                    ))}
                                 </Box>
-                            ))}
-                        </Box>
 
-                        <Box
-                            sx={{ width: `${containerWidth}px` }}
-                            ref={scrollContainerRef}
-                        >
-                            <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
-                                <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
+                                <Box
+                                    sx={{ width: `${containerWidth}px` }}
+                                    ref={scrollContainerRef}
+                                >
+                                    <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
+                                        <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
 
-                                {rooms.map((room) => (
-                                    <RoomRow
-                                        key={room.id}
-                                        dayWidth={DAY_WIDTH}
-                                        weekendColor={WEEKEND_COLOR}
-                                        monthColor={MONTH_COLOR}
-                                        room={room}
-                                        requests={requests.filter((req) => req.room === room.id)}
-                                        allRequests={requests} // Передаем все заявки
-                                        currentMonth={currentMonth}
-                                        onUpdateRequest={handleUpdateRequest}
-                                        isDraggingGlobal={isDraggingGlobal}
-                                        onOpenModal={handleOpenModal} // Прокидываем в RoomRow
-                                    />
-                                ))}
+                                        {rooms.map((room) => (
+                                            <RoomRow
+                                                key={room.id}
+                                                dayWidth={DAY_WIDTH}
+                                                weekendColor={WEEKEND_COLOR}
+                                                monthColor={MONTH_COLOR}
+                                                room={room}
+                                                requests={requests.filter((req) => req.room === room.id)}
+                                                allRequests={requests} // Передаем все заявки
+                                                currentMonth={currentMonth}
+                                                onUpdateRequest={handleUpdateRequest}
+                                                isDraggingGlobal={isDraggingGlobal}
+                                                onOpenModal={handleOpenModal} // Прокидываем в RoomRow
+                                            />
+                                        ))}
+                                    </Box>
+                                </Box>
                             </Box>
+                        </Box>
+                    </Box>
+
+                    <Box sx={{ width: "300px", padding: "10px", backgroundColor: "#f9f9f9" }}>
+                        <Typography variant="h6" sx={{ textAlign: "center", marginBottom: "10px" }}>
+                            Новые заявки
+                        </Typography>
+
+                        <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
+                            {newRequests.map((request) => (
+                                <DraggableRequest
+                                    key={request.id}
+                                    request={request}
+                                    dayWidth={DAY_WIDTH}
+                                    currentMonth={currentMonth}
+                                    onUpdateRequest={handleUpdateRequest}
+                                    allRequests={requests}
+                                    isDraggingGlobal={isDraggingGlobal}
+                                />
+                            ))}
                         </Box>
                     </Box>
                 </Box>

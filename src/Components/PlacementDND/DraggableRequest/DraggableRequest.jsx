@@ -36,17 +36,16 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     const { backgroundColor, borderColor } = getStatusColors(request.status);
 
     const style = {
-        position: "absolute",
-        top: `${position * 40 + 2}px`,
-        left: `${checkInOffset}px`,
-        width: `${duration}px`,
+        position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
+        top: request.room ? `${position * 40 + 2}px` : "auto",
+        left: request.room ? `${checkInOffset}px` : "auto",
+        width: request.room ? `${duration}px` : '100%',
         height: "35px",
         backgroundColor: backgroundColor,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",
         display: "flex",
         alignItems: "center",
-        textAlign: 'center',
         justifyContent: "space-between",
         color: "white",
         fontSize: "11px",
@@ -57,6 +56,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
             : undefined,
     };
+
 
     const originalRequestRef = useRef(null);
 
@@ -84,15 +84,15 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             updatedRequest.checkOutDate = newCheckOut.toISOString().split("T")[0];
         }
 
+        // Проверяем пересечения после изменения размера
         if (isOverlap(updatedRequest)) {
-            console.warn("Накладывание запрещено!");
-            return request; // Возвращаем исходную заявку, если есть наложение
+            console.warn("Изменение размера заявки недопустимо: пересечение с другой заявкой!");
+            return request; // Возвращаем исходную заявку, если есть пересечение
         }
 
         onUpdateRequest(updatedRequest);
         return updatedRequest;
     };
-
 
     const isOverlap = (updatedRequest) => {
         const roomRequests = allRequests.filter((req) => req.room === updatedRequest.room);
@@ -125,7 +125,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     const handleMouseLeave = () => setTooltipVisible(false);
     const handleMouseMove = (e) => {
         if (!isDraggingGlobal) {
-            setTooltipPosition({ x: e.clientX + 10, y: e.clientY + 10 });
+            setTooltipPosition({ x: e.clientX - (350 / 2), y: e.clientY + 10 });
         }
     };
 
@@ -197,6 +197,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         height: "100%",
                         display: "flex",
                         alignItems: "center",
+                        textAlign: "center",
                         justifyContent: "center",
                         cursor: "grab",
                         zIndex: 1,
