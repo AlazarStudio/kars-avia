@@ -354,8 +354,8 @@ const NewPlacement = () => {
     return (
         <>
             <DndContext onDragStart={() => setIsDraggingGlobal(true)} onDragEnd={handleDragEnd}>
-                <Box sx={{ display: 'flex' }}>
-                    <Box sx={{ flex: '1 1 auto', overflow: 'hidden' }}>
+                <Box sx={{ display: 'flex', gap: '50px' }}>
+                    <Box sx={{ overflow: 'hidden' }}>
                         <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
                             <Timeline
                                 currentMonth={currentMonth}
