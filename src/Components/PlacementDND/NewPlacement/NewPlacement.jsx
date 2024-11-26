@@ -37,6 +37,7 @@ const NewPlacement = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
 
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+
     const [requests, setRequests] = useState([
         {
             id: 1,
@@ -98,18 +99,18 @@ const NewPlacement = () => {
     const [newRequests, setNewRequests] = useState([
         {
             id: 6,
-            checkInDate: "2024-11-30",
+            checkInDate: "2024-11-26",
             checkInTime: "14:00",
-            checkOutDate: "2024-12-05",
+            checkOutDate: "2024-11-30",
             checkOutTime: "12:00",
             status: "Ожидает",
             guest: "Сидоров Сидор Сидорович",
         },
         {
             id: 7,
-            checkInDate: "2024-12-01",
+            checkInDate: "2024-11-22",
             checkInTime: "14:00",
-            checkOutDate: "2024-12-16",
+            checkOutDate: "2024-11-30",
             checkOutTime: "12:00",
             status: "Ожидает",
             guest: "Кузнецов Алексей Иванович",
