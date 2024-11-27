@@ -1,29 +1,31 @@
 import React, { useEffect, useRef, useState } from "react";
-import classes from './HotelTarifs_tabComponent.module.css';
-import CreateRequestTarif from "../CreateRequestTarif/CreateRequestTarif";
-import CreateRequestTarifCategory from "../CreateRequestTarifCategory/CreateRequestTarifCategory";
-import InfoTableDataTarifs from "../InfoTableDataTarifs/InfoTableDataTarifs";
-import EditRequestTarif from "../EditRequestTarif/EditRequestTarif";
-import DeleteComponent from "../DeleteComponent/DeleteComponent";
-import Filter from "../Filter/Filter";
+import classes from './AirlineTarifs_tabComponent.module.css';
+import CreateRequestTarif from "../CreateRequestTarif/CreateRequestTarif.jsx";
+import CreateRequestTarifCategory from "../CreateRequestTarifCategory/CreateRequestTarifCategory.jsx";
+import InfoTableDataTarifs from "../InfoTableDataTarifs/InfoTableDataTarifs.jsx";
+import EditRequestTarif from "../EditRequestTarif/EditRequestTarif.jsx";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
+import Filter from "../Filter/Filter.jsx";
 
-import { requestsTarifs } from "../../../requests";
+import { requestsTarifs } from "../../../requests.js";
 
-import { getCookie, GET_HOTEL_TARIFS, DELETE_HOTEL_CATEGORY, DELETE_HOTEL_TARIFF, GET_HOTEL_MEAL_PRICE } from '../../../../graphQL_requests.js';
+import { getCookie, GET_AIRLINE_TARIFS, GET_AIRLINE_MEAL_PRICE, DELETE_AIRLINE_CATEGORY, DELETE_AIRLINE_TARIFF } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
-import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTarifCategory";
+import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTarifCategory.jsx";
 import EditRequestMealTarif from "../EditRequestMealTarif/EditRequestMealTarif.jsx";
 
-function HotelTarifs_tabComponent({ children, id, user, ...props }) {
+function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     const token = getCookie('token');
+    // console.log(id);
+    
 
-    const { loading, error, data } = useQuery(GET_HOTEL_TARIFS, {
-        variables: { hotelId: id },
+    const { loading, error, data } = useQuery(GET_AIRLINE_TARIFS, {
+        variables: { airlineId: id },
     });
 
-    const { loading: mealPriceLoading, error: mealPriceError, data: mealPriceData } = useQuery(GET_HOTEL_MEAL_PRICE, {
-        variables: {hotelId: id}
+    const { loading: mealPriceLoading, error: mealPriceError, data: mealPriceData } = useQuery(GET_AIRLINE_MEAL_PRICE, {
+        variables: {airlineId: id}
     });
 
     const [addTarif, setAddTarif] = useState([]);
@@ -42,7 +44,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
     const [deleteIndex, setDeleteIndex] = useState(null);
     const [searchTarif, setSearchTarif] = useState('');
 
-    const [deleteHotelCategory] = useMutation(DELETE_HOTEL_CATEGORY, {
+    const [deleteHotelCategory] = useMutation(DELETE_AIRLINE_CATEGORY, {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -50,7 +52,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
             },
         },
     });
-    const [deleteHotelTarif] = useMutation(DELETE_HOTEL_TARIFF, {
+    const [deleteHotelTarif] = useMutation(DELETE_AIRLINE_TARIFF, {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -64,32 +66,32 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
             setAddTarif([
                 {
                     name: 'Одноместный',
-                    price: data.hotel.priceOneCategory,
+                    price: data.airline.priceOneCategory,
                     type: 1
                 },
                 {
                     name: 'Двухместный',
-                    price: data.hotel.priceTwoCategory,
+                    price: data.airline.priceTwoCategory,
                     type: 2
                 },
             ]);
         }
     }, [data]);
 
-    // console.log(addTarif);
+    console.log(data);
 
 
     useEffect(() => {
         if (mealPriceData) {
             setMealPrices({
-                breakfast: mealPriceData.hotel.MealPrice.breakfast,
-                lunch: mealPriceData.hotel.MealPrice.lunch,
-                dinner: mealPriceData.hotel.MealPrice.dinner
+                breakfast: mealPriceData.airline.MealPrice.breakfast,
+                lunch: mealPriceData.airline.MealPrice.lunch,
+                dinner: mealPriceData.airline.MealPrice.dinner
             })
         }
     }, [mealPriceData]);
 
-    // console.log(mealPrices);
+    console.log(mealPriceData);
     
 
     const handleSearchTarif = (e) => {
@@ -323,8 +325,8 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
             {/* <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
             {/* <CreateRequestTarifCategory user={user} id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
 
-            <EditRequestTarif id={id} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} isHotel={true} />
-            <EditRequestMealTarif id={id} show={showEditMealPrices} mealPrices={mealPrices} onClose={toggleEditMealPrices} onSubmit={handleEditMealPrices} isHotel={true} />
+            <EditRequestTarif id={id} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} isHotel={false} />
+            <EditRequestMealTarif id={id} show={showEditMealPrices} mealPrices={mealPrices} onClose={toggleEditMealPrices} onSubmit={handleEditMealPrices} isHotel={false} />
             {/* <EditRequestTarifCategory user={user} id={id} setAddTarif={setAddTarif} show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} /> */}
 
             {/* {showDelete && (
@@ -339,4 +341,4 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
     );
 }
 
-export default HotelTarifs_tabComponent;
+export default AirlineTarifs_tabComponent;

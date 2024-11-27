@@ -479,12 +479,14 @@ export const GET_BRONS_HOTEL = gql`
         place
         room
         client {
+          id
           name
           number
           position
           gender
         }
         request {
+          id
           airport {
             city
             code
@@ -1088,6 +1090,18 @@ export const GET_HOTEL_TARIFS = gql`
   }
 `;
 
+export const GET_HOTEL_MEAL_PRICE = gql`
+  query Hotel($hotelId: ID!) {
+    hotel(id: $hotelId) {
+      MealPrice {
+        breakfast
+        lunch
+        dinner
+      }
+    }
+  }
+`;
+
 export const GET_HOTEL_ROOMS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
@@ -1139,6 +1153,18 @@ export const UPDATE_HOTEL_TARIF = gql`
     updateHotel(id: $updateHotelId, input: $input) {
       priceOneCategory
       priceTwoCategory
+    }
+  }
+`;
+
+export const UPDATE_HOTEL_MEAL_TARIF = gql`
+  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
+    updateHotel(id: $updateHotelId, input: $input) {
+      MealPrice {
+        breakfast
+        lunch
+        dinner
+      }
     }
   }
 `;
@@ -1269,11 +1295,69 @@ export const GET_AIRLINE = gql`
   }
 `;
 
+export const GET_AIRLINE_TARIFS = gql`
+  query Airline($airlineId: ID!) {
+    airline(id: $airlineId) {
+      priceOneCategory
+      priceTwoCategory
+    }
+  }
+`;
+
+export const GET_AIRLINE_MEAL_PRICE = gql`
+  query Airline($airlineId: ID!) {
+    airline(id: $airlineId) {
+      MealPrice {
+        breakfast
+        dinner
+        lunch
+      }
+    }
+  }
+`;
+
 export const UPDATE_AIRLINE = gql`
   mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
     updateAirline(id: $updateAirlineId, input: $input) {
       name
       id
+    }
+  }
+`;
+
+export const UPDATE_AIRLINE_TARIF = gql`
+  mutation UpdateAirline($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
+    updateAirline(id: $updateAirlineId, input: $input) {
+      priceOneCategory
+      priceTwoCategory
+    }
+  }
+`;
+
+export const UPDATE_AIRLINE_MEAL_TARIF = gql`
+  mutation UpdateAirline($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
+    updateAirline(id: $updateAirlineId, input: $input) {
+      MealPrice {
+        breakfast
+        lunch
+        dinner
+      }
+    }
+  }
+`;
+
+export const DELETE_AIRLINE_CATEGORY = gql`
+  mutation DeleteCategory($deleteCategoryId: ID!) {
+    deleteCategory(id: $deleteCategoryId) {
+      name
+    }
+  }
+`;
+
+export const DELETE_AIRLINE_TARIFF = gql`
+  mutation Mutation($deleteTariffId: ID!) {
+    deleteTariff(id: $deleteTariffId) {
+      name
     }
   }
 `;
