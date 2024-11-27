@@ -1,42 +1,40 @@
 import React, { useState, useRef, useEffect } from "react";
-import classes from "./EditRequestTarif.module.css";
-import Button from "../../Standart/Button/Button";
-import Sidebar from "../Sidebar/Sidebar";
-
+import classes from "./EditRequestMealTarif.module.css";
+import Button from "../../Standart/Button/Button.jsx";
+import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
   getCookie,
-  UPDATE_AIRLINE_TARIF,
-  UPDATE_HOTEL_TARIF,
+  UPDATE_AIRLINE_MEAL_TARIF,
+  UPDATE_HOTEL_MEAL_TARIF,
 } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 
-function EditRequestTarif({
+function EditRequestMealTarif({
   show,
   onClose,
-  tarif,
+  mealPrices,
   onSubmit,
   id,
-  setAddTarif,
   isHotel,
 }) {
   const token = getCookie("token");
 
   const [formData, setFormData] = useState({
-    name: "",
-    price: "",
-    type: "",
+    breakfast: "",
+    lunch: "",
+    dinner: "",
   });
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      price: "",
-      type: "",
+      breakfast: "",
+      lunch: "",
+      dinner: "",
     });
   };
 
-  const [updateHotelTarif] = useMutation(
-    isHotel ? UPDATE_HOTEL_TARIF : UPDATE_AIRLINE_TARIF,
+  const [updateHotelMealTarif] = useMutation(
+    isHotel ? UPDATE_HOTEL_MEAL_TARIF : UPDATE_AIRLINE_MEAL_TARIF,
     {
       context: {
         headers: {
@@ -50,15 +48,14 @@ function EditRequestTarif({
   const sidebarRef = useRef();
 
   useEffect(() => {
-    if (show && tarif) {
+    if (show && mealPrices) {
       setFormData({
-        ...formData,
-        name: tarif.name,
-        price: tarif.price,
-        type: tarif.type,
+        breakfast: mealPrices.breakfast || "",
+        lunch: mealPrices.lunch || "",
+        dinner: mealPrices.dinner || "",
       });
     }
-  }, [show, tarif]);
+  }, [show, mealPrices]);
 
   const closeButton = () => {
     let success = confirm("Вы уверены, все несохраненные данные будут удалены");
@@ -78,54 +75,38 @@ function EditRequestTarif({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(formData);
-    // Проверяем, заполнены ли все поля
-    if (!formData.name.trim() || !formData.price.trim() || !formData.type) {
+    if (
+      !String(formData.breakfast).trim() ||
+      !String(formData.lunch).trim() ||
+      !String(formData.dinner).trim()
+    ) {
       alert("Пожалуйста, заполните все поля!");
       return;
     }
 
-    let dataSend;
-
-    if (formData.type == 1) {
-      dataSend = {
-        priceOneCategory: Number(formData.price),
-      };
-    }
-
-    if (formData.type == 2) {
-      dataSend = {
-        priceTwoCategory: Number(formData.price),
-      };
-    }
+    const dataSend = {
+      MealPrice: {
+        breakfast: Number(formData.breakfast),
+        lunch: Number(formData.lunch),
+        dinner: Number(formData.dinner),
+      },
+    };
 
     let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
 
-    let response_update_tarif = await updateHotelTarif({
+    let response_update_meal_tarif = await updateHotelMealTarif({
       variables: {
         [updateId]: id,
-        input: dataSend,
+        input: dataSend, // передаем MealPrice
       },
     });
 
-
-    if (response_update_tarif) {
-      onSubmit([
-        {
-          name: "Одноместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceOneCategory
-            : response_update_tarif.data.updateAirline.priceOneCategory,
-          type: 1,
-        },
-        {
-          name: "Двухместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceTwoCategory
-            : response_update_tarif.data.updateAirline.priceTwoCategory,
-          type: 2,
-        },
-      ]);
+    if (response_update_meal_tarif) {
+      onSubmit(
+        isHotel
+          ? response_update_meal_tarif.data.updateHotel.MealPrice
+          : response_update_meal_tarif.data.updateAirline.MealPrice
+      );
       resetForm();
       onClose();
     }
@@ -149,7 +130,9 @@ function EditRequestTarif({
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Редактировать тариф</div>
+        <div className={classes.requestTitle_name}>
+          Редактировать цены на питание
+        </div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
           <img src="/close.png" alt="" />
         </div>
@@ -157,19 +140,25 @@ function EditRequestTarif({
 
       <div className={classes.requestMiddle}>
         <div className={classes.requestData}>
-          <label>Название категории</label>
+          <label>Цена завтрака</label>
           <input
-            type="text"
-            name="name"
-            value={formData.name}
+            type="number"
+            name="breakfast"
+            value={formData.breakfast}
             onChange={handleChange}
-            disabled
           />
-          <label>Цена категории</label>
+          <label>Цена обеда</label>
           <input
-            type="text"
-            name="price"
-            value={formData.price}
+            type="number"
+            name="lunch"
+            value={formData.lunch}
+            onChange={handleChange}
+          />
+          <label>Цена ужина</label>
+          <input
+            type="number"
+            name="dinner"
+            value={formData.dinner}
             onChange={handleChange}
           />
         </div>
@@ -184,4 +173,4 @@ function EditRequestTarif({
   );
 }
 
-export default EditRequestTarif;
+export default EditRequestMealTarif;

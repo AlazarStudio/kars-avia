@@ -84,7 +84,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
         </svg>
         Шахматка
       </Link>
-      <Link
+      {/* <Link
         to={"/hotelTarifs"}
         className={`${classes.menu_items__elem} ${
           id == "hotelTarifs" && classes.menu_items__activeElem
@@ -117,7 +117,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
           />
         </svg>
         Цены
-      </Link>
+      </Link> */}
       <Link
         to={"/hotelRooms"}
         className={`${classes.menu_items__elem} ${

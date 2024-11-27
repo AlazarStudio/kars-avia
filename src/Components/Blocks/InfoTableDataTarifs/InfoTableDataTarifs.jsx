@@ -1,8 +1,9 @@
 import React from "react";
 import classes from './InfoTableDataTarifs.module.css';
 import InfoTable from "../InfoTable/InfoTable";
+import { roles } from "../../../roles";
 
-function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDeleteComponent, openDeleteComponentCategory, toggleEditTarifsCategory, user, ...props }) {
+function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPrices, requests, mealPrices, openDeleteComponent, openDeleteComponentCategory, toggleEditTarifsCategory, user, ...props }) {
     return (
         <>
             Категории - цены
@@ -14,7 +15,7 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDel
                                 <div className={classes.InfoTable_data_elem_title}>Категория "{item.name}"</div>
                             </div>
 
-                            {user?.role != "AIRLINEADMIN" &&
+                            {user?.role != roles.airlineAdmin &&
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                                     <div className={classes.InfoTable_data_elem_title}>{item.price} ₽</div>
                                 </div>
@@ -34,14 +35,15 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDel
                     ))}
                 </div>
             </InfoTable>
-            {/* 
+            
+            
             Питание - цены
             <InfoTable>
                 <div className={classes.bottom}>
-                    {requests.map((item, index) => (
+                    {mealPrices.map((item, index) => (
                         <div className={classes.InfoTable_data} key={index} >
                             <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                <div className={classes.InfoTable_data_elem_title}>Категория "{item.name}"</div>
+                                <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
 
                             {user?.role != "AIRLINEADMIN" &&
@@ -51,12 +53,12 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, requests, openDel
                             }
 
                             <div className={classes.infoTable_buttons}>
-                                <img src="/editPassenger.png" alt="" onClick={() => { toggleRequestSidebar(item) }} />
+                                <img src="/editPassenger.png" alt="" onClick={() => { toggleEditMealPrices(item) }} />
                             </div>
                         </div>
                     ))}
                 </div>
-            </InfoTable> */}
+            </InfoTable>
         </>
     );
 }
