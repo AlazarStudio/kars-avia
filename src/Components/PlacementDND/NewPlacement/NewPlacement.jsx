@@ -9,8 +9,8 @@ import { DndContext } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
-import { useQuery } from "@apollo/client";
-import { generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, getCookie } from "../../../../graphQL_requests";
+import { useMutation, useQuery } from "@apollo/client";
+import { decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, getCookie, UPDATE_HOTEL_BRON } from "../../../../graphQL_requests";
 
 const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
@@ -20,6 +20,7 @@ const NewPlacement = () => {
     let { idHotel } = useParams();
 
     const token = getCookie('token');
+    const user = decodeJWT(token);
 
     // Получение информации об отеле
     const [hotelInfo, setHotelInfo] = useState('');
@@ -75,13 +76,15 @@ const NewPlacement = () => {
             const transformedData = bronData.hotel.hotelChesses.map((chess, index) => ({
                 id: generateTimestampId(),
                 room: chess.room.replace("№ ", ""),
-                position: 0,
+                position: chess.place - 1,
                 checkInDate: new Date(chess.start).toISOString().split("T")[0],
                 checkInTime: new Date(chess.start).toISOString().split("T")[1].slice(0, 5),
                 checkOutDate: new Date(chess.end).toISOString().split("T")[0],
                 checkOutTime: new Date(chess.end).toISOString().split("T")[1].slice(0, 5),
                 status: translateStatus(chess.request.status),
                 guest: chess.client ? chess.client.name : "Неизвестный гость",
+                requestID: chess.request.id,
+                personID: chess.client.id,
             }));
 
             setRequests(transformedData);
@@ -121,6 +124,8 @@ const NewPlacement = () => {
                 checkOutTime: new Date(request.departure.date).toISOString().split("T")[1].slice(0, 5),
                 status: "Ожидает",
                 guest: request.person ? request.person.name : "Неизвестный гость",
+                requestID: request.id,
+                personID: request.person.id,
             }));
 
             setNewRequests(transformedRequests);
@@ -335,22 +340,63 @@ const NewPlacement = () => {
     const daysInMonth = differenceInDays(endOfMonth(currentMonth), currentMonth) + 1;
     const containerWidth = daysInMonth * DAY_WIDTH;
 
-    const confirmBooking = (request) => {
-        setRequests((prevRequests) => {
-            return prevRequests.map((req) =>
-                req.id === request.id
-                    ? { ...req, status: "Забронирован" } // Меняем статус существующей заявки
-                    : req
-            );
-        });
+    const [updateHotelBron] = useMutation(UPDATE_HOTEL_BRON, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+    });
 
-        // Удаляем заявку из блока "Новые заявки", если она там есть
-        setNewRequests((prevNewRequests) =>
-            prevNewRequests.filter((req) => req.id !== request.id)
-        );
+    const confirmBooking = async (request) => {
+        const bookingInput = {
+            hotelChesses: [
+                {
+                    clientId: request.personID, // ID клиента
+                    start: `${request.checkInDate}T${request.checkInTime}:00.000Z`, // Форматируем дату заезда
+                    end: `${request.checkOutDate}T${request.checkOutTime}:00.000Z`, // Форматируем дату выезда
+                    hotelId: idHotel, // ID отеля
+                    requestId: request.requestID, // ID заявки
+                    room: `№ ${request.room}`, // Номер комнаты
+                    place: Number(request.position) + 1, // Позиция в комнате (если двухместная)
+                    public: true, // Флаг публичности (если применимо)
+                },
+            ],
+        }
 
-        setIsConfirmModalOpen(false); // Закрываем модальное окно
-        setSelectedRequest(null); // Сбрасываем выбранную заявку
+        // console.log(bookingInput)
+
+        try {
+            let request = await updateHotelBron({
+                variables: {
+                    updateHotelId: idHotel,
+                    input: bookingInput
+                }
+            });
+
+            console.log(request)
+
+            if (request) {
+                setRequests((prevRequests) => {
+                    prevRequests.map((req) =>
+                        req.id === request.id
+                            ? { ...req, status: "Забронирован" } // Меняем статус существующей заявки
+                            : req
+                    );
+                });
+
+                // Удаляем заявку из блока "Новые заявки", если она там есть
+                setNewRequests((prevNewRequests) =>
+                    prevNewRequests.filter((req) => req.id !== request.id)
+                );
+
+                setIsConfirmModalOpen(false); // Закрываем модальное окно
+                setSelectedRequest(null); // Сбрасываем выбранную заявку
+            }
+        } catch (err) {
+            console.error('Произошла ошибка при сохранении данных', err);
+        }
     };
 
 

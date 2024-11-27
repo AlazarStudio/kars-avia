@@ -482,12 +482,14 @@ export const GET_BRONS_HOTEL = gql`
         place
         room
         client {
+          id
           name
           number
           position
           gender
         }
         request {
+          id
           airport {
             city
             code
