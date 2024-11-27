@@ -1,4 +1,5 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import { Box, Typography } from "@mui/material";
 import RoomRow from "../RoomRow/RoomRow";
 import Timeline from "../Timeline/Timeline";
@@ -8,24 +9,125 @@ import { DndContext } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
+import { useQuery } from "@apollo/client";
+import { generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, getCookie } from "../../../../graphQL_requests";
 
 const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
 const NewPlacement = () => {
-    const rooms = useMemo(() => [
-        { id: "101", type: "single" },
-        { id: "102", type: "double" },
-        { id: "103", type: "single" },
-        { id: "104", type: "double" },
-        { id: "105", type: "single" },
-        { id: "106", type: "double" },
-        { id: "107", type: "single" },
-        { id: "108", type: "double" },
-        { id: "109", type: "single" },
-        { id: "110", type: "double" },
-    ], []);
+    let { idHotel } = useParams();
+
+    const token = getCookie('token');
+
+    // Получение информации об отеле
+    const [hotelInfo, setHotelInfo] = useState('');
+
+    const { loading: loadingHotel, error: errorHotel, data: dataHotel } = useQuery(GET_HOTEL, {
+        variables: { hotelId: idHotel },
+    });
+
+    useEffect(() => {
+        if (dataHotel && dataHotel.hotel) {
+            setHotelInfo(dataHotel.hotel);
+        }
+    }, [dataHotel]);
+
+    // Получение комнат отеля
+    const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+        variables: { hotelId: idHotel },
+    });
+
+    const rooms = useMemo(() => {
+        if (!data || !data.hotel || !data.hotel.rooms) return [];
+
+        return data.hotel.rooms.map((room) => ({
+            id: room.name.replace('№ ', ''),
+            type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
+        }));
+    }, [data]);
+
+    // Получение броней отеля
+    const [requests, setRequests] = useState([]);
+
+    const { loading: bronLoading, error: bronError, data: bronData } = useQuery(GET_BRONS_HOTEL, {
+        variables: { hotelId: idHotel },
+    });
+
+    const translateStatus = (status) => {
+        switch (status) {
+            case "done":
+                return "Забронирован";
+            case "extended":
+                return "Продлен";
+            case "reduced":
+                return "Сокращен";
+            case "transferred":
+                return "Перенесен";
+            default:
+                return "Неизвестно";
+        }
+    };
+
+    useEffect(() => {
+        if (bronData && bronData.hotel && bronData.hotel.hotelChesses) {
+            const transformedData = bronData.hotel.hotelChesses.map((chess, index) => ({
+                id: generateTimestampId(),
+                room: chess.room.replace("№ ", ""),
+                position: 0,
+                checkInDate: new Date(chess.start).toISOString().split("T")[0],
+                checkInTime: new Date(chess.start).toISOString().split("T")[1].slice(0, 5),
+                checkOutDate: new Date(chess.end).toISOString().split("T")[0],
+                checkOutTime: new Date(chess.end).toISOString().split("T")[1].slice(0, 5),
+                status: translateStatus(chess.request.status),
+                guest: chess.client ? chess.client.name : "Неизвестный гость",
+            }));
+
+            setRequests(transformedData);
+        }
+    }, [bronData]);
+
+    // Получение новых заявок для размещения
+    const [newRequests, setNewRequests] = useState([])
+
+    const { loading: loadingBrons, error: errorBrons, data: dataBrons, refetch: refetchBrons } = useQuery(GET_REQUESTS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
+        variables: { pagination: { skip: 0, take: 99999999, status: "all" } },
+    });
+
+    useEffect(() => {
+        if (
+            dataBrons &&
+            dataBrons.requests &&
+            dataBrons.requests.requests &&
+            hotelInfo.city // Проверяем, что `hotelInfo.city` установлен
+        ) {
+            const filteredRequests = dataBrons.requests.requests.filter(
+                (request) =>
+                    request.status === "created" &&
+                    request.airport.city === hotelInfo.city
+            );
+
+            const transformedRequests = filteredRequests.map((request) => ({
+                id: generateTimestampId(), // Используем уникальный ID
+                checkInDate: new Date(request.arrival.date).toISOString().split("T")[0],
+                checkInTime: new Date(request.arrival.date).toISOString().split("T")[1].slice(0, 5),
+                checkOutDate: new Date(request.departure.date).toISOString().split("T")[0],
+                checkOutTime: new Date(request.departure.date).toISOString().split("T")[1].slice(0, 5),
+                status: "Ожидает",
+                guest: request.person ? request.person.name : "Неизвестный гость",
+            }));
+
+            setNewRequests(transformedRequests);
+        }
+    }, [dataBrons, hotelInfo.city, refetchBrons]);
+
+    // ----------------------------------------------------------------
 
     const scrollContainerRef = useRef(null);
 
@@ -37,85 +139,6 @@ const NewPlacement = () => {
     const [selectedRequest, setSelectedRequest] = useState(null);
 
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
-
-    const [requests, setRequests] = useState([
-        {
-            id: 1,
-            room: "101",
-            position: 0,
-            checkInDate: "2024-11-19",
-            checkInTime: "14:00",
-            checkOutDate: "2024-11-25",
-            checkOutTime: "12:00",
-            status: "Забронирован",
-            guest: "Иванов Иван Иванович"
-        },
-        {
-            id: 2,
-            room: "102",
-            position: 0,
-            checkInDate: "2024-11-25",
-            checkInTime: "16:00",
-            checkOutDate: "2024-12-08",
-            checkOutTime: "15:00",
-            status: "Продлен",
-            guest: "Петров Петр Петрович"
-        },
-        {
-            id: 3,
-            room: "102",
-            position: 1,
-            checkInDate: "2024-11-22",
-            checkInTime: "14:00",
-            checkOutDate: "2024-11-28",
-            checkOutTime: "15:00",
-            status: "Сокращен",
-            guest: "Петров Петр Петрович"
-        },
-        {
-            id: 4,
-            room: "101",
-            position: 0,
-            checkInDate: "2024-11-25",
-            checkInTime: "14:00",
-            checkOutDate: "2024-11-30",
-            checkOutTime: "12:00",
-            status: "Забронирован",
-            guest: "Иванов Иван Иванович"
-        },
-        {
-            id: 5,
-            room: "104",
-            position: 0,
-            checkInDate: "2024-11-16",
-            checkInTime: "14:00",
-            checkOutDate: "2024-11-25",
-            checkOutTime: "12:00",
-            status: "Забронирован",
-            guest: "Иванов Иван Иванович"
-        },
-    ]);
-
-    const [newRequests, setNewRequests] = useState([
-        {
-            id: 6,
-            checkInDate: "2024-11-26",
-            checkInTime: "14:00",
-            checkOutDate: "2024-11-30",
-            checkOutTime: "12:00",
-            status: "Ожидает",
-            guest: "Сидоров Сидор Сидорович",
-        },
-        {
-            id: 7,
-            checkInDate: "2024-11-22",
-            checkInTime: "14:00",
-            checkOutDate: "2024-11-30",
-            checkOutTime: "12:00",
-            status: "Ожидает",
-            guest: "Кузнецов Алексей Иванович",
-        },
-    ]);
 
     // Глобальное состояние перетаскивания
     const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);

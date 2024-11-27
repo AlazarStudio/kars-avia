@@ -48,6 +48,10 @@ export function convertToDate(dateString, includeTime = false) {
   return formattedDate;
 }
 
+export function generateTimestampId(min = 1, max = 1000000) {
+  return Date.now() + Math.floor(Math.random() * (max - min + 1)) + min; // Возвращает количество миллисекунд с 1 января 1970 года
+}
+
 // ----------------------------------------------------------------
 
 // Запросы получения пользователя
