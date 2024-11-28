@@ -383,22 +383,23 @@ const NewPlacement = () => {
                     }
 
                     try {
-                        await updateHotelBron({
+                        let request = await updateHotelBron({
                             variables: {
                                 updateHotelId: idHotel,
                                 input: bookingInput,
                             },
                         });
 
-                        await updateRequest({
-                            variables: {
-                                updateRequestId: draggedRequest.requestID,
-                                input: {
-                                    status: "transferred"
+                        if (request) {
+                            await updateRequest({
+                                variables: {
+                                    updateRequestId: draggedRequest.requestID,
+                                    input: {
+                                        status: "transferred"
+                                    },
                                 },
-                            },
-                        });
-
+                            });
+                        }
                         // console.log('Перенесен между местами в номере')
                     } catch (err) {
                         console.error("Произошла ошибка при подтверждении бронирования", err);
