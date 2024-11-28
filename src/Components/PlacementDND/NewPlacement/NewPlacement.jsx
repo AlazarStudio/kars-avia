@@ -295,6 +295,15 @@ const NewPlacement = () => {
                     status: "Ожидает",
                 };
 
+                setRequests((prevRequests) => {
+                    const exists = prevRequests.some((req) => req.id === newRequest.id);
+                    if (exists) {
+                        console.warn(`Заявка с id ${newRequest.id} уже существует в массиве requests!`);
+                        return prevRequests;
+                    }
+                    return [...prevRequests, newRequest];
+                });
+
                 // Открываем модальное окно для подтверждения
                 setSelectedRequest(newRequest);
                 setIsConfirmModalOpen(true);
@@ -448,7 +457,7 @@ const NewPlacement = () => {
         setIsModalOpen(true);
     };
 
-    const handleSaveChanges = (updatedRequest) => {
+    const handleSaveChanges = async (updatedRequest) => {
         setRequests((prevRequests) =>
             prevRequests.map((req) =>
                 req.id === updatedRequest.id ? updatedRequest : req
@@ -456,6 +465,25 @@ const NewPlacement = () => {
         );
         setOriginalRequest(null);
         setIsModalOpen(false);
+
+        try {
+            await updateRequest({
+                variables: {
+                    updateRequestId: updatedRequest.requestID,
+                    input: {
+                        arrival: {
+                            date: `${updatedRequest.checkInDate}T${updatedRequest.checkInTime}:00.000Z`,
+                        },
+                        departure: {
+                            date: `${updatedRequest.checkOutDate}T${updatedRequest.checkOutTime}:00.000Z`,
+                        },
+                        status: updatedRequest.status == 'Сокращен' ? 'reduced' : updatedRequest.status == 'Продлен' ? 'extended' : ''
+                    },
+                },
+            });
+        } catch (err) {
+            console.error("Произошла ошибка при подтверждении бронирования", err);
+        }
     };
 
     const handleCloseModal = () => {
@@ -526,6 +554,7 @@ const NewPlacement = () => {
             setRequests((prevRequests) =>
                 prevRequests.filter((req) => req.id !== selectedRequest.id)
             );
+
             setNewRequests((prevRequests) =>
                 prevRequests.filter((req) => req.id !== selectedRequest.id)
             );
@@ -599,6 +628,7 @@ const NewPlacement = () => {
 
                                         {rooms.map((room) => (
                                             <RoomRow
+                                                userRole={user.role}
                                                 key={room.id}
                                                 dayWidth={DAY_WIDTH}
                                                 weekendColor={WEEKEND_COLOR}
@@ -627,6 +657,7 @@ const NewPlacement = () => {
                             <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
                                 {newRequests.map((request) => (
                                     <DraggableRequest
+                                        userRole={user.role}
                                         key={request.id}
                                         request={request}
                                         dayWidth={DAY_WIDTH}

@@ -4,7 +4,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { convertToDate } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal }) => {
+const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -156,46 +156,48 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         <>
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
-                <Box
-                    onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        let deltaDays = 0;
+                {userRole != 'HOTELADMIN' &&
+                    <Box
+                        onMouseDown={(e) => {
+                            const startX = e.clientX;
+                            let deltaDays = 0;
 
-                        handleResizeStart();
+                            handleResizeStart();
 
-                        const handleMouseMove = (event) => {
-                            const deltaX = event.clientX - startX;
-                            deltaDays = Math.round(deltaX / dayWidth); // Обновляем deltaDays
-                            if (deltaDays !== 0) {
-                                handleResize("start", deltaDays);
-                            }
-                        };
+                            const handleMouseMove = (event) => {
+                                const deltaX = event.clientX - startX;
+                                deltaDays = Math.round(deltaX / dayWidth); // Обновляем deltaDays
+                                if (deltaDays !== 0) {
+                                    handleResize("start", deltaDays);
+                                }
+                            };
 
-                        const handleMouseUp = () => {
-                            document.removeEventListener("mousemove", handleMouseMove);
-                            document.removeEventListener("mouseup", handleMouseUp);
+                            const handleMouseUp = () => {
+                                document.removeEventListener("mousemove", handleMouseMove);
+                                document.removeEventListener("mouseup", handleMouseUp);
 
-                            // Передаём deltaDays в handleResize для обновления заявки
-                            const updatedRequest = handleResize("start", deltaDays);
-                            handleResizeEnd(updatedRequest); // Передаём обновлённую заявку
-                        };
+                                // Передаём deltaDays в handleResize для обновления заявки
+                                const updatedRequest = handleResize("start", deltaDays);
+                                handleResizeEnd(updatedRequest); // Передаём обновлённую заявку
+                            };
 
-                        document.addEventListener("mousemove", handleMouseMove);
-                        document.addEventListener("mouseup", handleMouseUp);
-                    }}
-                    sx={{
-                        width: "10px",
-                        height: "100%",
-                        cursor: "ew-resize",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: '23px',
-                        userSelect: 'none'
-                    }}
-                >
-                    <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
-                </Box>
+                            document.addEventListener("mousemove", handleMouseMove);
+                            document.addEventListener("mouseup", handleMouseUp);
+                        }}
+                        sx={{
+                            width: "10px",
+                            height: "100%",
+                            cursor: "ew-resize",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: '23px',
+                            userSelect: 'none'
+                        }}
+                    >
+                        <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                    </Box>
+                }
                 {/* Центральная область для перетаскивания */}
                 <Box
                     ref={setNodeRef}
@@ -219,48 +221,51 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 >
                     {request.guest}
                 </Box>
+
                 {/* Правая ручка для изменения конца */}
-                <Box
-                    onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        let deltaDays = 0;
+                {userRole != 'HOTELADMIN' &&
+                    <Box
+                        onMouseDown={(e) => {
+                            const startX = e.clientX;
+                            let deltaDays = 0;
 
-                        handleResizeStart();
+                            handleResizeStart();
 
-                        const handleMouseMove = (event) => {
-                            const deltaX = event.clientX - startX;
-                            deltaDays = Math.round(deltaX / dayWidth);
-                            if (deltaDays !== 0) {
-                                handleResize("end", deltaDays);
-                            }
-                        };
+                            const handleMouseMove = (event) => {
+                                const deltaX = event.clientX - startX;
+                                deltaDays = Math.round(deltaX / dayWidth);
+                                if (deltaDays !== 0) {
+                                    handleResize("end", deltaDays);
+                                }
+                            };
 
-                        const handleMouseUp = () => {
-                            document.removeEventListener("mousemove", handleMouseMove);
-                            document.removeEventListener("mouseup", handleMouseUp);
+                            const handleMouseUp = () => {
+                                document.removeEventListener("mousemove", handleMouseMove);
+                                document.removeEventListener("mouseup", handleMouseUp);
 
-                            // Получаем обновлённую заявку
-                            const updatedRequest = handleResize("end", deltaDays);
-                            handleResizeEnd(updatedRequest);
-                        };
+                                // Получаем обновлённую заявку
+                                const updatedRequest = handleResize("end", deltaDays);
+                                handleResizeEnd(updatedRequest);
+                            };
 
-                        document.addEventListener("mousemove", handleMouseMove);
-                        document.addEventListener("mouseup", handleMouseUp);
-                    }}
-                    sx={{
-                        width: "10px",
-                        height: "100%",
-                        cursor: "ew-resize",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: '23px',
-                        userSelect: 'none'
-                    }}
-                >
-                    <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
-                </Box>
-            </Box>
+                            document.addEventListener("mousemove", handleMouseMove);
+                            document.addEventListener("mouseup", handleMouseUp);
+                        }}
+                        sx={{
+                            width: "10px",
+                            height: "100%",
+                            cursor: "ew-resize",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: '23px',
+                            userSelect: 'none'
+                        }}
+                    >
+                        <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                    </Box>
+                }
+            </Box >
 
             {tooltipVisible && (
                 <Box
@@ -302,7 +307,8 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         <div style={styleToolTip}> Выселение: <b>{convertToDate(request.checkOutDate)} {request.checkOutTime}</b></div>
                     </Typography>
                 </Box>
-            )}
+            )
+            }
         </>
     );
 };
