@@ -230,6 +230,13 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
             images
           }
           requestNumber
+          hotelChess {
+            start
+            end
+            room
+            id
+            place
+          }
         }
     }
 `;
@@ -285,6 +292,13 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
             images
           }
           requestNumber
+          hotelChess {
+            start
+            end
+            room
+            id
+            place
+          }
         }
     }
 `;
@@ -471,11 +485,20 @@ export const UPDATE_HOTEL_BRON = gql`
   }
 `;
 
+export const UPDATE_REQUEST_RELAY = gql`
+  mutation Mutation($updateRequestId: ID!, $input: UpdateRequestInput!) {
+    updateRequest(id: $updateRequestId, input: $input) {
+      status
+    }
+  }
+`;
+
 export const GET_BRONS_HOTEL = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
       name
       hotelChesses {
+        id
         public
         start
         end

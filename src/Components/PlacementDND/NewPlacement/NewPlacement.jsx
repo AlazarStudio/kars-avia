@@ -9,8 +9,8 @@ import { DndContext } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
-import { useMutation, useQuery } from "@apollo/client";
-import { decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, getCookie, UPDATE_HOTEL_BRON } from "../../../../graphQL_requests";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
 
 const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
@@ -27,6 +27,7 @@ const NewPlacement = () => {
 
     const { loading: loadingHotel, error: errorHotel, data: dataHotel } = useQuery(GET_HOTEL, {
         variables: { hotelId: idHotel },
+        fetchPolicy: 'network-only',
     });
 
     useEffect(() => {
@@ -38,6 +39,7 @@ const NewPlacement = () => {
     // Получение комнат отеля
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: idHotel },
+        fetchPolicy: 'network-only',
     });
 
     const rooms = useMemo(() => {
@@ -50,10 +52,26 @@ const NewPlacement = () => {
     }, [data]);
 
     // Получение броней отеля
+
+    // При бронировании в шахматку не приходит hotelChess
+
     const [requests, setRequests] = useState([]);
 
-    const { loading: bronLoading, error: bronError, data: bronData } = useQuery(GET_BRONS_HOTEL, {
+    const { loading: bronLoading, error: bronError, data: bronData, refetch: bronRefetch } = useQuery(GET_BRONS_HOTEL, {
         variables: { hotelId: idHotel },
+        fetchPolicy: 'network-only',
+    });
+
+    // Подписки для отслеживания создания и обновления заявок
+    const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION, {
+        onSubscriptionData: () => {
+            bronRefetch(); // Обновляем данные после новых событий
+        },
+    });
+    const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION, {
+        onSubscriptionData: () => {
+            bronRefetch(); // Обновляем данные после новых событий
+        },
     });
 
     const translateStatus = (status) => {
@@ -72,6 +90,29 @@ const NewPlacement = () => {
     };
 
     useEffect(() => {
+        if (subscriptionUpdateData?.requestUpdated) {
+            const updatedRequest = {
+                id: subscriptionUpdateData.requestUpdated.id, // Используем ID из подписки
+                checkInDate: new Date(subscriptionUpdateData.requestUpdated.arrival.date).toISOString().split("T")[0],
+                checkInTime: new Date(subscriptionUpdateData.requestUpdated.arrival.date).toISOString().split("T")[1].slice(0, 5),
+                checkOutDate: new Date(subscriptionUpdateData.requestUpdated.departure.date).toISOString().split("T")[0],
+                checkOutTime: new Date(subscriptionUpdateData.requestUpdated.departure.date).toISOString().split("T")[1].slice(0, 5),
+                status: translateStatus(subscriptionUpdateData.requestUpdated.status),
+                guest: subscriptionUpdateData.requestUpdated.person?.name || "Неизвестный гость",
+                requestID: subscriptionUpdateData.requestUpdated.id,
+                personID: subscriptionUpdateData.requestUpdated.person?.id,
+                room: subscriptionUpdateData.requestUpdated.room?.replace("№ ", "") || null,
+            };
+
+            setRequests((prevRequests) =>
+                prevRequests.map((req) =>
+                    req.id === updatedRequest.id ? updatedRequest : req
+                )
+            );
+        }
+    }, [subscriptionUpdateData]);
+
+    useEffect(() => {
         if (bronData && bronData.hotel && bronData.hotel.hotelChesses) {
             const transformedData = bronData.hotel.hotelChesses.map((chess, index) => ({
                 id: generateTimestampId(),
@@ -85,6 +126,7 @@ const NewPlacement = () => {
                 guest: chess.client ? chess.client.name : "Неизвестный гость",
                 requestID: chess.request.id,
                 personID: chess.client.id,
+                chessID: chess.id,
             }));
 
             setRequests(transformedData);
@@ -101,7 +143,26 @@ const NewPlacement = () => {
             },
         },
         variables: { pagination: { skip: 0, take: 99999999, status: "all" } },
+        fetchPolicy: 'network-only',
     });
+
+    useEffect(() => {
+        if (subscriptionData?.requestCreated) {
+            const newRequest = {
+                id: generateTimestampId(), // Генерация уникального ID для фронтенда
+                checkInDate: new Date(subscriptionData.requestCreated.arrival.date).toISOString().split("T")[0],
+                checkInTime: new Date(subscriptionData.requestCreated.arrival.date).toISOString().split("T")[1].slice(0, 5),
+                checkOutDate: new Date(subscriptionData.requestCreated.departure.date).toISOString().split("T")[0],
+                checkOutTime: new Date(subscriptionData.requestCreated.departure.date).toISOString().split("T")[1].slice(0, 5),
+                status: "Ожидает",
+                guest: subscriptionData.requestCreated.person?.name || "Неизвестный гость",
+                requestID: subscriptionData.requestCreated.id,
+                personID: subscriptionData.requestCreated.person?.id,
+            };
+
+            setNewRequests((prev) => [...prev, newRequest]);
+        }
+    }, [subscriptionData]);
 
     useEffect(() => {
         if (
@@ -148,6 +209,32 @@ const NewPlacement = () => {
     // Глобальное состояние перетаскивания
     const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
 
+    const [updateHotelBron] = useMutation(UPDATE_HOTEL_BRON, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+        onCompleted: () => {
+            refetchBrons(); // Обновляем данные вручную
+            bronRefetch();
+        },
+    });
+
+    const [updateRequest] = useMutation(UPDATE_REQUEST_RELAY, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Apollo-Require-Preflight': 'true',
+            },
+        },
+        onCompleted: () => {
+            refetchBrons(); // Обновляем данные вручную
+            bronRefetch();
+        },
+    });
+
     const handleUpdateRequest = (updatedRequest) => {
         setRequests((prevRequests) =>
             prevRequests.map((req) =>
@@ -156,7 +243,7 @@ const NewPlacement = () => {
         );
     };
 
-    const handleDragEnd = (event) => {
+    const handleDragEnd = async (event) => {
         setIsDraggingGlobal(false);
 
         const { active, over } = event;
@@ -208,17 +295,6 @@ const NewPlacement = () => {
                     status: "Ожидает",
                 };
 
-                setRequests((prevRequests) => {
-                    // Удаляем заявку со статусом "Ожидает", если она уже есть
-                    const filteredRequests = prevRequests.filter((req) => req.id !== draggedRequest.id);
-                    return [...filteredRequests, newRequest];
-                });
-
-                // Удаляем заявку из блока "Новые заявки"
-                setNewRequests((prevNewRequests) =>
-                    prevNewRequests.filter((req) => req.id !== draggedRequest.id)
-                );
-
                 // Открываем модальное окно для подтверждения
                 setSelectedRequest(newRequest);
                 setIsConfirmModalOpen(true);
@@ -244,11 +320,6 @@ const NewPlacement = () => {
                     }
                     return [...prevRequests, newRequest];
                 });
-
-                // Удаляем из блока "Новые заявки"
-                setNewRequests((prevNewRequests) =>
-                    prevNewRequests.filter((req) => req.id !== draggedRequest.id)
-                );
 
                 // Открываем модальное окно для подтверждения
                 setSelectedRequest(newRequest);
@@ -277,32 +348,95 @@ const NewPlacement = () => {
             } else {
                 // Перемещение между комнатами
                 if (isDouble) {
-                    const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
+                    const availablePosition = [0, 1].find((pos) => {
+                        const isPositionOccupied = overlappingRequests.some(
+                            (req) => req.position === pos
+                        );
+                        return !isPositionOccupied; // Только свободные позиции
+                    });
+
                     if (availablePosition === undefined) {
                         console.warn("Места заняты в двухместной комнате!");
                         return;
                     }
 
-                    setRequests((prevRequests) =>
-                        prevRequests.map((req) =>
-                            req.id === draggedRequest.id
-                                ? { ...req, room: targetRoomId, position: availablePosition, status: "Перенесен" }
-                                : req
-                        )
-                    );
+                    const bookingInput = {
+                        hotelChesses: [
+                            {
+                                clientId: draggedRequest.personID, // ID клиента
+                                hotelId: idHotel, // ID отеля
+                                requestId: draggedRequest.requestID, // ID заявки
+                                room: `№ ${targetRoomId}`, // Номер комнаты
+                                place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
+                                id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
+                            },
+                        ],
+                    }
+
+                    try {
+                        await updateHotelBron({
+                            variables: {
+                                updateHotelId: idHotel,
+                                input: bookingInput,
+                            },
+                        });
+
+                        await updateRequest({
+                            variables: {
+                                updateRequestId: draggedRequest.requestID,
+                                input: {
+                                    status: "transferred"
+                                },
+                            },
+                        });
+
+                        // console.log('Перенесен между местами в номере')
+                    } catch (err) {
+                        console.error("Произошла ошибка при подтверждении бронирования", err);
+                    }
+
                 } else {
                     if (occupiedPositions.length > 0) {
                         console.warn("Место занято в однокомнатной комнате!");
                         return;
                     }
 
-                    setRequests((prevRequests) =>
-                        prevRequests.map((req) =>
-                            req.id === draggedRequest.id
-                                ? { ...req, room: targetRoomId, position: 0, status: "Перенесен" }
-                                : req
-                        )
-                    );
+                    const bookingInput = {
+                        hotelChesses: [
+                            {
+                                clientId: draggedRequest.personID, // ID клиента
+                                hotelId: idHotel, // ID отеля
+                                requestId: draggedRequest.requestID, // ID заявки
+                                room: `№ ${targetRoomId}`, // Номер комнаты
+                                place: 1, // Позиция в комнате (если двухместная)
+                                id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
+                            },
+                        ],
+                    }
+
+                    try {
+                        let request = await updateHotelBron({
+                            variables: {
+                                updateHotelId: idHotel,
+                                input: bookingInput,
+                            },
+                        });
+
+                        if (request) {
+                            await updateRequest({
+                                variables: {
+                                    updateRequestId: draggedRequest.requestID,
+                                    input: {
+                                        status: "transferred"
+                                    },
+                                },
+                            });
+                        }
+
+                        // console.log('Перенесен в другой номер')
+                    } catch (err) {
+                        console.error("Произошла ошибка при подтверждении бронирования", err);
+                    }
                 }
             }
         }
@@ -340,15 +474,6 @@ const NewPlacement = () => {
     const daysInMonth = differenceInDays(endOfMonth(currentMonth), currentMonth) + 1;
     const containerWidth = daysInMonth * DAY_WIDTH;
 
-    const [updateHotelBron] = useMutation(UPDATE_HOTEL_BRON, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
-            },
-        },
-    });
-
     const confirmBooking = async (request) => {
         const bookingInput = {
             hotelChesses: [
@@ -365,53 +490,53 @@ const NewPlacement = () => {
             ],
         }
 
-        // console.log(bookingInput)
-
         try {
-            let request = await updateHotelBron({
+            await updateHotelBron({
                 variables: {
                     updateHotelId: idHotel,
-                    input: bookingInput
-                }
+                    input: bookingInput,
+                },
             });
 
-            console.log(request)
-
-            if (request) {
-                setRequests((prevRequests) => {
-                    prevRequests.map((req) =>
-                        req.id === request.id
-                            ? { ...req, status: "Забронирован" } // Меняем статус существующей заявки
-                            : req
-                    );
-                });
-
-                // Удаляем заявку из блока "Новые заявки", если она там есть
-                setNewRequests((prevNewRequests) =>
-                    prevNewRequests.filter((req) => req.id !== request.id)
-                );
-
-                setIsConfirmModalOpen(false); // Закрываем модальное окно
-                setSelectedRequest(null); // Сбрасываем выбранную заявку
-            }
         } catch (err) {
-            console.error('Произошла ошибка при сохранении данных', err);
+            console.error("Произошла ошибка при подтверждении бронирования", err);
         }
+
+        setSelectedRequest(null);
+        setIsConfirmModalOpen(false);
     };
 
-
-    const handleCancelBooking = () => {
+    const handleCancelBooking = async () => {
         if (selectedRequest) {
+            // Создаем новую копию заявки с очищенными полями
+            const updatedRequest = {
+                ...selectedRequest,
+                id: generateTimestampId(), // Генерируем новый уникальный id
+                room: null, // Убираем комнату
+                position: null, // Убираем позицию
+            };
+
+            // Добавляем заявку обратно в список новых заявок
+            setNewRequests((prevNewRequests) => [
+                ...prevNewRequests,
+                updatedRequest,
+            ]);
+
             // Удаляем заявку из шахматки
             setRequests((prevRequests) =>
                 prevRequests.filter((req) => req.id !== selectedRequest.id)
             );
+            setNewRequests((prevRequests) =>
+                prevRequests.filter((req) => req.id !== selectedRequest.id)
+            );
 
-            // Возвращаем заявку в блок "Новые заявки" с обнулением поля room
-            setNewRequests((prevNewRequests) => [
-                ...prevNewRequests,
-                { ...selectedRequest, room: null, position: null },
-            ]);
+            try {
+                // Рефетч данных
+                await bronRefetch?.();
+                await refetchBrons?.();
+            } catch (error) {
+                console.error("Ошибка при обновлении данных:", error);
+            }
         }
 
         // Закрываем модальное окно
