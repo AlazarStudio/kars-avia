@@ -648,13 +648,14 @@ const NewPlacement = () => {
                         </Box>
                     </Box>
 
-                    {newRequests?.length > 0 &&
-                        <Box sx={{ width: "300px", padding: "10px", backgroundColor: "#f9f9f9" }}>
-                            <Typography variant="h6" sx={{ textAlign: "center", marginBottom: "10px" }}>
-                                Новые заявки
-                            </Typography>
 
-                            <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column' }}>
+                    <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
+                        <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            Заявки в городе {hotelInfo.city}
+                        </Typography>
+
+                        {newRequests?.length > 0 ?
+                            <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', padding: "10px" }}>
                                 {newRequests.map((request) => (
                                     <DraggableRequest
                                         userRole={user.role}
@@ -668,8 +669,12 @@ const NewPlacement = () => {
                                     />
                                 ))}
                             </Box>
-                        </Box>
-                    }
+                            :
+                            <Typography variant="h6" sx={{ padding: '10px ', textAlign: "center", fontSize: '14px', height: 'calc(100% - 50px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                Заявок не найдено
+                            </Typography>
+                        }
+                    </Box>
                 </Box>
             </DndContext >
 
