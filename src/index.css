@@ -94,6 +94,34 @@ input[type="file"] {
     background-color: var(--text-gray);
 }
 
+.extended {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #2196f3;
+}
+
+.reduced {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #f44336;
+}
+
+.transferred {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #ff9800;
+}
+
+.earlyStart {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #9575cd;
+}
+
 .archiving {
     width: 10px;
     height: 10px;
