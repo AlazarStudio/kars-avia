@@ -601,7 +601,7 @@ const NewPlacement = ({ idHotelInfo }) => {
         <>
             <DndContext onDragStart={() => setIsDraggingGlobal(true)} onDragEnd={handleDragEnd}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '50px' }}>
-                    <Box sx={{ overflow: 'hidden' }}>
+                    <Box sx={{ overflow: 'hidden', overflowX: 'scroll' }}>
                         <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
                             <Timeline
                                 currentMonth={currentMonth}
