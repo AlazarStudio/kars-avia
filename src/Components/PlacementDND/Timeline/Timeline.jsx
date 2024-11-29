@@ -37,9 +37,8 @@ const Timeline = memo(({ currentMonth, setCurrentMonth, dayWidth, weekendColor, 
         }}>
             <Box
                 sx={{
-                    width: '100px',
-                    borderBottom: '1px solid #ddd',
-                    borderRight: '1px solid #ddd',
+                    width: '240px',
+                    border: '1px solid #ddd',
                     backgroundColor: '#f5f5f5',
                 }}
             />
@@ -54,6 +53,7 @@ const Timeline = memo(({ currentMonth, setCurrentMonth, dayWidth, weekendColor, 
                         height: "50px",
                         backgroundColor: "#f5f5f5",
                         borderBottom: "1px solid #ddd",
+                        borderTop: "1px solid #ddd",
                         borderRight: '1px solid #ddd',
                         padding: "0 10px",
                     }}

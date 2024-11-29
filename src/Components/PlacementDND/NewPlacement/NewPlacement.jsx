@@ -387,26 +387,12 @@ const NewPlacement = ({ idHotelInfo }) => {
                     }
 
                     try {
-                        let request = await updateHotelBron({
+                        await updateHotelBron({
                             variables: {
                                 updateHotelId: hotelId,
                                 input: bookingInput,
                             },
                         });
-
-                        console.log(request)
-
-                        if (request) {
-                            await updateRequest({
-                                variables: {
-                                    updateRequestId: draggedRequest.requestID,
-                                    input: {
-                                        status: "transferred"
-                                    },
-                                },
-                            });
-                        }
-                        // console.log('Перенесен между местами в номере')
                     } catch (err) {
                         console.error("Произошла ошибка при подтверждении бронирования", err);
                     }
@@ -431,27 +417,12 @@ const NewPlacement = ({ idHotelInfo }) => {
                     }
 
                     try {
-                        let request = await updateHotelBron({
+                        await updateHotelBron({
                             variables: {
                                 updateHotelId: hotelId,
                                 input: bookingInput,
                             },
                         });
-
-                        console.log(request)
-
-                        if (request) {
-                            await updateRequest({
-                                variables: {
-                                    updateRequestId: draggedRequest.requestID,
-                                    input: {
-                                        status: "transferred"
-                                    },
-                                },
-                            });
-                        }
-
-                        // console.log('Перенесен в другой номер')
                     } catch (err) {
                         console.error("Произошла ошибка при подтверждении бронирования", err);
                     }
@@ -600,9 +571,9 @@ const NewPlacement = ({ idHotelInfo }) => {
     return (
         <>
             <DndContext onDragStart={() => setIsDraggingGlobal(true)} onDragEnd={handleDragEnd}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '50px' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
                     <Box sx={{ overflow: 'hidden', overflowX: 'scroll' }}>
-                        <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
+                        <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 248px)` }}>
                             <Timeline
                                 currentMonth={currentMonth}
                                 setCurrentMonth={setCurrentMonth}
@@ -615,7 +586,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                                     sx={{
                                         left: 0,
                                         top: 0,
-                                        minWidth: '100px',
+                                        minWidth: '240px',
                                         backgroundColor: '#f5f5f5',
                                         zIndex: 2,
                                     }}
@@ -629,12 +600,13 @@ const NewPlacement = ({ idHotelInfo }) => {
                                                 height: room.type === 'double' ? '80px' : '40px',
                                                 borderBottom: '1px solid #ddd',
                                                 borderRight: '1px solid #ddd',
+                                                borderLeft: '1px solid #ddd',
                                                 backgroundColor: '#f5f5f5',
                                             }}
                                         >
                                             <Typography
                                                 variant="body1"
-                                                sx={{ textAlign: 'center', width: '100%', fontSize: '14px' }}
+                                                sx={{ textAlign: 'center', width: '100%', fontSize: '14px', padding: '0 10px' }}
                                             >
                                                 {room.id}
                                             </Typography>
