@@ -16,8 +16,10 @@ const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
-const NewPlacement = () => {
+const NewPlacement = ({ idHotelInfo }) => {
     let { idHotel } = useParams();
+
+    let hotelId = idHotelInfo ? idHotelInfo : idHotel
 
     const token = getCookie('token');
     const user = decodeJWT(token);
@@ -26,7 +28,7 @@ const NewPlacement = () => {
     const [hotelInfo, setHotelInfo] = useState('');
 
     const { loading: loadingHotel, error: errorHotel, data: dataHotel } = useQuery(GET_HOTEL, {
-        variables: { hotelId: idHotel },
+        variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
     });
 
@@ -38,7 +40,7 @@ const NewPlacement = () => {
 
     // Получение комнат отеля
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
-        variables: { hotelId: idHotel },
+        variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
     });
 
@@ -58,7 +60,7 @@ const NewPlacement = () => {
     const [requests, setRequests] = useState([]);
 
     const { loading: bronLoading, error: bronError, data: bronData, refetch: bronRefetch } = useQuery(GET_BRONS_HOTEL, {
-        variables: { hotelId: idHotel },
+        variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
     });
 
@@ -375,7 +377,7 @@ const NewPlacement = () => {
                         hotelChesses: [
                             {
                                 clientId: draggedRequest.personID, // ID клиента
-                                hotelId: idHotel, // ID отеля
+                                hotelId: hotelId, // ID отеля
                                 requestId: draggedRequest.requestID, // ID заявки
                                 room: `№ ${targetRoomId}`, // Номер комнаты
                                 place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
@@ -387,7 +389,7 @@ const NewPlacement = () => {
                     try {
                         let request = await updateHotelBron({
                             variables: {
-                                updateHotelId: idHotel,
+                                updateHotelId: hotelId,
                                 input: bookingInput,
                             },
                         });
@@ -419,7 +421,7 @@ const NewPlacement = () => {
                         hotelChesses: [
                             {
                                 clientId: draggedRequest.personID, // ID клиента
-                                hotelId: idHotel, // ID отеля
+                                hotelId: hotelId, // ID отеля
                                 requestId: draggedRequest.requestID, // ID заявки
                                 room: `№ ${targetRoomId}`, // Номер комнаты
                                 place: 1, // Позиция в комнате (если двухместная)
@@ -431,7 +433,7 @@ const NewPlacement = () => {
                     try {
                         let request = await updateHotelBron({
                             variables: {
-                                updateHotelId: idHotel,
+                                updateHotelId: hotelId,
                                 input: bookingInput,
                             },
                         });
@@ -530,7 +532,7 @@ const NewPlacement = () => {
                     clientId: request.personID, // ID клиента
                     start: `${request.checkInDate}T${request.checkInTime}:00.000Z`, // Форматируем дату заезда
                     end: `${request.checkOutDate}T${request.checkOutTime}:00.000Z`, // Форматируем дату выезда
-                    hotelId: idHotel, // ID отеля
+                    hotelId: hotelId, // ID отеля
                     requestId: request.requestID, // ID заявки
                     room: `№ ${request.room}`, // Номер комнаты
                     place: Number(request.position) + 1, // Позиция в комнате (если двухместная)
@@ -542,7 +544,7 @@ const NewPlacement = () => {
         try {
             await updateHotelBron({
                 variables: {
-                    updateHotelId: idHotel,
+                    updateHotelId: hotelId,
                     input: bookingInput,
                 },
             });
@@ -598,7 +600,7 @@ const NewPlacement = () => {
     return (
         <>
             <DndContext onDragStart={() => setIsDraggingGlobal(true)} onDragEnd={handleDragEnd}>
-                <Box sx={{ display: 'flex', gap: '50px' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '50px' }}>
                     <Box sx={{ overflow: 'hidden' }}>
                         <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 108px)` }}>
                             <Timeline
