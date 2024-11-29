@@ -446,7 +446,7 @@ const NewPlacement = ({ idHotelInfo }) => {
         setOriginalRequest(null);
         setIsModalOpen(false);
 
-        console.log(updatedRequest)
+        // console.log(updatedRequest)
 
         try {
             await updateRequest({
