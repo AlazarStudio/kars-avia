@@ -390,6 +390,8 @@ const NewPlacement = () => {
                             },
                         });
 
+                        console.log(request)
+
                         if (request) {
                             await updateRequest({
                                 variables: {
@@ -431,6 +433,8 @@ const NewPlacement = () => {
                                 input: bookingInput,
                             },
                         });
+
+                        console.log(request)
 
                         if (request) {
                             await updateRequest({
