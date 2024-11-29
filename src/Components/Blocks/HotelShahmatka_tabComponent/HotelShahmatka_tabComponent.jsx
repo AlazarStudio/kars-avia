@@ -4,9 +4,9 @@ import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageCo
 
 import { GET_BRONS_HOTEL, GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
 import { useQuery } from "@apollo/client";
+import NewPlacement from "../../PlacementDND/NewPlacement/NewPlacement.jsx";
 
 function HotelShahmatka_tabComponent({ id }) {
-
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: id },
     });
@@ -106,13 +106,15 @@ function HotelShahmatka_tabComponent({ id }) {
                 </div>
             </div>
 
-            {(hotelBronsInfo.length === 0) &&
+            <NewPlacement idHotelInfo={id} />
+
+            {/* {(hotelBronsInfo.length === 0) &&
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={[]} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
             }
 
             {(hotelBronsInfo.length !== 0) &&
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={hotelBronsInfo} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
-            }
+            } */}
 
         </>
     );

@@ -28,7 +28,7 @@ const EditRequestModal = ({ isOpen, onClose, onSave, request, changes }) => {
     };
 
     return (
-        <Dialog open={isOpen} onClose={onClose}>
+        <Dialog open={isOpen} onClose={onClose} disableScrollLock={true}>
             <DialogTitle>Изменить заявку</DialogTitle>
             <DialogContent>
                 {/* Поля для даты заезда */}

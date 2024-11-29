@@ -2,12 +2,11 @@ import { gql } from "@apollo/client";
 
 // export const path = '192.168.0.113:4000';
 // export const path = '89.169.39.59:4000';
-// export const path = 'backend.karsavia.ru:4000';
 
+// export const path = 'backend.karsavia.ru:4000';
 // export const server = `https://${path}`;
 
 export const path = '192.168.0.24:4000';
-
 export const server = `http://${path}`;
 
 export const getCookie = (name) => {
@@ -47,6 +46,10 @@ export function convertToDate(dateString, includeTime = false) {
   }
 
   return formattedDate;
+}
+
+export function generateTimestampId(min = 1, max = 1000000) {
+  return Date.now() + Math.floor(Math.random() * (max - min + 1)) + min; // Возвращает количество миллисекунд с 1 января 1970 года
 }
 
 // ----------------------------------------------------------------
@@ -227,6 +230,13 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
             images
           }
           requestNumber
+          hotelChess {
+            start
+            end
+            room
+            id
+            place
+          }
         }
     }
 `;
@@ -282,6 +292,13 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
             images
           }
           requestNumber
+          hotelChess {
+            start
+            end
+            room
+            id
+            place
+          }
         }
     }
 `;
@@ -468,11 +485,20 @@ export const UPDATE_HOTEL_BRON = gql`
   }
 `;
 
+export const UPDATE_REQUEST_RELAY = gql`
+  mutation Mutation($updateRequestId: ID!, $input: UpdateRequestInput!) {
+    updateRequest(id: $updateRequestId, input: $input) {
+      status
+    }
+  }
+`;
+
 export const GET_BRONS_HOTEL = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
       name
       hotelChesses {
+        id
         public
         start
         end

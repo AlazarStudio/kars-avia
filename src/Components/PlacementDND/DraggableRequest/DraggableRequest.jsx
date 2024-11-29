@@ -4,7 +4,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { convertToDate } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal }) => {
+const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -28,6 +28,10 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 return { backgroundColor: "#2196f3", borderColor: "#1976d2" }; // Синий для "Продлен"
             case "Сокращен":
                 return { backgroundColor: "#f44336", borderColor: "#d32f2f" }; // Красный для "Сокращен"
+            case "Перенесен":
+                return { backgroundColor: "#ff9800", borderColor: "#e9831a" }; // Красный для "Сокращен"
+            case "Ранний заезд":
+                return { backgroundColor: "#9575cd", borderColor: "#865ecc" }; // Жёлтый
             default:
                 return { backgroundColor: "#9e9e9e", borderColor: "#757575" }; // Серый для остальных
         }
@@ -36,17 +40,16 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     const { backgroundColor, borderColor } = getStatusColors(request.status);
 
     const style = {
-        position: "absolute",
-        top: `${position * 40 + 2}px`,
-        left: `${checkInOffset}px`,
-        width: `${duration}px`,
+        position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
+        top: request.room ? `${position * 40 + 2}px` : "auto",
+        left: request.room ? `${checkInOffset}px` : "auto",
+        width: request.room ? `${duration}px` : '100%',
         height: "35px",
         backgroundColor: backgroundColor,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",
         display: "flex",
         alignItems: "center",
-        textAlign: 'center',
         justifyContent: "space-between",
         color: "white",
         fontSize: "11px",
@@ -57,6 +60,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
             : undefined,
     };
+
 
     const originalRequestRef = useRef(null);
 
@@ -70,7 +74,6 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         onOpenModal(updatedRequest, originalRequestRef.current);
     }
 
-
     const handleResize = (type, deltaDays) => {
         const updatedRequest = { ...request };
 
@@ -78,15 +81,30 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             const newCheckIn = new Date(checkIn);
             newCheckIn.setDate(newCheckIn.getDate() + deltaDays);
             updatedRequest.checkInDate = newCheckIn.toISOString().split("T")[0];
+
+            // Проверяем, если дата заезда сдвигается позже - статус "Сокращен"
+            if (deltaDays < 0) {
+                updatedRequest.status = "Ранний заезд";
+            } else if (deltaDays > 0) {
+                updatedRequest.status = "Сокращен";
+            }
         } else if (type === "end") {
             const newCheckOut = new Date(checkOut);
             newCheckOut.setDate(newCheckOut.getDate() + deltaDays);
             updatedRequest.checkOutDate = newCheckOut.toISOString().split("T")[0];
+
+            // Если дата выезда увеличивается - статус "Продлен"
+            if (deltaDays > 0) {
+                updatedRequest.status = "Продлен";
+            } else if (deltaDays < 0) {
+                updatedRequest.status = "Сокращен";
+            }
         }
 
+        // Проверяем пересечения
         if (isOverlap(updatedRequest)) {
-            console.warn("Накладывание запрещено!");
-            return request; // Возвращаем исходную заявку, если есть наложение
+            console.warn("Изменение размера заявки недопустимо: пересечение с другой заявкой!");
+            return request; // Возвращаем исходную заявку, если есть пересечение
         }
 
         onUpdateRequest(updatedRequest);
@@ -125,7 +143,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     const handleMouseLeave = () => setTooltipVisible(false);
     const handleMouseMove = (e) => {
         if (!isDraggingGlobal) {
-            setTooltipPosition({ x: e.clientX + 10, y: e.clientY + 10 });
+            setTooltipPosition({ x: e.clientX - (350 / 2), y: e.clientY + 10 });
         }
     };
 
@@ -142,46 +160,48 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         <>
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
-                <Box
-                    onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        let deltaDays = 0;
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
+                    <Box
+                        onMouseDown={(e) => {
+                            const startX = e.clientX;
+                            let deltaDays = 0;
 
-                        handleResizeStart();
+                            handleResizeStart();
 
-                        const handleMouseMove = (event) => {
-                            const deltaX = event.clientX - startX;
-                            deltaDays = Math.round(deltaX / dayWidth); // Обновляем deltaDays
-                            if (deltaDays !== 0) {
-                                handleResize("start", deltaDays);
-                            }
-                        };
+                            const handleMouseMove = (event) => {
+                                const deltaX = event.clientX - startX;
+                                deltaDays = Math.round(deltaX / dayWidth); // Обновляем deltaDays
+                                if (deltaDays !== 0) {
+                                    handleResize("start", deltaDays);
+                                }
+                            };
 
-                        const handleMouseUp = () => {
-                            document.removeEventListener("mousemove", handleMouseMove);
-                            document.removeEventListener("mouseup", handleMouseUp);
+                            const handleMouseUp = () => {
+                                document.removeEventListener("mousemove", handleMouseMove);
+                                document.removeEventListener("mouseup", handleMouseUp);
 
-                            // Передаём deltaDays в handleResize для обновления заявки
-                            const updatedRequest = handleResize("start", deltaDays);
-                            handleResizeEnd(updatedRequest); // Передаём обновлённую заявку
-                        };
+                                // Передаём deltaDays в handleResize для обновления заявки
+                                const updatedRequest = handleResize("start", deltaDays);
+                                handleResizeEnd(updatedRequest); // Передаём обновлённую заявку
+                            };
 
-                        document.addEventListener("mousemove", handleMouseMove);
-                        document.addEventListener("mouseup", handleMouseUp);
-                    }}
-                    sx={{
-                        width: "10px",
-                        height: "100%",
-                        cursor: "ew-resize",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: '23px',
-                        userSelect: 'none'
-                    }}
-                >
-                    <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
-                </Box>
+                            document.addEventListener("mousemove", handleMouseMove);
+                            document.addEventListener("mouseup", handleMouseUp);
+                        }}
+                        sx={{
+                            width: "10px",
+                            height: "100%",
+                            cursor: "ew-resize",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: '23px',
+                            userSelect: 'none'
+                        }}
+                    >
+                        <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                    </Box>
+                }
                 {/* Центральная область для перетаскивания */}
                 <Box
                     ref={setNodeRef}
@@ -197,6 +217,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         height: "100%",
                         display: "flex",
                         alignItems: "center",
+                        textAlign: "center",
                         justifyContent: "center",
                         cursor: "grab",
                         zIndex: 1,
@@ -204,48 +225,51 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 >
                     {request.guest}
                 </Box>
+
                 {/* Правая ручка для изменения конца */}
-                <Box
-                    onMouseDown={(e) => {
-                        const startX = e.clientX;
-                        let deltaDays = 0;
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
+                    <Box
+                        onMouseDown={(e) => {
+                            const startX = e.clientX;
+                            let deltaDays = 0;
 
-                        handleResizeStart();
+                            handleResizeStart();
 
-                        const handleMouseMove = (event) => {
-                            const deltaX = event.clientX - startX;
-                            deltaDays = Math.round(deltaX / dayWidth);
-                            if (deltaDays !== 0) {
-                                handleResize("end", deltaDays);
-                            }
-                        };
+                            const handleMouseMove = (event) => {
+                                const deltaX = event.clientX - startX;
+                                deltaDays = Math.round(deltaX / dayWidth);
+                                if (deltaDays !== 0) {
+                                    handleResize("end", deltaDays);
+                                }
+                            };
 
-                        const handleMouseUp = () => {
-                            document.removeEventListener("mousemove", handleMouseMove);
-                            document.removeEventListener("mouseup", handleMouseUp);
+                            const handleMouseUp = () => {
+                                document.removeEventListener("mousemove", handleMouseMove);
+                                document.removeEventListener("mouseup", handleMouseUp);
 
-                            // Получаем обновлённую заявку
-                            const updatedRequest = handleResize("end", deltaDays);
-                            handleResizeEnd(updatedRequest);
-                        };
+                                // Получаем обновлённую заявку
+                                const updatedRequest = handleResize("end", deltaDays);
+                                handleResizeEnd(updatedRequest);
+                            };
 
-                        document.addEventListener("mousemove", handleMouseMove);
-                        document.addEventListener("mouseup", handleMouseUp);
-                    }}
-                    sx={{
-                        width: "10px",
-                        height: "100%",
-                        cursor: "ew-resize",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        height: '23px',
-                        userSelect: 'none'
-                    }}
-                >
-                    <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
-                </Box>
-            </Box>
+                            document.addEventListener("mousemove", handleMouseMove);
+                            document.addEventListener("mouseup", handleMouseUp);
+                        }}
+                        sx={{
+                            width: "10px",
+                            height: "100%",
+                            cursor: "ew-resize",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            height: '23px',
+                            userSelect: 'none'
+                        }}
+                    >
+                        <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
+                    </Box>
+                }
+            </Box >
 
             {tooltipVisible && (
                 <Box
@@ -269,9 +293,11 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     <Typography variant="body2">
                         <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
                     </Typography>
-                    <Typography variant="body2">
-                        <div style={styleToolTip}> Комната: <b>{request.room}</b></div>
-                    </Typography>
+                    {request.room &&
+                        <Typography variant="body2">
+                            <div style={styleToolTip}> Комната: <b>{request.room}</b></div>
+                        </Typography>
+                    }
                     <Typography variant="body2">
                         <div style={styleToolTip}> Гость: <b>{request.guest}</b></div>
                     </Typography>
@@ -285,7 +311,8 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         <div style={styleToolTip}> Выселение: <b>{convertToDate(request.checkOutDate)} {request.checkOutTime}</b></div>
                     </Typography>
                 </Box>
-            )}
+            )
+            }
         </>
     );
 };

@@ -94,7 +94,7 @@ function App() {
             />
 
             <Route
-              path="/newPlacement"
+              path="/newPlacement/:idHotel"
               element={<NewPlacement />}
             />
 
@@ -104,10 +104,6 @@ function App() {
         ) : (
           <>
             <Route path="/login" element={<Login />} />
-            <Route
-              path="/newPlacement"
-              element={<NewPlacement />}
-            />
             <Route path="*" element={<Login />} />
           </>
         )}
