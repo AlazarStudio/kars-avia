@@ -84,6 +84,8 @@ const NewPlacement = () => {
                 return "Сокращен";
             case "transferred":
                 return "Перенесен";
+            case "earlyStart":
+                return "Ранний заезд";
             default:
                 return "Неизвестно";
         }
@@ -471,6 +473,8 @@ const NewPlacement = () => {
         setOriginalRequest(null);
         setIsModalOpen(false);
 
+        console.log(updatedRequest)
+
         try {
             await updateRequest({
                 variables: {
@@ -482,7 +486,19 @@ const NewPlacement = () => {
                         departure: {
                             date: `${updatedRequest.checkOutDate}T${updatedRequest.checkOutTime}:00.000Z`,
                         },
-                        status: updatedRequest.status == 'Сокращен' ? 'reduced' : updatedRequest.status == 'Продлен' ? 'extended' : ''
+                        status: updatedRequest.status == 'Сокращен'
+                            ?
+                            'reduced'
+                            :
+                            updatedRequest.status == 'Продлен'
+                                ?
+                                'extended'
+                                :
+                                updatedRequest.status == 'Ранний заезд'
+                                    ?
+                                    'earlyStart'
+                                    :
+                                    ''
                     },
                 },
             });

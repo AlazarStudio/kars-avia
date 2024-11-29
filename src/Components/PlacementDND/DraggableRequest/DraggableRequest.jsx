@@ -30,6 +30,8 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 return { backgroundColor: "#f44336", borderColor: "#d32f2f" }; // Красный для "Сокращен"
             case "Перенесен":
                 return { backgroundColor: "#ff9800", borderColor: "#e9831a" }; // Красный для "Сокращен"
+            case "Ранний заезд":
+                return { backgroundColor: "#9575cd", borderColor: "#865ecc" }; // Жёлтый
             default:
                 return { backgroundColor: "#9e9e9e", borderColor: "#757575" }; // Серый для остальных
         }
@@ -81,7 +83,9 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             updatedRequest.checkInDate = newCheckIn.toISOString().split("T")[0];
 
             // Проверяем, если дата заезда сдвигается позже - статус "Сокращен"
-            if (deltaDays > 0) {
+            if (deltaDays < 0) {
+                updatedRequest.status = "Ранний заезд";
+            } else if (deltaDays > 0) {
                 updatedRequest.status = "Сокращен";
             }
         } else if (type === "end") {
@@ -156,7 +160,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         <>
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
-                {userRole != 'HOTELADMIN' &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
@@ -223,7 +227,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 </Box>
 
                 {/* Правая ручка для изменения конца */}
-                {userRole != 'HOTELADMIN' &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
