@@ -35,7 +35,8 @@ function App() {
 
   const wsLink = new GraphQLWsLink(
     createClient({
-      url: `wss://${path}/graphql`,
+      // url: `wss://${path}/graphql`,
+      url: `ws://${path}/graphql`,
       connectionParams: () => {
         if (!token) {
           return {};
@@ -93,7 +94,7 @@ function App() {
             />
 
             <Route
-              path="/newPlacement"
+              path="/newPlacement/:idHotel"
               element={<NewPlacement />}
             />
 
@@ -103,10 +104,6 @@ function App() {
         ) : (
           <>
             <Route path="/login" element={<Login />} />
-            <Route
-              path="/newPlacement"
-              element={<NewPlacement />}
-            />
             <Route path="*" element={<Login />} />
           </>
         )}
