@@ -1,14 +1,45 @@
-
 .section_searchAndFilter {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative;
 }
 
-.section_searchAndFilter_filter{    
+.section_searchAndFilter_filter {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
 }
+
+.legend {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+}
+
+.legendLine {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.legendInfo {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.legendInfoColor {
+    width: 20px;
+    height: 20px;
+}
+
+.legendInfoText {
+    font-size: 12px;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import classes from './HotelShahmatka_tabComponent.module.css';
-import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent";
+// import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent";
 
 import { GET_BRONS_HOTEL, GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
 import { useQuery } from "@apollo/client";
@@ -95,15 +95,49 @@ function HotelShahmatka_tabComponent({ id }) {
                     value={searchQuery}
                     onChange={handleSearch}
                 />
-                <div className={classes.section_searchAndFilter_filter}>
+
+                <div className={classes.legend}>
+                    <div className={classes.legendLine}>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #9e9e9e', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#9e9e9e' }}></div>
+                            <div className={classes.legendInfoText}> Создан</div>
+                        </div>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #f44336', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#f44336' }}></div>
+                            <div className={classes.legendInfoText}> Сокращен</div>
+                        </div>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #2196f3', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#2196f3' }}></div>
+                            <div className={classes.legendInfoText}> Продлен</div>
+                        </div>
+                    </div>
+
+                    <div className={classes.legendLine}>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #4caf50', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#4caf50' }}></div>
+                            <div className={classes.legendInfoText}> Забронирован</div>
+                        </div>
+
+                        <div className={classes.legendInfo} style={{ border: '1px solid #ff9800', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#ff9800' }}></div>
+                            <div className={classes.legendInfoText}> Перенесен</div>
+                        </div>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #9575cd', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#9575cd' }}></div>
+                            <div className={classes.legendInfoText}> Ранний заезд</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* <div className={classes.section_searchAndFilter_filter}>
                     <select onChange={handleSelect}>
                         <option value="">Показать все</option>
                         {uniquePlacesArray.map((item, index) => (
                             <option value={`${item}`} key={index}>{item} - МЕСТНЫЕ</option>
                         ))}
                     </select>
-                    {/* <div onClick={toggleSidebar}>Добавить бронь</div> */}
-                </div>
+                    <div onClick={toggleSidebar}>Добавить бронь</div> 
+                </div>*/}
             </div>
 
             <NewPlacement idHotelInfo={id} />
