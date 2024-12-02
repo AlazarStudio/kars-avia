@@ -4,7 +4,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { convertToDate } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole }) => {
+const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -135,20 +135,50 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     };
 
     const [tooltipVisible, setTooltipVisible] = useState(false);
+    const [mouseIsMoving, setMouseIsMoving] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
     const handleMouseEnter = () => {
-        if (!isDraggingGlobal) setTooltipVisible(true);
-    };
-    const handleMouseLeave = () => setTooltipVisible(false);
-    const handleMouseMove = (e) => {
+        setMouseIsMoving(false)
+
         if (!isDraggingGlobal) {
-            setTooltipPosition({ x: e.clientX - (350 / 2), y: e.clientY + 10 });
+            setTooltipVisible(true)
+        };
+    };
+
+    const handleMouseLeave = () => setTooltipVisible(false);
+
+    const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+    const [isClick, setIsClick] = useState(true);
+
+    const handleMouseDown = (e) => {
+        setStartPosition({ x: e.clientX, y: e.clientY });
+        setIsClick(true);
+        setTooltipVisible(false);
+    };
+
+    const handleMouseMove = (e) => {
+        setMouseIsMoving(true)
+
+        if (!isDraggingGlobal) {
+            setTooltipPosition({ x: e.clientX - 350 / 2, y: e.clientY + 10 });
+        } else {
+            setTooltipVisible(false);
+        }
+
+        const deltaX = Math.abs(e.clientX - startPosition.x);
+        const deltaY = Math.abs(e.clientY - startPosition.y);
+
+        if (deltaX > 10 || deltaY > 10) {
+            setIsClick(false);
         }
     };
 
-    const handleDragStart = () => setTooltipVisible(false); // Скрыть Tooltip при начале перетаскивания
-    const handleDragEnd = () => setTooltipVisible(false); // Можно восстановить видимость после завершения
+    const handleMouseUp = (e) => {
+        if (isClick) {
+            toggleRequestSidebar && toggleRequestSidebar(request.requestID);
+        }
+    };
 
     let styleToolTip = {
         display: 'flex',
@@ -202,6 +232,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
                     </Box>
                 }
+
                 {/* Центральная область для перетаскивания */}
                 <Box
                     ref={setNodeRef}
@@ -209,9 +240,9 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     {...attributes}
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
-                    onMouseMove={handleMouseMove}
-                    onMouseDown={handleDragStart}
-                    onMouseUp={handleDragEnd}
+                    onMouseDown={handleMouseDown} // Отслеживаем начальную позицию
+                    onMouseMove={handleMouseMove} // Проверяем движение мыши
+                    onMouseUp={handleMouseUp}
                     sx={{
                         flex: 1,
                         height: "100%",
@@ -271,7 +302,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 }
             </Box >
 
-            {tooltipVisible && (
+            {tooltipVisible && !isDraggingGlobal && mouseIsMoving && (
                 <Box
                     sx={{
                         position: "fixed",

@@ -10,6 +10,7 @@ import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import ExistRequestInHotel from "../../Blocks/ExistRequestInHotel/ExistRequestInHotel";
 import { decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
 
 const DAY_WIDTH = 30;
@@ -567,6 +568,18 @@ const NewPlacement = ({ idHotelInfo }) => {
         setSelectedRequest(null);
     };
 
+    const [showChooseHotel, setShowChooseHotel] = useState(false);
+
+    const [showRequestSidebar, setShowRequestSidebar] = useState(false);
+    const [selectedRequestID, setSelectedRequestID] = useState(null);
+
+    const toggleRequestSidebar = (requestID) => {
+        setSelectedRequestID(requestID);
+        setShowRequestSidebar(true);
+    };
+
+    // console.log('showRequestSidebar - ', showRequestSidebar)
+    // console.log('selectedRequestID - ', selectedRequestID)
 
     return (
         <>
@@ -635,6 +648,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                                                 onUpdateRequest={handleUpdateRequest}
                                                 isDraggingGlobal={isDraggingGlobal}
                                                 onOpenModal={handleOpenModal} // Прокидываем в RoomRow
+                                                toggleRequestSidebar={toggleRequestSidebar}
                                             />
                                         ))}
                                     </Box>
@@ -678,7 +692,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                 isOpen={isModalOpen}
                 onClose={handleCloseModal}
                 onSave={handleSaveChanges}
-                request={editableRequest} // Передаём заявку
+                request={editableRequest}
             />
 
             <ConfirmBookingModal
@@ -688,6 +702,13 @@ const NewPlacement = ({ idHotelInfo }) => {
                 request={selectedRequest}
             />
 
+            <ExistRequestInHotel
+                show={showRequestSidebar}
+                onClose={() => setShowRequestSidebar(false)}
+                setShowChooseHotel={setShowChooseHotel}
+                chooseRequestID={selectedRequestID}
+                user={user}
+            />
         </>
     );
 };
