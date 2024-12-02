@@ -88,7 +88,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                         name: formData.name,
                         city: formData.city,
                         address: formData.address,
-                        quote: formData.quote
+                        quote: formData.quote || '0'
                     },
                     images: formData.images
                 }
@@ -159,8 +159,8 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                     <label>Адрес</label>
                     <input type="text" name="address" placeholder="ул. Лесная  147" onChange={handleChange} />
 
-                    <label>Квота</label>
-                    <input type="text" name="quote" placeholder="24" onChange={handleChange} />
+                    {/* <label>Квота</label>
+                    <input type="text" name="quote" placeholder="24" onChange={handleChange} /> */}
 
                     <label>Картинка</label>
                     <input type="file" name="images" onChange={handleFileChange} />

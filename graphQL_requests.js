@@ -1568,6 +1568,7 @@ export const GET_DISPATCHERS = gql`
 export const GET_DISPATCHER = gql`
   query Query($userId: ID!) {
     user(userId: $userId) {
+      id
       name
       role
       position
@@ -1609,6 +1610,21 @@ export const UPDATE_DISPATCHER_USER = gql`
     }
   }
 `;
+
+export const UPDATE_USER = gql`
+  mutation UpdateUser($input: UpdateUserInput!, $images: [Upload!]) {
+    updateUser(input: $input, images: $images) {
+      id
+      name
+      email
+      login
+      images
+    }
+  }
+`;
+
+
+
 
 export const DELETE_DISPATCHER_USER = gql`
   mutation Mutation($deleteUserId: ID!) {
