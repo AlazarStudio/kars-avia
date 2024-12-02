@@ -102,10 +102,6 @@ function HotelShahmatka_tabComponent({ id }) {
                             <div className={classes.legendInfoColor} style={{ backgroundColor: '#9e9e9e' }}></div>
                             <div className={classes.legendInfoText}> Создан</div>
                         </div>
-                        <div className={classes.legendInfo} style={{ border: '1px solid #f44336', width: '130px' }}>
-                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#f44336' }}></div>
-                            <div className={classes.legendInfoText}> Сокращен</div>
-                        </div>
                         <div className={classes.legendInfo} style={{ border: '1px solid #2196f3', width: '130px' }}>
                             <div className={classes.legendInfoColor} style={{ backgroundColor: '#2196f3' }}></div>
                             <div className={classes.legendInfoText}> Продлен</div>
@@ -118,14 +114,22 @@ function HotelShahmatka_tabComponent({ id }) {
                             <div className={classes.legendInfoText}> Забронирован</div>
                         </div>
 
-                        <div className={classes.legendInfo} style={{ border: '1px solid #ff9800', width: '130px' }}>
-                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#ff9800' }}></div>
-                            <div className={classes.legendInfoText}> Перенесен</div>
-                        </div>
                         <div className={classes.legendInfo} style={{ border: '1px solid #9575cd', width: '130px' }}>
                             <div className={classes.legendInfoColor} style={{ backgroundColor: '#9575cd' }}></div>
                             <div className={classes.legendInfoText}> Ранний заезд</div>
                         </div>
+                    </div>
+
+                    <div className={classes.legendLine}>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #ff9800', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#ff9800' }}></div>
+                            <div className={classes.legendInfoText}> Перенесен</div>
+                        </div>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #f44336', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#f44336' }}></div>
+                            <div className={classes.legendInfoText}> Сокращен</div>
+                        </div>
+
                     </div>
                 </div>
 
