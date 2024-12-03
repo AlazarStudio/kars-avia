@@ -1136,6 +1136,7 @@ export const GET_HOTEL_ROOMS = gql`
         name
         category
         places
+        active
       }
     }
   }

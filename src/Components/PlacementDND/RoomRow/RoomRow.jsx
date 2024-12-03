@@ -32,7 +32,8 @@ const RoomRow = memo(({ dayWidth, weekendColor, monthColor, room, requests, curr
                     sx={{
                         width: `${dayWidth}px`,
                         borderRight: "1px solid #ddd",
-                        backgroundColor: isToday(day) ? "#f3f292" : isWeekend(day) ? weekendColor : "#fff",
+                        backgroundColor: !room.active ? '#a9a9a9' : isToday(day) ? "#f3f292" : isWeekend(day) ? weekendColor : "#fff",
+                        opacity: !room.active ? '0.5' : '1'
                     }}
                 />
             ))}

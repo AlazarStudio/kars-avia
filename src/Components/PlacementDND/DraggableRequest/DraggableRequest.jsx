@@ -3,6 +3,7 @@ import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
+import { ConstructionOutlined } from "@mui/icons-material";
 
 const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -186,7 +187,6 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         fontSize: '14px',
     }
 
-    console.log(request)
     return (
         <>
             <Box sx={style}>
