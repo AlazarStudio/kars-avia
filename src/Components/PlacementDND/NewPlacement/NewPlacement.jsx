@@ -5,7 +5,7 @@ import RoomRow from "../RoomRow/RoomRow";
 import Timeline from "../Timeline/Timeline";
 import CurrentTimeIndicator from "../CurrentTimeIndicator/CurrentTimeIndicator";
 import { startOfMonth, addMonths, differenceInDays, endOfMonth, isWithinInterval } from "date-fns";
-import { DndContext } from "@dnd-kit/core";
+import { DndContext, DragOverlay } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
@@ -217,6 +217,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     const [selectedRequest, setSelectedRequest] = useState(null);
 
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+    const [activeDragItem, setActiveDragItem] = useState(null);
 
     // Глобальное состояние перетаскивания
     const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
@@ -257,6 +258,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
     const handleDragEnd = async (event) => {
         setIsDraggingGlobal(false);
+        setActiveDragItem(null);
 
         const { active, over } = event;
 
@@ -649,9 +651,17 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
             setNotifications((prev) => prev.filter((n) => n.id !== id));
         }, 5300); // 5 секунд уведомление + 300 мс для анимации
     };
+
+    const handleDragStart = (event) => {
+        const { active } = event;
+        const draggedItem = newRequests.find((req) => req.id === parseInt(active.id));
+        setActiveDragItem(draggedItem);
+        setIsDraggingGlobal(true)
+    };
+
     return (
         <>
-            <DndContext onDragStart={() => setIsDraggingGlobal(true)} onDragEnd={handleDragEnd}>
+            <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
                     <Box sx={{ overflow: 'hidden', overflowX: 'scroll' }}>
                         <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 248px)` }}>
@@ -732,7 +742,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                         </Typography>
 
                         {newRequests?.length > 0 ?
-                            <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', padding: "10px" }}>
+                            <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '565px', padding: "5px", overflowY: 'scroll' }}>
                                 {newRequests.map((request) => (
                                     <DraggableRequest
                                         userRole={user.role}
@@ -753,6 +763,19 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                         }
                     </Box>
                 </Box>
+
+                {/* DragOverlay */}
+                <DragOverlay>
+                    {activeDragItem ? (
+                        <DraggableRequest
+                            userRole={user.role}
+                            request={activeDragItem}
+                            dayWidth={DAY_WIDTH}
+                            currentMonth={currentMonth}
+                            isDraggingGlobal={true}
+                        />
+                    ) : null}
+                </DragOverlay>
             </DndContext >
 
             {/* Модальное окно для редактирования заявки */}

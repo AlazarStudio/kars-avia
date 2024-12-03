@@ -247,7 +247,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     sx={{
                         flex: 1,
                         width: 'calc(100% - 20px)',
-                        height: "100%",
+                        height: "35px",
                         display: "flex",
                         alignItems: "center",
                         textAlign: "center",

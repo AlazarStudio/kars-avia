@@ -27,7 +27,7 @@ const Notification = ({ text, status, onClose, index }) => {
         setVisible(false);
     };
     return (
-        <div className={`${classes.notification} ${classes[status]} ${visible ? classes.visible : classes.hidden} `} style={{ bottom: `calc(${index * 55 + 20}px)` }}>
+        <div className={`${classes.notification} ${classes[status]} ${visible ? classes.visible : classes.hidden} `} style={{ bottom: `calc(${index * 52 + 20}px)` }}>
             <span>{text}</span>
             <button className={classes.closeButton} onClick={handleClose}>
                 ✕
