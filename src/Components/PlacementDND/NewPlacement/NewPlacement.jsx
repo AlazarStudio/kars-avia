@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 import RoomRow from "../RoomRow/RoomRow";
 import Timeline from "../Timeline/Timeline";
 import CurrentTimeIndicator from "../CurrentTimeIndicator/CurrentTimeIndicator";
-import { startOfMonth, addMonths, differenceInDays, endOfMonth } from "date-fns";
+import { startOfMonth, addMonths, differenceInDays, endOfMonth, isWithinInterval } from "date-fns";
 import { DndContext } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
@@ -12,12 +12,13 @@ import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ExistRequestInHotel from "../../Blocks/ExistRequestInHotel/ExistRequestInHotel";
 import { decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
+import { } from "date-fns";
 
 const DAY_WIDTH = 30;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
-const NewPlacement = ({ idHotelInfo }) => {
+const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     let { idHotel } = useParams();
 
     let hotelId = idHotelInfo ? idHotelInfo : idHotel
@@ -105,6 +106,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                 status: translateStatus(subscriptionUpdateData.requestUpdated.status),
                 guest: subscriptionUpdateData.requestUpdated.person?.name || "Неизвестный гость",
                 requestID: subscriptionUpdateData.requestUpdated.id,
+                airline: subscriptionUpdateData.requestUpdated.airline,
                 personID: subscriptionUpdateData.requestUpdated.person?.id,
                 room: subscriptionUpdateData.requestUpdated.room?.replace("№ ", "") || null,
             };
@@ -116,6 +118,8 @@ const NewPlacement = ({ idHotelInfo }) => {
             );
         }
     }, [subscriptionUpdateData]);
+
+    console.log(bronData)
 
     useEffect(() => {
         if (bronData && bronData.hotel && bronData.hotel.hotelChesses) {
@@ -130,6 +134,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                 status: translateStatus(chess.request.status),
                 guest: chess.client ? chess.client.name : "Неизвестный гость",
                 requestID: chess.request.id,
+                airline: chess.request.airline,
                 personID: chess.client.id,
                 chessID: chess.id,
             }));
@@ -162,6 +167,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                 status: "Ожидает",
                 guest: subscriptionData.requestCreated.person?.name || "Неизвестный гость",
                 requestID: subscriptionData.requestCreated.id,
+                airline: subscriptionData.requestCreated.airline,
                 personID: subscriptionData.requestCreated.person?.id,
             };
 
@@ -191,6 +197,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                 status: "Ожидает",
                 guest: request.person ? request.person.name : "Неизвестный гость",
                 requestID: request.id,
+                airline: request.airline,
                 personID: request.person.id,
             }));
 
@@ -578,8 +585,34 @@ const NewPlacement = ({ idHotelInfo }) => {
         setShowRequestSidebar(true);
     };
 
-    // console.log('showRequestSidebar - ', showRequestSidebar)
-    // console.log('selectedRequestID - ', selectedRequestID)
+    const startOfCurrentMonth = startOfMonth(currentMonth);
+    const endOfCurrentMonth = endOfMonth(currentMonth);
+
+    const filteredRequests = useMemo(() => {
+        if (!searchQuery) return requests
+
+        return requests.filter((request) =>
+            (
+                request.guest.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (request.room && request.room.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                request.requestID.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request.airline.name.toLowerCase().includes(searchQuery.toLowerCase())
+            ) && (
+                isWithinInterval(new Date(request.checkInDate), { start: startOfCurrentMonth, end: endOfCurrentMonth }) ||
+                isWithinInterval(new Date(request.checkOutDate), { start: startOfCurrentMonth, end: endOfCurrentMonth }) ||
+                (new Date(request.checkInDate) <= endOfCurrentMonth && new Date(request.checkOutDate) >= startOfCurrentMonth)
+            )
+        );
+    }, [requests, searchQuery, startOfCurrentMonth, endOfCurrentMonth]);
+
+    const filteredRooms = useMemo(() => {
+        if (!searchQuery) return rooms
+
+        return rooms.filter((room) =>
+            filteredRequests.some((request) => request.room === room.id) ||
+            room.id.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [rooms, filteredRequests, searchQuery]);
 
     return (
         <>
@@ -604,7 +637,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                                         zIndex: 2,
                                     }}
                                 >
-                                    {rooms.map((room, index) => (
+                                    {filteredRooms.map((room, index) => (
                                         <Box
                                             key={index}
                                             sx={{
@@ -634,7 +667,7 @@ const NewPlacement = ({ idHotelInfo }) => {
                                     <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
                                         <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
 
-                                        {rooms.map((room) => (
+                                        {filteredRooms.map((room) => (
                                             <RoomRow
                                                 userRole={user.role}
                                                 key={room.id}
@@ -642,8 +675,8 @@ const NewPlacement = ({ idHotelInfo }) => {
                                                 weekendColor={WEEKEND_COLOR}
                                                 monthColor={MONTH_COLOR}
                                                 room={room}
-                                                requests={requests.filter((req) => req.room === room.id)}
-                                                allRequests={requests} // Передаем все заявки
+                                                requests={filteredRequests.filter((req) => req.room === room.id)}
+                                                allRequests={filteredRequests} // Передаем все заявки
                                                 currentMonth={currentMonth}
                                                 onUpdateRequest={handleUpdateRequest}
                                                 isDraggingGlobal={isDraggingGlobal}

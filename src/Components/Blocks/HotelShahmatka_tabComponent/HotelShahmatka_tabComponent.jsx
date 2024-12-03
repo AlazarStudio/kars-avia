@@ -144,7 +144,7 @@ function HotelShahmatka_tabComponent({ id }) {
                 </div>*/}
             </div>
 
-            <NewPlacement idHotelInfo={id} />
+            <NewPlacement idHotelInfo={id} searchQuery={searchQuery} />
 
             {/* {(hotelBronsInfo.length === 0) &&
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={[]} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />

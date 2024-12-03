@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
-import { convertToDate } from "../../../../graphQL_requests";
+import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
 const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
@@ -186,6 +186,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         fontSize: '14px',
     }
 
+    console.log(request)
     return (
         <>
             <Box sx={style}>
@@ -245,16 +246,24 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     onMouseUp={handleMouseUp}
                     sx={{
                         flex: 1,
+                        width: 'calc(100% - 20px)',
                         height: "100%",
                         display: "flex",
                         alignItems: "center",
                         textAlign: "center",
-                        justifyContent: "center",
+                        justifyContent: "left",
                         cursor: "grab",
                         zIndex: 1,
+                        overflow: 'hidden',
+                        padding: '0 5px'
                     }}
                 >
-                    {request.guest}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
+                        <img src={`${server}${request.airline.images[0]}`} alt="" style={{ height: '20px' }} />
+                        <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                            {request.guest}
+                        </div>
+                    </div>
                 </Box>
 
                 {/* Правая ручка для изменения конца */}
@@ -322,8 +331,11 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     }}
                 >
                     <Typography variant="body2">
-                        <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
+                        <div style={styleToolTip}> Авиакомпания: <b>{request.airline.name}</b></div>
                     </Typography>
+                    {/* <Typography variant="body2">
+                        <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
+                    </Typography> */}
                     {request.room &&
                         <Typography variant="body2">
                             <div style={styleToolTip}> Комната: <b>{request.room}</b></div>
