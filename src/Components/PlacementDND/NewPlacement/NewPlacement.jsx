@@ -16,6 +16,7 @@ import { } from "date-fns";
 import Notification from "../../Notification/Notification";
 
 const DAY_WIDTH = 30;
+const LEFT_WIDTH = 200;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
@@ -74,6 +75,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
             bronRefetch(); // Обновляем данные после новых событий
         },
     });
+
     const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION, {
         onSubscriptionData: () => {
             bronRefetch(); // Обновляем данные после новых событий
@@ -663,21 +665,22 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
-                    <Box sx={{ overflow: 'hidden', overflowX: 'scroll' }}>
-                        <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '100vh', overflow: 'hidden', overflowY: 'scroll', width: `calc(${containerWidth}px + 248px)` }}>
+                    <Box sx={{ overflow: 'hidden' }}>
+                        <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '67vh', overflow: 'hidden', overflowY: 'scroll', width: '100%', borderBottom: '1px solid #ddd', borderTop: '1px solid #ddd' }}>
                             <Timeline
                                 currentMonth={currentMonth}
                                 setCurrentMonth={setCurrentMonth}
                                 dayWidth={DAY_WIDTH}
                                 weekendColor={WEEKEND_COLOR}
                                 monthColor={MONTH_COLOR}
+                                leftWidth={LEFT_WIDTH}
                             />
                             <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
                                 <Box
                                     sx={{
                                         left: 0,
                                         top: 0,
-                                        minWidth: '240px',
+                                        minWidth: `${LEFT_WIDTH}px`,
                                         backgroundColor: '#f5f5f5',
                                         zIndex: 2,
                                     }}
@@ -689,7 +692,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                 display: 'flex',
                                                 alignItems: 'center',
                                                 height: room.type === 'double' ? '80px' : '40px',
-                                                borderBottom: '1px solid #ddd',
+                                                borderBottom: index + 1 == filteredRooms.length ? '1px solid #dddddd00' : '1px solid #ddd',
                                                 borderRight: '1px solid #ddd',
                                                 borderLeft: '1px solid #ddd',
                                                 backgroundColor: !room.active ? '#a9a9a9' : '#f5f5f5',
@@ -707,13 +710,14 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                 </Box>
 
                                 <Box
-                                    sx={{ width: `${containerWidth} px` }}
+                                    sx={{ width: `calc(100% - ${LEFT_WIDTH}px)` }}
                                     ref={scrollContainerRef}
                                 >
-                                    <Box sx={{ overflow: 'hidden', width: `${containerWidth}px` }}>
+                                    <Box sx={{ overflow: 'hidden' }}>
                                         <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
-                                        {filteredRooms.map((room) => (
+                                        {filteredRooms.map((room, index) => (
                                             <RoomRow
+                                                borderBottomDraw={index + 1 == filteredRooms.length ? true : false}
                                                 userRole={user.role}
                                                 key={room.id}
                                                 dayWidth={DAY_WIDTH}
