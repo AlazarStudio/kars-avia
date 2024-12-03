@@ -304,6 +304,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

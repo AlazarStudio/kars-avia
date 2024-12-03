@@ -45,7 +45,7 @@ function ExistRequestProfile({
         login: user.login || "",
         password: user.password || "",
       });
-      setShowIMG(user.images);
+      setShowIMG(user.images[0]);
       setIndex(user.index);
     }
   }, [user]);

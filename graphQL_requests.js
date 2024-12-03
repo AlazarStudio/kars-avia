@@ -1150,8 +1150,8 @@ export const GET_HOTEL_NAME = gql`
 `;
 
 export const UPDATE_HOTEL = gql`
-  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
-    updateHotel(id: $updateHotelId, input: $input) {
+  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!, $images: [Upload!]) {
+    updateHotel(id: $updateHotelId, input: $input, images: $images) {
       rooms {
         id
         name
@@ -1170,6 +1170,7 @@ export const UPDATE_HOTEL = gql`
         start
         end
       }
+      images
     }
   }
 `;
@@ -1343,10 +1344,11 @@ export const GET_AIRLINE_MEAL_PRICE = gql`
 `;
 
 export const UPDATE_AIRLINE = gql`
-  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
-    updateAirline(id: $updateAirlineId, input: $input) {
+  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!, $images: [Upload!]) {
+    updateAirline(id: $updateAirlineId, input: $input, images: $images) {
       name
       id
+      images
     }
   }
 `;

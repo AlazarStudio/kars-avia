@@ -11,6 +11,12 @@
     gap: 20px;
 }
 
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
 .hotelAbout {
     padding: 40px;
     border-radius: 10px;
@@ -79,6 +85,35 @@
     border-bottom: 1px solid #545873;
 }
 
+.hotelAbout_info__filters {
+    display: flex;
+    gap: 20px;
+}
+
+.hotelAbout_info__filters button {
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 1px solid #54587380;
+    outline: none;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #545873;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+}
+
+.hotelAbout_info__filters button:hover {
+    background-color: #e4e4efbd;
+    border: 1px solid transparent;
+    transition: all ease-in-out 0.3s;
+}
+
+.activeButton {
+    background-color: #E4E4EF !important;
+    border: 1px solid transparent !important;
+    transition: all ease-in-out 0.3s;
+}
+
 .hotelAbout_info {
     display: flex;
     justify-content: space-between;
@@ -101,7 +136,7 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    width: 50%;
+    width: 45%;
 }
 
 .hotelAbout_info_block_meal .hotelAbout_info_item input {

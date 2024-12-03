@@ -13,9 +13,13 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
         <InfoTable>
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w50}`}>Название</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Город</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Адрес</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w25}`}>Название</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Город</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Рейтинг</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Адрес</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w11}`}>До аэропорта</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w7}`}>Квота</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w7}`}>Резерв</div>
                 {/* <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Квота</div> */}
             </div>
 
@@ -27,7 +31,7 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
                         key={index}
                     >
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w50}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
                                     <img src={item.images.length != 0 ? `${server}${item.images}` : '/no-avatar.png'} alt="" />
@@ -35,15 +39,24 @@ function InfoTableDataHotels({ children, toggleRequestSidebar, requests, ...prop
                                 <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_title}>{item.city}</div>
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
+                            <div className={classes.InfoTable_data_elem_title}>4</div>
+                        </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_title}>{item.address}</div>
                         </div>
-                        {/* <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w11}`}>
+                            <div className={classes.InfoTable_data_elem_title}>2 км</div>
+                        </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w7}`}>
+                            <div className={classes.InfoTable_data_elem_title}>24</div>
+                        </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w7}`}>
                             <div className={classes.InfoTable_data_elem_title}>{item.quote}</div>
-                        </div> */}
+                        </div>
                     </Link>
                 ))}
             </div>
