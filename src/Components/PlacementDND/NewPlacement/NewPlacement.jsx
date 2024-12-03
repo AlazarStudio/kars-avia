@@ -265,7 +265,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         const { active, over } = event;
 
         if (!over) {
-            addNotification("Дроп произошел вне шахматки", "warning");
+            // addNotification("Дроп произошел вне шахматки", "error");
             return; // Если дроп происходит вне шахматки, ничего не делаем
         }
 
@@ -320,7 +320,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 setRequests((prevRequests) => {
                     const exists = prevRequests.some((req) => req.id === newRequest.id);
                     if (exists) {
-                        addNotification(`Заявка с id ${newRequest.id} уже существует!`, "warning");
+                        addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
                         return prevRequests;
                     }
                     return [...prevRequests, newRequest];
@@ -346,7 +346,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 setRequests((prevRequests) => {
                     const exists = prevRequests.some((req) => req.id === newRequest.id);
                     if (exists) {
-                        addNotification(`Заявка с id ${newRequest.id} уже существует!`, "warning");
+                        addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
                         return prevRequests;
                     }
                     return [...prevRequests, newRequest];
@@ -769,7 +769,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 </Box>
 
                 {/* DragOverlay */}
-                <DragOverlay>
+                <DragOverlay style={{ pointerEvents: 'none' }}>
                     {activeDragItem ? (
                         <DraggableRequest
                             userRole={user.role}
@@ -777,6 +777,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                             dayWidth={DAY_WIDTH}
                             currentMonth={currentMonth}
                             isDraggingGlobal={true}
+                            toggleRequestSidebar={toggleRequestSidebar}
                         />
                     ) : null}
                 </DragOverlay>
