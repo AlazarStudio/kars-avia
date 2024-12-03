@@ -421,7 +421,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
                     } else {
                         if (occupiedPositions.length > 0) {
-                            addNotification("Место занято в однокомнатной комнате!", "error");
+                            addNotification("Место занято в комнате!", "error");
                             return;
                         }
 
@@ -666,7 +666,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
                     <Box sx={{ overflow: 'hidden' }}>
-                        <Box sx={{ position: "relative", height: 'fit-content', maxHeight: '67vh', overflow: 'hidden', overflowY: 'scroll', width: '100%', borderBottom: '1px solid #ddd', borderTop: '1px solid #ddd' }}>
+                        <Box sx={{ position: "relative", height: 'fit-content', maxHeight: user.role == 'HOTELADMIN' ? '76vh' : '67vh', overflow: 'hidden', overflowY: 'scroll', width: '100%', borderBottom: '1px solid #ddd', borderTop: '1px solid #ddd', borderRight: '1px solid #ddd' }}>
                             <Timeline
                                 currentMonth={currentMonth}
                                 setCurrentMonth={setCurrentMonth}
