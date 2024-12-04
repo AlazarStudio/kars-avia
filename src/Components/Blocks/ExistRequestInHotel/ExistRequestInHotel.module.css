@@ -1,0 +1,370 @@
+.requestTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 20px 30px;
+}
+
+.requestButton {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 20px 30px;
+    border-top: 1px solid #54587380;
+}
+
+.requestTitle_name {
+    font-family: Inter;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 38.73px;
+    color: var(--main-gray);
+}
+
+.requestTitle_close {
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+}
+
+.requestTitle_close img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.tabs {
+    width: 100%;
+    display: flex;
+    /* justify-content: space-between; */
+    gap: 20px;
+    padding: 20px 20px 20px 30px;
+    /* position: fixed; */
+    background-color: #fff;
+    box-shadow: 0 0 1px #545873c5;
+    z-index: 9999999;
+}
+
+.tab {
+    cursor: pointer;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 21.82px;
+    border-bottom: 5px solid transparent
+}
+
+.activeTab {
+    border-bottom: 5px solid #54587380;
+}
+
+.requestData {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 30px;
+    gap: 10px;
+}
+
+.requestData label {
+    display: flex;
+    gap: 15px;
+}
+
+.requestData input,
+select {
+    height: 38px;
+    outline: none;
+    padding: 0 10px;
+    cursor: pointer;
+}
+
+.requestMiddle {
+    height: calc(100vh - 79px - 67px - 81px);
+    overflow: hidden;
+    overflow-y: scroll;
+}
+
+.reis_info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.reis_info input {
+    width: 50%;
+}
+
+.checks {
+    display: flex;
+    justify-content: space-between;
+}
+
+.checks label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+}
+
+.requestButton {
+    position: fixed;
+    bottom: 0;
+    background-color: #fff;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.requestButton a {
+    width: 50%;
+}
+
+.requestDataTitle {
+    font-family: Nunito Sans;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 24.2px;
+    color: var(--main-gray);
+    padding: 10px 0;
+}
+
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 40%;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 5px;
+}
+
+.requestDataInfo input {
+    width: 60%;
+}
+
+.requestData_messages {
+    height: 590px;
+    overflow: hidden;
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.requestData_date {
+    display: flex;
+    justify-content: center;
+}
+
+.requestData_date_info {
+    background-color: #F3F3F3;
+    padding: 5px 15px;
+    border-radius: 5px;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 21.82px;
+    text-align: center;
+}
+
+.requestData_message {
+    width: fit-content;
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.requestData_message_name {
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 600;
+    color: #545873;
+}
+
+.requestData_message_post {
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16.37px;
+    color: #0057C3;
+}
+
+.requestData_message_text {
+    background-color: #F6F6FC;
+    padding: 15px;
+    border-radius: 20px 20px 20px 0px;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 500;
+    color: #545873;
+}
+
+.requestData_message_text__name {
+    margin-bottom: 20px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.requestData_message_time {
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16.37px;
+    color: #545873;
+}
+
+.requestData_message_full {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.myMes {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 10px;
+}
+
+.myMes .requestData_message_name,
+.myMes .requestData_message_post,
+.myMes .requestData_message_time {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.myMes .requestData_message_text {
+    border-radius: 20px 20px 0px 20px;
+}
+
+.myMes .requestData_message_text__name {
+    display: none;
+}
+
+.sendBlock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sendBlock_message {
+    width: fit-content;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0057C3;
+    border-radius: 50px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.sendBlock_message:hover {
+    opacity: 1;
+}
+
+.sendBlock img {
+    height: 100%;
+}
+
+.sendBlock textarea {
+    width: 100%;
+    height: 40px;
+    outline: none;
+    padding: 10px;
+    cursor: pointer;
+    resize: none;
+    border-radius: 5px;
+}
+
+.historyDate {
+    box-shadow: 0px 4px 16px 0px #00000026;
+    border-radius: 50px;
+    width: 190px;
+    height: 44px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    color: #545873;
+}
+
+.logs {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    align-items: center;
+    height: 600px;
+    overflow: hidden;
+    overflow-y: scroll;
+    padding: 10px 0;
+}
+
+.historyLog {
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: #54587380;
+}
+
+.historyLog span {
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: #545873;
+}
+
+.smiles {
+    position: relative;
+}
+
+.smiles .smilesBlock {
+    cursor: pointer;
+}
+
+.mealInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mealInfoDate {
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 24.2px;
+    color: var(--main-gray);
+    padding: 10px 0;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}

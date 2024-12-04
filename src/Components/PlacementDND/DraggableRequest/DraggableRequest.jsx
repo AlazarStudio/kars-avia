@@ -1,10 +1,11 @@
 import React, { useRef, useState } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
-import { convertToDate } from "../../../../graphQL_requests";
+import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
+import { ConstructionOutlined } from "@mui/icons-material";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole }) => {
+const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -135,20 +136,50 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     };
 
     const [tooltipVisible, setTooltipVisible] = useState(false);
+    const [mouseIsMoving, setMouseIsMoving] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
     const handleMouseEnter = () => {
-        if (!isDraggingGlobal) setTooltipVisible(true);
-    };
-    const handleMouseLeave = () => setTooltipVisible(false);
-    const handleMouseMove = (e) => {
+        setMouseIsMoving(false)
+
         if (!isDraggingGlobal) {
-            setTooltipPosition({ x: e.clientX - (350 / 2), y: e.clientY + 10 });
+            setTooltipVisible(true)
+        };
+    };
+
+    const handleMouseLeave = () => setTooltipVisible(false);
+
+    const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+    const [isClick, setIsClick] = useState(true);
+
+    const handleMouseDown = (e) => {
+        setStartPosition({ x: e.clientX, y: e.clientY });
+        setIsClick(true);
+        setTooltipVisible(false);
+    };
+
+    const handleMouseMove = (e) => {
+        setMouseIsMoving(true)
+
+        if (!isDraggingGlobal) {
+            setTooltipPosition({ x: e.clientX - 350 / 2, y: e.clientY + 10 });
+        } else {
+            setTooltipVisible(false);
+        }
+
+        const deltaX = Math.abs(e.clientX - startPosition.x);
+        const deltaY = Math.abs(e.clientY - startPosition.y);
+
+        if (deltaX > 10 || deltaY > 10) {
+            setIsClick(false);
         }
     };
 
-    const handleDragStart = () => setTooltipVisible(false); // Скрыть Tooltip при начале перетаскивания
-    const handleDragEnd = () => setTooltipVisible(false); // Можно восстановить видимость после завершения
+    const handleMouseUp = (e) => {
+        if (isClick) {
+            toggleRequestSidebar && toggleRequestSidebar(request.requestID);
+        }
+    };
 
     let styleToolTip = {
         display: 'flex',
@@ -202,6 +233,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
                     </Box>
                 }
+
                 {/* Центральная область для перетаскивания */}
                 <Box
                     ref={setNodeRef}
@@ -209,21 +241,29 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     {...attributes}
                     onMouseEnter={handleMouseEnter}
                     onMouseLeave={handleMouseLeave}
-                    onMouseMove={handleMouseMove}
-                    onMouseDown={handleDragStart}
-                    onMouseUp={handleDragEnd}
+                    onMouseDown={handleMouseDown} // Отслеживаем начальную позицию
+                    onMouseMove={handleMouseMove} // Проверяем движение мыши
+                    onMouseUp={handleMouseUp}
                     sx={{
                         flex: 1,
-                        height: "100%",
+                        width: 'calc(100% - 20px)',
+                        height: "35px",
                         display: "flex",
                         alignItems: "center",
                         textAlign: "center",
-                        justifyContent: "center",
+                        justifyContent: "left",
                         cursor: "grab",
                         zIndex: 1,
+                        overflow: 'hidden',
+                        padding: '0 5px'
                     }}
                 >
-                    {request.guest}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
+                        <img src={`${server}${request.airline.images[0]}`} alt="" style={{ height: '20px' }} />
+                        <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                            {request.guest}
+                        </div>
+                    </div>
                 </Box>
 
                 {/* Правая ручка для изменения конца */}
@@ -271,7 +311,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 }
             </Box >
 
-            {tooltipVisible && (
+            {tooltipVisible && !isDraggingGlobal && mouseIsMoving && (
                 <Box
                     sx={{
                         position: "fixed",
@@ -291,8 +331,11 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     }}
                 >
                     <Typography variant="body2">
-                        <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
+                        <div style={styleToolTip}> Авиакомпания: <b>{request.airline.name}</b></div>
                     </Typography>
+                    {/* <Typography variant="body2">
+                        <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
+                    </Typography> */}
                     {request.room &&
                         <Typography variant="body2">
                             <div style={styleToolTip}> Комната: <b>{request.room}</b></div>
