@@ -135,6 +135,12 @@ function CreateRequest({ show, onClose, user }) {
     // Обработчик изменений в полях формы
     const handleChange = useCallback((e) => {
         const { name, value, type, checked } = e.target;
+        if (name === "departureTime" && formData.departureDate === formData.arrivalDate) {
+            if (value < formData.arrivalTime) {
+                alert("Время отъезда должно быть позже времени прибытия.");
+                return;
+            }
+        }
         setIsEdited(true);
         setFormData(prevState => {
             if (type === 'checkbox') {
@@ -175,6 +181,11 @@ function CreateRequest({ show, onClose, user }) {
     const handleSubmit = async () => {
         if (!isFormValid()) {
             alert("Пожалуйста, заполните все обязательные поля.");
+            return;
+        }
+
+        if (formData.departureDate === formData.arrivalDate && formData.departureTime <= formData.arrivalTime) {
+            alert("Время отъезда должно быть позже времени прибытия.");
             return;
         }
 
@@ -242,6 +253,9 @@ function CreateRequest({ show, onClose, user }) {
 
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [show, closeButton]);
+
+    const today = new Date().toISOString().split('T')[0];
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -333,14 +347,14 @@ function CreateRequest({ show, onClose, user }) {
                         <label>Прибытие</label>
                         <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} />
                         <div className={classes.reis_info}>
-                            <input type="date" name="arrivalDate" value={formData.arrivalDate} onChange={handleChange} placeholder="Дата" />
+                            <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="arrivalTime" value={formData.arrivalTime} onChange={handleChange} placeholder="Время" />
                         </div>
 
                         <label>Отъезд</label>
                         <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} />
                         <div className={classes.reis_info}>
-                            <input type="date" name="departureDate" value={formData.departureDate} onChange={handleChange} placeholder="Дата" />
+                            <input type="date" name="departureDate" value={formData.departureDate} min={formData.arrivalDate} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
                         </div>
                     </div>

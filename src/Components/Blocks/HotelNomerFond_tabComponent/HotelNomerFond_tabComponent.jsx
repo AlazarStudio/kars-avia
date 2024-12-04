@@ -167,8 +167,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         setShowEditCategory(false);
     };
 
-    const toggleEditNomer = (nomer, category) => {
-        setSelectedNomer({ nomer, category });
+    const toggleEditNomer = (nomer, category, reserve, active) => {
+        setSelectedNomer({ nomer, category, reserve, active });
         setShowEditNomer(true);
     }
 
@@ -185,6 +185,9 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         const matchesSearch = searchTarif === '' || request.rooms.some(room => room.name.toLowerCase().includes(searchTarif.toLowerCase()));
         return matchesCategory && matchesSearch;
     });
+
+    // console.log(data?.hotel?.rooms?.map(room => room.reserve));
+    
 
     return (
         <>
@@ -233,6 +236,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                         onClose={() => setShowEditNomer(false)}
                         nomer={selectedNomer.nomer}
                         category={selectedNomer.category}
+                        reserve={selectedNomer.reserve}
+                        active={selectedNomer.active}
                         selectedNomer={selectedNomer}
                         onSubmit={handleEditNomer}
                         uniqueCategories={uniqueCategories}

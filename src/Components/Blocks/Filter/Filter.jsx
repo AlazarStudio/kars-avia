@@ -2,12 +2,13 @@ import React, { useMemo } from "react";
 import classes from './Filter.module.css';
 import Button from "../../Standart/Button/Button";
 import DropDownList from "../DropDownList/DropDownList";
+import { roles } from "../../../roles";
 
 function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, buttonTitle, filterList, needDate, filterLocalData, user, ...props }) {
     // Опции для выбора состояния
     let filterListShow
 
-    if (user && user?.role === 'SUPERADMIN' || user?.role === 'DISPATCHERADMIN' || user?.role === 'AIRLINEADMIN') {
+    if (user && user?.role === roles.superAdmin || user?.role === roles.dispatcerAdmin || user?.role === roles.airlineAdmin) {
         filterListShow = [
             { label: "Все заявки", value: "all" },
             { label: "Создан / В обработке", value: "created / opened" },
@@ -18,7 +19,7 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
         ]
     }
 
-    if (user && user?.role === 'HOTELADMIN') {
+    if (user && user?.role === roles.hotelAdmin) {
         filterListShow = [
             { label: "Все заявки", value: "all" },
             { label: "Создан / В обработке", value: "created / opened" },
@@ -83,7 +84,11 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
                     /> */}
                 </>
             )}
-            <Button onClick={toggleSidebar} minwidth={'200px'}>{buttonTitle}</Button>
+            {
+            user?.role == roles.airlineAdmin 
+            ? null 
+            : <Button onClick={toggleSidebar} minwidth={'200px'}>{buttonTitle}</Button>
+            }
         </div>
     );
 }

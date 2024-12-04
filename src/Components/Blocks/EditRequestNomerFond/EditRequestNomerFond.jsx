@@ -6,12 +6,16 @@ import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, UPDATE_HOTEL } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
-function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSubmit, uniqueCategories, tarifs, addTarif, setAddTarif, selectedNomer }) {
+function EditRequestNomerFond({ show, id, onClose, nomer, places, category, reserve, active, onSubmit, uniqueCategories, tarifs, addTarif, setAddTarif, selectedNomer }) {
     const token = getCookie('token');
+    // console.log(category);
+    
 
     const [formData, setFormData] = useState({
         nomerName: (nomer && nomer.name) || '',
-        category: uniqueCategories[0] || '',
+        category: category?.origName || '',
+        reserve: nomer?.reserve || '',
+        active: nomer?.active || ''
     });
 
     const sidebarRef = useRef();
@@ -19,11 +23,14 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSu
     useEffect(() => {
         if (show) {
             setFormData({
-                nomerName: (nomer && nomer.name) || '',
-                category: category || uniqueCategories[0] || ''
+                nomerName: nomer?.name || '',
+                category: category.origName || nomer?.category || '',
+                reserve: typeof nomer?.reserve === "boolean" ? nomer?.reserve : false, // Установить false, если undefined
+                active: typeof nomer?.active === "boolean" ? nomer?.active : false,   // Установить false, если undefined
             });
         }
-    }, [show, nomer, category]);
+    }, [show, nomer, category, reserve, active]);
+    
 
     const closeButton = () => {
         let success = confirm("Вы уверены, все несохраненные данные будут удалены");
@@ -62,7 +69,9 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSu
                         {
                             id: nomer.id,
                             name: nomerName,
-                            category: formData.category.origName
+                            category: formData.category,
+                            reserve: formData.reserve,
+                            active: formData.active
                         }
                     ]
                 }
@@ -95,6 +104,9 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSu
         }
     };
 
+    // console.log(formData.reserve);
+    
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -109,10 +121,51 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, onSu
 
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
-                        {uniqueCategories.map(category => (
+                        <option value="onePlace">Одноместный</option>
+                        <option value="twoPlace">Двухместный</option>
+                        {/* {uniqueCategories.map(category => (
                             <option key={category} value={category}>{category == 'onePlace' ? 'Одноместный' : category == 'twoPlace' ? 'Двухместный' : ''}</option>
-                        ))}
+                        ))} */}
                     </select>
+                    
+                    <label>Тип</label>
+                    <select
+                        name="reserve"
+                        value={formData.reserve === true ? "true" : formData.reserve === false ? "false" : ""}
+                        onChange={(e) => {
+                            const value = e.target.value === "true"; // Преобразование строки в булевое значение
+                            setFormData((prevState) => ({
+                                ...prevState,
+                                reserve: value,
+                            }));
+                        }}
+                    >
+                        <option value="" disabled>
+                            Выберите тип
+                        </option>
+                        <option value="false">Квота</option>
+                        <option value="true">Резерв</option>
+                    </select>
+
+                    <label>Доступность</label>
+                    <select
+                        name="active"
+                        value={formData.active === true ? "true" : formData.active === false ? "false" : ""}
+                        onChange={(e) => {
+                            const value = e.target.value === "true";
+                            setFormData((prevState) => ({
+                                ...prevState,
+                                active: value,
+                            }));
+                        }}
+                    >
+                        <option value="" disabled>
+                            Выберите состояние
+                        </option>
+                        <option value="false">Недоступный</option>
+                        <option value="true">Доступный</option>
+                    </select>
+
                 </div>
             </div>
 

@@ -17,7 +17,6 @@ import EditRequestMealTarif from "../EditRequestMealTarif/EditRequestMealTarif.j
 
 function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     const token = getCookie('token');
-    // console.log(id);
     
 
     const { loading, error, data } = useQuery(GET_AIRLINE_TARIFS, {
@@ -78,7 +77,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         }
     }, [data]);
 
-    console.log(data);
 
 
     useEffect(() => {
@@ -91,7 +89,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         }
     }, [mealPriceData]);
 
-    console.log(mealPriceData);
     
 
     const handleSearchTarif = (e) => {

@@ -1046,7 +1046,8 @@ export const CREATE_HOTEL = gql`
       name
       city
       address
-      quote
+      stars
+      airportDistance
     }
   }
 `;
@@ -1060,6 +1061,8 @@ export const GET_HOTELS = gql`
           address
           quote
           images
+          stars
+          airportDistance
       }
   }
 `;
@@ -1069,6 +1072,7 @@ export const GET_HOTEL = gql`
     hotel(id: $hotelId) {
       id
       name
+      stars
       country
       city
       address
@@ -1137,6 +1141,7 @@ export const GET_HOTEL_ROOMS = gql`
         category
         places
         active
+        reserve
       }
     }
   }
@@ -1151,13 +1156,15 @@ export const GET_HOTEL_NAME = gql`
 `;
 
 export const UPDATE_HOTEL = gql`
-  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
-    updateHotel(id: $updateHotelId, input: $input) {
+  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!, $images: [Upload!]) {
+    updateHotel(id: $updateHotelId, input: $input, images: $images) {
       rooms {
         id
         name
         category
         places
+        reserve
+        active
       }
       breakfast {
         start
@@ -1171,6 +1178,7 @@ export const UPDATE_HOTEL = gql`
         start
         end
       }
+      images
     }
   }
 `;
@@ -1344,10 +1352,11 @@ export const GET_AIRLINE_MEAL_PRICE = gql`
 `;
 
 export const UPDATE_AIRLINE = gql`
-  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
-    updateAirline(id: $updateAirlineId, input: $input) {
+  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!, $images: [Upload!]) {
+    updateAirline(id: $updateAirlineId, input: $input, images: $images) {
       name
       id
+      images
     }
   }
 `;
@@ -1569,6 +1578,7 @@ export const GET_DISPATCHERS = gql`
 export const GET_DISPATCHER = gql`
   query Query($userId: ID!) {
     user(userId: $userId) {
+      id
       name
       role
       position
@@ -1610,6 +1620,21 @@ export const UPDATE_DISPATCHER_USER = gql`
     }
   }
 `;
+
+export const UPDATE_USER = gql`
+  mutation UpdateUser($input: UpdateUserInput!, $images: [Upload!]) {
+    updateUser(input: $input, images: $images) {
+      id
+      name
+      email
+      login
+      images
+    }
+  }
+`;
+
+
+
 
 export const DELETE_DISPATCHER_USER = gql`
   mutation Mutation($deleteUserId: ID!) {

@@ -11,7 +11,8 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
 
     const [formData, setFormData] = useState({
         nomerName: '',
-        category: ''
+        category: '',
+        reserve: ''
     });
 
     const [updateHotel] = useMutation(UPDATE_HOTEL, {
@@ -28,7 +29,8 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
     const resetForm = () => {
         setFormData({
             nomerName: '',
-            category: ''
+            category: '',
+            reserve: ''
         });
     };
 
@@ -52,12 +54,15 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
         e.preventDefault();
 
 
-        if (!formData.nomerName.trim() || !formData.category) {
+        if (!formData.nomerName.trim() || !formData.category || !formData.reserve) {
             alert("Пожалуйста, заполните все поля формы перед отправкой.");
             return;
         }
 
         const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
+
+        // Преобразование reserve в булево значение
+        const reserveBoolean = formData.reserve === 'true';
 
         let response_update_room = await updateHotel({
             variables: {
@@ -66,7 +71,8 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
                     rooms: [
                         {
                             name: nomerName,
-                            category: formData.category
+                            category: formData.category,
+                            reserve: reserveBoolean
                         }
                     ]
                 }
@@ -116,6 +122,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
         }
     }, [show]);
 
+    
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -135,6 +142,13 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
                         <option value={"onePlace"}>Одноместный</option>
                         <option value={"twoPlace"}>Двухместный</option>
                         {/* ))} */}
+                    </select>
+
+                    <label>Квота или резерв</label>
+                    <select name="reserve" id="reserve" value={formData.reserve} onChange={handleChange}>
+                        <option value="" disabled>Выберите тип</option>
+                        <option value={false}>Квота</option>
+                        <option value={true}>Резерв</option>
                     </select>
                 </div>
             </div>

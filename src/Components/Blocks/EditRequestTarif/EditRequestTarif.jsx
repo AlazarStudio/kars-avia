@@ -78,7 +78,6 @@ function EditRequestTarif({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(formData);
     // Проверяем, заполнены ли все поля
     if (!formData.name.trim() || !formData.price.trim() || !formData.type) {
       alert("Пожалуйста, заполните все поля!");
