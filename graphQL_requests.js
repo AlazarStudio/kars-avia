@@ -122,6 +122,7 @@ export const GET_REQUESTS = gql`
           gender
         }
         airline {
+          id
           name
           images
         }
@@ -464,6 +465,15 @@ export const GET_REQUEST = gql`
           }
       }
     }
+`;
+
+export const CANCEL_REQUEST = gql`
+  mutation CancelRequest($cancelRequestId: ID!) {
+    cancelRequest(id: $cancelRequestId) {
+      id
+      status
+    }
+  }
 `;
 
 export const UPDATE_HOTEL_BRON = gql`

@@ -1,10 +1,35 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import classes from './Filter.module.css';
 import Button from "../../Standart/Button/Button";
 import DropDownList from "../DropDownList/DropDownList";
 import { roles } from "../../../roles";
+import { useQuery } from "@apollo/client";
+import { GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY } from "../../../../graphQL_requests";
 
-function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, buttonTitle, filterList, needDate, filterLocalData, user, ...props }) {
+function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelectedAirline, selectedAirport, setSelectedAirport, handleChange, handleStatusChange, filterData, buttonTitle, filterList, needDate, filterLocalData, user, ...props }) {
+    const [airlines, setAirlines] = useState([]);
+    const [airports, setAirports] = useState([]);
+
+    // Запросы для получения авиакомпаний и аэропортов
+    const { data: airlinesData, loading: airlinesLoading, error: airlinesError } = useQuery(GET_AIRLINES_RELAY);
+    const { data: airportsData, loading: airportsLoading, error: airportsError } = useQuery(GET_AIRPORTS_RELAY);
+    // console.log(airlinesData);
+    // console.log(airportsData);
+    
+
+
+    useEffect(() => {
+        if (airlinesData) {
+            setAirlines(airlinesData.airlines || []);
+        }
+    }, [airlinesData]);
+
+    useEffect(() => {
+        if (airportsData) {
+            setAirports(airportsData.airports || []);
+        }
+    }, [airportsData]);
+    
     // Опции для выбора состояния
     let filterListShow
 
@@ -15,7 +40,7 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
             { label: "Размещен", value: "done" },
             { label: "Готов к архиву", value: "archiving" },
             { label: "Архивные", value: "archived" },
-            { label: "Отменен", value: "cancelled" },
+            { label: "Отменен", value: "canceled" },
         ]
     }
 
@@ -25,25 +50,63 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
             { label: "Создан / В обработке", value: "created / opened" },
             { label: "Размещен", value: "done" },
             { label: "Готов к архиву", value: "archiving" },
-            { label: "Отменен", value: "cancelled" },
+            { label: "Отменен", value: "canceled" },
         ]
     }
 
     const statusOptions = useMemo(() => filterListShow, []);
 
     // Опции для фильтрации по роли
-    const filterOptions = useMemo(() => [
-        { label: "Показать все", value: "" },
-        { label: "Администратор", value: "DISPATCHERADMIN" }
-    ], []);
+    // const filterOptions = useMemo(() => [
+    //     { label: "Показать все", value: "" },
+    //     { label: "Администратор", value: "DISPATCHERADMIN" }
+    // ], []);
 
     let filter = filterLocalData || "created / opened"
 
     return (
         <div className={classes.filter}>
+
+            {isVisibleAirFiler && (
+                <>
+                <DropDownList
+                    width={'200px'}
+                    placeholder="Выберите авиакомпанию"
+                    options={['Все авиакомпании', ...airlines.map(airline => airline.name)]} // Добавляем 'Все авиакомпании'
+                    initialValue={selectedAirline?.name || ''} // Устанавливаем "Все авиакомпании" по умолчанию
+                    onSelect={(value) => {
+                        if (value === 'Все авиакомпании') {
+                            setSelectedAirline(null); // Если выбрали "Все авиакомпании", сбрасываем выбранную авиакомпанию
+                            handleChange({ target: { name: "airline", value: "" } }); // Убираем фильтрацию по авиакомпании
+                        } else {
+                            const selectedOption = airlines.find(airline => airline.name === value);
+                            setSelectedAirline(selectedOption);
+                            handleChange({ target: { name: "airline", value: selectedOption?.id || "" } });
+                        }
+                    }}
+                />
+                <DropDownList
+                    width={'200px'}
+                    placeholder="Выберите аэропорт"
+                    options={['Все аэропорты', ...airports.map(airport => airport.name)]}  // Добавляем 'Все аэропорты'
+                    initialValue={selectedAirport?.name || 'Все аэропорты'}  // Устанавливаем "Все аэропорты" по умолчанию, если ничего не выбрано
+                    onSelect={(value) => {
+                        if (value === 'Все аэропорты') {
+                            setSelectedAirport(null);  // Если выбрали "Все аэропорты", сбрасываем выбранный аэропорт
+                            handleChange({ target: { name: "airport", value: "" } });  // Убираем фильтрацию по аэропорту
+                        } else {
+                            const selectedOption = airports.find(airport => airport.name === value);
+                            setSelectedAirport(selectedOption);
+                            handleChange({ target: { name: "airport", value: selectedOption?.id || "" } });
+                        }
+                    }}
+                />
+            </>
+            )}
+
             {handleStatusChange && (
                 <>
-                    <div className={classes.filter_title}>Статус:</div>
+                    {/* <div className={classes.filter_title}>Статус:</div> */}
                     <DropDownList
                         width={'200px'}
                         placeholder="Выберите состояние"

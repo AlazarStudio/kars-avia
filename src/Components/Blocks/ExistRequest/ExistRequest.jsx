@@ -10,6 +10,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import {
+  CANCEL_REQUEST,
   CHANGE_TO_ARCHIVE,
   convertToDate,
   GET_LOGS,
@@ -26,6 +27,7 @@ function ExistRequest({
   onClose,
   setShowChooseHotel,
   chooseRequestID,
+  handleCancelRequest,
   user,
   setChooseRequestID,
   totalMeals,
@@ -619,6 +621,15 @@ function ExistRequest({
             (user.role === roles.superAdmin ||
               user.role === roles.dispatcerAdmin) && (
               <div className={classes.requestButton}>
+                <button
+                  onClick={() => {
+                    onClose();
+                    handleCancelRequest(chooseRequestID);
+                  }}
+                >
+                  Отменить
+                  {/* <img src="/user-check.png" alt="" /> */}
+                </button>
                 <Button
                   onClick={() => {
                     onClose();
