@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 import RoomRow from "../RoomRow/RoomRow";
 import Timeline from "../Timeline/Timeline";
 import CurrentTimeIndicator from "../CurrentTimeIndicator/CurrentTimeIndicator";
-import { startOfMonth, addMonths, differenceInDays, endOfMonth, isWithinInterval } from "date-fns";
+import { startOfMonth, addMonths, differenceInDays, endOfMonth, isWithinInterval, startOfDay, eachDayOfInterval } from "date-fns";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
@@ -220,6 +220,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
     const [activeDragItem, setActiveDragItem] = useState(null);
+    const [activeDragItemOld, setActiveDragItemOld] = useState(null);
 
     // Глобальное состояние перетаскивания
     const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
@@ -258,9 +259,42 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         );
     };
 
+    const [highlightedDatesOld, setHighlightedDatesOld] = useState([]);
+
+    const handleDragStart = (event) => {
+        const { active } = event;
+        const draggedItem = newRequests.find((req) => req.id === parseInt(active.id));
+        const draggedItemOld = requests.find((req) => req.id === parseInt(active.id));
+        setActiveDragItem(draggedItem);
+        setActiveDragItemOld(draggedItemOld);
+        setIsDraggingGlobal(true)
+
+        handleDragStartForRequest(draggedItemOld)
+    };
+
+    const daysInMonthOld = eachDayOfInterval({
+        start: startOfMonth(currentMonth),
+        end: endOfMonth(currentMonth),
+    });
+
+    const handleDragStartForRequest = (request) => {
+        if (!request) {
+            return;
+        }
+        const dragStart = startOfDay(new Date(request.checkInDate));
+        const dragEnd = startOfDay(new Date(request.checkOutDate));
+
+        const datesToHighlight = daysInMonthOld.filter(
+            (date) => date.getTime() >= dragStart.getTime() && date.getTime() <= dragEnd.getTime()
+        );
+
+        setHighlightedDatesOld(datesToHighlight);
+    };
+
     const handleDragEnd = async (event) => {
         setIsDraggingGlobal(false);
         setActiveDragItem(null);
+        setHighlightedDatesOld([]);
 
         const { active, over } = event;
 
@@ -659,14 +693,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         }, 5300); // 5 секунд уведомление + 300 мс для анимации
     };
 
-    const handleDragStart = (event) => {
-        const { active } = event;
-        const draggedItem = newRequests.find((req) => req.id === parseInt(active.id));
-        setActiveDragItem(draggedItem);
-        setIsDraggingGlobal(true)
-    };
-
-
     const [hoveredDayInMonth, setHoveredDayInMonth] = useState(null);
     const [hoveredRoom, setHoveredRoom] = useState(null);
 
@@ -744,6 +770,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                 onOpenModal={handleOpenModal} // Прокидываем в RoomRow
                                                 toggleRequestSidebar={toggleRequestSidebar}
                                                 activeDragItem={activeDragItem}
+                                                highlightedDatesOld={highlightedDatesOld}
                                             />
                                         ))}
                                     </Box>
