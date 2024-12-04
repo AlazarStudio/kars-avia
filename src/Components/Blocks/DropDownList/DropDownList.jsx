@@ -53,6 +53,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
                 onChange={handleInputChange}
                 onFocus={handleFocus}
                 placeholder={placeholder}
+                onClick={() => setSearchTerm('')}
             // disabled={!searchable}
             />
             {isOpen && (
