@@ -76,7 +76,6 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
         }
     }, [data]);
 
-    // console.log(addTarif);
 
 
     useEffect(() => {
@@ -89,7 +88,6 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
         }
     }, [mealPriceData]);
 
-    // console.log(mealPrices);
     
 
     const handleSearchTarif = (e) => {

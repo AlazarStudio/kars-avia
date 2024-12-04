@@ -7,6 +7,7 @@ import Header from "../Header/Header";
 import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
 import { gql, useQuery } from "@apollo/client";
 import { GET_HOTELS } from "../../../../graphQL_requests";
+import { roles } from "../../../roles";
 
 function HotelsList({ children, user, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -22,6 +23,8 @@ function HotelsList({ children, user, ...props }) {
         }
         refetch()
     }, [data, refetch]);
+
+    // console.log(data)
 
     const addHotel = (newHotel) => {
         setCompanyData([...companyData, newHotel].sort((a, b) => a.name.localeCompare(b.name)));
@@ -80,7 +83,7 @@ function HotelsList({ children, user, ...props }) {
                         value={searchQuery}
                         onChange={handleSearch}
                     />
-                    {(user.role == 'SUPERADMIN' || user.role == 'DISPATCHERADMIN') &&
+                    {(user.role == roles.superAdmin || user.role == roles.dispatcerAdmin) &&
                         <Filter
                             toggleSidebar={toggleCreateSidebar}
                             handleChange={handleChange}

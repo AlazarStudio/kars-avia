@@ -12,7 +12,8 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         name: '',
         city: '',
         address: '',
-        quote: '',
+        stars: '',
+        airportDistance: '',
         images: ''
     });
 
@@ -23,7 +24,8 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
             name: '',
             city: '',
             address: '',
-            quote: '',
+            stars: '',
+            airportDistance: '',
             images: ''
         });
     };
@@ -70,7 +72,8 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         if (!formData.name.trim() ||
             !formData.city.trim() ||
             !formData.address.trim() ||
-            !formData.quote.trim() ||
+            !formData.stars.trim() ||
+            !formData.airportDistance.trim() ||
             !formData.images) {
             alert('Пожалуйста, заполните все поля!');
             return;
@@ -88,7 +91,8 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                         name: formData.name,
                         city: formData.city,
                         address: formData.address,
-                        quote: formData.quote
+                        stars: formData.stars,
+                        airportDistance: formData.airportDistance
                     },
                     images: formData.images
                 }
@@ -159,8 +163,11 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                     <label>Адрес</label>
                     <input type="text" name="address" placeholder="ул. Лесная  147" onChange={handleChange} />
 
-                    <label>Квота</label>
-                    <input type="text" name="quote" placeholder="24" onChange={handleChange} />
+                    <label>Рейтинг (количество звезд)</label>
+                    <input type="text" name="stars" onChange={handleChange} />
+
+                    <label>Расстояние до аэропорта</label>
+                    <input type="text" name="airportDistance" onChange={handleChange} />
 
                     <label>Картинка</label>
                     <input type="file" name="images" onChange={handleFileChange} />

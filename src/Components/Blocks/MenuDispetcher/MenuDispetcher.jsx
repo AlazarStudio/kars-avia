@@ -229,13 +229,13 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
           )}
         </div>
 
-        <a
+        {/* <a
           className={`${classes.menu_items__elem}`}
           style={{ position: "absolute", bottom: "25px" }}
           onClick={handleClick}
         >
           Выход из учетной записи
-        </a>
+        </a> */}
       </div>
     </>
   );
