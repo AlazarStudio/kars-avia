@@ -16,7 +16,7 @@ import { } from "date-fns";
 import Notification from "../../Notification/Notification";
 
 const DAY_WIDTH = 30;
-const LEFT_WIDTH = 200;
+const LEFT_WIDTH = 220;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
@@ -728,6 +728,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                         left: 0,
                                         top: 0,
                                         minWidth: `${LEFT_WIDTH}px`,
+                                        width: `${LEFT_WIDTH}px`,
+                                        maxWidth: `${LEFT_WIDTH}px`,
                                         backgroundColor: '#f5f5f5',
                                         zIndex: 2,
                                     }}

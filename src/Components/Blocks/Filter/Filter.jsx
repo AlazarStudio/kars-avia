@@ -15,7 +15,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
     const { data: airportsData, loading: airportsLoading, error: airportsError } = useQuery(GET_AIRPORTS_RELAY);
     // console.log(airlinesData);
     // console.log(airportsData);
-    
+
 
 
     useEffect(() => {
@@ -29,7 +29,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
             setAirports(airportsData.airports || []);
         }
     }, [airportsData]);
-    
+
     // Опции для выбора состояния
     let filterListShow
 
@@ -69,39 +69,39 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
 
             {isVisibleAirFiler && (
                 <>
-                <DropDownList
-                    width={'200px'}
-                    placeholder="Выберите авиакомпанию"
-                    options={['Все авиакомпании', ...airlines.map(airline => airline.name)]} // Добавляем 'Все авиакомпании'
-                    initialValue={selectedAirline?.name || ''} // Устанавливаем "Все авиакомпании" по умолчанию
-                    onSelect={(value) => {
-                        if (value === 'Все авиакомпании') {
-                            setSelectedAirline(null); // Если выбрали "Все авиакомпании", сбрасываем выбранную авиакомпанию
-                            handleChange({ target: { name: "airline", value: "" } }); // Убираем фильтрацию по авиакомпании
-                        } else {
-                            const selectedOption = airlines.find(airline => airline.name === value);
-                            setSelectedAirline(selectedOption);
-                            handleChange({ target: { name: "airline", value: selectedOption?.id || "" } });
-                        }
-                    }}
-                />
-                <DropDownList
-                    width={'200px'}
-                    placeholder="Выберите аэропорт"
-                    options={['Все аэропорты', ...airports.map(airport => airport.name)]}  // Добавляем 'Все аэропорты'
-                    initialValue={selectedAirport?.name || 'Все аэропорты'}  // Устанавливаем "Все аэропорты" по умолчанию, если ничего не выбрано
-                    onSelect={(value) => {
-                        if (value === 'Все аэропорты') {
-                            setSelectedAirport(null);  // Если выбрали "Все аэропорты", сбрасываем выбранный аэропорт
-                            handleChange({ target: { name: "airport", value: "" } });  // Убираем фильтрацию по аэропорту
-                        } else {
-                            const selectedOption = airports.find(airport => airport.name === value);
-                            setSelectedAirport(selectedOption);
-                            handleChange({ target: { name: "airport", value: selectedOption?.id || "" } });
-                        }
-                    }}
-                />
-            </>
+                    <DropDownList
+                        width={'200px'}
+                        placeholder="Выберите авиакомпанию"
+                        options={['Все авиакомпании', ...airlines.map(airline => airline.name)]} // Добавляем 'Все авиакомпании'
+                        initialValue={selectedAirline?.name || 'Все авиакомпании'} // Устанавливаем "Все авиакомпании" по умолчанию
+                        onSelect={(value) => {
+                            if (value === 'Все авиакомпании') {
+                                setSelectedAirline(null); // Если выбрали "Все авиакомпании", сбрасываем выбранную авиакомпанию
+                                handleChange({ target: { name: "airline", value: "" } }); // Убираем фильтрацию по авиакомпании
+                            } else {
+                                const selectedOption = airlines.find(airline => airline.name === value);
+                                setSelectedAirline(selectedOption);
+                                handleChange({ target: { name: "airline", value: selectedOption?.id || "" } });
+                            }
+                        }}
+                    />
+                    <DropDownList
+                        width={'200px'}
+                        placeholder="Выберите аэропорт"
+                        options={['Все аэропорты', ...airports.map(airport => airport.name)]}  // Добавляем 'Все аэропорты'
+                        initialValue={selectedAirport?.name || 'Все аэропорты'}  // Устанавливаем "Все аэропорты" по умолчанию, если ничего не выбрано
+                        onSelect={(value) => {
+                            if (value === 'Все аэропорты') {
+                                setSelectedAirport(null);  // Если выбрали "Все аэропорты", сбрасываем выбранный аэропорт
+                                handleChange({ target: { name: "airport", value: "" } });  // Убираем фильтрацию по аэропорту
+                            } else {
+                                const selectedOption = airports.find(airport => airport.name === value);
+                                setSelectedAirport(selectedOption);
+                                handleChange({ target: { name: "airport", value: selectedOption?.id || "" } });
+                            }
+                        }}
+                    />
+                </>
             )}
 
             {handleStatusChange && (
@@ -148,9 +148,9 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
                 </>
             )}
             {
-            user?.role == roles.airlineAdmin 
-            ? null 
-            : <Button onClick={toggleSidebar} minwidth={'200px'}>{buttonTitle}</Button>
+                user?.role == roles.airlineAdmin
+                    ? null
+                    : <Button onClick={toggleSidebar} minwidth={'200px'}>{buttonTitle}</Button>
             }
         </div>
     );
