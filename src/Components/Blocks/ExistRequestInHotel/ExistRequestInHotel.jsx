@@ -114,34 +114,34 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
     const formatDate = (dateString) => dateString.split('-').reverse().join('.');
 
     // Функция для генерации HTML-описания для логов
-    function getLogDescription(log, logsData) {
-        switch (log.action) {
-            case 'create_request':
-                return `
-                Пользователь <span>${log.user.name}</span> 
-                создал заявку <br /><span>№${getJsonParce(log.newData).requestNumber} </span>
-                для <span>${logsData.person.position} ${logsData.person.name}</span>
-                в аэропорт <span>${logsData.airport.name}</span>
-            `;
-            case 'updateHotelChess':
-                return `
-                Пользователь <span>${log.user.name}</span> 
-                создал бронь в отель <span>${logsData.hotel.name}</span>
-                для <span>${logsData.person.position} ${logsData.person.name}</span> 
-                в номер <span>${getJsonParce(log.newData).room}</span> 
-                место <span>${getJsonParce(log.newData).place}</span>
-                c <span>${formatDate(getJsonParce(log.newData).start)}</span> 
-                по <span>${formatDate(getJsonParce(log.newData).end)}</span>
-            `;
-            case 'open_request':
-                return `
-                Пользователь <span>${log.user.name}</span> 
-                первый открыл заявку <br /> <span>№${getJsonParce(log.description).requestNumber}</span>
-            `;
-            default:
-                return 'Неизвестное действие';
-        }
-    }
+    // function getLogDescription(log, logsData) {
+    //     switch (log.action) {
+    //         case 'create_request':
+    //             return `
+    //             Пользователь <span>${log.user.name}</span> 
+    //             создал заявку <br /><span>№${getJsonParce(log.newData).requestNumber} </span>
+    //             для <span>${logsData.person.position} ${logsData.person.name}</span>
+    //             в аэропорт <span>${logsData.airport.name}</span>
+    //         `;
+    //         case 'updateHotelChess':
+    //             return `
+    //             Пользователь <span>${log.user.name}</span> 
+    //             создал бронь в отель <span>${logsData.hotel.name}</span>
+    //             для <span>${logsData.person.position} ${logsData.person.name}</span> 
+    //             в номер <span>${getJsonParce(log.newData).room}</span> 
+    //             место <span>${getJsonParce(log.newData).place}</span>
+    //             c <span>${formatDate(getJsonParce(log.newData).start)}</span> 
+    //             по <span>${formatDate(getJsonParce(log.newData).end)}</span>
+    //         `;
+    //         case 'open_request':
+    //             return `
+    //             Пользователь <span>${log.user.name}</span> 
+    //             первый открыл заявку <br /> <span>№${getJsonParce(log.description).requestNumber}</span>
+    //         `;
+    //         default:
+    //             return 'Неизвестное действие';
+    //     }
+    // }
     // Инициализируем mealData с пустым массивом
     const [mealData, setMealData] = useState([]);
 
@@ -361,10 +361,12 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
                                             </div>
                                             <div
                                                 className={classes.historyLog}
-                                                dangerouslySetInnerHTML={{
-                                                    __html: getLogDescription(log, logsData)
-                                                }}
-                                            />
+                                            // dangerouslySetInnerHTML={{
+                                            //   __html: getLogDescription(log, logsData),
+                                            // }}
+                                            >
+                                                {log.description}
+                                            </div>
                                         </>
                                     ))}
                                 </div>
@@ -373,14 +375,38 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
                     </div>
 
                     {/* Кнопка для размещения заявки */}
-                    {(formData.status !== 'archived' && formData.status !== 'done' && formData.status !== 'archiving' && activeTab === 'Общая' && (user.role === 'SUPERADMIN' || user.role === 'DISPATCHERADMIN')) && (
-                        <div className={classes.requestButton}>
-                            <Button onClick={() => {
-                                onClose();
-                                setShowChooseHotel(true);
-                            }}>Разместить<img src="/user-check.png" alt="" /></Button>
-                        </div>
-                    )}
+                    {formData.status !== "archived" &&
+                        formData.status !== "done" &&
+                        formData.status !== "archiving" &&
+                        formData.status !== "extended" &&
+                        formData.status !== "reduced" &&
+                        formData.status !== "transferred" &&
+                        formData.status !== "earlyStart" &&
+                        formData.status !== "canceled" &&
+                        activeTab === "Общая" &&
+                        (user.role === roles.superAdmin ||
+                            user.role === roles.dispatcerAdmin) && (
+                            <div className={classes.requestButton}>
+                                <button
+                                    onClick={() => {
+                                        onClose();
+                                        handleCancelRequest(chooseRequestID);
+                                    }}
+                                >
+                                    Отменить
+                                    {/* <img src="/user-check.png" alt="" /> */}
+                                </button>
+                                <Button
+                                    onClick={() => {
+                                        onClose();
+                                        setShowChooseHotel(true);
+                                    }}
+                                >
+                                    Разместить
+                                    <img src="/user-check.png" alt="" />
+                                </Button>
+                            </div>
+                        )}
                 </Sidebar >
             }
         </>
