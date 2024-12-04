@@ -54,6 +54,7 @@ function HotelAbout_tabComponent({ id }) {
             updateHotelId: hotel.id,
             input: {
               name: hotel.name,
+              stars: hotel.stars,
               country: hotel.country,
               city: hotel.city,
               address: hotel.address,
@@ -261,6 +262,17 @@ function HotelAbout_tabComponent({ id }) {
                     type="tel"
                     name="name"
                     value={hotel.name || ""}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className={classes.hotelAbout_info_input}
+                  />
+                </div>
+                <div className={classes.hotelAbout_info_item}>
+                  <label>Рейтинг</label>
+                  <input
+                    type="text"
+                    name="stars"
+                    value={hotel.stars || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={classes.hotelAbout_info_input}

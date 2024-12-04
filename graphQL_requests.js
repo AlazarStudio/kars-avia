@@ -1046,7 +1046,8 @@ export const CREATE_HOTEL = gql`
       name
       city
       address
-      quote
+      stars
+      airportDistance
     }
   }
 `;
@@ -1060,6 +1061,8 @@ export const GET_HOTELS = gql`
           address
           quote
           images
+          stars
+          airportDistance
       }
   }
 `;
@@ -1069,6 +1072,7 @@ export const GET_HOTEL = gql`
     hotel(id: $hotelId) {
       id
       name
+      stars
       country
       city
       address
@@ -1136,6 +1140,8 @@ export const GET_HOTEL_ROOMS = gql`
         name
         category
         places
+        active
+        reserve
       }
     }
   }
@@ -1157,6 +1163,8 @@ export const UPDATE_HOTEL = gql`
         name
         category
         places
+        reserve
+        active
       }
       breakfast {
         start

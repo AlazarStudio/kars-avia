@@ -174,4 +174,11 @@
     object-fit: cover;
 }
 
+.star {
+    width: 19px;
+    height: 17px;
+    margin-right: 3px;
+    object-fit: contain;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

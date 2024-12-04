@@ -24,6 +24,8 @@ function HotelsList({ children, user, ...props }) {
         refetch()
     }, [data, refetch]);
 
+    // console.log(data)
+
     const addHotel = (newHotel) => {
         setCompanyData([...companyData, newHotel].sort((a, b) => a.name.localeCompare(b.name)));
     };

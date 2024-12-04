@@ -87,7 +87,7 @@
 
 .hotelAbout_info__filters {
     display: flex;
-    gap: 20px;
+    gap: 5px;
 }
 
 .hotelAbout_info__filters button {
