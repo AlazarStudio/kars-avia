@@ -754,7 +754,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                         </Typography>
 
                         {newRequests?.length > 0 ?
-                            <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '565px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
+                            <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
                                 {newRequests.map((request) => (
                                     <DraggableRequest
                                         userRole={user.role}
