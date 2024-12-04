@@ -7,8 +7,8 @@ import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
-import { GET_REQUESTS, GET_AIRLINE, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, GET_REQUESTS_ARCHIVED, getCookie } from '../../../../graphQL_requests.js';
-import { useQuery, useSubscription } from "@apollo/client";
+import { GET_REQUESTS, GET_AIRLINE, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, GET_REQUESTS_ARCHIVED, getCookie, CANCEL_REQUEST } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ReactPaginate from 'react-paginate';
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
@@ -129,6 +129,30 @@ function Estafeta({ user }) {
     const handleChange = (e) => setFilterData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSearch = (e) => setSearchQuery(e.target.value);
 
+    // Запрос на отмену созданной, но не размещенной заявки
+    const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
+        context: {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+        },
+    });
+
+    const handleCancelRequest = async (id) => {
+        try {
+        // Отправка запроса с правильным ID заявки
+        const response = await cancelRequestMutation({
+            variables: {
+            cancelRequestId: id,
+            },
+        });
+        console.log("Заявка успешно отменена", response);
+        } catch (error) {
+        console.error("Ошибка при отмене заявки:", JSON.stringify(error));
+        }
+    };
+
+
     // Запрос для получения имени авиакомпании пользователя
     const [airlineName, setAirlineName] = useState();
     const { data: airlineData } = useQuery(GET_AIRLINE, { variables: { airlineId: user.airlineId } });
@@ -227,7 +251,7 @@ function Estafeta({ user }) {
             )}
             {/* Боковые панели для создания и выбора заявок */}
             <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
-            <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
+            <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} handleCancelRequest={handleCancelRequest} user={user} />
             <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
         </div>
     );

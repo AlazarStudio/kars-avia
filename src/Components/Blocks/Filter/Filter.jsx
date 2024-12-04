@@ -15,7 +15,7 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
             { label: "Размещен", value: "done" },
             { label: "Готов к архиву", value: "archiving" },
             { label: "Архивные", value: "archived" },
-            { label: "Отменен", value: "cancelled" },
+            { label: "Отменен", value: "canceled" },
         ]
     }
 
@@ -25,7 +25,7 @@ function Filter({ toggleSidebar, handleChange, handleStatusChange, filterData, b
             { label: "Создан / В обработке", value: "created / opened" },
             { label: "Размещен", value: "done" },
             { label: "Готов к архиву", value: "archiving" },
-            { label: "Отменен", value: "cancelled" },
+            { label: "Отменен", value: "canceled" },
         ]
     }
 

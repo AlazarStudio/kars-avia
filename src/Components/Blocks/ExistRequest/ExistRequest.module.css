@@ -112,12 +112,37 @@ select {
     bottom: 0;
     background-color: #fff;
     width: 100%;
+    gap: 5px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 
-.requestButton a {
-    width: 50%;
+.requestButton button {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--red);
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 0 35px;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    border: none;
+    cursor: pointer;
+}
+
+.requestButton button:hover {
+    opacity: 1;
+}
+
+.requestButton a,
+.requestButton button {
+    width: 49%;
 }
 
 .requestDataTitle {
