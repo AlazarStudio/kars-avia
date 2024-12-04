@@ -4,7 +4,7 @@ import { eachDayOfInterval, startOfMonth, endOfMonth, isWeekend, isToday, format
 import { useDroppable } from "@dnd-kit/core";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
-const RoomRow = memo(({ activeDragItem, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+const RoomRow = memo(({ isClick, setIsClick, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { setNodeRef } = useDroppable({
         id: room.id,
     });
@@ -32,7 +32,7 @@ const RoomRow = memo(({ activeDragItem, setHoveredDayInMonth, setHoveredRoom, da
     };
 
     const containerRef = useRef(null);
-    const [dayWidthLength, setDayWidthLength] = useState(30); // Default value
+    const [dayWidthLength, setDayWidthLength] = useState(dayWidth);
 
     // Update dayWidth dynamically based on container size
     useEffect(() => {
@@ -68,7 +68,6 @@ const RoomRow = memo(({ activeDragItem, setHoveredDayInMonth, setHoveredRoom, da
         }
     };
 
-
     return (
         <Box
             ref={(node) => {
@@ -94,11 +93,11 @@ const RoomRow = memo(({ activeDragItem, setHoveredDayInMonth, setHoveredRoom, da
                     key={index}
                     sx={{
                         width: `${dayWidth}px`,
-                        borderLeft: highlightedDates[0]?.getTime() === day.getTime() ? "1px solid #757575" : "1px solid #dddddd00",
-                        borderBottom: highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #757575" : "1px solid #dddddd00",
-                        borderTop: highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #757575" : "1px solid #dddddd00",
-                        borderRight: highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #757575" : "1px solid #ddd",
-                        backgroundColor: highlightedDates.some(d => d.getTime() === day.getTime()) ? "#9e9e9e" : hoveredPoint === index ? "#cce5ff" : !room.active ? '#a9a9a9' : isToday(day) ? "#f3f292" : isWeekend(day) ? weekendColor : "#fff",
+                        borderLeft: !isClick && highlightedDatesOld[0]?.getTime() === day.getTime() ? "1px solid #75757540" : highlightedDates[0]?.getTime() === day.getTime() ? "1px solid #75757540" : "1px solid #dddddd00",
+                        borderBottom: !isClick && highlightedDatesOld.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : "1px solid #dddddd00",
+                        borderTop: !isClick && highlightedDatesOld.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : "1px solid #dddddd00",
+                        borderRight: !isClick && highlightedDatesOld.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : "1px solid #ddd",
+                        backgroundColor: !isClick && highlightedDatesOld.some(d => d.getTime() === day.getTime()) ? "#9e9e9e40" : highlightedDates.some(d => d.getTime() === day.getTime()) ? "#9e9e9e40" : hoveredPoint === index ? "#cce5ff" : !room.active ? '#a9a9a9' : isToday(day) ? "#f3f292" : isWeekend(day) ? weekendColor : "#fff",
                         opacity: !room.active ? '0.5' : '1'
                     }}
                     onMouseEnter={() => handleMouseEnter(index, day)} // Передаем индекс и дату
@@ -121,6 +120,8 @@ const RoomRow = memo(({ activeDragItem, setHoveredDayInMonth, setHoveredRoom, da
                         position={request.position}
                         isDraggingGlobal={isDraggingGlobal}
                         toggleRequestSidebar={toggleRequestSidebar}
+                        isClick={isClick}
+                        setIsClick={setIsClick}
                     />
                 ))}
 

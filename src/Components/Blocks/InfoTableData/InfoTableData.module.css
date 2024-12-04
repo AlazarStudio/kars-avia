@@ -53,6 +53,7 @@
     font-weight: 400;
     color: var(--main-gray);
     width: 100%;
+    text-align: center;
 }
 
 .w5 {

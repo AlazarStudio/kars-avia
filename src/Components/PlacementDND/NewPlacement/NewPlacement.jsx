@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 import RoomRow from "../RoomRow/RoomRow";
 import Timeline from "../Timeline/Timeline";
 import CurrentTimeIndicator from "../CurrentTimeIndicator/CurrentTimeIndicator";
-import { startOfMonth, addMonths, differenceInDays, endOfMonth, isWithinInterval } from "date-fns";
+import { startOfMonth, addMonths, differenceInDays, endOfMonth, isWithinInterval, startOfDay, eachDayOfInterval } from "date-fns";
 import { DndContext, DragOverlay } from "@dnd-kit/core";
 import EditRequestModal from "../EditRequestModal/EditRequestModal";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
@@ -43,20 +43,29 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     }, [dataHotel]);
 
     // Получение комнат отеля
-    const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+    const { loading, error, data, refetch: roomsRefetch } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
     });
 
+    const [checkRoomsType, setCheckRoomsType] = useState(false);
+
+    const handleCheckRoomsType = (info) => {
+        setCheckRoomsType(info);
+        roomsRefetch();
+    }
+
     const rooms = useMemo(() => {
         if (!data || !data.hotel || !data.hotel.rooms) return [];
 
-        return data.hotel.rooms.map((room) => ({
-            id: room.name.replace('№ ', ''),
-            active: room.active,
-            type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
-        }));
-    }, [data]);
+        return data.hotel.rooms
+            .filter((room) => room.reserve === checkRoomsType)
+            .map((room) => ({
+                id: room.name.replace('№ ', ''),
+                active: room.active,
+                type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
+            }));
+    }, [data, checkRoomsType]);
 
     // Получение броней отеля
 
@@ -220,6 +229,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
     const [activeDragItem, setActiveDragItem] = useState(null);
+    const [activeDragItemOld, setActiveDragItemOld] = useState(null);
 
     // Глобальное состояние перетаскивания
     const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
@@ -258,9 +268,43 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         );
     };
 
+    const [highlightedDatesOld, setHighlightedDatesOld] = useState([]);
+    const [isClick, setIsClick] = useState(false);
+
+    const handleDragStart = (event) => {
+        const { active } = event;
+        const draggedItem = newRequests.find((req) => req.id === parseInt(active.id));
+        const draggedItemOld = requests.find((req) => req.id === parseInt(active.id));
+        setActiveDragItem(draggedItem);
+        setActiveDragItemOld(draggedItemOld);
+        setIsDraggingGlobal(true)
+
+        handleDragStartForRequest(draggedItemOld)
+    };
+
+    const daysInMonthOld = eachDayOfInterval({
+        start: startOfMonth(currentMonth),
+        end: endOfMonth(currentMonth),
+    });
+
+    const handleDragStartForRequest = (request) => {
+        if (!request) {
+            return;
+        }
+        const dragStart = startOfDay(new Date(request.checkInDate));
+        const dragEnd = startOfDay(new Date(request.checkOutDate));
+
+        const datesToHighlight = daysInMonthOld.filter(
+            (date) => date.getTime() >= dragStart.getTime() && date.getTime() <= dragEnd.getTime()
+        );
+
+        setHighlightedDatesOld(datesToHighlight);
+    };
+
     const handleDragEnd = async (event) => {
         setIsDraggingGlobal(false);
         setActiveDragItem(null);
+        setHighlightedDatesOld([]);
 
         const { active, over } = event;
 
@@ -659,14 +703,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         }, 5300); // 5 секунд уведомление + 300 мс для анимации
     };
 
-    const handleDragStart = (event) => {
-        const { active } = event;
-        const draggedItem = newRequests.find((req) => req.id === parseInt(active.id));
-        setActiveDragItem(draggedItem);
-        setIsDraggingGlobal(true)
-    };
-
-
     const [hoveredDayInMonth, setHoveredDayInMonth] = useState(null);
     const [hoveredRoom, setHoveredRoom] = useState(null);
 
@@ -684,6 +720,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                 weekendColor={WEEKEND_COLOR}
                                 monthColor={MONTH_COLOR}
                                 leftWidth={LEFT_WIDTH}
+                                handleCheckRoomsType={handleCheckRoomsType}
                             />
                             <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
                                 <Box
@@ -744,6 +781,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                 onOpenModal={handleOpenModal} // Прокидываем в RoomRow
                                                 toggleRequestSidebar={toggleRequestSidebar}
                                                 activeDragItem={activeDragItem}
+                                                highlightedDatesOld={highlightedDatesOld}
+                                                isClick={isClick}
+                                                setIsClick={setIsClick}
                                             />
                                         ))}
                                     </Box>
@@ -755,7 +795,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
                     <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
                         <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            Заявки в городе {hotelInfo.city}
+                            Заявки по эстафете в городе {hotelInfo.city}
                         </Typography>
 
                         {newRequests?.length > 0 ?
@@ -770,6 +810,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                         onUpdateRequest={handleUpdateRequest}
                                         allRequests={requests}
                                         isDraggingGlobal={isDraggingGlobal}
+                                        isClick={isClick}
+                                        setIsClick={setIsClick}
                                     />
                                 ))}
                             </Box>
@@ -791,6 +833,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                             currentMonth={currentMonth}
                             isDraggingGlobal={true}
                             toggleRequestSidebar={toggleRequestSidebar}
+                            isClick={isClick}
+                            setIsClick={setIsClick}
                         />
                     ) : null}
                 </DragOverlay>
