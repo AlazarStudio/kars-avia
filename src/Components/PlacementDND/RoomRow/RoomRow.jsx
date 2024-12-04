@@ -1,10 +1,10 @@
 import React, { memo, useEffect, useRef, useState } from "react";
 import { Box } from "@mui/material";
-import { eachDayOfInterval, startOfMonth, endOfMonth, isWeekend, isToday } from "date-fns";
+import { eachDayOfInterval, startOfMonth, endOfMonth, isWeekend, isToday, format } from "date-fns";
 import { useDroppable } from "@dnd-kit/core";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
-const RoomRow = memo(({ dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+const RoomRow = memo(({ setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { setNodeRef } = useDroppable({
         id: room.id,
     });
@@ -15,6 +15,20 @@ const RoomRow = memo(({ dayWidth, weekendColor, borderBottomDraw, room, requests
     });
 
     const isDouble = room.type === "double";
+
+    const [hoveredPoint, setHoveredPoint] = useState(null);
+
+    const handleMouseEnter = (index, day) => {
+        setHoveredPoint(index);
+        setHoveredDayInMonth(format(day, 'd'))
+        setHoveredRoom(room.id)
+    };
+
+    const handleMouseLeave = () => {
+        setHoveredPoint(null);
+        setHoveredDayInMonth(null)
+        setHoveredRoom(null)
+    };
 
     const containerRef = useRef(null);
     const [dayWidthLength, setDayWidthLength] = useState(30); // Default value
@@ -41,6 +55,7 @@ const RoomRow = memo(({ dayWidth, weekendColor, borderBottomDraw, room, requests
         };
     }, [daysInMonth]);
 
+
     return (
         <Box
             ref={(node) => {
@@ -61,9 +76,11 @@ const RoomRow = memo(({ dayWidth, weekendColor, borderBottomDraw, room, requests
                     sx={{
                         width: `${dayWidth}px`,
                         borderRight: "1px solid #ddd",
-                        backgroundColor: !room.active ? '#a9a9a9' : isToday(day) ? "#f3f292" : isWeekend(day) ? weekendColor : "#fff",
+                        backgroundColor: hoveredPoint === index ? "#cce5ff" : !room.active ? '#a9a9a9' : isToday(day) ? "#f3f292" : isWeekend(day) ? weekendColor : "#fff",
                         opacity: !room.active ? '0.5' : '1'
                     }}
+                    onMouseEnter={() => handleMouseEnter(index, day)} // Передаем индекс и дату
+                    onMouseLeave={handleMouseLeave}
                 />
             ))}
 

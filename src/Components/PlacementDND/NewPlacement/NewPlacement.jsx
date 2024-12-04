@@ -661,6 +661,10 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         setIsDraggingGlobal(true)
     };
 
+
+    const [hoveredDayInMonth, setHoveredDayInMonth] = useState(null);
+    const [hoveredRoom, setHoveredRoom] = useState(null);
+
     return (
         <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
@@ -668,6 +672,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                     <Box sx={{ overflow: 'hidden' }}>
                         <Box sx={{ position: "relative", height: 'fit-content', maxHeight: user.role == 'HOTELADMIN' ? '76vh' : '67vh', overflow: 'hidden', overflowY: 'scroll', width: '100%', borderBottom: '1px solid #ddd', borderTop: '1px solid #ddd', borderRight: '1px solid #ddd' }}>
                             <Timeline
+                                hoveredDayInMonth={hoveredDayInMonth}
                                 currentMonth={currentMonth}
                                 setCurrentMonth={setCurrentMonth}
                                 dayWidth={DAY_WIDTH}
@@ -695,7 +700,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                 borderBottom: index + 1 == filteredRooms.length ? '1px solid #dddddd00' : '1px solid #ddd',
                                                 borderRight: '1px solid #ddd',
                                                 borderLeft: '1px solid #ddd',
-                                                backgroundColor: !room.active ? '#a9a9a9' : '#f5f5f5',
+                                                backgroundColor: hoveredRoom == room.id ? "#cce5ff" : !room.active ? '#a9a9a9' : '#f5f5f5',
                                                 opacity: !room.active ? '0.5' : '1'
                                             }}
                                         >
@@ -717,6 +722,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                         <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
                                         {filteredRooms.map((room, index) => (
                                             <RoomRow
+                                                setHoveredRoom={setHoveredRoom}
+                                                setHoveredDayInMonth={setHoveredDayInMonth}
                                                 borderBottomDraw={index + 1 == filteredRooms.length ? true : false}
                                                 userRole={user.role}
                                                 key={room.id}

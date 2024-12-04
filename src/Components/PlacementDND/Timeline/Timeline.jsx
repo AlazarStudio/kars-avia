@@ -12,7 +12,7 @@ import {
 } from "date-fns";
 import { ru } from "date-fns/locale";
 
-const Timeline = memo(({ currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth }) => {
+const Timeline = memo(({ hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth }) => {
     const daysInMonth = eachDayOfInterval({
         start: startOfMonth(currentMonth),
         end: endOfMonth(currentMonth),
@@ -78,6 +78,7 @@ const Timeline = memo(({ currentMonth, setCurrentMonth, dayWidth, weekendColor, 
                         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                         const isCurrentDay = isToday(day);
 
+                        let dateChoose = hoveredDayInMonth == format(day, "d", { locale: ru }) ? true : false;
                         return (
                             <Box
                                 key={index}
@@ -86,7 +87,7 @@ const Timeline = memo(({ currentMonth, setCurrentMonth, dayWidth, weekendColor, 
                                     textAlign: "center",
                                     borderRight: "1px solid #ddd",
                                     padding: "2px 0",
-                                    backgroundColor: isCurrentDay
+                                    backgroundColor: dateChoose ? "#cce5ff" : isCurrentDay
                                         ? "#f3f292"
                                         : isWeekend
                                             ? weekendColor
