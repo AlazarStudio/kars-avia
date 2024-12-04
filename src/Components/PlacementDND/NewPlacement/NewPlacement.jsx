@@ -260,6 +260,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     };
 
     const [highlightedDatesOld, setHighlightedDatesOld] = useState([]);
+    const [isClick, setIsClick] = useState(false);
 
     const handleDragStart = (event) => {
         const { active } = event;
@@ -771,6 +772,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                 toggleRequestSidebar={toggleRequestSidebar}
                                                 activeDragItem={activeDragItem}
                                                 highlightedDatesOld={highlightedDatesOld}
+                                                isClick={isClick}
+                                                setIsClick={setIsClick}
                                             />
                                         ))}
                                     </Box>
@@ -797,6 +800,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                         onUpdateRequest={handleUpdateRequest}
                                         allRequests={requests}
                                         isDraggingGlobal={isDraggingGlobal}
+                                        isClick={isClick}
+                                        setIsClick={setIsClick}
                                     />
                                 ))}
                             </Box>
@@ -818,6 +823,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                             currentMonth={currentMonth}
                             isDraggingGlobal={true}
                             toggleRequestSidebar={toggleRequestSidebar}
+                            isClick={isClick}
+                            setIsClick={setIsClick}
                         />
                     ) : null}
                 </DragOverlay>

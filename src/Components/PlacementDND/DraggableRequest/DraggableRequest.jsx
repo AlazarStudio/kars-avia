@@ -5,7 +5,7 @@ import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 import { ConstructionOutlined } from "@mui/icons-material";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -150,7 +150,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     const handleMouseLeave = () => setTooltipVisible(false);
 
     const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
-    const [isClick, setIsClick] = useState(true);
+    // const [isClick, setIsClick] = useState(true);
 
     const handleMouseDown = (e) => {
         setStartPosition({ x: e.clientX, y: e.clientY });
