@@ -43,20 +43,29 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     }, [dataHotel]);
 
     // Получение комнат отеля
-    const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+    const { loading, error, data, refetch: roomsRefetch } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
     });
 
+    const [checkRoomsType, setCheckRoomsType] = useState(false);
+
+    const handleCheckRoomsType = (info) => {
+        setCheckRoomsType(info);
+        roomsRefetch();
+    }
+
     const rooms = useMemo(() => {
         if (!data || !data.hotel || !data.hotel.rooms) return [];
 
-        return data.hotel.rooms.map((room) => ({
-            id: room.name.replace('№ ', ''),
-            active: room.active,
-            type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
-        }));
-    }, [data]);
+        return data.hotel.rooms
+            .filter((room) => room.reserve === checkRoomsType)
+            .map((room) => ({
+                id: room.name.replace('№ ', ''),
+                active: room.active,
+                type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
+            }));
+    }, [data, checkRoomsType]);
 
     // Получение броней отеля
 
@@ -711,6 +720,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                 weekendColor={WEEKEND_COLOR}
                                 monthColor={MONTH_COLOR}
                                 leftWidth={LEFT_WIDTH}
+                                handleCheckRoomsType={handleCheckRoomsType}
                             />
                             <Box sx={{ display: 'flex', position: 'relative', height: '100%', overflow: 'hidden' }}>
                                 <Box

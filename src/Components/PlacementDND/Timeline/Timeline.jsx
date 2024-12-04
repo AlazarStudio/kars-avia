@@ -1,7 +1,8 @@
-import React, { memo } from "react";
+import React, { memo, useState } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import classes from "./Timeline.module.css";
 import {
     format,
     eachDayOfInterval,
@@ -12,7 +13,7 @@ import {
 } from "date-fns";
 import { ru } from "date-fns/locale";
 
-const Timeline = memo(({ hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth }) => {
+const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth }) => {
     const daysInMonth = eachDayOfInterval({
         start: startOfMonth(currentMonth),
         end: endOfMonth(currentMonth),
@@ -28,6 +29,12 @@ const Timeline = memo(({ hoveredDayInMonth, currentMonth, setCurrentMonth, dayWi
 
     const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
 
+    const [activeButton, setActiveButton] = useState(false);
+
+    const handleCheckRoomsTypeInfo = (info) => {
+        setActiveButton(info);
+        handleCheckRoomsType(info);
+    };
     return (
         <Box sx={{
             width: '100%',
@@ -43,8 +50,16 @@ const Timeline = memo(({ hoveredDayInMonth, currentMonth, setCurrentMonth, dayWi
                     borderRight: '1px solid #ddd',
                     borderBottom: '1px solid #ddd',
                     backgroundColor: '#f5f5f5',
+                    display: 'flex',
+                    justifyContent: "center",
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '10px'
                 }}
-            />
+            >
+                <button className={`${classes.checkBTN} ${!activeButton ? classes.activeButton : ''}`} onClick={() => { handleCheckRoomsTypeInfo(false) }}>Квота</button>
+                <button className={`${classes.checkBTN} ${activeButton ? classes.activeButton : ''}`} onClick={() => { handleCheckRoomsTypeInfo(true) }}>Резерв</button>
+            </Box>
 
             <Box sx={{ display: "flex", flexDirection: "column", borderBottom: "1px solid #ddd", width: `calc(100% - ${leftWidth}px)` }}>
                 {/* Месяц и кнопки */}
