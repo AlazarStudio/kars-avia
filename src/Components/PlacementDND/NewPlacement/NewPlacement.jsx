@@ -301,60 +301,65 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
         if (newRequests.includes(draggedRequest)) {
             // Если это новая заявка
-            if (isDouble) {
-                // Проверяем доступные позиции для двухместной комнаты
-                const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
+            if (targetRoom.active) {
+                if (isDouble) {
+                    // Проверяем доступные позиции для двухместной комнаты
+                    const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
 
-                if (availablePosition === undefined) {
-                    addNotification("Все позиции заняты в этой комнате!", "error");
-                    return;
-                }
-
-                const newRequest = {
-                    ...draggedRequest,
-                    room: targetRoomId,
-                    position: availablePosition,
-                    status: "Ожидает",
-                };
-
-                setRequests((prevRequests) => {
-                    const exists = prevRequests.some((req) => req.id === newRequest.id);
-                    if (exists) {
-                        addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-                        return prevRequests;
+                    if (availablePosition === undefined) {
+                        addNotification("Все позиции заняты в этой комнате!", "error");
+                        return;
                     }
-                    return [...prevRequests, newRequest];
-                });
 
-                // Открываем модальное окно для подтверждения
-                setSelectedRequest(newRequest);
-                setIsConfirmModalOpen(true);
+                    const newRequest = {
+                        ...draggedRequest,
+                        room: targetRoomId,
+                        position: availablePosition,
+                        status: "Ожидает",
+                    };
+
+                    setRequests((prevRequests) => {
+                        const exists = prevRequests.some((req) => req.id === newRequest.id);
+                        if (exists) {
+                            addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
+                            return prevRequests;
+                        }
+                        return [...prevRequests, newRequest];
+                    });
+
+                    // Открываем модальное окно для подтверждения
+                    setSelectedRequest(newRequest);
+                    setIsConfirmModalOpen(true);
+                } else {
+                    // Для одноместной комнаты
+                    if (occupiedPositions.length > 0) {
+                        addNotification("Место занято в комнате!", "error");
+                        return;
+                    }
+
+                    const newRequest = {
+                        ...draggedRequest,
+                        room: targetRoomId,
+                        position: 0,
+                        status: "Ожидает",
+                    };
+
+                    setRequests((prevRequests) => {
+                        const exists = prevRequests.some((req) => req.id === newRequest.id);
+                        if (exists) {
+                            addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
+                            return prevRequests;
+                        }
+                        return [...prevRequests, newRequest];
+                    });
+
+                    // Открываем модальное окно для подтверждения
+                    setSelectedRequest(newRequest);
+                    setIsConfirmModalOpen(true);
+                }
             } else {
-                // Для одноместной комнаты
-                if (occupiedPositions.length > 0) {
-                    addNotification("Место занято в комнате!", "error");
-                    return;
-                }
-
-                const newRequest = {
-                    ...draggedRequest,
-                    room: targetRoomId,
-                    position: 0,
-                    status: "Ожидает",
-                };
-
-                setRequests((prevRequests) => {
-                    const exists = prevRequests.some((req) => req.id === newRequest.id);
-                    if (exists) {
-                        addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-                        return prevRequests;
-                    }
-                    return [...prevRequests, newRequest];
-                });
-
-                // Открываем модальное окно для подтверждения
-                setSelectedRequest(newRequest);
-                setIsConfirmModalOpen(true);
+                addNotification("Комната не активна!", "error");
+                return;
             }
         } else {
             // Перемещение существующих заявок

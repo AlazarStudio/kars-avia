@@ -9,7 +9,7 @@ import { useMutation, useQuery } from "@apollo/client";
 function EditRequestNomerFond({ show, id, onClose, nomer, places, category, reserve, active, onSubmit, uniqueCategories, tarifs, addTarif, setAddTarif, selectedNomer }) {
     const token = getCookie('token');
     // console.log(category);
-    
+
 
     const [formData, setFormData] = useState({
         nomerName: (nomer && nomer.name) || '',
@@ -30,7 +30,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, rese
             });
         }
     }, [show, nomer, category, reserve, active]);
-    
+
 
     const closeButton = () => {
         let success = confirm("Вы уверены, все несохраненные данные будут удалены");
@@ -105,7 +105,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, rese
     };
 
     // console.log(formData.reserve);
-    
+
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -127,7 +127,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, rese
                             <option key={category} value={category}>{category == 'onePlace' ? 'Одноместный' : category == 'twoPlace' ? 'Двухместный' : ''}</option>
                         ))} */}
                     </select>
-                    
+
                     <label>Тип</label>
                     <select
                         name="reserve"
@@ -147,7 +147,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, rese
                         <option value="true">Резерв</option>
                     </select>
 
-                    <label>Доступность</label>
+                    <label>Состояние</label>
                     <select
                         name="active"
                         value={formData.active === true ? "true" : formData.active === false ? "false" : ""}
@@ -162,8 +162,8 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, rese
                         <option value="" disabled>
                             Выберите состояние
                         </option>
-                        <option value="false">Недоступный</option>
-                        <option value="true">Доступный</option>
+                        <option value="false">Не работает</option>
+                        <option value="true">Работает</option>
                     </select>
 
                 </div>
