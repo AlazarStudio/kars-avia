@@ -14,7 +14,7 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
             if (room.reserve === false) {
                 // Найдем, существует ли уже такой запрос с таким же category
                 const existingRequest = quotaRequests.find(r => r.rooms[0]?.category === room.category);
-                
+
                 if (existingRequest) {
                     // Если такой запрос уже есть, добавляем комнату в существующий запрос
                     existingRequest.rooms.push(room);
@@ -26,12 +26,12 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
                     });
                 }
             }
-    
+
             // Проверяем, является ли комната резервной
             if (room.reserve === true) {
                 // Найдем, существует ли уже такой запрос с таким же category
                 const existingRequest = reserveRequests.find(r => r.rooms[0]?.category === room.category);
-                
+
                 if (existingRequest) {
                     // Если такой запрос уже есть, добавляем комнату в существующий запрос
                     existingRequest.rooms.push(room);
@@ -61,51 +61,51 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
 
     const filteredRequests = filter === 'quote' ? quotaRequests : reserveRequests;
 
-    console.log(requests);
-    
+    console.log(filteredRequests);
+
 
     return (
         <>
-        <div className={classes.filter_wrapper}>
-            <button onClick={() => setFilter('quote')} className={filter === 'quote' ? classes.activeButton : null}>Квота</button>
-            <button onClick={() => setFilter('reserve')} className={filter === 'reserve' ? classes.activeButton : null}>Резерв</button>
-        </div>
-        <InfoTable>
-            <div className={classes.bottom}>
-                {filteredRequests.map((item, index) => (
-                    <div key={index}>
-                        <div
-                            className={classes.InfoTable_data}
-                        >
-                            <div className={`${classes.InfoTable_data_elem}`}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
-                            </div>
+            <div className={classes.filter_wrapper}>
+                <button onClick={() => setFilter('quote')} className={filter === 'quote' ? classes.activeButton : null}>Квота</button>
+                <button onClick={() => setFilter('reserve')} className={filter === 'reserve' ? classes.activeButton : null}>Резерв</button>
+            </div>
+            <InfoTable>
+                <div className={classes.bottom}>
+                    {filteredRequests.map((item, index) => (
+                        <div key={index}>
+                            <div
+                                className={classes.InfoTable_data}
+                            >
+                                <div className={`${classes.InfoTable_data_elem}`}>
+                                    <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
+                                </div>
 
-                            {/* <div className={classes.infoTable_buttons}>
+                                {/* <div className={classes.infoTable_buttons}>
                                 <img src="/editPassenger.png" alt="" onClick={() => toggleRequestSidebar(item)} />
                                 <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponent(index, item)} />
                             </div> */}
 
-                        </div>
-                        <div className={classes.InfoTable_BottomInfo}>
-                            <div className={`${classes.InfoTable_BottomInfo__item}`}>
-                                {item.rooms.map((elem, index) => (
-                                    <div className={`${classes.InfoTable_BottomInfo__item___elem}`} key={index}>
-                                        {elem.name}
-                                        <div className={classes.infoTable_buttons}>
-                                            <img src="/editPassenger.png" alt="" onClick={() => toggleRequestEditNumber(elem, item)} />
-                                            <img src="/deletePassenger.png" alt="" onClick={() => openDeleteNomerComponent(elem, item.name)} />
-                                        </div>
-                                    </div>
-
-                                ))}
                             </div>
-                        </div>
+                            <div className={classes.InfoTable_BottomInfo}>
+                                <div className={`${classes.InfoTable_BottomInfo__item}`}>
+                                    {item.rooms.map((elem, index) => (
+                                        <div className={`${classes.InfoTable_BottomInfo__item___elem}`} key={index}>
+                                            {elem.name} {!elem.active && '(не работает)'}
+                                            <div className={classes.infoTable_buttons}>
+                                                <img src="/editPassenger.png" alt="" onClick={() => toggleRequestEditNumber(elem, item)} />
+                                                <img src="/deletePassenger.png" alt="" onClick={() => openDeleteNomerComponent(elem, item.name)} />
+                                            </div>
+                                        </div>
 
-                    </div>
-                ))}
-            </div>
-        </InfoTable>
+                                    ))}
+                                </div>
+                            </div>
+
+                        </div>
+                    ))}
+                </div>
+            </InfoTable>
         </>
     );
 }
