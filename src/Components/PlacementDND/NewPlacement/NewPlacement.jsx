@@ -782,7 +782,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
                     <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
                         <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            Заявки в городе {hotelInfo.city}
+                            Заявки по эстафете в городе {hotelInfo.city}
                         </Typography>
 
                         {newRequests?.length > 0 ?

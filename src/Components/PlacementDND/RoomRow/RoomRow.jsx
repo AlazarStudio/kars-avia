@@ -9,8 +9,6 @@ const RoomRow = memo(({ activeDragItem, highlightedDatesOld, setHoveredDayInMont
         id: room.id,
     });
 
-    console.log(room)
-
     const daysInMonth = eachDayOfInterval({
         start: startOfMonth(currentMonth),
         end: endOfMonth(currentMonth),
