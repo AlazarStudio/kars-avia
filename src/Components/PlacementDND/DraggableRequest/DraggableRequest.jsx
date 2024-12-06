@@ -45,7 +45,7 @@ const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth
         top: request.room ? `${position * 40 + 2}px` : "auto",
         left: request.room ? `${checkInOffset}px` : "auto",
         width: request.room ? `${duration}px` : '100%',
-        height: "35px",
+        height: "45px",
         backgroundColor: backgroundColor,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",

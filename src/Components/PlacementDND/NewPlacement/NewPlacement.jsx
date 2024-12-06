@@ -740,7 +740,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                             sx={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                height: room.type === 'double' ? '80px' : '40px',
+                                                height: room.type === 'double' ? '100px' : '50px',
                                                 borderBottom: index + 1 == filteredRooms.length ? '1px solid #dddddd00' : '1px solid #ddd',
                                                 borderRight: '1px solid #ddd',
                                                 borderLeft: '1px solid #ddd',
@@ -752,8 +752,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                             <Tooltip title={`${room.id} ${!room.active ? '(не работает)' : ''}`}
                                                 arrow
                                                 placement="top"
-                                                enterDelay={1500}
-                                                leaveDelay={200}
+                                                enterDelay={1000}
                                             >
                                                 <Typography
                                                     variant="body1"

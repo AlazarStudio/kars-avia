@@ -78,7 +78,7 @@ const RoomRow = memo(({ isClick, setIsClick, activeDragItem, highlightedDatesOld
                 display: "flex",
                 position: "relative",
                 borderBottom: borderBottomDraw ? "1px solid #dddddd00" : "1px solid #ddd",
-                height: isDouble ? "80px" : "40px",
+                height: isDouble ? "100px" : "50px",
             }}
 
             onMouseEnter={(e) => {
