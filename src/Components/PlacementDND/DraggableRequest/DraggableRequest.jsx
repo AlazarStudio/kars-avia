@@ -42,7 +42,7 @@ const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth
 
     const style = {
         position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
-        top: request.room ? `${position * 40 + 2}px` : "auto",
+        top: request.room ? `${position * 50 + 2}px` : "auto",
         left: request.room ? `${checkInOffset}px` : "auto",
         width: request.room ? `${duration}px` : '100%',
         height: "45px",
