@@ -11,7 +11,7 @@ import DraggableRequest from "../DraggableRequest/DraggableRequest";
 import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ExistRequestInHotel from "../../Blocks/ExistRequestInHotel/ExistRequestInHotel";
-import { decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
+import { convertToDate, decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, GET_RESERVE_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, server, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
 import { } from "date-fns";
 import Notification from "../../Notification/Notification";
 
@@ -62,6 +62,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
             // .filter((room) => room.reserve === checkRoomsType)
             .map((room) => ({
                 id: room.name,
+                reserve: room.reserve,
                 active: room.active,
                 type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
             }));
@@ -706,6 +707,31 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     const [hoveredDayInMonth, setHoveredDayInMonth] = useState(null);
     const [hoveredRoom, setHoveredRoom] = useState(null);
 
+
+    // Резерв
+    // Подписки на создание и обновление заявок
+    const { data: subscriptionDataReserves } = useSubscription(REQUEST_RESERVE_CREATED_SUBSCRIPTION);
+    const { data: subscriptionUpdateDataReserves } = useSubscription(REQUEST_RESERVE_UPDATED_SUBSCRIPTION);
+
+    const { loading: loadingReserves, error: errorReserves, data: dataReserves, refetch: refetchReserves } = useQuery(GET_RESERVE_REQUESTS, {
+        variables: { pagination: { skip: 0, take: 999999999 } },
+    });
+
+    const [requestsReserve, setRequestsReserve] = useState([]);
+
+    useEffect(() => {
+        if (dataReserves && dataReserves.reserves.reserves) {
+            const sortedRequests = dataReserves.reserves.reserves.filter(
+                (reserve) => reserve.airport.city === hotelInfo.city
+            );
+            setRequestsReserve(sortedRequests);
+        }
+    }, [dataReserves, hotelInfo.city]);
+
+
+
+
+
     return (
         <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
@@ -767,7 +793,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                         WebkitLineClamp: 2
                                                     }}
                                                 >
-                                                    {room.id} {!room.active ? '(не работает)' : ''}
+                                                    {room.id} {!room.active ? '(не работает)' : ''} {room.reserve ? '(резерв)' : ''}
                                                 </Typography>
                                             </Tooltip>
                                         </Box>
@@ -814,7 +840,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
                     {!checkRoomsType &&
                         <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
-                            <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по эстафете в городе {hotelInfo.city}
                             </Typography>
 
@@ -844,9 +870,52 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                     }
                     {checkRoomsType &&
                         <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
-                            <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по резерву в городе {hotelInfo.city}
                             </Typography>
+
+                            {requestsReserve?.length > 0 ?
+                                <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '518px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
+                                    {requestsReserve.map((request) => (
+                                        <Box sx={{
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            width: '100%',
+                                            padding: '5px',
+                                            cursor: 'pointer',
+                                            textAlign: 'center',
+                                            fontSize: '12px',
+                                            backgroundColor: "#9e9e9e",
+                                            border: "1px solid #757575",
+                                            color: '#fff',
+                                            borderRadius: '3px',
+                                        }}>
+                                            <Box sx={{
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                            }}>
+                                                <img src={`${server}${request.airline.images[0]}`} alt="" style={{ height: '20px', marginRight: '5px' }} />
+                                                {request.airline.name}
+                                            </Box>
+                                            <Box sx={{
+                                                display: 'flex',
+                                                justifyContent: 'center',
+                                                alignItems: 'center',
+                                            }}>
+                                                {convertToDate(request.arrival.date)} - {convertToDate(request.departure.date)}
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Box>
+                                :
+                                <Typography variant="h6" sx={{ padding: '10px ', textAlign: "center", fontSize: '14px', height: 'calc(100% - 50px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    Заявок не найдено
+                                </Typography>
+                            }
                         </Box>
                     }
                 </Box>
