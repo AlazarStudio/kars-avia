@@ -1,14 +1,16 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from './CreateRequestCompanyHotel.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
 import { getCookie, server, CREATE_HOTEL_USER } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
+import Swal from "sweetalert2";
 
 function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
     const token = getCookie('token');
 
+    const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
     const [formData, setFormData] = useState({
         images: '',
         name: '',
@@ -21,7 +23,7 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
 
     const sidebarRef = useRef();
 
-    const resetForm = () => {
+    const resetForm = useCallback(() => {
         setFormData({
             images: '',
             name: '',
@@ -31,23 +33,45 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
             login: '',
             password: ''
         });
-    };
+        setIsEdited(false); // Сброс флага изменений
+    }, []);
 
-    const closeButton = () => {
-        let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-        if (success) {
+    const closeButton = useCallback(() => {
+        if (!isEdited) {
             resetForm();
             onClose();
+            return;
         }
-    };
 
-    const handleChange = (e) => {
+        Swal.fire({
+            title: 'Вы уверены?',
+            text: 'Все несохраненные данные будут удалены.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Да',
+            cancelButtonText: 'Нет',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            customClass: {
+                confirmButton: 'swal_confirm',
+                cancelButton: 'swal_cancel',
+            },
+        }).then(result => {
+            if (result.isConfirmed) {
+                resetForm();
+                onClose();
+            }
+        });
+    }, [isEdited, resetForm, onClose]);
+
+    const handleChange = useCallback((e) => {
         const { name, value } = e.target;
+        setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
         setFormData(prevState => ({
             ...prevState,
             [name]: value
         }));
-    };
+    }, []);
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
@@ -76,18 +100,36 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
         const emptyFields = requiredFields.filter((field) => !formData[field]?.trim());
 
         if (emptyFields.length > 0) {
-            alert('Пожалуйста, заполните все обязательные поля.');
+            // alert('Пожалуйста, заполните все обязательные поля.');
+            Swal.fire({
+                title: 'Ошибка!',
+                text: 'Пожалуйста, заполните все обязательные поля.',
+                icon: 'error',
+                confirmButtonText: 'Ок',
+                customClass: {
+                    confirmButton:'swal_confirm'
+                }
+            });
             return;
         }
 
         if (!formData.images) {
-            alert('Пожалуйста, выберите файл для загрузки.');
+            // alert('Пожалуйста, выберите файл для загрузки.');
+            Swal.fire({
+                title: 'Ошибка!',
+                text: 'Пожалуйста, выберите файл для загрузки.',
+                icon: 'error',
+                confirmButtonText: 'Ок',
+                customClass: {
+                    confirmButton:'swal_confirm'
+                }
+            });
             return;
         }
-        if (!formData.images) {
-            alert('Пожалуйста, выберите файл для загрузки');
-            return;
-        }
+        // if (!formData.images) {
+        //     alert('Пожалуйста, выберите файл для загрузки');
+        //     return;
+        // }
 
         try {
             let response_create_user = await uploadFile({
@@ -118,9 +160,14 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
 
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                closeButton();
+            if (
+                document.querySelector('.swal2-container')?.contains(event.target) ||  // Клик в SweetAlert2
+                sidebarRef.current?.contains(event.target) // Клик в боковой панели
+            ) {
+                return; // Если клик внутри, ничего не делаем
             }
+
+            closeButton();
         };
 
         if (show) {
@@ -132,7 +179,7 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [show, onClose]);
+    }, [show, closeButton]);
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>

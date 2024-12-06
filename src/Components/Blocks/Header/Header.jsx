@@ -9,6 +9,7 @@ import {
 import { useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
+import Swal from "sweetalert2";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -22,8 +23,8 @@ function Header({ children }) {
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
-    setIsDropdownOpen(false)
-    setIsFullyVisible(false)
+    setIsDropdownOpen(false);
+    setIsFullyVisible(false);
   };
 
   const userID = useMemo(
@@ -42,13 +43,39 @@ function Header({ children }) {
     }
   }, [data]);
 
+  // const logout = () => {
+  //   let result = confirm("Вы уверены что хотите выйти?");
+  //   if (result) {
+  //     document.cookie = "token=; Max-Age=0; Path=/;";
+  //     navigate("/");
+  //     window.location.reload();
+  //   }
+  // };
+
   const logout = () => {
-    let result = confirm("Вы уверены что хотите выйти?");
-    if (result) {
-      document.cookie = "token=; Max-Age=0; Path=/;";
-      navigate("/");
-      window.location.reload();
-    }
+    Swal.fire({
+      title: "Вы уверены?",
+      text: "Вы действительно хотите выйти?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Да, выйти",
+      cancelButtonText: "Отмена",
+      allowOutsideClick: true,
+      allowEscapeKey: false,
+      customClass: {
+        confirmButton: "swal_confirm",
+        cancelButton: "swal_cancel",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Удаляем токен из cookie
+        document.cookie = "token=; Max-Age=0; Path=/;";
+        // Перенаправляем на главную страницу
+        navigate("/");
+        // Перезагружаем страницу
+        window.location.reload();
+      }
+    });
   };
 
   const formattedDate = useMemo(() => {
@@ -76,7 +103,10 @@ function Header({ children }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        document.querySelector(".swal2-container")?.contains(event.target) ||
+        (dropdownRef.current && !dropdownRef.current.contains(event.target))
+      ) {
         setIsDropdownOpen(false);
         setTimeout(() => setIsFullyVisible(false), 300); // Убираем из DOM через 300ms
       }
@@ -97,7 +127,6 @@ function Header({ children }) {
       setTimeout(() => setIsFullyVisible(false), 300); // Убираем через 300ms
     }
   };
-
 
   const handleUpdateUser = (updatedUser) => {
     setUserData(updatedUser); // Обновляем данные пользователя в родительском компоненте

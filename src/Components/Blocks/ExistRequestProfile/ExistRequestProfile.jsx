@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./ExistRequestProfile.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, server, UPDATE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
+import Swal from "sweetalert2";
 
 function ExistRequestProfile({
   show,
@@ -18,11 +19,12 @@ function ExistRequestProfile({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Apollo-Require-Preflight': 'true',
+        "Apollo-Require-Preflight": "true",
       },
     },
   });
 
+  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     id: "",
     images: null,
@@ -32,40 +34,74 @@ function ExistRequestProfile({
     password: "",
   });
 
+  const sidebarRef = useRef();
+
   const [index, setIndex] = useState(null);
   const [showIMG, setShowIMG] = useState();
 
   useEffect(() => {
-    if (user) {
+    if (show && user) {
       setFormData({
-        id: user.id || "",
+        id: user?.id || "",
         images: null,
-        name: user.name || "",
-        email: user.email || "",
-        login: user.login || "",
-        password: user.password || "",
+        name: user?.name || "",
+        email: user?.email || "",
+        login: user?.login || "",
+        password: user?.password || "",
       });
-      setShowIMG(user.images[0]);
-      setIndex(user.index);
+      setShowIMG(user?.images[0]);
+      setIndex(user?.index);
     }
-  }, [user]);
+  }, [show, user]);
 
-  const sidebarRef = useRef();
+  const resetForm = useCallback(() => {
+    setFormData({
+      id: "",
+      images: null,
+      name: "",
+      email: "",
+      login: "",
+      password: "",
+    });
+    setIsEdited(false); // Сброс флага изменений
+  }, []);
 
-  const closeButton = () => {
-    let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-    if (success) {
+  const closeButton = useCallback(() => {
+    if (!isEdited) {
+      resetForm();
       onClose();
+      return;
     }
-  };
 
-  const handleChange = (e) => {
+    Swal.fire({
+      title: "Вы уверены?",
+      text: "Все несохраненные данные будут удалены.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Да",
+      cancelButtonText: "Нет",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      customClass: {
+        confirmButton: "swal_confirm",
+        cancelButton: "swal_cancel",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        resetForm();
+        onClose();
+      }
+    });
+  }, [isEdited, onClose]);
+
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
+    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
-  };
+  }, []);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -91,18 +127,23 @@ function ExistRequestProfile({
       },
     });
 
-
     if (response_update_user) {
       updateUser(response_update_user.data.updateUser);
+      resetForm();
       onClose();
     }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        closeButton();
+      if (
+        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
+        sidebarRef.current?.contains(event.target) // Клик в боковой панели
+      ) {
+        return; // Если клик внутри, ничего не делаем
       }
+
+      closeButton();
     };
 
     if (show) {
@@ -114,7 +155,7 @@ function ExistRequestProfile({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, onClose]);
+  }, [show, closeButton]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

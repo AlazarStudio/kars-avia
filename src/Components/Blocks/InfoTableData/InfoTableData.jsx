@@ -77,7 +77,7 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
                             </div>
                             {item.airline.name}
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.airport.city} ({item.airport?.code})</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.airport.name} ({item.airport?.code})</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 <div className={classes.InfoTable_data_elem_title}>{item.arrival.flight}</div>
