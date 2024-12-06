@@ -59,7 +59,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
             return;
         }
 
-        const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
+        const nomerName = formData.nomerName;
 
         // Преобразование reserve в булево значение
         const reserveBoolean = formData.reserve === 'true';
@@ -122,7 +122,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
         }
     }, [show]);
 
-    
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -133,7 +133,7 @@ function CreateRequestNomerFond({ show, onClose, addTarif, id, setAddTarif, uniq
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Название номера</label>
-                    <input type="text" name="nomerName" value={formData.nomerName} onChange={handleChange} placeholder="Пример: № 151" />
+                    <input type="text" name="nomerName" value={formData.nomerName} onChange={handleChange} placeholder="Пример: 151" />
 
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Box, Typography } from "@mui/material";
+import { Box, Tooltip, Typography } from "@mui/material";
 import RoomRow from "../RoomRow/RoomRow";
 import Timeline from "../Timeline/Timeline";
 import CurrentTimeIndicator from "../CurrentTimeIndicator/CurrentTimeIndicator";
@@ -61,7 +61,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         return data.hotel.rooms
             .filter((room) => room.reserve === checkRoomsType)
             .map((room) => ({
-                id: room.name.replace('№ ', ''),
+                id: room.name,
                 active: room.active,
                 type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
             }));
@@ -121,7 +121,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 requestID: subscriptionUpdateData.requestUpdated.id,
                 airline: subscriptionUpdateData.requestUpdated.airline,
                 personID: subscriptionUpdateData.requestUpdated.person?.id,
-                room: subscriptionUpdateData.requestUpdated.room?.replace("№ ", "") || null,
+                room: subscriptionUpdateData.requestUpdated.room || null,
             };
 
             setRequests((prevRequests) =>
@@ -136,7 +136,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         if (bronData && bronData.hotel && bronData.hotel.hotelChesses) {
             const transformedData = bronData.hotel.hotelChesses.map((chess, index) => ({
                 id: generateTimestampId(),
-                room: chess.room.replace("№ ", ""),
+                room: chess.room,
                 position: chess.place - 1,
                 checkInDate: new Date(chess.start).toISOString().split("T")[0],
                 checkInTime: new Date(chess.start).toISOString().split("T")[1].slice(0, 5),
@@ -447,7 +447,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                     clientId: draggedRequest.personID, // ID клиента
                                     hotelId: hotelId, // ID отеля
                                     requestId: draggedRequest.requestID, // ID заявки
-                                    room: `№ ${targetRoomId}`, // Номер комнаты
+                                    room: `${targetRoomId}`, // Номер комнаты
                                     place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
                                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
                                 },
@@ -480,7 +480,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                     clientId: draggedRequest.personID, // ID клиента
                                     hotelId: hotelId, // ID отеля
                                     requestId: draggedRequest.requestID, // ID заявки
-                                    room: `№ ${targetRoomId}`, // Номер комнаты
+                                    room: `${targetRoomId}`, // Номер комнаты
                                     place: 1, // Позиция в комнате (если двухместная)
                                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
                                 },
@@ -587,7 +587,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                     end: `${request.checkOutDate}T${request.checkOutTime}:00.000Z`, // Форматируем дату выезда
                     hotelId: hotelId, // ID отеля
                     requestId: request.requestID, // ID заявки
-                    room: `№ ${request.room}`, // Номер комнаты
+                    room: `${request.room}`, // Номер комнаты
                     place: Number(request.position) + 1, // Позиция в комнате (если двухместная)
                     public: true, // Флаг публичности (если применимо)
                 },
@@ -745,15 +745,32 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                 borderRight: '1px solid #ddd',
                                                 borderLeft: '1px solid #ddd',
                                                 backgroundColor: hoveredRoom == room.id ? "#cce5ff" : !room.active ? '#a9a9a9' : '#f5f5f5',
-                                                opacity: !room.active ? '0.5' : '1'
+                                                opacity: !room.active ? '0.5' : '1',
+                                                overflow: 'hidden',
                                             }}
                                         >
-                                            <Typography
-                                                variant="body1"
-                                                sx={{ textAlign: 'center', width: '100%', fontSize: '14px', padding: '0 10px' }}
+                                            <Tooltip title={`${room.id} ${!room.active ? '(не работает)' : ''}`}
+                                                arrow
+                                                placement="top"
+                                                enterDelay={1500}
+                                                leaveDelay={200}
                                             >
-                                                {room.id} {!room.active ? '(не работает)' : ''}
-                                            </Typography>
+                                                <Typography
+                                                    variant="body1"
+                                                    sx={{
+                                                        textAlign: 'left',
+                                                        width: `${LEFT_WIDTH}px`,
+                                                        fontSize: '14px',
+                                                        padding: '0 10px',
+                                                        overflow: 'hidden',
+                                                        display: '-webkit-box',
+                                                        WebkitBoxOrient: 'vertical',
+                                                        WebkitLineClamp: 2
+                                                    }}
+                                                >
+                                                    {room.id} {!room.active ? '(не работает)' : ''}
+                                                </Typography>
+                                            </Tooltip>
                                         </Box>
                                     ))}
                                 </Box>

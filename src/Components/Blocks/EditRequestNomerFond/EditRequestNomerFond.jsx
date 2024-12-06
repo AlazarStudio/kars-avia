@@ -59,7 +59,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, rese
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const nomerName = formData.nomerName.startsWith("№") ? formData.nomerName : `№ ${formData.nomerName}`;
+        const nomerName = formData.nomerName;
 
         let response_update_room = await updateHotel({
             variables: {
@@ -104,9 +104,6 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, rese
         }
     };
 
-    // console.log(formData.reserve);
-
-
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -117,7 +114,7 @@ function EditRequestNomerFond({ show, id, onClose, nomer, places, category, rese
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
                     <label>Название номера</label>
-                    <input type="text" name="nomerName" value={formData.nomerName.replace(/№\s*/g, '')} onChange={handleChange} placeholder="Пример: № 151" />
+                    <input type="text" name="nomerName" value={formData.nomerName} onChange={handleChange} placeholder="Пример: 151" />
 
                     <label>Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange}>
