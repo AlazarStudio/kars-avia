@@ -5,7 +5,7 @@ import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 import { ConstructionOutlined } from "@mui/icons-material";
 
-const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -47,6 +47,7 @@ const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth
         width: request.room ? `${duration}px` : '100%',
         height: "45px",
         backgroundColor: backgroundColor,
+        opacity: checkRoomsType ? 0.3 : 1,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",
         display: "flex",
@@ -191,7 +192,7 @@ const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth
         <>
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && !checkRoomsType &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
@@ -267,7 +268,7 @@ const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth
                 </Box>
 
                 {/* Правая ручка для изменения конца */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && !checkRoomsType &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;

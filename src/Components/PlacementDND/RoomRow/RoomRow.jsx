@@ -4,7 +4,7 @@ import { eachDayOfInterval, startOfMonth, endOfMonth, isWeekend, isToday, format
 import { useDroppable } from "@dnd-kit/core";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
-const RoomRow = memo(({ isClick, setIsClick, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+const RoomRow = memo(({ checkRoomsType, isClick, setIsClick, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { setNodeRef } = useDroppable({
         id: room.id,
     });
@@ -109,6 +109,7 @@ const RoomRow = memo(({ isClick, setIsClick, activeDragItem, highlightedDatesOld
                 .sort((a, b) => a.position - b.position)
                 .map((request) => (
                     <DraggableRequest
+                        checkRoomsType={checkRoomsType}
                         userRole={userRole}
                         key={request.id}
                         request={request}

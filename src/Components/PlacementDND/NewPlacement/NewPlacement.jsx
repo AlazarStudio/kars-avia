@@ -52,20 +52,20 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
     const handleCheckRoomsType = (info) => {
         setCheckRoomsType(info);
-        roomsRefetch();
+        // roomsRefetch();
     }
 
     const rooms = useMemo(() => {
         if (!data || !data.hotel || !data.hotel.rooms) return [];
 
         return data.hotel.rooms
-            .filter((room) => room.reserve === checkRoomsType)
+            // .filter((room) => room.reserve === checkRoomsType)
             .map((room) => ({
                 id: room.name,
                 active: room.active,
                 type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
             }));
-    }, [data, checkRoomsType]);
+    }, [data]);
 
     // Получение броней отеля
 
@@ -802,6 +802,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                 highlightedDatesOld={highlightedDatesOld}
                                                 isClick={isClick}
                                                 setIsClick={setIsClick}
+                                                checkRoomsType={checkRoomsType}
                                             />
                                         ))}
                                     </Box>
@@ -811,34 +812,43 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                     </Box>
 
 
-                    <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
-                        <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            Заявки по эстафете в городе {hotelInfo.city}
-                        </Typography>
-
-                        {newRequests?.length > 0 ?
-                            <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
-                                {newRequests.map((request) => (
-                                    <DraggableRequest
-                                        userRole={user.role}
-                                        key={request.id}
-                                        request={request}
-                                        dayWidth={DAY_WIDTH}
-                                        currentMonth={currentMonth}
-                                        onUpdateRequest={handleUpdateRequest}
-                                        allRequests={requests}
-                                        isDraggingGlobal={isDraggingGlobal}
-                                        isClick={isClick}
-                                        setIsClick={setIsClick}
-                                    />
-                                ))}
-                            </Box>
-                            :
-                            <Typography variant="h6" sx={{ padding: '10px ', textAlign: "center", fontSize: '14px', height: 'calc(100% - 50px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                Заявок не найдено
+                    {!checkRoomsType &&
+                        <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
+                            <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                Заявки по эстафете в городе {hotelInfo.city}
                             </Typography>
-                        }
-                    </Box>
+
+                            {newRequests?.length > 0 ?
+                                <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
+                                    {newRequests.map((request) => (
+                                        <DraggableRequest
+                                            userRole={user.role}
+                                            key={request.id}
+                                            request={request}
+                                            dayWidth={DAY_WIDTH}
+                                            currentMonth={currentMonth}
+                                            onUpdateRequest={handleUpdateRequest}
+                                            allRequests={requests}
+                                            isDraggingGlobal={isDraggingGlobal}
+                                            isClick={isClick}
+                                            setIsClick={setIsClick}
+                                        />
+                                    ))}
+                                </Box>
+                                :
+                                <Typography variant="h6" sx={{ padding: '10px ', textAlign: "center", fontSize: '14px', height: 'calc(100% - 50px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    Заявок не найдено
+                                </Typography>
+                            }
+                        </Box>
+                    }
+                    {checkRoomsType &&
+                        <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
+                            <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                Заявки по резерву в городе {hotelInfo.city}
+                            </Typography>
+                        </Box>
+                    }
                 </Box>
 
                 {/* DragOverlay */}
