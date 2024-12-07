@@ -99,9 +99,8 @@ function Header({ children }) {
     ];
     const currentDate = new Date();
 
-    return `${daysOfWeek[currentDate.getDay()]}, ${currentDate.getDate()} ${
-      months[currentDate.getMonth()]
-    }`;
+    return `${daysOfWeek[currentDate.getDay()]}, ${currentDate.getDate()} ${months[currentDate.getMonth()]
+      }`;
   }, []);
 
   useEffect(() => {
@@ -166,9 +165,8 @@ function Header({ children }) {
 
             {isFullyVisible && (
               <div
-                className={`${classes.profile_dropdown} ${
-                  isDropdownOpen ? classes.open : classes.closed
-                }`}
+                className={`${classes.profile_dropdown} ${isDropdownOpen ? classes.open : classes.closed
+                  }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={classes.dropdown_info}>

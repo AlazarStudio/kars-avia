@@ -42,7 +42,8 @@ function Reports({ children, ...props }) {
   useEffect(() => {
     if (user.role === roles.hotelAdmin) {
       setIsAirline(false);
-    } else {
+    }
+    if (user.role === roles.airlineAdmin) {
       setIsAirline(true);
     }
   }, [user.role]);
@@ -205,7 +206,7 @@ function Reports({ children, ...props }) {
         <CreateRequestReport
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
-          //   addDispatcher={addDispatcher}
+        //   addDispatcher={addDispatcher}
         />
         {/* 
                 <ExistRequestReport 
