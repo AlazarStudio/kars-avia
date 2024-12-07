@@ -6,6 +6,7 @@ import Estafeta from '../../Blocks/Estafeta/Estafeta'
 import HotelPage from '../../Blocks/HotelPage/HotelPage'
 import HotelsList from '../../Blocks/HotelsList/HotelsList'
 import Reserve from '../../Blocks/Reserve/Reserve'
+import Reports from '../../Blocks/Reports/Reports'
 
 const AirlineAdminContent = ({ user }) => {
 	const { id, hotelID, airlineID } = useParams()
@@ -24,6 +25,7 @@ const AirlineAdminContent = ({ user }) => {
 			)}
 			{!id && hotelID && <HotelPage id={hotelID} user={user} />}
 			{!id && airlineID && <AirlinePage id={airlineID} user={user} />}
+			{id === 'reports' && <Reports user={user} />}
 		</>
 	)
 }

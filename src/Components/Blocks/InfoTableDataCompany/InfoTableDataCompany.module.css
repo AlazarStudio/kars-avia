@@ -119,6 +119,8 @@
 }
 
 .bottom {
+    /* height: fit-content;
+    max-height: calc(100vh - 350px); */
     height: calc(100vh - 296px);
     overflow: hidden;
     overflow-y: scroll;
@@ -134,7 +136,7 @@
 }
 
 .InfoTable_data_elem_title{
-    text-align: left;
+    text-align: center;
 }
 
 .InfoTable_data_elem_avatar{

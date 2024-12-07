@@ -5,6 +5,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList";
+import Swal from "sweetalert2";
 
 // Компонент для создания новой заявки
 function CreateRequest({ show, onClose, user }) {
@@ -120,28 +121,47 @@ function CreateRequest({ show, onClose, user }) {
             },
             city: ''
         });
-        setIsEdited(false);
+        setIsEdited(false);  // Сбрасываем флаг, что форма не изменена
         setWarningMessage('');
     }, [userID]);
 
     // Закрытие формы с проверкой на несохраненные изменения
     const closeButton = useCallback(() => {
-        if (!isEdited || confirm("Вы уверены, все несохраненные данные будут удалены")) {
+        if (!isEdited) {
             resetForm();
             onClose();
+            return;
         }
+    
+        Swal.fire({
+            title: 'Вы уверены?',
+            text: 'Все несохраненные данные будут удалены.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Да',
+            cancelButtonText: 'Нет',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            customClass: {
+                confirmButton: 'swal_confirm',
+                cancelButton: 'swal_cancel',
+            },
+        }).then(result => {
+            if (result.isConfirmed) {
+                resetForm();
+                onClose();
+            }
+        });
     }, [isEdited, resetForm, onClose]);
+    
 
     // Обработчик изменений в полях формы
     const handleChange = useCallback((e) => {
         const { name, value, type, checked } = e.target;
-        if (name === "departureTime" && formData.departureDate === formData.arrivalDate) {
-            if (value < formData.arrivalTime) {
-                alert("Время отъезда должно быть позже времени прибытия.");
-                return;
-            }
-        }
+    
+        // Обновляем флаг, что данные были изменены
         setIsEdited(true);
+    
         setFormData(prevState => {
             if (type === 'checkbox') {
                 return {
@@ -160,6 +180,7 @@ function CreateRequest({ show, onClose, user }) {
             }
         });
     }, []);
+    
 
     // Обработчик переключения вкладок
     const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
@@ -180,15 +201,32 @@ function CreateRequest({ show, onClose, user }) {
     // Отправка формы на сервер
     const handleSubmit = async () => {
         if (!isFormValid()) {
-            alert("Пожалуйста, заполните все обязательные поля.");
+            Swal.fire({
+                title: 'Ошибка!',
+                text: 'Пожалуйста, заполните все обязательные поля.',
+                icon: 'error',
+                confirmButtonText: 'Ок',
+                customClass: {
+                    confirmButton:'swal_confirm'
+                }
+            });
             return;
         }
-
+    
         if (formData.departureDate === formData.arrivalDate && formData.departureTime <= formData.arrivalTime) {
-            alert("Время отъезда должно быть позже времени прибытия.");
+            Swal.fire({
+                title: 'Ошибка!',
+                text: 'Время отъезда должно быть позже времени прибытия.',
+                icon: 'error',
+                confirmButtonText: 'Ок',
+                customClass: {
+                    confirmButton:'swal_confirm',
+                    cancelButton:'swal_cancel'
+                }
+            });
             return;
         }
-
+    
         const input = {
             personId: formData.personId,
             airportId: formData.airportId,
@@ -198,7 +236,7 @@ function CreateRequest({ show, onClose, user }) {
             senderId: formData.senderId,
             airlineId: formData.airlineId,
         };
-
+    
         try {
             await createRequest({ variables: { input } });
             resetForm();
@@ -243,18 +281,41 @@ function CreateRequest({ show, onClose, user }) {
     // Клик вне боковой панели закрывает её
     useEffect(() => {
         const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                closeButton();
+            // Проверяем, был ли клик внутри боковой панели или SweetAlert2
+            if (
+                document.querySelector('.swal2-container')?.contains(event.target) ||  // Клик в SweetAlert2
+                sidebarRef.current?.contains(event.target) // Клик в боковой панели
+            ) {
+                return; // Если клик внутри, ничего не делаем
             }
+    
+            // Если клик был вне боковой панели, то закрываем её
+            closeButton();
         };
-
-        if (show) document.addEventListener('mousedown', handleClickOutside);
-        else document.removeEventListener('mousedown', handleClickOutside);
-
+    
+        if (show) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+    
+        // Очистка эффекта при демонтировании компонента
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [show, closeButton]);
+    
 
     const today = new Date().toISOString().split('T')[0];
+
+    const meal = [
+        {
+            title: "Включено",
+            value: true,
+        },
+        {
+            title: "Не включено",
+            value: false,
+        },
+    ]
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -364,10 +425,27 @@ function CreateRequest({ show, onClose, user }) {
                 {activeTab === 'Доп. услуги' && (
                     <div className={classes.requestData}>
                         <label>Питание</label>
-                        <select name="included" value={formData.mealPlan.included} onChange={handleChange}>
+                        {/* <select name="included" value={formData.mealPlan.included} onChange={handleChange}>
                             <option value={true}>Включено</option>
                             <option value={false}>Не включено</option>
-                        </select>
+                        </select> */}
+
+                        <DropDownList
+                            placeholder="Питание"
+                            options={meal.map((name) => name.title)}
+                            initialValue={formData.mealPlan.included ? 'Включено' : 'Не включено'}
+                            onSelect={(value) => {
+                                const isIncluded = value === 'Включено';
+                                setFormData(prevFormData => ({
+                                    ...prevFormData,
+                                    mealPlan: {
+                                        ...prevFormData.mealPlan,
+                                        included: isIncluded
+                                    }
+                                }));
+                                setIsEdited(true);
+                            }}
+                        />
 
                         <div className={classes.checks} style={{ display: formData.mealPlan.included ? 'flex' : 'none' }}>
                             <label>

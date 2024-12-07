@@ -171,7 +171,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
           </div>
           <div className={classes.airlineAbout_info}>
             {displayInfo == "generalInfo" ? (
-              <div className={`${classes.column} ${classes.w45}`}>
+              <div className={`${classes.column} ${classes.w50}`}>
                 <div className={classes.airlineAbout_info_item}>
                   <label>Название</label>
                   <input
@@ -197,7 +197,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             ) : displayInfo == "contacts" ? (
               <>
                 <div className={classes.airlineAbout_info_block}>
-                  <div className={`${classes.column} ${classes.w45}`}>
+                  <div className={`${classes.column} ${classes.w50}`}>
                     <div className={classes.airlineAbout_info_label}>Адрес</div>
                     <div className={classes.airlineAbout_info_item}>
                       <label>Страна</label>
@@ -245,7 +245,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                     </div>
                   </div>
 
-                  <div className={`${classes.column} ${classes.w45}`}>
+                  <div className={`${classes.column} ${classes.w50}`}>
                     <div className={classes.airlineAbout_info_label}>
                       Контакты
                     </div>
@@ -277,7 +277,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             ) : (
               <>
                 <div className={classes.airlineAbout_info_block}>
-                  <div className={`${classes.column} ${classes.w45}`}>
+                  <div className={`${classes.column} ${classes.w50}`}>
                     <div className={classes.airlineAbout_info_item}>
                       <label>ИНН</label>
                       <input

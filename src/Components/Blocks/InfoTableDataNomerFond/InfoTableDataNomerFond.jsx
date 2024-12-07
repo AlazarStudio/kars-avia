@@ -61,9 +61,6 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
 
     const filteredRequests = filter === 'quote' ? quotaRequests : reserveRequests;
 
-    console.log(filteredRequests);
-
-
     return (
         <>
             <div className={classes.filter_wrapper}>

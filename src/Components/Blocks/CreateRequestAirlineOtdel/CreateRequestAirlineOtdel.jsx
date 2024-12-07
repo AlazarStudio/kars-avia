@@ -1,124 +1,188 @@
-import React, { useState, useRef, useEffect } from "react";
-import classes from './CreateRequestAirlineOtdel.module.css';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import classes from "./CreateRequestAirlineOtdel.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { CREATE_AIRLINE_DEPARTMERT, decodeJWT, getCookie } from "../../../../graphQL_requests";
+import {
+  CREATE_AIRLINE_DEPARTMERT,
+  decodeJWT,
+  getCookie,
+} from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
+import Swal from "sweetalert2";
 
-function CreateRequestAirlineOtdel({ show, onClose, id, addTarif, setAddTarif }) {
-    const [userRole, setUserRole] = useState();
-    const token = getCookie('token');
+function CreateRequestAirlineOtdel({
+  show,
+  onClose,
+  id,
+  addTarif,
+  setAddTarif,
+}) {
+  const [userRole, setUserRole] = useState();
+  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const token = getCookie("token");
 
-    useEffect(() => {
-        setUserRole(decodeJWT(token).role);
-    }, [token]);
+  useEffect(() => {
+    setUserRole(decodeJWT(token).role);
+  }, [token]);
 
-    const [formData, setFormData] = useState({
-        category: ''
+  const [formData, setFormData] = useState({
+    category: "",
+  });
+
+  const sidebarRef = useRef();
+
+  const resetForm = useCallback(() => {
+    setFormData({
+      category: "",
     });
+    setIsEdited(false); // Сброс флага изменений
+  }, []);
 
-    const sidebarRef = useRef();
+  const closeButton = useCallback(() => {
+    if (!isEdited) {
+      resetForm();
+      onClose();
+      return;
+    }
 
-    const resetForm = () => {
-        setFormData({
-            category: ''
-        });
-    };
+    Swal.fire({
+      title: "Вы уверены?",
+      text: "Все несохраненные данные будут удалены.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Да",
+      cancelButtonText: "Нет",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      customClass: {
+        confirmButton: "swal_confirm",
+        cancelButton: "swal_cancel",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        resetForm();
+        onClose();
+      }
+    });
+  }, [isEdited, resetForm, onClose]);
 
-    const closeButton = () => {
-        let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-        if (success) {
-            resetForm();
-            onClose();
-        }
-    };
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  }, []);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    };
+  const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
 
-    const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
-            },
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Проверка на заполненность поля
+    if (!formData.category.trim()) {
+      //   alert("Пожалуйста, введите название отдела.");
+      Swal.fire({
+        title: "Ошибка!",
+        text: "Пожалуйста, введите название отдела.",
+        icon: "error",
+        confirmButtonText: "Ок",
+        customClass: {
+          confirmButton: "swal_confirm",
         },
-    });
+      });
+      return;
+    }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    try {
+      let request = await createAirlineDepartment({
+        variables: {
+          updateAirlineId: id,
+          input: {
+            department: [
+              {
+                name: formData.category,
+              },
+            ],
+          },
+        },
+      });
 
-        // Проверка на заполненность поля
-        if (!formData.category.trim()) {
-            alert('Пожалуйста, введите название отдела.');
-            return;
-        }
+      if (request) {
+        setAddTarif(
+          request.data.updateAirline.department.sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )
+        );
 
-        try {
-            let request = await createAirlineDepartment({
-                variables: {
-                    "updateAirlineId": id,
-                    "input": {
-                        "department": [
-                            {
-                                "name": formData.category
-                            }
-                        ]
-                    }
-                }
-            });
+        resetForm();
+        onClose();
+      }
+    } catch (err) {
+      alert("Произошла ошибка при сохранении данных");
+    }
+  };
 
-            if (request) {
-                setAddTarif(request.data.updateAirline.department.sort((a, b) => a.name.localeCompare(b.name)));
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
+        sidebarRef.current?.contains(event.target) // Клик в боковой панели
+      ) {
+        return; // Если клик внутри, ничего не делаем
+      }
 
-                resetForm();
-                onClose();
-            }
-        } catch (err) {
-            alert('Произошла ошибка при сохранении данных');
-        }
+      closeButton();
     };
 
-    useEffect(() => {
-        if (show) {
-            resetForm();
-            const handleClickOutside = (event) => {
-                if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                    closeButton();
-                }
-            };
-            document.addEventListener('mousedown', handleClickOutside);
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
 
-            return () => {
-                document.removeEventListener('mousedown', handleClickOutside);
-            };
-        }
-    }, [show]);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, closeButton]);
 
-    return (
-        <Sidebar show={show} sidebarRef={sidebarRef}>
-            <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Добавить отдел</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
-            </div>
+  return (
+    <Sidebar show={show} sidebarRef={sidebarRef}>
+      <div className={classes.requestTitle}>
+        <div className={classes.requestTitle_name}>Добавить отдел</div>
+        <div className={classes.requestTitle_close} onClick={closeButton}>
+          <img src="/close.png" alt="" />
+        </div>
+      </div>
 
-            <div className={classes.requestMiddle}>
-                <div className={classes.requestData}>
-                    <label>Название</label>
-                    <input type="text" name="category" value={formData.category} onChange={handleChange} placeholder="Пример: Отдел продаж" />
-                </div>
-            </div>
+      <div className={classes.requestMiddle}>
+        <div className={classes.requestData}>
+          <label>Название</label>
+          <input
+            type="text"
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+            placeholder="Пример: Отдел продаж"
+          />
+        </div>
+      </div>
 
-            <div className={classes.requestButton}>
-                <Button type="submit" onClick={handleSubmit}>Добавить</Button>
-            </div>
-        </Sidebar>
-    );
+      <div className={classes.requestButton}>
+        <Button type="submit" onClick={handleSubmit}>
+          Добавить
+        </Button>
+      </div>
+    </Sidebar>
+  );
 }
 
 export default CreateRequestAirlineOtdel;

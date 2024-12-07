@@ -1,5 +1,5 @@
-import React, { useState, useRef } from "react";
-import classes from './Reports.module.css';
+import React, { useState, useRef, useEffect } from "react";
+import classes from "./Reports.module.css";
 import Filter from "../Filter/Filter";
 import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
 import { requestsReports } from "../../../requests";
@@ -10,120 +10,185 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import InfoTableDataReports from "../InfoTableDataReports/InfoTableDataReports";
 import CreateRequestReport from "../CreateRequestReport/CreateRequestReport";
 import ExistRequestReport from "../ExistRequestReport/ExistRequestReport";
+import { useQuery } from "@apollo/client";
+import {
+  convertToDate,
+  decodeJWT,
+  GET_AIRLINE_REPORT,
+  GET_HOTEL_REPORT,
+  getCookie,
+} from "../../../../graphQL_requests";
+import { roles } from "../../../roles";
 
 function Reports({ children, ...props }) {
-    const [showCreateSidebar, setShowCreateSidebar] = useState(false);
-    const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-    const [chooseObject, setChooseObject] = useState(null);
-    const [showDelete, setShowDelete] = useState(false);
-    const [deleteIndex, setDeleteIndex] = useState(null);
+  const token = getCookie("token");
+  const user = decodeJWT(token);
 
-    const deleteComponentRef = useRef();
+  const [showCreateSidebar, setShowCreateSidebar] = useState(false);
+  const [showRequestSidebar, setShowRequestSidebar] = useState(false);
+  const [chooseObject, setChooseObject] = useState(null);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState(null);
 
-    const [companyData, setCompanyData] = useState(requestsReports);
+  const [reports, setReports] = useState([]);
+  
+  const value = user.role === roles.hotelAdmin ? false : true
+  const [isAirline, setIsAirline] = useState(value);
 
-    const addDispatcher = (newDispatcher) => {
-        setCompanyData([...companyData, newDispatcher]);
-    };
+  // {
+  //   user.role !== roles.superAdmin || user.role !== roles.dispatcerAdmin
+  // }
+  // useEffect(() => {
+  //   user.role === roles.hotelAdmin ? setIsAirline(false) : setIsAirline(true);
+  // }, [user]);
 
-    const updateDispatcher = (updatedDispatcher, index) => {
-        const newData = [...companyData];
-        newData[index] = updatedDispatcher;
-        setCompanyData(newData);
-    };
+  const deleteComponentRef = useRef();
 
-    const deleteDispatcher = (index) => {
-        setCompanyData(companyData.filter((_, i) => i !== index));
-        setShowDelete(false);
-        setShowRequestSidebar(false);
-    };
+  // Получаем текущий год
+  const currentYear = new Date().getFullYear();
 
-    const toggleCreateSidebar = () => {
-        setShowCreateSidebar(!showCreateSidebar);
-    };
+  // Устанавливаем endDate как последний день текущего года
+  const endDate1 = new Date(currentYear, 11, 31).toISOString().split("T")[0];
 
-    const toggleRequestSidebar = () => {
-        setShowRequestSidebar(!showRequestSidebar);
-    };
-
-    const openDeleteComponent = (index) => {
-        setShowDelete(true);
-        setDeleteIndex(index);
-        setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
-    };
-
-    const closeDeleteComponent = () => {
-        setShowDelete(false);
-        setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
-    };
-
-    const [filterData, setFilterData] = useState({
-        filterSelect: '',
-    });
-
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFilterData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
+  const { data: companyData } = useQuery(
+    isAirline ? GET_AIRLINE_REPORT : GET_HOTEL_REPORT,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      variables: {
+        filter: {
+          startDate: "0000-00-00T12:00:00.000Z",
+          endDate: endDate1,
+          airlineId: null,
+          hotelId: null,
+          personId: null,
+        },
+      },
     }
+  );
 
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
+  // const addDispatcher = (newDispatcher) => {
+  //     setCompanyData([...companyData, newDispatcher]);
+  // };
+
+  // const updateDispatcher = (updatedDispatcher, index) => {
+  //     const newData = [...companyData];
+  //     newData[index] = updatedDispatcher;
+  //     setCompanyData(newData);
+  // };
+
+  // const deleteDispatcher = (index) => {
+  //     setCompanyData(companyData.filter((_, i) => i !== index));
+  //     setShowDelete(false);
+  //     setShowRequestSidebar(false);
+  // };
+
+  const toggleCreateSidebar = () => {
+    setShowCreateSidebar(!showCreateSidebar);
+  };
+
+  const toggleRequestSidebar = () => {
+    setShowRequestSidebar(!showRequestSidebar);
+  };
+
+  const openDeleteComponent = (index) => {
+    setShowDelete(true);
+    setDeleteIndex(index);
+    setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
+  };
+
+  const closeDeleteComponent = () => {
+    setShowDelete(false);
+    setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
+  };
+
+  const [filterData, setFilterData] = useState({
+    filterSelect: "",
+  });
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFilterData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  useEffect(() => {
+    if (companyData && companyData) {
+      setReports(
+        isAirline
+          ? companyData.getAirlineReport[0].reports
+          : companyData.getHotelReport[0].reports
+      );
     }
+  }, [companyData]);
 
-    const filteredRequests = companyData.filter(request => {
-        return (
-            (
-                request.airline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.dateFormirovania.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.startDate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.endDate.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-        );
-    });
-
-    let filterList = ['Азимут'];
-
+  const filteredRequests = reports.filter((request) => {
+    const name = isAirline ? request?.airline?.name : request?.hotel?.name;
+    const createTime = convertToDate(request?.createdAt);
+    const startTime = convertToDate(request?.startDate);
+    const endTime = convertToDate(request?.endDate);
     return (
-        <>
-            <div className={classes.section}>
-                <Header>Отчеты</Header>
+      name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      createTime.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      startTime.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      endTime.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
 
-                <div className={classes.section_searchAndFilter}>
-                    <input
-                        type="text"
-                        placeholder="Поиск"
-                        style={{ width: '500px' }}
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    />
-                    <Filter
-                        toggleSidebar={toggleCreateSidebar}
-                        handleChange={handleChange}
-                        filterData={filterData}
-                        buttonTitle={'Создать отчет'}
-                        filterList={filterList}
-                        needDate={false}
-                    />
-                </div>
+  // console.log(reports);
 
-                <InfoTableDataReports
-                    toggleRequestSidebar={toggleRequestSidebar}
-                    requests={filteredRequests}
-                    setChooseObject={setChooseObject}
-                    openDeleteComponent={openDeleteComponent}
-                />
+  let filterList = ["Азимут"];
 
-                <CreateRequestReport
-                    show={showCreateSidebar}
-                    onClose={toggleCreateSidebar}
-                    addDispatcher={addDispatcher}
-                />
-                {/* 
+  return (
+    <>
+      <div className={classes.section}>
+        <Header>Отчеты</Header>
+
+        <div className={classes.section_searchAndFilter}>
+          <input
+            type="text"
+            placeholder="Поиск"
+            style={{ width: "500px" }}
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+          <Filter
+            toggleSidebar={toggleCreateSidebar}
+            handleChange={handleChange}
+            filterData={filterData}
+            buttonTitle={"Создать отчет"}
+            filterList={filterList}
+            needDate={false}
+          />
+        </div>
+
+        <InfoTableDataReports
+          user={user}
+          toggleRequestSidebar={toggleRequestSidebar}
+          requests={filteredRequests}
+          isAirline={isAirline}
+          setIsAirline={setIsAirline}
+          setChooseObject={setChooseObject}
+          openDeleteComponent={openDeleteComponent}
+        />
+
+        <CreateRequestReport
+          show={showCreateSidebar}
+          onClose={toggleCreateSidebar}
+          //   addDispatcher={addDispatcher}
+        />
+        {/* 
                 <ExistRequestReport 
                     show={showRequestSidebar} 
                     onClose={toggleRequestSidebar} 
@@ -134,17 +199,17 @@ function Reports({ children, ...props }) {
                     filterList={filterList}
                 /> */}
 
-                {showDelete && (
-                    <DeleteComponent
-                        ref={deleteComponentRef}
-                        remove={() => deleteDispatcher(deleteIndex)}
-                        close={closeDeleteComponent}
-                        title={`Вы действительно хотите удалить отчет?`}
-                    />
-                )}
-            </div>
-        </>
-    );
+        {showDelete && (
+          <DeleteComponent
+            ref={deleteComponentRef}
+            remove={() => deleteDispatcher(deleteIndex)}
+            close={closeDeleteComponent}
+            title={`Вы действительно хотите удалить отчет?`}
+          />
+        )}
+      </div>
+    </>
+  );
 }
 
 export default Reports;
