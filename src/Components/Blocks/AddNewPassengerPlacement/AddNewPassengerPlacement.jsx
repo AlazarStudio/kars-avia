@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import classes from './AddNewPassenger.module.css';
+import classes from './AddNewPassengerPlacement.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../graphQL_requests";
 
-function AddNewPassenger({ show, onClose, request, placement, setPlacement, user, hotelInfo, showChooseHotels, setshowModalForAddHotelInReserve, setShowReserveInfo }) {
+function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacement, user, hotelInfo, showChooseHotels, setshowModalForAddHotelInReserve, setShowReserveInfo }) {
     const [city, setCity] = useState("");
     const [hotel, setHotel] = useState('');
 
@@ -166,7 +166,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
                             </div>
                         </>
                     }
-                    {user.role != 'HOTELADMIN' && <label>Город</label>}
+                    {/* {user.role != 'HOTELADMIN' && <label>Город</label>}
                     <select hidden={user.role == 'HOTELADMIN' && true} name="city" value={formData.city} onChange={handleChange}>
                         <option value="">Выберите город</option>
                         {uniqueCities.map((city, index) => (
@@ -189,7 +189,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
                                 ))}
                             </select>
                         </>
-                    )}
+                    )} */}
 
                     <label>Количество пассажиров</label>
                     <input
@@ -212,4 +212,4 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
     );
 }
 
-export default AddNewPassenger;
+export default AddNewPassengerPlacement;

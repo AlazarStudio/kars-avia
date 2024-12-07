@@ -169,8 +169,7 @@ function CreateRequestReserve({ show, onClose, user }) {
             formData.departureTime &&
             formData.passengerCount && // Убедиться, что количество пассажиров указано
             formData.senderId &&
-            formData.airlineId &&
-            formData.reserveForPerson
+            formData.airlineId
         );
     };
 

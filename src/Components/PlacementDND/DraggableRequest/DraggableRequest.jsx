@@ -47,7 +47,7 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
         width: request.room ? `${duration}px` : '100%',
         height: "45px",
         backgroundColor: backgroundColor,
-        opacity: checkRoomsType ? 0.3 : 1,
+        // opacity: checkRoomsType ? 0.3 : 1,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",
         display: "flex",
@@ -192,7 +192,7 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
         <>
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && !checkRoomsType &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
@@ -260,7 +260,7 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
-                        <img src={`${server}${request.airline.images[0]}`} alt="" style={{ height: '20px' }} />
+                        <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
                         <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                             {request.guest}
                         </div>
@@ -268,7 +268,7 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
                 </Box>
 
                 {/* Правая ручка для изменения конца */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && !checkRoomsType &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
@@ -332,7 +332,7 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
                     }}
                 >
                     <Typography variant="body2">
-                        <div style={styleToolTip}> Авиакомпания: <b>{request.airline.name}</b></div>
+                        <div style={styleToolTip}> Авиакомпания: <b>{request.airline?.name}</b></div>
                     </Typography>
                     {/* <Typography variant="body2">
                         <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
