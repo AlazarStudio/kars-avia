@@ -549,6 +549,34 @@ export const GET_BRONS_HOTEL = gql`
           status
           requestNumber
         }
+        reserve {
+          id
+          airport {
+            city
+            code
+            name
+          }
+          arrival {
+            date
+            flight
+          }
+          departure {
+            flight
+            date
+          }
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          airline {
+            name
+            images
+          }
+          status
+          reserveNumber
+        }
       }
     }
   }
@@ -784,6 +812,7 @@ export const GET_RESERVE_REQUESTS = gql`
         }
         reserveNumber
         passengerCount
+        reserveForPerson
       }
     }
   }
@@ -946,6 +975,18 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
       }
       reserve {
         id
+        arrival {
+          date
+          flight
+        }
+        departure {
+          date
+          flight
+        }
+        airline {
+          name
+          images
+        }
       }
     }
   }
@@ -985,6 +1026,18 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS = gql`
     reservePersons {
       reserveHotel {
         id
+        person {
+          id
+          name
+          number
+          gender
+        }
+        passengers {
+          id
+          name
+          number
+          gender
+        }
       }
       passengers {
         id
@@ -997,6 +1050,27 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS = gql`
         name
         number
         gender
+      }
+    }
+  }
+`;
+export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT = gql`
+  subscription ReservePersons {
+    reservePersons {
+      reserveHotel {
+        id
+        person {
+          id
+          name
+          number
+          gender
+        }
+        passengers {
+          id
+          name
+          number
+          gender
+        }
       }
     }
   }

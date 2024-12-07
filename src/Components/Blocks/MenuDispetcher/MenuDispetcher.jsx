@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-    decodeJWT,
-    GET_AIRLINE,
-    GET_HOTEL_CITY,
-    GET_REQUESTS,
-    GET_RESERVE_REQUESTS,
-    getCookie,
-    REQUEST_CREATED_SUBSCRIPTION,
-    REQUEST_RESERVE_CREATED_SUBSCRIPTION,
+  decodeJWT,
+  GET_AIRLINE,
+  GET_HOTEL_CITY,
+  GET_REQUESTS,
+  GET_RESERVE_REQUESTS,
+  getCookie,
+  REQUEST_CREATED_SUBSCRIPTION,
+  REQUEST_RESERVE_CREATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import { roles } from "../../../roles";
@@ -84,6 +84,11 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
   const [allCreatedRequests, setAllCreatedRequests] = useState(0);
 
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+    },
     variables: { pagination: { skip: 0, take: 999999999 } },
   });
 
@@ -93,6 +98,11 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     data: dataRequest,
     refetch: refetchRequest,
   } = useQuery(GET_REQUESTS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+    },
     variables: { pagination: { skip: 0, take: 999999999 } },
   });
 

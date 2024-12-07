@@ -120,7 +120,6 @@ function EditRequestNomerFond({
         },
       },
     });
-
     if (response_update_room) {
       const sortedTarifs = Object.values(
         response_update_room.data.updateHotel.rooms.reduce((acc, room) => {

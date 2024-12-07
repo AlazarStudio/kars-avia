@@ -5,7 +5,7 @@ import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 import { ConstructionOutlined } from "@mui/icons-material";
 
-const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -42,11 +42,12 @@ const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth
 
     const style = {
         position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
-        top: request.room ? `${position * 40 + 2}px` : "auto",
+        top: request.room ? `${position * 50 + 2}px` : "auto",
         left: request.room ? `${checkInOffset}px` : "auto",
         width: request.room ? `${duration}px` : '100%',
-        height: "35px",
+        height: "45px",
         backgroundColor: backgroundColor,
+        // opacity: checkRoomsType ? 0.3 : 1,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",
         display: "flex",
@@ -259,7 +260,7 @@ const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
-                        <img src={`${server}${request.airline.images[0]}`} alt="" style={{ height: '20px' }} />
+                        <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
                         <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                             {request.guest}
                         </div>
@@ -331,7 +332,7 @@ const DraggableRequest = ({ isClick, setIsClick, request, dayWidth, currentMonth
                     }}
                 >
                     <Typography variant="body2">
-                        <div style={styleToolTip}> Авиакомпания: <b>{request.airline.name}</b></div>
+                        <div style={styleToolTip}> Авиакомпания: <b>{request.airline?.name}</b></div>
                     </Typography>
                     {/* <Typography variant="body2">
                         <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
