@@ -34,7 +34,7 @@ function Reports({ children, ...props }) {
 
   // Получаем значение isAirline из localStorage, если оно существует
   const savedIsAirline = localStorage.getItem("isAirline");
-  const initialIsAirline = savedIsAirline ? JSON.parse(savedIsAirline) : null;
+  const initialIsAirline = savedIsAirline ? JSON.parse(savedIsAirline) : true;
 
   const [isAirline, setIsAirline] = useState(initialIsAirline);
 
@@ -45,6 +45,9 @@ function Reports({ children, ...props }) {
     }
     if (user.role === roles.airlineAdmin) {
       setIsAirline(true);
+    }
+    if (user.role === roles.superAdmin || user.role === roles.dispatcerAdmin) {
+      setIsAirline(isAirline);
     }
   }, [user.role]);
 
@@ -206,7 +209,7 @@ function Reports({ children, ...props }) {
         <CreateRequestReport
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
-        //   addDispatcher={addDispatcher}
+          //   addDispatcher={addDispatcher}
         />
         {/* 
                 <ExistRequestReport 

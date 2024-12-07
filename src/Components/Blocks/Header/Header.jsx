@@ -73,6 +73,7 @@ function Header({ children }) {
       if (result.isConfirmed) {
         // Удаляем токен из cookie
         document.cookie = "token=; Max-Age=0; Path=/;";
+        localStorage.removeItem("isAirline");
         // Перенаправляем на главную страницу
         navigate("/");
         // Перезагружаем страницу
@@ -99,14 +100,19 @@ function Header({ children }) {
     ];
     const currentDate = new Date();
 
-    return `${daysOfWeek[currentDate.getDay()]}, ${currentDate.getDate()} ${months[currentDate.getMonth()]
-      }`;
+    return `${daysOfWeek[currentDate.getDay()]}, ${currentDate.getDate()} ${
+      months[currentDate.getMonth()]
+    }`;
   }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Убедимся, что клик не произошел вне профиля и только если нет открытого Swal
-      if (!isSwalOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        !isSwalOpen &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
         setIsDropdownOpen(false);
         setTimeout(() => setIsFullyVisible(false), 300);
       }
@@ -165,8 +171,9 @@ function Header({ children }) {
 
             {isFullyVisible && (
               <div
-                className={`${classes.profile_dropdown} ${isDropdownOpen ? classes.open : classes.closed
-                  }`}
+                className={`${classes.profile_dropdown} ${
+                  isDropdownOpen ? classes.open : classes.closed
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={classes.dropdown_info}>
