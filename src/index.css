@@ -66,6 +66,27 @@ input[type="file"] {
     background-color: #0063DE;
 }
 
+.swal_confirm {
+    background-color: #0057C3;
+    opacity: 0.8;
+    transition: all ease-in-out 0.3s;
+}
+
+.swal_confirm:hover {
+    opacity: 1;
+}
+
+.swal_cancel {
+    opacity: 0.8;
+    transition: all ease-in-out 0.3s;
+}
+
+.swal_cancel:hover {
+    opacity: 1;
+}
+
+
+
 
 .opened {
     width: 10px;

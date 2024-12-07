@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestTarif.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
@@ -9,6 +9,7 @@ import {
   UPDATE_HOTEL_TARIF,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
+import Swal from "sweetalert2";
 
 function EditRequestTarif({
   show,
@@ -21,19 +22,21 @@ function EditRequestTarif({
 }) {
   const token = getCookie("token");
 
+  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     name: "",
     price: "",
     type: "",
   });
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
-      name: "",
-      price: "",
-      type: "",
+      name: tarif?.name || "",
+      price: tarif?.price || "",
+      type: tarif?.type || "",
     });
-  };
+    setIsEdited(false); // Сброс флага изменений
+  }, []);
 
   const [updateHotelTarif] = useMutation(
     isHotel ? UPDATE_HOTEL_TARIF : UPDATE_AIRLINE_TARIF,
@@ -60,27 +63,58 @@ function EditRequestTarif({
     }
   }, [show, tarif]);
 
-  const closeButton = () => {
-    let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-    if (success) {
+  const closeButton = useCallback(() => {
+    if (!isEdited) {
+      resetForm();
       onClose();
+      return;
     }
-  };
 
-  const handleChange = (e) => {
+    Swal.fire({
+      title: "Вы уверены?",
+      text: "Все несохраненные данные будут удалены.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Да",
+      cancelButtonText: "Нет",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      customClass: {
+        confirmButton: "swal_confirm",
+        cancelButton: "swal_cancel",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        resetForm();
+        onClose();
+      }
+    });
+  }, [isEdited, onClose]);
+
+  const handleChange = useCallback((e) => {
     const { name, value } = e.target;
+    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
-  };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Проверяем, заполнены ли все поля
     if (!formData.name.trim() || !formData.price.trim() || !formData.type) {
-      alert("Пожалуйста, заполните все поля!");
+      // alert("Пожалуйста, заполните все поля!");
+      Swal.fire({
+        title: "Ошибка!",
+        text: "Пожалуйста, заполните все обязательные поля.",
+        icon: "error",
+        confirmButtonText: "Ок",
+        customClass: {
+          confirmButton: "swal_confirm",
+        },
+      });
       return;
     }
 
@@ -107,7 +141,6 @@ function EditRequestTarif({
       },
     });
 
-
     if (response_update_tarif) {
       onSubmit([
         {
@@ -131,19 +164,27 @@ function EditRequestTarif({
   };
 
   useEffect(() => {
-    if (show) {
-      const handleClickOutside = (event) => {
-        if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-          closeButton();
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
+    const handleClickOutside = (event) => {
+      if (
+        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
+        sidebarRef.current?.contains(event.target) // Клик в боковой панели
+      ) {
+        return; // Если клик внутри, ничего не делаем
+      }
 
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
+      closeButton();
+    };
+
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [show]);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, closeButton]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

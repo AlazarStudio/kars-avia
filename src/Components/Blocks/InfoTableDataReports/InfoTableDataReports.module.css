@@ -12,6 +12,35 @@
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
 }
 
+.filter_wrapper {
+    display: flex;
+    gap: 5px;
+}
+
+.filter_wrapper button {
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 1px solid #54587380;
+    outline: none;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #545873;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+}
+
+.filter_wrapper button:hover {
+    background-color: #e4e4efbd;
+    border: 1px solid transparent;
+    transition: all ease-in-out 0.3s;
+}
+
+.activeButton {
+    background-color: #E4E4EF !important;
+    border: 1px solid transparent !important;
+    transition: all ease-in-out 0.3s;
+}
+
 .InfoTable_data:hover {
     background-color: var(--hover-gray);
 }
@@ -119,7 +148,8 @@
 }
 
 .bottom {
-    height: calc(100vh - 296px);
+    height: fit-content;
+    max-height: calc(100vh - 330px);
     overflow: hidden;
     overflow-y: scroll;
 }

@@ -8,267 +8,266 @@ import { useMutation, useQuery } from "@apollo/client";
 import Swal from "sweetalert2";
 
 function EditRequestNomerFond({
-    show,
-    id,
-    onClose,
-    nomer,
-    places,
-    category,
-    reserve,
-    active,
-    onSubmit,
-    uniqueCategories,
-    tarifs,
-    addTarif,
-    setAddTarif,
-    selectedNomer,
+  show,
+  id,
+  onClose,
+  nomer,
+  places,
+  category,
+  reserve,
+  active,
+  onSubmit,
+  uniqueCategories,
+  tarifs,
+  addTarif,
+  setAddTarif,
+  selectedNomer,
 }) {
-    const token = getCookie("token");
-    // console.log(category);
+  const token = getCookie("token");
+  // console.log(category);
 
-    const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
-    const [formData, setFormData] = useState({
-        nomerName: (nomer && nomer.name) || "",
-        category: category?.origName || "",
-        reserve: nomer?.reserve || "",
-        active: nomer?.active || "",
+  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [formData, setFormData] = useState({
+    nomerName: (nomer && nomer.name) || "",
+    category: category?.origName || "",
+    reserve: nomer?.reserve || "",
+    active: nomer?.active || "",
+  });
+
+  const sidebarRef = useRef();
+
+  const resetForm = useCallback(() => {
+    setIsEdited(false); // Сброс флага изменений
+  }, []);
+
+  useEffect(() => {
+    if (show) {
+      setFormData({
+        nomerName: nomer?.name || "",
+        category: category.origName || nomer?.category || "",
+        reserve: typeof nomer?.reserve === "boolean" ? nomer?.reserve : false, // Установить false, если undefined
+        active: typeof nomer?.active === "boolean" ? nomer?.active : false, // Установить false, если undefined
+      });
+    }
+  }, [show, nomer, category, reserve, active]);
+
+  const closeButton = useCallback(() => {
+    if (!isEdited) {
+      resetForm();
+      onClose();
+      return;
+    }
+
+    Swal.fire({
+      title: "Вы уверены?",
+      text: "Все несохраненные данные будут удалены.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Да",
+      cancelButtonText: "Нет",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      customClass: {
+        confirmButton: "swal_confirm",
+        cancelButton: "swal_cancel",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        resetForm();
+        onClose();
+      }
     });
+  }, [isEdited, resetForm, onClose]);
 
-    const sidebarRef = useRef();
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  }, []);
 
-    const resetForm = useCallback(() => {
-        setIsEdited(false); // Сброс флага изменений
-    }, []);
+  const [updateHotel] = useMutation(UPDATE_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
 
-    useEffect(() => {
-        if (show) {
-            setFormData({
-                nomerName: nomer?.name || "",
-                category: category.origName || nomer?.category || "",
-                reserve: typeof nomer?.reserve === "boolean" ? nomer?.reserve : false, // Установить false, если undefined
-                active: typeof nomer?.active === "boolean" ? nomer?.active : false, // Установить false, если undefined
-            });
-        }
-    }, [show, nomer, category, reserve, active]);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    const closeButton = useCallback(() => {
-        if (!isEdited) {
-            resetForm();
-            onClose();
-            return;
-        }
+    const nomerName = formData.nomerName.startsWith("№")
+      ? formData.nomerName
+      : `№ ${formData.nomerName}`;
 
-        Swal.fire({
-            title: "Вы уверены?",
-            text: "Все несохраненные данные будут удалены.",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonText: "Да",
-            cancelButtonText: "Нет",
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            customClass: {
-                confirmButton: "swal_confirm",
-                cancelButton: "swal_cancel",
+    let response_update_room = await updateHotel({
+      variables: {
+        updateHotelId: id,
+        input: {
+          rooms: [
+            {
+              id: nomer.id,
+              name: nomerName,
+              category: formData.category,
+              reserve: formData.reserve,
+              active: formData.active,
             },
-        }).then((result) => {
-            if (result.isConfirmed) {
-                resetForm();
-                onClose();
-            }
-        });
-    }, [isEdited, resetForm, onClose]);
-
-    const handleChange = useCallback((e) => {
-        const { name, value } = e.target;
-        setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-        setFormData((prevState) => ({
-            ...prevState,
-            [name]: value,
-        }));
-    }, []);
-
-    const [updateHotel] = useMutation(UPDATE_HOTEL, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                "Apollo-Require-Preflight": "true",
-            },
+          ],
         },
+      },
     });
+    if (response_update_room) {
+      const sortedTarifs = Object.values(
+        response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
+          if (!acc[room.category]) {
+            acc[room.category] = {
+              name:
+                room.category === "onePlace"
+                  ? "Одноместный"
+                  : room.category === "twoPlace"
+                  ? "Двухместный"
+                  : "",
+              origName: room.category,
+              rooms: [],
+            };
+          }
+          acc[room.category].rooms.push(room);
+          return acc;
+        }, {})
+      );
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+      sortedTarifs.forEach((category) => {
+        category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+      });
 
-        const nomerName = formData.nomerName.startsWith("№")
-            ? formData.nomerName
-            : `№ ${formData.nomerName}`;
+      setAddTarif(sortedTarifs);
+      onSubmit(nomerName, nomer, formData.category);
+      resetForm();
+      onClose();
+    }
+  };
 
-        let response_update_room = await updateHotel({
-            variables: {
-                updateHotelId: id,
-                input: {
-                    rooms: [
-                        {
-                            id: nomer.id,
-                            name: nomerName,
-                            category: formData.category,
-                            reserve: formData.reserve,
-                            active: formData.active,
-                        },
-                    ],
-                },
-            },
-        });
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
+        sidebarRef.current?.contains(event.target) // Клик в боковой панели
+      ) {
+        return; // Если клик внутри, ничего не делаем
+      }
 
-        if (response_update_room) {
-            const sortedTarifs = Object.values(
-                response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
-                    if (!acc[room.category]) {
-                        acc[room.category] = {
-                            name:
-                                room.category === "onePlace"
-                                    ? "Одноместный"
-                                    : room.category === "twoPlace"
-                                        ? "Двухместный"
-                                        : "",
-                            origName: room.category,
-                            rooms: [],
-                        };
-                    }
-                    acc[room.category].rooms.push(room);
-                    return acc;
-                }, {})
-            );
-
-            sortedTarifs.forEach((category) => {
-                category.rooms.sort((a, b) => a.name.localeCompare(b.name));
-            });
-
-            setAddTarif(sortedTarifs);
-            onSubmit(nomerName, nomer, formData.category);
-            resetForm();
-            onClose();
-        }
+      closeButton();
     };
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
-                sidebarRef.current?.contains(event.target) // Клик в боковой панели
-            ) {
-                return; // Если клик внутри, ничего не делаем
-            }
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
 
-            closeButton();
-        };
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, closeButton]);
 
-        if (show) {
-            document.addEventListener("mousedown", handleClickOutside);
-        } else {
-            document.removeEventListener("mousedown", handleClickOutside);
-        }
+  return (
+    <Sidebar show={show} sidebarRef={sidebarRef}>
+      <div className={classes.requestTitle}>
+        <div className={classes.requestTitle_name}>Редактировать номер</div>
+        <div className={classes.requestTitle_close} onClick={closeButton}>
+          <img src="/close.png" alt="" />
+        </div>
+      </div>
 
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [show, closeButton]);
+      <div className={classes.requestMiddle}>
+        <div className={classes.requestData}>
+          <label>Название номера</label>
+          <input
+            type="text"
+            name="nomerName"
+            value={formData.nomerName.replace(/№\s*/g, "")}
+            onChange={handleChange}
+            placeholder="Пример: № 151"
+          />
 
-    return (
-        <Sidebar show={show} sidebarRef={sidebarRef}>
-            <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Редактировать номер</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}>
-                    <img src="/close.png" alt="" />
-                </div>
-            </div>
-
-            <div className={classes.requestMiddle}>
-                <div className={classes.requestData}>
-                    <label>Название номера</label>
-                    <input
-                        type="text"
-                        name="nomerName"
-                        value={formData.nomerName.replace(/№\s*/g, "")}
-                        onChange={handleChange}
-                        placeholder="Пример: № 151"
-                    />
-
-                    <label>Категория</label>
-                    <select
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                    >
-                        <option value="onePlace">Одноместный</option>
-                        <option value="twoPlace">Двухместный</option>
-                        {/* {uniqueCategories.map(category => (
+          <label>Категория</label>
+          <select
+            name="category"
+            value={formData.category}
+            onChange={handleChange}
+          >
+            <option value="onePlace">Одноместный</option>
+            <option value="twoPlace">Двухместный</option>
+            {/* {uniqueCategories.map(category => (
                             <option key={category} value={category}>{category == 'onePlace' ? 'Одноместный' : category == 'twoPlace' ? 'Двухместный' : ''}</option>
                         ))} */}
-                    </select>
+          </select>
 
-                    <label>Тип</label>
-                    <select
-                        name="reserve"
-                        value={
-                            formData.reserve === true
-                                ? "true"
-                                : formData.reserve === false
-                                    ? "false"
-                                    : ""
-                        }
-                        onChange={(e) => {
-                            const value = e.target.value === "true"; // Преобразование строки в булевое значение
-                            setIsEdited(true);
-                            setFormData((prevState) => ({
-                                ...prevState,
-                                reserve: value,
-                            }));
-                        }}
-                    >
-                        <option value="" disabled>
-                            Выберите тип
-                        </option>
-                        <option value="false">Квота</option>
-                        <option value="true">Резерв</option>
-                    </select>
+          <label>Тип</label>
+          <select
+            name="reserve"
+            value={
+              formData.reserve === true
+                ? "true"
+                : formData.reserve === false
+                ? "false"
+                : ""
+            }
+            onChange={(e) => {
+              const value = e.target.value === "true"; // Преобразование строки в булевое значение
+              setIsEdited(true);
+              setFormData((prevState) => ({
+                ...prevState,
+                reserve: value,
+              }));
+            }}
+          >
+            <option value="" disabled>
+              Выберите тип
+            </option>
+            <option value="false">Квота</option>
+            <option value="true">Резерв</option>
+          </select>
 
-                    <label>Состояние</label>
-                    <select
-                        name="active"
-                        value={
-                            formData.active === true
-                                ? "true"
-                                : formData.active === false
-                                    ? "false"
-                                    : ""
-                        }
-                        onChange={(e) => {
-                            const value = e.target.value === "true";
-                            setIsEdited(true);
-                            setFormData((prevState) => ({
-                                ...prevState,
-                                active: value,
-                            }));
-                        }}
-                    >
-                        <option value="" disabled>
-                            Выберите состояние
-                        </option>
-                        <option value="false">Не работает</option>
-                        <option value="true">Работает</option>
-                    </select>
-                </div>
-            </div>
+          <label>Состояние</label>
+          <select
+            name="active"
+            value={
+              formData.active === true
+                ? "true"
+                : formData.active === false
+                ? "false"
+                : ""
+            }
+            onChange={(e) => {
+              const value = e.target.value === "true";
+              setIsEdited(true);
+              setFormData((prevState) => ({
+                ...prevState,
+                active: value,
+              }));
+            }}
+          >
+            <option value="" disabled>
+              Выберите состояние
+            </option>
+            <option value="false">Не работает</option>
+            <option value="true">Работает</option>
+          </select>
+        </div>
+      </div>
 
-            <div className={classes.requestButton}>
-                <Button type="submit" onClick={handleSubmit}>
-                    Сохранить изменения
-                </Button>
-            </div>
-        </Sidebar>
-    );
+      <div className={classes.requestButton}>
+        <Button type="submit" onClick={handleSubmit}>
+          Сохранить изменения
+        </Button>
+      </div>
+    </Sidebar>
+  );
 }
 
 export default EditRequestNomerFond;

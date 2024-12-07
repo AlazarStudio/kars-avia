@@ -1734,3 +1734,63 @@ export const DELETE_DISPATCHER_USER = gql`
 `;
 
 // Запросы в компанию
+
+// Отчеты
+
+export const CREATE_REPORT = gql`
+  mutation CreateReport($input: CreateReportInput!) {
+    createReport(input: $input) {
+      id
+      name
+      url
+      createdAt
+    }
+  }
+`;
+
+export const GET_AIRLINE_REPORT = gql`
+  query GetAirlineReport($filter: ReportFilterInput) {
+    getAirlineReport(filter: $filter) {
+      airlineId
+      reports {
+        id
+        name
+        url
+        createdAt
+        airlineId
+        airline {
+          id
+          name
+          images
+        }
+        startDate
+        endDate
+      }
+    }
+  }
+`;
+
+export const GET_HOTEL_REPORT = gql`
+  query GetHotelReport($filter: ReportFilterInput) {
+    getHotelReport(filter: $filter) {
+      hotelId
+      reports {
+        id
+        name
+        url
+        createdAt
+        hotelId
+        hotel {
+          id
+          name
+          images
+        }
+        startDate
+        endDate
+      }
+    }
+  }
+`;
+
+
+// Отчеты

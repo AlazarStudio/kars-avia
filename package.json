@@ -32,7 +32,8 @@
     "react-resizable": "^3.0.5",
     "react-router-dom": "^6.22.1",
     "react-tabs": "^6.0.2",
-    "sweetalert2": "^11.14.5"
+    "sweetalert2": "^11.14.5",
+    "sweetalert2-react-content": "^5.0.7"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",
