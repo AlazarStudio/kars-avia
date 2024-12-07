@@ -31,9 +31,28 @@ function Reports({ children, ...props }) {
   const [deleteIndex, setDeleteIndex] = useState(null);
 
   const [reports, setReports] = useState([]);
-  
-  const value = user.role === roles.hotelAdmin ? false : true
-  const [isAirline, setIsAirline] = useState(value);
+
+  // Получаем значение isAirline из localStorage, если оно существует
+  const savedIsAirline = localStorage.getItem("isAirline");
+  const initialIsAirline = savedIsAirline ? JSON.parse(savedIsAirline) : null;
+
+  const [isAirline, setIsAirline] = useState(initialIsAirline);
+
+  // Проверяем роль пользователя и обновляем isAirline
+  useEffect(() => {
+    if (user.role === roles.hotelAdmin) {
+      setIsAirline(false);
+    } else {
+      setIsAirline(true);
+    }
+  }, [user.role]);
+
+  // Сохраняем isAirline в localStorage при его изменении
+  useEffect(() => {
+    if (isAirline !== null) {
+      localStorage.setItem("isAirline", JSON.stringify(isAirline));
+    }
+  }, [isAirline]);
 
   // {
   //   user.role !== roles.superAdmin || user.role !== roles.dispatcerAdmin
