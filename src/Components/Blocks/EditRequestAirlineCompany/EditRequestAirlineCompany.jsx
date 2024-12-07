@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, UPDATE_AIRLINE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import Swal from "sweetalert2";
+import DropDownList from "../DropDownList/DropDownList";
 
 function EditRequestAirlineCompany({
   show,
@@ -123,6 +124,13 @@ function EditRequestAirlineCompany({
     e.preventDefault();
 
     try {
+      // Найдем id отдела по имени
+      const selectedDepartment = addTarif.find(
+        (dept) => dept.name === formData.department
+      );
+
+      // console.log(selectedDepartment.id);
+
       let response_update_user = await uploadFile({
         variables: {
           input: {
@@ -193,6 +201,8 @@ function EditRequestAirlineCompany({
     };
   }, [show, closeButton]);
 
+  const positions = ["Директор", "Заместитель директора", "Сотрудник"];
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -223,26 +233,34 @@ function EditRequestAirlineCompany({
           />
 
           <label>Роль</label>
-          <select name="role" value={formData.role} onChange={handleChange}>
-            <option value="" disabled>
-              Выберите должность
-            </option>
-            <option value="AIRLINEADMIN">AIRLINEADMIN</option>
-          </select>
+          <DropDownList
+            placeholder="Выберите роль"
+            searchable={false}
+            options={["AIRLINEADMIN"]}
+            initialValue={formData.role}
+            onSelect={(value) => {
+              setFormData((prevFormData) => ({
+                ...prevFormData,
+                role: value,
+              }));
+              setIsEdited(true);
+            }}
+          />
 
           <label>Должность</label>
-          <select
-            name="position"
-            value={formData.position}
-            onChange={handleChange}
-          >
-            <option value="" disabled>
-              Выберите должность
-            </option>
-            <option value="Директор">Директор</option>
-            <option value="Заместитель директора">Заместитель директора</option>
-            <option value="Сотрудник">Сотрудник</option>
-          </select>
+          <DropDownList
+            placeholder="Выберите должность"
+            searchable={false}
+            options={positions}
+            initialValue={formData.position}
+            onSelect={(value) => {
+              setFormData((prevFormData) => ({
+                ...prevFormData,
+                position: value,
+              }));
+              setIsEdited(true);
+            }}
+          />
 
           <label>Отдел</label>
           <select

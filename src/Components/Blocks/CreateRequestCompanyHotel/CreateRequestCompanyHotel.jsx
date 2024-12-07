@@ -6,6 +6,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, server, CREATE_HOTEL_USER } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 import Swal from "sweetalert2";
+import DropDownList from "../DropDownList/DropDownList.jsx";
 
 function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
     const token = getCookie('token');
@@ -197,19 +198,45 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
                     <input type="email" name="email" placeholder="example@mail.ru" value={formData.email} onChange={handleChange} />
 
                     <label>Роль</label>
-                    <select name="role" value={formData.role} onChange={handleChange}>
+                    <DropDownList
+                        placeholder="Выберите роль"
+                        searchable={false}
+                        options={['HOTELADMIN']} // Роли
+                        initialValue={formData.role}
+                        onSelect={(value) => {
+                            setIsEdited(true);
+                            setFormData((prevData) => ({
+                                ...prevData,
+                                role: value,
+                            }));
+                        }}
+                    />
+                    {/* <select name="role" value={formData.role} onChange={handleChange}>
                         <option value="" disabled>Выберите роль</option>
-                        {/* <option value="HOTELMODERATOR">Модератор</option> */}
+                        <option value="HOTELMODERATOR">Модератор</option>
                         <option value="HOTELADMIN">HOTELADMIN</option>
-                        {/* <option value="HOTELUSER">Пользователь</option> */}
-                    </select>
+                        <option value="HOTELUSER">Пользователь</option>
+                    </select> */}
 
                     <label>Должность</label>
-                    <select name="position" value={formData.position} onChange={handleChange}>
+                    <DropDownList
+                        placeholder="Выберите должность"
+                        searchable={false}
+                        options={['Модератор', 'Администратор']} // Должности
+                        initialValue={formData.position}
+                        onSelect={(value) => {
+                            setIsEdited(true);
+                            setFormData((prevData) => ({
+                                ...prevData,
+                                position: value,
+                            }));
+                        }}
+                    />
+                    {/* <select name="position" value={formData.position} onChange={handleChange}>
                         <option value="" disabled>Выберите должность</option>
                         <option value="Модератор">Модератор</option>
                         <option value="Администратор">Администратор</option>
-                    </select>
+                    </select> */}
 
                     <label>Логин</label>
                     <input type="text" name="login" placeholder="Логин" value={formData.login} onChange={handleChange} />

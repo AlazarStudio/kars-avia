@@ -18,6 +18,7 @@ function Header({ children }) {
   const [isFullyVisible, setIsFullyVisible] = useState(false); // Управляет полным отображением
   const dropdownRef = useRef(null);
   const [userData, setUserData] = useState(null); // Храним данные пользователя в state
+  const [isSwalOpen, setIsSwalOpen] = useState(false); // Новый флаг для отслеживания состояния Swal
 
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
 
@@ -53,6 +54,7 @@ function Header({ children }) {
   // };
 
   const logout = () => {
+    setIsSwalOpen(true);
     Swal.fire({
       title: "Вы уверены?",
       text: "Вы действительно хотите выйти?",
@@ -60,13 +62,14 @@ function Header({ children }) {
       showCancelButton: true,
       confirmButtonText: "Да, выйти",
       cancelButtonText: "Отмена",
-      allowOutsideClick: true,
+      allowOutsideClick: false,
       allowEscapeKey: false,
       customClass: {
         confirmButton: "swal_confirm",
         cancelButton: "swal_cancel",
       },
     }).then((result) => {
+      setIsSwalOpen(false);
       if (result.isConfirmed) {
         // Удаляем токен из cookie
         document.cookie = "token=; Max-Age=0; Path=/;";
@@ -103,12 +106,10 @@ function Header({ children }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        document.querySelector(".swal2-container")?.contains(event.target) ||
-        (dropdownRef.current && !dropdownRef.current.contains(event.target))
-      ) {
+      // Убедимся, что клик не произошел вне профиля и только если нет открытого Swal
+      if (!isSwalOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
-        setTimeout(() => setIsFullyVisible(false), 300); // Убираем из DOM через 300ms
+        setTimeout(() => setIsFullyVisible(false), 300);
       }
     };
 
@@ -116,7 +117,7 @@ function Header({ children }) {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [isSwalOpen]); // Отслеживаем isSwalOpen
 
   const handleProfileClick = () => {
     if (!isDropdownOpen) {

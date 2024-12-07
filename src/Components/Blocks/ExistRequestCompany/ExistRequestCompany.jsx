@@ -9,6 +9,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import Swal from "sweetalert2";
+import DropDownList from "../DropDownList/DropDownList";
 
 function ExistRequestCompany({
   show,
@@ -173,6 +174,14 @@ function ExistRequestCompany({
     };
   }, [show, closeButton]);
 
+  const positions = [
+    "Руководитель службы размещения",
+    "Суточный диспетчер",
+    "Дневной диспетчер",
+    "Коммерческий директор",
+    "Региональный руководитель",
+  ];
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -213,35 +222,39 @@ function ExistRequestCompany({
           </div>
           <div className={classes.requestDataInfo}>
             <div className={classes.requestDataInfo_title}>Роль</div>
-            <select name="role" value={formData.role} onChange={handleChange}>
-              <option value="" disabled>
-                Выберите роль
-              </option>
-              <option value="DISPATCHERADMIN">DISPATCHERADMIN</option>
-            </select>
+            <div className={classes.dropdown}>
+              <DropDownList
+                placeholder="Выберите роль"
+                searchable={false}
+                options={["DISPATCHERADMIN"]}
+                initialValue={formData.role}
+                onSelect={(value) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    role: value,
+                  }));
+                }}
+              />
+            </div>
           </div>
           <div className={classes.requestDataInfo}>
             <div className={classes.requestDataInfo_title}>Должность</div>
-            <select
-              name="position"
-              value={formData.position}
-              onChange={handleChange}
-            >
-              <option value="" disabled>
-                Выберите должность
-              </option>
-              <option value="Руководитель службы размещения">
-                Руководитель службы размещения{" "}
-              </option>
-              <option value="Суточный диспетчер">Суточный диспетчер</option>
-              <option value="Дневной диспетчер">Дневной диспетчер</option>
-              <option value="Коммерческий директор">
-                Коммерческий директор
-              </option>
-              <option value="Региональный руководитель">
-                Региональный руководитель
-              </option>
-            </select>
+            <div className={classes.dropdown}>
+              <DropDownList
+                placeholder="Выберите должность"
+                searchable={false}
+                options={positions}
+                initialValue={formData.position}
+                onSelect={(value) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    position: value,
+                  }));
+                }}
+              />
+            </div>
           </div>
           <div className={classes.requestDataInfo}>
             <div className={classes.requestDataInfo_title}>Логин</div>

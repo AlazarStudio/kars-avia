@@ -10,6 +10,7 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import Swal from "sweetalert2";
+import DropDownList from "../DropDownList/DropDownList.jsx";
 
 function ExistRequestCompanyHotel({
   show,
@@ -215,20 +216,49 @@ function ExistRequestCompanyHotel({
           </div>
           <div className={classes.requestDataInfo}>
             <div className={classes.requestDataInfo_title}>Роль</div>
-            <select name="role" value={formData.role} onChange={handleChange}>
+            <div className={classes.dropdown}>
+              <DropDownList
+                placeholder="Выберите роль"
+                options={["HOTELADMIN"]} // Роли
+                initialValue={formData.role}
+                onSelect={(value) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    role: value,
+                  }));
+                }}
+              />
+            </div>
+
+            {/* <select name="role" value={formData.role} onChange={handleChange}>
               <option value="HOTELADMIN">HOTELADMIN</option>
-            </select>
+            </select> */}
           </div>
           <div className={classes.requestDataInfo}>
             <div className={classes.requestDataInfo_title}>Должность</div>
-            <select
+            <div className={classes.dropdown}>
+              <DropDownList
+                placeholder="Выберите должность"
+                options={["Модератор", "Администратор"]} // Должности
+                initialValue={formData.position}
+                onSelect={(value) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    position: value,
+                  }));
+                }}
+              />
+            </div>
+            {/* <select
               name="position"
               value={formData.position}
               onChange={handleChange}
             >
               <option value="Модератор">Модератор</option>
               <option value="Администратор">Администратор</option>
-            </select>
+            </select> */}
           </div>
           <div className={classes.requestDataInfo}>
             <div className={classes.requestDataInfo_title}>Логин</div>

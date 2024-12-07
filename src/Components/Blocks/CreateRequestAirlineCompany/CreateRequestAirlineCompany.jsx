@@ -9,6 +9,8 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import Swal from "sweetalert2";
+import DropDownList from "../DropDownList/DropDownList";
+import DropDownListObj from "../DropDownListObj/DropDownListObj";
 
 function CreateRequestAirlineCompany({
   show,
@@ -235,6 +237,8 @@ function CreateRequestAirlineCompany({
     };
   }, [show, closeButton]);
 
+  const positions = ["Директор", "Заместитель директора", "Сотрудник"];
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -265,26 +269,34 @@ function CreateRequestAirlineCompany({
           />
 
           <label>Роль</label>
-          <select name="role" value={formData.role} onChange={handleChange}>
-            <option value="" disabled>
-              Выберите роль
-            </option>
-            <option value="AIRLINEADMIN">AIRLINEADMIN</option>
-          </select>
+          <DropDownList
+            placeholder="Выберите роль"
+            searchable={false}
+            options={["AIRLINEADMIN"]}
+            initialValue={formData.role}
+            onSelect={(value) => {
+              setFormData((prevFormData) => ({
+                ...prevFormData,
+                role: value,
+              }));
+              setIsEdited(true);
+            }}
+          />
 
           <label>Должность</label>
-          <select
-            name="position"
-            value={formData.position}
-            onChange={handleChange}
-          >
-            <option value="" disabled>
-              Выберите должность
-            </option>
-            <option value="Директор">Директор</option>
-            <option value="Заместитель директора">Заместитель директора</option>
-            <option value="Сотрудник">Сотрудник</option>
-          </select>
+          <DropDownList
+            placeholder="Выберите должность"
+            searchable={false}
+            options={positions}
+            initialValue={formData.position}
+            onSelect={(value) => {
+              setFormData((prevFormData) => ({
+                ...prevFormData,
+                position: value,
+              }));
+              setIsEdited(true);
+            }}
+          />
 
           <label>Логин</label>
           <input

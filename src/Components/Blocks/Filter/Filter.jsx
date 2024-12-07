@@ -72,6 +72,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
                     <DropDownList
                         width={'200px'}
                         placeholder="Выберите авиакомпанию"
+                        searchable={true}
                         options={['Все авиакомпании', ...airlines.map(airline => airline.name)]} // Добавляем 'Все авиакомпании'
                         initialValue={selectedAirline?.name || 'Все авиакомпании'} // Устанавливаем "Все авиакомпании" по умолчанию
                         onSelect={(value) => {
@@ -88,6 +89,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
                     <DropDownList
                         width={'200px'}
                         placeholder="Выберите аэропорт"
+                        searchable={true}
                         options={['Все аэропорты', ...airports.map(airport => airport.name)]}  // Добавляем 'Все аэропорты'
                         initialValue={selectedAirport?.name || 'Все аэропорты'}  // Устанавливаем "Все аэропорты" по умолчанию, если ничего не выбрано
                         onSelect={(value) => {

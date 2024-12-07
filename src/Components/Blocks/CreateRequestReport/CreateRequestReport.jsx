@@ -124,8 +124,7 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
     return (
       formData.startDate &&
       formData.endDate &&
-      formData.airlineId &&
-      formData.hotelId
+      (formData.airlineId || formData.hotelId)
     );
   };
 
@@ -206,26 +205,29 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
           {user.airlineId || user.hotelId ? null : (
             <>
               <label>Авиакомпания или гостиница</label>
-              <select
-                name=""
-                value={airOrHotel}
-                onChange={(e) => {
-                  setAirOrHotel(e.target.value);
+              <DropDownList
+                placeholder="Выберите тип отчета"
+                searchable={false}
+                options={["Авиакомпания", "Гостиница"]}
+                initialValue={
+                  airOrHotel
+                    ? airOrHotel === "airline"
+                      ? "Авиакомпания"
+                      : "Гостиница"
+                    : ""
+                }
+                onSelect={(value) => {
+                  setAirOrHotel(value === "Авиакомпания" ? "airline" : "hotel");
                   setIsEdited(true);
-                }} // Используем onChange для установки значения
-              >
-                <option value="" defaultValue>
-                  Выберите тип отчета
-                </option>
-                <option value="airline">Авиакомпания</option>
-                <option value="hotel">Гостиница</option>
-              </select>
+                }}
+              />
 
               {airOrHotel === "airline" ? (
                 <>
                   <label>Авиакомпания</label>
                   <DropDownList
                     placeholder="Введите авиакомпанию"
+                    searchable={false}
                     options={airlines?.map((airline) => airline.name)}
                     initialValue={selectedAirline?.name || ""}
                     onSelect={(value) => {
@@ -246,6 +248,7 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
                   <label>Гостиница</label>
                   <DropDownList
                     placeholder="Введите гостиницу"
+                    searchable={false}
                     options={airlines?.map((airline) => airline.name)}
                     initialValue={selectedAirline?.name || ""}
                     onSelect={(value) => {
@@ -278,6 +281,7 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
           <input
             type="date"
             name="endDate"
+            min={formData.startDate}
             placeholder="Конечная дата"
             value={formData.endDate}
             onChange={handleChange}

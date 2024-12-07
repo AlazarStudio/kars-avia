@@ -9,6 +9,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import Swal from "sweetalert2";
+import DropDownList from "../DropDownList/DropDownList";
 
 function CreateRequestAirlineStaff({
   show,
@@ -189,6 +190,8 @@ function CreateRequestAirlineStaff({
     "Инженер",
   ];
 
+  const genders = ["Мужской", "Женский"];
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -219,29 +222,34 @@ function CreateRequestAirlineStaff({
           />
 
           <label>Должность</label>
-          <select
-            name="position"
-            value={formData.position}
-            onChange={handleChange}
-          >
-            <option value="" disabled>
-              Выберите должность
-            </option>
-            {positions.map((pos, index) => (
-              <option key={index} value={pos}>
-                {pos}
-              </option>
-            ))}
-          </select>
+          <DropDownList
+            placeholder="Выберите должность"
+            searchable={false}
+            options={positions}
+            initialValue={formData.position}
+            onSelect={(value) => {
+              setFormData((prevFormData) => ({
+                ...prevFormData,
+                position: value,
+              }));
+              setIsEdited(true);
+            }}
+          />
 
           <label>Пол</label>
-          <select name="gender" value={formData.gender} onChange={handleChange}>
-            <option value="" disabled>
-              Выберите пол
-            </option>
-            <option value="Мужской">Мужской</option>
-            <option value="Женский">Женский</option>
-          </select>
+          <DropDownList
+            placeholder="Выберите пол"
+            searchable={false}
+            options={["Мужской", "Женский"]}
+            initialValue={formData.gender}
+            onSelect={(value) => {
+              setFormData((prevFormData) => ({
+                ...prevFormData,
+                gender: value,
+              }));
+              setIsEdited(true);
+            }}
+          />
         </div>
       </div>
 

@@ -306,6 +306,17 @@ function CreateRequest({ show, onClose, user }) {
 
     const today = new Date().toISOString().split('T')[0];
 
+    const meal = [
+        {
+            title: "Включено",
+            value: true,
+        },
+        {
+            title: "Не включено",
+            value: false,
+        },
+    ]
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -414,10 +425,27 @@ function CreateRequest({ show, onClose, user }) {
                 {activeTab === 'Доп. услуги' && (
                     <div className={classes.requestData}>
                         <label>Питание</label>
-                        <select name="included" value={formData.mealPlan.included} onChange={handleChange}>
+                        {/* <select name="included" value={formData.mealPlan.included} onChange={handleChange}>
                             <option value={true}>Включено</option>
                             <option value={false}>Не включено</option>
-                        </select>
+                        </select> */}
+
+                        <DropDownList
+                            placeholder="Питание"
+                            options={meal.map((name) => name.title)}
+                            initialValue={formData.mealPlan.included ? 'Включено' : 'Не включено'}
+                            onSelect={(value) => {
+                                const isIncluded = value === 'Включено';
+                                setFormData(prevFormData => ({
+                                    ...prevFormData,
+                                    mealPlan: {
+                                        ...prevFormData.mealPlan,
+                                        included: isIncluded
+                                    }
+                                }));
+                                setIsEdited(true);
+                            }}
+                        />
 
                         <div className={classes.checks} style={{ display: formData.mealPlan.included ? 'flex' : 'none' }}>
                             <label>

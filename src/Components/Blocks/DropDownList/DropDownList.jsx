@@ -41,7 +41,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
     };
 
     const filteredOptions = searchable
-        ? options?.filter(option => option?.toLowerCase().includes(searchTerm.toLowerCase()))
+        ? options.filter(option => option?.toLowerCase().includes(searchTerm.toLowerCase()))
         : options;
 
     return (
