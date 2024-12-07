@@ -128,6 +128,8 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
     );
   };
 
+  const today = new Date().toISOString().split("T")[0];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -141,6 +143,24 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
           confirmButton: "swal_confirm",
         },
       });
+      return;
+    }
+
+    if (formData.endDate < formData.startDate) {
+      Swal.fire({
+        title: "Ошибка!",
+        text: "Конечная дата не может быть раньше начальной.",
+        icon: "error",
+        confirmButtonText: "Ок",
+        customClass: {
+          confirmButton: "swal_confirm",
+          cancelButton: "swal_cancel",
+        },
+      });
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        endDate: "",
+      }));
       return;
     }
 

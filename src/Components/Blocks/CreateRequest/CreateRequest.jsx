@@ -198,6 +198,8 @@ function CreateRequest({ show, onClose, user }) {
         );
     };
 
+    const today = new Date().toISOString().split('T')[0];
+
     // Отправка формы на сервер
     const handleSubmit = async () => {
         if (!isFormValid()) {
@@ -212,6 +214,43 @@ function CreateRequest({ show, onClose, user }) {
             });
             return;
         }
+
+        // Проверка на дату прибытия: она не может быть меньше сегодняшней
+        if (formData.arrivalDate < today) {
+            Swal.fire({
+                title: 'Ошибка!',
+                text: 'Дата прибытия не может быть раньше сегодняшнего дня.',
+                icon: 'error',
+                confirmButtonText: 'Ок',
+                customClass: {
+                    confirmButton: 'swal_confirm'
+                }
+            });
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                arrivalDate: ""  // Очищаем дату прибытия
+            }));
+            return;
+        }
+
+        // Проверка на дату отъезда: она не может быть раньше даты прибытия
+        if (formData.departureDate < formData.arrivalDate) {
+            Swal.fire({
+                title: 'Ошибка!',
+                text: 'Дата отъезда не может быть раньше даты прибытия.',
+                icon: 'error',
+                confirmButtonText: 'Ок',
+                customClass: {
+                    confirmButton: 'swal_confirm',
+                    cancelButton: 'swal_cancel'
+                }
+            });
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                departureDate: ""  // Очищаем дату отъезда
+            }));
+            return;
+        }
     
         if (formData.departureDate === formData.arrivalDate && formData.departureTime <= formData.arrivalTime) {
             Swal.fire({
@@ -224,6 +263,11 @@ function CreateRequest({ show, onClose, user }) {
                     cancelButton:'swal_cancel'
                 }
             });
+            // Очищаем значения для времени прибытия и отъезда
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                departureTime: "",
+            }));
             return;
         }
     
@@ -304,7 +348,6 @@ function CreateRequest({ show, onClose, user }) {
     }, [show, closeButton]);
     
 
-    const today = new Date().toISOString().split('T')[0];
 
     const meal = [
         {
