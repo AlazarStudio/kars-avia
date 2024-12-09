@@ -150,7 +150,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
                 </>
             )}
             {
-                user?.role == roles.airlineAdmin
+                user?.role == roles.hotelAdmin
                     ? null
                     : <Button onClick={toggleSidebar} minwidth={'200px'}>{buttonTitle}</Button>
             }

@@ -21,6 +21,7 @@ import {
 } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 import { roles } from "../../../roles";
+import Swal from "sweetalert2";
 
 function ExistRequest({
   show,
@@ -131,7 +132,16 @@ function ExistRequest({
           },
         },
       });
-      alert("Изменения сохранены");
+      // alert("Изменения сохранены");
+      Swal.fire({
+        title: "Изменения сохранены!",
+        // text: "Пожалуйста, заполните все обязательные поля.",
+        icon: "success",
+        confirmButtonText: "Ок",
+        customClass: {
+          confirmButton: "swal_confirm",
+        },
+      });
       await refetch(); // Обновляем данные после изменения
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
@@ -164,18 +174,18 @@ function ExistRequest({
   //       return log.description
   //     case "updateHotelChess":
   //       return `
-  //               Пользователь <span>${log.user.name}</span> 
+  //               Пользователь <span>${log.user.name}</span>
   //               создал бронь в отель <span>${logsData.hotel.name}</span>
   //               для <span>${logsData.person.position} ${logsData.person.name
-  //         }</span> 
-  //               в номер <span>${getJsonParce(log.newData).room}</span> 
+  //         }</span>
+  //               в номер <span>${getJsonParce(log.newData).room}</span>
   //               место <span>${getJsonParce(log.newData).place}</span>
-  //               c <span>${formatDate(getJsonParce(log.newData).start)}</span> 
+  //               c <span>${formatDate(getJsonParce(log.newData).start)}</span>
   //               по <span>${formatDate(getJsonParce(log.newData).end)}</span>
   //           `;
   //     case "open_request":
   //       return `
-  //               Пользователь <span>${log.user.name}</span> 
+  //               Пользователь <span>${log.user.name}</span>
   //               первый открыл заявку <br /> <span>№${getJsonParce(log.description).requestNumber
   //         }</span>
   //           `;
@@ -227,7 +237,16 @@ function ExistRequest({
           },
         },
       });
-      alert("Изменения сохранены");
+      // alert("Изменения сохранены");
+      Swal.fire({
+        title: "Изменения сохранены!",
+        // text: "Пожалуйста, заполните все обязательные поля.",
+        icon: "success",
+        confirmButtonText: "Ок",
+        customClass: {
+          confirmButton: "swal_confirm",
+        },
+      });
       await refetch(); // Обновляем данные после сохранения изменений в питании
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
@@ -251,7 +270,15 @@ function ExistRequest({
           archivingRequstId: chooseRequestID,
         },
       });
-      alert("Изменения сохранены");
+      // alert("Изменения сохранены");
+      Swal.fire({
+        title: "Изменения сохранены!",
+        icon: "success",
+        confirmButtonText: "Ок",
+        customClass: {
+          confirmButton: "swal_confirm",
+        },
+      });
       await refetch();
       onClose();
     } catch (error) {
@@ -274,31 +301,35 @@ function ExistRequest({
           </div>
           <div className={classes.tabs}>
             <div
-              className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
-                }`}
+              className={`${classes.tab} ${
+                activeTab === "Общая" ? classes.activeTab : ""
+              }`}
               onClick={() => handleTabChange("Общая")}
             >
               Общая
             </div>
             {formData.status !== "created" && formData.status !== "opened" && (
               <div
-                className={`${classes.tab} ${activeTab === "Питание" ? classes.activeTab : ""
-                  }`}
+                className={`${classes.tab} ${
+                  activeTab === "Питание" ? classes.activeTab : ""
+                }`}
                 onClick={() => handleTabChange("Питание")}
               >
                 Питание
               </div>
             )}
             <div
-              className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
-                }`}
+              className={`${classes.tab} ${
+                activeTab === "Комментарии" ? classes.activeTab : ""
+              }`}
               onClick={() => handleTabChange("Комментарии")}
             >
               Комментарии
             </div>
             <div
-              className={`${classes.tab} ${activeTab === "История" ? classes.activeTab : ""
-                }`}
+              className={`${classes.tab} ${
+                activeTab === "История" ? classes.activeTab : ""
+              }`}
               onClick={() => handleTabChange("История")}
             >
               История
@@ -582,9 +613,9 @@ function ExistRequest({
                       </div>
                       <div
                         className={classes.historyLog}
-                      // dangerouslySetInnerHTML={{
-                      //   __html: getLogDescription(log, logsData),
-                      // }}
+                        // dangerouslySetInnerHTML={{
+                        //   __html: getLogDescription(log, logsData),
+                        // }}
                       >
                         {log.description}
                       </div>
