@@ -831,7 +831,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
     const { data: subscriptionDataPerson } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT);
 
-    // console.log(subscriptionDataPerson)
 
     const { loading: loadingReserves, error: errorReserves, data: dataReserves, refetch: refetchReserves } = useQuery(GET_RESERVE_REQUESTS, {
         variables: { pagination: { skip: 0, take: 999999999 } },
@@ -850,7 +849,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     const { loading: loadingHotelReserveOne, error: errorHotelReserveOne, data: dataHotelReserveOne, refetch: refetchHotelReserveOne } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
         variables: { reservationHotelsId: openReserveId },
     });
-
 
     const [requestsReserves, setRequestsReserves] = useState([]);
     const [requestsReserveOne, setRequestsReserveOne] = useState([]);
@@ -985,8 +983,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 );
                 return [...prevReservePassangers, ...newEntries];
             });
+            refetchHotelReserveOne()
         }
-    }, [subscriptionDataPerson]);
+    }, [subscriptionDataPerson, refetchHotelReserveOne]);
 
     const handleCloseReserveInfo = () => {
         setOpenReserveId('');
