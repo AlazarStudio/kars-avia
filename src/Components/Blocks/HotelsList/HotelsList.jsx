@@ -18,7 +18,7 @@ function HotelsList({ children, user, ...props }) {
 
     useEffect(() => {
         if (data && data.hotels) {
-            const sortedHotels = [...data.hotels].sort((a, b) => a.name.localeCompare(b.name));
+            const sortedHotels = [...data.hotels].sort((a, b) => a.city.localeCompare(b.city));
             setCompanyData(sortedHotels);
         }
         refetch()
@@ -27,7 +27,7 @@ function HotelsList({ children, user, ...props }) {
     // console.log(data)
 
     const addHotel = (newHotel) => {
-        setCompanyData([...companyData, newHotel].sort((a, b) => a.name.localeCompare(b.name)));
+        setCompanyData([...companyData, newHotel].sort((a, b) => a.city.localeCompare(b.city)));
     };
 
     const toggleCreateSidebar = () => {

@@ -158,7 +158,8 @@
 }
 
 .InfoTable_data_elem_title {
-    text-align: left;
+    text-align: center;
+    padding: 0 10px;
 }
 
 .InfoTable_data_elem_avatar {

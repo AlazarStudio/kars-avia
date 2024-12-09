@@ -128,6 +128,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 airline: subscriptionUpdateData.requestUpdated.airline,
                 personID: subscriptionUpdateData.requestUpdated.person?.id,
                 room: subscriptionUpdateData.requestUpdated.room || null,
+                isRequest: true
             };
 
             setRequests((prevRequests) =>
@@ -185,6 +186,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 status: "Ожидает",
                 guest: subscriptionData.requestCreated.person?.name || "Неизвестный гость",
                 requestID: subscriptionData.requestCreated.id,
+                isRequest: true,
                 airline: subscriptionData.requestCreated.airline,
                 personID: subscriptionData.requestCreated.person?.id,
             };
@@ -215,6 +217,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 status: "Ожидает",
                 guest: request.person ? request.person.name : "Неизвестный гость",
                 requestID: request.id,
+                isRequest: true,
                 airline: request.airline,
                 personID: request.person.id,
             }));
@@ -222,6 +225,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
             setNewRequests(transformedRequests);
         }
     }, [dataBrons, hotelInfo.city, refetchBrons]);
+
+    // console.log(newRequests)
 
     // ----------------------------------------------------------------
 
@@ -524,7 +529,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                     {
                                         clientId: draggedRequest.personID, // ID клиента
                                         hotelId: hotelId, // ID отеля
-                                        reserveId: draggedRequest.requestID, // ID заявки
+                                        requestId: draggedRequest.requestID, // ID заявки
                                         room: `${targetRoomId}`, // Номер комнаты
                                         place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
                                         id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
@@ -537,7 +542,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                     {
                                         clientId: draggedRequest.personID, // ID клиента
                                         hotelId: hotelId, // ID отеля
-                                        reserveId: draggedRequest.requestID, // ID заявки
+                                        requestId: draggedRequest.requestID, // ID заявки
                                         room: `${targetRoomId}`, // Номер комнаты
                                         place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
                                         id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
@@ -831,7 +836,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
     const { data: subscriptionDataPerson } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT);
 
-    // console.log(subscriptionDataPerson)
 
     const { loading: loadingReserves, error: errorReserves, data: dataReserves, refetch: refetchReserves } = useQuery(GET_RESERVE_REQUESTS, {
         variables: { pagination: { skip: 0, take: 999999999 } },
@@ -850,7 +854,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     const { loading: loadingHotelReserveOne, error: errorHotelReserveOne, data: dataHotelReserveOne, refetch: refetchHotelReserveOne } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
         variables: { reservationHotelsId: openReserveId },
     });
-
 
     const [requestsReserves, setRequestsReserves] = useState([]);
     const [requestsReserveOne, setRequestsReserveOne] = useState([]);
@@ -927,6 +930,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                         status: "Ожидает",
                         guest: request.name ? request.name : "Неизвестный гость",
                         reserveId: reservePassanger?.reserve?.id,
+                        isRequest: false,
                         airline: reservePassanger?.reserve?.airline,
                         personID: request.id,
                     };
@@ -971,6 +975,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                         status: "Ожидает",
                         guest: request.name ? request.name : "Неизвестный гость",
                         reserveId: reservePassanger?.reserve?.id,
+                        isRequest: false,
                         airline: reservePassanger?.reserve?.airline,
                         personID: request.id,
                     };
@@ -985,8 +990,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 );
                 return [...prevReservePassangers, ...newEntries];
             });
+            refetchHotelReserveOne()
         }
-    }, [subscriptionDataPerson]);
+    }, [subscriptionDataPerson, refetchHotelReserveOne]);
 
     const handleCloseReserveInfo = () => {
         setOpenReserveId('');
