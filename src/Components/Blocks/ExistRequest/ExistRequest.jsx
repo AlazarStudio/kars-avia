@@ -128,7 +128,7 @@ function ExistRequest({
           input: {
             requestId: chooseRequestID,
             newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
-            newEndName: formDataExtend.departureName,
+            // newEndName: formDataExtend.departureName,
           },
         },
       });
@@ -301,35 +301,31 @@ function ExistRequest({
           </div>
           <div className={classes.tabs}>
             <div
-              className={`${classes.tab} ${
-                activeTab === "Общая" ? classes.activeTab : ""
-              }`}
+              className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
+                }`}
               onClick={() => handleTabChange("Общая")}
             >
               Общая
             </div>
             {formData.status !== "created" && formData.status !== "opened" && (
               <div
-                className={`${classes.tab} ${
-                  activeTab === "Питание" ? classes.activeTab : ""
-                }`}
+                className={`${classes.tab} ${activeTab === "Питание" ? classes.activeTab : ""
+                  }`}
                 onClick={() => handleTabChange("Питание")}
               >
                 Питание
               </div>
             )}
             <div
-              className={`${classes.tab} ${
-                activeTab === "Комментарии" ? classes.activeTab : ""
-              }`}
+              className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
+                }`}
               onClick={() => handleTabChange("Комментарии")}
             >
               Комментарии
             </div>
             <div
-              className={`${classes.tab} ${
-                activeTab === "История" ? classes.activeTab : ""
-              }`}
+              className={`${classes.tab} ${activeTab === "История" ? classes.activeTab : ""
+                }`}
               onClick={() => handleTabChange("История")}
             >
               История
@@ -455,8 +451,8 @@ function ExistRequest({
                           Заезд
                         </div>
                         <div className={classes.requestDataInfo_desc}>
-                          {convertToDate(formData.arrival.date)} -{" "}
-                          {convertToDate(formData.arrival.date, true)}
+                          {convertToDate(formData.arrival)} - {" "}
+                          {convertToDate(formData.arrival, true)}
                         </div>
                       </div>
                       <div className={classes.requestDataInfo}>
@@ -464,8 +460,8 @@ function ExistRequest({
                           Выезд
                         </div>
                         <div className={classes.requestDataInfo_desc}>
-                          {convertToDate(formData.departure.date)} -{" "}
-                          {convertToDate(formData.departure.date, true)}
+                          {convertToDate(formData.departure)} -{" "}
+                          {convertToDate(formData.departure, true)}
                         </div>
                       </div>
                     </>
@@ -480,13 +476,13 @@ function ExistRequest({
                     <>
                       <div className={classes.requestDataTitle}>Продление</div>
                       <div className={classes.reis_info}>
-                        <input
+                        {/* <input
                           type="text"
                           name="departureName"
                           value={formDataExtend.departureName}
                           onChange={handleExtendChange}
                           placeholder="Номер рейса"
-                        />
+                        /> */}
                         <input
                           type="date"
                           name="departureDate"
@@ -613,11 +609,11 @@ function ExistRequest({
                       </div>
                       <div
                         className={classes.historyLog}
-                        // dangerouslySetInnerHTML={{
-                        //   __html: getLogDescription(log, logsData),
-                        // }}
+                        dangerouslySetInnerHTML={{
+                          __html: log.description,
+                        }}
                       >
-                        {log.description}
+                        {/* {log.description} */}
                       </div>
                     </>
                   ))}

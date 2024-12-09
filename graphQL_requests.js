@@ -92,14 +92,8 @@ export const GET_REQUESTS = gql`
           city
           code
         }
-        arrival {
-          flight
-          date
-        }
-        departure {
-          flight
-          date
-        }
+        arrival
+        departure
         roomCategory
         mealPlan {
           included
@@ -147,14 +141,8 @@ export const GET_REQUESTS_ARCHIVED = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -197,14 +185,8 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -253,14 +235,8 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -330,14 +306,8 @@ export const CREATE_REQUEST_MUTATION = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -415,14 +385,8 @@ export const GET_REQUEST = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -528,14 +492,8 @@ export const GET_BRONS_HOTEL = gql`
             code
             name
           }
-          arrival {
-            date
-            flight
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           mealPlan {
             included
             breakfast
@@ -556,14 +514,8 @@ export const GET_BRONS_HOTEL = gql`
             code
             name
           }
-          arrival {
-            date
-            flight
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           mealPlan {
             included
             breakfast
@@ -651,9 +603,7 @@ export const GET_LOGS = gql`
         name
       }
       id
-      arrival {
-        flight
-      }
+      arrival
       hotel {
         name
       }
@@ -681,14 +631,8 @@ export const SAVE_MEALS_MUTATION = gql`
 export const SAVE_HANDLE_EXTEND_MUTATION = gql`
   mutation ExtendRequestDates($input: ExtendRequestDatesInput!) {
     extendRequestDates(input: $input) {
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       hotelChess {
         start
         end
@@ -735,14 +679,8 @@ export const CREATE_REQUEST_RESERVE_MUTATION = gql`
         city
         code
       }
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       mealPlan {
         included
         breakfast
@@ -781,14 +719,8 @@ export const GET_RESERVE_REQUESTS = gql`
           city
           code
         }
-        arrival {
-          flight
-          date
-        }
-        departure {
-          flight
-          date
-        }
+        arrival
+        departure
         mealPlan {
           included
           breakfast
@@ -836,14 +768,8 @@ export const REQUEST_RESERVE_CREATED_SUBSCRIPTION = gql`
         images
       }
       senderId
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       mealPlan {
         included
         breakfast
@@ -875,14 +801,8 @@ export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION = gql`
         images
       }
       senderId
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       mealPlan {
         included
         breakfast
@@ -906,14 +826,8 @@ export const GET_RESERVE_REQUEST = gql`
         city
         code
       }
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       mealPlan {
         included
         breakfast
@@ -975,14 +889,8 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
       }
       reserve {
         id
-        arrival {
-          date
-          flight
-        }
-        departure {
-          date
-          flight
-        }
+        arrival
+        departure
         airline {
           name
           images

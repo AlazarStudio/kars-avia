@@ -82,8 +82,7 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
                 variables: {
                     input: {
                         requestId: chooseRequestID,
-                        newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
-                        newEndName: formDataExtend.departureName
+                        newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`
                     }
                 }
             });
@@ -270,8 +269,8 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
                                         <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Номер заявки</div><div className={classes.requestDataInfo_desc}>{formData.requestNumber}</div></div>
                                         <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Гостиница</div><div className={classes.requestDataInfo_desc}>{formData.hotel?.name}</div></div>
                                         <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Номер комнаты</div><div className={classes.requestDataInfo_desc}>{formData.hotelChess?.room}</div></div>
-                                        <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Заезд</div><div className={classes.requestDataInfo_desc}>{convertToDate(formData.arrival.date)} - {convertToDate(formData.arrival.date, true)}</div></div>
-                                        <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Выезд</div><div className={classes.requestDataInfo_desc}>{convertToDate(formData.departure.date)} - {convertToDate(formData.departure.date, true)}</div></div>
+                                        <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Заезд</div><div className={classes.requestDataInfo_desc}>{convertToDate(formData.arrival)} - {convertToDate(formData.arrival, true)}</div></div>
+                                        <div className={classes.requestDataInfo}><div className={classes.requestDataInfo_title}>Выезд</div><div className={classes.requestDataInfo_desc}>{convertToDate(formData.departure)} - {convertToDate(formData.departure, true)}</div></div>
                                     </>
                                 }
 
@@ -280,7 +279,7 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
                                     <>
                                         <div className={classes.requestDataTitle}>Продление</div>
                                         <div className={classes.reis_info}>
-                                            <input type="text" name="departureName" value={formDataExtend.departureName} onChange={handleExtendChange} placeholder="Номер рейса" />
+                                            {/* <input type="text" name="departureName" value={formDataExtend.departureName} onChange={handleExtendChange} placeholder="Номер рейса" /> */}
                                             <input type="date" name="departureDate" value={formDataExtend.departureDate} onChange={handleExtendChange} placeholder="Дата" />
                                             <input type="time" name="departureTime" value={formDataExtend.departureTime} onChange={handleExtendChange} placeholder="Время" />
                                         </div>
@@ -361,11 +360,11 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
                                             </div>
                                             <div
                                                 className={classes.historyLog}
-                                            // dangerouslySetInnerHTML={{
-                                            //   __html: getLogDescription(log, logsData),
-                                            // }}
+                                                dangerouslySetInnerHTML={{
+                                                    __html: log.description,
+                                                }}
                                             >
-                                                {log.description}
+                                                {/* {log.description} */}
                                             </div>
                                         </>
                                     ))}

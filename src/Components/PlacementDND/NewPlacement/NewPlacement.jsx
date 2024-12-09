@@ -118,10 +118,10 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         if (subscriptionUpdateData?.requestUpdated) {
             const updatedRequest = {
                 id: subscriptionUpdateData.requestUpdated.id, // Используем ID из подписки
-                checkInDate: new Date(subscriptionUpdateData.requestUpdated.arrival.date).toISOString().split("T")[0],
-                checkInTime: new Date(subscriptionUpdateData.requestUpdated.arrival.date).toISOString().split("T")[1].slice(0, 5),
-                checkOutDate: new Date(subscriptionUpdateData.requestUpdated.departure.date).toISOString().split("T")[0],
-                checkOutTime: new Date(subscriptionUpdateData.requestUpdated.departure.date).toISOString().split("T")[1].slice(0, 5),
+                checkInDate: new Date(subscriptionUpdateData.requestUpdated.arrival).toISOString().split("T")[0],
+                checkInTime: new Date(subscriptionUpdateData.requestUpdated.arrival).toISOString().split("T")[1].slice(0, 5),
+                checkOutDate: new Date(subscriptionUpdateData.requestUpdated.departure).toISOString().split("T")[0],
+                checkOutTime: new Date(subscriptionUpdateData.requestUpdated.departure).toISOString().split("T")[1].slice(0, 5),
                 status: translateStatus(subscriptionUpdateData.requestUpdated.status),
                 guest: subscriptionUpdateData.requestUpdated.person?.name || "Неизвестный гость",
                 requestID: subscriptionUpdateData.requestUpdated.id,
@@ -149,11 +149,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 checkInTime: new Date(chess.start).toISOString().split("T")[1].slice(0, 5),
                 checkOutDate: new Date(chess.end).toISOString().split("T")[0],
                 checkOutTime: new Date(chess.end).toISOString().split("T")[1].slice(0, 5),
-                status: translateStatus(chess.request ? chess.request.status : chess.reserve.status),
+                status: translateStatus(chess.request ? chess.request?.status : chess.reserve?.status),
                 guest: chess.client ? chess.client.name : "Неизвестный гость",
-                requestID: chess.request ? chess.request.id : chess.reserve.id,
+                requestID: chess.request ? chess.request?.id : chess.reserve?.id,
                 isRequest: chess.request ? true : false,
-                airline: chess.request ? chess.request.airline : chess.reserve.airline,
+                airline: chess.request ? chess.request?.airline : chess.reserve?.airline,
                 personID: chess.client.id,
                 chessID: chess.id,
             }));
@@ -179,10 +179,10 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         if (subscriptionData?.requestCreated) {
             const newRequest = {
                 id: generateTimestampId(), // Генерация уникального ID для фронтенда
-                checkInDate: new Date(subscriptionData.requestCreated.arrival.date).toISOString().split("T")[0],
-                checkInTime: new Date(subscriptionData.requestCreated.arrival.date).toISOString().split("T")[1].slice(0, 5),
-                checkOutDate: new Date(subscriptionData.requestCreated.departure.date).toISOString().split("T")[0],
-                checkOutTime: new Date(subscriptionData.requestCreated.departure.date).toISOString().split("T")[1].slice(0, 5),
+                checkInDate: new Date(subscriptionData.requestCreated.arrival).toISOString().split("T")[0],
+                checkInTime: new Date(subscriptionData.requestCreated.arrival).toISOString().split("T")[1].slice(0, 5),
+                checkOutDate: new Date(subscriptionData.requestCreated.departure).toISOString().split("T")[0],
+                checkOutTime: new Date(subscriptionData.requestCreated.departure).toISOString().split("T")[1].slice(0, 5),
                 status: "Ожидает",
                 guest: subscriptionData.requestCreated.person?.name || "Неизвестный гость",
                 requestID: subscriptionData.requestCreated.id,
@@ -210,10 +210,10 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
             const transformedRequests = filteredRequests.map((request) => ({
                 id: generateTimestampId(), // Используем уникальный ID
-                checkInDate: new Date(request.arrival.date).toISOString().split("T")[0],
-                checkInTime: new Date(request.arrival.date).toISOString().split("T")[1].slice(0, 5),
-                checkOutDate: new Date(request.departure.date).toISOString().split("T")[0],
-                checkOutTime: new Date(request.departure.date).toISOString().split("T")[1].slice(0, 5),
+                checkInDate: new Date(request.arrival).toISOString().split("T")[0],
+                checkInTime: new Date(request.arrival).toISOString().split("T")[1].slice(0, 5),
+                checkOutDate: new Date(request.departure).toISOString().split("T")[0],
+                checkOutTime: new Date(request.departure).toISOString().split("T")[1].slice(0, 5),
                 status: "Ожидает",
                 guest: request.person ? request.person.name : "Неизвестный гость",
                 requestID: request.id,
@@ -628,12 +628,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 variables: {
                     updateRequestId: updatedRequest.requestID,
                     input: {
-                        arrival: {
-                            date: `${updatedRequest.checkInDate}T${updatedRequest.checkInTime}:00.000Z`,
-                        },
-                        departure: {
-                            date: `${updatedRequest.checkOutDate}T${updatedRequest.checkOutTime}:00.000Z`,
-                        },
+                        arrival: `${updatedRequest.checkInDate}T${updatedRequest.checkInTime}:00.000Z`,
+                        departure: `${updatedRequest.checkOutDate}T${updatedRequest.checkOutTime}:00.000Z`,
                         status: updatedRequest.status == 'Сокращен'
                             ?
                             'reduced'
@@ -912,8 +908,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 const combinedPersons = [...(reservePassanger?.person || []), ...(reservePassanger?.passengers || [])];
 
                 return combinedPersons.map((request) => {
-                    const arrivalDate = reservePassanger?.reserve?.arrival?.date;
-                    const departureDate = reservePassanger?.reserve?.departure?.date;
+                    const arrivalDate = reservePassanger?.reserve?.arrival;
+                    const departureDate = reservePassanger?.reserve?.departure;
 
                     // Проверяем наличие дат
                     if (!arrivalDate || !departureDate) {
@@ -957,8 +953,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 const combinedPersons = (isPerson && !isPassanger) ? [...(reservePersons?.reserveHotel.person || [])] : (!isPerson && isPassanger) ? [...(reservePersons?.reserveHotel.passengers || [])] : [];
 
                 return combinedPersons.map((request) => {
-                    const arrivalDate = reservePassanger?.reserve?.arrival?.date;
-                    const departureDate = reservePassanger?.reserve?.departure?.date;
+                    const arrivalDate = reservePassanger?.reserve?.arrival;
+                    const departureDate = reservePassanger?.reserve?.departure;
 
                     // Проверяем наличие дат
                     if (!arrivalDate || !departureDate) {
@@ -1201,7 +1197,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
                                             }}>
-                                                {convertToDate(request.arrival.date)} - {convertToDate(request.departure.date)}
+                                                {convertToDate(request.arrival)} - {convertToDate(request.departure)}
                                             </Box>
                                         </Box>
                                     ))}

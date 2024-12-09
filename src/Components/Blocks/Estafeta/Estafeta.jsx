@@ -135,23 +135,23 @@ function Estafeta({ user }) {
     // Запрос на отмену созданной, но не размещенной заявки
     const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
         context: {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
         },
     });
 
     const handleCancelRequest = async (id) => {
         try {
-        // Отправка запроса с правильным ID заявки
-        const response = await cancelRequestMutation({
-            variables: {
-            cancelRequestId: id,
-            },
-        });
-        // console.log("Заявка успешно отменена", response);
+            // Отправка запроса с правильным ID заявки
+            const response = await cancelRequestMutation({
+                variables: {
+                    cancelRequestId: id,
+                },
+            });
+            // console.log("Заявка успешно отменена", response);
         } catch (error) {
-        console.error("Ошибка при отмене заявки:", JSON.stringify(error));
+            console.error("Ошибка при отмене заявки:", JSON.stringify(error));
         }
     };
 
@@ -170,13 +170,13 @@ function Estafeta({ user }) {
             const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
             const matchesDate = !filterData.filterDate || convertToDate(Number(request.createdAt)) === filterData.filterDate;
             const matchesSearch = searchQuery.toLowerCase();
-            
+
             // Если выбрана авиакомпания, фильтруем по ней. Если "Все авиакомпании", не фильтруем.
             const matchesAirline = selectedAirline ? request.airline.id === selectedAirline.id : true;
-            
+
             // Если выбран аэропорт, фильтруем по аэропорту. Если "Все аэропорты", не фильтруем.
             const matchesAirport = selectedAirport?.name ? request.airport.id === selectedAirport.id : true;
-            
+
             const searchFields = [
                 request.person.name,
                 request.person.number,
@@ -185,21 +185,19 @@ function Estafeta({ user }) {
                 request.airline.name,
                 request.airport.name,
                 request.airport.code,
-                request.arrival.flight,
-                request.arrival.date,
-                request.departure.flight,
-                request.departure.date,
+                request.arrival,
+                request.departure,
                 request.status
             ];
-    
+
             return matchesAirline && matchesAirport && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
         });
     }, [requests, filterData, searchQuery, selectedAirline, selectedAirport]);
-    
-    
-    
-    
-    
+
+
+
+
+
 
     const filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
 

@@ -132,7 +132,7 @@ function CreateRequest({ show, onClose, user }) {
             onClose();
             return;
         }
-    
+
         Swal.fire({
             title: 'Вы уверены?',
             text: 'Все несохраненные данные будут удалены.',
@@ -153,15 +153,15 @@ function CreateRequest({ show, onClose, user }) {
             }
         });
     }, [isEdited, resetForm, onClose]);
-    
+
 
     // Обработчик изменений в полях формы
     const handleChange = useCallback((e) => {
         const { name, value, type, checked } = e.target;
-    
+
         // Обновляем флаг, что данные были изменены
         setIsEdited(true);
-    
+
         setFormData(prevState => {
             if (type === 'checkbox') {
                 return {
@@ -180,7 +180,7 @@ function CreateRequest({ show, onClose, user }) {
             }
         });
     }, []);
-    
+
 
     // Обработчик переключения вкладок
     const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
@@ -189,10 +189,10 @@ function CreateRequest({ show, onClose, user }) {
         return (
             formData.personId &&
             formData.airportId &&
-            formData.arrivalRoute &&
+            // formData.arrivalRoute &&
             formData.arrivalDate &&
             formData.arrivalTime &&
-            formData.departureRoute &&
+            // formData.departureRoute &&
             formData.departureDate &&
             formData.departureTime
         );
@@ -209,7 +209,7 @@ function CreateRequest({ show, onClose, user }) {
                 icon: 'error',
                 confirmButtonText: 'Ок',
                 customClass: {
-                    confirmButton:'swal_confirm'
+                    confirmButton: 'swal_confirm'
                 }
             });
             return;
@@ -251,7 +251,7 @@ function CreateRequest({ show, onClose, user }) {
             }));
             return;
         }
-    
+
         if (formData.departureDate === formData.arrivalDate && formData.departureTime <= formData.arrivalTime) {
             Swal.fire({
                 title: 'Ошибка!',
@@ -259,8 +259,8 @@ function CreateRequest({ show, onClose, user }) {
                 icon: 'error',
                 confirmButtonText: 'Ок',
                 customClass: {
-                    confirmButton:'swal_confirm',
-                    cancelButton:'swal_cancel'
+                    confirmButton: 'swal_confirm',
+                    cancelButton: 'swal_cancel'
                 }
             });
             // Очищаем значения для времени прибытия и отъезда
@@ -270,17 +270,17 @@ function CreateRequest({ show, onClose, user }) {
             }));
             return;
         }
-    
+
         const input = {
             personId: formData.personId,
             airportId: formData.airportId,
-            arrival: { flight: formData.arrivalRoute, date: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00` },
-            departure: { flight: formData.departureRoute, date: `${formData.departureDate}T${formData.departureTime}:00+00:00` },
+            arrival: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00`,
+            departure: `${formData.departureDate}T${formData.departureTime}:00+00:00`,
             mealPlan: { included: formData.mealPlan.included },
             senderId: formData.senderId,
             airlineId: formData.airlineId,
         };
-    
+
         try {
             await createRequest({ variables: { input } });
             resetForm();
@@ -332,21 +332,21 @@ function CreateRequest({ show, onClose, user }) {
             ) {
                 return; // Если клик внутри, ничего не делаем
             }
-    
+
             // Если клик был вне боковой панели, то закрываем её
             closeButton();
         };
-    
+
         if (show) {
             document.addEventListener('mousedown', handleClickOutside);
         } else {
             document.removeEventListener('mousedown', handleClickOutside);
         }
-    
+
         // Очистка эффекта при демонтировании компонента
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [show, closeButton]);
-    
+
 
 
     const meal = [
@@ -449,14 +449,14 @@ function CreateRequest({ show, onClose, user }) {
                         )}
 
                         <label>Прибытие</label>
-                        <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} />
+                        {/* <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} /> */}
                         <div className={classes.reis_info}>
                             <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="arrivalTime" value={formData.arrivalTime} onChange={handleChange} placeholder="Время" />
                         </div>
 
                         <label>Отъезд</label>
-                        <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} />
+                        {/* <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} /> */}
                         <div className={classes.reis_info}>
                             <input type="date" name="departureDate" value={formData.departureDate} min={formData.arrivalDate} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
