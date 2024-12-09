@@ -68,8 +68,11 @@ input[type="file"] {
 
 .swal_confirm {
     background-color: #0057C3;
+    border: none;
+    outline: none;
     opacity: 0.8;
     transition: all ease-in-out 0.3s;
+    box-shadow: none !important;
 }
 
 .swal_confirm:hover {
