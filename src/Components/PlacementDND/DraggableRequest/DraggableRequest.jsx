@@ -334,6 +334,9 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
                     <Typography variant="body2">
                         <div style={styleToolTip}> Авиакомпания: <b>{request.airline?.name}</b></div>
                     </Typography>
+                    <Typography variant="body2">
+                        <div style={styleToolTip}> Заявка: <b>{request.isRequest ? 'Квота' : 'Резерв'}</b></div>
+                    </Typography>
                     {/* <Typography variant="body2">
                         <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
                     </Typography> */}
