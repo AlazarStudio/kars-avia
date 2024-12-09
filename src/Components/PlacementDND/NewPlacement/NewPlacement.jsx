@@ -524,7 +524,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                     {
                                         clientId: draggedRequest.personID, // ID клиента
                                         hotelId: hotelId, // ID отеля
-                                        reserveId: draggedRequest.requestID, // ID заявки
+                                        requestId: draggedRequest.requestID, // ID заявки
                                         room: `${targetRoomId}`, // Номер комнаты
                                         place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
                                         id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
@@ -537,7 +537,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                     {
                                         clientId: draggedRequest.personID, // ID клиента
                                         hotelId: hotelId, // ID отеля
-                                        reserveId: draggedRequest.requestID, // ID заявки
+                                        requestId: draggedRequest.requestID, // ID заявки
                                         room: `${targetRoomId}`, // Номер комнаты
                                         place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
                                         id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
