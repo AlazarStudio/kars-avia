@@ -99,9 +99,7 @@ function CreateRequestNomerFond({
       return;
     }
 
-    const nomerName = formData.nomerName.startsWith("№")
-      ? formData.nomerName
-      : `№ ${formData.nomerName}`;
+    const nomerName = formData.nomerName
 
     // Преобразование reserve в булево значение
     const reserveBoolean = formData.reserve === "true";
@@ -120,7 +118,7 @@ function CreateRequestNomerFond({
         },
       },
     });
-    
+
     if (response_update_room) {
       const sortedTarifs = Object.values(
         response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
@@ -130,8 +128,8 @@ function CreateRequestNomerFond({
                 room.category === "onePlace"
                   ? "Одноместный"
                   : room.category === "twoPlace"
-                  ? "Двухместный"
-                  : "",
+                    ? "Двухместный"
+                    : "",
               origName: room.category,
               rooms: [],
             };

@@ -162,7 +162,7 @@ function CreateRequestReserve({ show, onClose, user }) {
     const isFormValid = () => {
         return (
             formData.airportId &&
-            formData.route &&
+            // formData.route &&
             formData.arrivalDate &&
             formData.arrivalTime &&
             formData.departureDate &&
@@ -181,14 +181,8 @@ function CreateRequestReserve({ show, onClose, user }) {
 
         const input = {
             airportId: formData.airportId,
-            arrival: {
-                flight: formData.route,
-                date: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00`
-            },
-            departure: {
-                flight: formData.route,
-                date: `${formData.departureDate}T${formData.departureTime}:00+00:00`
-            },
+            arrival: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00`,
+            departure: `${formData.departureDate}T${formData.departureTime}:00+00:00`,
             mealPlan: {
                 included: formData.mealPlan.included,
                 // breakfast: formData.mealPlan.breakfast,
@@ -264,8 +258,8 @@ function CreateRequestReserve({ show, onClose, user }) {
                     <label>Количество людей на заселение</label>
                     <input type="number" name="passengerCount" placeholder="100" value={formData.passengerCount} onChange={handleChange} />
 
-                    <label>Рейс</label>
-                    <input type="text" name="route" placeholder="Рейс" value={formData.route} onChange={handleChange} />
+                    {/* <label>Рейс</label>
+                    <input type="text" name="route" placeholder="Рейс" value={formData.route} onChange={handleChange} /> */}
 
                     <label>Прибытие</label>
                     <div className={classes.reis_info}>

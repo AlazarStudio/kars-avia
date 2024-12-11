@@ -80,19 +80,19 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.airport.name} ({item.airport?.code})</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
                             <div className={classes.InfoTable_data_elem_information}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.arrival.flight}</div>
+                                {/* <div className={classes.InfoTable_data_elem_title}>{item.arrival.flight}</div> */}
                                 <div className={classes.InfoTable_data_elem_moreInfo}>
-                                    <span><img src="/calendar.png" alt="" /> {convertToDate(item.arrival.date)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDate(item.arrival.date, true)}</span>
+                                    <span><img src="/calendar.png" alt="" /> {convertToDate(item.arrival)}</span>
+                                    <span><img src="/time.png" alt="" /> {convertToDate(item.arrival, true)}</span>
                                 </div>
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
                             <div className={classes.InfoTable_data_elem_information}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.departure.flight}</div>
+                                {/* <div className={classes.InfoTable_data_elem_title}>{item.departure.flight}</div> */}
                                 <div className={classes.InfoTable_data_elem_moreInfo}>
-                                    <span><img src="/calendar.png" alt="" /> {convertToDate(item.departure.date)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDate(item.departure.date, true)}</span>
+                                    <span><img src="/calendar.png" alt="" /> {convertToDate(item.departure)}</span>
+                                    <span><img src="/time.png" alt="" /> {convertToDate(item.departure, true)}</span>
                                 </div>
                             </div>
                         </div>

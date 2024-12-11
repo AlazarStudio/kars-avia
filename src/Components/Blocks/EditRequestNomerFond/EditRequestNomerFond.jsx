@@ -100,9 +100,7 @@ function EditRequestNomerFond({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const nomerName = formData.nomerName.startsWith("№")
-      ? formData.nomerName
-      : `№ ${formData.nomerName}`;
+    const nomerName = formData.nomerName
 
     let response_update_room = await updateHotel({
       variables: {
@@ -129,8 +127,8 @@ function EditRequestNomerFond({
                 room.category === "onePlace"
                   ? "Одноместный"
                   : room.category === "twoPlace"
-                  ? "Двухместный"
-                  : "",
+                    ? "Двухместный"
+                    : "",
               origName: room.category,
               rooms: [],
             };
@@ -189,7 +187,7 @@ function EditRequestNomerFond({
           <input
             type="text"
             name="nomerName"
-            value={formData.nomerName.replace(/№\s*/g, "")}
+            value={formData.nomerName}
             onChange={handleChange}
             placeholder="Пример: № 151"
           />
@@ -214,8 +212,8 @@ function EditRequestNomerFond({
               formData.reserve === true
                 ? "true"
                 : formData.reserve === false
-                ? "false"
-                : ""
+                  ? "false"
+                  : ""
             }
             onChange={(e) => {
               const value = e.target.value === "true"; // Преобразование строки в булевое значение
@@ -240,8 +238,8 @@ function EditRequestNomerFond({
               formData.active === true
                 ? "true"
                 : formData.active === false
-                ? "false"
-                : ""
+                  ? "false"
+                  : ""
             }
             onChange={(e) => {
               const value = e.target.value === "true";
