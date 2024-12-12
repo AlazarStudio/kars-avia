@@ -8,7 +8,6 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
-import Swal from "sweetalert2";
 
 function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
   const [userRole, setUserRole] = useState();
@@ -26,9 +25,9 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
   const sidebarRef = useRef();
 
   useEffect(() => {
-      if (show && category) {
-          setFormData({ type: category.name });
-      }
+    if (show && category) {
+      setFormData({ type: category.name });
+    }
   }, [show, category]);
 
   const resetForm = useCallback(() => {
@@ -45,25 +44,10 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
       return;
     }
 
-    Swal.fire({
-      title: "Вы уверены?",
-      text: "Все несохраненные данные будут удалены.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Да",
-      cancelButtonText: "Нет",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      customClass: {
-        confirmButton: "swal_confirm",
-        cancelButton: "swal_cancel",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        resetForm();
-        onClose();
-      }
-    });
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      resetForm();
+      onClose();
+    }
   }, [isEdited, resetForm, onClose]);
 
   const handleChange = useCallback((e) => {
@@ -121,7 +105,6 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
         return; // Если клик внутри, ничего не делаем

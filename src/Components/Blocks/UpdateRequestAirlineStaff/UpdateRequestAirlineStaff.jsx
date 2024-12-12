@@ -8,7 +8,6 @@ import {
   UPDATE_AIRLINE_STAFF,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
-import Swal from "sweetalert2";
 import DropDownList from "../DropDownList/DropDownList";
 
 function UpdateRequestAirlineStaff({
@@ -68,25 +67,10 @@ function UpdateRequestAirlineStaff({
       return;
     }
 
-    Swal.fire({
-      title: "Вы уверены?",
-      text: "Все несохраненные данные будут удалены.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Да",
-      cancelButtonText: "Нет",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      customClass: {
-        confirmButton: "swal_confirm",
-        cancelButton: "swal_cancel",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        resetForm();
-        onClose();
-      }
-    });
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      resetForm();
+      onClose();
+    }
   }, [isEdited, resetForm, onClose]);
 
   const handleChange = useCallback((e) => {
@@ -145,7 +129,6 @@ function UpdateRequestAirlineStaff({
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
         return; // Если клик внутри, ничего не делаем

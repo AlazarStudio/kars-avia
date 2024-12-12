@@ -5,7 +5,6 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList";
-import Swal from "sweetalert2";
 
 // Компонент для создания новой заявки
 function CreateRequest({ show, onClose, user }) {
@@ -133,25 +132,10 @@ function CreateRequest({ show, onClose, user }) {
             return;
         }
 
-        Swal.fire({
-            title: 'Вы уверены?',
-            text: 'Все несохраненные данные будут удалены.',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Да',
-            cancelButtonText: 'Нет',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            customClass: {
-                confirmButton: 'swal_confirm',
-                cancelButton: 'swal_cancel',
-            },
-        }).then(result => {
-            if (result.isConfirmed) {
-                resetForm();
-                onClose();
-            }
-        });
+        if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+            resetForm();
+            onClose();
+        }
     }, [isEdited, resetForm, onClose]);
 
 
@@ -203,29 +187,13 @@ function CreateRequest({ show, onClose, user }) {
     // Отправка формы на сервер
     const handleSubmit = async () => {
         if (!isFormValid()) {
-            Swal.fire({
-                title: 'Ошибка!',
-                text: 'Пожалуйста, заполните все обязательные поля.',
-                icon: 'error',
-                confirmButtonText: 'Ок',
-                customClass: {
-                    confirmButton: 'swal_confirm'
-                }
-            });
+            alert('Пожалуйста, заполните все обязательные поля.')
             return;
         }
 
         // Проверка на дату прибытия: она не может быть меньше сегодняшней
         if (formData.arrivalDate < today) {
-            Swal.fire({
-                title: 'Ошибка!',
-                text: 'Дата прибытия не может быть раньше сегодняшнего дня.',
-                icon: 'error',
-                confirmButtonText: 'Ок',
-                customClass: {
-                    confirmButton: 'swal_confirm'
-                }
-            });
+            alert('Дата прибытия не может быть раньше сегодняшнего дня.')
             setFormData(prevFormData => ({
                 ...prevFormData,
                 arrivalDate: ""  // Очищаем дату прибытия
@@ -235,16 +203,7 @@ function CreateRequest({ show, onClose, user }) {
 
         // Проверка на дату отъезда: она не может быть раньше даты прибытия
         if (formData.departureDate < formData.arrivalDate) {
-            Swal.fire({
-                title: 'Ошибка!',
-                text: 'Дата отъезда не может быть раньше даты прибытия.',
-                icon: 'error',
-                confirmButtonText: 'Ок',
-                customClass: {
-                    confirmButton: 'swal_confirm',
-                    cancelButton: 'swal_cancel'
-                }
-            });
+            alert('Дата отъезда не может быть раньше даты прибытия.')
             setFormData(prevFormData => ({
                 ...prevFormData,
                 departureDate: ""  // Очищаем дату отъезда
@@ -253,16 +212,7 @@ function CreateRequest({ show, onClose, user }) {
         }
 
         if (formData.departureDate === formData.arrivalDate && formData.departureTime <= formData.arrivalTime) {
-            Swal.fire({
-                title: 'Ошибка!',
-                text: 'Время отъезда должно быть позже времени прибытия.',
-                icon: 'error',
-                confirmButtonText: 'Ок',
-                customClass: {
-                    confirmButton: 'swal_confirm',
-                    cancelButton: 'swal_cancel'
-                }
-            });
+            alert('Время отъезда должно быть позже времени прибытия.')
             // Очищаем значения для времени прибытия и отъезда
             setFormData(prevFormData => ({
                 ...prevFormData,
@@ -325,9 +275,7 @@ function CreateRequest({ show, onClose, user }) {
     // Клик вне боковой панели закрывает её
     useEffect(() => {
         const handleClickOutside = (event) => {
-            // Проверяем, был ли клик внутри боковой панели или SweetAlert2
             if (
-                document.querySelector('.swal2-container')?.contains(event.target) ||  // Клик в SweetAlert2
                 sidebarRef.current?.contains(event.target) // Клик в боковой панели
             ) {
                 return; // Если клик внутри, ничего не делаем

@@ -4,7 +4,6 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, server, UPDATE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
-import Swal from "sweetalert2";
 
 function ExistRequestProfile({
   show,
@@ -73,25 +72,10 @@ function ExistRequestProfile({
       return;
     }
 
-    Swal.fire({
-      title: "Вы уверены?",
-      text: "Все несохраненные данные будут удалены.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Да",
-      cancelButtonText: "Нет",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      customClass: {
-        confirmButton: "swal_confirm",
-        cancelButton: "swal_cancel",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        resetForm();
-        onClose();
-      }
-    });
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      resetForm();
+      onClose();
+    }
   }, [isEdited, onClose]);
 
   const handleChange = useCallback((e) => {
@@ -137,7 +121,6 @@ function ExistRequestProfile({
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
         return; // Если клик внутри, ничего не делаем

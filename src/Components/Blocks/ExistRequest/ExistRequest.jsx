@@ -21,7 +21,6 @@ import {
 } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 import { roles } from "../../../roles";
-import Swal from "sweetalert2";
 
 function ExistRequest({
   show,
@@ -132,16 +131,7 @@ function ExistRequest({
           },
         },
       });
-      // alert("Изменения сохранены");
-      Swal.fire({
-        title: "Изменения сохранены!",
-        // text: "Пожалуйста, заполните все обязательные поля.",
-        icon: "success",
-        confirmButtonText: "Ок",
-        customClass: {
-          confirmButton: "swal_confirm",
-        },
-      });
+      alert("Изменения сохранены");
       await refetch(); // Обновляем данные после изменения
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
@@ -237,16 +227,7 @@ function ExistRequest({
           },
         },
       });
-      // alert("Изменения сохранены");
-      Swal.fire({
-        title: "Изменения сохранены!",
-        // text: "Пожалуйста, заполните все обязательные поля.",
-        icon: "success",
-        confirmButtonText: "Ок",
-        customClass: {
-          confirmButton: "swal_confirm",
-        },
-      });
+      alert("Изменения сохранены");
       await refetch(); // Обновляем данные после сохранения изменений в питании
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
@@ -270,15 +251,7 @@ function ExistRequest({
           archivingRequstId: chooseRequestID,
         },
       });
-      // alert("Изменения сохранены");
-      Swal.fire({
-        title: "Изменения сохранены!",
-        icon: "success",
-        confirmButtonText: "Ок",
-        customClass: {
-          confirmButton: "swal_confirm",
-        },
-      });
+      alert("Изменения сохранены");
       await refetch();
       onClose();
     } catch (error) {

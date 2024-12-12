@@ -8,7 +8,6 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
-import Swal from "sweetalert2";
 import DropDownList from "../DropDownList/DropDownList";
 
 function CreateRequestAirlineStaff({
@@ -52,25 +51,10 @@ function CreateRequestAirlineStaff({
       return;
     }
 
-    Swal.fire({
-      title: "Вы уверены?",
-      text: "Все несохраненные данные будут удалены.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Да",
-      cancelButtonText: "Нет",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      customClass: {
-        confirmButton: "swal_confirm",
-        cancelButton: "swal_cancel",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        resetForm();
-        onClose();
-      }
-    });
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      resetForm();
+      onClose();
+    }
   }, [isEdited, resetForm, onClose]);
 
   const handleChange = useCallback((e) => {
@@ -101,15 +85,7 @@ function CreateRequestAirlineStaff({
     e.preventDefault();
 
     if (!isFormValid()) {
-      Swal.fire({
-        title: "Ошибка!",
-        text: "Пожалуйста, заполните все обязательные поля.",
-        icon: "error",
-        confirmButtonText: "Ок",
-        customClass: {
-          confirmButton: "swal_confirm",
-        },
-      });
+      alert('Пожалуйста, заполните все обязательные поля.')
       return;
     }
 
@@ -159,7 +135,6 @@ function CreateRequestAirlineStaff({
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
         return; // Если клик внутри, ничего не делаем
