@@ -33,7 +33,7 @@ function ReservePlacement({ children, user, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
         variables: { reserveId: idRequest },
@@ -185,7 +185,7 @@ function ReservePlacement({ children, user, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -194,7 +194,7 @@ function ReservePlacement({ children, user, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

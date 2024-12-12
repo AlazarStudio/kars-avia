@@ -473,6 +473,7 @@ export const GET_BRONS_HOTEL = gql`
       name
       hotelChesses {
         id
+        status
         public
         start
         end
@@ -900,6 +901,18 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
         airline {
           name
           images
+        }
+        hotelChess {
+          status
+          passenger {
+            id
+            name
+          }
+          client {
+            id
+            name
+          }
+          room
         }
       }
     }

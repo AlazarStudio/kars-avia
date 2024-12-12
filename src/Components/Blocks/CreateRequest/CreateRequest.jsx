@@ -92,7 +92,7 @@ function CreateRequest({ show, onClose, user }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

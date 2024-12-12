@@ -47,7 +47,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -76,7 +76,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
 
     const openDeleteComponent = async (index, userID) => {
         setShowDelete(true);
-        setDeleteIndex({index, userID});
+        setDeleteIndex({ index, userID });
         setShowRequestSidebar(false);
     };
 
@@ -161,7 +161,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
                 updateDispatcher={updateDispatcher}
                 openDeleteComponent={openDeleteComponent}
                 deleteComponentRef={deleteComponentRef}
-                // filterList={filterList}
+            // filterList={filterList}
             />
 
             {showDelete && (

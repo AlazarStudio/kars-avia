@@ -85,7 +85,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -117,7 +117,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

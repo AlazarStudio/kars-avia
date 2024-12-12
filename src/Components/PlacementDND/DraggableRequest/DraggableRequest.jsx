@@ -40,6 +40,19 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
 
     const { backgroundColor, borderColor } = getStatusColors(request.status);
 
+    let showBlockRequest = 0.3
+    let showBlockReserve = 0.3
+
+    if (!checkRoomsType) {
+        if (request.isRequest) {
+            showBlockRequest = 1
+        }
+    } else {
+        if (!request.isRequest) {
+            showBlockReserve = 1
+        }
+    }
+
     const style = {
         position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
         top: request.room ? `${position * 50 + 2}px` : "auto",
@@ -47,7 +60,7 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
         width: request.room ? `${duration}px` : '100%',
         height: "45px",
         backgroundColor: backgroundColor,
-        // opacity: checkRoomsType ? 0.3 : 1,
+        opacity: request.isRequest ? showBlockRequest : showBlockReserve,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",
         display: "flex",
@@ -192,7 +205,7 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
         <>
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.isRequest && showBlockRequest == 1 &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
@@ -236,39 +249,96 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
                 }
 
                 {/* Центральная область для перетаскивания */}
-                <Box
-                    ref={setNodeRef}
-                    {...listeners}
-                    {...attributes}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    onMouseDown={handleMouseDown} // Отслеживаем начальную позицию
-                    onMouseMove={handleMouseMove} // Проверяем движение мыши
-                    onMouseUp={handleMouseUp}
-                    sx={{
-                        flex: 1,
-                        width: 'calc(100% - 20px)',
-                        height: "35px",
-                        display: "flex",
-                        alignItems: "center",
-                        textAlign: "center",
-                        justifyContent: "left",
-                        cursor: "grab",
-                        zIndex: 1,
-                        overflow: 'hidden',
-                        padding: '0 5px'
-                    }}
-                >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
-                        <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
-                        <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                            {request.guest}
+                {request.isRequest && showBlockRequest == 1 ?
+                    <Box
+                        ref={setNodeRef}
+                        {...listeners}
+                        {...attributes}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onMouseDown={handleMouseDown} // Отслеживаем начальную позицию
+                        onMouseMove={handleMouseMove} // Проверяем движение мыши
+                        onMouseUp={handleMouseUp}
+                        sx={{
+                            flex: 1,
+                            width: 'calc(100% - 20px)',
+                            height: "35px",
+                            display: "flex",
+                            alignItems: "center",
+                            textAlign: "center",
+                            justifyContent: "left",
+                            cursor: "grab",
+                            zIndex: 1,
+                            overflow: 'hidden',
+                            padding: '0 5px'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
+                            <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                            <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                {request.guest}
+                            </div>
                         </div>
-                    </div>
-                </Box>
+                    </Box>
+                    :
+                    !request.isRequest && showBlockReserve == 1 ?
+                        <Box
+                            ref={setNodeRef}
+                            {...listeners}
+                            {...attributes}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                            onMouseDown={handleMouseDown} // Отслеживаем начальную позицию
+                            onMouseMove={handleMouseMove} // Проверяем движение мыши
+                            onMouseUp={handleMouseUp}
+                            sx={{
+                                flex: 1,
+                                width: 'calc(100% - 20px)',
+                                height: "35px",
+                                display: "flex",
+                                alignItems: "center",
+                                textAlign: "center",
+                                justifyContent: "left",
+                                cursor: "grab",
+                                zIndex: 1,
+                                overflow: 'hidden',
+                                padding: '0 5px'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
+                                <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                                <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                    {request.guest}
+                                </div>
+                            </div>
+                        </Box>
+                        :
+                        <Box
+                            sx={{
+                                flex: 1,
+                                width: 'calc(100% - 20px)',
+                                height: "35px",
+                                display: "flex",
+                                alignItems: "center",
+                                textAlign: "center",
+                                justifyContent: "left",
+                                cursor: "grab",
+                                zIndex: 1,
+                                overflow: 'hidden',
+                                padding: '0 5px'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
+                                <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                                <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                    {request.guest}
+                                </div>
+                            </div>
+                        </Box>
+                }
 
                 {/* Правая ручка для изменения конца */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.isRequest && showBlockRequest == 1 &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;

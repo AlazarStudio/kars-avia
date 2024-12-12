@@ -13,7 +13,7 @@ import {
 } from "date-fns";
 import { ru } from "date-fns/locale";
 
-const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth }) => {
+const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth, setShowReserveInfo, setshowModalForAddHotelInReserve }) => {
     const daysInMonth = eachDayOfInterval({
         start: startOfMonth(currentMonth),
         end: endOfMonth(currentMonth),
@@ -57,8 +57,24 @@ const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, 
                     padding: '10px'
                 }}
             >
-                <button className={`${classes.checkBTN} ${!activeButton ? classes.activeButton : ''}`} onClick={() => { handleCheckRoomsTypeInfo(false) }}>Квота</button>
-                <button className={`${classes.checkBTN} ${activeButton ? classes.activeButton : ''}`} onClick={() => { handleCheckRoomsTypeInfo(true) }}>Резерв</button>
+                <button className={`${classes.checkBTN} ${!activeButton ? classes.activeButton : ''}`}
+                    onClick={() => {
+                        handleCheckRoomsTypeInfo(false);
+                        setShowReserveInfo(false);
+                        setshowModalForAddHotelInReserve(false)
+                    }}
+                >
+                    Квота
+                </button>
+                <button className={`${classes.checkBTN} ${activeButton ? classes.activeButton : ''}`}
+                    onClick={() => {
+                        handleCheckRoomsTypeInfo(true);
+                        setShowReserveInfo(false);
+                        setshowModalForAddHotelInReserve(false)
+                    }}
+                >
+                    Резерв
+                </button>
             </Box>
 
             <Box sx={{ display: "flex", flexDirection: "column", borderBottom: "1px solid #ddd", width: `calc(100% - ${leftWidth}px)` }}>

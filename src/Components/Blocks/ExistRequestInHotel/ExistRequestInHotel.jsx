@@ -11,12 +11,22 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
 
     // Запросы данных о заявке и логе
     const { data, refetch } = useQuery(GET_REQUEST, {
-        context: { headers: { Authorization: `Bearer ${token}`, 'Apollo-Require-Preflight': 'true' } },
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                // 'Apollo-Require-Preflight': 'true' 
+            }
+        },
         variables: { requestId: chooseRequestID },
     });
 
     const { data: dataLogs } = useQuery(GET_LOGS, {
-        context: { headers: { Authorization: `Bearer ${token}`, 'Apollo-Require-Preflight': 'true' } },
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                // 'Apollo-Require-Preflight': 'true' 
+            }
+        },
         variables: { requestId: chooseRequestID },
     });
 
@@ -32,10 +42,12 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
         if (dataLogs && dataLogs.request) setLogsData(dataLogs.request);
     }, [data, dataLogs]);
 
+
     // Функция закрытия формы
     const closeButton = useCallback(() => {
         resetForm();
         onClose();
+        setFormData(null)
         // setChooseRequestID('');
     }, [onClose, setChooseRequestID]);
 
@@ -71,7 +83,7 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -168,7 +180,7 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
