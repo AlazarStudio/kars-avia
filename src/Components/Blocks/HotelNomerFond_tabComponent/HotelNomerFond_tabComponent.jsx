@@ -42,7 +42,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -50,7 +50,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -187,7 +187,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     });
 
     // console.log(data?.hotel?.rooms?.map(room => room.reserve));
-    
+
 
     return (
         <>

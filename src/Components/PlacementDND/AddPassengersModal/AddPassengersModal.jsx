@@ -12,12 +12,35 @@ import {
     InputLabel,
 } from "@mui/material";
 import { useMutation, useQuery } from "@apollo/client";
-import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINE_USERS } from "../../../../graphQL_requests";
+import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINE_USERS, GET_RESERVE_REQUEST_HOTELS } from "../../../../graphQL_requests";
 
-const AddPassengersModal = ({ isOpen, onClose, isPerson, airlineId, reserveId, token, hotelId }) => {
+const AddPassengersModal = ({ isOpen, onClose, isPerson, airlineId, reserveId, token, hotelId, openReserveId }) => {
+    const [requestsHotelReserveOne, setRequestsHotelReserveOne] = useState([]);
+
     const { loading, error, data } = useQuery(GET_AIRLINE_USERS, {
         variables: { airlineId },
     });
+
+    const { loading: loadingHotelReserveOne, error: errorHotelReserveOne, data: dataHotelReserveOne, refetch: refetchHotelReserveOne } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+        variables: { reservationHotelsId: openReserveId },
+    });
+
+    useEffect(() => {
+        if (openReserveId && dataHotelReserveOne) {
+            setRequestsHotelReserveOne(dataHotelReserveOne.reservationHotels);
+        }
+    }, [dataHotelReserveOne, openReserveId]);
+
+    const reservePassangers = requestsHotelReserveOne.filter(
+        (hotel) => hotel.hotel.id === hotelId
+    );
+
+    const bronedPersons = reservePassangers
+        .flatMap(item => [
+            ...(item.passengers || []).map(passenger => passenger.id),
+            ...(item.person || []).map(person => person.id)
+        ]);
+
 
     const [staff, setStaff] = useState([]);
     const [selectedStaffId, setSelectedStaffId] = useState("");
@@ -73,7 +96,7 @@ const AddPassengersModal = ({ isOpen, onClose, isPerson, airlineId, reserveId, t
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -82,7 +105,7 @@ const AddPassengersModal = ({ isOpen, onClose, isPerson, airlineId, reserveId, t
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -172,11 +195,14 @@ const AddPassengersModal = ({ isOpen, onClose, isPerson, airlineId, reserveId, t
                             onChange={(e) => handleStaffChange(e.target.value)}
                             label="Выберите сотрудника"
                         >
-                            {staff.map((s) => (
-                                <MenuItem key={s.id} value={s.id}>
-                                    {s.name} - {s.position}
-                                </MenuItem>
-                            ))}
+                            {staff.map((s) => {
+                                const isAlreadyAdded = bronedPersons.includes(s.id);
+                                return (
+                                    <MenuItem key={s.id} value={s.id} disabled={isAlreadyAdded}>
+                                        {s.name} - {s.position} {isAlreadyAdded && "(уже добавлен)"}
+                                    </MenuItem>
+                                )
+                            })}
                         </Select>
                     </FormControl>
                 ) : (

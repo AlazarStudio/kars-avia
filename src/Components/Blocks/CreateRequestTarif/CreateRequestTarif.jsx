@@ -17,7 +17,7 @@ function CreateRequestTarif({ show, onClose, id, addTarif, setAddTarif }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

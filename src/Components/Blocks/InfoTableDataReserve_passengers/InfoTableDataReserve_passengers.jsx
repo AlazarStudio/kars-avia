@@ -77,7 +77,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -86,7 +86,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -151,7 +151,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

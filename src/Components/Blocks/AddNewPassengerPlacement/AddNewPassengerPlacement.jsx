@@ -67,7 +67,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

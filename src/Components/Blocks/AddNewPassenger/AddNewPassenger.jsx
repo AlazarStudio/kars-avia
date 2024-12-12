@@ -67,7 +67,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

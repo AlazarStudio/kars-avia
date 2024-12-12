@@ -120,7 +120,7 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
