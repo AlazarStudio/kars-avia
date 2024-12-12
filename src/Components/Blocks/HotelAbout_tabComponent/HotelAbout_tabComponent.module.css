@@ -132,6 +132,27 @@
     width: 50%;
 }
 
+.hotelAbout_rooms_block {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    height: 500px;
+    overflow: scroll;
+}
+
+.rooms_wrapper {
+    padding: 0 16px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    /* justify-content: space-between; */
+    gap: 14px;
+}
+
+.rooms_wrapper article {
+    flex-basis: 24%;
+}
+
 .hotelAbout_info_block_meal {
     display: flex;
     flex-direction: column;

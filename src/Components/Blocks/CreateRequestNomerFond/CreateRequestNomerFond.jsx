@@ -22,6 +22,8 @@ function CreateRequestNomerFond({
     nomerName: "",
     category: "",
     reserve: "",
+    description: "",
+    roomImages: "",
   });
 
   const [updateHotel] = useMutation(UPDATE_HOTEL, {
@@ -40,6 +42,8 @@ function CreateRequestNomerFond({
       nomerName: "",
       category: "",
       reserve: "",
+      description: "",
+      roomImages: "",
     });
     setIsEdited(false); // Сброс флага изменений
   }, []);
@@ -66,6 +70,16 @@ function CreateRequestNomerFond({
     }));
   }, []);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prevState) => ({
+        ...prevState,
+        roomImages: file, // Сохраняем файл напрямую
+      }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -74,7 +88,7 @@ function CreateRequestNomerFond({
       return;
     }
 
-    const nomerName = formData.nomerName
+    const nomerName = formData.nomerName;
 
     // Преобразование reserve в булево значение
     const reserveBoolean = formData.reserve === "true";
@@ -88,9 +102,11 @@ function CreateRequestNomerFond({
               name: nomerName,
               category: formData.category,
               reserve: reserveBoolean,
+              description: formData.description,
             },
           ],
         },
+        roomImages: formData.roomImages,
       },
     });
 
@@ -103,8 +119,8 @@ function CreateRequestNomerFond({
                 room.category === "onePlace"
                   ? "Одноместный"
                   : room.category === "twoPlace"
-                    ? "Двухместный"
-                    : "",
+                  ? "Двухместный"
+                  : "",
               origName: room.category,
               rooms: [],
             };
@@ -194,6 +210,17 @@ function CreateRequestNomerFond({
             <option value={false}>Квота</option>
             <option value={true}>Резерв</option>
           </select>
+
+          <label>Описание</label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+          ></textarea>
+
+          <label>Изображение</label>
+          <input type="file" name="roomImages" onChange={handleFileChange} />
         </div>
       </div>
 

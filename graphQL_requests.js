@@ -1086,6 +1086,7 @@ export const GET_HOTEL = gql`
       id
       name
       stars
+      airportDistance
       country
       city
       address
@@ -1100,6 +1101,16 @@ export const GET_HOTEL = gql`
       images
       link
       description
+      rooms {
+        id
+        name
+        category
+        active
+        places
+        reserve
+        description
+        images
+      }
       breakfast {
         start
         end
@@ -1155,6 +1166,8 @@ export const GET_HOTEL_ROOMS = gql`
         places
         active
         reserve
+        description
+        images
       }
     }
   }
@@ -1169,8 +1182,8 @@ export const GET_HOTEL_NAME = gql`
 `;
 
 export const UPDATE_HOTEL = gql`
-  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!, $images: [Upload!]) {
-    updateHotel(id: $updateHotelId, input: $input, images: $images) {
+  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!, $images: [Upload!], $roomImages: [Upload!]) {
+    updateHotel(id: $updateHotelId, input: $input, images: $images, roomImages: $roomImages) {
       rooms {
         id
         name
@@ -1178,6 +1191,8 @@ export const UPDATE_HOTEL = gql`
         places
         reserve
         active
+        description
+        images
       }
       breakfast {
         start

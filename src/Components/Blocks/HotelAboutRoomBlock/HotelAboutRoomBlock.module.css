@@ -1,0 +1,57 @@
+.hotelAbout_room {
+  /* height: fit-content; */
+  min-height: 420px;
+  padding: 0 0 15px 0;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: center; */
+  gap: 20px;
+  border: 1px solid var(--text-gray);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.noImage {
+  padding: 15px 15px 0 15px;
+}
+
+.roomInfoItem {
+  /* width: 50%; */
+  padding: 0 15px 0 15px;
+  display: flex;
+  align-items: center;
+  /* justify-content: space-between; */
+  gap: 10px;
+}
+
+.ri_textarea {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.roomInfoItem input {
+  width: 100%;
+}
+
+.roomInfoItem textarea {
+  height: 150px;
+  width: 100%;
+}
+
+.roomImages_wrapper {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 200px;
+}
+
+.roomImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* border: 1px solid #ddd; */
+  /* border-radius: 4px; */
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}

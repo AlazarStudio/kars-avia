@@ -51,6 +51,15 @@ input[type="file"] {
     height: auto;
 }
 
+textarea {
+    resize: vertical;
+    border: 1px solid var(--text-gray);
+    outline: none;
+    border-radius: 5px;
+    font-family: Inter;
+    padding: 10px;
+}
+
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -64,28 +73,6 @@ input[type="file"] {
 
 ::-webkit-scrollbar-thumb:hover {
     background-color: #0063DE;
-}
-
-.swal_confirm {
-    background-color: #0057C3;
-    border: none;
-    outline: none;
-    opacity: 0.8;
-    transition: all ease-in-out 0.3s;
-    box-shadow: none !important;
-}
-
-.swal_confirm:hover {
-    opacity: 1;
-}
-
-.swal_cancel {
-    opacity: 0.8;
-    transition: all ease-in-out 0.3s;
-}
-
-.swal_cancel:hover {
-    opacity: 1;
 }
 
 
