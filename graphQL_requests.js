@@ -485,6 +485,12 @@ export const GET_BRONS_HOTEL = gql`
           position
           gender
         }
+        passenger {
+          id
+          name
+          number
+          gender
+        }
         request {
           id
           airport {
