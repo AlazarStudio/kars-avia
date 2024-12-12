@@ -11,7 +11,6 @@ import Sidebar from "../Sidebar/Sidebar";
 import { useQuery } from "@apollo/client";
 import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
-import Swal from "sweetalert2";
 
 function ChooseHotel({ show, onClose, chooseObject, id }) {
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -52,25 +51,10 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
       return;
     }
 
-    Swal.fire({
-      title: "Вы уверены?",
-      text: "Все несохраненные данные будут удалены.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Да",
-      cancelButtonText: "Нет",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      customClass: {
-        confirmButton: "swal_confirm",
-        cancelButton: "swal_cancel",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        resetForm();
-        onClose();
-      }
-    });
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      resetForm();
+      onClose();
+    }
   }, [isEdited, onClose]);
 
   const handleCitySelect = (value) => {
@@ -86,7 +70,6 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
         return; // Если клик внутри, ничего не делаем

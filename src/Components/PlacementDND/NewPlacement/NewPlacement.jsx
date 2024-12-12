@@ -150,11 +150,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 checkOutDate: new Date(chess.end).toISOString().split("T")[0],
                 checkOutTime: new Date(chess.end).toISOString().split("T")[1].slice(0, 5),
                 status: translateStatus(chess.request ? chess.request?.status : chess.reserve?.status),
-                guest: chess.client ? chess.client.name : "Неизвестный гость",
+                guest: chess.client ? chess.client.name : chess.passenger?.name,
                 requestID: chess.request ? chess.request?.id : chess.reserve?.id,
                 isRequest: chess.request ? true : false,
                 airline: chess.request ? chess.request?.airline : chess.reserve?.airline,
-                personID: chess.client.id,
+                personID: chess.client ? chess.client?.id : chess.passenger?.id,
                 chessID: chess.id,
             }));
 

@@ -8,7 +8,6 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import { useMutation, useQuery } from "@apollo/client";
-import Swal from "sweetalert2";
 import DropDownList from "../DropDownList/DropDownList";
 
 function CreateRequestHotel({ show, onClose, addHotel }) {
@@ -45,25 +44,10 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
       return;
     }
 
-    Swal.fire({
-      title: "Вы уверены?",
-      text: "Все несохраненные данные будут удалены.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Да",
-      cancelButtonText: "Нет",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      customClass: {
-        confirmButton: "swal_confirm",
-        cancelButton: "swal_cancel",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        resetForm();
-        onClose();
-      }
-    });
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      resetForm();
+      onClose();
+    }
   }, [isEdited, resetForm, onClose]);
 
   const handleChange = useCallback((e) => {
@@ -106,30 +90,12 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
       !formData.airportDistance.trim() ||
       !formData.images
     ) {
-      //   alert("Пожалуйста, заполните все поля!");
-      Swal.fire({
-        title: "Ошибка!",
-        text: "Пожалуйста, заполните все поля.",
-        icon: "error",
-        confirmButtonText: "Ок",
-        customClass: {
-          confirmButton: "swal_confirm",
-        },
-      });
+      alert("Пожалуйста, заполните все поля!");
       return;
     }
 
     if (!formData.images) {
-      //   alert("Пожалуйста, выберите файл для загрузки");
-      Swal.fire({
-        title: "Ошибка!",
-        text: "Пожалуйста, выберите файл для загрузки.",
-        icon: "error",
-        confirmButtonText: "Ок",
-        customClass: {
-          confirmButton: "swal_confirm",
-        },
-      });
+      alert("Пожалуйста, выберите файл для загрузки");
       return;
     }
 
@@ -160,7 +126,6 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
         return; // Если клик внутри, ничего не делаем

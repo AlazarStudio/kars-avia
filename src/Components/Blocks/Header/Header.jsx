@@ -9,7 +9,6 @@ import {
 import { useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
-import Swal from "sweetalert2";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -18,7 +17,6 @@ function Header({ children }) {
   const [isFullyVisible, setIsFullyVisible] = useState(false); // Управляет полным отображением
   const dropdownRef = useRef(null);
   const [userData, setUserData] = useState(null); // Храним данные пользователя в state
-  const [isSwalOpen, setIsSwalOpen] = useState(false); // Новый флаг для отслеживания состояния Swal
 
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
 
@@ -44,43 +42,16 @@ function Header({ children }) {
     }
   }, [data]);
 
-  // const logout = () => {
-  //   let result = confirm("Вы уверены что хотите выйти?");
-  //   if (result) {
-  //     document.cookie = "token=; Max-Age=0; Path=/;";
-  //     navigate("/");
-  //     window.location.reload();
-  //   }
-  // };
-
   const logout = () => {
-    setIsSwalOpen(true);
-    Swal.fire({
-      title: "Вы уверены?",
-      text: "Вы действительно хотите выйти?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Да, выйти",
-      cancelButtonText: "Отмена",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      customClass: {
-        confirmButton: "swal_confirm",
-        cancelButton: "swal_cancel",
-      },
-    }).then((result) => {
-      setIsSwalOpen(false);
-      if (result.isConfirmed) {
-        // Удаляем токен из cookie
-        document.cookie = "token=; Max-Age=0; Path=/;";
-        localStorage.removeItem("isAirline");
-        // Перенаправляем на главную страницу
-        navigate("/");
-        // Перезагружаем страницу
-        window.location.reload();
-      }
-    });
+    let result = confirm("Вы уверены что хотите выйти?");
+    if (result) {
+      document.cookie = "token=; Max-Age=0; Path=/;";
+      localStorage.removeItem("isAirline");
+      navigate("/");
+      window.location.reload();
+    }
   };
+
 
   const formattedDate = useMemo(() => {
     const daysOfWeek = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
@@ -100,16 +71,13 @@ function Header({ children }) {
     ];
     const currentDate = new Date();
 
-    return `${daysOfWeek[currentDate.getDay()]}, ${currentDate.getDate()} ${
-      months[currentDate.getMonth()]
-    }`;
+    return `${daysOfWeek[currentDate.getDay()]}, ${currentDate.getDate()} ${months[currentDate.getMonth()]
+      }`;
   }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Убедимся, что клик не произошел вне профиля и только если нет открытого Swal
       if (
-        !isSwalOpen &&
         dropdownRef.current &&
         !dropdownRef.current.contains(event.target)
       ) {
@@ -122,7 +90,7 @@ function Header({ children }) {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSwalOpen]); // Отслеживаем isSwalOpen
+  }, []);
 
   const handleProfileClick = () => {
     if (!isDropdownOpen) {
@@ -171,9 +139,8 @@ function Header({ children }) {
 
             {isFullyVisible && (
               <div
-                className={`${classes.profile_dropdown} ${
-                  isDropdownOpen ? classes.open : classes.closed
-                }`}
+                className={`${classes.profile_dropdown} ${isDropdownOpen ? classes.open : classes.closed
+                  }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={classes.dropdown_info}>

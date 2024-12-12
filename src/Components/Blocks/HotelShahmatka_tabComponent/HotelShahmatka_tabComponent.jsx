@@ -72,7 +72,7 @@ function HotelShahmatka_tabComponent({ id }) {
         const matchesPlaces = selectQuery === '' || request.places === parseInt(selectQuery);
 
         const matchingClients = hotelBronsInfo.filter(entry =>
-            entry.client.name && entry.client.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+            entry.client?.name && entry.client?.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
             entry.room === request.room
         );
 

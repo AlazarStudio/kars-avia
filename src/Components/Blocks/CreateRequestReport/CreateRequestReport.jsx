@@ -11,7 +11,6 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList";
-import Swal from "sweetalert2";
 
 function CreateRequestReport({ show, onClose, addDispatcher }) {
   const token = getCookie("token");
@@ -52,25 +51,10 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
       return;
     }
 
-    Swal.fire({
-      title: "Вы уверены?",
-      text: "Все несохраненные данные будут удалены.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Да",
-      cancelButtonText: "Нет",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      customClass: {
-        confirmButton: "swal_confirm",
-        cancelButton: "swal_cancel",
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        resetForm();
-        onClose();
-      }
-    });
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      resetForm();
+      onClose();
+    }
   }, [isEdited, resetForm, onClose]);
 
   const handleChange = useCallback((e) => {
@@ -134,29 +118,12 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
     e.preventDefault();
 
     if (!isFormValid()) {
-      Swal.fire({
-        title: "Ошибка!",
-        text: "Пожалуйста, заполните все обязательные поля.",
-        icon: "error",
-        confirmButtonText: "Ок",
-        customClass: {
-          confirmButton: "swal_confirm",
-        },
-      });
+      alert('Пожалуйста, заполните все обязательные поля.')
       return;
     }
 
     if (formData.endDate < formData.startDate) {
-      Swal.fire({
-        title: "Ошибка!",
-        text: "Конечная дата не может быть раньше начальной.",
-        icon: "error",
-        confirmButtonText: "Ок",
-        customClass: {
-          confirmButton: "swal_confirm",
-          cancelButton: "swal_cancel",
-        },
-      });
+      alert('Конечная дата не может быть раньше начальной.')
       setFormData((prevFormData) => ({
         ...prevFormData,
         endDate: "",
@@ -186,9 +153,7 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Проверяем, был ли клик внутри боковой панели или SweetAlert2
       if (
-        document.querySelector(".swal2-container")?.contains(event.target) || // Клик в SweetAlert2
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
         return; // Если клик внутри, ничего не делаем
