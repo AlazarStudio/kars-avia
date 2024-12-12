@@ -3,9 +3,22 @@
     width: 100%;
 }
 
+.dropdown_wrapper {
+    position: relative;
+}
+
+.dropdown_wrapper img {
+    position: absolute;
+    top: 45%;
+    right: 10px;
+    width: 12px;
+    height: 5px;
+    object-fit: contain;
+}
+
 .search {
     width: 100%;
-    padding: 8px;
+    padding: 8px 24px 8px 8px;
     border: 1px solid var(--text-gray);
     border-radius: 5px;
     outline: none;

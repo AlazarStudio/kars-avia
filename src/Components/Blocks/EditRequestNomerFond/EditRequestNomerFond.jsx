@@ -31,6 +31,8 @@ function EditRequestNomerFond({
     category: category?.origName || "",
     reserve: nomer?.reserve || "",
     active: nomer?.active || "",
+    description: nomer?.description || "",
+    roomImages: null,
   });
 
   const sidebarRef = useRef();
@@ -46,6 +48,8 @@ function EditRequestNomerFond({
         category: category.origName || nomer?.category || "",
         reserve: typeof nomer?.reserve === "boolean" ? nomer?.reserve : false, // Установить false, если undefined
         active: typeof nomer?.active === "boolean" ? nomer?.active : false, // Установить false, если undefined
+        description: nomer?.description || "",
+        roomImages: null,
       });
     }
   }, [show, nomer, category, reserve, active]);
@@ -72,6 +76,16 @@ function EditRequestNomerFond({
     }));
   }, []);
 
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prevState) => ({
+        ...prevState,
+        roomImages: file, // Сохраняем файл напрямую
+      }));
+    }
+  };
+
   const [updateHotel] = useMutation(UPDATE_HOTEL, {
     context: {
       headers: {
@@ -84,7 +98,7 @@ function EditRequestNomerFond({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const nomerName = formData.nomerName
+    const nomerName = formData.nomerName;
 
     let response_update_room = await updateHotel({
       variables: {
@@ -97,9 +111,11 @@ function EditRequestNomerFond({
               category: formData.category,
               reserve: formData.reserve,
               active: formData.active,
+              description: formData.description,
             },
           ],
         },
+        roomImages: formData.roomImages,
       },
     });
     if (response_update_room) {
@@ -111,8 +127,8 @@ function EditRequestNomerFond({
                 room.category === "onePlace"
                   ? "Одноместный"
                   : room.category === "twoPlace"
-                    ? "Двухместный"
-                    : "",
+                  ? "Двухместный"
+                  : "",
               origName: room.category,
               rooms: [],
             };
@@ -195,8 +211,8 @@ function EditRequestNomerFond({
               formData.reserve === true
                 ? "true"
                 : formData.reserve === false
-                  ? "false"
-                  : ""
+                ? "false"
+                : ""
             }
             onChange={(e) => {
               const value = e.target.value === "true"; // Преобразование строки в булевое значение
@@ -221,8 +237,8 @@ function EditRequestNomerFond({
               formData.active === true
                 ? "true"
                 : formData.active === false
-                  ? "false"
-                  : ""
+                ? "false"
+                : ""
             }
             onChange={(e) => {
               const value = e.target.value === "true";
@@ -239,6 +255,17 @@ function EditRequestNomerFond({
             <option value="false">Не работает</option>
             <option value="true">Работает</option>
           </select>
+
+          <label>Описание</label>
+          <textarea
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+          ></textarea>
+
+          <label>Изображение</label>
+          <input type="file" name="roomImages" onChange={handleFileChange} />
         </div>
       </div>
 

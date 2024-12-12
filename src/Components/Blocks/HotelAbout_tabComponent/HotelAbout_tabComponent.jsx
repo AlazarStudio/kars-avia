@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import classes from "./HotelAbout_tabComponent.module.css";
 import { gql, useQuery, useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
+import HotelAboutRoomBlock from "../HotelAboutRoomBlock/HotelAboutRoomBlock.jsx";
 import {
   server,
   getCookie,
@@ -55,6 +56,7 @@ function HotelAbout_tabComponent({ id }) {
             input: {
               name: hotel.name,
               stars: hotel.stars,
+              airportDistance: hotel.airportDistance,
               country: hotel.country,
               city: hotel.city,
               address: hotel.address,
@@ -215,6 +217,15 @@ function HotelAbout_tabComponent({ id }) {
               </button>
 
               <button
+                className={displayInfo == "rooms" ? classes.activeButton : null}
+                onClick={() => {
+                  setDisplayInfo("rooms");
+                }}
+              >
+                Номера
+              </button>
+
+              <button
                 className={
                   displayInfo == "schedule" ? classes.activeButton : null
                 }
@@ -286,6 +297,7 @@ function HotelAbout_tabComponent({ id }) {
                     value={hotel.description || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
+                    style={!isEditing ? { resize: "none" } : null}
                     className={classes.hotelAbout_info_input}
                   />
                 </div>
@@ -437,6 +449,20 @@ function HotelAbout_tabComponent({ id }) {
                   />
                 </div>
               </div>
+            ) : displayInfo === "rooms" ? (
+              <div className={classes.hotelAbout_rooms_block}>
+                <div className={classes.rooms_wrapper}>
+                  {hotel.rooms?.map((room, index) => (
+                    <HotelAboutRoomBlock
+                      key={room.id}
+                      {...room}
+                      // index={index}
+                      // handleChange={handleChange}
+                      // isEditing={isEditing}
+                    />
+                  ))}
+                </div>
+              </div>
             ) : (
               <>
                 <div className={classes.hotelAbout_info_block}>
@@ -480,6 +506,17 @@ function HotelAbout_tabComponent({ id }) {
                       type="text"
                       name="index"
                       value={hotel.index || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={classes.hotelAbout_info_input}
+                    />
+                  </div>
+                  <div className={classes.hotelAbout_info_item}>
+                    <label>Расстояние до аэропорта</label>
+                    <input
+                      type="text"
+                      name="airportDistance"
+                      value={hotel.airportDistance || ""}
                       onChange={handleChange}
                       disabled={!isEditing}
                       className={classes.hotelAbout_info_input}
