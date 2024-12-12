@@ -1058,9 +1058,11 @@ export const GET_HOTELS = gql`
           city
           address
           quote
+          provision
           images
           stars
           airportDistance
+
       }
   }
 `;

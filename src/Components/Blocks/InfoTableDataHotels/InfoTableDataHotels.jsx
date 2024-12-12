@@ -115,7 +115,7 @@ function InfoTableDataHotels({
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w7}`}>
               <div className={classes.InfoTable_data_elem_title}>
-                {item.reserve ? item.reserve : "0"}
+                {item.provision ? item.provision : "0"}
               </div>
             </div>
           </Link>
