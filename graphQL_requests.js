@@ -3,7 +3,7 @@ import { gql } from "@apollo/client";
 // export const path = '192.168.0.113:4000';
 // export const path = '89.169.39.59:4000';
 
-// export const path = 'backend.karsavia.ru:4000';
+// export const path = 'backend.karsavia.ru:443';
 // export const server = `https://${path}`;
 
 export const path = '192.168.0.24:4000';
