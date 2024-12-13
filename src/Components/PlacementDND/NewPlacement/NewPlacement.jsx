@@ -55,7 +55,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
     const handleCheckRoomsType = (info) => {
         setCheckRoomsType(info);
-        // roomsRefetch();
     }
 
     const rooms = useMemo(() => {
@@ -1041,11 +1040,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     const [showChooseHotels, setShowChooseHotels] = useState(0);
 
     useEffect(() => {
-        const totalPassengers = requestsHotelReserveOne.reduce((acc, item) => acc + Number(item.hotel.passengersCount), 0);
+        const totalPassengers = requestsHotelReserveOne.reduce((acc, item) => acc + Number(item.capacity), 0);
         setShowChooseHotels(totalPassengers);
     }, [requestsHotelReserveOne]);
-
-    // console.log(requestsReserves)
 
     const handleOpenAddPassengersModal = () => {
         setIsAddPassengersModalOpen(true);
@@ -1055,7 +1052,10 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         setIsAddPassengersModalOpen(false);
     };
 
-    // console.log(newReservePassangers)
+    const targetReserveHotels = requestsHotelReserveOne.filter(item => item.hotel?.id === hotelId);
+    const targetReserveHotelCapacity = targetReserveHotels[0]?.capacity;
+    const targetReserveHotelCPassPersonCount = targetReserveHotels[0]?.passengers?.length + targetReserveHotels[0]?.person?.length;
+
     return (
         <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
@@ -1216,7 +1216,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                             cursor: 'pointer',
                                             textAlign: 'center',
                                             fontSize: '12px',
-                                            backgroundColor: "#9e9e9e",
+                                            backgroundColor: "#adadad",
                                             border: "1px solid #757575",
                                             color: '#fff',
                                             borderRadius: '3px',
@@ -1256,7 +1256,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                     onClick={handleCloseReserveInfo}
                                 />
                                 Заявка {requestsReserveOne?.reserveNumber} - {requestsReserveOne?.reserveForPerson ? 'экипаж' : 'пассажиры'}
-                                <img src="/addReserve.png" alt="" style={{ height: '16px', cursor: 'pointer', marginLeft: '10px' }} onClick={handleOpenAddPassengersModal} />
+                                {targetReserveHotelCPassPersonCount < targetReserveHotelCapacity &&
+                                    <img src="/addReserve.png" alt="" style={{ height: '16px', cursor: 'pointer', marginLeft: '10px' }} onClick={handleOpenAddPassengersModal} />
+                                }
                             </Typography>
 
                             {newReservePassangers?.length > 0 ?

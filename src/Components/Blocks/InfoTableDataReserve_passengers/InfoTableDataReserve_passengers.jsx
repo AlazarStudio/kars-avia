@@ -53,7 +53,20 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
 
     const handleSave = (hotelIndex) => {
         setPlacement((prevPlacement) => {
-            const updatedPlacement = [...prevPlacement];
+            const updatedPlacement = prevPlacement.map((item, index) =>
+                index === hotelIndex
+                    ? {
+                        ...item,
+                        hotel: {
+                            ...item.hotel,
+                            passengers: item.hotel.passengers.map((name) =>
+                                name.id === editingId ? { ...name, ...editedData } : name
+                            ),
+                        },
+                    }
+                    : item
+            );
+
             const hotel = updatedPlacement[hotelIndex];
 
             if (editedData.type === 'Пассажир') {
@@ -231,11 +244,12 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
     const [selectedAirline, setSelectedAirline] = useState(null);
     const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
 
+
     useEffect(() => {
-        if (data) {
-            if (airline) {
-                const selectedAirline = data.airlines.find(airline => airline.id === airline.id);
-                setSelectedAirline(selectedAirline.staff);
+        if (data && airline) {
+            const selectedAirlineData = data.airlines.find(item => item.id === airline.id);
+            if (selectedAirlineData) {
+                setSelectedAirline(selectedAirlineData.staff);
             }
         }
     }, [data, airline]);
