@@ -25,7 +25,6 @@ const AddPassengersModal = ({ isOpen, onClose, isPerson, airlineId, reserveId, t
         variables: { reservationHotelsId: openReserveId },
     });
 
-
     useEffect(() => {
         if (openReserveId && dataHotelReserveOne) {
             setRequestsHotelReserveOne(dataHotelReserveOne.reservationHotels);

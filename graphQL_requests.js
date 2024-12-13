@@ -720,6 +720,9 @@ export const GET_RESERVE_REQUESTS = gql`
       totalPages
       reserves {
         id
+        hotel {
+          capacity
+        }
         airport {
           id
           name

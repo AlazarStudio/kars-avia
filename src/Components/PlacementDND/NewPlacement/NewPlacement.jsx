@@ -16,6 +16,7 @@ import { convertToDate, decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOT
 import { } from "date-fns";
 import Notification from "../../Notification/Notification";
 import AddNewPassengerPlacement from "../../Blocks/AddNewPassengerPlacement/AddNewPassengerPlacement";
+import ExistReserveMess from "../../Blocks/ExistReserveMess/ExistReserveMess";
 
 const DAY_WIDTH = 30;
 const LEFT_WIDTH = 220;
@@ -873,7 +874,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         variables: { reservationHotelsId: openReserveId },
     });
 
-    // console.log(dataHotelReserveOne)
 
     const [requestsReserves, setRequestsReserves] = useState([]);
     const [requestsReserveOne, setRequestsReserveOne] = useState([]);
@@ -1056,6 +1056,14 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     const targetReserveHotelCapacity = targetReserveHotels[0]?.capacity;
     const targetReserveHotelCPassPersonCount = targetReserveHotels[0]?.passengers?.length + targetReserveHotels[0]?.person?.length;
 
+    const filteredRequestsReserves = requestsReserves.filter((request) => {
+        const totalCapacity = request.hotel.reduce((sum, hotel) => sum + hotel.capacity, 0);
+        return request.passengerCount > totalCapacity;
+    });
+
+    const [showRequestSidebarMess, setShowChooseHotelMess] = useState(false);
+
+    const toggleRequestSidebarMess = () => setShowChooseHotelMess(!showRequestSidebarMess);
     return (
         <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
@@ -1202,9 +1210,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                 Заявки по резерву в городе {hotelInfo.city}
                             </Typography>
 
-                            {requestsReserves?.length > 0 ?
+                            {filteredRequestsReserves?.length > 0 ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '518px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
-                                    {requestsReserves.map((request) => (
+                                    {filteredRequestsReserves.map((request) => (
                                         <Box sx={{
                                             display: 'flex',
                                             flexDirection: 'column',
@@ -1255,10 +1263,14 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                 <img src="/arrow-left-back.png" alt="" style={{ height: '16px', cursor: 'pointer', marginRight: '10px' }}
                                     onClick={handleCloseReserveInfo}
                                 />
-                                Заявка {requestsReserveOne?.reserveNumber} - {requestsReserveOne?.reserveForPerson ? 'экипаж' : 'пассажиры'}
+
+                                Заявка {requestsReserveOne?.reserveNumber?.split('-')[0]} - {requestsReserveOne?.reserveForPerson ? 'экипаж' : 'пассажиры'}
+
                                 {targetReserveHotelCPassPersonCount < targetReserveHotelCapacity &&
                                     <img src="/addReserve.png" alt="" style={{ height: '16px', cursor: 'pointer', marginLeft: '10px' }} onClick={handleOpenAddPassengersModal} />
                                 }
+
+                                <img src="/chat.png" alt="" style={{ height: '18px', cursor: 'pointer', marginLeft: '10px' }} onClick={toggleRequestSidebarMess} />
                             </Typography>
 
                             {newReservePassangers?.length > 0 ?
@@ -1365,6 +1377,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 setshowModalForAddHotelInReserve={setshowModalForAddHotelInReserve}
                 setShowReserveInfo={setShowReserveInfo}
             />
+
+            <ExistReserveMess show={showRequestSidebarMess} onClose={toggleRequestSidebarMess} chooseRequestID={openReserveId} user={user} />
         </>
     );
 };
