@@ -1065,9 +1065,12 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     const targetReserveHotelCPassPersonCount = targetReserveHotels[0]?.passengers?.length + targetReserveHotels[0]?.person?.length;
 
     const filteredRequestsReserves = requestsReserves.filter((request) => {
+        const infoHotel = request.hotel.find(hotel => hotel.hotel?.id === hotelId);
         const totalCapacity = request.hotel.reduce((sum, hotel) => sum + hotel.capacity, 0);
-        return request.passengerCount > totalCapacity;
+
+        return request.passengerCount > totalCapacity || !!infoHotel;
     });
+
 
     const [showRequestSidebarMess, setShowChooseHotelMess] = useState(false);
 

@@ -68,7 +68,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         width: request.room ? `${duration}px` : '100%',
         height: "45px",
         backgroundColor: backgroundColor,
-        animation: request.requestID === requestId && request.status == "Ожидает"
+        animation: requestId && request.requestID === requestId && request.status == "Ожидает"
             ? "blinkBackground 1s infinite" // Добавляем анимацию, если ID совпадают
             : "none", // Отключаем анимацию, если ID не совпадают
         opacity: request.isRequest ? showBlockRequest : showBlockReserve,

@@ -84,6 +84,10 @@
     width: 35%;
 }
 
+.w30 {
+    width: 30%;
+}
+
 .w100 {
     width: 100%;
     justify-content: space-between;
@@ -172,6 +176,17 @@
     display: flex;
     align-items: center;
     gap: 20px;
+}
+
+.blockInfoShow a {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.blockInfoShow a img {
+    width: 15px;
+    height: auto;
 }
 
 .blockInfoShow img {

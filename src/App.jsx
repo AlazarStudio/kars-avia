@@ -92,10 +92,10 @@ function App() {
             />
 
             {/* Шахматка */}
-            <Route
+            {/* <Route
               path="/:id/placement/:idHotel"
               element={<Placement user={user} />}
-            />
+            /> */}
 
             <Route
               path="/newPlacement/:idHotel"

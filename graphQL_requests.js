@@ -721,6 +721,9 @@ export const GET_RESERVE_REQUESTS = gql`
       reserves {
         id
         hotel {
+          hotel {
+            id
+          }
           capacity
         }
         airport {
@@ -883,6 +886,18 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
         id
         name
         city
+      }
+      hotelChess {
+        status
+        passenger {
+          id
+          name
+        }
+        client {
+          id
+          name
+        }
+        room
       }
       passengers {
         id
