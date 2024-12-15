@@ -14,6 +14,7 @@ function CreateRequestNomerFond({
   setAddTarif,
   uniqueCategories,
   tarifs,
+  filter
 }) {
   const token = getCookie("token");
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -88,7 +89,9 @@ function CreateRequestNomerFond({
       return;
     }
 
-    const nomerName = formData.nomerName;
+    const nomerName =
+      filter == 'quote' ? formData.nomerName :
+        filter == 'reserve' && formData.nomerName.includes('резерв') ? formData.nomerName : `${formData.nomerName} (резерв)`;
 
     // Преобразование reserve в булево значение
     const reserveBoolean = formData.reserve === "true";

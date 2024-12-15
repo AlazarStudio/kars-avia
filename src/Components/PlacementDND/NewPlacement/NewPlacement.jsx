@@ -68,7 +68,15 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 reserve: room.reserve,
                 active: room.active,
                 type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
-            }));
+            }))
+            .sort((a, b) => {
+                // Сначала сортируем по reserve (false < true)
+                if (a.reserve !== b.reserve) {
+                    return a.reserve - b.reserve;
+                }
+                // Затем сортируем по id по возрастанию
+                return a.id.localeCompare(b.id, undefined, { numeric: true });
+            });
     }, [data]);
 
     // Получение броней отеля

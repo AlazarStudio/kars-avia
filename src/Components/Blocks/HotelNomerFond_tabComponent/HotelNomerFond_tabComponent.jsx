@@ -195,7 +195,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     });
 
     // console.log(data?.hotel?.rooms?.map(room => room.reserve));
-
+    const [filter, setFilter] = useState('quote');
 
     return (
         <>
@@ -228,6 +228,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                     </div>
 
                     <InfoTableDataNomerFond
+                        filter={filter}
+                        setFilter={setFilter}
                         toggleRequestSidebar={toggleEditCategory}
                         toggleRequestEditNumber={toggleEditNomer}
                         requests={filteredRequestsTarif}
@@ -235,10 +237,11 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                         openDeleteNomerComponent={openDeleteNomerComponent}
                     />
 
-                    <CreateRequestNomerFond id={id} tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+                    <CreateRequestNomerFond id={id} filter={filter} tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
 
                     <EditRequestNomerFond
                         id={id}
+                        filter={filter}
                         tarifs={requestsTarifs}
                         show={showEditNomer}
                         onClose={() => setShowEditNomer(false)}
