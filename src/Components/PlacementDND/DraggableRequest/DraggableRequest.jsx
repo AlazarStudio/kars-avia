@@ -1,11 +1,11 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 import { ConstructionOutlined } from "@mui/icons-material";
 
-const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -53,6 +53,14 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
         }
     }
 
+    const blinkAnimation = `
+        @keyframes blinkBackground {
+            0% { background-color: rgb(194, 194, 194); border: 1px solid rgb(175, 175, 175) } /* Светло-голубой */
+            50% { background-color: #FCC737; border: 1px solid rgb(218, 172, 47) } /* Пастельно-голубой */
+            100% { background-color:rgb(194, 194, 194); border: 1px solid rgb(175, 175, 175) } /* Светло-голубой */
+        }
+    `;
+
     const style = {
         position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
         top: request.room ? `${position * 50 + 2}px` : "auto",
@@ -60,6 +68,9 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
         width: request.room ? `${duration}px` : '100%',
         height: "45px",
         backgroundColor: backgroundColor,
+        animation: requestId && request.requestID === requestId && request.status == "Ожидает"
+            ? "blinkBackground 1s infinite" // Добавляем анимацию, если ID совпадают
+            : "none", // Отключаем анимацию, если ID не совпадают
         opacity: request.isRequest ? showBlockRequest : showBlockReserve,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",
@@ -76,6 +87,14 @@ const DraggableRequest = ({ checkRoomsType, isClick, setIsClick, request, dayWid
             : undefined,
     };
 
+    useEffect(() => {
+        const styleElement = document.createElement("style");
+        styleElement.textContent = blinkAnimation;
+        document.head.appendChild(styleElement);
+        return () => {
+            document.head.removeChild(styleElement);
+        };
+    }, []);
 
     const originalRequestRef = useRef(null);
 

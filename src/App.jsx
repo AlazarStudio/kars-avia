@@ -73,6 +73,10 @@ function App() {
             <Route index element={<Main_Page user={user} />} />
             <Route path="/:id" element={<Main_Page user={user} />} />
             <Route
+              path="/hotels/:hotelID/:requestId"
+              element={<Main_Page user={user} />}
+            />
+            <Route
               path="/hotels/:hotelID"
               element={<Main_Page user={user} />}
             />
@@ -88,10 +92,10 @@ function App() {
             />
 
             {/* Шахматка */}
-            <Route
+            {/* <Route
               path="/:id/placement/:idHotel"
               element={<Placement user={user} />}
-            />
+            /> */}
 
             <Route
               path="/newPlacement/:idHotel"

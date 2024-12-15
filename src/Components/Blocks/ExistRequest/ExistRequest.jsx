@@ -31,6 +31,7 @@ function ExistRequest({
   user,
   setChooseRequestID,
   totalMeals,
+  setChooseCityRequest
 }) {
   const token = getCookie("token");
 
@@ -621,6 +622,7 @@ function ExistRequest({
                   onClick={() => {
                     onClose();
                     setShowChooseHotel(true);
+                    setChooseCityRequest(formData.airport.city)
                   }}
                 >
                   Разместить

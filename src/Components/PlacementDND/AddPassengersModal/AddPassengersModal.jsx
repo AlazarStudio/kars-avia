@@ -31,16 +31,11 @@ const AddPassengersModal = ({ isOpen, onClose, isPerson, airlineId, reserveId, t
         }
     }, [dataHotelReserveOne, openReserveId]);
 
-    const reservePassangers = requestsHotelReserveOne.filter(
-        (hotel) => hotel.hotel.id === hotelId
-    );
-
-    const bronedPersons = reservePassangers
+    const bronedPersons = requestsHotelReserveOne
         .flatMap(item => [
             ...(item.passengers || []).map(passenger => passenger.id),
             ...(item.person || []).map(person => person.id)
         ]);
-
 
     const [staff, setStaff] = useState([]);
     const [selectedStaffId, setSelectedStaffId] = useState("");

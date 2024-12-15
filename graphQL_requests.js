@@ -720,6 +720,12 @@ export const GET_RESERVE_REQUESTS = gql`
       totalPages
       reserves {
         id
+        hotel {
+          hotel {
+            id
+          }
+          capacity
+        }
         airport {
           id
           name
@@ -880,6 +886,18 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
         id
         name
         city
+      }
+      hotelChess {
+        status
+        passenger {
+          id
+          name
+        }
+        client {
+          id
+          name
+        }
+        room
       }
       passengers {
         id
@@ -1140,6 +1158,8 @@ export const GET_HOTEL_TARIFS = gql`
     hotel(id: $hotelId) {
       priceOneCategory
       priceTwoCategory
+      priceThreeCategory
+      priceFourCategory
     }
   }
 `;
@@ -1216,6 +1236,8 @@ export const UPDATE_HOTEL_TARIF = gql`
     updateHotel(id: $updateHotelId, input: $input) {
       priceOneCategory
       priceTwoCategory
+      priceThreeCategory
+      priceFourCategory
     }
   }
 `;
@@ -1363,6 +1385,8 @@ export const GET_AIRLINE_TARIFS = gql`
     airline(id: $airlineId) {
       priceOneCategory
       priceTwoCategory
+      priceThreeCategory
+      priceFourCategory
     }
   }
 `;
@@ -1394,6 +1418,8 @@ export const UPDATE_AIRLINE_TARIF = gql`
     updateAirline(id: $updateAirlineId, input: $input) {
       priceOneCategory
       priceTwoCategory
+      priceThreeCategory
+      priceFourCategory
     }
   }
 `;

@@ -16,14 +16,15 @@ import { convertToDate, decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOT
 import { } from "date-fns";
 import Notification from "../../Notification/Notification";
 import AddNewPassengerPlacement from "../../Blocks/AddNewPassengerPlacement/AddNewPassengerPlacement";
+import ExistReserveMess from "../../Blocks/ExistReserveMess/ExistReserveMess";
 
 const DAY_WIDTH = 30;
 const LEFT_WIDTH = 220;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
-const NewPlacement = ({ idHotelInfo, searchQuery }) => {
-    let { idHotel } = useParams();
+const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
+    let { idHotel, requestId } = useParams();
 
     let hotelId = idHotelInfo ? idHotelInfo : idHotel
 
@@ -55,7 +56,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
     const handleCheckRoomsType = (info) => {
         setCheckRoomsType(info);
-        // roomsRefetch();
     }
 
     const rooms = useMemo(() => {
@@ -68,7 +68,15 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 reserve: room.reserve,
                 active: room.active,
                 type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
-            }));
+            }))
+            .sort((a, b) => {
+                // Сначала сортируем по reserve (false < true)
+                if (a.reserve !== b.reserve) {
+                    return a.reserve - b.reserve;
+                }
+                // Затем сортируем по id по возрастанию
+                return a.id.localeCompare(b.id, undefined, { numeric: true });
+            });
     }, [data]);
 
     // Получение броней отеля
@@ -874,7 +882,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         variables: { reservationHotelsId: openReserveId },
     });
 
-    // console.log(dataHotelReserveOne)
 
     const [requestsReserves, setRequestsReserves] = useState([]);
     const [requestsReserveOne, setRequestsReserveOne] = useState([]);
@@ -1041,11 +1048,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     const [showChooseHotels, setShowChooseHotels] = useState(0);
 
     useEffect(() => {
-        const totalPassengers = requestsHotelReserveOne.reduce((acc, item) => acc + Number(item.hotel.passengersCount), 0);
+        const totalPassengers = requestsHotelReserveOne.reduce((acc, item) => acc + Number(item.capacity), 0);
         setShowChooseHotels(totalPassengers);
     }, [requestsHotelReserveOne]);
-
-    // console.log(requestsReserves)
 
     const handleOpenAddPassengersModal = () => {
         setIsAddPassengersModalOpen(true);
@@ -1055,7 +1060,22 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
         setIsAddPassengersModalOpen(false);
     };
 
-    // console.log(newReservePassangers)
+    const targetReserveHotels = requestsHotelReserveOne.filter(item => item.hotel?.id === hotelId);
+    const targetReserveHotelCapacity = targetReserveHotels[0]?.capacity;
+    const targetReserveHotelCPassPersonCount = targetReserveHotels[0]?.passengers?.length + targetReserveHotels[0]?.person?.length;
+
+    const filteredRequestsReserves = requestsReserves.filter((request) => {
+        const infoHotel = request.hotel.find(hotel => hotel.hotel?.id === hotelId);
+        const totalCapacity = request.hotel.reduce((sum, hotel) => sum + hotel.capacity, 0);
+
+        return request.passengerCount > totalCapacity || !!infoHotel;
+    });
+
+
+    const [showRequestSidebarMess, setShowChooseHotelMess] = useState(false);
+
+    const toggleRequestSidebarMess = () => setShowChooseHotelMess(!showRequestSidebarMess);
+
     return (
         <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
@@ -1134,6 +1154,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                         <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
                                         {filteredRooms.map((room, index) => (
                                             <RoomRow
+                                                requestId={requestId}
                                                 setHoveredRoom={setHoveredRoom}
                                                 setHoveredDayInMonth={setHoveredDayInMonth}
                                                 borderBottomDraw={index + 1 == filteredRooms.length ? true : false}
@@ -1172,21 +1193,29 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
                             {newRequests?.length > 0 ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
-                                    {newRequests.map((request) => (
-                                        <DraggableRequest
-                                            userRole={user.role}
-                                            key={request.id}
-                                            request={request}
-                                            dayWidth={DAY_WIDTH}
-                                            currentMonth={currentMonth}
-                                            onUpdateRequest={handleUpdateRequest}
-                                            allRequests={requests}
-                                            isDraggingGlobal={isDraggingGlobal}
-                                            isClick={isClick}
-                                            setIsClick={setIsClick}
-                                            checkRoomsType={checkRoomsType}
-                                        />
-                                    ))}
+                                    {newRequests
+                                        .slice() // Создаём копию массива, чтобы не мутировать исходный
+                                        .sort((a, b) => {
+                                            if (a.requestID === requestId) return -1; // Если `a` — нужный request, он идёт первым
+                                            if (b.requestID === requestId) return 1; // Если `b` — нужный request, он идёт позже
+                                            return 0; // Остальные остаются на своих местах
+                                        })
+                                        .map((request) => (
+                                            <DraggableRequest
+                                                requestId={requestId}
+                                                userRole={user.role}
+                                                key={request.id}
+                                                request={request}
+                                                dayWidth={DAY_WIDTH}
+                                                currentMonth={currentMonth}
+                                                onUpdateRequest={handleUpdateRequest}
+                                                allRequests={requests}
+                                                isDraggingGlobal={isDraggingGlobal}
+                                                isClick={isClick}
+                                                setIsClick={setIsClick}
+                                                checkRoomsType={checkRoomsType}
+                                            />
+                                        ))}
                                 </Box>
                                 :
                                 <Typography variant="h6" sx={{ padding: '10px ', textAlign: "center", fontSize: '14px', height: 'calc(100% - 50px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1202,9 +1231,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                 Заявки по резерву в городе {hotelInfo.city}
                             </Typography>
 
-                            {requestsReserves?.length > 0 ?
+                            {filteredRequestsReserves?.length > 0 ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '518px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
-                                    {requestsReserves.map((request) => (
+                                    {filteredRequestsReserves.map((request) => (
                                         <Box sx={{
                                             display: 'flex',
                                             flexDirection: 'column',
@@ -1216,7 +1245,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                             cursor: 'pointer',
                                             textAlign: 'center',
                                             fontSize: '12px',
-                                            backgroundColor: "#9e9e9e",
+                                            backgroundColor: "#adadad",
                                             border: "1px solid #757575",
                                             color: '#fff',
                                             borderRadius: '3px',
@@ -1255,14 +1284,21 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                 <img src="/arrow-left-back.png" alt="" style={{ height: '16px', cursor: 'pointer', marginRight: '10px' }}
                                     onClick={handleCloseReserveInfo}
                                 />
-                                Заявка {requestsReserveOne?.reserveNumber} - {requestsReserveOne?.reserveForPerson ? 'экипаж' : 'пассажиры'}
-                                <img src="/addReserve.png" alt="" style={{ height: '16px', cursor: 'pointer', marginLeft: '10px' }} onClick={handleOpenAddPassengersModal} />
+
+                                Заявка {requestsReserveOne?.reserveNumber?.split('-')[0]} - {requestsReserveOne?.reserveForPerson ? 'экипаж' : 'пассажиры'}
+
+                                {targetReserveHotelCPassPersonCount < targetReserveHotelCapacity &&
+                                    <img src="/addReserve.png" alt="" style={{ height: '16px', cursor: 'pointer', marginLeft: '10px' }} onClick={handleOpenAddPassengersModal} />
+                                }
+
+                                <img src="/chat.png" alt="" style={{ height: '18px', cursor: 'pointer', marginLeft: '10px' }} onClick={toggleRequestSidebarMess} />
                             </Typography>
 
                             {newReservePassangers?.length > 0 ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
                                     {newReservePassangers.map((request) => (
                                         <DraggableRequest
+                                            requestId={requestId}
                                             userRole={user.role}
                                             key={request.id}
                                             request={request}
@@ -1291,6 +1327,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 <DragOverlay style={{ pointerEvents: 'none' }}>
                     {activeDragItem ? (
                         <DraggableRequest
+                            requestId={requestId}
                             userRole={user.role}
                             request={activeDragItem}
                             dayWidth={DAY_WIDTH}
@@ -1363,6 +1400,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 setshowModalForAddHotelInReserve={setshowModalForAddHotelInReserve}
                 setShowReserveInfo={setShowReserveInfo}
             />
+
+            <ExistReserveMess show={showRequestSidebarMess} onClose={toggleRequestSidebarMess} chooseRequestID={openReserveId} user={user} />
         </>
     );
 };

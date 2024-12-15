@@ -42,10 +42,10 @@ function HotelPage({ children, id, user, ...props }) {
             {(user.role == roles.superAdmin ||
               user.role == roles.airlineAdmin ||
               user.role == roles.dispatcerAdmin) && (
-              <Link to={`/hotels`} className={classes.backButton}>
-                <img src="/arrow.png" alt="" />
-              </Link>
-            )}
+                <Link to={params.requestId ? `/relay` : `/hotels`} className={classes.backButton}>
+                  <img src="/arrow.png" alt="" />
+                </Link>
+              )}
             {data && data.hotel.name}
           </div>
         </Header>

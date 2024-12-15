@@ -2,9 +2,7 @@ import React, { useState } from "react";
 import classes from './InfoTableDataNomerFond.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, ...props }) {
-    const [filter, setFilter] = useState('quote');
-
+function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, setFilter, ...props }) {
     const quotaRequests = [];
     const reserveRequests = [];
 

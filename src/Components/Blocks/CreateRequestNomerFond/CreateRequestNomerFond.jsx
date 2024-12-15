@@ -14,6 +14,7 @@ function CreateRequestNomerFond({
   setAddTarif,
   uniqueCategories,
   tarifs,
+  filter
 }) {
   const token = getCookie("token");
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -88,7 +89,9 @@ function CreateRequestNomerFond({
       return;
     }
 
-    const nomerName = formData.nomerName;
+    const nomerName =
+      filter == 'quote' ? formData.nomerName :
+        filter == 'reserve' && formData.nomerName.includes('резерв') ? formData.nomerName : `${formData.nomerName} (резерв)`;
 
     // Преобразование reserve в булево значение
     const reserveBoolean = formData.reserve === "true";
@@ -119,8 +122,12 @@ function CreateRequestNomerFond({
                 room.category === "onePlace"
                   ? "Одноместный"
                   : room.category === "twoPlace"
-                  ? "Двухместный"
-                  : "",
+                    ? "Двухместный"
+                    : room.category === "threePlace"
+                      ? "Трехместный"
+                      : room.category === "fourPlace"
+                        ? "Четырехместный"
+                        : "",
               origName: room.category,
               rooms: [],
             };
@@ -194,6 +201,8 @@ function CreateRequestNomerFond({
             </option>
             <option value={"onePlace"}>Одноместный</option>
             <option value={"twoPlace"}>Двухместный</option>
+            <option value={"threePlace"}>Трехместный</option>
+            <option value={"fourPlace"}>Четырехместный</option>
             {/* ))} */}
           </select>
 

@@ -17,14 +17,14 @@ import EditRequestMealTarif from "../EditRequestMealTarif/EditRequestMealTarif.j
 
 function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     const token = getCookie('token');
-    
+
 
     const { loading, error, data } = useQuery(GET_AIRLINE_TARIFS, {
         variables: { airlineId: id },
     });
 
     const { loading: mealPriceLoading, error: mealPriceError, data: mealPriceData } = useQuery(GET_AIRLINE_MEAL_PRICE, {
-        variables: {airlineId: id}
+        variables: { airlineId: id }
     });
 
     const [addTarif, setAddTarif] = useState([]);
@@ -73,6 +73,16 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
                     price: data.airline.priceTwoCategory,
                     type: 2
                 },
+                {
+                    name: 'Трехместный',
+                    price: data.airline.priceThreeCategory,
+                    type: 3
+                },
+                {
+                    name: 'Четырехместный',
+                    price: data.airline.priceFourCategory,
+                    type: 4
+                },
             ]);
         }
     }, [data]);
@@ -89,7 +99,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         }
     }, [mealPriceData]);
 
-    
+
 
     const handleSearchTarif = (e) => {
         setSearchTarif(e.target.value);
@@ -187,7 +197,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         setAddTarif(updatedTarifs);
         setEditShowAddTarifCategory(false);
         setSelectedTarif(null);
-    };    
+    };
 
     const deleteTarif = async (index, tarifID) => {
         let response_update_tarif = await deleteHotelTarif({

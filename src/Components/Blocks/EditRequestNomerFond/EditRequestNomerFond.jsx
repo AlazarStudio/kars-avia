@@ -21,6 +21,7 @@ function EditRequestNomerFond({
   addTarif,
   setAddTarif,
   selectedNomer,
+  filter
 }) {
   const token = getCookie("token");
   // console.log(category);
@@ -98,7 +99,9 @@ function EditRequestNomerFond({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const nomerName = formData.nomerName;
+    const nomerName =
+      filter == 'quote' ? formData.nomerName :
+        filter == 'reserve' && formData.nomerName.includes('резерв') ? formData.nomerName : `${formData.nomerName} (резерв)`;
 
     let response_update_room = await updateHotel({
       variables: {
@@ -127,8 +130,12 @@ function EditRequestNomerFond({
                 room.category === "onePlace"
                   ? "Одноместный"
                   : room.category === "twoPlace"
-                  ? "Двухместный"
-                  : "",
+                    ? "Двухместный"
+                    : room.category === "threePlace"
+                      ? "Трехместный"
+                      : room.category === "fourPlace"
+                        ? "Четырехместный"
+                        : "",
               origName: room.category,
               rooms: [],
             };
@@ -186,7 +193,7 @@ function EditRequestNomerFond({
           <input
             type="text"
             name="nomerName"
-            value={formData.nomerName}
+            value={formData.nomerName.includes('резерв') ? formData.nomerName.split(' (резерв)')[0] : `${formData.nomerName}`}
             onChange={handleChange}
             placeholder="Пример: № 151"
           />
@@ -197,8 +204,10 @@ function EditRequestNomerFond({
             value={formData.category}
             onChange={handleChange}
           >
-            <option value="onePlace">Одноместный</option>
-            <option value="twoPlace">Двухместный</option>
+            <option value={"onePlace"}>Одноместный</option>
+            <option value={"twoPlace"}>Двухместный</option>
+            <option value={"threePlace"}>Трехместный</option>
+            <option value={"fourPlace"}>Четырехместный</option>
             {/* {uniqueCategories.map(category => (
                             <option key={category} value={category}>{category == 'onePlace' ? 'Одноместный' : category == 'twoPlace' ? 'Двухместный' : ''}</option>
                         ))} */}
@@ -211,8 +220,8 @@ function EditRequestNomerFond({
               formData.reserve === true
                 ? "true"
                 : formData.reserve === false
-                ? "false"
-                : ""
+                  ? "false"
+                  : ""
             }
             onChange={(e) => {
               const value = e.target.value === "true"; // Преобразование строки в булевое значение
@@ -237,8 +246,8 @@ function EditRequestNomerFond({
               formData.active === true
                 ? "true"
                 : formData.active === false
-                ? "false"
-                : ""
+                  ? "false"
+                  : ""
             }
             onChange={(e) => {
               const value = e.target.value === "true";

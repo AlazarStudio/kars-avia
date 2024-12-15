@@ -47,6 +47,11 @@ function ReservePlacement({ children, user, ...props }) {
         if (data && data.reserve && dataHotel) {
             setRequest(data.reserve);
 
+            const getClientInfo = (client, hotelChess, isPassenger) => {
+                const clientInfo = isPassenger ? hotelChess.find(entry => entry.passenger?.id === client) : hotelChess.find(entry => entry.client?.id === client);
+                return clientInfo;
+            };
+
             const transformedData = dataHotel.reservationHotels.map(item => ({
                 hotel: {
                     reservationHotelId: item.id,
@@ -56,6 +61,8 @@ function ReservePlacement({ children, user, ...props }) {
                     city: item.hotel.city,
                     requestId: item.reserve.id,
                     passengers: item.passengers.map((passenger, index) => ({
+                        status: getClientInfo(passenger.id, item.hotelChess, true) ? getClientInfo(passenger.id, item.hotelChess, true).status : 'waiting',
+                        room: getClientInfo(passenger.id, item.hotelChess, true) ? getClientInfo(passenger.id, item.hotelChess, true).room : '-',
                         name: passenger.name || "не указано",
                         gender: passenger.gender || "не указано",
                         number: passenger.number || "не указано",
@@ -63,7 +70,16 @@ function ReservePlacement({ children, user, ...props }) {
                         order: index + 1,
                         id: passenger.id || `id-${index}`
                     })),
-                    person: item.person
+                    person: item.person.map((pers, index) => ({
+                        status: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).status : 'waiting',
+                        room: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).room : '-',
+                        name: pers.name || "не указано",
+                        gender: pers.gender || "не указано",
+                        number: pers.number || "не указано",
+                        type: pers.type || "не указано",
+                        order: index + 1,
+                        id: pers.id || `id-${index}`
+                    })),
                 }
             }));
 
@@ -87,7 +103,14 @@ function ReservePlacement({ children, user, ...props }) {
                             order: index + 1,
                             id: passenger.id || `id-${index}`
                         })),
-                        person: subscriptionData.reserveHotel.person
+                        person: subscriptionData.reserveHotel.person.map((pers, index) => ({
+                            name: pers.name || "не указано",
+                            gender: pers.gender || "не указано",
+                            number: pers.number || "не указано",
+                            type: pers.type || "не указано",
+                            order: index + 1,
+                            id: pers.id || `id-${index}`
+                        })),
                     }
                 };
 
@@ -126,7 +149,7 @@ function ReservePlacement({ children, user, ...props }) {
                                             id: person.id,
                                             name: person.name,
                                             number: person.number || "не указано",
-                                            gender: person.gender || "не указано"
+                                            gender: person.gender || "не указано",
                                         }))
                                     ]
                                 }
@@ -141,7 +164,6 @@ function ReservePlacement({ children, user, ...props }) {
             refetchHotel();
         }
     }, [data, dataHotel, subscriptionData, subscriptionDataPerson]);
-
 
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
 
