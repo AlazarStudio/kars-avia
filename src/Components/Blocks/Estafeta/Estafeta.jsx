@@ -119,6 +119,7 @@ function Estafeta({ user }) {
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const [chooseObject, setChooseObject] = useState([]);
     const [chooseRequestID, setChooseRequestID] = useState();
+    const [chooseCityRequest, setChooseCityRequest] = useState();
 
     // Функции для переключения видимости боковых панелей
     const toggleCreateSidebar = () => setShowCreateSidebar(!showCreateSidebar);
@@ -268,8 +269,8 @@ function Estafeta({ user }) {
             )}
             {/* Боковые панели для создания и выбора заявок */}
             <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
-            <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} handleCancelRequest={handleCancelRequest} user={user} />
-            <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} chooseRequestID={chooseRequestID} id={'relay'} />
+            <ExistRequest setChooseCityRequest={setChooseCityRequest} show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} handleCancelRequest={handleCancelRequest} user={user} />
+            <ChooseHotel chooseCityRequest={chooseCityRequest} show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} chooseRequestID={chooseRequestID} id={'relay'} />
         </div>
     );
 }

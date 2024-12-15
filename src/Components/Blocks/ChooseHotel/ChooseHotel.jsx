@@ -12,11 +12,12 @@ import { useQuery } from "@apollo/client";
 import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
 
-function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID }) {
+function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID, chooseCityRequest }) {
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({ city: "", hotel: "", request: chooseRequestID });
   const [hotels, setHotels] = useState([]);
   const sidebarRef = useRef();
+
 
   // Получаем данные о гостиницах
   const { data: hotelsData, loading: hotelsLoading } =
@@ -27,6 +28,12 @@ function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID }) {
       setHotels(hotelsData.hotels || []);
     }
   }, [hotelsLoading, hotelsData]);
+
+  useEffect(() => {
+    if (chooseCityRequest) {
+      setFormData((prevState) => ({ ...prevState, city: chooseCityRequest, hotel: "", request: chooseRequestID }));
+    }
+  }, [chooseCityRequest]);
 
   // Получаем уникальные города и фильтруем отели по выбранному городу
   const uniqueCities = useMemo(
