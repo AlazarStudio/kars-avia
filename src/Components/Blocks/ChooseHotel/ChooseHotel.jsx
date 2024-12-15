@@ -12,9 +12,9 @@ import { useQuery } from "@apollo/client";
 import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
 
-function ChooseHotel({ show, onClose, chooseObject, id }) {
+function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID }) {
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
-  const [formData, setFormData] = useState({ city: "", hotel: "" });
+  const [formData, setFormData] = useState({ city: "", hotel: "", request: chooseRequestID });
   const [hotels, setHotels] = useState([]);
   const sidebarRef = useRef();
 
@@ -40,7 +40,7 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
   }, [formData.city, hotels]);
 
   const resetForm = useCallback(() => {
-    setFormData({ city: "", hotel: "" });
+    setFormData({ city: "", hotel: "", request: chooseRequestID });
     setIsEdited(false);
   }, []);
 
@@ -59,12 +59,12 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
 
   const handleCitySelect = (value) => {
     setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-    setFormData((prevState) => ({ ...prevState, city: value, hotel: "" })); // Сброс отеля при изменении города
+    setFormData((prevState) => ({ ...prevState, city: value, hotel: "", request: chooseRequestID })); // Сброс отеля при изменении города
   };
 
   const handleHotelSelect = (value) => {
     setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-    setFormData((prevState) => ({ ...prevState, hotel: value }));
+    setFormData((prevState) => ({ ...prevState, hotel: value, request: chooseRequestID }));
   };
 
   useEffect(() => {
@@ -129,7 +129,7 @@ function ChooseHotel({ show, onClose, chooseObject, id }) {
       {formData.city && formData.hotel && (
         <div className={classes.requestButton}>
           <Button
-            link={`/${id}/placement/${formData.hotel}`}
+            link={`/hotels/${formData.hotel}/${formData.request}`}
             dataObject={chooseObject}
             disabled={true}
           >

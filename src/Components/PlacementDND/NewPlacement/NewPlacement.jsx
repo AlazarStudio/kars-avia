@@ -23,8 +23,8 @@ const LEFT_WIDTH = 220;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
-const NewPlacement = ({ idHotelInfo, searchQuery }) => {
-    let { idHotel } = useParams();
+const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
+    let { idHotel, requestId } = useParams();
 
     let hotelId = idHotelInfo ? idHotelInfo : idHotel
 
@@ -1072,6 +1072,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
     const [showRequestSidebarMess, setShowChooseHotelMess] = useState(false);
 
     const toggleRequestSidebarMess = () => setShowChooseHotelMess(!showRequestSidebarMess);
+
     return (
         <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
@@ -1150,6 +1151,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                         <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
                                         {filteredRooms.map((room, index) => (
                                             <RoomRow
+                                                requestId={requestId}
                                                 setHoveredRoom={setHoveredRoom}
                                                 setHoveredDayInMonth={setHoveredDayInMonth}
                                                 borderBottomDraw={index + 1 == filteredRooms.length ? true : false}
@@ -1188,21 +1190,29 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
 
                             {newRequests?.length > 0 ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
-                                    {newRequests.map((request) => (
-                                        <DraggableRequest
-                                            userRole={user.role}
-                                            key={request.id}
-                                            request={request}
-                                            dayWidth={DAY_WIDTH}
-                                            currentMonth={currentMonth}
-                                            onUpdateRequest={handleUpdateRequest}
-                                            allRequests={requests}
-                                            isDraggingGlobal={isDraggingGlobal}
-                                            isClick={isClick}
-                                            setIsClick={setIsClick}
-                                            checkRoomsType={checkRoomsType}
-                                        />
-                                    ))}
+                                    {newRequests
+                                        .slice() // Создаём копию массива, чтобы не мутировать исходный
+                                        .sort((a, b) => {
+                                            if (a.requestID === requestId) return -1; // Если `a` — нужный request, он идёт первым
+                                            if (b.requestID === requestId) return 1; // Если `b` — нужный request, он идёт позже
+                                            return 0; // Остальные остаются на своих местах
+                                        })
+                                        .map((request) => (
+                                            <DraggableRequest
+                                                requestId={requestId}
+                                                userRole={user.role}
+                                                key={request.id}
+                                                request={request}
+                                                dayWidth={DAY_WIDTH}
+                                                currentMonth={currentMonth}
+                                                onUpdateRequest={handleUpdateRequest}
+                                                allRequests={requests}
+                                                isDraggingGlobal={isDraggingGlobal}
+                                                isClick={isClick}
+                                                setIsClick={setIsClick}
+                                                checkRoomsType={checkRoomsType}
+                                            />
+                                        ))}
                                 </Box>
                                 :
                                 <Typography variant="h6" sx={{ padding: '10px ', textAlign: "center", fontSize: '14px', height: 'calc(100% - 50px)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -1285,6 +1295,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
                                     {newReservePassangers.map((request) => (
                                         <DraggableRequest
+                                            requestId={requestId}
                                             userRole={user.role}
                                             key={request.id}
                                             request={request}
@@ -1313,6 +1324,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery }) => {
                 <DragOverlay style={{ pointerEvents: 'none' }}>
                     {activeDragItem ? (
                         <DraggableRequest
+                            requestId={requestId}
                             userRole={user.role}
                             request={activeDragItem}
                             dayWidth={DAY_WIDTH}

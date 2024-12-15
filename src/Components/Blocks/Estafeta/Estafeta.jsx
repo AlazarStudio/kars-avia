@@ -269,7 +269,7 @@ function Estafeta({ user }) {
             {/* Боковые панели для создания и выбора заявок */}
             <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
             <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} handleCancelRequest={handleCancelRequest} user={user} />
-            <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
+            <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} chooseRequestID={chooseRequestID} id={'relay'} />
         </div>
     );
 }

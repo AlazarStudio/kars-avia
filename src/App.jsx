@@ -73,6 +73,10 @@ function App() {
             <Route index element={<Main_Page user={user} />} />
             <Route path="/:id" element={<Main_Page user={user} />} />
             <Route
+              path="/hotels/:hotelID/:requestId"
+              element={<Main_Page user={user} />}
+            />
+            <Route
               path="/hotels/:hotelID"
               element={<Main_Page user={user} />}
             />
