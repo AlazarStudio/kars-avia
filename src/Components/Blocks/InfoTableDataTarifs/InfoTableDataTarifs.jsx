@@ -35,8 +35,8 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPri
                     ))}
                 </div>
             </InfoTable>
-            
-            
+
+
             Питание - цены
             <InfoTable>
                 <div className={classes.bottom}>

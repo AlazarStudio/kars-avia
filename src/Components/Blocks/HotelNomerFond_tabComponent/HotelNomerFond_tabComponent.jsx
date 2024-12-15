@@ -62,7 +62,15 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                     .reduce((acc, room) => {
                         if (!acc[room.category]) {
                             acc[room.category] = {
-                                name: room.category === 'onePlace' ? 'Одноместный' : room.category === 'twoPlace' ? 'Двухместный' : '',
+                                name: room.category === "onePlace"
+                                    ? "Одноместный"
+                                    : room.category === "twoPlace"
+                                        ? "Двухместный"
+                                        : room.category === "threePlace"
+                                            ? "Трехместный"
+                                            : room.category === "fourPlace"
+                                                ? "Четырехместный"
+                                                : "",
                                 origName: room.category,
                                 rooms: []
                             };

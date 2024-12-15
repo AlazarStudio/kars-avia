@@ -119,8 +119,12 @@ function CreateRequestNomerFond({
                 room.category === "onePlace"
                   ? "Одноместный"
                   : room.category === "twoPlace"
-                  ? "Двухместный"
-                  : "",
+                    ? "Двухместный"
+                    : room.category === "threePlace"
+                      ? "Трехместный"
+                      : room.category === "fourPlace"
+                        ? "Четырехместный"
+                        : "",
               origName: room.category,
               rooms: [],
             };
@@ -194,6 +198,8 @@ function CreateRequestNomerFond({
             </option>
             <option value={"onePlace"}>Одноместный</option>
             <option value={"twoPlace"}>Двухместный</option>
+            <option value={"threePlace"}>Трехместный</option>
+            <option value={"fourPlace"}>Четырехместный</option>
             {/* ))} */}
           </select>
 

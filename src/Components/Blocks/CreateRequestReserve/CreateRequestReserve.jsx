@@ -274,7 +274,7 @@ function CreateRequestReserve({ show, onClose, user }) {
                     </div>
 
 
-                    <label>Питание</label>
+                    {/* <label>Питание</label>
                     <select name="included" value={formData.mealPlan.included} onChange={handleChange}>
                         <option value={true}>Включено</option>
                         <option value={false}>Не включено</option>
@@ -295,7 +295,7 @@ function CreateRequestReserve({ show, onClose, user }) {
                                 Ужин
                             </label>
                         </div>
-                    )}
+                    )} */}
                 </div>
             </div>
 

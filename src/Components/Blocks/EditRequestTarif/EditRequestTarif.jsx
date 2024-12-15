@@ -107,6 +107,18 @@ function EditRequestTarif({
       };
     }
 
+    if (formData.type == 3) {
+      dataSend = {
+        priceThreeCategory: Number(formData.price),
+      };
+    }
+
+    if (formData.type == 4) {
+      dataSend = {
+        priceFourCategory: Number(formData.price),
+      };
+    }
+
     let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
 
     let response_update_tarif = await updateHotelTarif({
@@ -131,6 +143,20 @@ function EditRequestTarif({
             ? response_update_tarif.data.updateHotel.priceTwoCategory
             : response_update_tarif.data.updateAirline.priceTwoCategory,
           type: 2,
+        },
+        {
+          name: "Трехместный",
+          price: isHotel
+            ? response_update_tarif.data.updateHotel.priceThreeCategory
+            : response_update_tarif.data.updateAirline.priceThreeCategory,
+          type: 3,
+        },
+        {
+          name: "Четырехместный",
+          price: isHotel
+            ? response_update_tarif.data.updateHotel.priceFourCategory
+            : response_update_tarif.data.updateAirline.priceFourCategory,
+          type: 4,
         },
       ]);
       resetForm();

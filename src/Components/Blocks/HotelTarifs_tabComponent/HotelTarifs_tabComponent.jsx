@@ -23,7 +23,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
     });
 
     const { loading: mealPriceLoading, error: mealPriceError, data: mealPriceData } = useQuery(GET_HOTEL_MEAL_PRICE, {
-        variables: {hotelId: id}
+        variables: { hotelId: id }
     });
 
     const [addTarif, setAddTarif] = useState([]);
@@ -72,6 +72,16 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
                     price: data.hotel.priceTwoCategory,
                     type: 2
                 },
+                {
+                    name: 'Трехместный',
+                    price: data.hotel.priceThreeCategory,
+                    type: 3
+                },
+                {
+                    name: 'Четырехместный',
+                    price: data.hotel.priceFourCategory,
+                    type: 4
+                },
             ]);
         }
     }, [data]);
@@ -88,7 +98,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
         }
     }, [mealPriceData]);
 
-    
+
 
     const handleSearchTarif = (e) => {
         setSearchTarif(e.target.value);
@@ -186,7 +196,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
         setAddTarif(updatedTarifs);
         setEditShowAddTarifCategory(false);
         setSelectedTarif(null);
-    };    
+    };
 
     const deleteTarif = async (index, tarifID) => {
         let response_update_tarif = await deleteHotelTarif({
