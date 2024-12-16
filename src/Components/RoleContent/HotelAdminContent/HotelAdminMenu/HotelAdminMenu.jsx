@@ -2,14 +2,14 @@ import { Link } from "react-router-dom";
 
 import classes from "./HotelAdminMenu.module.css";
 
-const HotelAdminMenu = ({ id, allCreatedReserves }) => {
+const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
   return (
     <>
       <Link
         to={"/reserveRequests"}
         className={`${classes.menu_items__elem} ${
-          id == "reserveRequests" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "reserveRequests" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -31,7 +31,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Заявки с резерва
+        {menuOpen ? "Заявки с резерва" : ""}
         {allCreatedReserves > 0 && (
           <div className={classes.countRequests}>{allCreatedReserves}</div>
         )}
@@ -39,6 +39,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
       <Link
         to={"/hotelChess"}
         className={`${classes.menu_items__elem} ${
+          !menuOpen ? classes.jcc : ""
+        } ${
           (id == "hotelChess" || id == undefined || !id) &&
           classes.menu_items__activeElem
         }`}
@@ -82,7 +84,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
             </clipPath>
           </defs>
         </svg>
-        Шахматка
+        {menuOpen ? "Шахматка" : ""}
       </Link>
       {/* <Link
         to={"/hotelTarifs"}
@@ -121,8 +123,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
       <Link
         to={"/hotelRooms"}
         className={`${classes.menu_items__elem} ${
-          id == "hotelRooms" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "hotelRooms" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -150,13 +152,13 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
             stroke-linejoin="round"
           />
         </svg>
-        Номерной фонд
+        {menuOpen ? "Номерной фонд" : ""}
       </Link>
       <Link
         to={"/hotelCompany"}
         className={`${classes.menu_items__elem} ${
-          id == "hotelCompany" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "hotelCompany" && classes.menu_items__activeElem}`}
       >
         <svg
           width="24"
@@ -182,13 +184,13 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
             stroke-linejoin="round"
           />
         </svg>
-        Компания
+        {menuOpen ? "Компания" : ""}
       </Link>
       <Link
         to={"/hotelAbout"}
         className={`${classes.menu_items__elem} ${
-          id == "hotelAbout" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "hotelAbout" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -210,13 +212,13 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
             stroke="var(--menu-gray)"
           />
         </svg>
-        О гостинице
+        {menuOpen ? "О гостинице" : ""}
       </Link>
       <Link
         to={"/reports"}
         className={`${classes.menu_items__elem} ${
-          id == "reports" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "reports" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -262,7 +264,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Отчеты
+        {menuOpen ? "Отчеты" : ""}
       </Link>
     </>
   );
