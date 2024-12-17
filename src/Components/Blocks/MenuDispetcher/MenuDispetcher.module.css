@@ -22,12 +22,28 @@
     height: 100vh;
     background-color: var(--menu-bg);
     color: var(--white);
-    padding: 40px 15px 15px 15px;
+    padding: 30px 15px 15px 15px;
     display: flex;
     flex-direction: column;
     gap: 25px;
     transition: all ease-in-out 0.3s;
     position: relative;
+}
+
+/* Скрываем кнопку menuToggle по умолчанию */
+.menuToggle,
+.w_closed .menuToggle {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
+}
+
+/* Показываем кнопку при наведении на menu или w_closed */
+.menu:hover .menuToggle,
+.w_closed:hover .menuToggle {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease-in-out, visibility 0s 0s; /* убираем задержку для visibility */
 }
 
 .menuHeader {
@@ -36,17 +52,25 @@
     justify-content: flex-end;
     position: absolute;
     right: 10px;
-    top: 10px;
+    top: 5px;
+    transition: all ease-in-out 0.3s;
 }
 
 .menuToggle {
     background: none;
     border: none;
     color: var(--white);
-    font-size: 20px;
+    font-size: 25px;
     cursor: pointer;
+    opacity: 0; /* по умолчанию скрыто */
+    visibility: hidden; /* по умолчанию скрыто */
+    transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
 }
 
+.menuToggle span img {
+    height: 15px;
+    transition: all ease-in-out 0.3s;
+}
 
 .menu_logo {
     width: 100%;

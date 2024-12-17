@@ -46,7 +46,8 @@
 
 .menu_items__elem .countRequests {
   position: absolute;
-  right: 20px;
+  /* right: 20px; */
+  right: 15px;
   background-color: red;
   color: var(--white);
   padding: 0px 8px;

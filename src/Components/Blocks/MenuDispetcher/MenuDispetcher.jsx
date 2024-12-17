@@ -231,7 +231,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
         <div className={classes.menuHeader}>
           {/* Стрелка для открытия/закрытия меню */}
           <button className={classes.menuToggle} onClick={handleMenuToggle}>
-            <span>{menuOpen ? "←" : "→"}</span> {/* Стрелка */}
+            <span>{menuOpen ? <img src="/arrow-left.png" alt=""/> : <img src="/arrow-right.png" alt="" />}</span> {/* Стрелка */}
           </button>
         </div>
         <Link
