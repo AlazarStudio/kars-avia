@@ -96,22 +96,42 @@ function CreateRequestNomerFond({
     // Преобразование reserve в булево значение
     const reserveBoolean = formData.reserve === "true";
 
-    let response_update_room = await updateHotel({
-      variables: {
-        updateHotelId: id,
-        input: {
-          rooms: [
-            {
-              name: nomerName,
-              category: formData.category,
-              reserve: reserveBoolean,
-              description: formData.description,
-            },
-          ],
+    let response_update_room;
+
+    if (formData.roomImages) {
+      response_update_room = await updateHotel({
+        variables: {
+          updateHotelId: id,
+          input: {
+            rooms: [
+              {
+                name: nomerName,
+                category: formData.category,
+                reserve: reserveBoolean,
+                description: formData.description,
+              },
+            ],
+          },
+          roomImages: formData.roomImages,
         },
-        roomImages: formData.roomImages,
-      },
-    });
+      });
+    } else {
+      response_update_room = await updateHotel({
+        variables: {
+          updateHotelId: id,
+          input: {
+            rooms: [
+              {
+                name: nomerName,
+                category: formData.category,
+                reserve: reserveBoolean,
+                description: formData.description,
+              },
+            ],
+          }
+        },
+      });
+    }
 
     if (response_update_room) {
       const sortedTarifs = Object.values(

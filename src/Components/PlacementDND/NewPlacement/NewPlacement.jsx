@@ -212,7 +212,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         ) {
             const filteredRequests = dataBrons.requests.requests.filter(
                 (request) =>
-                    request.status === "created" &&
+                    (request.status === "created" || request.status === "opened") &&
                     request.airport.city === hotelInfo.city
             );
 
