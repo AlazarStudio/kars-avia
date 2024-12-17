@@ -2,12 +2,19 @@ import { Link } from "react-router-dom";
 
 import classes from "./SuperAdminMenu.module.css";
 
-const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
+const SuperAdminMenu = ({
+  id,
+  allCreatedReserves,
+  allCreatedRequests,
+  menuOpen,
+}) => {
   return (
     <>
       <Link
         to={"/relay"}
         className={`${classes.menu_items__elem} ${
+          !menuOpen ? classes.jcc : ""
+        } ${
           (id == "relay" || id == undefined || !id) &&
           classes.menu_items__activeElem
         }`}
@@ -26,7 +33,7 @@ const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Эстафета
+        {menuOpen ? "Эстафета" : ""}
         {allCreatedRequests > 0 && (
           <div className={classes.countRequests}>{allCreatedRequests}</div>
         )}
@@ -34,8 +41,8 @@ const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
       <Link
         to={"/reserve"}
         className={`${classes.menu_items__elem} ${
-          id == "reserve" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "reserve" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -57,7 +64,7 @@ const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Резерв
+        {menuOpen ? "Резерв" : ""}
         {allCreatedReserves > 0 && (
           <div className={classes.countRequests}>{allCreatedReserves}</div>
         )}
@@ -65,8 +72,8 @@ const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
       <Link
         to={"/company"}
         className={`${classes.menu_items__elem} ${
-          id == "company" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "company" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -120,13 +127,13 @@ const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Компания
+        {menuOpen ? "Компания" : ""}
       </Link>
       <Link
         to={"/hotels"}
         className={`${classes.menu_items__elem} ${
-          id == "hotels" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "hotels" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -148,13 +155,13 @@ const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             stroke="var(--menu-gray)"
           />
         </svg>
-        Гостиницы
+        {menuOpen ? "Гостиницы" : ""}
       </Link>
       <Link
         to={"/airlines"}
         className={`${classes.menu_items__elem} ${
-          id == "airlines" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "airlines" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -169,13 +176,13 @@ const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Авиакомпании
+        {menuOpen ? "Авиакомпании" : ""}
       </Link>
       <Link
         to={"/reports"}
         className={`${classes.menu_items__elem} ${
-          id == "reports" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "reports" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -221,7 +228,7 @@ const SuperAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Отчеты
+        {menuOpen ? "Отчеты" : ""}
       </Link>
     </>
   );

@@ -31,6 +31,22 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     }
   }, [token]);
 
+  // Получаем состояние из localStorage или по умолчанию true
+  const storedMenuState = JSON.parse(localStorage.getItem("menuOpen"));
+  const [menuOpen, setMenuOpen] = useState(
+    storedMenuState !== null ? storedMenuState : true
+  );
+
+  useEffect(() => {
+    // Сохраняем состояние в localStorage при его изменении
+    localStorage.setItem("menuOpen", JSON.stringify(menuOpen));
+  }, [menuOpen]);
+
+  const handleMenuToggle = () => {
+    // Переключаем состояние меню
+    setMenuOpen((prevState) => !prevState);
+  };
+
   const navigate = useNavigate();
 
   const [reserves, setReserves] = useState([]);
@@ -86,7 +102,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
     context: {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
     },
     variables: { pagination: { skip: 0, take: 999999999 } },
@@ -100,7 +116,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
   } = useQuery(GET_REQUESTS, {
     context: {
       headers: {
-        Authorization: `Bearer ${token}`
+        Authorization: `Bearer ${token}`,
       },
     },
     variables: { pagination: { skip: 0, take: 999999999 } },
@@ -204,15 +220,39 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     }
   }, [data, dataRequest, hotelCity, airlineName, newReserves, newRequests]);
 
+  // Пока значение menuOpen не загружено из localStorage, ничего не рендерим
+  if (menuOpen === null) {
+    return null; // или можно вернуть спиннер загрузки
+  }
+
   return (
     <>
-      <div className={classes.menu}>
-        <Link to={"/"} className={classes.menu_logo}>
-          <img src="/kars-avia-mainLogo.png" alt="" />
+      <div className={menuOpen ? `${classes.menu}` : `${classes.w_closed}`}>
+        <div className={classes.menuHeader}>
+          {/* Стрелка для открытия/закрытия меню */}
+          <button className={classes.menuToggle} onClick={handleMenuToggle}>
+            <span>{menuOpen ? <img src="/arrow-left.png" alt=""/> : <img src="/arrow-right.png" alt="" />}</span> {/* Стрелка */}
+          </button>
+        </div>
+        <Link
+          to={"/"}
+          className={
+            menuOpen ? `${classes.menu_logo}` : `${classes.side_menu_logo}`
+          }
+        >
+          {menuOpen ? (
+            <img src="/kars-avia-mainLogo.png" alt="" />
+          ) : (
+            <img src="/mini-logo.png" alt="" />
+          )}
         </Link>
         <div className={classes.menu_items}>
           {user.role == roles.hotelAdmin && (
-            <HotelAdminMenu id={id} allCreatedReserves={allCreatedReserves} />
+            <HotelAdminMenu
+              id={id}
+              allCreatedReserves={allCreatedReserves}
+              menuOpen={menuOpen}
+            />
           )}
 
           {user.role == roles.airlineAdmin && (
@@ -220,6 +260,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
               id={id}
               allCreatedRequests={allCreatedRequests}
               allCreatedReserves={allCreatedReserves}
+              menuOpen={menuOpen}
             />
           )}
 
@@ -228,6 +269,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
+              menuOpen={menuOpen}
             />
           )}
           {user.role == roles.dispatcerAdmin && (
@@ -235,6 +277,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
+              menuOpen={menuOpen}
             />
           )}
         </div>

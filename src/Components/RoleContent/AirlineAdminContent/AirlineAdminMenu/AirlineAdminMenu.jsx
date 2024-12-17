@@ -2,12 +2,19 @@ import { Link } from "react-router-dom";
 
 import classes from "./AirlineAdminMenu.module.css";
 
-const AirlineAdminMenu = ({ id, allCreatedRequests, allCreatedReserves }) => {
+const AirlineAdminMenu = ({
+  id,
+  allCreatedRequests,
+  allCreatedReserves,
+  menuOpen,
+}) => {
   return (
     <>
       <Link
         to={"/relay"}
         className={`${classes.menu_items__elem} ${
+          !menuOpen ? classes.jcc : ""
+        } ${
           (id == "relay" || id == undefined || !id) &&
           classes.menu_items__activeElem
         }`}
@@ -26,14 +33,14 @@ const AirlineAdminMenu = ({ id, allCreatedRequests, allCreatedReserves }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Эстафета
+        {menuOpen ? "Эстафета" : ""}
         {allCreatedRequests > 0 && (
           <div className={classes.countRequests}>{allCreatedRequests}</div>
         )}
       </Link>
       <Link
         to={"/reserve"}
-        className={`${classes.menu_items__elem} ${
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ''} ${
           id == "reserve" && classes.menu_items__activeElem
         }`}
       >
@@ -57,14 +64,14 @@ const AirlineAdminMenu = ({ id, allCreatedRequests, allCreatedReserves }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Резерв
+        {menuOpen ? "Резерв" : ""}
         {allCreatedReserves > 0 && (
           <div className={classes.countRequests}>{allCreatedReserves}</div>
         )}
       </Link>
       <Link
         to={"/hotels"}
-        className={`${classes.menu_items__elem} ${
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ''} ${
           id == "hotels" && classes.menu_items__activeElem
         }`}
       >
@@ -88,11 +95,11 @@ const AirlineAdminMenu = ({ id, allCreatedRequests, allCreatedReserves }) => {
             stroke="var(--menu-gray)"
           />
         </svg>
-        Гостиницы
+        {menuOpen ? "Гостиницы" : ""}
       </Link>
       <Link
         to={"/airlineCompany"}
-        className={`${classes.menu_items__elem} ${
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ''} ${
           id == "airlineCompany" && classes.menu_items__activeElem
         }`}
       >
@@ -148,11 +155,11 @@ const AirlineAdminMenu = ({ id, allCreatedRequests, allCreatedReserves }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Компания
+        {menuOpen ? "Компания" : ""}
       </Link>
       <Link
         to={"/airlineStaff"}
-        className={`${classes.menu_items__elem} ${
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ''} ${
           id == "airlineStaff" && classes.menu_items__activeElem
         }`}
       >
@@ -188,11 +195,11 @@ const AirlineAdminMenu = ({ id, allCreatedRequests, allCreatedReserves }) => {
             stroke-linejoin="round"
           />
         </svg>
-        Сотрудники
+        {menuOpen ? "Сотрудники" : ""}
       </Link>
       <Link
         to={"/airlineAbout"}
-        className={`${classes.menu_items__elem} ${
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ''} ${
           id == "airlineAbout" && classes.menu_items__activeElem
         }`}
       >
@@ -209,11 +216,11 @@ const AirlineAdminMenu = ({ id, allCreatedRequests, allCreatedReserves }) => {
             strokeLinejoin="round"
           />
         </svg>
-        О авиакомпании
+        {menuOpen ? "О авиакомпании" : ""}
       </Link>
       <Link
         to={"/reports"}
-        className={`${classes.menu_items__elem} ${
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ''} ${
           id == "reports" && classes.menu_items__activeElem
         }`}
       >
@@ -261,7 +268,7 @@ const AirlineAdminMenu = ({ id, allCreatedRequests, allCreatedReserves }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Отчеты
+        {menuOpen ? "Отчеты" : ""}
       </Link>
     </>
   );

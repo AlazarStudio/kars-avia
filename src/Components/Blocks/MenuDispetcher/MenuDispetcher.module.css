@@ -8,11 +8,90 @@
     display: flex;
     flex-direction: column;
     gap: 55px;
+    transition: all ease-in-out 0.3s;
+    position: relative;
+}
+
+/* .menuClosed {
+    transform: translateX(-80%);
+} */
+
+.w_closed {
+    width: 130px;
+    min-width: 130px;
+    height: 100vh;
+    background-color: var(--menu-bg);
+    color: var(--white);
+    padding: 30px 15px 15px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    transition: all ease-in-out 0.3s;
+    position: relative;
+}
+
+/* Скрываем кнопку menuToggle по умолчанию */
+.menuToggle,
+.w_closed .menuToggle {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
+}
+
+/* Показываем кнопку при наведении на menu или w_closed */
+.menu:hover .menuToggle,
+.w_closed:hover .menuToggle {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease-in-out, visibility 0s 0s; /* убираем задержку для visibility */
+}
+
+.menuHeader {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    position: absolute;
+    right: 10px;
+    top: 5px;
+    transition: all ease-in-out 0.3s;
+}
+
+.menuToggle {
+    background: none;
+    border: none;
+    color: var(--white);
+    font-size: 25px;
+    cursor: pointer;
+    opacity: 0; /* по умолчанию скрыто */
+    visibility: hidden; /* по умолчанию скрыто */
+    transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
+}
+
+.menuToggle span img {
+    height: 15px;
+    transition: all ease-in-out 0.3s;
 }
 
 .menu_logo {
     width: 100%;
     padding-left: 20px;
+}
+
+.side_menu_logo {
+    padding: 0;
+    transition: all ease-in-out 0.3s;
+}
+
+.menu_logo img {
+    width: 278px;
+    height: 93px;
+    transition: all ease-in-out 0.3s;
+}
+
+.side_menu_logo img {
+    width: 101px;
+    height: 33px;
+    transition: all ease-in-out 0.3s;
 }
 
 .menu_items__elem {
@@ -74,6 +153,11 @@
 
 .menu_items__activeElem .countRequests {
     opacity: 1;
+}
+
+/* Убираем стили для скрытого меню */
+.menuClosed .menu_items {
+    display: none;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}
