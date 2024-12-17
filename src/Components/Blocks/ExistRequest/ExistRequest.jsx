@@ -268,6 +268,23 @@ function ExistRequest({
           <div className={classes.requestTitle}>
             <div className={classes.requestTitle_name}>
               {formData.requestNumber}
+              {
+                (formData.status == "done" ||
+                  formData.status == "extended" ||
+                  formData.status == "reduced" ||
+                  formData.status == "transferred" ||
+                  formData.status == "earlyStart") &&
+                <button
+                  className={classes.canceledButton}
+                  onClick={() => {
+                    onClose();
+                    handleCancelRequest(chooseRequestID);
+                  }}
+                >
+                  Отменить
+                  {/* <img src="/user-check.png" alt="" /> */}
+                </button>
+              }
             </div>
             <div className={classes.requestTitle_close} onClick={closeButton}>
               <img src="/close.png" alt="" />

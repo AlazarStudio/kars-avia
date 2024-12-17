@@ -18,7 +18,7 @@ import Notification from "../../Notification/Notification";
 import AddNewPassengerPlacement from "../../Blocks/AddNewPassengerPlacement/AddNewPassengerPlacement";
 import ExistReserveMess from "../../Blocks/ExistReserveMess/ExistReserveMess";
 
-const DAY_WIDTH = 30;
+const DAY_WIDTH = 40;
 const LEFT_WIDTH = 220;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
@@ -117,6 +117,10 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 return "Перенесен";
             case "earlyStart":
                 return "Ранний заезд";
+            case "archived":
+                return "Архив";
+            case "archiving":
+                return "Готов к архиву";
             default:
                 return "Неизвестно";
         }
@@ -1187,7 +1191,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
                     {!checkRoomsType &&
                         <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
-                            <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Typography variant="h6" sx={{ padding: '10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по эстафете в городе {hotelInfo.city}
                             </Typography>
 
