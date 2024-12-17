@@ -19,6 +19,9 @@
     font-weight: 600;
     line-height: 38.73px;
     color: var(--main-gray);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .requestTitle_close {
@@ -115,6 +118,24 @@ select {
     gap: 5px;
     display: flex;
     justify-content: space-between;
+}
+
+.canceledButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--red);
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 8px 10px;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    border: none;
+    cursor: pointer;
 }
 
 .requestButton button {

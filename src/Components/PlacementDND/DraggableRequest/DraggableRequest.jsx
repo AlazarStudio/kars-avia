@@ -33,6 +33,10 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                 return { backgroundColor: "#ff9800", borderColor: "#e9831a" }; // Красный для "Сокращен"
             case "Ранний заезд":
                 return { backgroundColor: "#9575cd", borderColor: "#865ecc" }; // Жёлтый
+            case "Архив":
+                return { backgroundColor: "#3b653d", borderColor: "#1b5e20" }; // Тёмно-коричневый
+            case "Готов к архиву":
+                return { backgroundColor: "#638ea4", borderColor: "#78909c" }; // Светло-серый с голубым оттенком
             default:
                 return { backgroundColor: "#9e9e9e", borderColor: "#757575" }; // Серый для остальных
         }

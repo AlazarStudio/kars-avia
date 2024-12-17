@@ -129,7 +129,17 @@ function HotelShahmatka_tabComponent({ id }) {
                             <div className={classes.legendInfoColor} style={{ backgroundColor: '#f44336' }}></div>
                             <div className={classes.legendInfoText}> Сокращен</div>
                         </div>
+                    </div>
 
+                    <div className={classes.legendLine}>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #638ea4', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#638ea4' }}></div>
+                            <div className={classes.legendInfoText}> Готов к архиву</div>
+                        </div>
+                        <div className={classes.legendInfo} style={{ border: '1px solid #3b653d', width: '130px' }}>
+                            <div className={classes.legendInfoColor} style={{ backgroundColor: '#3b653d' }}></div>
+                            <div className={classes.legendInfoText}> Архив</div>
+                        </div>
                     </div>
                 </div>
 
