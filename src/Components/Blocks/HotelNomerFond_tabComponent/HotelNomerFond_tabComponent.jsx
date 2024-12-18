@@ -42,7 +42,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -50,7 +50,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -62,7 +62,15 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                     .reduce((acc, room) => {
                         if (!acc[room.category]) {
                             acc[room.category] = {
-                                name: room.category === 'onePlace' ? 'Одноместный' : room.category === 'twoPlace' ? 'Двухместный' : '',
+                                name: room.category === "onePlace"
+                                    ? "Одноместный"
+                                    : room.category === "twoPlace"
+                                        ? "Двухместный"
+                                        : room.category === "threePlace"
+                                            ? "Трехместный"
+                                            : room.category === "fourPlace"
+                                                ? "Четырехместный"
+                                                : "",
                                 origName: room.category,
                                 rooms: []
                             };
@@ -167,8 +175,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         setShowEditCategory(false);
     };
 
-    const toggleEditNomer = (nomer, category) => {
-        setSelectedNomer({ nomer, category });
+    const toggleEditNomer = (nomer, category, reserve, active) => {
+        setSelectedNomer({ nomer, category, reserve, active });
         setShowEditNomer(true);
     }
 
@@ -185,6 +193,9 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         const matchesSearch = searchTarif === '' || request.rooms.some(room => room.name.toLowerCase().includes(searchTarif.toLowerCase()));
         return matchesCategory && matchesSearch;
     });
+
+    // console.log(data?.hotel?.rooms?.map(room => room.reserve));
+    const [filter, setFilter] = useState('quote');
 
     return (
         <>
@@ -217,6 +228,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                     </div>
 
                     <InfoTableDataNomerFond
+                        filter={filter}
+                        setFilter={setFilter}
                         toggleRequestSidebar={toggleEditCategory}
                         toggleRequestEditNumber={toggleEditNomer}
                         requests={filteredRequestsTarif}
@@ -224,15 +237,18 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                         openDeleteNomerComponent={openDeleteNomerComponent}
                     />
 
-                    <CreateRequestNomerFond id={id} tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
+                    <CreateRequestNomerFond id={id} filter={filter} tarifs={requestsTarifs} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} uniqueCategories={uniqueCategories} />
 
                     <EditRequestNomerFond
                         id={id}
+                        filter={filter}
                         tarifs={requestsTarifs}
                         show={showEditNomer}
                         onClose={() => setShowEditNomer(false)}
                         nomer={selectedNomer.nomer}
                         category={selectedNomer.category}
+                        reserve={selectedNomer.reserve}
+                        active={selectedNomer.active}
                         selectedNomer={selectedNomer}
                         onSubmit={handleEditNomer}
                         uniqueCategories={uniqueCategories}

@@ -16,6 +16,7 @@
     border-radius: 10px;
     background-color: var(--white);
     height: calc(100vh - 235px);
+    overflow: scroll;
 }
 
 .airlineAbout_top {
@@ -25,6 +26,46 @@
     padding-bottom: 30px;
     border-bottom: 1px solid #9E9E9E;
 }
+
+.column {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.w50 {
+    width: 50%;
+}
+
+.airlineAbout_info__filters {
+    display: flex;
+    gap: 20px;
+}
+
+.airlineAbout_info__filters button {
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 1px solid #54587380;
+    outline: none;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #545873;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+}
+
+.airlineAbout_info__filters button:hover {
+    background-color: #e4e4efbd;
+    border: 1px solid transparent;
+    transition: all ease-in-out 0.3s;
+}
+
+.activeButton {
+    background-color: #E4E4EF !important;
+    border: 1px solid transparent !important;
+    transition: all ease-in-out 0.3s;
+}
+
 
 .airlineAbout_top_complete {
     display: flex;
@@ -78,17 +119,18 @@
 
 .airlineAbout_info_block {
     display: flex;
-    flex-direction: column;
-    gap: 30px;
-    width: 40%;
+    gap: 80px;
+    justify-content: space-between;
+    padding-right: 20px;
+    width: 100%;
 }
 
 .airlineAbout_info_label {
     font-family: Nunito Sans;
     font-size: 16px;
-    font-weight: 400;
+    font-weight: 600;
     line-height: 20px;
-    color: #9E9E9E;
+    color: #545873;
 }
 
 .airlineAbout_info_item {

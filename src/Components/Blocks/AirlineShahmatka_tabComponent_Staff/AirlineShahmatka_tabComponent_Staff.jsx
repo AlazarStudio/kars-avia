@@ -113,7 +113,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

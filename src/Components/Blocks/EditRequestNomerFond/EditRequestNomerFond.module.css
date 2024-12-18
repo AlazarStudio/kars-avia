@@ -73,6 +73,15 @@ select {
     cursor: pointer;
 }
 
+.requestData textarea {
+    height: 150px;
+    outline: none;
+    padding: 10px;
+    cursor: pointer;
+    border: 1px solid var(--text-gray);
+    border-radius: 5px;
+}
+
 .requestMiddle {
     height: calc(100% - 90px - 71px);
     overflow: hidden;

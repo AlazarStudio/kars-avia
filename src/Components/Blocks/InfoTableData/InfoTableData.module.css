@@ -53,6 +53,7 @@
     font-weight: 400;
     color: var(--main-gray);
     width: 100%;
+    text-align: center;
 }
 
 .w5 {
@@ -98,9 +99,10 @@
 
 .InfoTable_data_elem_moreInfo {
     font-family: Nunito Sans;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 10px;
     color: #0057C3;

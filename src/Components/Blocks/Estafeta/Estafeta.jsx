@@ -7,8 +7,8 @@ import CreateRequest from "../CreateRequest/CreateRequest";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
-import { GET_REQUESTS, GET_AIRLINE, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, GET_REQUESTS_ARCHIVED, getCookie } from '../../../../graphQL_requests.js';
-import { useQuery, useSubscription } from "@apollo/client";
+import { GET_REQUESTS, GET_AIRLINE, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, GET_REQUESTS_ARCHIVED, getCookie, CANCEL_REQUEST } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ReactPaginate from 'react-paginate';
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
@@ -16,6 +16,9 @@ function Estafeta({ user }) {
     const token = getCookie('token');
     const location = useLocation();
     const navigate = useNavigate();
+
+    const [selectedAirline, setSelectedAirline] = useState(null);
+    const [selectedAirport, setSelectedAirport] = useState(null);
 
     // Инициализация текущей страницы на основе параметров URL или по умолчанию
     const pageNumberRelay = new URLSearchParams(location.search).get("page");
@@ -116,6 +119,7 @@ function Estafeta({ user }) {
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const [chooseObject, setChooseObject] = useState([]);
     const [chooseRequestID, setChooseRequestID] = useState();
+    const [chooseCityRequest, setChooseCityRequest] = useState();
 
     // Функции для переключения видимости боковых панелей
     const toggleCreateSidebar = () => setShowCreateSidebar(!showCreateSidebar);
@@ -128,6 +132,30 @@ function Estafeta({ user }) {
 
     const handleChange = (e) => setFilterData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSearch = (e) => setSearchQuery(e.target.value);
+
+    // Запрос на отмену созданной, но не размещенной заявки
+    const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        },
+    });
+
+    const handleCancelRequest = async (id) => {
+        try {
+            // Отправка запроса с правильным ID заявки
+            const response = await cancelRequestMutation({
+                variables: {
+                    cancelRequestId: id,
+                },
+            });
+            // console.log("Заявка успешно отменена", response);
+        } catch (error) {
+            console.error("Ошибка при отмене заявки:", JSON.stringify(error));
+        }
+    };
+
 
     // Запрос для получения имени авиакомпании пользователя
     const [airlineName, setAirlineName] = useState();
@@ -143,7 +171,12 @@ function Estafeta({ user }) {
             const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
             const matchesDate = !filterData.filterDate || convertToDate(Number(request.createdAt)) === filterData.filterDate;
             const matchesSearch = searchQuery.toLowerCase();
-            const matchesAirline = airlineName ? request.airline.name.toLowerCase() === airlineName.toLowerCase() : true;
+
+            // Если выбрана авиакомпания, фильтруем по ней. Если "Все авиакомпании", не фильтруем.
+            const matchesAirline = selectedAirline ? request.airline.id === selectedAirline.id : true;
+
+            // Если выбран аэропорт, фильтруем по аэропорту. Если "Все аэропорты", не фильтруем.
+            const matchesAirport = selectedAirport?.name ? request.airport.id === selectedAirport.id : true;
 
             const searchFields = [
                 request.person.name,
@@ -153,15 +186,19 @@ function Estafeta({ user }) {
                 request.airline.name,
                 request.airport.name,
                 request.airport.code,
-                request.arrival.flight,
-                request.arrival.date,
-                request.departure.flight,
-                request.departure.date,
+                request.arrival,
+                request.departure,
                 request.status
             ];
-            return matchesAirline && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
+
+            return matchesAirline && matchesAirport && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
         });
-    }, [requests, filterData, searchQuery, airlineName]);
+    }, [requests, filterData, searchQuery, selectedAirline, selectedAirport]);
+
+
+
+
+
 
     const filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
 
@@ -191,8 +228,13 @@ function Estafeta({ user }) {
                 />
                 <Filter
                     user={user}
+                    isVisibleAirFiler={true}
                     toggleSidebar={toggleCreateSidebar}
                     handleChange={handleChange}
+                    selectedAirline={selectedAirline}
+                    setSelectedAirline={setSelectedAirline}
+                    selectedAirport={selectedAirport}
+                    setSelectedAirport={setSelectedAirport}
                     filterData={filterData}
                     buttonTitle={'Создать заявку'}
                     filterList={filterList}
@@ -227,8 +269,8 @@ function Estafeta({ user }) {
             )}
             {/* Боковые панели для создания и выбора заявок */}
             <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
-            <ExistRequest show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} user={user} />
-            <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} id={'relay'} />
+            <ExistRequest setChooseCityRequest={setChooseCityRequest} show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} handleCancelRequest={handleCancelRequest} user={user} />
+            <ChooseHotel chooseCityRequest={chooseCityRequest} show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} chooseRequestID={chooseRequestID} id={'relay'} />
         </div>
     );
 }

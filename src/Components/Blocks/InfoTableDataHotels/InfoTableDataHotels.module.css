@@ -68,20 +68,40 @@
     width: 10%;
 }
 
+.w7 {
+    width: 7%
+}
+
 .w8 {
     width: 8%;
+}
+
+.w10 {
+    width: 10%;
+}
+
+.w11 {
+    width: 11%
+}
+
+.w15 {
+    width: 15%
 }
 
 .w20 {
     width: 20%;
 }
 
+.w25 {
+    width: 25%;
+}
+
 .w30 {
     width: 30%;
 }
 
-.w50 {
-    width: 50%;
+.w35 {
+    width: 35%;
 }
 
 .w12:last-child {
@@ -138,7 +158,8 @@
 }
 
 .InfoTable_data_elem_title {
-    text-align: left;
+    text-align: center;
+    padding: 0 10px;
 }
 
 .InfoTable_data_elem_avatar {
@@ -152,6 +173,13 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.star {
+    width: 19px;
+    height: 17px;
+    margin-right: 3px;
+    object-fit: contain;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

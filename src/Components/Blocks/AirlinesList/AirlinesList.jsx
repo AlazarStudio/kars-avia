@@ -5,22 +5,33 @@ import { requestsAirlanes } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataAirlines from "../InfoTableDataAirlines/InfoTableDataAirlines";
 import CreateRequestAirline from "../CreateRequestAirline/CreateRequestAirline";
-import { GET_AIRLINES } from "../../../../graphQL_requests";
-import { useQuery } from "@apollo/client";
+import { GET_AIRLINES, GET_AIRLINES_SUBSCRIPTION, GET_AIRLINES_UPDATE_SUBSCRIPTION } from "../../../../graphQL_requests";
+import { useQuery, useSubscription } from "@apollo/client";
 
 function AirlinesList({ children, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
 
     const [companyData, setCompanyData] = useState([]);
-    const { loading, error, data } = useQuery(GET_AIRLINES);
+    const { loading, error, data, refetch } = useQuery(GET_AIRLINES);
+    const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
+    const { data: dataSubscriptionUpd } = useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION);
 
     useEffect(() => {
         if (data && data.airlines) {
             const sortedAirlines = [...data.airlines].sort((a, b) => a.name.localeCompare(b.name));
             setCompanyData(sortedAirlines);
         }
-    }, [data]);
+
+        if (dataSubscription && dataSubscription.hotelCreated) {
+            setCompanyData((prevCompanyData) => {
+                const updatedData = [...prevCompanyData, dataSubscription.airlineCreated];
+                return updatedData.sort((a, b) => a.name.localeCompare(b.name));
+            });
+        }
+
+        refetch()
+    }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
 
     const addHotel = (airline) => {
         setCompanyData([...companyData, airline].sort((a, b) => a.name.localeCompare(b.name)));

@@ -19,6 +19,9 @@
     font-weight: 600;
     line-height: 38.73px;
     color: var(--main-gray);
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .requestTitle_close {
@@ -112,12 +115,55 @@ select {
     bottom: 0;
     background-color: #fff;
     width: 100%;
+    gap: 5px;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 
-.requestButton a {
-    width: 50%;
+.canceledButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--red);
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 8px 10px;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    border: none;
+    cursor: pointer;
+}
+
+.requestButton button {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--red);
+    border-radius: 5px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 0 35px;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    border: none;
+    cursor: pointer;
+}
+
+.requestButton button:hover {
+    opacity: 1;
+}
+
+.requestButton a,
+.requestButton button {
+    width: 49%;
 }
 
 .requestDataTitle {
@@ -320,7 +366,7 @@ select {
     flex-direction: column;
     gap: 30px;
     align-items: center;
-    height: 600px;
+    height: auto;
     overflow: hidden;
     overflow-y: scroll;
     padding: 10px 0;

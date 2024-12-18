@@ -13,6 +13,37 @@
 
 
 
+.filter_wrapper {
+    display: flex;
+    gap: 5px;
+}
+
+.filter_wrapper button {
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 1px solid #54587380;
+    outline: none;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #545873;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+}
+
+.filter_wrapper button:hover {
+    background-color: #e4e4efbd;
+    border: 1px solid transparent;
+    transition: all ease-in-out 0.3s;
+}
+
+.activeButton {
+    background-color: #E4E4EF !important;
+    border: 1px solid transparent !important;
+    transition: all ease-in-out 0.3s;
+}
+
+
+
 .InfoTable_title {
     color: var(--text-gray);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
@@ -115,7 +146,7 @@
 }
 
 .bottom {
-    height: calc(100vh - 296px);
+    height: calc(100vh - 370px);
     overflow: hidden;
     overflow-y: scroll;
 }
@@ -132,6 +163,7 @@
 .InfoTable_data_elem_title {
     text-align: left;
     color: #9E9E9E;
+    padding: 0 10px;
 }
 
 .InfoTable_data_elem_avatar {
@@ -161,7 +193,7 @@
     transition: all 0.3s ease-in-out;
 }
 
-.InfoTable_BottomInfo__item___elem img{
+.InfoTable_BottomInfo__item___elem img {
     opacity: 0;
     transition: all 0.3s ease-in-out;
 }
@@ -170,7 +202,7 @@
     background-color: var(--hover-gray);
 }
 
-.InfoTable_BottomInfo__item___elem:hover img{
+.InfoTable_BottomInfo__item___elem:hover img {
     opacity: 1;
 }
 
@@ -188,7 +220,7 @@
     gap: 20px;
 }
 
-.infoTable_buttons img{
+.infoTable_buttons img {
     cursor: pointer;
 }
 

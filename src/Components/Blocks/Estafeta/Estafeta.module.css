@@ -1,5 +1,5 @@
 .section {
-    width: calc(100% - var(--menu-width));
+    width: 100%;
     min-width: 1000px;
     height: 100vh;
     display: flex;

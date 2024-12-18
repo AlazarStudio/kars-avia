@@ -3,7 +3,7 @@ import { gql } from "@apollo/client";
 // export const path = '192.168.0.113:4000';
 // export const path = '89.169.39.59:4000';
 
-// export const path = 'backend.karsavia.ru:4000';
+// export const path = 'backend.karsavia.ru:443';
 // export const server = `https://${path}`;
 
 export const path = '192.168.0.24:4000';
@@ -92,14 +92,8 @@ export const GET_REQUESTS = gql`
           city
           code
         }
-        arrival {
-          flight
-          date
-        }
-        departure {
-          flight
-          date
-        }
+        arrival
+        departure
         roomCategory
         mealPlan {
           included
@@ -122,6 +116,7 @@ export const GET_REQUESTS = gql`
           gender
         }
         airline {
+          id
           name
           images
         }
@@ -146,14 +141,8 @@ export const GET_REQUESTS_ARCHIVED = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -196,14 +185,8 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -252,14 +235,8 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -329,14 +306,8 @@ export const CREATE_REQUEST_MUTATION = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -414,14 +385,8 @@ export const GET_REQUEST = gql`
             city
             code
           }
-          arrival {
-            flight
-            date
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           roomCategory
           mealPlan {
             included
@@ -466,6 +431,15 @@ export const GET_REQUEST = gql`
     }
 `;
 
+export const CANCEL_REQUEST = gql`
+  mutation CancelRequest($cancelRequestId: ID!) {
+    cancelRequest(id: $cancelRequestId) {
+      id
+      status
+    }
+  }
+`;
+
 export const UPDATE_HOTEL_BRON = gql`
   mutation Mutation($updateHotelId: ID!, $input: UpdateHotelInput!) {
     updateHotel(id: $updateHotelId, input: $input) {
@@ -499,6 +473,7 @@ export const GET_BRONS_HOTEL = gql`
       name
       hotelChesses {
         id
+        status
         public
         start
         end
@@ -511,6 +486,12 @@ export const GET_BRONS_HOTEL = gql`
           position
           gender
         }
+        passenger {
+          id
+          name
+          number
+          gender
+        }
         request {
           id
           airport {
@@ -518,14 +499,8 @@ export const GET_BRONS_HOTEL = gql`
             code
             name
           }
-          arrival {
-            date
-            flight
-          }
-          departure {
-            flight
-            date
-          }
+          arrival
+          departure
           mealPlan {
             included
             breakfast
@@ -538,6 +513,28 @@ export const GET_BRONS_HOTEL = gql`
           }
           status
           requestNumber
+        }
+        reserve {
+          id
+          airport {
+            city
+            code
+            name
+          }
+          arrival
+          departure
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          airline {
+            name
+            images
+          }
+          status
+          reserveNumber
         }
       }
     }
@@ -613,9 +610,7 @@ export const GET_LOGS = gql`
         name
       }
       id
-      arrival {
-        flight
-      }
+      arrival
       hotel {
         name
       }
@@ -643,14 +638,8 @@ export const SAVE_MEALS_MUTATION = gql`
 export const SAVE_HANDLE_EXTEND_MUTATION = gql`
   mutation ExtendRequestDates($input: ExtendRequestDatesInput!) {
     extendRequestDates(input: $input) {
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       hotelChess {
         start
         end
@@ -697,14 +686,8 @@ export const CREATE_REQUEST_RESERVE_MUTATION = gql`
         city
         code
       }
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       mealPlan {
         included
         breakfast
@@ -737,20 +720,20 @@ export const GET_RESERVE_REQUESTS = gql`
       totalPages
       reserves {
         id
+        hotel {
+          hotel {
+            id
+          }
+          capacity
+        }
         airport {
           id
           name
           city
           code
         }
-        arrival {
-          flight
-          date
-        }
-        departure {
-          flight
-          date
-        }
+        arrival
+        departure
         mealPlan {
           included
           breakfast
@@ -774,6 +757,7 @@ export const GET_RESERVE_REQUESTS = gql`
         }
         reserveNumber
         passengerCount
+        reserveForPerson
       }
     }
   }
@@ -797,14 +781,8 @@ export const REQUEST_RESERVE_CREATED_SUBSCRIPTION = gql`
         images
       }
       senderId
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       mealPlan {
         included
         breakfast
@@ -836,14 +814,8 @@ export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION = gql`
         images
       }
       senderId
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       mealPlan {
         included
         breakfast
@@ -867,14 +839,8 @@ export const GET_RESERVE_REQUEST = gql`
         city
         code
       }
-      arrival {
-        flight
-        date
-      }
-      departure {
-        flight
-        date
-      }
+      arrival
+      departure
       mealPlan {
         included
         breakfast
@@ -921,6 +887,18 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
         name
         city
       }
+      hotelChess {
+        status
+        passenger {
+          id
+          name
+        }
+        client {
+          id
+          name
+        }
+        room
+      }
       passengers {
         id
         name
@@ -936,6 +914,24 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
       }
       reserve {
         id
+        arrival
+        departure
+        airline {
+          name
+          images
+        }
+        hotelChess {
+          status
+          passenger {
+            id
+            name
+          }
+          client {
+            id
+            name
+          }
+          room
+        }
       }
     }
   }
@@ -975,6 +971,18 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS = gql`
     reservePersons {
       reserveHotel {
         id
+        person {
+          id
+          name
+          number
+          gender
+        }
+        passengers {
+          id
+          name
+          number
+          gender
+        }
       }
       passengers {
         id
@@ -987,6 +995,27 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS = gql`
         name
         number
         gender
+      }
+    }
+  }
+`;
+export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT = gql`
+  subscription ReservePersons {
+    reservePersons {
+      reserveHotel {
+        id
+        person {
+          id
+          name
+          number
+          gender
+        }
+        passengers {
+          id
+          name
+          number
+          gender
+        }
       }
     }
   }
@@ -1046,7 +1075,8 @@ export const CREATE_HOTEL = gql`
       name
       city
       address
-      quote
+      stars
+      airportDistance
     }
   }
 `;
@@ -1059,8 +1089,43 @@ export const GET_HOTELS = gql`
           city
           address
           quote
+          provision
           images
+          stars
+          airportDistance
       }
+  }
+`;
+
+export const GET_HOTELS_SUBSCRIPTION = gql`
+  subscription Subscription {
+    hotelCreated {
+      id
+      name
+      city
+      address
+      quote
+      provision
+      images
+      stars
+      airportDistance
+    }
+  }
+`;
+
+export const GET_HOTELS_UPDATE_SUBSCRIPTION = gql`
+  subscription Subscription {
+    hotelUpdated {
+      id
+      name
+      city
+      address
+      quote
+      provision
+      images
+      stars
+      airportDistance
+    }
   }
 `;
 
@@ -1069,6 +1134,8 @@ export const GET_HOTEL = gql`
     hotel(id: $hotelId) {
       id
       name
+      stars
+      airportDistance
       country
       city
       address
@@ -1083,6 +1150,16 @@ export const GET_HOTEL = gql`
       images
       link
       description
+      rooms {
+        id
+        name
+        category
+        active
+        places
+        reserve
+        description
+        images
+      }
       breakfast {
         start
         end
@@ -1112,6 +1189,8 @@ export const GET_HOTEL_TARIFS = gql`
     hotel(id: $hotelId) {
       priceOneCategory
       priceTwoCategory
+      priceThreeCategory
+      priceFourCategory
     }
   }
 `;
@@ -1136,6 +1215,10 @@ export const GET_HOTEL_ROOMS = gql`
         name
         category
         places
+        active
+        reserve
+        description
+        images
       }
     }
   }
@@ -1150,13 +1233,17 @@ export const GET_HOTEL_NAME = gql`
 `;
 
 export const UPDATE_HOTEL = gql`
-  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
-    updateHotel(id: $updateHotelId, input: $input) {
+  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!, $images: [Upload!], $roomImages: [Upload!]) {
+    updateHotel(id: $updateHotelId, input: $input, images: $images, roomImages: $roomImages) {
       rooms {
         id
         name
         category
         places
+        reserve
+        active
+        description
+        images
       }
       breakfast {
         start
@@ -1170,6 +1257,7 @@ export const UPDATE_HOTEL = gql`
         start
         end
       }
+      images
     }
   }
 `;
@@ -1179,6 +1267,8 @@ export const UPDATE_HOTEL_TARIF = gql`
     updateHotel(id: $updateHotelId, input: $input) {
       priceOneCategory
       priceTwoCategory
+      priceThreeCategory
+      priceFourCategory
     }
   }
 `;
@@ -1290,6 +1380,26 @@ export const GET_AIRLINES = gql`
   }
 `;
 
+export const GET_AIRLINES_SUBSCRIPTION = gql`
+  subscription Subscription {
+    airlineCreated {
+      id
+      images
+      name
+    }
+  }
+`;
+
+export const GET_AIRLINES_UPDATE_SUBSCRIPTION = gql`
+  subscription Subscription {
+    airlineUpdated {
+      id
+      images
+      name
+    }
+  }
+`;
+
 export const CREATE_AIRLINE = gql`
   mutation Mutation($input: CreateAirlineInput!, $images: [Upload!]) {
     createAirline(input: $input, images: $images) {
@@ -1326,6 +1436,8 @@ export const GET_AIRLINE_TARIFS = gql`
     airline(id: $airlineId) {
       priceOneCategory
       priceTwoCategory
+      priceThreeCategory
+      priceFourCategory
     }
   }
 `;
@@ -1343,10 +1455,11 @@ export const GET_AIRLINE_MEAL_PRICE = gql`
 `;
 
 export const UPDATE_AIRLINE = gql`
-  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
-    updateAirline(id: $updateAirlineId, input: $input) {
+  mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!, $images: [Upload!]) {
+    updateAirline(id: $updateAirlineId, input: $input, images: $images) {
       name
       id
+      images
     }
   }
 `;
@@ -1356,6 +1469,8 @@ export const UPDATE_AIRLINE_TARIF = gql`
     updateAirline(id: $updateAirlineId, input: $input) {
       priceOneCategory
       priceTwoCategory
+      priceThreeCategory
+      priceFourCategory
     }
   }
 `;
@@ -1565,9 +1680,24 @@ export const GET_DISPATCHERS = gql`
   }
 `;
 
+export const GET_DISPATCHERS_SUBSCRIPTION = gql`
+  subscription Subscription {
+    userCreated {
+      id
+      name
+      images
+      role
+      position
+      email
+      login
+    }
+  }
+`;
+
 export const GET_DISPATCHER = gql`
   query Query($userId: ID!) {
     user(userId: $userId) {
+      id
       name
       role
       position
@@ -1610,6 +1740,21 @@ export const UPDATE_DISPATCHER_USER = gql`
   }
 `;
 
+export const UPDATE_USER = gql`
+  mutation UpdateUser($input: UpdateUserInput!, $images: [Upload!]) {
+    updateUser(input: $input, images: $images) {
+      id
+      name
+      email
+      login
+      images
+    }
+  }
+`;
+
+
+
+
 export const DELETE_DISPATCHER_USER = gql`
   mutation Mutation($deleteUserId: ID!) {
     deleteUser(id: $deleteUserId) {
@@ -1624,3 +1769,72 @@ export const DELETE_DISPATCHER_USER = gql`
 `;
 
 // Запросы в компанию
+
+// Отчеты
+
+export const CREATE_REPORT = gql`
+  mutation CreateReport($input: CreateReportInput!) {
+    createReport(input: $input) {
+      id
+      name
+      url
+      createdAt
+    }
+  }
+`;
+
+export const GET_AIRLINE_REPORT = gql`
+  query GetAirlineReport($filter: ReportFilterInput) {
+    getAirlineReport(filter: $filter) {
+      airlineId
+      reports {
+        id
+        name
+        url
+        createdAt
+        airlineId
+        airline {
+          id
+          name
+          images
+        }
+        startDate
+        endDate
+      }
+    }
+  }
+`;
+
+export const GET_REPORTS_SUBSCRIOPTION = gql`
+  subscription Subscription {
+    reportCreated {
+      id
+      name
+    }
+  }
+`;
+
+export const GET_HOTEL_REPORT = gql`
+  query GetHotelReport($filter: ReportFilterInput) {
+    getHotelReport(filter: $filter) {
+      hotelId
+      reports {
+        id
+        name
+        url
+        createdAt
+        hotelId
+        hotel {
+          id
+          name
+          images
+        }
+        startDate
+        endDate
+      }
+    }
+  }
+`;
+
+
+// Отчеты

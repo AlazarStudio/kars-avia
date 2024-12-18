@@ -46,15 +46,20 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
 
     return (
         <div className={classes.dropdown} ref={searchRef} style={{ width: width ? width : '100%' }}>
-            <input
-                type="text"
-                className={classes.search}
-                value={searchTerm}
-                onChange={handleInputChange}
-                onFocus={handleFocus}
-                placeholder={placeholder}
-            // disabled={!searchable}
-            />
+            <div className={classes.dropdown_wrapper}>
+                <input
+                    type="text"
+                    className={classes.search}
+                    value={searchTerm}
+                    onChange={handleInputChange}
+                    onFocus={handleFocus}
+                    placeholder={placeholder}
+                    onClick={() => setSearchTerm('')}
+                // disabled={!searchable}
+                />
+                <img src="/arrow-bottomx1,5.png" alt="" />
+                {/* <span>&#8250;</span> */}
+            </div>
             {isOpen && (
                 <ul className={classes.dropdownList}>
                     {filteredOptions.length > 0 ? (

@@ -5,9 +5,13 @@ import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../graphQL_requests";
 
-function AddNewPassenger({ show, onClose, request, placement, setPlacement, user, showChooseHotels }) {
+function AddNewPassenger({ show, onClose, request, placement, setPlacement, user, hotelInfo, showChooseHotels, setshowModalForAddHotelInReserve, setShowReserveInfo }) {
     const [city, setCity] = useState("");
-    const [hotel, setHotel] = useState(user.hotelId);
+    const [hotel, setHotel] = useState('');
+
+    useEffect(() => {
+        setHotel(user.hotelId ? user.hotelId : hotelInfo?.id)
+    }, [user, hotelInfo]);
 
     const token = getCookie('token');
 
@@ -23,7 +27,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
             passengers: '',
             city: city, // Используем значение из состояния `city`
             hotel: hotel,
-            requestId: ''
+            requestId: request?.id
         });
     };
 
@@ -34,6 +38,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         if (success) {
             resetForm();
             onClose();
+            setShowReserveInfo && setShowReserveInfo(false)
         }
     };
 
@@ -62,7 +67,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -94,6 +99,8 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
             if (reserverAddHotel.data) {
                 resetForm();
                 onClose();
+                setshowModalForAddHotelInReserve && setshowModalForAddHotelInReserve(true)
+                setShowReserveInfo && setShowReserveInfo(true)
             }
         } catch (e) {
             console.error(e);

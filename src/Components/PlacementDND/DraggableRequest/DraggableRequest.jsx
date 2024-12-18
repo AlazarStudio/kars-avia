@@ -1,10 +1,11 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
-import { convertToDate } from "../../../../graphQL_requests";
+import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
+import { ConstructionOutlined } from "@mui/icons-material";
 
-const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole }) => {
+const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
         id: request.id.toString(),
         data: {
@@ -32,6 +33,10 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 return { backgroundColor: "#ff9800", borderColor: "#e9831a" }; // Красный для "Сокращен"
             case "Ранний заезд":
                 return { backgroundColor: "#9575cd", borderColor: "#865ecc" }; // Жёлтый
+            case "Архив":
+                return { backgroundColor: "#3b653d", borderColor: "#1b5e20" }; // Тёмно-коричневый
+            case "Готов к архиву":
+                return { backgroundColor: "#638ea4", borderColor: "#78909c" }; // Светло-серый с голубым оттенком
             default:
                 return { backgroundColor: "#9e9e9e", borderColor: "#757575" }; // Серый для остальных
         }
@@ -39,13 +44,38 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
 
     const { backgroundColor, borderColor } = getStatusColors(request.status);
 
+    let showBlockRequest = 0.3
+    let showBlockReserve = 0.3
+
+    if (!checkRoomsType) {
+        if (request.isRequest) {
+            showBlockRequest = 1
+        }
+    } else {
+        if (!request.isRequest) {
+            showBlockReserve = 1
+        }
+    }
+
+    const blinkAnimation = `
+        @keyframes blinkBackground {
+            0% { background-color: rgb(194, 194, 194); border: 1px solid rgb(175, 175, 175) } /* Светло-голубой */
+            50% { background-color: #FCC737; border: 1px solid rgb(218, 172, 47) } /* Пастельно-голубой */
+            100% { background-color:rgb(194, 194, 194); border: 1px solid rgb(175, 175, 175) } /* Светло-голубой */
+        }
+    `;
+
     const style = {
         position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
-        top: request.room ? `${position * 40 + 2}px` : "auto",
+        top: request.room ? `${position * 50 + 2}px` : "auto",
         left: request.room ? `${checkInOffset}px` : "auto",
         width: request.room ? `${duration}px` : '100%',
-        height: "35px",
+        height: "45px",
         backgroundColor: backgroundColor,
+        animation: requestId && request.requestID === requestId && request.status == "Ожидает"
+            ? "blinkBackground 1s infinite" // Добавляем анимацию, если ID совпадают
+            : "none", // Отключаем анимацию, если ID не совпадают
+        opacity: request.isRequest ? showBlockRequest : showBlockReserve,
         border: `1px solid ${borderColor}`,
         borderRadius: "3px",
         display: "flex",
@@ -61,6 +91,14 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
             : undefined,
     };
 
+    useEffect(() => {
+        const styleElement = document.createElement("style");
+        styleElement.textContent = blinkAnimation;
+        document.head.appendChild(styleElement);
+        return () => {
+            document.head.removeChild(styleElement);
+        };
+    }, []);
 
     const originalRequestRef = useRef(null);
 
@@ -135,20 +173,50 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
     };
 
     const [tooltipVisible, setTooltipVisible] = useState(false);
+    const [mouseIsMoving, setMouseIsMoving] = useState(false);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
 
     const handleMouseEnter = () => {
-        if (!isDraggingGlobal) setTooltipVisible(true);
-    };
-    const handleMouseLeave = () => setTooltipVisible(false);
-    const handleMouseMove = (e) => {
+        setMouseIsMoving(false)
+
         if (!isDraggingGlobal) {
-            setTooltipPosition({ x: e.clientX - (350 / 2), y: e.clientY + 10 });
+            setTooltipVisible(true)
+        };
+    };
+
+    const handleMouseLeave = () => setTooltipVisible(false);
+
+    const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
+    // const [isClick, setIsClick] = useState(true);
+
+    const handleMouseDown = (e) => {
+        setStartPosition({ x: e.clientX, y: e.clientY });
+        setIsClick(true);
+        setTooltipVisible(false);
+    };
+
+    const handleMouseMove = (e) => {
+        setMouseIsMoving(true)
+
+        if (!isDraggingGlobal) {
+            setTooltipPosition({ x: e.clientX - 350 / 2, y: e.clientY + 10 });
+        } else {
+            setTooltipVisible(false);
+        }
+
+        const deltaX = Math.abs(e.clientX - startPosition.x);
+        const deltaY = Math.abs(e.clientY - startPosition.y);
+
+        if (deltaX > 10 || deltaY > 10) {
+            setIsClick(false);
         }
     };
 
-    const handleDragStart = () => setTooltipVisible(false); // Скрыть Tooltip при начале перетаскивания
-    const handleDragEnd = () => setTooltipVisible(false); // Можно восстановить видимость после завершения
+    const handleMouseUp = (e) => {
+        if (isClick) {
+            toggleRequestSidebar && toggleRequestSidebar(request.requestID);
+        }
+    };
 
     let styleToolTip = {
         display: 'flex',
@@ -160,7 +228,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
         <>
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.isRequest && showBlockRequest == 1 &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
@@ -202,32 +270,98 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                         <img src="/drag-vertical.svg" alt="" style={{ pointerEvents: 'none', width: '100%', height: '100%', padding: '4px 0', cursor: "ew-resize", opacity: '0.5' }} />
                     </Box>
                 }
+
                 {/* Центральная область для перетаскивания */}
-                <Box
-                    ref={setNodeRef}
-                    {...listeners}
-                    {...attributes}
-                    onMouseEnter={handleMouseEnter}
-                    onMouseLeave={handleMouseLeave}
-                    onMouseMove={handleMouseMove}
-                    onMouseDown={handleDragStart}
-                    onMouseUp={handleDragEnd}
-                    sx={{
-                        flex: 1,
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        textAlign: "center",
-                        justifyContent: "center",
-                        cursor: "grab",
-                        zIndex: 1,
-                    }}
-                >
-                    {request.guest}
-                </Box>
+                {request.isRequest && showBlockRequest == 1 ?
+                    <Box
+                        ref={setNodeRef}
+                        {...listeners}
+                        {...attributes}
+                        onMouseEnter={handleMouseEnter}
+                        onMouseLeave={handleMouseLeave}
+                        onMouseDown={handleMouseDown} // Отслеживаем начальную позицию
+                        onMouseMove={handleMouseMove} // Проверяем движение мыши
+                        onMouseUp={handleMouseUp}
+                        sx={{
+                            flex: 1,
+                            width: 'calc(100% - 20px)',
+                            height: "35px",
+                            display: "flex",
+                            alignItems: "center",
+                            textAlign: "center",
+                            justifyContent: "left",
+                            cursor: "grab",
+                            zIndex: 1,
+                            overflow: 'hidden',
+                            padding: '0 5px'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
+                            <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                            <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                {request.guest}
+                            </div>
+                        </div>
+                    </Box>
+                    :
+                    !request.isRequest && showBlockReserve == 1 ?
+                        <Box
+                            ref={setNodeRef}
+                            {...listeners}
+                            {...attributes}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
+                            onMouseDown={handleMouseDown} // Отслеживаем начальную позицию
+                            onMouseMove={handleMouseMove} // Проверяем движение мыши
+                            onMouseUp={handleMouseUp}
+                            sx={{
+                                flex: 1,
+                                width: 'calc(100% - 20px)',
+                                height: "35px",
+                                display: "flex",
+                                alignItems: "center",
+                                textAlign: "center",
+                                justifyContent: "left",
+                                cursor: "grab",
+                                zIndex: 1,
+                                overflow: 'hidden',
+                                padding: '0 5px'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
+                                <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                                <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                    {request.guest}
+                                </div>
+                            </div>
+                        </Box>
+                        :
+                        <Box
+                            sx={{
+                                flex: 1,
+                                width: 'calc(100% - 20px)',
+                                height: "35px",
+                                display: "flex",
+                                alignItems: "center",
+                                textAlign: "center",
+                                justifyContent: "left",
+                                cursor: "grab",
+                                zIndex: 1,
+                                overflow: 'hidden',
+                                padding: '0 5px'
+                            }}
+                        >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
+                                <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                                <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                                    {request.guest}
+                                </div>
+                            </div>
+                        </Box>
+                }
 
                 {/* Правая ручка для изменения конца */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.isRequest && showBlockRequest == 1 &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
@@ -271,7 +405,7 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                 }
             </Box >
 
-            {tooltipVisible && (
+            {tooltipVisible && !isDraggingGlobal && mouseIsMoving && (
                 <Box
                     sx={{
                         position: "fixed",
@@ -291,8 +425,14 @@ const DraggableRequest = ({ request, dayWidth, currentMonth, onUpdateRequest, po
                     }}
                 >
                     <Typography variant="body2">
-                        <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
+                        <div style={styleToolTip}> Авиакомпания: <b>{request.airline?.name}</b></div>
                     </Typography>
+                    <Typography variant="body2">
+                        <div style={styleToolTip}> Заявка: <b>{request.isRequest ? 'Квота' : 'Резерв'}</b></div>
+                    </Typography>
+                    {/* <Typography variant="body2">
+                        <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
+                    </Typography> */}
                     {request.room &&
                         <Typography variant="body2">
                             <div style={styleToolTip}> Комната: <b>{request.room}</b></div>

@@ -74,6 +74,17 @@
     cursor: pointer;
 }
 
+.requestDataInfo .dropdown {
+    width: 60%;
+    height: 38px;
+    outline: none;
+    cursor: pointer;
+}
+
+.requestDataInfo .dropdown input {
+    width: 100%;
+}
+
 .requestMiddle {
     height: calc(100% - 90px - 71px);
     overflow: hidden;

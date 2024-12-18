@@ -4,7 +4,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Smiles from "../Smiles/Smiles";
 import { convertToDate, GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 
-function Message({ children, activeTab, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, ...props }) {
+function Message({ children, activeTab, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
     const messagesEndRef = useRef(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [showScrollButton, setShowScrollButton] = useState(false);
@@ -120,7 +120,7 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -169,7 +169,7 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
 
             {!loading && !error && messages?.messages && data &&
                 <div className={classes.requestData} style={{ padding: chatPadding }}>
-                    <div className={classes.requestData_messages} style={{ height: formData?.status === 'done' ? 'calc(100vh - 240px)' : chatHeight }}>
+                    <div className={classes.requestData_messages} style={{ height: height ? `calc(100vh - ${height}px)` : formData?.status === 'done' ? 'calc(100vh - 240px)' : chatHeight }}>
                         {messages?.messages.map((message, index) => (
                             <div className={`${classes.requestData_message_full} ${message.sender.id === user.userId && classes.myMes}`} key={index}>
                                 <div className={classes.requestData_message}>

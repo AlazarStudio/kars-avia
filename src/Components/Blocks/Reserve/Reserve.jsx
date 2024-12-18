@@ -151,8 +151,8 @@ function Reserve({ children, user, idHotel, ...props }) {
             request.airline?.name.toLowerCase(),
             request.airport?.name.toLowerCase(),
             request.airport?.code.toLowerCase(),
-            request.arrival?.date.toLowerCase(),
-            request.departure?.date.toLowerCase(),
+            request.arrival.toLowerCase(),
+            request.departure.toLowerCase(),
             request.status?.toLowerCase()
         ].some(field => field.includes(searchQuery.toLowerCase()));
 

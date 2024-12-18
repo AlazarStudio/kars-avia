@@ -17,7 +17,7 @@ function EditRequestTarifCategory({ show, onClose, tarif, onSubmit, addTarif, id
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });

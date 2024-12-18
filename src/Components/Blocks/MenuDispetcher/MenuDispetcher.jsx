@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-    decodeJWT,
-    GET_AIRLINE,
-    GET_HOTEL_CITY,
-    GET_REQUESTS,
-    GET_RESERVE_REQUESTS,
-    getCookie,
-    REQUEST_CREATED_SUBSCRIPTION,
-    REQUEST_RESERVE_CREATED_SUBSCRIPTION,
+  decodeJWT,
+  GET_AIRLINE,
+  GET_HOTEL_CITY,
+  GET_REQUESTS,
+  GET_RESERVE_REQUESTS,
+  getCookie,
+  REQUEST_CREATED_SUBSCRIPTION,
+  REQUEST_RESERVE_CREATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import { roles } from "../../../roles";
@@ -30,6 +30,22 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
       setUser(decodeJWT(token));
     }
   }, [token]);
+
+  // Получаем состояние из localStorage или по умолчанию true
+  const storedMenuState = JSON.parse(localStorage.getItem("menuOpen"));
+  const [menuOpen, setMenuOpen] = useState(
+    storedMenuState !== null ? storedMenuState : true
+  );
+
+  useEffect(() => {
+    // Сохраняем состояние в localStorage при его изменении
+    localStorage.setItem("menuOpen", JSON.stringify(menuOpen));
+  }, [menuOpen]);
+
+  const handleMenuToggle = () => {
+    // Переключаем состояние меню
+    setMenuOpen((prevState) => !prevState);
+  };
 
   const navigate = useNavigate();
 
@@ -84,6 +100,11 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
   const [allCreatedRequests, setAllCreatedRequests] = useState(0);
 
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { pagination: { skip: 0, take: 999999999 } },
   });
 
@@ -93,6 +114,11 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     data: dataRequest,
     refetch: refetchRequest,
   } = useQuery(GET_REQUESTS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { pagination: { skip: 0, take: 999999999 } },
   });
 
@@ -194,15 +220,39 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     }
   }, [data, dataRequest, hotelCity, airlineName, newReserves, newRequests]);
 
+  // Пока значение menuOpen не загружено из localStorage, ничего не рендерим
+  if (menuOpen === null) {
+    return null; // или можно вернуть спиннер загрузки
+  }
+
   return (
     <>
-      <div className={classes.menu}>
-        <Link to={"/"} className={classes.menu_logo}>
-          <img src="/kars-avia-mainLogo.png" alt="" />
+      <div className={menuOpen ? `${classes.menu}` : `${classes.w_closed}`}>
+        <div className={classes.menuHeader}>
+          {/* Стрелка для открытия/закрытия меню */}
+          <button className={classes.menuToggle} onClick={handleMenuToggle}>
+            <span>{menuOpen ? <img src="/left-arrow.png" alt="" /> : <img src="/right-arrow.png" alt="" />}</span> {/* Стрелка */}
+          </button>
+        </div>
+        <Link
+          to={"/"}
+          className={
+            menuOpen ? `${classes.menu_logo}` : `${classes.side_menu_logo}`
+          }
+        >
+          {menuOpen ? (
+            <img src="/kars-avia-mainLogo.png" alt="" />
+          ) : (
+            <img src="/mini-logo.png" alt="" />
+          )}
         </Link>
         <div className={classes.menu_items}>
           {user.role == roles.hotelAdmin && (
-            <HotelAdminMenu id={id} allCreatedReserves={allCreatedReserves} />
+            <HotelAdminMenu
+              id={id}
+              allCreatedReserves={allCreatedReserves}
+              menuOpen={menuOpen}
+            />
           )}
 
           {user.role == roles.airlineAdmin && (
@@ -210,6 +260,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
               id={id}
               allCreatedRequests={allCreatedRequests}
               allCreatedReserves={allCreatedReserves}
+              menuOpen={menuOpen}
             />
           )}
 
@@ -218,6 +269,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
+              menuOpen={menuOpen}
             />
           )}
           {user.role == roles.dispatcerAdmin && (
@@ -225,17 +277,18 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
+              menuOpen={menuOpen}
             />
           )}
         </div>
 
-        <a
+        {/* <a
           className={`${classes.menu_items__elem}`}
           style={{ position: "absolute", bottom: "25px" }}
           onClick={handleClick}
         >
           Выход из учетной записи
-        </a>
+        </a> */}
       </div>
     </>
   );

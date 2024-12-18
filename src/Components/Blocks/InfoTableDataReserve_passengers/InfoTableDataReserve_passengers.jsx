@@ -5,7 +5,7 @@ import Button from "../../Standart/Button/Button";
 import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINES_RELAY, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, getCookie, UPDATE_RESERVE } from "../../../../graphQL_requests";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Message from "../Message/Message";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, request, airline }) {
     const token = getCookie('token');
@@ -53,7 +53,20 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
 
     const handleSave = (hotelIndex) => {
         setPlacement((prevPlacement) => {
-            const updatedPlacement = [...prevPlacement];
+            const updatedPlacement = prevPlacement.map((item, index) =>
+                index === hotelIndex
+                    ? {
+                        ...item,
+                        hotel: {
+                            ...item.hotel,
+                            passengers: item.hotel.passengers.map((name) =>
+                                name.id === editingId ? { ...name, ...editedData } : name
+                            ),
+                        },
+                    }
+                    : item
+            );
+
             const hotel = updatedPlacement[hotelIndex];
 
             if (editedData.type === 'Пассажир') {
@@ -77,7 +90,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -86,7 +99,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -151,7 +164,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         context: {
             headers: {
                 Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
+                // 'Apollo-Require-Preflight': 'true',
             },
         },
     });
@@ -231,11 +244,12 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
     const [selectedAirline, setSelectedAirline] = useState(null);
     const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
 
+
     useEffect(() => {
-        if (data) {
-            if (airline) {
-                const selectedAirline = data.airlines.find(airline => airline.id === airline.id);
-                setSelectedAirline(selectedAirline.staff);
+        if (data && airline) {
+            const selectedAirlineData = data.airlines.find(item => item.id === airline.id);
+            if (selectedAirlineData) {
+                setSelectedAirline(selectedAirlineData.staff);
             }
         }
     }, [data, airline]);
@@ -260,202 +274,228 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         ? placement.filter(item => item.hotel.id === user.hotelId)
         : placement;
 
+    const statusLabels = {
+        created: 'Создан',
+        opened: 'В обработке',
+        extended: 'Продлен',
+        reduced: 'Сокращен',
+        transferred: 'Перенесен',
+        earlyStart: 'Ранний заезд',
+        canceled: 'Отменен',
+        archiving: 'Готов к архиву',
+        archived: 'Архив',
+        done: 'Размещен',
+        waiting: 'Ожидает'
+    };
     return (
         // Сделать отдельную компоненту для чата
         <div style={{ display: 'flex', gap: '20px', height: '100%' }}>
             <InfoTable>
                 <div className={classes.InfoTable_title}>
                     <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>№</div>
-                    <div className={`${classes.InfoTable_title_elem} ${classes.w35}`}>ФИО</div>
-                    <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Пол</div>
-                    <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Номер телефона</div>
-                    <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Тип</div>
+                    <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>ФИО</div>
+                    <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Номер телефона</div>
+                    <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Пол</div>
+                    <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Тип</div>
+                    <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Комната</div>
+                    <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Статус</div>
                     <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Действия</div>
                 </div>
 
                 <div className={classes.bottom} style={{ height: user.role == 'HOTELADMIN' && 'calc(100vh)' }}>
-                    {filteredPlacement.map((item, hotelIndex) => (
-                        <React.Fragment key={hotelIndex}>
-                            <div className={`${classes.InfoTable_data} ${classes.stickyHeader}`}>
-                                <div className={`${classes.InfoTable_data_elem} ${classes.w100}`}>
-                                    <div className={classes.blockInfoShow}>
-                                        <b>{item.hotel.name}</b>
-                                        {getAllGuests(item.hotel).length} гостей из {item.hotel.passengersCount}
-                                    </div>
+                    {filteredPlacement.map((item, hotelIndex) => {
+                        return (
+                            <React.Fragment key={hotelIndex}>
+                                <div className={`${classes.InfoTable_data} ${classes.stickyHeader}`}>
+                                    <div className={`${classes.InfoTable_data_elem} ${classes.w100}`}>
+                                        <div className={classes.blockInfoShow}>
+                                            <b>{item.hotel.name}</b>
+                                            <Link to={`/hotels/${item.hotel.id}/${item.hotel.requestId}`}> <img src="/placement_icon.png" alt="" /></Link>
+                                            {getAllGuests(item.hotel).length} гостей из {item.hotel.passengersCount}
+                                        </div>
 
-                                    <div className={classes.blockInfoShow}>
-                                        {request.reserveForPerson == false && getAllGuests(item.hotel).length < item.hotel.passengersCount && <Button onClick={() => startAddingNewPassenger(hotelIndex, item.hotel.id)}><img src="/plus.png" alt="" /> Пассажир</Button>}
-                                        {request.reserveForPerson == true && getAllGuests(item.hotel).length < item.hotel.passengersCount && <Button onClick={() => startAddingNewPerson(hotelIndex, item.hotel.id)}><img src="/plus.png" alt="" /> Сотрудник</Button>}
+                                        <div className={classes.blockInfoShow}>
+                                            {request.reserveForPerson == false && getAllGuests(item.hotel).length < item.hotel.passengersCount && <Button onClick={() => startAddingNewPassenger(hotelIndex, item.hotel.id)}><img src="/plus.png" alt="" /> Пассажир</Button>}
+                                            {request.reserveForPerson == true && getAllGuests(item.hotel).length < item.hotel.passengersCount && <Button onClick={() => startAddingNewPerson(hotelIndex, item.hotel.id)}><img src="/plus.png" alt="" /> Сотрудник</Button>}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            {getAllGuests(item.hotel).sort((a, b) => a.order - b.order).map((guest, index) => (
-                                <div className={classes.InfoTable_data} key={guest.id}>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
-                                        {
-                                            editingId === guest.id ? (
-                                                guest.type === 'Сотрудник' ? (
-                                                    <select
-                                                        value={editedData.name || ''}
-                                                        onChange={(e) => handleChangePerson(hotelIndex, guest.id, e.target.value)}
-                                                    >
-                                                        <option value="">Выберите сотрудника</option>
-                                                        {selectedAirline.map((staff) => (
-                                                            <option
-                                                                key={staff.id}
-                                                                value={staff.name}
-                                                                disabled={addedStaffNames.includes(staff.name)}
-                                                            >
-                                                                {staff.name} {addedStaffNames.includes(staff.name) ? '(уже добавлен)' : ''}
-                                                            </option>
-                                                        ))}
-                                                    </select>
+                                {getAllGuests(item.hotel).sort((a, b) => a.order - b.order).map((guest, index) => (
+                                    <div className={classes.InfoTable_data} key={guest.id}>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+                                            {
+                                                editingId === guest.id ? (
+                                                    guest.type === 'Сотрудник' ? (
+                                                        <select
+                                                            value={editedData.name || ''}
+                                                            onChange={(e) => handleChangePerson(hotelIndex, guest.id, e.target.value)}
+                                                        >
+                                                            <option value="">Выберите сотрудника</option>
+                                                            {selectedAirline.map((staff) => (
+                                                                <option
+                                                                    key={staff.id}
+                                                                    value={staff.name}
+                                                                    disabled={addedStaffNames.includes(staff.name)}
+                                                                >
+                                                                    {staff.name} {addedStaffNames.includes(staff.name) ? '(уже добавлен)' : ''}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : (
+                                                        <input
+                                                            type="text"
+                                                            value={editedData.name || ''}
+                                                            onChange={(e) => handleChange('name', e.target.value)}
+                                                        />
+                                                    )
                                                 ) : (
-                                                    <input
-                                                        type="text"
-                                                        value={editedData.name || ''}
-                                                        onChange={(e) => handleChange('name', e.target.value)}
-                                                    />
+                                                    guest.name
                                                 )
+                                            }
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
+                                            {editingId === guest.id ? (
+                                                <input
+                                                    type="text"
+                                                    value={editedData.number || ''}
+                                                    onChange={(e) => handleChange('number', e.target.value)}
+                                                    disabled
+                                                />
                                             ) : (
-                                                guest.name
-                                            )
-                                        }
+                                                guest.number || '-'
+                                            )}
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
+                                            {editingId === guest.id ? (
+                                                <select
+                                                    value={editedData.gender || ''}
+                                                    onChange={(e) => handleChange('gender', e.target.value)}
+                                                    disabled
+                                                >
+                                                    <option value="">Выберите пол</option>
+                                                    <option value="Мужской">Мужской</option>
+                                                    <option value="Женский">Женский</option>
+                                                </select>
+                                            ) : (
+                                                guest.gender || '-'
+                                            )}
+                                        </div>
+
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
+                                            {guest.type}
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
+                                            {guest.room}
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
+                                            {statusLabels[guest.status]}
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
+                                            {editingId === guest.id ? (
+                                                <Button onClick={() => handleSave(hotelIndex)}>Сохранить</Button>
+                                            ) : (
+                                                <>
+                                                    {/* {request.reserveForPerson == false && <img src="/editPassenger.png" alt="" onClick={() => handleEdit(guest.id, guest)} />} */}
+                                                    <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(guest, item)} />
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        {editingId === guest.id ? (
+                                ))}
+
+                                {(isAddingNewPassenger && currentHotelIndex === hotelIndex) && (
+                                    <div className={classes.InfoTable_data} ref={newGuestRef}>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
+                                            <input
+                                                type="text"
+                                                placeholder="ФИО пассажира"
+                                                value={newPassengerData.name}
+                                                onChange={(e) => setNewPassengerData({ ...newPassengerData, name: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                                             <select
-                                                value={editedData.gender || ''}
-                                                onChange={(e) => handleChange('gender', e.target.value)}
-                                                disabled
+                                                value={newPassengerData.gender}
+                                                onChange={(e) => setNewPassengerData({ ...newPassengerData, gender: e.target.value })}
                                             >
                                                 <option value="">Выберите пол</option>
                                                 <option value="Мужской">Мужской</option>
                                                 <option value="Женский">Женский</option>
                                             </select>
-                                        ) : (
-                                            guest.gender || '-'
-                                        )}
-                                    </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        {editingId === guest.id ? (
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                                             <input
                                                 type="text"
-                                                value={editedData.number || ''}
-                                                onChange={(e) => handleChange('number', e.target.value)}
-                                                disabled
+                                                placeholder="Номер телефона"
+                                                value={newPassengerData.number}
+                                                onChange={(e) => setNewPassengerData({ ...newPassengerData, number: e.target.value })}
                                             />
-                                        ) : (
-                                            guest.number || '-'
-                                        )}
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                                            <Button onClick={handleAddNewPassenger}>Добавить пассажира</Button>
+                                        </div>
                                     </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        {guest.type}
-                                    </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
-                                        {editingId === guest.id ? (
-                                            <Button onClick={() => handleSave(hotelIndex)}>Сохранить</Button>
-                                        ) : (
-                                            <>
-                                                {/* {request.reserveForPerson == false && <img src="/editPassenger.png" alt="" onClick={() => handleEdit(guest.id, guest)} />} */}
-                                                <img src="/deletePassenger.png" alt="" onClick={() => openDeletecomponent(guest, item)} />
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
+                                )}
+                                {(isAddingNewPerson && currentHotelIndex === hotelIndex) && (
+                                    <div className={classes.InfoTable_data} ref={newGuestRef}>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
+                                            <select
+                                                value={newPersonData.name}
+                                                onChange={(e) => {
+                                                    const selectedName = e.target.value;
+                                                    const selectedStaff = selectedAirline.find((staff) => staff.name === selectedName);
 
-                            {(isAddingNewPassenger && currentHotelIndex === hotelIndex) && (
-                                <div className={classes.InfoTable_data} ref={newGuestRef}>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
-                                        <input
-                                            type="text"
-                                            placeholder="ФИО пассажира"
-                                            value={newPassengerData.name}
-                                            onChange={(e) => setNewPassengerData({ ...newPassengerData, name: e.target.value })}
-                                        />
+                                                    setNewPersonData({
+                                                        ...newPersonData,
+                                                        name: selectedName,
+                                                        gender: selectedStaff?.gender || '',
+                                                        number: selectedStaff?.number || '',
+                                                        id: selectedStaff?.id || ''
+                                                    });
+                                                }}
+                                            >
+                                                <option value="">Выберите сотрудника</option>
+                                                {selectedAirline.map((staff) => (
+                                                    <option
+                                                        key={staff.id}
+                                                        value={staff.name}
+                                                        disabled={addedStaffNames.includes(staff.name)}
+                                                    >
+                                                        {staff.name} {addedStaffNames.includes(staff.name) ? '(уже добавлен)' : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                                            <select
+                                                value={newPersonData.gender}
+                                                onChange={(e) => setNewPersonData({ ...newPersonData, gender: e.target.value })}
+                                            >
+                                                <option value="">Выберите пол</option>
+                                                <option value="Мужской">Мужской</option>
+                                                <option value="Женский">Женский</option>
+                                            </select>
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                                            <input
+                                                type="text"
+                                                placeholder="Номер телефона"
+                                                value={newPersonData.number}
+                                                onChange={(e) => setNewPersonData({ ...newPersonData, number: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                                            <Button onClick={handleAddNewPerson}>Добавить сотрудника</Button>
+                                        </div>
                                     </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        <select
-                                            value={newPassengerData.gender}
-                                            onChange={(e) => setNewPassengerData({ ...newPassengerData, gender: e.target.value })}
-                                        >
-                                            <option value="">Выберите пол</option>
-                                            <option value="Мужской">Мужской</option>
-                                            <option value="Женский">Женский</option>
-                                        </select>
-                                    </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        <input
-                                            type="text"
-                                            placeholder="Номер телефона"
-                                            value={newPassengerData.number}
-                                            onChange={(e) => setNewPassengerData({ ...newPassengerData, number: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        <Button onClick={handleAddNewPassenger}>Добавить пассажира</Button>
-                                    </div>
-                                </div>
-                            )}
-                            {(isAddingNewPerson && currentHotelIndex === hotelIndex) && (
-                                <div className={classes.InfoTable_data} ref={newGuestRef}>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}></div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
-                                        <select
-                                            value={newPersonData.name}
-                                            onChange={(e) => {
-                                                const selectedName = e.target.value;
-                                                const selectedStaff = selectedAirline.find((staff) => staff.name === selectedName);
-
-                                                setNewPersonData({
-                                                    ...newPersonData,
-                                                    name: selectedName,
-                                                    gender: selectedStaff?.gender || '',
-                                                    number: selectedStaff?.number || '',
-                                                    id: selectedStaff?.id || ''
-                                                });
-                                            }}
-                                        >
-                                            <option value="">Выберите сотрудника</option>
-                                            {selectedAirline.map((staff) => (
-                                                <option
-                                                    key={staff.id}
-                                                    value={staff.name}
-                                                    disabled={addedStaffNames.includes(staff.name)}
-                                                >
-                                                    {staff.name} {addedStaffNames.includes(staff.name) ? '(уже добавлен)' : ''}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        <select
-                                            value={newPersonData.gender}
-                                            onChange={(e) => setNewPersonData({ ...newPersonData, gender: e.target.value })}
-                                        >
-                                            <option value="">Выберите пол</option>
-                                            <option value="Мужской">Мужской</option>
-                                            <option value="Женский">Женский</option>
-                                        </select>
-                                    </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        <input
-                                            type="text"
-                                            placeholder="Номер телефона"
-                                            value={newPersonData.number}
-                                            onChange={(e) => setNewPersonData({ ...newPersonData, number: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                        <Button onClick={handleAddNewPerson}>Добавить сотрудника</Button>
-                                    </div>
-                                </div>
-                            )}
-                        </React.Fragment>
-                    ))}
+                                )}
+                            </React.Fragment>
+                        )
+                    }
+                    )}
                 </div>
 
                 {user.role != "HOTELADMIN" && <div className={classes.counting}>

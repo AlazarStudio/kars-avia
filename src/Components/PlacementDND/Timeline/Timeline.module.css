@@ -1,2 +1,26 @@
+.checkBTN {
+    padding: 10px;
+    background-color: transparent;
+    border: 1px solid #54587380;
+    outline: none;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #545873;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+    width: 85px;
+}
+
+.checkBTN:hover {
+    background-color: #e4e4efbd;
+    border: 1px solid transparent;
+    transition: all ease-in-out 0.3s;
+}
+
+.activeButton {
+    background-color: #E4E4EF !important;
+    border: 1px solid transparent !important;
+    transition: all ease-in-out 0.3s;
+}
 
 @media (min-width: 0px) and (max-width: 1299px) {}
