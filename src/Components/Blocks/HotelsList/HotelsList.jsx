@@ -5,8 +5,8 @@ import CreateRequestHotel from "../CreateRequestHotel/CreateRequestHotel";
 import { requestsHotels } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
-import { gql, useQuery } from "@apollo/client";
-import { GET_HOTELS } from "../../../../graphQL_requests";
+import { gql, useQuery, useSubscription } from "@apollo/client";
+import { GET_HOTELS, GET_HOTELS_SUBSCRIPTION, GET_HOTELS_UPDATE_SUBSCRIPTION } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 
 function HotelsList({ children, user, ...props }) {
@@ -14,6 +14,9 @@ function HotelsList({ children, user, ...props }) {
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
 
     const { loading, error, data, refetch } = useQuery(GET_HOTELS);
+    const { data: dataSubscription } = useSubscription(GET_HOTELS_SUBSCRIPTION);
+    const { data: dataSubscriptionUpd } = useSubscription(GET_HOTELS_UPDATE_SUBSCRIPTION);
+
     const [companyData, setCompanyData] = useState([]);
 
     useEffect(() => {
@@ -21,10 +24,17 @@ function HotelsList({ children, user, ...props }) {
             const sortedHotels = [...data.hotels].sort((a, b) => a.city.localeCompare(b.city));
             setCompanyData(sortedHotels);
         }
-        refetch()
-    }, [data, refetch]);
 
-    // console.log(data)
+        if (dataSubscription && dataSubscription.hotelCreated) {
+            setCompanyData((prevCompanyData) => {
+                const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
+                return updatedData.sort((a, b) => a.city.localeCompare(b.city));
+            });
+        }
+
+        refetch()
+    }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
+
 
     const addHotel = (newHotel) => {
         setCompanyData([...companyData, newHotel].sort((a, b) => a.city.localeCompare(b.city)));

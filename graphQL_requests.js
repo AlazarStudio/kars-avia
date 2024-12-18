@@ -1093,8 +1093,39 @@ export const GET_HOTELS = gql`
           images
           stars
           airportDistance
-
       }
+  }
+`;
+
+export const GET_HOTELS_SUBSCRIPTION = gql`
+  subscription Subscription {
+    hotelCreated {
+      id
+      name
+      city
+      address
+      quote
+      provision
+      images
+      stars
+      airportDistance
+    }
+  }
+`;
+
+export const GET_HOTELS_UPDATE_SUBSCRIPTION = gql`
+  subscription Subscription {
+    hotelUpdated {
+      id
+      name
+      city
+      address
+      quote
+      provision
+      images
+      stars
+      airportDistance
+    }
   }
 `;
 
@@ -1342,6 +1373,26 @@ export const DELETE_HOTEL_USER = gql`
 export const GET_AIRLINES = gql`
   query Airlines {
     airlines {
+      id
+      images
+      name
+    }
+  }
+`;
+
+export const GET_AIRLINES_SUBSCRIPTION = gql`
+  subscription Subscription {
+    airlineCreated {
+      id
+      images
+      name
+    }
+  }
+`;
+
+export const GET_AIRLINES_UPDATE_SUBSCRIPTION = gql`
+  subscription Subscription {
+    airlineUpdated {
       id
       images
       name
@@ -1629,6 +1680,20 @@ export const GET_DISPATCHERS = gql`
   }
 `;
 
+export const GET_DISPATCHERS_SUBSCRIPTION = gql`
+  subscription Subscription {
+    userCreated {
+      id
+      name
+      images
+      role
+      position
+      email
+      login
+    }
+  }
+`;
+
 export const GET_DISPATCHER = gql`
   query Query($userId: ID!) {
     user(userId: $userId) {
@@ -1736,6 +1801,15 @@ export const GET_AIRLINE_REPORT = gql`
         startDate
         endDate
       }
+    }
+  }
+`;
+
+export const GET_REPORTS_SUBSCRIOPTION = gql`
+  subscription Subscription {
+    reportCreated {
+      id
+      name
     }
   }
 `;

@@ -7,13 +7,14 @@ import Header from "../Header/Header";
 import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
 import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
-import { useMutation, useQuery } from "@apollo/client";
-import { DELETE_DISPATCHER_USER, GET_DISPATCHERS, getCookie } from "../../../../graphQL_requests";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { DELETE_DISPATCHER_USER, GET_DISPATCHERS, GET_DISPATCHERS_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests";
 
 function Company({ children, user, ...props }) {
     const token = getCookie('token');
 
-    const { loading, error, data } = useQuery(GET_DISPATCHERS);
+    const { loading, error, data, refetch } = useQuery(GET_DISPATCHERS);
+    const { data: dataSubscription } = useSubscription(GET_DISPATCHERS_SUBSCRIPTION);
 
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -30,7 +31,8 @@ function Company({ children, user, ...props }) {
             const sortedDispatchers = [...data.dispatcherUsers].sort((a, b) => a.name.localeCompare(b.name));
             setCompanyData(sortedDispatchers)
         }
-    }, [data]);
+        refetch()
+    }, [data, dataSubscription, refetch]);
 
     const addDispatcher = (newDispatcher) => {
         setCompanyData([...companyData, newDispatcher].sort((a, b) => a.name.localeCompare(b.name)));
