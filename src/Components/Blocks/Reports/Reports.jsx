@@ -10,12 +10,13 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import InfoTableDataReports from "../InfoTableDataReports/InfoTableDataReports";
 import CreateRequestReport from "../CreateRequestReport/CreateRequestReport";
 import ExistRequestReport from "../ExistRequestReport/ExistRequestReport";
-import { useQuery } from "@apollo/client";
+import { useQuery, useSubscription } from "@apollo/client";
 import {
   convertToDate,
   decodeJWT,
   GET_AIRLINE_REPORT,
   GET_HOTEL_REPORT,
+  GET_REPORTS_SUBSCRIOPTION,
   getCookie,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
@@ -73,7 +74,7 @@ function Reports({ children, ...props }) {
   // Устанавливаем endDate как последний день текущего года
   const endDate1 = new Date(currentYear, 11, 31).toISOString().split("T")[0];
 
-  const { data: companyData } = useQuery(
+  const { data: companyData, refetch } = useQuery(
     isAirline ? GET_AIRLINE_REPORT : GET_HOTEL_REPORT,
     {
       context: {
@@ -92,6 +93,8 @@ function Reports({ children, ...props }) {
       },
     }
   );
+
+  const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIOPTION);
 
   // const addDispatcher = (newDispatcher) => {
   //     setCompanyData([...companyData, newDispatcher]);
@@ -154,7 +157,10 @@ function Reports({ children, ...props }) {
           : companyData.getHotelReport[0].reports
       );
     }
-  }, [companyData]);
+
+    // Подписка
+    refetch()
+  }, [companyData, refetch, dataSubscription]);
 
   const filteredRequests = reports.filter((request) => {
     const name = isAirline ? request?.airline?.name : request?.hotel?.name;
@@ -209,7 +215,7 @@ function Reports({ children, ...props }) {
         <CreateRequestReport
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
-          //   addDispatcher={addDispatcher}
+        //   addDispatcher={addDispatcher}
         />
         {/* 
                 <ExistRequestReport 

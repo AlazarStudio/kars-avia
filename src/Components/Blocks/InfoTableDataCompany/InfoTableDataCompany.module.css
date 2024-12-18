@@ -135,18 +135,19 @@
     padding: 0 20px;
 }
 
-.InfoTable_data_elem_title{
+.InfoTable_data_elem_title {
     text-align: center;
+    padding: 0 10px;
 }
 
-.InfoTable_data_elem_avatar{
+.InfoTable_data_elem_avatar {
     width: 40px;
     height: 40px;
     border-radius: 50px;
     overflow: hidden;
 }
 
-.InfoTable_data_elem_avatar img{
+.InfoTable_data_elem_avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;

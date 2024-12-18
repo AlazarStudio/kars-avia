@@ -58,7 +58,7 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
                 {requests.map((item, index) => (
                     <div
                         className={`${classes.InfoTable_data} ${chooseRequestID === item.id && classes.InfoTable_data_active}`}
-                        style={{ opacity: (item.status === 'done' || item.status === 'extended' || item.status === 'reduced' || item.status === 'transferred' || item.status === 'earlyStart') ? 0.5 : 1 }}
+                        style={{ opacity: (item.status === 'done' || item.status === 'extended' || item.status === 'reduced' || item.status === 'transferred' || item.status === 'earlyStart' || item.status === 'canceled') ? 0.5 : 1 }}
                         onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
                         key={index}
                     >
