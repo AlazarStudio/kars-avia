@@ -188,13 +188,34 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     const uniqueCategories = addTarif && addTarif.map(request => `${request.origName}`);
 
     // Надо починить не работает
-    const filteredRequestsTarif = addTarif.filter(request => {
-        const matchesCategory = selectQuery === '' || request.name.toLowerCase().includes(selectQuery.toLowerCase());
-        const matchesSearch = searchTarif === '' || request.rooms.some(room => room.name.toLowerCase().includes(searchTarif.toLowerCase()));
-        return matchesCategory && matchesSearch;
-    });
+    // const filteredRequestsTarif = addTarif.filter(request => {
+    //     const matchesCategory = selectQuery === '' || request.name.toLowerCase().includes(selectQuery.toLowerCase());
+    //     const matchesSearch = searchTarif === '' || request.rooms.some(room => room.name.toLowerCase().includes(searchTarif.toLowerCase()));
+    //     return matchesCategory && matchesSearch;
+    // });
 
-    // console.log(data?.hotel?.rooms?.map(room => room.reserve));
+    // Рабочая версия
+    const filteredRequestsTarif = addTarif
+    .map(request => {
+        // Фильтруем комнаты внутри категории
+        const filteredRooms = request.rooms.filter(room =>
+            room.name.toLowerCase().includes(searchTarif.toLowerCase())
+        );
+
+        // Если есть подходящие комнаты, возвращаем категорию с этими комнатами
+        if (filteredRooms.length > 0) {
+            return {
+                ...request,
+                rooms: filteredRooms, // Только подходящие комнаты
+            };
+        }
+
+        // Если нет подходящих комнат, пропускаем категорию
+        return null;
+    })
+    .filter(request => request !== null); // Убираем пустые категории
+
+
     const [filter, setFilter] = useState('quote');
 
     return (

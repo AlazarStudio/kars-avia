@@ -237,6 +237,9 @@ function CreateRequest({ show, onClose, user }) {
             onClose();
         } catch (error) {
             console.error(error);
+            if (error.message.startsWith('Заявка с такими же параметрами уже существует')) {
+                alert(error.message + '.')
+            }
         }
     };
 

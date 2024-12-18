@@ -2,12 +2,19 @@ import { Link } from "react-router-dom";
 
 import classes from "./DisAdminMenu.module.css";
 
-const DisAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
+const DisAdminMenu = ({
+  id,
+  allCreatedReserves,
+  allCreatedRequests,
+  menuOpen,
+}) => {
   return (
     <>
       <Link
         to={"/relay"}
         className={`${classes.menu_items__elem} ${
+          !menuOpen ? classes.jcc : ""
+        } ${
           (id == "relay" || id == undefined || !id) &&
           classes.menu_items__activeElem
         }`}
@@ -26,16 +33,17 @@ const DisAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Эстафета
+        {menuOpen ? "Эстафета" : ""}
         {allCreatedRequests > 0 && (
           <div className={classes.countRequests}>{allCreatedRequests}</div>
         )}
+        {!menuOpen && <span className={classes.tooltip}>Эстафета</span>}
       </Link>
       <Link
         to={"/reserve"}
         className={`${classes.menu_items__elem} ${
-          id == "reserve" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "reserve" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -57,16 +65,17 @@ const DisAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Резерв
+        {menuOpen ? "Резерв" : ""}
         {allCreatedReserves > 0 && (
           <div className={classes.countRequests}>{allCreatedReserves}</div>
         )}
+        {!menuOpen && <span className={classes.tooltip}>Резерв</span>}
       </Link>
       <Link
         to={"/company"}
         className={`${classes.menu_items__elem} ${
-          id == "company" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "company" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -120,13 +129,14 @@ const DisAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Компания
+        {menuOpen ? "Компания" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Компания</span>}
       </Link>
       <Link
         to={"/hotels"}
         className={`${classes.menu_items__elem} ${
-          id == "hotels" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "hotels" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -148,13 +158,14 @@ const DisAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             stroke="var(--menu-gray)"
           />
         </svg>
-        Гостиницы
+        {menuOpen ? "Гостиницы" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Гостиницы</span>}
       </Link>
       <Link
         to={"/airlines"}
         className={`${classes.menu_items__elem} ${
-          id == "airlines" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "airlines" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -169,13 +180,14 @@ const DisAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Авиакомпании
+        {menuOpen ? "Авиакомпании" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Авиакомпании</span>}
       </Link>
       <Link
         to={"/reports"}
         className={`${classes.menu_items__elem} ${
-          id == "reports" && classes.menu_items__activeElem
-        }`}
+          !menuOpen ? classes.jcc : ""
+        } ${id == "reports" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -221,7 +233,8 @@ const DisAdminMenu = ({ id, allCreatedReserves, allCreatedRequests }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Отчеты
+        {menuOpen ? "Отчеты" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
       </Link>
     </>
   );

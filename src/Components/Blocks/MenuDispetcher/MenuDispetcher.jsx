@@ -243,7 +243,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
           {menuOpen ? (
             <img src="/kars-avia-mainLogo.png" alt="" />
           ) : (
-            <img src="/mini-logo.png" alt="" />
+            <img src="/miniLogo.png" alt="" />
           )}
         </Link>
         <div className={classes.menu_items}>

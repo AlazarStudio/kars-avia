@@ -37,6 +37,7 @@ const SuperAdminMenu = ({
         {allCreatedRequests > 0 && (
           <div className={classes.countRequests}>{allCreatedRequests}</div>
         )}
+        {!menuOpen && <span className={classes.tooltip}>Эстафета</span>}
       </Link>
       <Link
         to={"/reserve"}
@@ -68,6 +69,7 @@ const SuperAdminMenu = ({
         {allCreatedReserves > 0 && (
           <div className={classes.countRequests}>{allCreatedReserves}</div>
         )}
+        {!menuOpen && <span className={classes.tooltip}>Резерв</span>}
       </Link>
       <Link
         to={"/company"}
@@ -128,6 +130,7 @@ const SuperAdminMenu = ({
           />
         </svg>
         {menuOpen ? "Компания" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Компания</span>}
       </Link>
       <Link
         to={"/hotels"}
@@ -156,6 +159,7 @@ const SuperAdminMenu = ({
           />
         </svg>
         {menuOpen ? "Гостиницы" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Гостиницы</span>}
       </Link>
       <Link
         to={"/airlines"}
@@ -177,6 +181,7 @@ const SuperAdminMenu = ({
           />
         </svg>
         {menuOpen ? "Авиакомпании" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Авиакомпании</span>}
       </Link>
       <Link
         to={"/reports"}
@@ -229,6 +234,7 @@ const SuperAdminMenu = ({
           />
         </svg>
         {menuOpen ? "Отчеты" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
       </Link>
     </>
   );
