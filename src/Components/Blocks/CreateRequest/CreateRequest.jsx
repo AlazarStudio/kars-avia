@@ -192,14 +192,14 @@ function CreateRequest({ show, onClose, user }) {
         }
 
         // Проверка на дату прибытия: она не может быть меньше сегодняшней
-        if (formData.arrivalDate < today) {
-            alert('Дата прибытия не может быть раньше сегодняшнего дня.')
-            setFormData(prevFormData => ({
-                ...prevFormData,
-                arrivalDate: ""  // Очищаем дату прибытия
-            }));
-            return;
-        }
+        // if (formData.arrivalDate < today) {
+        //     alert('Дата прибытия не может быть раньше сегодняшнего дня.')
+        //     setFormData(prevFormData => ({
+        //         ...prevFormData,
+        //         arrivalDate: ""  // Очищаем дату прибытия
+        //     }));
+        //     return;
+        // }
 
         // Проверка на дату отъезда: она не может быть раньше даты прибытия
         if (formData.departureDate < formData.arrivalDate) {
@@ -399,7 +399,8 @@ function CreateRequest({ show, onClose, user }) {
                         <label>Прибытие</label>
                         {/* <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} /> */}
                         <div className={classes.reis_info}>
-                            <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" />
+                            {/* <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" /> */}
+                            <input type="date" name="arrivalDate" value={formData.arrivalDate} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="arrivalTime" value={formData.arrivalTime} onChange={handleChange} placeholder="Время" />
                         </div>
 
