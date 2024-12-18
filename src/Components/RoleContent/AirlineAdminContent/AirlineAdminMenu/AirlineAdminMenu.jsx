@@ -37,6 +37,7 @@ const AirlineAdminMenu = ({
         {allCreatedRequests > 0 && (
           <div className={classes.countRequests}>{allCreatedRequests}</div>
         )}
+        {!menuOpen && <span className={classes.tooltip}>Эстафета</span>}
       </Link>
       <Link
         to={"/reserve"}
@@ -68,6 +69,7 @@ const AirlineAdminMenu = ({
         {allCreatedReserves > 0 && (
           <div className={classes.countRequests}>{allCreatedReserves}</div>
         )}
+        {!menuOpen && <span className={classes.tooltip}>Резерв</span>}
       </Link>
       <Link
         to={"/hotels"}
@@ -96,6 +98,7 @@ const AirlineAdminMenu = ({
           />
         </svg>
         {menuOpen ? "Гостиницы" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Гостиницы</span>}
       </Link>
       <Link
         to={"/airlineCompany"}
@@ -156,6 +159,7 @@ const AirlineAdminMenu = ({
           />
         </svg>
         {menuOpen ? "Компания" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Компания</span>}
       </Link>
       <Link
         to={"/airlineStaff"}
@@ -196,6 +200,7 @@ const AirlineAdminMenu = ({
           />
         </svg>
         {menuOpen ? "Сотрудники" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Сотрудники</span>}
       </Link>
       <Link
         to={"/airlineAbout"}
@@ -217,6 +222,7 @@ const AirlineAdminMenu = ({
           />
         </svg>
         {menuOpen ? "О авиакомпании" : ""}
+        {!menuOpen && <span className={classes.tooltip}>О авиакомпании</span>}
       </Link>
       <Link
         to={"/reports"}
@@ -269,6 +275,7 @@ const AirlineAdminMenu = ({
           />
         </svg>
         {menuOpen ? "Отчеты" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
       </Link>
     </>
   );

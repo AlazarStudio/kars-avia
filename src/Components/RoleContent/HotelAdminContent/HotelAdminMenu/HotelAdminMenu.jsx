@@ -35,6 +35,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
         {allCreatedReserves > 0 && (
           <div className={classes.countRequests}>{allCreatedReserves}</div>
         )}
+        {!menuOpen && <span className={classes.tooltip}>Заявки с резерва</span>}
       </Link>
       <Link
         to={"/hotelChess"}
@@ -85,6 +86,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           </defs>
         </svg>
         {menuOpen ? "Шахматка" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Шахматка</span>}
       </Link>
       {/* <Link
         to={"/hotelTarifs"}
@@ -153,6 +155,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           />
         </svg>
         {menuOpen ? "Номерной фонд" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Номерной фонд</span>}
       </Link>
       <Link
         to={"/hotelCompany"}
@@ -185,6 +188,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           />
         </svg>
         {menuOpen ? "Компания" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Компания</span>}
       </Link>
       <Link
         to={"/hotelAbout"}
@@ -213,6 +217,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           />
         </svg>
         {menuOpen ? "О гостинице" : ""}
+        {!menuOpen && <span className={classes.tooltip}>О гостинице</span>}
       </Link>
       <Link
         to={"/reports"}
@@ -265,6 +270,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           />
         </svg>
         {menuOpen ? "Отчеты" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
       </Link>
     </>
   );

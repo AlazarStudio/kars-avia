@@ -12,6 +12,30 @@
   border-radius: 10px;
   transition: all 0.1s ease-in-out;
   position: relative;
+  overflow: visible;
+}
+
+/* Класс для подсказки */
+.tooltip {
+  position: absolute;
+  top: -10px;
+  right: -44px;
+  background-color: #4e4e4e;
+  color: #fff;
+  border-radius: 5px;
+  padding: 5px;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity ease-in-out 0.3s;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 999;
+}
+
+/* Показывать подсказку при hover на элементе */
+.menu_items__elem:hover .tooltip {
+  opacity: 0.9;
+  visibility: visible;
 }
 
 .jcc {
@@ -46,8 +70,8 @@
 
 .menu_items__elem .countRequests {
   position: absolute;
-  /* right: 20px; */
-  right: 15px;
+  /* right: 15px; */
+  right: 5px;
   background-color: red;
   color: var(--white);
   padding: 0px 8px;
