@@ -18,13 +18,14 @@
 /* Класс для подсказки */
 .tooltip {
   position: absolute;
-  top: -10px;
+  top: 30px;
   right: -44px;
   background-color: #4e4e4e;
   color: #fff;
   border-radius: 5px;
   padding: 5px;
   font-size: 12px;
+  text-align: center;
   opacity: 0;
   transition: opacity ease-in-out 0.3s;
   pointer-events: none;
@@ -40,6 +41,7 @@
 
 .jcc {
   justify-content: center;
+  padding: 15px 5px;
 }
 
 .menu_items__elem svg path {
@@ -70,7 +72,7 @@
 
 .menu_items__elem .countRequests {
   position: absolute;
-  right: 5px;
+  right: 10px;
   background-color: red;
   color: var(--white);
   padding: 0px 8px;
@@ -81,6 +83,11 @@
   font-size: 12px;
   opacity: 0.5;
   transition: all 0.1s ease-in-out;
+}
+
+.menu_items__elem .countRequestsMini {
+  right: -10px !important;
+  top: -10px !important;
 }
 
 .menu_items__activeElem .countRequests {

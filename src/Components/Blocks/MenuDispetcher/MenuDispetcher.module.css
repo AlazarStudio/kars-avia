@@ -17,8 +17,8 @@
 } */
 
 .w_closed {
-    width: 110px;
-    min-width: 110px;
+    width: 90px;
+    min-width: 90px;
     height: 100vh;
     background-color: var(--menu-bg);
     color: var(--white);
@@ -51,8 +51,8 @@
     display: flex;
     justify-content: flex-end;
     position: absolute;
-    right: 10px;
-    top: 1px;
+    right: 5px;
+    top: 0;
     transition: all ease-in-out 0.3s;
 }
 
@@ -90,12 +90,14 @@
     width: 278px;
     height: 93px;
     transition: all ease-in-out 0.3s;
+    object-fit: contain;
 }
 
 .side_menu_logo img {
     width: 73px;
     height: 71px;
     transition: all ease-in-out 0.3s;
+    object-fit: contain;
 }
 
 .menu_items__elem {
