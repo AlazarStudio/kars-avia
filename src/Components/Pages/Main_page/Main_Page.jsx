@@ -24,7 +24,7 @@ function Main_Page({ user }) {
     [hotelID, airlineID]
   );
 
-  console.log(user)
+  // console.log(user)
 
   return (
     <div className={classes.main}>
