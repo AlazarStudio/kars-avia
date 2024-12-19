@@ -33,7 +33,13 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
         </svg>
         {menuOpen ? "Заявки с резерва" : ""}
         {allCreatedReserves > 0 && (
-          <div className={classes.countRequests}>{allCreatedReserves}</div>
+          <div
+            className={`${classes.countRequests} ${
+              !menuOpen ? classes.countRequestsMini : ""
+            }`}
+          >
+            {allCreatedReserves}
+          </div>
         )}
         {!menuOpen && <span className={classes.tooltip}>Заявки с резерва</span>}
       </Link>

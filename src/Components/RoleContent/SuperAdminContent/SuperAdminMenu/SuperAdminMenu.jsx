@@ -35,7 +35,13 @@ const SuperAdminMenu = ({
         </svg>
         {menuOpen ? "Эстафета" : ""}
         {allCreatedRequests > 0 && (
-          <div className={classes.countRequests}>{allCreatedRequests}</div>
+          <div
+            className={`${classes.countRequests} ${
+              !menuOpen ? classes.countRequestsMini : ""
+            }`}
+          >
+            {allCreatedRequests}
+          </div>
         )}
         {!menuOpen && <span className={classes.tooltip}>Эстафета</span>}
       </Link>
@@ -67,7 +73,13 @@ const SuperAdminMenu = ({
         </svg>
         {menuOpen ? "Резерв" : ""}
         {allCreatedReserves > 0 && (
-          <div className={classes.countRequests}>{allCreatedReserves}</div>
+          <div
+            className={`${classes.countRequests} ${
+              !menuOpen ? classes.countRequestsMini : ""
+            }`}
+          >
+            {allCreatedReserves}
+          </div>
         )}
         {!menuOpen && <span className={classes.tooltip}>Резерв</span>}
       </Link>
