@@ -67,7 +67,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 id: room.name,
                 reserve: room.reserve,
                 active: room.active,
-                type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
+                // type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
+                type: room.places,
             }))
             .sort((a, b) => {
                 // Сначала сортируем по reserve (false < true)
@@ -326,6 +327,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         setHighlightedDatesOld(datesToHighlight);
     };
 
+    const getAvailablePosition = (roomType, occupiedPositions) => {
+        const maxPositions = Array.from({ length: roomType }, (_, i) => i);
+        return maxPositions.find((pos) => !occupiedPositions.includes(pos));
+    };
+
     const handleDragEnd = async (event) => {
         setIsDraggingGlobal(false);
         setActiveDragItem(null);
@@ -356,7 +362,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         }
 
         const targetRoom = rooms.find((room) => room.id === targetRoomId);
-        const isDouble = targetRoom?.type === "double";
+        const isDouble = targetRoom?.type === 2;
 
         const overlappingRequests = requests.filter(
             (req) =>
@@ -372,61 +378,61 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         if (newRequests.includes(draggedRequest)) {
             // Если это новая заявка
             if (targetRoom.active) {
-                if (isDouble) {
-                    // Проверяем доступные позиции для двухместной комнаты
-                    const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
+                // if (isDouble) {
+                // Проверяем доступные позиции для двухместной комнаты
+                const availablePosition = getAvailablePosition(targetRoom.type, occupiedPositions);
 
-                    if (availablePosition === undefined) {
-                        addNotification("Все позиции заняты в этой комнате!", "error");
-                        return;
-                    }
-
-                    const newRequest = {
-                        ...draggedRequest,
-                        room: targetRoomId,
-                        position: availablePosition,
-                        status: "Ожидает",
-                    };
-
-                    setRequests((prevRequests) => {
-                        const exists = prevRequests.some((req) => req.id === newRequest.id);
-                        if (exists) {
-                            addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-                            return prevRequests;
-                        }
-                        return [...prevRequests, newRequest];
-                    });
-
-                    // Открываем модальное окно для подтверждения
-                    setSelectedRequest(newRequest);
-                    setIsConfirmModalOpen(true);
-                } else {
-                    // Для одноместной комнаты
-                    if (occupiedPositions.length > 0) {
-                        addNotification("Место занято в комнате!", "error");
-                        return;
-                    }
-
-                    const newRequest = {
-                        ...draggedRequest,
-                        room: targetRoomId,
-                        position: 0,
-                        status: "Ожидает",
-                    };
-
-                    setRequests((prevRequests) => {
-                        const exists = prevRequests.some((req) => req.id === newRequest.id);
-                        if (exists) {
-                            addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-                            return prevRequests;
-                        }
-                        return [...prevRequests, newRequest];
-                    });
-
-                    // Открываем модальное окно для подтверждения
-                    setSelectedRequest(newRequest);
-                    setIsConfirmModalOpen(true);
+                if (availablePosition === undefined) {
+                    addNotification("Все позиции заняты в этой комнате!", "error");
+                    return;
                 }
+
+                const newRequest = {
+                    ...draggedRequest,
+                    room: targetRoomId,
+                    position: availablePosition,
+                    status: "Ожидает",
+                };
+
+                setRequests((prevRequests) => {
+                    const exists = prevRequests.some((req) => req.id === newRequest.id);
+                    if (exists) {
+                        addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
+                        return prevRequests;
+                    }
+                    return [...prevRequests, newRequest];
+                });
+
+                // Открываем модальное окно для подтверждения
+                setSelectedRequest(newRequest);
+                setIsConfirmModalOpen(true);
+                // } else {
+                //     // Для одноместной комнаты
+                //     if (occupiedPositions.length > 0) {
+                //         addNotification("Место занято в комнате!", "error");
+                //         return;
+                //     }
+
+                //     const newRequest = {
+                //         ...draggedRequest,
+                //         room: targetRoomId,
+                //         position: 0,
+                //         status: "Ожидает",
+                //     };
+
+                //     setRequests((prevRequests) => {
+                //         const exists = prevRequests.some((req) => req.id === newRequest.id);
+                //         if (exists) {
+                //             addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
+                //             return prevRequests;
+                //         }
+                //         return [...prevRequests, newRequest];
+                //     });
+
+                //     // Открываем модальное окно для подтверждения
+                //     setSelectedRequest(newRequest);
+                //     setIsConfirmModalOpen(true);
+                // }
             } else {
                 addNotification("Комната не активна!", "error");
                 return;
@@ -435,61 +441,61 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         else if (newReservePassangers.includes(draggedRequest)) {
             // Если это новая заявка
             if (targetRoom.active) {
-                if (isDouble) {
-                    // Проверяем доступные позиции для двухместной комнаты
-                    const availablePosition = [0, 1].find((pos) => !occupiedPositions.includes(pos));
+                // if (isDouble) {
+                // Проверяем доступные позиции для двухместной комнаты
+                const availablePosition = getAvailablePosition(targetRoom.type, occupiedPositions);
 
-                    if (availablePosition === undefined) {
-                        addNotification("Все позиции заняты в этой комнате!", "error");
-                        return;
-                    }
-
-                    const newRequest = {
-                        ...draggedRequest,
-                        room: targetRoomId,
-                        position: availablePosition,
-                        status: "Ожидает",
-                    };
-
-                    setRequests((prevRequests) => {
-                        const exists = prevRequests.some((req) => req.id === newRequest.id);
-                        if (exists) {
-                            addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-                            return prevRequests;
-                        }
-                        return [...prevRequests, newRequest];
-                    });
-
-                    // Открываем модальное окно для подтверждения
-                    setSelectedRequest(newRequest);
-                    setIsConfirmModalOpen(true);
-                } else {
-                    // Для одноместной комнаты
-                    if (occupiedPositions.length > 0) {
-                        addNotification("Место занято в комнате!", "error");
-                        return;
-                    }
-
-                    const newRequest = {
-                        ...draggedRequest,
-                        room: targetRoomId,
-                        position: 0,
-                        status: "Ожидает",
-                    };
-
-                    setRequests((prevRequests) => {
-                        const exists = prevRequests.some((req) => req.id === newRequest.id);
-                        if (exists) {
-                            addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-                            return prevRequests;
-                        }
-                        return [...prevRequests, newRequest];
-                    });
-
-                    // Открываем модальное окно для подтверждения
-                    setSelectedRequest(newRequest);
-                    setIsConfirmModalOpen(true);
+                if (availablePosition === undefined) {
+                    addNotification("Все позиции заняты в этой комнате!", "error");
+                    return;
                 }
+
+                const newRequest = {
+                    ...draggedRequest,
+                    room: targetRoomId,
+                    position: availablePosition,
+                    status: "Ожидает",
+                };
+
+                setRequests((prevRequests) => {
+                    const exists = prevRequests.some((req) => req.id === newRequest.id);
+                    if (exists) {
+                        addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
+                        return prevRequests;
+                    }
+                    return [...prevRequests, newRequest];
+                });
+
+                // Открываем модальное окно для подтверждения
+                setSelectedRequest(newRequest);
+                setIsConfirmModalOpen(true);
+                // } else {
+                //     // Для одноместной комнаты
+                //     if (occupiedPositions.length > 0) {
+                //         addNotification("Место занято в комнате!", "error");
+                //         return;
+                //     }
+
+                //     const newRequest = {
+                //         ...draggedRequest,
+                //         room: targetRoomId,
+                //         position: 0,
+                //         status: "Ожидает",
+                //     };
+
+                //     setRequests((prevRequests) => {
+                //         const exists = prevRequests.some((req) => req.id === newRequest.id);
+                //         if (exists) {
+                //             addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
+                //             return prevRequests;
+                //         }
+                //         return [...prevRequests, newRequest];
+                //     });
+
+                //     // Открываем модальное окно для подтверждения
+                //     setSelectedRequest(newRequest);
+                //     setIsConfirmModalOpen(true);
+                // }
             } else {
                 addNotification("Комната не активна!", "error");
                 return;
@@ -518,121 +524,116 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     }
                 } else {
                     // Перемещение между комнатами
-                    if (isDouble) {
-                        const availablePosition = [0, 1].find((pos) => {
-                            const isPositionOccupied = overlappingRequests.some(
-                                (req) => req.position === pos
-                            );
-                            return !isPositionOccupied; // Только свободные позиции
-                        });
+                    // if (isDouble) {
+                    const availablePosition = getAvailablePosition(targetRoom.type, occupiedPositions)
 
-                        if (availablePosition === undefined) {
-                            addNotification("Место занято в комнате!", "error");
-                            return;
-                        }
+                    if (availablePosition === undefined) {
+                        addNotification("Место занято в комнате!", "error");
+                        return;
+                    }
 
-                        console.log(draggedRequest)
+                    // console.log(draggedRequest)
 
-                        let bookingInput;
+                    let bookingInput;
 
-                        if (draggedRequest.isRequest) {
-                            bookingInput = {
-                                hotelChesses: [
-                                    {
-                                        clientId: draggedRequest.personID, // ID клиента
-                                        status: 'transferred',
-                                        hotelId: hotelId, // ID отеля
-                                        requestId: draggedRequest.requestID, // ID заявки
-                                        room: `${targetRoomId}`, // Номер комнаты
-                                        place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
-                                        id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
-                                    },
-                                ],
-                            }
-                        } else if (!draggedRequest.isRequest) {
-                            bookingInput = {
-                                hotelChesses: [
-                                    {
-                                        clientId: draggedRequest.personID, // ID клиента
-                                        status: 'transferred',
-                                        hotelId: hotelId, // ID отеля
-                                        reserveId: draggedRequest.requestID, // ID заявки
-                                        room: `${targetRoomId}`, // Номер комнаты
-                                        place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
-                                        id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
-                                    },
-                                ],
-                            }
-                        }
-
-                        // console.log(bookingInput)
-
-                        try {
-                            await updateHotelBron({
-                                variables: {
-                                    updateHotelId: hotelId,
-                                    input: bookingInput,
+                    if (draggedRequest.isRequest) {
+                        bookingInput = {
+                            hotelChesses: [
+                                {
+                                    clientId: draggedRequest.personID, // ID клиента
+                                    status: 'transferred',
+                                    hotelId: hotelId, // ID отеля
+                                    requestId: draggedRequest.requestID, // ID заявки
+                                    room: `${targetRoomId}`, // Номер комнаты
+                                    place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
+                                    id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
                                 },
-                            });
-
-                            addNotification("Бронь успешно перемещена", "success");
-                        } catch (err) {
-                            addNotification("Произошла ошибка при подтверждении бронирования", "error");
-                            console.log("Произошла ошибка при подтверждении бронирования", err);
+                            ],
                         }
-
-                    } else {
-                        if (occupiedPositions.length > 0) {
-                            addNotification("Место занято в комнате!", "error");
-                            return;
-                        }
-
-                        let bookingInput;
-
-                        if (draggedRequest.isRequest) {
-                            bookingInput = {
-                                hotelChesses: [
-                                    {
-                                        clientId: draggedRequest.personID, // ID клиента
-                                        status: 'transferred',
-                                        hotelId: hotelId, // ID отеля
-                                        requestId: draggedRequest.requestID, // ID заявки
-                                        room: `${targetRoomId}`, // Номер комнаты
-                                        place: 1, // Позиция в комнате (если двухместная)
-                                        id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
-                                    },
-                                ],
-                            }
-                        } else if (!draggedRequest.isRequest) {
-                            bookingInput = {
-                                hotelChesses: [
-                                    {
-                                        clientId: draggedRequest.personID, // ID клиента
-                                        status: 'transferred',
-                                        hotelId: hotelId, // ID отеля
-                                        reserveId: draggedRequest.requestID, // ID заявки
-                                        room: `${targetRoomId}`, // Номер комнаты
-                                        place: 1, // Позиция в комнате (если двухместная)
-                                        id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
-                                    },
-                                ],
-                            }
-                        }
-
-                        try {
-                            await updateHotelBron({
-                                variables: {
-                                    updateHotelId: hotelId,
-                                    input: bookingInput,
+                    } else if (!draggedRequest.isRequest) {
+                        bookingInput = {
+                            hotelChesses: [
+                                {
+                                    clientId: draggedRequest.personID, // ID клиента
+                                    status: 'transferred',
+                                    hotelId: hotelId, // ID отеля
+                                    reserveId: draggedRequest.requestID, // ID заявки
+                                    room: `${targetRoomId}`, // Номер комнаты
+                                    place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
+                                    id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
                                 },
-                            });
-
-                            addNotification("Бронь успешно перемещена", "success");
-                        } catch (err) {
-                            addNotification("Произошла ошибка при подтверждении бронирования", "error");
-                            console.log("Произошла ошибка при подтверждении бронирования", err);
+                            ],
                         }
                     }
+
+                    // console.log(bookingInput)
+
+                    try {
+                        await updateHotelBron({
+                            variables: {
+                                updateHotelId: hotelId,
+                                input: bookingInput,
+                            },
+                        });
+
+                        addNotification("Бронь успешно перемещена", "success");
+                    } catch (err) {
+                        addNotification("Произошла ошибка при подтверждении бронирования", "error");
+                        console.log("Произошла ошибка при подтверждении бронирования", err);
+                    }
+
+                    // } else {
+                    //     if (occupiedPositions.length > 0) {
+                    //         addNotification("Место занято в комнате!", "error");
+                    //         return;
+                    //     }
+
+                    //     let bookingInput;
+
+                    //     if (draggedRequest.isRequest) {
+                    //         bookingInput = {
+                    //             hotelChesses: [
+                    //                 {
+                    //                     clientId: draggedRequest.personID, // ID клиента
+                    //                     status: 'transferred',
+                    //                     hotelId: hotelId, // ID отеля
+                    //                     requestId: draggedRequest.requestID, // ID заявки
+                    //                     room: `${targetRoomId}`, // Номер комнаты
+                    //                     place: 1, // Позиция в комнате (если двухместная)
+                    //                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
+                    //                 },
+                    //             ],
+                    //         }
+                    //     } else if (!draggedRequest.isRequest) {
+                    //         bookingInput = {
+                    //             hotelChesses: [
+                    //                 {
+                    //                     clientId: draggedRequest.personID, // ID клиента
+                    //                     status: 'transferred',
+                    //                     hotelId: hotelId, // ID отеля
+                    //                     reserveId: draggedRequest.requestID, // ID заявки
+                    //                     room: `${targetRoomId}`, // Номер комнаты
+                    //                     place: 1, // Позиция в комнате (если двухместная)
+                    //                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
+                    //                 },
+                    //             ],
+                    //         }
+                    //     }
+
+                    //     try {
+                    //         await updateHotelBron({
+                    //             variables: {
+                    //                 updateHotelId: hotelId,
+                    //                 input: bookingInput,
+                    //             },
+                    //         });
+
+                    //         addNotification("Бронь успешно перемещена", "success");
+                    //     } catch (err) {
+                    //         addNotification("Произошла ошибка при подтверждении бронирования", "error");
+                    //         console.log("Произошла ошибка при подтверждении бронирования", err);
+                    //     }
+                    // }
                 }
             } else {
                 addNotification("Комната не активна!", "error");
@@ -1116,7 +1117,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                             sx={{
                                                 display: 'flex',
                                                 alignItems: 'center',
-                                                height: room.type === 'double' ? '100px' : '50px',
+                                                height: `${50 * room.type}px`,
                                                 borderBottom: index + 1 == filteredRooms.length ? '1px solid #dddddd00' : '1px solid #ddd',
                                                 borderRight: '1px solid #ddd',
                                                 borderLeft: '1px solid #ddd',

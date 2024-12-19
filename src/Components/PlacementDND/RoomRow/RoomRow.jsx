@@ -78,7 +78,7 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDr
                 display: "flex",
                 position: "relative",
                 borderBottom: borderBottomDraw ? "1px solid #dddddd00" : "1px solid #ddd",
-                height: isDouble ? "100px" : "50px",
+                height: `${50 * room.type}px`,
             }}
 
             onMouseEnter={(e) => {
