@@ -169,6 +169,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 airline: chess.request ? chess.request?.airline : chess.reserve?.airline,
                 personID: chess.client ? chess.client?.id : chess.passenger?.id,
                 chessID: chess.id,
+                requestNumber: chess.request ? chess.request?.requestNumber : chess.reserve?.reserveNumber,
             }));
 
             setRequests(transformedData);

@@ -7,7 +7,7 @@ import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RE
 import DropDownList from "../DropDownList/DropDownList";
 
 // Компонент для создания новой заявки
-function CreateRequest({ show, onClose, user }) {
+function CreateRequest({ show, onClose, onMatchFound, user }) {
     const token = getCookie('token');
     const [userID, setUserID] = useState();
     const [isEdited, setIsEdited] = useState(false);  // Флаг, указывающий, были ли изменения в форме
@@ -44,6 +44,7 @@ function CreateRequest({ show, onClose, user }) {
 
     const [warningMessage, setWarningMessage] = useState('');  // Предупреждение при пересечении бронирования
     const [hotelBronsInfo, setHotelBronsInfo] = useState([]);  // Информация о бронировании пользователя
+    const [matchingRequest, setMatchingRequest] = useState(null)
 
     // Запрос данных о бронированиях пользователя
     const { data: bronData } = useQuery(GET_USER_BRONS, {
@@ -128,15 +129,17 @@ function CreateRequest({ show, onClose, user }) {
     const closeButton = useCallback(() => {
         if (!isEdited) {
             resetForm();
+            setMatchingRequest(null)
             onClose();
             return;
         }
 
         if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
             resetForm();
+            setMatchingRequest(null)
             onClose();
         }
-    }, [isEdited, resetForm, onClose]);
+    }, [isEdited, resetForm, setMatchingRequest, onClose]);
 
 
     // Обработчик изменений в полях формы
@@ -236,9 +239,12 @@ function CreateRequest({ show, onClose, user }) {
             resetForm();
             onClose();
         } catch (error) {
-            console.error(error);
-            if (error.message.startsWith('Заявка с такими же параметрами уже существует')) {
-                alert(error.message + '.')
+            if (error.message.startsWith('requestId')) {
+                const match = error.message.match(/requestId:\s*([a-zA-Z0-9]+)/);
+                if (match) {
+                    const requestId = match[1];
+                    setMatchingRequest(requestId)
+                }
             }
         }
     };
@@ -413,6 +419,24 @@ function CreateRequest({ show, onClose, user }) {
                             <input type="date" name="departureDate" value={formData.departureDate} min={formData.arrivalDate} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
                         </div>
+
+                        {
+                            matchingRequest 
+                            ? 
+                            <div className={classes.matchingRequest}>
+                                Заявка с такими же параметрами уже существует. {' '}
+                                <span 
+                                onClick={() => {
+                                    onMatchFound(matchingRequest);
+                                    setMatchingRequest(null)
+                                    resetForm();
+                                    onClose();
+                                    }}>
+                                        Перейти к заявке
+                                </span>
+                            </div> 
+                            : null
+                        }
                     </div>
                 )}
 

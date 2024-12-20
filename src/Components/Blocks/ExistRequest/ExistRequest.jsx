@@ -13,6 +13,7 @@ import {
   CANCEL_REQUEST,
   CHANGE_TO_ARCHIVE,
   convertToDate,
+  decodeJWT,
   GET_LOGS,
   GET_REQUEST,
   getCookie,
@@ -21,6 +22,7 @@ import {
 } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 import { roles } from "../../../roles";
+import { Link } from "react-router-dom";
 
 function ExistRequest({
   show,
@@ -321,6 +323,23 @@ function ExistRequest({
             >
               История
             </div>
+
+            {
+              user.role !== roles.airlineAdmin ?
+             (formData.status !== "created" &&
+              formData.status !== "canceled") &&
+
+                <div className={classes.shahmatka_icon}>
+                  <Link 
+                    to={`/hotels/${formData.hotelId}/${formData.id}`}
+                    onClick={() => localStorage.setItem('selectedTab', 0)}
+                  >
+                    <img src="/placement_icon.png" alt="" />
+                  </Link>
+                </div>
+            : null
+            }
+
           </div>
 
           <div
