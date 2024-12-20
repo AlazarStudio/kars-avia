@@ -37,7 +37,7 @@ function InfoTableDataReserve({ children, requests, paginationHeight, ...props }
                                 <div className={classes.InfoTable_data_elem_title}>{item.passengerCount ? item.passengerCount : 0}</div>
                             </div>
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.p0} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 <div className={classes.InfoTable_data_elem_moreInfo}>
                                     <span><img src="/calendar.png" alt="" /> {convertToDate(item.arrival)}</span>
@@ -45,7 +45,7 @@ function InfoTableDataReserve({ children, requests, paginationHeight, ...props }
                                 </div>
                             </div>
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.p0} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 <div className={classes.InfoTable_data_elem_moreInfo}>
                                     <span><img src="/calendar.png" alt="" /> {convertToDate(item.departure)}</span>

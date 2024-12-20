@@ -116,6 +116,7 @@ function Estafeta({ user }) {
     // Управление состоянием боковых панелей для создания и просмотра заявок
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
+    const [existRequestData, setExistRequestData] = useState(null); // Для хранения данных match
     const [showChooseHotel, setShowChooseHotel] = useState(false);
     const [chooseObject, setChooseObject] = useState([]);
     const [chooseRequestID, setChooseRequestID] = useState();
@@ -132,6 +133,11 @@ function Estafeta({ user }) {
 
     const handleChange = (e) => setFilterData(prev => ({ ...prev, [e.target.name]: e.target.value }));
     const handleSearch = (e) => setSearchQuery(e.target.value);
+
+    const handleOpenExistRequest = (matchData) => {
+        setExistRequestData(matchData); // Сохраняем данные match
+        setShowRequestSidebar(true);   // Открываем ExistRequest
+    };
 
     // Запрос на отмену созданной, но не размещенной заявки
     const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
@@ -268,8 +274,8 @@ function Estafeta({ user }) {
                 </>
             )}
             {/* Боковые панели для создания и выбора заявок */}
-            <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
-            <ExistRequest setChooseCityRequest={setChooseCityRequest} show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID} handleCancelRequest={handleCancelRequest} user={user} />
+            <CreateRequest show={showCreateSidebar} onClose={toggleCreateSidebar} onMatchFound={handleOpenExistRequest} user={user} />
+            <ExistRequest setChooseCityRequest={setChooseCityRequest} show={showRequestSidebar} onClose={toggleRequestSidebar} setChooseRequestID={setChooseRequestID} setShowChooseHotel={setShowChooseHotel} chooseRequestID={chooseRequestID ? chooseRequestID : existRequestData} handleCancelRequest={handleCancelRequest} user={user} />
             <ChooseHotel chooseCityRequest={chooseCityRequest} show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={chooseObject} chooseRequestID={chooseRequestID} id={'relay'} />
         </div>
     );
