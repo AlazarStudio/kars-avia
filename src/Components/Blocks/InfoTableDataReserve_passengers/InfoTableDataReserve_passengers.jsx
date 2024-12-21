@@ -247,7 +247,7 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
 
     useEffect(() => {
         if (data && airline) {
-            const selectedAirlineData = data.airlines.find(item => item.id === airline.id);
+            const selectedAirlineData = data.airlines.airlines.find(item => item.id === airline.id);
             if (selectedAirlineData) {
                 setSelectedAirline(selectedAirlineData.staff);
             }

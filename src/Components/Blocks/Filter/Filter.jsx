@@ -20,7 +20,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
 
     useEffect(() => {
         if (airlinesData) {
-            setAirlines(airlinesData.airlines || []);
+            setAirlines(airlinesData.airlines.airlines || []);
         }
     }, [airlinesData]);
 

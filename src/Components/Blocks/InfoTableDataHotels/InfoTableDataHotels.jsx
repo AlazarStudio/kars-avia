@@ -53,7 +53,7 @@ function InfoTableDataHotels({
             key={index}
           >
             <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>
-              {index + 1}
+              {item.order}
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>
               <div className={classes.InfoTable_data_elem_userInfo}>

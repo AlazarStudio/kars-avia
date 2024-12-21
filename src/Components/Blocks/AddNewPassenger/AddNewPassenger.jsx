@@ -126,7 +126,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
     }, [show]);
 
     const { data } = useQuery(GET_HOTELS_RELAY);
-    const hotels = data?.hotels || [];
+    const hotels = data?.hotels.hotels || [];
     const uniqueCities = useMemo(() => {
         return [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
     }, [data]);
