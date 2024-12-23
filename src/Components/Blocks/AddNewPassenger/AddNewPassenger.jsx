@@ -37,6 +37,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         let success = confirm("Вы уверены, все несохраненные данные будут удалены?");
         if (success) {
             resetForm();
+            setError('')
             onClose();
             setShowReserveInfo && setShowReserveInfo(false)
         }
@@ -47,8 +48,8 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         const { name, value } = e.target;
         const maxCount = request.passengerCount;
         const maxCountChoose = request.passengerCount - showChooseHotels;
-
-        if (value > maxCount) {
+    
+        if (name === 'passengers' && Number(value) + showChooseHotels > maxCount) {
             setError(`Максимальное количество пассажиров - ${maxCount}. Другие гостиницы уже выбрали ${showChooseHotels} пассажиров. Вы можете выбрать не более ${maxCountChoose} пассажиров`);
             setFormData(prevState => ({
                 ...prevState,
@@ -61,7 +62,8 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
                 [name]: value
             }));
         }
-    }
+    };
+    
 
     const [createRequest] = useMutation(ADD_HOTEL_TO_RESERVE, {
         context: {
@@ -104,6 +106,9 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
             }
         } catch (e) {
             console.error(e);
+            if (e.message.startsWith('This reserve and hotel combination already exists.')) {
+                setError('Эта гостиница уже выбрана.')
+            }
         }
     };
 
@@ -127,22 +132,27 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
 
     const { data } = useQuery(GET_HOTELS_RELAY);
     const hotels = data?.hotels.hotels || [];
+    
+    // Уникальные города с мемоизацией
     const uniqueCities = useMemo(() => {
         return [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
-    }, [data]);
-
+    }, [hotels]);
+    
     useEffect(() => {
-        if (request && request.airport && uniqueCities.length > 0) {  // Добавляем проверку request.airport
-            const selectedCity = uniqueCities.includes(request.airport.city) ? request.airport.city : "";
+        // Инициализация при первом рендере
+        if (!formData.city && request?.airport?.city && uniqueCities.includes(request.airport.city)) {
+            const selectedCity = request.airport.city;
             setCity(selectedCity);
             setFormData(prevFormData => ({
                 ...prevFormData,
-                requestId: request.id,
                 city: selectedCity,
-                hotel: hotel
+                requestId: request.id,
+                hotel: '',
             }));
         }
-    }, [request, uniqueCities]);
+    }, [request, uniqueCities]); // Зависимости строго ограничены
+    
+    
 
 
     const addedHotelIds = placement.map((item) => item.hotel.name);

@@ -336,7 +336,8 @@ function ReservePlacement({ children, user, ...props }) {
     };
 
     const exists = filteredPlacement.some(item => item.hotel.id === user.hotelId);
-
+    
+    
     return (
         <div className={classes.main}>
             <MenuDispetcher id={'reserve'} />
@@ -362,6 +363,7 @@ function ReservePlacement({ children, user, ...props }) {
                         {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Добавить новую гостиницу</Button>}
 
                         {!exists &&
+                        request.passengerCount === showChooseHotels ? null :
                             <Button onClick={toggleCreateSidebar}>
                                 {user.role == 'HOTELADMIN' ? 'Выбрать количество пассажиров' : 'Добавить гостиницу'}
                             </Button>
