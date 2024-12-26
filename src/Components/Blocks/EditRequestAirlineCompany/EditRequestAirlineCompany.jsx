@@ -108,59 +108,79 @@ function EditRequestAirlineCompany({
     e.preventDefault();
 
     try {
-      // Найдем id отдела по имени
-      const selectedDepartment = addTarif.find(
-        (dept) => dept.name === formData.department
-      );
+        const selectedDepartment = addTarif.find(
+            (dept) => dept.name === formData.department
+        );
 
-      // console.log(selectedDepartment.id);
+        let response_update_user = await uploadFile({
+            variables: {
+                input: {
+                    id: user.id,
+                    name: formData.name,
+                    email: formData.email,
+                    role: formData.role,
+                    position: formData.position,
+                    login: formData.login,
+                    password: formData.password,
+                    airlineId: id,
+                    airlineDepartmentId: selectedDepartment?.id,
+                },
+                images: formData.images,
+            },
+        });
 
-      let response_update_user = await uploadFile({
-        variables: {
-          input: {
-            id: user.id,
-            name: formData.name,
-            email: formData.email,
-            role: formData.role,
-            position: formData.position,
-            login: formData.login,
-            password: formData.password,
-            airlineId: id,
-            airlineDepartmentId: formData.department,
-          },
-          images: formData.images,
-        },
-      });
+        // console.log("Response from uploadFile:", response_update_user);
 
-      if (response_update_user) {
-        const updatedUser = response_update_user.data.updateUser;
+        if (response_update_user) {
+            const updatedUser = response_update_user.data.updateUser;
 
-        const updatedTarif = addTarif
-          .map((department) => {
-            if (department.name === formData.department) {
-              return {
-                ...department,
-                users: department.users
-                  .map((user) =>
-                    user.id === updatedUser.id
-                      ? { ...user, ...updatedUser }
-                      : user
-                  )
-                  .sort((a, b) => a.name.localeCompare(b.name)),
-              };
-            }
-            return department;
-          })
-          .sort((a, b) => a.name.localeCompare(b.name));
+            const updatedTarif = addTarif.map((department) => {
+                // Если пользователь находится в этом отделе
+                if (department.users.some((u) => u.id === user.id)) {
+                    // Если это старый отдел и отдел изменился, удаляем пользователя
+                    if (department.name !== formData.department) {
+                        return {
+                            ...department,
+                            users: department.users.filter((u) => u.id !== user.id),
+                        };
+                    } else {
+                        // Если отдел не изменился, просто обновляем данные пользователя
+                        return {
+                            ...department,
+                            users: department.users.map((u) =>
+                                u.id === updatedUser.id ? { ...u, ...updatedUser } : u
+                            ),
+                        };
+                    }
+                }
 
-        onSubmit(updatedTarif);
-        resetForm();
-        onClose();
-      }
+                // Если это новый отдел, добавляем пользователя
+                if (department.name === formData.department) {
+                    return {
+                        ...department,
+                        users: [
+                            ...department.users,
+                            { ...user, ...updatedUser },
+                        ].sort((a, b) => a.name.localeCompare(b.name)),
+                    };
+                }
+
+                // Если отдел не связан с изменениями, возвращаем как есть
+                return department;
+            });
+
+            // console.log("Updated Tarif:", updatedTarif);
+
+            onSubmit(updatedTarif); // Обновляем состояние в родительском компоненте
+            resetForm();
+            onClose();
+        }
     } catch (err) {
-      alert("Произошла ошибка при обновлении пользователя");
+        console.error("Error during update:", err);
+        alert("Произошла ошибка при обновлении пользователя");
     }
-  };
+};
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {
