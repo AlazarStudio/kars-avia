@@ -143,7 +143,7 @@ function CreateRequestReserve({ show, onClose, user }) {
             setAirports(infoAirports.data?.airports || []);
         }
         if (data && data.airlines) {
-            setAirlines(data.airlines);
+            setAirlines(data.airlines.airlines);
         }
     }, [infoAirports, data]);
 

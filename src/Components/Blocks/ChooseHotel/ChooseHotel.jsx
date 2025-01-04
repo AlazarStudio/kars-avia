@@ -25,7 +25,7 @@ function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID, chooseC
 
   useEffect(() => {
     if (!hotelsLoading && hotelsData) {
-      setHotels(hotelsData.hotels || []);
+      setHotels(hotelsData.hotels.hotels || []);
     }
   }, [hotelsLoading, hotelsData]);
 

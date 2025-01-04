@@ -72,10 +72,10 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                 senderId: userId,
                 airlineId: user?.airlineId || prevFormData.airlineId,
             }));
-            setAirlines(data.airlines);
+            setAirlines(data.airlines.airlines);
 
             if (user?.airlineId) {
-                const selectedAirline = data.airlines.find(airline => airline.id === user.airlineId);
+                const selectedAirline = data.airlines.airlines.find(airline => airline.id === user.airlineId);
                 setSelectedAirline(selectedAirline);
             }
         }

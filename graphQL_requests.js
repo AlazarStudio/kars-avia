@@ -337,20 +337,22 @@ export const CREATE_REQUEST_MUTATION = gql`
     }
 `;
 
-export const GET_AIRLINES_RELAY = gql`
-  query Airlines {
-    airlines {
-      id
-      name
-      staff {
-        id
-        name
-        position
-        gender
-        number
-      }
-    }
-  }
+export const GET_AIRLINES_RELAY = gql` 
+query Airlines { 
+  airlines(pagination: {all: true}) { 
+    airlines { 
+      id 
+      name 
+      staff { 
+        id 
+        name 
+        position 
+        gender 
+        number 
+      } 
+    } 
+  } 
+} 
 `;
 
 export const GET_AIRPORTS_RELAY = gql`
@@ -366,10 +368,12 @@ export const GET_AIRPORTS_RELAY = gql`
 
 export const GET_HOTELS_RELAY = gql`
   query Hotels {
-    hotels {
-      id
-      name
-      city
+    hotels(pagination: {all: true}) {
+      hotels {
+        id
+        name
+        city
+      }
     }
   }
 `;
@@ -1082,18 +1086,22 @@ export const CREATE_HOTEL = gql`
 `;
 
 export const GET_HOTELS = gql`
-  query Hotel {
+  query Hotels($pagination: HotelPaginationInput) {
+    hotels(pagination: $pagination) {
+      totalCount
+      totalPages
       hotels {
-          id
-          name
-          city
-          address
-          quote
-          provision
-          images
-          stars
-          airportDistance
+        id
+        name
+        city
+        address
+        quote
+        provision
+        images
+        stars
+        airportDistance
       }
+    }
   }
 `;
 
@@ -1309,6 +1317,15 @@ export const DELETE_HOTEL_ROOM = gql`
   }
 `;
 
+export const DELETE_HOTEL = gql`
+  mutation DeleteHotel($deleteHotelId: ID!) {
+    deleteHotel(id: $deleteHotelId) {
+      id
+      name
+    }
+  }
+`;
+
 export const GET_HOTEL_USERS = gql`
   query HotelUsers($hotelId: ID!) {
     hotelUsers(hotelId: $hotelId) {
@@ -1371,11 +1388,15 @@ export const DELETE_HOTEL_USER = gql`
 // Запросы в авиакомпанию
 
 export const GET_AIRLINES = gql`
-  query Airlines {
-    airlines {
-      id
-      images
-      name
+  query Airlines($pagination: AirlinePaginationInput) {
+    airlines(pagination: $pagination) {
+      totalCount
+      totalPages
+      airlines {
+        id
+        images
+        name
+      }
     }
   }
 `;

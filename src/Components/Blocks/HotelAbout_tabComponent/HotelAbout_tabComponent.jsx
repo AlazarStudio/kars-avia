@@ -9,12 +9,17 @@ import {
   GET_HOTEL,
   UPDATE_HOTEL,
   decodeJWT,
+  DELETE_HOTEL,
 } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
+import { useNavigate } from "react-router-dom";
 
 function HotelAbout_tabComponent({ id }) {
   const [userRole, setUserRole] = useState();
   const token = getCookie("token");
+
+  const navigate = useNavigate();
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
 
@@ -38,6 +43,16 @@ function HotelAbout_tabComponent({ id }) {
       },
     },
   });
+
+  const [deleteHotel] = useMutation(DELETE_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const [showDelete, setShowDelete] = useState(false);
 
   useEffect(() => {
     if (data) {
@@ -143,6 +158,29 @@ function HotelAbout_tabComponent({ id }) {
         };
       }
     });
+  };
+
+  const openDeleteComponent = () => {
+    setShowDelete(true);
+  };
+
+  const closeDeleteComponent = () => {
+    setShowDelete(false);
+  };
+
+  const handleDeleteHotel = async () => {
+    try {
+      await deleteHotel({
+        variables: {
+          deleteHotelId: id,
+        },
+      });
+      setShowDelete(false);
+      // Handle post-deletion logic (e.g., redirect or notification)
+      navigate("/hotels");
+    } catch (err) {
+      console.error("Ошибка при удалении гостиницы", err);
+    }
   };
 
   return (
@@ -311,6 +349,22 @@ function HotelAbout_tabComponent({ id }) {
                     className={classes.hotelAbout_info_input}
                   />
                 </div>
+                <div className={classes.hotelAbout_info_item}>
+                  <div
+                    className={classes.deleteHotel}
+                    onClick={openDeleteComponent}
+                  >
+                    Удалить гостиницу
+                    <img src="/delete.png" alt="" />
+                  </div>
+                </div>
+                {showDelete && (
+                  <DeleteComponent
+                    remove={handleDeleteHotel}
+                    close={closeDeleteComponent}
+                    title={`Вы действительно хотите удалить гостиницу "${hotel?.name}"?`}
+                  />
+                )}
               </div>
             ) : displayInfo == "schedule" ? (
               <div className={classes.hotelAbout_info_block_meal}>

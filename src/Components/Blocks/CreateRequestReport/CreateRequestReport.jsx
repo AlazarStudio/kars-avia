@@ -89,7 +89,7 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
     airOrHotel === "airline" ? GET_AIRLINES_RELAY : GET_HOTELS_RELAY
   );
 
-  const selectData = airOrHotel === "airline" ? data?.airlines : data?.hotels;
+  const selectData = airOrHotel === "airline" ? data?.airlines.airlines : data?.hotels.hotels;
 
   useEffect(() => {
     setAirlines(selectData);

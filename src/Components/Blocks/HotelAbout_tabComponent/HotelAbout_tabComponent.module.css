@@ -215,4 +215,22 @@
     outline: none;
 }
 
+.deleteHotel {
+    height: 40px;
+    padding: 0 35px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    background-color: rgb(255, 156, 156);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+    opacity: 0.8;
+}
+
+.deleteHotel:hover {
+    opacity: 1;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}
