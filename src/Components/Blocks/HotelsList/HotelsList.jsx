@@ -26,6 +26,10 @@ function HotelsList({ children, user, ...props }) {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Получение текущей страницы из URL
+    const pageNumber = new URLSearchParams(location.search).get("page");
+    const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
+
     useEffect(() => {
         if (data && data.hotels) {
             const sortedHotels = [...data.hotels.hotels].sort((a, b) => a.city.localeCompare(b.city));
@@ -76,6 +80,12 @@ function HotelsList({ children, user, ...props }) {
             )
         );
     });
+
+    // Пагинация: общее количество страниц
+    const totalPages = Math.ceil(filteredRequests.length / pageInfo.take);
+
+    // Корректировка текущей страницы
+    const validCurrentPage = currentPage < totalPages ? currentPage : 0;
 
     // Пагинация: учитываем текущую страницу
     const paginatedRequests = useMemo(() => {
@@ -129,21 +139,23 @@ function HotelsList({ children, user, ...props }) {
                             }))}
                         />
 
-                        <div className={classes.pagination}>
-                            <ReactPaginate
-                                previousLabel={"←"}
-                                nextLabel={"→"}
-                                breakLabel={"..."}
-                                pageCount={Math.ceil(filteredRequests.length / pageInfo.take)} // Количество страниц, основанное на отфильтрованных данных
-                                marginPagesDisplayed={2}
-                                pageRangeDisplayed={5}
-                                onPageChange={handlePageClick}
-                                forcePage={pageInfo.skip}
-                                containerClassName={classes.pagination}
-                                activeClassName={classes.activePaginationNumber}
-                                pageLinkClassName={classes.paginationNumber}
-                            />
-                        </div>
+                        {totalPages > 0 && (
+                            <div className={classes.pagination}>
+                                <ReactPaginate
+                                    previousLabel={"←"}
+                                    nextLabel={"→"}
+                                    breakLabel={"..."}
+                                    pageCount={totalPages}
+                                    marginPagesDisplayed={2}
+                                    pageRangeDisplayed={5}
+                                    onPageChange={handlePageClick}
+                                    forcePage={validCurrentPage}
+                                    containerClassName={classes.pagination}
+                                    activeClassName={classes.activePaginationNumber}
+                                    pageLinkClassName={classes.paginationNumber}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
                 <CreateRequestHotel

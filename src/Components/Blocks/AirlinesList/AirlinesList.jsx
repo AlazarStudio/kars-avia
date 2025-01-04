@@ -24,6 +24,10 @@ function AirlinesList({ children, ...props }) {
     const location = useLocation();
     const navigate = useNavigate();
 
+    // Получение текущей страницы из URL
+    const pageNumber = new URLSearchParams(location.search).get("page");
+    const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
+
     useEffect(() => {
         if (data && data.airlines) {
             const sortedAirlines = [...data.airlines.airlines].sort((a, b) => a.name.localeCompare(b.name));
@@ -68,6 +72,12 @@ function AirlinesList({ children, ...props }) {
     const filteredRequests = companyData.filter(request => {
         return request.name.toLowerCase().includes(searchQuery.toLowerCase());
     });
+
+    // Пагинация: общее количество страниц
+    const totalPages = Math.ceil(filteredRequests.length / pageInfo.take);
+
+    // Корректировка текущей страницы
+    const validCurrentPage = currentPage < totalPages ? currentPage : 0;
 
     // Пагинация: вычисляем элементы для отображения на текущей странице
     const paginatedRequests = useMemo(() => {
@@ -119,21 +129,23 @@ function AirlinesList({ children, ...props }) {
                             }))}
                         />
 
-                        <div className={classes.pagination}>
-                            <ReactPaginate
-                                previousLabel={"←"}
-                                nextLabel={"→"}
-                                breakLabel={"..."}
-                                pageCount={Math.ceil(filteredRequests.length / pageInfo.take)} // Количество страниц на основе отфильтрованных данных
-                                marginPagesDisplayed={2}
-                                pageRangeDisplayed={5}
-                                onPageChange={handlePageClick}
-                                forcePage={pageInfo.skip}
-                                containerClassName={classes.pagination}
-                                activeClassName={classes.activePaginationNumber}
-                                pageLinkClassName={classes.paginationNumber}
-                            />
-                        </div>
+                        {totalPages > 0 && (
+                            <div className={classes.pagination}>
+                                <ReactPaginate
+                                    previousLabel={"←"}
+                                    nextLabel={"→"}
+                                    breakLabel={"..."}
+                                    pageCount={totalPages}
+                                    marginPagesDisplayed={2}
+                                    pageRangeDisplayed={5}
+                                    onPageChange={handlePageClick}
+                                    forcePage={validCurrentPage}
+                                    containerClassName={classes.pagination}
+                                    activeClassName={classes.activePaginationNumber}
+                                    pageLinkClassName={classes.paginationNumber}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
 

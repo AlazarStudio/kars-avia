@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 function HotelAbout_tabComponent({ id }) {
   const [userRole, setUserRole] = useState();
   const token = getCookie("token");
+  const user = decodeJWT(token);
 
   const navigate = useNavigate();
 
@@ -349,7 +350,8 @@ function HotelAbout_tabComponent({ id }) {
                     className={classes.hotelAbout_info_input}
                   />
                 </div>
-                <div className={classes.hotelAbout_info_item}>
+                {user.role === roles.superAdmin || user.role === roles.dispatcerAdmin ? (
+                  <div className={classes.hotelAbout_info_item}>
                   <div
                     className={classes.deleteHotel}
                     onClick={openDeleteComponent}
@@ -358,6 +360,8 @@ function HotelAbout_tabComponent({ id }) {
                     <img src="/delete.png" alt="" />
                   </div>
                 </div>
+                ) : null}
+                
                 {showDelete && (
                   <DeleteComponent
                     remove={handleDeleteHotel}
