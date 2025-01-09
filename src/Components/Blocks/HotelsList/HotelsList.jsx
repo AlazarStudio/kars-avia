@@ -17,18 +17,19 @@ function HotelsList({ children, user, ...props }) {
     const { loading, error, data, refetch } = useQuery(GET_HOTELS);
     const { data: dataSubscription } = useSubscription(GET_HOTELS_SUBSCRIPTION);
     const { data: dataSubscriptionUpd } = useSubscription(GET_HOTELS_UPDATE_SUBSCRIPTION);
-
+    
     const [companyData, setCompanyData] = useState([]);
     const [filterData, setFilterData] = useState({ filterSelect: '' });
     const [searchQuery, setSearchQuery] = useState('');
-    const [pageInfo, setPageInfo] = useState({ skip: 0, take: 20 });
-
+    
     const location = useLocation();
     const navigate = useNavigate();
-
+    
     // Получение текущей страницы из URL
     const pageNumber = new URLSearchParams(location.search).get("page");
     const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
+    
+    const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
 
     useEffect(() => {
         if (data && data.hotels) {

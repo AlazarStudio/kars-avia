@@ -59,6 +59,7 @@ function InfoTableDataHotels({
               <div className={classes.InfoTable_data_elem_userInfo}>
                 <div className={classes.InfoTable_data_elem_avatar}>
                   <img
+                    loading="lazy"
                     src={
                       item.images.length != 0
                         ? `${server}${item.images}`
