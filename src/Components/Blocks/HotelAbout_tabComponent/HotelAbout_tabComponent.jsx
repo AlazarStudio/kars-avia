@@ -350,7 +350,7 @@ function HotelAbout_tabComponent({ id }) {
                     className={classes.hotelAbout_info_input}
                   />
                 </div>
-                {user.role === roles.superAdmin || user.role === roles.dispatcerAdmin ? (
+                {user.role === roles.superAdmin ? (
                   <div className={classes.hotelAbout_info_item}>
                   <div
                     className={classes.deleteHotel}
