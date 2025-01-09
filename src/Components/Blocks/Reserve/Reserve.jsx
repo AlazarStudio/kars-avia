@@ -197,6 +197,7 @@ function Reserve({ children, user, idHotel, ...props }) {
                             paginationHeight={totalPages === 1 && '295px'}
                             toggleRequestSidebar={toggleRequestSidebar}
                             requests={filteredRequests}
+                            pageInfo={pageInfo.skip}
                         />
                         <div className={classes.pagination}>
                             <ReactPaginate

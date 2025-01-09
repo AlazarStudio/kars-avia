@@ -14,7 +14,6 @@ function HotelsList({ children, user, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
 
-    const { loading, error, data, refetch } = useQuery(GET_HOTELS);
     const { data: dataSubscription } = useSubscription(GET_HOTELS_SUBSCRIPTION);
     const { data: dataSubscriptionUpd } = useSubscription(GET_HOTELS_UPDATE_SUBSCRIPTION);
     
@@ -30,6 +29,10 @@ function HotelsList({ children, user, ...props }) {
     const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
     
     const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
+    
+    const { loading, error, data, refetch } = useQuery(GET_HOTELS, {
+        variables: {pagination: {skip: pageInfo.skip, take: pageInfo.take}}
+    });
 
     useEffect(() => {
         if (data && data.hotels) {
@@ -83,17 +86,17 @@ function HotelsList({ children, user, ...props }) {
     });
 
     // Пагинация: общее количество страниц
-    const totalPages = Math.ceil(filteredRequests.length / pageInfo.take);
+    const totalPages = data?.hotels?.totalPages;
 
     // Корректировка текущей страницы
     const validCurrentPage = currentPage < totalPages ? currentPage : 0;
 
     // Пагинация: учитываем текущую страницу
-    const paginatedRequests = useMemo(() => {
-        const start = pageInfo.skip * pageInfo.take;
-        const end = start + pageInfo.take;
-        return filteredRequests.slice(start, end);
-    }, [filteredRequests, pageInfo]);
+    // const paginatedRequests = useMemo(() => {
+    //     const start = pageInfo.skip * pageInfo.take;
+    //     const end = start + pageInfo.take;
+    //     return filteredRequests.slice(start, end);
+    // }, [filteredRequests, pageInfo]);
 
     const handlePageClick = (event) => {
         const selectedPage = event.selected;
@@ -134,10 +137,11 @@ function HotelsList({ children, user, ...props }) {
                     <>
                         <InfoTableDataHotels
                             toggleRequestSidebar={toggleRequestSidebar}
-                            requests={paginatedRequests.map((request, index) => ({
+                            requests={filteredRequests.map((request, index) => ({
                                 ...request,
                                 order: pageInfo.skip * pageInfo.take + index + 1  // Добавляем порядковый номер
                             }))}
+                            pageInfo={pageInfo.skip}
                         />
 
                         {totalPages > 0 && (

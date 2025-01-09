@@ -1,13 +1,26 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import classes from './InfoTableDataAirlines.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
 import { server } from "../../../../graphQL_requests";
 
-function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, ...props }) {
+function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, pageInfo, ...props }) {
     const handleObject = (item, index) => {
         toggleRequestSidebar();
     };
+
+    // Ref для контейнера списка
+    const listContainerRef = useRef(null);
+
+    // Прокрутка наверх при изменении `pageInfo`
+    useEffect(() => {
+      if (listContainerRef.current) {
+          listContainerRef.current.scrollTo({
+              top: 0,
+              behavior: "instant",
+          });
+      }
+    }, [pageInfo]);
 
     return (
         <InfoTable>
@@ -16,7 +29,7 @@ function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, ...pr
                 <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Название</div>
             </div>
 
-            <div className={classes.bottom}>
+            <div className={classes.bottom} ref={listContainerRef}>
                 {requests.map((item, index) => (
                     <Link to={`/airlines/${item.id}`}
                         className={classes.InfoTable_data}

@@ -15,18 +15,23 @@ function AirlinesList({ children, ...props }) {
     const [companyData, setCompanyData] = useState([]);
     const [filterData, setFilterData] = useState({ filterSelect: '' });
     const [searchQuery, setSearchQuery] = useState('');
-    const [pageInfo, setPageInfo] = useState({ skip: 0, take: 20 });
-
-    const { loading, error, data, refetch } = useQuery(GET_AIRLINES);
+    
     const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
     const { data: dataSubscriptionUpd } = useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION);
-
+    
     const location = useLocation();
     const navigate = useNavigate();
-
+    
     // Получение текущей страницы из URL
     const pageNumber = new URLSearchParams(location.search).get("page");
     const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
+    
+    const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
+    
+    const { loading, error, data, refetch } = useQuery(GET_AIRLINES, {
+        variables: {pagination: {skip: pageInfo.skip, take: pageInfo.take}}
+    });
+
 
     useEffect(() => {
         if (data && data.airlines) {
@@ -74,17 +79,17 @@ function AirlinesList({ children, ...props }) {
     });
 
     // Пагинация: общее количество страниц
-    const totalPages = Math.ceil(filteredRequests.length / pageInfo.take);
+    const totalPages = data?.airlines?.totalPages;
 
     // Корректировка текущей страницы
     const validCurrentPage = currentPage < totalPages ? currentPage : 0;
 
     // Пагинация: вычисляем элементы для отображения на текущей странице
-    const paginatedRequests = useMemo(() => {
-        const start = pageInfo.skip * pageInfo.take;
-        const end = start + pageInfo.take;
-        return filteredRequests.slice(start, end);
-    }, [filteredRequests, pageInfo]);
+    // const paginatedRequests = useMemo(() => {
+    //     const start = pageInfo.skip * pageInfo.take;
+    //     const end = start + pageInfo.take;
+    //     return filteredRequests.slice(start, end);
+    // }, [filteredRequests, pageInfo]);
 
     const handlePageClick = (event) => {
         const selectedPage = event.selected;
@@ -123,10 +128,11 @@ function AirlinesList({ children, ...props }) {
                     <>
                         <InfoTableDataAirlines
                             toggleRequestSidebar={toggleRequestSidebar}
-                            requests={paginatedRequests.map((request, index) => ({
+                            requests={filteredRequests.map((request, index) => ({
                                 ...request,
                                 order: pageInfo.skip * pageInfo.take + index + 1  // Добавляем порядковый номер
                             }))}
+                            pageInfo={pageInfo.skip}
                         />
 
                         {totalPages > 0 && (

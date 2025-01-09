@@ -233,4 +233,10 @@
     opacity: 1;
 }
 
+@media (max-height: 900px) {
+    .hotelAbout_info {
+        height: 460px;
+    }
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

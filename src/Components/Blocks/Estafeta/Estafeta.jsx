@@ -255,7 +255,7 @@ function Estafeta({ user }) {
             {/* Отображение таблицы заявок и компонентов пагинации */}
             {!loading && !error && requests && (
                 <>
-                    <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} chooseRequestID={chooseRequestID} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} />
+                    <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} chooseRequestID={chooseRequestID} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} pageInfo={pageInfo.skip} />
                     <div className={classes.pagination}>
                         <ReactPaginate
                             previousLabel={'←'}

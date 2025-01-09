@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import classes from "./InfoTableDataHotels.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
@@ -8,11 +8,25 @@ function InfoTableDataHotels({
   children,
   toggleRequestSidebar,
   requests,
+  pageInfo,
   ...props
 }) {
   const handleObject = (item, index) => {
     toggleRequestSidebar();
   };
+
+  // Ref для контейнера списка
+  const listContainerRef = useRef(null);
+
+  // Прокрутка наверх при изменении `pageInfo`
+  useEffect(() => {
+    if (listContainerRef.current) {
+        listContainerRef.current.scrollTo({
+            top: 0,
+            behavior: "instant",
+        });
+    }
+  }, [pageInfo]);
 
   return (
     <InfoTable>
@@ -44,7 +58,7 @@ function InfoTableDataHotels({
         {/* <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Квота</div> */}
       </div>
 
-      <div className={classes.bottom}>
+      <div className={classes.bottom} ref={listContainerRef}>
         {requests.map((item, index) => (
           <Link
             to={`/hotels/${item.id}`}

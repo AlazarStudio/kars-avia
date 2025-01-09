@@ -1,10 +1,23 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import classes from './InfoTableDataReserve.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
 import { convertToDate, server } from "../../../../graphQL_requests";
 
-function InfoTableDataReserve({ children, requests, paginationHeight, ...props }) {
+function InfoTableDataReserve({ children, requests, paginationHeight, pageInfo, ...props }) {
+    // Ref для контейнера списка
+    const listContainerRef = useRef(null);
+
+    // Прокрутка наверх при изменении `pageInfo`
+    useEffect(() => {
+      if (listContainerRef.current) {
+          listContainerRef.current.scrollTo({
+              top: 0,
+              behavior: "instant",
+          });
+      }
+    }, [pageInfo]);
+
     return (
         <InfoTable >
             <div className={classes.InfoTable_title}>
@@ -18,7 +31,7 @@ function InfoTableDataReserve({ children, requests, paginationHeight, ...props }
                 <div className={`${classes.InfoTable_title_elem} ${classes.w12}`}>Статус</div>
             </div>
 
-            <div className={classes.bottom} style={{ height: `calc(100vh - ${paginationHeight})` }} >
+            <div className={classes.bottom} style={{ height: `calc(100vh - ${paginationHeight})` }} ref={listContainerRef} >
                 {requests.map((item, index) => (
                     <Link to={`/reserve/reservePlacement/${item.id}`} className={classes.InfoTable_data} key={index} style={{ opacity: item.status == 'done' && '0.5' }} >
                         {item.status == 'created' && <div className={classes.newRequest}></div>}

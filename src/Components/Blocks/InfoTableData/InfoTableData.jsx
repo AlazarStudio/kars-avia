@@ -1,10 +1,10 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, server } from "../../../../graphQL_requests";
 
 // Основная таблица с данными о заявках
-function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, chooseRequestID, setChooseRequestID }) {
+function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
     // Функция для установки выбранного объекта и переключения боковой панели
     const handleObject = useCallback((id, arrival, departure, person, requestNumber) => {
         setChooseObject([{
@@ -39,6 +39,19 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
         done: 'Размещен'
     };
 
+    // Ref для контейнера списка
+    const listContainerRef = useRef(null);
+
+    // Прокрутка наверх при изменении `pageInfo`
+    useEffect(() => {
+      if (listContainerRef.current) {
+          listContainerRef.current.scrollTo({
+              top: 0,
+              behavior: "instant",
+          });
+      }
+    }, [pageInfo]);
+
     return (
         <InfoTable>
             {/* Заголовки колонок */}
@@ -54,7 +67,7 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
             </div>
 
             {/* Данные о заявках */}
-            <div className={classes.bottom}>
+            <div className={classes.bottom} ref={listContainerRef}>
                 {requests.map((item, index) => (
                     <div
                         className={`${classes.InfoTable_data} ${chooseRequestID === item.id && classes.InfoTable_data_active}`}
