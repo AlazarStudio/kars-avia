@@ -1157,7 +1157,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                     ref={scrollContainerRef}
                                 >
                                     <Box sx={{ overflow: 'hidden' }}>
-                                        <CurrentTimeIndicator dayWidth={DAY_WIDTH} />
+                                        {/* <CurrentTimeIndicator dayWidth={DAY_WIDTH} /> */}
                                         {filteredRooms.map((room, index) => (
                                             <RoomRow
                                                 requestId={requestId}
