@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import classes from "./HotelAbout_tabComponent.module.css";
 import { gql, useQuery, useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
@@ -110,8 +110,25 @@ function HotelAbout_tabComponent({ id }) {
     setIsEditing(!isEditing);
   };
 
+  const fileInputRef = useRef(null);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+
+    // Проверяем размер файла (2 МБ = 2 * 1024 * 1024 байт)
+    const maxSizeInBytes = 2 * 1024 * 1024; // 2 MB
+    if (file.size > maxSizeInBytes) {
+      alert("Размер файла не должен превышать 2 МБ!");
+      setHotel((prevState) => ({
+        ...prevState,
+        images: [`${data.hotel.images[0]}`],
+      }));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null; // Сброс значения в DOM-элементе
+      }
+      return;
+    }
+
     if (file) {
       setNewImage(file); // Сохраняем объект файла
       const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
@@ -346,6 +363,7 @@ function HotelAbout_tabComponent({ id }) {
                     type="file"
                     name="images"
                     onChange={handleFileChange}
+                    ref={fileInputRef}
                     disabled={!isEditing}
                     className={classes.hotelAbout_info_input}
                   />

@@ -75,8 +75,25 @@ function CreateRequestAirlineCompany({
     }));
   }, []);
 
+  const fileInputRef = useRef(null);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+
+    // Проверяем размер файла (2 МБ = 2 * 1024 * 1024 байт)
+    const maxSizeInBytes = 2 * 1024 * 1024; // 2 MB
+    if (file.size > maxSizeInBytes) {
+      alert("Размер файла не должен превышать 2 МБ!");
+      setFormData((prevState) => ({
+        ...prevState,
+        images: "",
+      }));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
+      }
+      return;
+    }
+
     if (file) {
       setFormData((prevState) => ({
         ...prevState,
@@ -308,7 +325,7 @@ function CreateRequestAirlineCompany({
           </select>
 
           <label>Аватар</label>
-          <input type="file" name="images" onChange={handleFileChange} />
+          <input type="file" name="images" onChange={handleFileChange} ref={fileInputRef} />
         </div>
       </div>
 

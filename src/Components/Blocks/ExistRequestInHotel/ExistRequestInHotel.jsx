@@ -47,7 +47,7 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
     const closeButton = useCallback(() => {
         resetForm();
         onClose();
-        setFormData(null)
+        // setFormData(null)
         // setChooseRequestID('');
     }, [onClose, setChooseRequestID]);
 

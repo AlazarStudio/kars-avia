@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import classes from "./AirlineAbout_tabComponent.module.css";
 import { requestsAirlanes } from "../../../requests.js";
 import Button from "../../Standart/Button/Button.jsx";
@@ -76,8 +76,27 @@ function AirlineAbout_tabComponent({ id, ...props }) {
     setIsEditing(!isEditing);
   };
 
+  const fileInputRef = useRef(null);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+
+    // Проверяем размер файла (2 МБ = 2 * 1024 * 1024 байт)
+    const maxSizeInBytes = 2 * 1024 * 1024; // 2 MB
+    if (file.size > maxSizeInBytes) {
+      alert("Размер файла не должен превышать 2 МБ!");
+      setAirline((prevState) => ({
+        ...prevState,
+        images: [`${data.airline.images[0]}`],
+      }));
+      console.log(`${data.airline.images[0]}`);
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null; // Сброс значения в DOM-элементе
+      }
+      return;
+    }
+
     if (file) {
       setNewImage(file); // Сохраняем объект файла
       const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
@@ -189,6 +208,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                     type="file"
                     name="images"
                     onChange={handleFileChange}
+                    ref={fileInputRef}
                     disabled={!isEditing}
                     className={classes.airlineAbout_info_input}
                   />
