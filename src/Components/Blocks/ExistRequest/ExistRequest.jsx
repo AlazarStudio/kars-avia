@@ -482,7 +482,8 @@ function ExistRequest({
                   formData.status !== "created" &&
                   formData.status !== "opened" &&
                   formData.status !== "canceled" &&
-                  formData.status !== "archiving" && (
+                  // formData.status !== "archiving" &&
+                   (
                     <>
                       <div className={classes.requestDataTitle}>Продление</div>
                       <div className={classes.reis_info}>

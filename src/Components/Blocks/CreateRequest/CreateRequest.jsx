@@ -187,6 +187,13 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
 
     const today = new Date().toISOString().split('T')[0];
 
+    // Рассчитываем минимальную дату прибытия как дату, начиная с месяца назад
+    const minArrivalDate = useMemo(() => {
+        const date = new Date();
+        date.setMonth(date.getMonth() - 1);
+        return date.toISOString().split('T')[0];
+    }, []);
+
     // Отправка формы на сервер
     const handleSubmit = async () => {
         if (!isFormValid()) {
@@ -195,8 +202,17 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
         }
 
         // Проверка на дату прибытия: она не может быть меньше сегодняшней
-        if (formData.arrivalDate < today) {
-            alert('Дата прибытия не может быть раньше сегодняшнего дня.')
+        // if (formData.arrivalDate < today) {
+        //     alert('Дата прибытия не может быть раньше сегодняшнего дня.')
+        //     setFormData(prevFormData => ({
+        //         ...prevFormData,
+        //         arrivalDate: ""  // Очищаем дату прибытия
+        //     }));
+        //     return;
+        // }
+
+        if (formData.arrivalDate < minArrivalDate) {
+            alert('Дата прибытия не может быть больше месяца назад.')
             setFormData(prevFormData => ({
                 ...prevFormData,
                 arrivalDate: ""  // Очищаем дату прибытия
@@ -409,7 +425,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                         {/* <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} /> */}
                         <div className={classes.reis_info}>
                             {/* <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" /> */}
-                            <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" />
+                            <input type="date" name="arrivalDate" value={formData.arrivalDate} min={minArrivalDate} onChange={handleChange} placeholder="Дата" />
                             <input type="time" name="arrivalTime" value={formData.arrivalTime} onChange={handleChange} placeholder="Время" />
                         </div>
 

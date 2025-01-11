@@ -221,6 +221,9 @@ function Estafeta({ user }) {
         return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
     }
 
+    // Корректировка текущей страницы
+    const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;    
+
     return (
         <div className={classes.section}>
             <Header>Эстафета</Header>
@@ -256,21 +259,24 @@ function Estafeta({ user }) {
             {!loading && !error && requests && (
                 <>
                     <InfoTableData toggleRequestSidebar={toggleRequestSidebar} requests={filteredRequests} chooseRequestID={chooseRequestID} setChooseObject={setChooseObject} setChooseRequestID={setChooseRequestID} pageInfo={pageInfo.skip} />
-                    <div className={classes.pagination}>
-                        <ReactPaginate
-                            previousLabel={'←'}
-                            nextLabel={'→'}
-                            breakLabel={'...'}
-                            pageCount={totalPages}
-                            marginPagesDisplayed={2}
-                            pageRangeDisplayed={5}
-                            onPageChange={handlePageClick}
-                            forcePage={currentPageRelay}
-                            containerClassName={classes.pagination}
-                            activeClassName={classes.activePaginationNumber}
-                            pageLinkClassName={classes.paginationNumber}
-                        />
-                    </div>
+                    
+                    {totalPages > 0 && (
+                        <div className={classes.pagination}>
+                            <ReactPaginate
+                                previousLabel={'←'}
+                                nextLabel={'→'}
+                                breakLabel={'...'}
+                                pageCount={totalPages}
+                                marginPagesDisplayed={2}
+                                pageRangeDisplayed={5}
+                                onPageChange={handlePageClick}
+                                forcePage={validCurrentPage}
+                                containerClassName={classes.pagination}
+                                activeClassName={classes.activePaginationNumber}
+                                pageLinkClassName={classes.paginationNumber}
+                            />
+                        </div>
+                    )}
                 </>
             )}
             {/* Боковые панели для создания и выбора заявок */}
