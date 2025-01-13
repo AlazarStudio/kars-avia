@@ -1859,3 +1859,33 @@ export const GET_HOTEL_REPORT = gql`
 
 
 // Отчеты
+
+
+
+// Поддержка
+
+export const GET_USER_SUPPORT_CHAT = gql`
+  query UserSupportChat($userId: ID!) {
+    userSupportChat(userId: $userId) {
+      id
+      participants {
+        id
+        name
+      }
+      createdAt
+      messages {
+        id
+        createdAt
+        text
+        sender {
+          id
+          name
+          role
+        }
+        isRead
+      }
+    }
+  }
+`;
+
+// Поддержка

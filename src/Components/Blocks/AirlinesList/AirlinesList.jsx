@@ -15,6 +15,9 @@ function AirlinesList({ children, ...props }) {
     const [companyData, setCompanyData] = useState([]);
     const [filterData, setFilterData] = useState({ filterSelect: '' });
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
+    const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
+
     
     const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
     const { data: dataSubscriptionUpd } = useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION);
@@ -69,14 +72,40 @@ function AirlinesList({ children, ...props }) {
         }));
     };
 
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
+    const handleSearch = async (e) => {
+        const query = e.target.value;
+        setSearchQuery(query);
+    
+        if (query.trim() == '') {
+            // Если строка поиска пуста, возвращаемся к стандартному режиму
+            setIsSearching(false);
+            refetch({
+                pagination: { skip: currentPage, take: 20 }, // Загрузить большое количество данных для поиска
+            }); // Запускаем повторный запрос с пагинацией
+            return;
+        }
+    
+        setIsSearching(true); // Активируем режим поиска
+    
+        try {
+            const { data } = await refetch({
+                pagination: { all: true }, // Загрузить большое количество данных для поиска
+            });
+    
+            if (data && data.airlines?.airlines) {
+                setAllFilteredData(data.airlines.airlines); // Сохраняем все данные для локального поиска
+            }
+        } catch (err) {
+            console.error("Ошибка при поиске:", err);
+        }
     };
 
     // Фильтрация запросов по имени авиакомпании
-    const filteredRequests = companyData.filter(request => {
-        return request.name.toLowerCase().includes(searchQuery.toLowerCase());
-    });
+    const filteredRequests = useMemo(() => {
+        const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
+        return dataSource.filter(request => request.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }, [isSearching, allFilteredData, companyData, searchQuery]);
+    
 
     // Пагинация: общее количество страниц
     const totalPages = data?.airlines?.totalPages;

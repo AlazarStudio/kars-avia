@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import classes from './Reserve.module.css';
 import Filter from "../Filter/Filter";
 import CreateRequestReserve from "../CreateRequestReserve/CreateRequestReserve";
@@ -121,6 +121,10 @@ function Reserve({ children, user, idHotel, ...props }) {
     });
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
+    const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
+
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFilterData(prevState => ({
@@ -128,7 +132,33 @@ function Reserve({ children, user, idHotel, ...props }) {
             [name]: value
         }));
     };
-    const handleSearch = (e) => setSearchQuery(e.target.value);
+        const handleSearch = async (e) => {
+        const query = e.target.value;
+        setSearchQuery(query);
+    
+        if (query.trim() == '') {
+            // Если строка поиска пуста, возвращаемся к стандартному режиму
+            setIsSearching(false);
+            refetch({
+                pagination: { skip: currentPageReserve, take: 50 }, // Загрузить большое количество данных для поиска
+            }); // Запускаем повторный запрос с пагинацией
+            return;
+        }
+    
+        setIsSearching(true); // Активируем режим поиска
+    
+        try {
+            const { data } = await refetch({
+                pagination: { skip: 0, take: 10000000, status: statusFilter.split(" / ") }, // Загрузить большое количество данных для поиска
+            });
+    
+            if (data && data.reserves?.reserves) {
+                setAllFilteredData(data.reserves.reserves); // Сохраняем все данные для локального поиска
+            }
+        } catch (err) {
+            console.error("Ошибка при поиске:", err);
+        }
+    };
 
     const [hotelCity, setHotelCity] = useState();
     const { data: hotelData } = useQuery(GET_HOTEL_CITY, { variables: { hotelId: idHotel } });
@@ -142,25 +172,30 @@ function Reserve({ children, user, idHotel, ...props }) {
         if (airlineData) setAirlineName(airlineData.airline.name);
     }, [airlineData]);
 
-    const filteredRequests = requests && requests.filter(request => {
-        const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
-        const matchesDate = !filterData.filterDate || request.date === filterData.filterDate;
-        const matchesSearchQuery = [
-            request.id.toLowerCase(),
-            request.airport?.city.toLowerCase(),
-            request.airline?.name.toLowerCase(),
-            request.airport?.name.toLowerCase(),
-            request.airport?.code.toLowerCase(),
-            request.arrival.toLowerCase(),
-            request.departure.toLowerCase(),
-            request.status?.toLowerCase()
-        ].some(field => field.includes(searchQuery.toLowerCase()));
-
-        const matchesCity = hotelCity ? request.airport?.city.toLowerCase() === hotelCity.toLowerCase() : true;
-        const matchesAirline = airlineName ? request.airline?.name.toLowerCase() === airlineName.toLowerCase() : true;
-
-        return matchesCity && matchesSelect && matchesDate && matchesSearchQuery && matchesAirline;
-    });
+    const filteredRequests = useMemo(() => {
+        if (!requests) return [];
+    
+        return requests.filter(request => {
+            const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
+            const matchesDate = !filterData.filterDate || request.date === filterData.filterDate;
+            const matchesSearchQuery = [
+                request.id.toLowerCase(),
+                request.airport?.city.toLowerCase(),
+                request.airline?.name.toLowerCase(),
+                request.airport?.name.toLowerCase(),
+                request.airport?.code.toLowerCase(),
+                request.arrival.toLowerCase(),
+                request.departure.toLowerCase(),
+                request.status?.toLowerCase()
+            ].some(field => field.includes(searchQuery.toLowerCase()));
+    
+            const matchesCity = hotelCity ? request.airport?.city.toLowerCase() === hotelCity.toLowerCase() : true;
+            const matchesAirline = airlineName ? request.airline?.name.toLowerCase() === airlineName.toLowerCase() : true;
+    
+            return matchesCity && matchesSelect && matchesDate && matchesSearchQuery && matchesAirline;
+        });
+    }, [requests, filterData, searchQuery, hotelCity, airlineName]);
+    
 
     const filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
     return (

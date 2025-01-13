@@ -20,6 +20,9 @@ function HotelsList({ children, user, ...props }) {
     const [companyData, setCompanyData] = useState([]);
     const [filterData, setFilterData] = useState({ filterSelect: '' });
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
+    const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
+
     
     const location = useLocation();
     const navigate = useNavigate();
@@ -70,20 +73,48 @@ function HotelsList({ children, user, ...props }) {
         }));
     };
 
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
+    const handleSearch = async (e) => {
+        const query = e.target.value;
+        setSearchQuery(query);
+    
+        if (query.trim() == '') {
+            // Если строка поиска пуста, возвращаемся к стандартному режиму
+            setIsSearching(false);
+            refetch({
+                pagination: { skip: currentPage, take: 20 }, // Загрузить большое количество данных для поиска
+            }); // Запускаем повторный запрос с пагинацией
+            return;
+        }
+    
+        setIsSearching(true); // Активируем режим поиска
+    
+        try {
+            const { data } = await refetch({
+                pagination: { all: true }, // Загрузить большое количество данных для поиска
+            });
+    
+            if (data && data.hotels?.hotels) {
+                setAllFilteredData(data.hotels.hotels); // Сохраняем все данные для локального поиска
+            }
+        } catch (err) {
+            console.error("Ошибка при поиске:", err);
+        }
     };
 
-    const filteredRequests = companyData.filter(request => {
-        return (
-            (filterData.filterSelect === '' || request.city.includes(filterData.filterSelect)) &&
-            (
-                request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.address.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-        );
-    });
+    const filteredRequests = useMemo(() => {
+        const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
+
+        return dataSource.filter(request => {
+            return (
+                (filterData.filterSelect === '' || request.city.includes(filterData.filterSelect)) &&
+                (
+                    request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    request.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    request.address.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+            );
+        });
+    }, [isSearching, allFilteredData, companyData, filterData, searchQuery]);
 
     // Пагинация: общее количество страниц
     const totalPages = data?.hotels?.totalPages;

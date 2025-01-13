@@ -131,9 +131,49 @@ function Estafeta({ user }) {
     const [filterData, setFilterData] = useState({ filterSelect: '', filterDate: '' });
     const [searchQuery, setSearchQuery] = useState('');
 
-    const handleChange = (e) => setFilterData(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    const handleSearch = (e) => setSearchQuery(e.target.value);
+    const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
+    const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
+
+    const handleChange = (e) => setFilterData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const handleSearch = async (e) => {
+        const query = e.target.value;
+        setSearchQuery(query);
+    
+        if (query.trim() == '') {
+            // Если строка поиска пуста, возвращаемся к стандартному режиму
+            setIsSearching(false);
+            refetch({
+                pagination: { skip: currentPageRelay, take: 50 }, // Загрузить большое количество данных для поиска
+            }); // Запускаем повторный запрос с пагинацией
+            return;
+        }
+    
+        setIsSearching(true); // Активируем режим поиска
+    
+        try {
+            const { data } = await refetch({
+                pagination: { skip: 0, take: 10000000 }, // Загрузить большое количество данных для поиска
+                filter: { searchQuery: query, status: statusFilter.split(" / ") } // Передаем статус и строку поиска
+            });
+    
+            if (data && data.requests?.requests) {
+                setAllFilteredData(data.requests.requests); // Сохраняем все данные для локального поиска
+            }
+        } catch (err) {
+            console.error("Ошибка при поиске:", err);
+        }
+    };
+
+    useEffect(() => {
+        if (!isSearching) {
+            refetch({
+                pagination: { skip: currentPageRelay, take: 50 },
+            }); // Возвращаем данные из стандартного режима
+        }
+    }, [isSearching, refetch]);    
+    
+    
     const handleOpenExistRequest = (matchData) => {
         setExistRequestData(matchData); // Сохраняем данные match
         setShowRequestSidebar(true);   // Открываем ExistRequest
@@ -173,17 +213,19 @@ function Estafeta({ user }) {
 
     // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
     const filteredRequests = useMemo(() => {
-        return requests.filter(request => {
+        const dataSource = isSearching ? allFilteredData : requests; // Используем данные из поиска или стандартные
+    
+        return dataSource.filter(request => {
             const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
             const matchesDate = !filterData.filterDate || convertToDate(Number(request.createdAt)) === filterData.filterDate;
             const matchesSearch = searchQuery.toLowerCase();
-
+    
             // Если выбрана авиакомпания, фильтруем по ней. Если "Все авиакомпании", не фильтруем.
             const matchesAirline = selectedAirline ? request.airline.id === selectedAirline.id : true;
-
+    
             // Если выбран аэропорт, фильтруем по аэропорту. Если "Все аэропорты", не фильтруем.
             const matchesAirport = selectedAirport?.name ? request.airport.id === selectedAirport.id : true;
-
+    
             const searchFields = [
                 request.person.name,
                 request.person.number,
@@ -196,10 +238,11 @@ function Estafeta({ user }) {
                 request.departure,
                 request.status
             ];
-
+    
             return matchesAirline && matchesAirport && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
         });
-    }, [requests, filterData, searchQuery, selectedAirline, selectedAirport]);
+    }, [isSearching, allFilteredData, requests, filterData, searchQuery, selectedAirline, selectedAirport]);
+    
 
 
 

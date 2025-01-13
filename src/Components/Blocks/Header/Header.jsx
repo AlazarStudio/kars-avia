@@ -9,6 +9,7 @@ import {
 import { useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
+import Support from "../Support/Support";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -19,11 +20,17 @@ function Header({ children }) {
   const [userData, setUserData] = useState(null); // Храним данные пользователя в state
 
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
+  const [showSupportSidebar, setShowSupportSidebar] = useState(false);
+
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
     setIsDropdownOpen(false);
     setIsFullyVisible(false);
+  };
+
+  const toggleSupportSidebar = () => {
+    setShowSupportSidebar(!showSupportSidebar);
   };
 
   const userID = useMemo(
@@ -114,6 +121,14 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
+          <div 
+            className={classes.section_top_elems_notify} 
+            onClick={toggleSupportSidebar}
+          >
+            {/* <div className={classes.section_top_elems_notify_red}></div>
+            <img src="/notify.png" alt="Уведомления" /> */}
+            <p>TS</p>
+          </div>
           <div className={classes.section_top_elems_notify}>
             <div className={classes.section_top_elems_notify_red}></div>
             <img src="/notify.png" alt="Уведомления" />
@@ -186,6 +201,12 @@ function Header({ children }) {
               updateUser={handleUpdateUser}
               openDeleteComponent={null}
               deleteComponentRef={null}
+            />
+
+            <Support
+              show={showSupportSidebar}
+              onClose={toggleSupportSidebar}
+              user={data?.user}
             />
           </div>
         </div>
