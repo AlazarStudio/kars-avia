@@ -121,14 +121,13 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
-          <div 
-            className={classes.section_top_elems_notify} 
+          <div
+            className={classes.section_top_elems_support}
             onClick={toggleSupportSidebar}
           >
-            {/* <div className={classes.section_top_elems_notify_red}></div>
-            <img src="/notify.png" alt="Уведомления" /> */}
-            <p>TS</p>
+            <img src="/support.png" alt="Поддержка" />
           </div>
+
           <div className={classes.section_top_elems_notify}>
             <div className={classes.section_top_elems_notify_red}></div>
             <img src="/notify.png" alt="Уведомления" />
