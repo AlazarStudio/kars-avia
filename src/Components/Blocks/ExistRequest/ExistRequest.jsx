@@ -327,6 +327,7 @@ function ExistRequest({
             {
               user.role !== roles.airlineAdmin ?
              (formData.status !== "created" &&
+              formData.status !== "opened" &&
               formData.status !== "canceled") &&
 
                 <div className={classes.shahmatka_icon}>
