@@ -1099,6 +1099,7 @@ export const GET_HOTELS = gql`
         provision
         images
         stars
+        usStars
         airportDistance
       }
     }
@@ -1143,6 +1144,7 @@ export const GET_HOTEL = gql`
       id
       name
       stars
+      usStars
       airportDistance
       country
       city

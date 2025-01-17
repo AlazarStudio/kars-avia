@@ -111,7 +111,12 @@ function Estafeta({ user }) {
     const handleStatusChange = (value) => {
         setStatusFilter(value);
         localStorage.setItem("statusFilter", value);
+    
+        // Сбрасываем текущую страницу на первую
+        setPageInfo(prev => ({ ...prev, skip: 0 }));
+        navigate("?page=1");
     };
+    
 
     // Управление состоянием боковых панелей для создания и просмотра заявок
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -153,8 +158,8 @@ function Estafeta({ user }) {
     
         try {
             const { data } = await refetch({
-                pagination: { skip: 0, take: 10000000 }, // Загрузить большое количество данных для поиска
-                filter: { searchQuery: query, status: statusFilter.split(" / ") } // Передаем статус и строку поиска
+                pagination: { skip: 0, take: 10000000, status: statusFilter.split(" / ") }, // Загрузить большое количество данных для поиска
+                // filter: { searchQuery: query, status: statusFilter.split(" / ") } // Передаем статус и строку поиска
             });
     
             if (data && data.requests?.requests) {
@@ -168,10 +173,11 @@ function Estafeta({ user }) {
     useEffect(() => {
         if (!isSearching) {
             refetch({
-                pagination: { skip: currentPageRelay, take: 50 },
-            }); // Возвращаем данные из стандартного режима
+                pagination: { skip: pageInfo.skip, take: pageInfo.take, status: statusFilter.split(" / ") },
+            });
         }
-    }, [isSearching, refetch]);    
+    }, [isSearching, refetch, pageInfo, statusFilter]);
+    
     
     
     const handleOpenExistRequest = (matchData) => {

@@ -43,16 +43,19 @@ function InfoTableDataHotels({
         <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
           Рейтинг
         </div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
+          Звёздность
+        </div>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>
           Адрес
         </div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w11}`}>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
           До аэропорта
         </div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w7}`}>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>
           Квота
         </div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w7}`}>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>
           Резерв
         </div>
         {/* <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Квота</div> */}
@@ -101,34 +104,35 @@ function InfoTableDataHotels({
                     className={classes.star}
                   />
                 ))}
-                {/* {Array.from({ length: 5 }, (_, index) =>
-                  index < item.stars ? (
-                    <img
-                      key={index}
-                      src="/star.png"
-                      alt="star"
-                      className={classes.star}
-                    />
-                  ) : null
-                )} */}
               </div>
             </div>
-            <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+            <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
+              <div className={classes.InfoTable_data_elem_title}>
+                {Array.from({ length: 5 }, (_, index) => (
+                  <img
+                    key={index}
+                    src={index < item.usStars ? "/star.png" : "/op_star.png"}
+                    className={classes.star}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
               <div className={classes.InfoTable_data_elem_title}>
                 {item.address}
               </div>
             </div>
-            <div className={`${classes.InfoTable_data_elem} ${classes.w11}`}>
+            <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
               <div className={classes.InfoTable_data_elem_title}>
                 {item.airportDistance}
               </div>
             </div>
-            <div className={`${classes.InfoTable_data_elem} ${classes.w7}`}>
+            <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>
               <div className={classes.InfoTable_data_elem_title}>
                 {item.quote ? item.quote : "0"}
               </div>
             </div>
-            <div className={`${classes.InfoTable_data_elem} ${classes.w7}`}>
+            <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>
               <div className={classes.InfoTable_data_elem_title}>
                 {item.provision ? item.provision : "0"}
               </div>

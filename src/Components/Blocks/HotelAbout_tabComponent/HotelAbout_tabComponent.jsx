@@ -72,6 +72,7 @@ function HotelAbout_tabComponent({ id }) {
             input: {
               name: hotel.name,
               stars: hotel.stars,
+              usStars: hotel.usStars,
               airportDistance: hotel.airportDistance,
               country: hotel.country,
               city: hotel.city,
@@ -340,6 +341,17 @@ function HotelAbout_tabComponent({ id }) {
                     type="text"
                     name="stars"
                     value={hotel.stars || ""}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className={classes.hotelAbout_info_input}
+                  />
+                </div>
+                <div className={classes.hotelAbout_info_item}>
+                  <label>Звездность</label>
+                  <input
+                    type="text"
+                    name="usStars"
+                    value={hotel.usStars || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={classes.hotelAbout_info_input}
