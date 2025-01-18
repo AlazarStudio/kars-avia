@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import {
   CREATE_HOTEL,
   GET_AIRPORTS_RELAY,
+  GET_CITIES,
   getCookie,
 } from "../../../../graphQL_requests";
 import { useMutation, useQuery } from "@apollo/client";
@@ -19,6 +20,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
     city: "",
     address: "",
     stars: "",
+    usStars: "",
     airportDistance: "",
     images: "",
   });
@@ -31,6 +33,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
       city: "",
       address: "",
       stars: "",
+      usStars: "",
       airportDistance: "",
       images: "",
     });
@@ -105,6 +108,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
       !formData.city.trim() ||
       !formData.address.trim() ||
       !formData.stars.trim() ||
+      !formData.usStars.trim() ||
       !formData.airportDistance.trim() ||
       !formData.images
     ) {
@@ -125,6 +129,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
             city: formData.city,
             address: formData.address,
             stars: formData.stars,
+            usStars: formData.usStars,
             airportDistance: formData.airportDistance,
           },
           images: formData.images,
@@ -141,40 +146,67 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
     }
   };
 
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (
+  //       sidebarRef.current?.contains(event.target) // Клик в боковой панели
+  //     ) {
+  //       return; // Если клик внутри, ничего не делаем
+  //     }
+
+  //     closeButton();
+  //   };
+
+  //   if (show) {
+  //     document.addEventListener("mousedown", handleClickOutside);
+  //   } else {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   }
+
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, [show, closeButton]);
+
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      const handleClickOutside = (event) => {
+          if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+              closeButton();
+          }
+      };
+
+      if (show) {
+          document.addEventListener("mousedown", handleClickOutside);
       }
 
-      closeButton();
-    };
-
-    if (show) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+      return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+      };
   }, [show, closeButton]);
 
-  let infoAirports = useQuery(GET_AIRPORTS_RELAY);
+
+  // let infoAirports = useQuery(GET_AIRPORTS_RELAY);
+  let infoAirports = useQuery(GET_CITIES);
   const [airports, setAirports] = useState([]);
+
+  // useEffect(() => {
+  //   if (infoAirports.data) {
+  //     setAirports(infoAirports.data?.airports || []);
+  //   }
+  // }, [infoAirports]);
 
   useEffect(() => {
     if (infoAirports.data) {
-      setAirports(infoAirports.data?.airports || []);
+      setAirports(infoAirports.data?.citys.map((item) => item.city) || []);
     }
   }, [infoAirports]);
 
-  const uniqueCities = [
-    ...new Set(airports.map((airport) => airport.city.trim())),
-  ].sort((a, b) => a.localeCompare(b));
+  // console.log(airports);
+  
+
+  // const uniqueCities = [
+  //   ...new Set(airports.map((airport) => airport.city.trim())),
+  // ].sort((a, b) => a.localeCompare(b));
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -209,8 +241,8 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
           </select> */}
           <DropDownList
             placeholder="Выберите город"
-            searchable={false}
-            options={uniqueCities}
+            searchable={true}
+            options={airports}
             initialValue={formData.city}
             onSelect={(value) => {
               setIsEdited(true);
@@ -235,6 +267,15 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
             type="text"
             name="stars"
             value={formData.stars}
+            placeholder="от 1 до 5"
+            onChange={handleChange}
+          />
+
+          <label>Звёздность</label>
+          <input
+            type="text"
+            name="usStars"
+            value={formData.usStars}
             placeholder="от 1 до 5"
             onChange={handleChange}
           />

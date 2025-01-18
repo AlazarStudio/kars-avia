@@ -366,6 +366,16 @@ export const GET_AIRPORTS_RELAY = gql`
   }
 `;
 
+export const GET_CITIES = gql`
+  query Citys {
+    citys {
+      id
+      city
+      region
+    }
+  }
+`;
+
 export const GET_HOTELS_RELAY = gql`
   query Hotels {
     hotels(pagination: {all: true}) {
@@ -1080,6 +1090,7 @@ export const CREATE_HOTEL = gql`
       city
       address
       stars
+      usStars
       airportDistance
     }
   }
