@@ -160,6 +160,14 @@ function Reserve({ children, user, idHotel, ...props }) {
         }
     };
 
+    useEffect(() => {
+        if (!isSearching) {
+            refetch({
+                pagination: { skip: pageInfo.skip, take: pageInfo.take, status: statusFilter.split(" / ") },
+            });
+        }
+    }, [isSearching, refetch, pageInfo, statusFilter]);
+
     const [hotelCity, setHotelCity] = useState();
     const { data: hotelData } = useQuery(GET_HOTEL_CITY, { variables: { hotelId: idHotel } });
     useEffect(() => {
@@ -198,6 +206,8 @@ function Reserve({ children, user, idHotel, ...props }) {
     
 
     const filterList = ['Азимут', 'S7 airlines', 'Северный ветер'];
+
+    const validCurrentPage = currentPageReserve < totalPages ? currentPageReserve : 0;    
     return (
         <>
             <div className={classes.section}>
@@ -229,26 +239,28 @@ function Reserve({ children, user, idHotel, ...props }) {
                 {!loading && !error && requests && (
                     <>
                         <InfoTableDataReserve
-                            paginationHeight={totalPages === 1 && '295px'}
+                            paginationHeight={totalPages === 1 && '329px'}
                             toggleRequestSidebar={toggleRequestSidebar}
                             requests={filteredRequests}
                             pageInfo={pageInfo.skip}
                         />
-                        <div className={classes.pagination}>
-                            <ReactPaginate
-                                previousLabel={'←'}
-                                nextLabel={'→'}
-                                breakLabel={'...'}
-                                pageCount={totalPages}
-                                marginPagesDisplayed={2}
-                                pageRangeDisplayed={5}
-                                onPageChange={handlePageClick}
-                                forcePage={currentPageReserve}
-                                containerClassName={classes.pagination}
-                                activeClassName={classes.activePaginationNumber}
-                                pageLinkClassName={classes.paginationNumber}
-                            />
-                        </div>
+                        {totalPages > 0 && (
+                            <div className={classes.pagination}>
+                                <ReactPaginate
+                                    previousLabel={'←'}
+                                    nextLabel={'→'}
+                                    breakLabel={'...'}
+                                    pageCount={totalPages}
+                                    marginPagesDisplayed={2}
+                                    pageRangeDisplayed={5}
+                                    onPageChange={handlePageClick}
+                                    forcePage={validCurrentPage}
+                                    containerClassName={classes.pagination}
+                                    activeClassName={classes.activePaginationNumber}
+                                    pageLinkClassName={classes.paginationNumber}
+                                />
+                            </div>
+                        )}
                     </>
                 )}
 

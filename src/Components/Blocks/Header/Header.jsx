@@ -10,6 +10,7 @@ import { useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
 import Support from "../Support/Support";
+import { roles } from "../../../roles";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -21,7 +22,6 @@ function Header({ children }) {
 
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [showSupportSidebar, setShowSupportSidebar] = useState(false);
-
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
@@ -59,7 +59,6 @@ function Header({ children }) {
     }
   };
 
-
   const formattedDate = useMemo(() => {
     const daysOfWeek = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
     const months = [
@@ -78,16 +77,14 @@ function Header({ children }) {
     ];
     const currentDate = new Date();
 
-    return `${daysOfWeek[currentDate.getDay()]}, ${currentDate.getDate()} ${months[currentDate.getMonth()]
-      }`;
+    return `${daysOfWeek[currentDate.getDay()]}, ${currentDate.getDate()} ${
+      months[currentDate.getMonth()]
+    }`;
   }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
         setTimeout(() => setIsFullyVisible(false), 300);
       }
@@ -121,12 +118,14 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
-          <div
-            className={classes.section_top_elems_support}
-            onClick={toggleSupportSidebar}
-          >
-            <img src="/support.png" alt="Поддержка" />
-          </div>
+          {userData?.role !== roles.superAdmin ? (
+            <div
+              className={classes.section_top_elems_support}
+              onClick={toggleSupportSidebar}
+            >
+              <img src="/support.png" alt="Поддержка" />
+            </div>
+          ) : null}
 
           <div className={classes.section_top_elems_notify}>
             <div className={classes.section_top_elems_notify_red}></div>
@@ -153,8 +152,9 @@ function Header({ children }) {
 
             {isFullyVisible && (
               <div
-                className={`${classes.profile_dropdown} ${isDropdownOpen ? classes.open : classes.closed
-                  }`}
+                className={`${classes.profile_dropdown} ${
+                  isDropdownOpen ? classes.open : classes.closed
+                }`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={classes.dropdown_info}>

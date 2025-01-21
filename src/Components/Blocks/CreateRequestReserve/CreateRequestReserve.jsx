@@ -4,6 +4,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_RESERVE_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, getCookie } from "../../../../graphQL_requests";
 import { useMutation, useQuery } from "@apollo/client";
+import DropDownList from "../DropDownList/DropDownList";
 
 function CreateRequestReserve({ show, onClose, user }) {
     const token = getCookie('token');
@@ -215,43 +216,91 @@ function CreateRequestReserve({ show, onClose, user }) {
                 <div className={classes.requestData}>
 
                     <label>Тип заявки</label>
-                    <select name="reserveForPerson" value={formData.reserveForPerson} onChange={handleChange}>
+                    <DropDownList
+                        placeholder="Выберите тип"
+                        searchable={false}
+                        options={["Заявка для экипажа", "Заявка для пассажиров"]}
+                        initialValue={formData.reserveForPerson === true ? 'Заявка для экипажа' : formData.reserveForPerson === false ?'Заявка для пассажиров' : ''}
+                        onSelect={(value) => {
+                        const pass = value === "Заявка для экипажа" ? true : false;
+                        setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            reserveForPerson: pass
+                        }));
+                        // setIsEdited(true);
+                        }}
+                    />
+                    {/* <select name="reserveForPerson" value={formData.reserveForPerson} onChange={handleChange}>
                         <option value="" disabled>Выберите тип</option>
                         <option value={true}>Заявка для экипажа</option>
                         <option value={false}>Заявка для пассажиров</option>
-                    </select>
+                    </select> */}
 
                     <label>Авиакомпания</label>
-                    <select name="airlineId" value={formData.airlineId} onChange={handleChange}>
+                    <DropDownList
+                        placeholder="Введите авиакомпанию"
+                        searchable={false}
+                        options={airlines?.map((airline) => airline.name)}
+                        initialValue={airlines.find(airline => airline.id === formData.airlineId)?.name || ""}
+                        onSelect={(value) => {
+                        const selectedAirline = airlines.find(
+                            (airline) => airline.name === value
+                        );
+                        setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            airlineId: selectedAirline?.id || "",
+                        }));
+                        // setIsEdited(true);
+                        }}
+                    />                    
+                    {/* <select name="airlineId" value={formData.airlineId} onChange={handleChange}>
                         <option value="" disabled>Выберите авиакомпанию</option>
                         {airlines.map(airline => (
                             <option key={airline.id} value={airline.id}>
                                 {airline.name}
                             </option>
                         ))}
-                    </select>
+                    </select> */}
 
                     <label>Город</label>
-                    <select name="city" value={formData.city} onChange={handleChange}>
-                        <option value="" disabled>Выберите город</option>
-                        {uniqueCities.map(city => (
-                            <option key={city} value={city}>
-                                {city}
-                            </option>
-                        ))}
-                    </select>
+                    <DropDownList
+                            placeholder="Введите город"
+                            options={uniqueCities}
+                            initialValue={formData.city}
+                            onSelect={(value) => {
+                                setFormData(prevFormData => ({
+                                    ...prevFormData,
+                                    city: value,
+                                    airportId: ""
+                                }));
+                                // setIsEdited(true);
+                            }}
+                        />
 
                     {formData.city && (
                         <>
                             <label>Аэропорт</label>
-                            <select name="airportId" value={formData.airportId} onChange={handleChange} disabled={!formData.city}>
+                            <DropDownList
+                                    placeholder="Введите аэропорт"
+                                    options={filteredAirports.map(airport => airport.name)}
+                                    initialValue={filteredAirports.find(airport => airport.id === formData.airportId)?.name || ""}
+                                    onSelect={(value) => {
+                                        const selectedAirport = filteredAirports.find(airport => airport.name === value);
+                                        setFormData(prevFormData => ({
+                                            ...prevFormData,
+                                            airportId: selectedAirport?.id || ""
+                                        }));
+                                        // setIsEdited(true);
+                                    }}
+                                />
+                            {/* <select name="airportId" value={formData.airportId} onChange={handleChange} disabled={!formData.city}>
                                 <option value="" disabled>Выберите аэропорт</option>
                                 {filteredAirports.map(airport => (
                                     <option key={airport.id} value={airport.id}>
                                         {airport.name}
                                     </option>
                                 ))}
-                            </select>
+                            </select> */}
                         </>
                     )}
 

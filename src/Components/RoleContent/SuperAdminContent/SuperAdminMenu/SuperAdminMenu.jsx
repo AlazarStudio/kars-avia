@@ -248,6 +248,16 @@ const SuperAdminMenu = ({
         {menuOpen ? "Отчеты" : ""}
         {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
       </Link>
+      <Link
+        to={"/support"}
+        className={`${classes.menu_items__elem} ${
+          !menuOpen ? classes.jcc : ""
+        } ${id == "support" && classes.menu_items__activeElem}`}
+      >
+        <img src="/support.png" alt="" />
+        {menuOpen ? "Поддержка" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Поддержка</span>}
+      </Link>
     </>
   );
 };

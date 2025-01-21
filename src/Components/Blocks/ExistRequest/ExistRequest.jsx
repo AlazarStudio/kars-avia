@@ -613,7 +613,7 @@ function ExistRequest({
               <div className={classes.requestData}>
                 <div className={classes.logs}>
                   {[...logsData.logs].reverse().map((log, index) => (
-                    <>
+                    <div key={log.id}>
                       <div className={classes.historyDate} key={index}>
                         {convertToDate(log.createdAt)}{" "}
                         {convertToDate(log.createdAt, true)}
@@ -626,7 +626,7 @@ function ExistRequest({
                       >
                         {/* {log.description} */}
                       </div>
-                    </>
+                    </div>
                   ))}
                 </div>
               </div>

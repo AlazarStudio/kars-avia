@@ -8,9 +8,11 @@ import { roles } from "../../../roles";
 import { Link } from "react-router-dom";
 import SupportMessage from "../SupportMessage/SupportMessage";
 
-function Support({ show, onClose, chooseRequestID, user, setChooseRequestID }) {
+function Support({ show, onClose, user, selectedId }) {
   const token = getCookie("token");
   // console.log(user.id);
+
+  // let userId = user ? user : selectedId
   
 
   const [activeTab, setActiveTab] = useState("Комментарии");
@@ -61,10 +63,10 @@ function Support({ show, onClose, chooseRequestID, user, setChooseRequestID }) {
             // }}
           >
             <SupportMessage
-              chooseRequestID={chooseRequestID}
               formData={formData}
               token={token}
               user={user}
+              selectedId={selectedId}
             />
           </div>
         </Sidebar>

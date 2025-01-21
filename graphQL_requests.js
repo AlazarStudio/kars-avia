@@ -1734,6 +1734,7 @@ export const GET_DISPATCHER = gql`
       id
       name
       role
+      support
       position
       images
       login
@@ -1876,6 +1877,30 @@ export const GET_HOTEL_REPORT = gql`
 
 
 // Поддержка
+
+export const GET_USER_SUPPORT_CHATS = gql`
+  query SupportChats {
+    supportChats {
+      id
+      createdAt
+      participants {
+        id
+        name
+        images
+      }
+      messages {
+        id
+        sender {
+          id
+          name
+          role
+        }
+        text
+        isRead
+      }
+    }
+  }
+`;
 
 export const GET_USER_SUPPORT_CHAT = gql`
   query UserSupportChat($userId: ID!) {

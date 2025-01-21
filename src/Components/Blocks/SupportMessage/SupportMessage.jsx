@@ -3,13 +3,19 @@ import classes from './SupportMessage.module.css';
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Smiles from "../Smiles/Smiles";
 import { convertToDate, GET_USER_SUPPORT_CHAT, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
+import { roles } from "../../../roles";
 
-function SupportMessage({ children, chooseRequestID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
+function SupportMessage({ children, formData, token, user, selectedId, chatPadding, chatHeight, height, ...props }) {
     const messagesEndRef = useRef(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [newMessagesCount, setNewMessagesCount] = useState(0);
     const [isUserMessage, setIsUserMessage] = useState(false);
+
+    // console.log(user?.id);
+
+    let userID = selectedId ? selectedId : user?.id
+    
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -19,13 +25,13 @@ function SupportMessage({ children, chooseRequestID, formData, token, user, chat
 
     const { loading, error, data, refetch } = useQuery(GET_USER_SUPPORT_CHAT, {
         variables: {
-            userId: user.id,
+            userId: userID,
         },
     });
     
 
     const [messages, setMessages] = useState([]);
-    // console.log(data.userSupportChat.messages);
+    // console.log(data?.userSupportChat?.id);
     
 
     useEffect(() => {
@@ -41,36 +47,38 @@ function SupportMessage({ children, chooseRequestID, formData, token, user, chat
         refetch()
     }, [data, isInitialLoad, refetch]);
 
+    // useEffect(() => {
+    //     setTimeout(() => {
+    //         scrollToBottom();
+    //     }, 0);
+    // }, [data])
+
     const { data: subscriptionData } = useSubscription(REQUEST_MESSAGES_SUBSCRIPTION, {
-        variables: { chatId: messages?.id },
+        variables: { chatId: data?.userSupportChat?.id },
     });
 
-    // useEffect(() => {
-    //     if (subscriptionData) {
-    //         const newMessage = subscriptionData.messageSent;
-
-    //         setMessages(prevMessages => {
-    //             const messageExists = prevMessages.messages.some(
-    //                 message => message.id === newMessage.id
-    //             );
-
-    //             if (!messageExists) {
-    //                 return {
-    //                     ...prevMessages,
-    //                     messages: [...prevMessages.messages, newMessage]
-    //                 };
-    //             }
-    //             return prevMessages;
-    //         });
-
-    //         // Проверяем, что сообщение отправлено не текущим пользователем
-    //         if (newMessage.sender.id !== user.userId) {
-    //             setNewMessagesCount(prevCount => prevCount + 1);
-    //             setShowScrollButton(true);
-    //         }
-    //         setIsUserMessage(false);
-    //     }
-    // }, [subscriptionData, user.userId]);
+    useEffect(() => {
+        if (subscriptionData) {
+            const newMessage = subscriptionData.messageSent;
+            setMessages((prevMessages) => {
+                if (Array.isArray(prevMessages)) {
+                    const messageExists = prevMessages.some(
+                        (message) => message.id === newMessage.id
+                    );
+                    if (!messageExists) {
+                        return [...prevMessages, newMessage];
+                    }
+                }
+                return prevMessages;
+            });
+    
+            if (newMessage.sender.id !== user?.id) {
+                setNewMessagesCount((prevCount) => prevCount + 1);
+                setShowScrollButton(true);
+            }
+            setIsUserMessage(false);
+        }
+    }, [subscriptionData, user?.id]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -182,7 +190,7 @@ function SupportMessage({ children, chooseRequestID, formData, token, user, chat
                                         <div className={classes.requestData_message_text__name}>
                                             <div className={classes.requestData_message_name}>{message.sender.name}</div>
                                             {/* {console.log(message.sender)} */}
-                                            <div className={classes.requestData_message_post}>{message.sender.role}</div>
+                                            <div className={classes.requestData_message_post}>{message.sender.role === roles.superAdmin ? 'SUPPORT' : message.sender.role}</div>
                                         </div>
                                         <p style={{lineBreak: 'anywhere'}}>{message.text}</p>
                                         <div className={classes.requestData_message_time}>{convertToDate(message.createdAt)} {convertToDate(message.createdAt, true)}</div>
