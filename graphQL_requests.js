@@ -6,7 +6,7 @@ import { gql } from "@apollo/client";
 // export const path = 'backend.karsavia.ru:443';
 // export const server = `https://${path}`;
 
-export const path = '192.168.0.109:4000';
+export const path = '192.168.0.24:4000';
 export const server = `http://${path}`;
 
 export const getCookie = (name) => {
