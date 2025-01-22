@@ -41,7 +41,6 @@
     height: calc(100vh - 78px);
     display: flex;
     flex-direction: column;
-    padding: 10px;
     gap: 10px;
 }
 

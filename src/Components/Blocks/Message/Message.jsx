@@ -44,7 +44,7 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
                 // Фильтруем чаты по separator, переданному через пропсы
                 selectedChats = data.chats.filter(chat => chat.separator === separator);
             }
-            console.log(selectedChats);
+            // console.log(selectedChats);
             
     
             // Устанавливаем первый чат из отфильтрованных как текущий

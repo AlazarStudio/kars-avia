@@ -93,7 +93,6 @@ function AirlineAbout_tabComponent({ id, ...props }) {
         ...prevState,
         images: [`${data.airline.images[0]}`],
       }));
-      console.log(`${data.airline.images[0]}`);
 
       if (fileInputRef.current) {
         fileInputRef.current.value = null; // Сброс значения в DOM-элементе
