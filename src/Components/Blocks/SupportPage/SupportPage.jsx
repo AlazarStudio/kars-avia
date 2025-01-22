@@ -190,6 +190,7 @@ function SupportPage({ children, user, ...props }) {
               }))}
               pageInfo={pageInfo.skip}
               onSelectId={handleSelectId}
+              user={userData?.user}
             />
 
             {/* {totalPages > 0 && (

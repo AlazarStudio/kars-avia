@@ -11,12 +11,16 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import { roles } from "../../../roles.js";
+import Logs from "../LogsHistory/Logs.jsx";
 
 function AirlineAbout_tabComponent({ id, ...props }) {
   const [userRole, setUserRole] = useState();
   const token = getCookie("token");
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
+  const [showLogsSidebar, setShowLogsSidebar] = useState(false);
+
+  const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
   useEffect(() => {
     setUserRole(decodeJWT(token).role);
@@ -90,7 +94,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
         images: [`${data.airline.images[0]}`],
       }));
       console.log(`${data.airline.images[0]}`);
-      
+
       if (fileInputRef.current) {
         fileInputRef.current.value = null; // Сброс значения в DOM-элементе
       }
@@ -149,9 +153,12 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                 {(userRole == roles.superAdmin ||
                   userRole == roles.hotelAdmin ||
                   userRole == roles.dispatcerAdmin) && (
-                  <Button onClick={handleEditClick}>
-                    {isEditing ? "Сохранить" : "Редактировать"}
-                  </Button>
+                  <>
+                    <Button onClick={toggleLogsSidebar}>История</Button>
+                    <Button onClick={handleEditClick}>
+                      {isEditing ? "Сохранить" : "Редактировать"}
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -358,6 +365,13 @@ function AirlineAbout_tabComponent({ id, ...props }) {
               </>
             )}
           </div>
+          <Logs
+            isHotel={false}
+            id={id}
+            show={showLogsSidebar}
+            onClose={toggleLogsSidebar}
+            name={airline?.name}
+          />
         </div>
       )}
     </>

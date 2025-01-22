@@ -10,10 +10,13 @@ import {
   UPDATE_HOTEL,
   decodeJWT,
   DELETE_HOTEL,
+  GET_HOTEL_LOGS,
+  convertToDate,
 } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { useNavigate } from "react-router-dom";
+import Logs from "../LogsHistory/Logs.jsx";
 
 function HotelAbout_tabComponent({ id }) {
   const [userRole, setUserRole] = useState();
@@ -23,6 +26,9 @@ function HotelAbout_tabComponent({ id }) {
   const navigate = useNavigate();
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
+  const [showLogsSidebar, setShowLogsSidebar] = useState(false);
+
+  const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
   useEffect(() => {
     setUserRole(decodeJWT(token).role);
@@ -60,8 +66,6 @@ function HotelAbout_tabComponent({ id }) {
       setHotel(data.hotel);
     }
   }, [data]);
-
-  // console.log(hotel)
 
   const handleEditClick = async () => {
     if (isEditing) {
@@ -255,9 +259,12 @@ function HotelAbout_tabComponent({ id }) {
                 {(userRole == roles.superAdmin ||
                   userRole == roles.hotelAdmin ||
                   userRole == roles.dispatcerAdmin) && (
-                  <Button onClick={handleEditClick}>
-                    {isEditing ? "Сохранить" : "Редактировать"}
-                  </Button>
+                  <>
+                    <Button onClick={toggleLogsSidebar}>История</Button>
+                    <Button onClick={handleEditClick}>
+                      {isEditing ? "Сохранить" : "Редактировать"}
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
@@ -382,16 +389,16 @@ function HotelAbout_tabComponent({ id }) {
                 </div>
                 {user.role === roles.superAdmin ? (
                   <div className={classes.hotelAbout_info_item}>
-                  <div
-                    className={classes.deleteHotel}
-                    onClick={openDeleteComponent}
-                  >
-                    Удалить гостиницу
-                    <img src="/delete.png" alt="" />
+                    <div
+                      className={classes.deleteHotel}
+                      onClick={openDeleteComponent}
+                    >
+                      Удалить гостиницу
+                      <img src="/delete.png" alt="" />
+                    </div>
                   </div>
-                </div>
                 ) : null}
-                
+
                 {showDelete && (
                   <DeleteComponent
                     remove={handleDeleteHotel}
@@ -650,6 +657,13 @@ function HotelAbout_tabComponent({ id }) {
               </>
             )}
           </div>
+          <Logs
+            isHotel={true}
+            id={id}
+            show={showLogsSidebar}
+            onClose={toggleLogsSidebar}
+            name={hotel?.name}
+          />
         </div>
       )}
     </>

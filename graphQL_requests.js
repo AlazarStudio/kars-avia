@@ -6,7 +6,7 @@ import { gql } from "@apollo/client";
 // export const path = 'backend.karsavia.ru:443';
 // export const server = `https://${path}`;
 
-export const path = '192.168.0.24:4000';
+export const path = '192.168.0.109:4000';
 export const server = `http://${path}`;
 
 export const getCookie = (name) => {
@@ -559,6 +559,7 @@ export const GET_MESSAGES_HOTEL = gql`
   query Requests($requestId: ID!, $reserveId: ID) {
     chats(requestId: $requestId, reserveId: $reserveId) {
       id
+      separator
       messages {
         text
         createdAt
@@ -627,6 +628,48 @@ export const GET_LOGS = gql`
       arrival
       hotel {
         name
+      }
+    }
+  }
+`;
+
+export const GET_HOTEL_LOGS = gql`
+  query Hotel($hotelId: ID!) {
+    hotel(id: $hotelId) {
+      id
+      name
+      logs {
+        id
+        description
+        action
+        oldData
+        newData
+        user {
+          name
+          role
+        }
+        createdAt
+      }
+    }
+  }
+`;
+
+export const GET_AIRLINE_LOGS = gql`
+  query Airline($airlineId: ID!) {
+    airline(id: $airlineId) {
+      id
+      name
+      logs {
+        id
+        description
+        createdAt
+        action
+        newData
+        oldData
+        user {
+          name
+          role
+        }
       }
     }
   }

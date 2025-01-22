@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import { CHANGE_TO_ARCHIVE, convertToDate, GET_LOGS, GET_REQUEST, getCookie, SAVE_HANDLE_EXTEND_MUTATION, SAVE_MEALS_MUTATION } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
+import { roles } from "../../../roles";
 
 function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestID, user, setChooseRequestID, totalMeals }) {
     const token = getCookie('token');
@@ -230,6 +231,8 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
         }
     };
 
+    const [separator, setSeparator] = useState('airline');
+
     return (
         <>
             {formData &&
@@ -358,7 +361,36 @@ function ExistRequestInHotel({ show, onClose, setShowChooseHotel, chooseRequestI
 
                         {/* Вкладка "Комментарии" */}
                         {activeTab === 'Комментарии' && (
-                            <Message activeTab={activeTab} chooseRequestID={chooseRequestID} chooseReserveID={''} formData={formData} token={token} user={user} me />
+                            <>
+                            {
+                                user.role !== roles.superAdmin 
+                                && user.role !== roles.dispatcerAdmin 
+                                ? null 
+                                : (
+                                    <div className={classes.separatorWrapper}>
+                                        <button
+                                            onClick={() => setSeparator('airline')} // Установить separator как 'airline'
+                                            className={separator === 'airline' ? classes.active : null}
+                                        >
+                                            Авиакомпания
+                                        </button>
+                                        <button
+                                            onClick={() => setSeparator('hotel')} // Установить separator как 'hotel'
+                                            className={separator === 'hotel' ? classes.active : null}
+                                        >
+                                            Гостиница
+                                        </button>
+                                    </div>
+                            )}
+                            <Message 
+                                activeTab={activeTab} 
+                                chooseRequestID={chooseRequestID} 
+                                chooseReserveID={''} 
+                                formData={formData} 
+                                token={token} 
+                                user={user} 
+                                separator={separator} />
+                            </>
                         )}
 
                         {/* Вкладка "История" */}

@@ -367,4 +367,28 @@ select {
     padding: 10px 0;
 }
 
+.separatorWrapper {
+    display: flex;
+    justify-content: space-between;
+}
+
+.separatorWrapper button {
+    padding: 5px;
+    flex-basis: 50%;
+    border: none;
+    border: 1px solid transparent;
+    color: #545873;
+    background-color: transparent;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+    opacity: 0.5;
+}
+
+.separatorWrapper button.active {
+    color: #000;
+    opacity: 1;
+    background-color: #E4E4EF;
+    outline: none;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

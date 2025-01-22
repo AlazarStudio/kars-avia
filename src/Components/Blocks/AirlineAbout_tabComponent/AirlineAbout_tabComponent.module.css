@@ -80,6 +80,11 @@
     overflow: hidden;
 }
 
+.airlineAbout_top_button {
+    display: flex;
+    gap: 10px;
+}
+
 .airlineAbout_top_img img {
     width: 100%;
     height: 100%;

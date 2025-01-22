@@ -33,7 +33,7 @@ function ExistRequest({
   user,
   setChooseRequestID,
   totalMeals,
-  setChooseCityRequest
+  setChooseCityRequest,
 }) {
   const token = getCookie("token");
 
@@ -263,6 +263,8 @@ function ExistRequest({
     }
   };
 
+  const [separator, setSeparator] = useState('airline');
+
   return (
     <>
       {formData && (
@@ -270,12 +272,11 @@ function ExistRequest({
           <div className={classes.requestTitle}>
             <div className={classes.requestTitle_name}>
               {formData.requestNumber}
-              {
-                (formData.status == "done" ||
-                  formData.status == "extended" ||
-                  formData.status == "reduced" ||
-                  formData.status == "transferred" ||
-                  formData.status == "earlyStart") &&
+              {(formData.status == "done" ||
+                formData.status == "extended" ||
+                formData.status == "reduced" ||
+                formData.status == "transferred" ||
+                formData.status == "earlyStart") && (
                 <button
                   className={classes.canceledButton}
                   onClick={() => {
@@ -286,7 +287,7 @@ function ExistRequest({
                   Отменить
                   {/* <img src="/user-check.png" alt="" /> */}
                 </button>
-              }
+              )}
             </div>
             <div className={classes.requestTitle_close} onClick={closeButton}>
               <img src="/close.png" alt="" />
@@ -294,53 +295,54 @@ function ExistRequest({
           </div>
           <div className={classes.tabs}>
             <div
-              className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
-                }`}
+              className={`${classes.tab} ${
+                activeTab === "Общая" ? classes.activeTab : ""
+              }`}
               onClick={() => handleTabChange("Общая")}
             >
               Общая
             </div>
             {formData.status !== "created" && formData.status !== "opened" && (
               <div
-                className={`${classes.tab} ${activeTab === "Питание" ? classes.activeTab : ""
-                  }`}
+                className={`${classes.tab} ${
+                  activeTab === "Питание" ? classes.activeTab : ""
+                }`}
                 onClick={() => handleTabChange("Питание")}
               >
                 Питание
               </div>
             )}
             <div
-              className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
-                }`}
+              className={`${classes.tab} ${
+                activeTab === "Комментарии" ? classes.activeTab : ""
+              }`}
               onClick={() => handleTabChange("Комментарии")}
             >
               Комментарии
             </div>
             <div
-              className={`${classes.tab} ${activeTab === "История" ? classes.activeTab : ""
-                }`}
+              className={`${classes.tab} ${
+                activeTab === "История" ? classes.activeTab : ""
+              }`}
               onClick={() => handleTabChange("История")}
             >
               История
             </div>
 
-            {
-              user.role !== roles.airlineAdmin ?
-             (formData.status !== "created" &&
-              formData.status !== "opened" &&
-              formData.status !== "canceled") &&
-
-                <div className={classes.shahmatka_icon}>
-                  <Link 
-                    to={`/hotels/${formData.hotelId}/${formData.id}`}
-                    onClick={() => localStorage.setItem('selectedTab', 0)}
-                  >
-                    <img src="/placement_icon.png" alt="" />
-                  </Link>
-                </div>
-            : null
-            }
-
+            {user.role !== roles.airlineAdmin
+              ? formData.status !== "created" &&
+                formData.status !== "opened" &&
+                formData.status !== "canceled" && (
+                  <div className={classes.shahmatka_icon}>
+                    <Link
+                      to={`/hotels/${formData.hotelId}/${formData.id}`}
+                      onClick={() => localStorage.setItem("selectedTab", 0)}
+                    >
+                      <img src="/placement_icon.png" alt="" />
+                    </Link>
+                  </div>
+                )
+              : null}
           </div>
 
           <div
@@ -462,7 +464,7 @@ function ExistRequest({
                           Заезд
                         </div>
                         <div className={classes.requestDataInfo_desc}>
-                          {convertToDate(formData.arrival)} - {" "}
+                          {convertToDate(formData.arrival)} -{" "}
                           {convertToDate(formData.arrival, true)}
                         </div>
                       </div>
@@ -482,9 +484,8 @@ function ExistRequest({
                 {formData.status !== "archived" &&
                   formData.status !== "created" &&
                   formData.status !== "opened" &&
-                  formData.status !== "canceled" &&
-                  // formData.status !== "archiving" &&
-                   (
+                  formData.status !== "canceled" && (
+                    // formData.status !== "archiving" &&
                     <>
                       <div className={classes.requestDataTitle}>Продление</div>
                       <div className={classes.reis_info}>
@@ -598,14 +599,36 @@ function ExistRequest({
 
             {/* Вкладка "Комментарии" */}
             {activeTab === "Комментарии" && (
-              <Message
-                activeTab={activeTab}
-                chooseRequestID={chooseRequestID}
-                chooseReserveID={""}
-                formData={formData}
-                token={token}
-                user={user}
-              />
+              <>
+                {user.role !== roles.superAdmin &&
+                user.role !== roles.dispatcerAdmin ? null : (
+                  <div className={classes.separatorWrapper}>
+                    <button
+                      onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                      className={
+                        separator === "airline" ? classes.active : null
+                      }
+                    >
+                      Авиакомпания
+                    </button>
+                    <button
+                      onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
+                      className={separator === "hotel" ? classes.active : null}
+                    >
+                      Гостиница
+                    </button>
+                  </div>
+                )}
+                <Message
+                  activeTab={activeTab}
+                  chooseRequestID={chooseRequestID}
+                  chooseReserveID={""}
+                  formData={formData}
+                  token={token}
+                  user={user}
+                  separator={separator}
+                />
+              </>
             )}
 
             {/* Вкладка "История" */}
@@ -613,7 +636,7 @@ function ExistRequest({
               <div className={classes.requestData}>
                 <div className={classes.logs}>
                   {[...logsData.logs].reverse().map((log, index) => (
-                    <div key={log.id}>
+                    <>
                       <div className={classes.historyDate} key={index}>
                         {convertToDate(log.createdAt)}{" "}
                         {convertToDate(log.createdAt, true)}
@@ -626,7 +649,7 @@ function ExistRequest({
                       >
                         {/* {log.description} */}
                       </div>
-                    </div>
+                    </>
                   ))}
                 </div>
               </div>
@@ -659,7 +682,7 @@ function ExistRequest({
                   onClick={() => {
                     onClose();
                     setShowChooseHotel(true);
-                    setChooseCityRequest(formData.airport.city)
+                    setChooseCityRequest(formData.airport.city);
                   }}
                 >
                   Разместить

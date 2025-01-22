@@ -3,8 +3,9 @@ import classes from './Message.module.css';
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Smiles from "../Smiles/Smiles";
 import { convertToDate, GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
+import { roles } from "../../../roles";
 
-function Message({ children, activeTab, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
+function Message({ children, activeTab, separator, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
     const messagesEndRef = useRef(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [showScrollButton, setShowScrollButton] = useState(false);
@@ -24,11 +25,33 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
         },
     });
 
+    // console.log(data?.chats.map((chat) => chat.separator === separator));
+    
+
     const [messages, setMessages] = useState({ messages: [] });
 
     useEffect(() => {
-        if (data && data.chats && data.chats[0]) {
-            setMessages(data.chats[0]);
+        if (data && data.chats) {
+            let selectedChats = [];
+    
+            if (user.role === roles.airlineAdmin) {
+                // Фильтруем чаты по separator 'airline'
+                selectedChats = data.chats.filter(chat => chat.separator === 'airline');
+            } else if (user.role === roles.hotelAdmin) {
+                // Фильтруем чаты по separator 'hotel'
+                selectedChats = data.chats.filter(chat => chat.separator === 'hotel');
+            } else if (user.role === roles.superAdmin || user.role === roles.dispatcerAdmin) {
+                // Фильтруем чаты по separator, переданному через пропсы
+                selectedChats = data.chats.filter(chat => chat.separator === separator);
+            }
+            console.log(selectedChats);
+            
+    
+            // Устанавливаем первый чат из отфильтрованных как текущий
+            if (selectedChats.length > 0) {
+                setMessages(selectedChats[0]);
+            }
+    
             if (isInitialLoad) {
                 setTimeout(() => {
                     scrollToBottom();
@@ -36,8 +59,9 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
                 setIsInitialLoad(false);
             }
         }
-        refetch()
-    }, [data, isInitialLoad, refetch]);
+        refetch();
+    }, [data, separator, user.role, isInitialLoad, refetch]);
+    
 
     const { data: subscriptionData } = useSubscription(REQUEST_MESSAGES_SUBSCRIPTION, {
         variables: { chatId: messages?.id },
@@ -169,7 +193,7 @@ function Message({ children, activeTab, chooseRequestID, chooseReserveID, formDa
 
             {!loading && !error && messages?.messages && data &&
                 <div className={classes.requestData} style={{ padding: chatPadding }}>
-                    <div className={classes.requestData_messages} style={{ height: height ? `calc(100vh - ${height}px)` : formData?.status === 'done' ? 'calc(100vh - 240px)' : chatHeight }}>
+                    <div className={classes.requestData_messages} style={{ height: height ? `calc(100vh - ${height}px)` : formData?.status === 'done' ? 'calc(100vh - 244px)' : chatHeight }}>
                         {messages?.messages.map((message, index) => (
                             <div className={`${classes.requestData_message_full} ${message.sender.id === user.userId && classes.myMes}`} key={index}>
                                 <div className={classes.requestData_message}>
