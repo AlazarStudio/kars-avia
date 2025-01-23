@@ -675,6 +675,25 @@ export const GET_AIRLINE_LOGS = gql`
   }
 `;
 
+export const GET_RESERVE_LOGS = gql`
+  query Reserve($reserveId: ID!) {
+    reserve(id: $reserveId) {
+      logs {
+        id
+        newData
+        oldData
+        description
+        createdAt
+        action
+        user {
+          name
+          role
+        }
+      }
+    }
+  }
+`;
+
 export const SAVE_MEALS_MUTATION = gql`
   mutation ModifyDailyMeals($input: ModifyDailyMealsInput!) {
     modifyDailyMeals(input: $input) {
@@ -1255,6 +1274,10 @@ export const GET_HOTEL_TARIFS = gql`
       priceTwoCategory
       priceThreeCategory
       priceFourCategory
+      priceFiveCategory
+      priceSixCategory
+      priceSevenCategory
+      priceEightCategory
     }
   }
 `;
@@ -1333,6 +1356,10 @@ export const UPDATE_HOTEL_TARIF = gql`
       priceTwoCategory
       priceThreeCategory
       priceFourCategory
+      priceFiveCategory
+      priceSixCategory
+      priceSevenCategory
+      priceEightCategory
     }
   }
 `;

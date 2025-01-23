@@ -82,6 +82,26 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
                     price: data.hotel.priceFourCategory,
                     type: 4
                 },
+                {
+                    name: 'Пятиместный',
+                    price: data.hotel.priceFiveCategory,
+                    type: 5
+                },
+                {
+                    name: 'Шестиместный',
+                    price: data.hotel.priceSixCategory,
+                    type: 6
+                },
+                {
+                    name: 'Семиместный',
+                    price: data.hotel.priceSevenCategory,
+                    type: 7
+                },
+                {
+                    name: 'Восьмиместный',
+                    price: data.hotel.priceEightCategory,
+                    type: 8
+                },
             ]);
         }
     }, [data]);

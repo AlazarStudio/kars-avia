@@ -5,9 +5,9 @@ import { roles } from "../../../roles";
 
 function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPrices, requests, mealPrices, openDeleteComponent, openDeleteComponentCategory, toggleEditTarifsCategory, user, ...props }) {
     return (
-        <>
+        <div className={classes.tarifsWrapper}>
             Категории - цены
-            <InfoTable>
+            <InfoTable isScroll={true}>
                 <div className={classes.bottom}>
                     {requests.map((item, index) => (
                         <div className={classes.InfoTable_data} key={index} >
@@ -38,7 +38,7 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPri
 
 
             Питание - цены
-            <InfoTable>
+            <InfoTable isScroll={true}>
                 <div className={classes.bottom}>
                     {mealPrices.map((item, index) => (
                         <div className={classes.InfoTable_data} key={index} >
@@ -46,7 +46,7 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPri
                                 <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
 
-                            {user?.role != "AIRLINEADMIN" &&
+                            {user?.role != roles.airlineAdmin &&
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                                     <div className={classes.InfoTable_data_elem_title}>{item.price} ₽</div>
                                 </div>
@@ -59,7 +59,7 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPri
                     ))}
                 </div>
             </InfoTable>
-        </>
+        </div>
     );
 }
 

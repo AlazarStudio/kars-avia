@@ -146,7 +146,7 @@
     padding: 20px;
     box-shadow: 0px -3px 4px 0px #7979791A;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
     gap: 30px;
     height: 97px;
@@ -199,6 +199,29 @@
     color: #fff;
     padding: 0 10px;
     height: 100%;
+}
+
+.hotelAbout_info__filters {
+    display: flex;
+    gap: 5px;
+}
+
+.hotelAbout_info__filters button {
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 1px solid #54587380;
+    outline: none;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #545873;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+}
+
+.hotelAbout_info__filters button:hover {
+    background-color: #e4e4efbd;
+    border: 1px solid transparent;
+    transition: all ease-in-out 0.3s;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

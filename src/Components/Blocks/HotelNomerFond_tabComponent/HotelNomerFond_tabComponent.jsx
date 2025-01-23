@@ -70,7 +70,15 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                                             ? "Трехместный"
                                             : room.category === "fourPlace"
                                                 ? "Четырехместный"
-                                                : "",
+                                                :room.category === "fivePlace"
+                                                    ? "Пятиместный"
+                                                        : room.category === "sixPlace"
+                                                            ? "Шестиместный"
+                                                                : room.category === "sevenPlace"
+                                                                    ? "Семиместный"
+                                                                    : room.category === "eightPlace"
+                                                                        ? "Восьмиместный"
+                                                                            : "",
                                 origName: room.category,
                                 rooms: []
                             };
@@ -234,12 +242,12 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                             onChange={handleSearchTarif}
                         />
                         <div className={classes.section_searchAndFilter_filter}>
-                            <select onChange={handleSelect}>
+                            {/* <select onChange={handleSelect}>
                                 <option value="">Показать все</option>
                                 {uniqueCategories.map(category => (
                                     <option key={category} value={category}>{category}</option>
                                 ))}
-                            </select>
+                            </select> */}
                             <Filter
                                 toggleSidebar={toggleTarifs}
                                 handleChange={''}

@@ -1,3 +1,12 @@
+.tarifsWrapper {
+    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    height: calc(100vh - 211px);
+    overflow-y: auto; /* Вертикальная прокрутка */
+}
+
 .InfoTable_title,
 .InfoTable_data {
     display: flex;
@@ -123,9 +132,9 @@
 
 .bottom {
     max-height: calc(100vh - 296px);
-    height: fit-content;
-    overflow: hidden;
-    overflow-y: scroll;
+    /* height: fit-content; */
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .InfoTable_data_elem_userInfo {

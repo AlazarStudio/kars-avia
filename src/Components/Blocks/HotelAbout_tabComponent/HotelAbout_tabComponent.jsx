@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import classes from "./HotelAbout_tabComponent.module.css";
-import { gql, useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
 import HotelAboutRoomBlock from "../HotelAboutRoomBlock/HotelAboutRoomBlock.jsx";
 import {
@@ -11,7 +11,6 @@ import {
   decodeJWT,
   DELETE_HOTEL,
   GET_HOTEL_LOGS,
-  convertToDate,
 } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
@@ -260,7 +259,10 @@ function HotelAbout_tabComponent({ id }) {
                   userRole == roles.hotelAdmin ||
                   userRole == roles.dispatcerAdmin) && (
                   <>
-                    <Button onClick={toggleLogsSidebar}>История</Button>
+                    {/* <Button onClick={toggleLogsSidebar}>История</Button> */}
+                    <div className={classes.hotelAbout_info__filters}>
+                      <button onClick={toggleLogsSidebar}>История</button>
+                    </div>
                     <Button onClick={handleEditClick}>
                       {isEditing ? "Сохранить" : "Редактировать"}
                     </Button>
@@ -658,7 +660,9 @@ function HotelAbout_tabComponent({ id }) {
             )}
           </div>
           <Logs
-            isHotel={true}
+            type={"hotel"}
+            queryLog={GET_HOTEL_LOGS}
+            queryID={"hotelId"}
             id={id}
             show={showLogsSidebar}
             onClose={toggleLogsSidebar}

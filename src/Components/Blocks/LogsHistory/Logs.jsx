@@ -6,14 +6,15 @@ import {
   convertToDate,
   GET_AIRLINE_LOGS,
   GET_HOTEL_LOGS,
+  GET_RESERVE_LOGS,
   getCookie,
 } from "../../../../graphQL_requests";
 
-function Logs({ isHotel, show, onClose, id, name }) {
+function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const token = getCookie("token");
 
-  const query = isHotel ? GET_HOTEL_LOGS : GET_AIRLINE_LOGS
-  const ID = isHotel ? 'hotelId' : 'airlineId'
+  const query = queryLog;
+  const ID = queryID;
 
   const { data: dataLogs } = useQuery(query, {
     context: {
@@ -25,14 +26,20 @@ function Logs({ isHotel, show, onClose, id, name }) {
     variables: { [ID]: id },
   });
 
-  console.log(dataLogs);
-  
+  // console.log(dataLogs);
 
   const [logsData, setLogsData] = useState(null);
 
   useEffect(() => {
-    if (dataLogs) setLogsData(isHotel? dataLogs.hotel : dataLogs.airline);
-  }, [ dataLogs]);
+    if (dataLogs)
+      setLogsData(
+        type === "hotel"
+          ? dataLogs.hotel
+          : type === "airline"
+          ? dataLogs.airline
+          : dataLogs.reserve
+      );
+  }, [dataLogs]);
 
   const sidebarRef = useRef();
 
@@ -57,39 +64,37 @@ function Logs({ isHotel, show, onClose, id, name }) {
 
   return (
     <>
-        <Sidebar show={show} sidebarRef={sidebarRef}>
-          <div className={classes.requestTitle}>
-            <div className={classes.requestTitle_name}>
-              {`История ${name}`}
-            </div>
-            <div className={classes.requestTitle_close} onClick={closeButton}>
-              <img src="/close.png" alt="" />
+      <Sidebar show={show} sidebarRef={sidebarRef}>
+        <div className={classes.requestTitle}>
+          <div className={classes.requestTitle_name}>{`История ${name}`}</div>
+          <div className={classes.requestTitle_close} onClick={closeButton}>
+            <img src="/close.png" alt="" />
+          </div>
+        </div>
+
+        {logsData && (
+          <div className={classes.requestData}>
+            <div className={classes.logs}>
+              {[...logsData.logs].reverse().map((log, index) => (
+                <div className={classes.logs1} key={log.id}>
+                  <div className={classes.historyDate} key={index}>
+                    {convertToDate(log.createdAt)}{" "}
+                    {convertToDate(log.createdAt, true)}
+                  </div>
+                  <div
+                    className={classes.historyLog}
+                    dangerouslySetInnerHTML={{
+                      __html: log.description,
+                    }}
+                  >
+                    {/* {log.description} */}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-
-          {logsData && (
-            <div className={classes.requestData}>
-              <div className={classes.logs}>
-                {[...logsData.logs].reverse().map((log, index) => (
-                  <>
-                    <div className={classes.historyDate} key={index}>
-                      {convertToDate(log.createdAt)}{" "}
-                      {convertToDate(log.createdAt, true)}
-                    </div>
-                    <div
-                      className={classes.historyLog}
-                      dangerouslySetInnerHTML={{
-                        __html: log.description,
-                      }}
-                    >
-                      {/* {log.description} */}
-                    </div>
-                  </>
-                ))}
-              </div>
-            </div>
-          )}
-        </Sidebar>
+        )}
+      </Sidebar>
     </>
   );
 }

@@ -42,10 +42,6 @@
     position: relative;
 }
 
-.section_top_elems_support img {
-    width: 70%;
-}
-
 .section_top_elems_notify_red {
     position: absolute;
     top: 5px;

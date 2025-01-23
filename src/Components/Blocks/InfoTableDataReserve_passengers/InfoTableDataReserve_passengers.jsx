@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import classes from './InfoTableDataReserve_passengers.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
-import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINES_RELAY, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, getCookie, UPDATE_RESERVE } from "../../../../graphQL_requests";
+import { ADD_PASSENGER_TO_HOTEL, ADD_PERSON_TO_HOTEL, GET_AIRLINES_RELAY, GET_RESERVE_LOGS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, getCookie, UPDATE_RESERVE } from "../../../../graphQL_requests";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Message from "../Message/Message";
 import { Link, useNavigate } from "react-router-dom";
+import { roles } from "../../../roles";
+import Logs from "../LogsHistory/Logs";
 
 function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdateSidebar, setIdPassangerForUpdate, openDeletecomponent, toggleChooseHotel, user, request, airline }) {
     const token = getCookie('token');
@@ -31,6 +33,10 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
         id: ''
     });
     const [currentHotelIndex, setCurrentHotelIndex] = useState(null);
+
+    const [showLogsSidebar, setShowLogsSidebar] = useState(false);
+    
+    const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
     const newGuestRef = useRef(null);
 
@@ -498,7 +504,10 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                     )}
                 </div>
 
-                {user.role != "HOTELADMIN" && <div className={classes.counting}>
+                {user.role != roles.hotelAdmin && <div className={classes.counting}>
+                    <div className={classes.hotelAbout_info__filters}>
+                      <button onClick={toggleLogsSidebar}>История</button>
+                    </div>
                     <div className={classes.countingPeople}>
                         <img src="/peopleCount.png" alt="" />
                         {placement.length} отелей, {getTotalGuests()} из {request.passengerCount} гостей
@@ -514,9 +523,18 @@ function InfoTableDataReserve_passengers({ placement, setPlacement, toggleUpdate
                 </div>}
             </InfoTable>
 
-            {user.role != "HOTELADMIN" && <div style={{ width: '500px', backgroundColor: '#fff', borderRadius: '8px', padding: '20px' }}>
+            {user.role != roles.hotelAdmin && <div style={{ width: '500px', backgroundColor: '#fff', borderRadius: '8px', padding: '20px' }}>
                 <Message activeTab={"Комментарий"} chooseRequestID={''} chooseReserveID={request.id} token={token} user={user} chatPadding={'0'} chatHeight={'calc(100vh - 290px)'} />
             </div>}
+            <Logs
+                type={"reserve"}
+                queryLog={GET_RESERVE_LOGS}
+                queryID={"reserveId"}
+                id={request.id}
+                show={showLogsSidebar}
+                onClose={toggleLogsSidebar}
+                name={request.reserveNumber}
+          />
         </div>
     );
 }

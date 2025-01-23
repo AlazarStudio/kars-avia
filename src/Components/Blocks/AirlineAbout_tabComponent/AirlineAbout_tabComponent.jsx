@@ -5,6 +5,7 @@ import Button from "../../Standart/Button/Button.jsx";
 import {
   decodeJWT,
   GET_AIRLINE,
+  GET_AIRLINE_LOGS,
   getCookie,
   server,
   UPDATE_AIRLINE,
@@ -150,10 +151,17 @@ function AirlineAbout_tabComponent({ id, ...props }) {
               </div>
               <div className={classes.airlineAbout_top_button}>
                 {(userRole == roles.superAdmin ||
-                  userRole == roles.hotelAdmin ||
+                  userRole == roles.airlineAdmin ||
                   userRole == roles.dispatcerAdmin) && (
                   <>
-                    <Button onClick={toggleLogsSidebar}>История</Button>
+                    <div className={classes.airlineAbout_info__filters}>
+                      {/* <Button onClick={toggleLogsSidebar}>История</Button> */}
+                      <button
+                        onClick={toggleLogsSidebar}
+                      >
+                        История
+                      </button>
+                    </div>
                     <Button onClick={handleEditClick}>
                       {isEditing ? "Сохранить" : "Редактировать"}
                     </Button>
@@ -365,7 +373,9 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             )}
           </div>
           <Logs
-            isHotel={false}
+            type={'airline'}
+            queryLog={GET_AIRLINE_LOGS}
+            queryID={'airlineId'}
             id={id}
             show={showLogsSidebar}
             onClose={toggleLogsSidebar}

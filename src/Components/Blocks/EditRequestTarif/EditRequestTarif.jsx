@@ -119,6 +119,30 @@ function EditRequestTarif({
       };
     }
 
+    if (formData.type == 5) {
+      dataSend = {
+        priceFiveCategory: Number(formData.price),
+      };
+    }
+
+    if (formData.type == 6) {
+      dataSend = {
+        priceSixCategory: Number(formData.price),
+      };
+    }
+
+    if (formData.type == 7) {
+      dataSend = {
+        priceSevenCategory: Number(formData.price),
+      };
+    }
+
+    if (formData.type == 8) {
+      dataSend = {
+        priceEightCategory: Number(formData.price),
+      };
+    }
+
     let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
 
     let response_update_tarif = await updateHotelTarif({
@@ -156,6 +180,34 @@ function EditRequestTarif({
           price: isHotel
             ? response_update_tarif.data.updateHotel.priceFourCategory
             : response_update_tarif.data.updateAirline.priceFourCategory,
+          type: 4,
+        },
+        {
+          name: "Пятиместный",
+          price: isHotel
+            ? response_update_tarif.data.updateHotel.priceFiveCategory
+            : response_update_tarif.data.updateAirline.priceFiveCategory,
+          type: 1,
+        },
+        {
+          name: "Шестиместный",
+          price: isHotel
+            ? response_update_tarif.data.updateHotel.priceSixCategory
+            : response_update_tarif.data.updateAirline.priceSixCategory,
+          type: 2,
+        },
+        {
+          name: "Семиместный",
+          price: isHotel
+            ? response_update_tarif.data.updateHotel.priceSevenCategory
+            : response_update_tarif.data.updateAirline.priceSevenCategory,
+          type: 3,
+        },
+        {
+          name: "Восьмиместный",
+          price: isHotel
+            ? response_update_tarif.data.updateHotel.priceEightCategory
+            : response_update_tarif.data.updateAirline.priceEightCategory,
           type: 4,
         },
       ]);
