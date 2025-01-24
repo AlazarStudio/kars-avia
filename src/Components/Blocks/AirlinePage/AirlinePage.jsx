@@ -20,7 +20,7 @@ function AirlinePage({ children, id, user, ...props }) {
   });
 
   useEffect(() => {
-    const savedTab = localStorage.getItem("selectedTab");
+    const savedTab = localStorage.getItem("selectedAirlineTab");
     if (savedTab !== null) {
       setSelectedTab(parseInt(savedTab, 10));
     }
@@ -28,7 +28,7 @@ function AirlinePage({ children, id, user, ...props }) {
 
   const handleTabSelect = (index) => {
     setSelectedTab(index);
-    localStorage.setItem("selectedTab", index);
+    localStorage.setItem("selectedAirlineTab", index);
   };
   return (
     <>

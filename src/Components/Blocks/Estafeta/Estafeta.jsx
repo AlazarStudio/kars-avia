@@ -26,7 +26,7 @@ function Estafeta({ user }) {
 
     // Состояние для фильтрации по статусу. Получаем фильтр из localStorage или устанавливаем значение по умолчанию
     const [statusFilter, setStatusFilter] = useState(() => {
-        return localStorage.getItem("statusFilter") || "created / opened";
+        return localStorage.getItem("statusFilter") || "all";
     });
 
     // Состояние для хранения информации о странице (для пагинации)

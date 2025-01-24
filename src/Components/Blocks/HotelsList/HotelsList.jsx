@@ -50,7 +50,7 @@ function HotelsList({ children, user, ...props }) {
             });
         }
 
-        if (dataSubscriptionUpd) refetch();
+        refetch();
     }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
 
     const addHotel = (newHotel) => {

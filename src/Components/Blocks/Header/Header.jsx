@@ -118,14 +118,14 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
-          {userData?.role !== roles.superAdmin ? (
+          {/* {userData?.role !== roles.superAdmin ? (
             <div
               className={classes.section_top_elems_support}
               onClick={toggleSupportSidebar}
             >
               <img src="/support.png" alt="Поддержка" />
             </div>
-          ) : null}
+          ) : null} */}
 
           <div className={classes.section_top_elems_notify}>
             <div className={classes.section_top_elems_notify_red}></div>

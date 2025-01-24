@@ -360,7 +360,7 @@ function ReservePlacement({ children, user, ...props }) {
                     />
 
                     <div className={classes.btnsReserve}>
-                        {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Добавить новую гостиницу</Button>}
+                        {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
 
                         {!exists &&
                         request.passengerCount === showChooseHotels ? null :

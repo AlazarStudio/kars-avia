@@ -62,7 +62,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
     //     { label: "Администратор", value: "DISPATCHERADMIN" }
     // ], []);
 
-    let filter = filterLocalData || "created / opened"
+    let filter = filterLocalData || "all"
 
     return (
         <div className={classes.filter}>

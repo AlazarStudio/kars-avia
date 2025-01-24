@@ -23,7 +23,7 @@ const SuperAdminContent = ({ user }) => {
 			{id === 'hotels' && <HotelsList user={user} />}
 			{id === 'airlines' && <AirlinesList user={user} />}
 			{id === 'reports' && <Reports user={user} />}
-			{id === 'support' && <SupportPage user={user} />}
+			{/* {id === 'support' && <SupportPage user={user} />} */}
 			{!id && hotelID && <HotelPage id={hotelID} user={user} />}
 			{!id && airlineID && <AirlinePage id={airlineID} user={user} />}
 		</>

@@ -103,7 +103,8 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
                 setShowReserveInfo && setShowReserveInfo(true)
             }
         } catch (e) {
-            console.error(e);
+            // console.log(formData)
+            console.error(e.message);
         }
     };
 
