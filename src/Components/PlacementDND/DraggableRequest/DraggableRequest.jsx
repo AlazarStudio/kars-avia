@@ -228,7 +228,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         <>
             <Box sx={style}>
                 {/* Левая ручка для изменения начала */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.isRequest && showBlockRequest == 1 &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.status != 'Архив' && request.isRequest && showBlockRequest == 1 &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;
@@ -361,7 +361,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                 }
 
                 {/* Правая ручка для изменения конца */}
-                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.isRequest && showBlockRequest == 1 &&
+                {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.status != 'Архив' && request.isRequest && showBlockRequest == 1 &&
                     <Box
                         onMouseDown={(e) => {
                             const startX = e.clientX;

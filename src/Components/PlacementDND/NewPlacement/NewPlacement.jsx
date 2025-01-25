@@ -17,6 +17,7 @@ import { } from "date-fns";
 import Notification from "../../Notification/Notification";
 import AddNewPassengerPlacement from "../../Blocks/AddNewPassengerPlacement/AddNewPassengerPlacement";
 import ExistReserveMess from "../../Blocks/ExistReserveMess/ExistReserveMess";
+import { roles } from "../../../roles";
 
 const DAY_WIDTH = 40;
 const LEFT_WIDTH = 220;
@@ -660,11 +661,20 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             newReservePassangers.find((req) => req.id === parseInt(active.id)) ||
             newRequests.find((req) => req.id === parseInt(active.id)) ||
             requests.find((req) => req.id === parseInt(active.id));
+        
+        // if (draggedRequest?.status === 'Архив' && user.role !== roles.superAdmin) {
+        //     addNotification("Эту заявку нельзя перемещать, так как она в архиве", "error");
+        //     return;
+        // } else if (draggedRequest?.status === 'Архив' && user.role === roles.superAdmin) {
+        //     addNotification("SUPERADMIN", "info");
+        //     return;
+        // }
     
-        if (!draggedRequest) {
-            addNotification("Не удалось определить заявку для перемещения", "error");
-            return;
-        }
+        // if (!draggedRequest) {
+        //     addNotification("Не удалось определить заявку для перемещения", "error");
+        //     return;
+        // }
+
     
         const targetRoomId = over?.id;
     
@@ -729,48 +739,48 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     
         // // Проверяем принадлежность к одному номеру
-        // if (currentRoom.id === targetRoom.id) {
-        //     // addNotification("Нельзя перемещать заявку внутри одного номера", "error");
-        //     return;
-        // }
+        if (currentRoom.id === targetRoom.id) {
+            // addNotification("Нельзя перемещать заявку внутри одного номера", "error");
+            return;
+        }
 
          // Если перемещение в ту же комнату (обновляем только позицию)
-        if (currentRoom.id === targetRoom.id) {
-            // console.log("Перемещение внутри одного номера");
+        // if (currentRoom.id === targetRoom.id) {
+        //     // console.log("Перемещение внутри одного номера");
 
-            const targetPosition = parseInt(over.data.current?.position || 0);
-            // console.log(over);
+        //     const targetPosition = parseInt(over.data.current?.position || 0);
+        //     // console.log(over);
             
 
-            // Проверяем, занято ли место
-            const overlappingRequests = requests.filter(
-                (req) =>
-                    req.room === targetRoomId &&
-                    req.position === targetPosition &&
-                    req.id !== draggedRequest.id // Исключаем текущую заявку
-            );
+        //     // Проверяем, занято ли место
+        //     const overlappingRequests = requests.filter(
+        //         (req) =>
+        //             req.room === targetRoomId &&
+        //             req.position === targetPosition &&
+        //             req.id !== draggedRequest.id // Исключаем текущую заявку
+        //     );
 
-            // console.log(overlappingRequests);
-            // console.log(targetRoomId);
-            // console.log(targetPosition);
+        //     // console.log(overlappingRequests);
+        //     // console.log(targetRoomId);
+        //     // console.log(targetPosition);
             
-            if (overlappingRequests.length > 0) {
-                // addNotification("Позиция уже занята!", "error");
-                return;
-            }
+        //     if (overlappingRequests.length > 0) {
+        //         // addNotification("Позиция уже занята!", "error");
+        //         return;
+        //     }
 
-            // Обновляем позицию заявки в локальном состоянии
-            setRequests((prevRequests) =>
-                prevRequests.map((req) =>
-                    req.id === draggedRequest.id
-                        ? { ...req, position: targetPosition }
-                        : req
-                )
-            );
+        //     // Обновляем позицию заявки в локальном состоянии
+        //     setRequests((prevRequests) =>
+        //         prevRequests.map((req) =>
+        //             req.id === draggedRequest.id
+        //                 ? { ...req, position: targetPosition }
+        //                 : req
+        //         )
+        //     );
 
-            console.log("Заявка перемещена на новую позицию:", draggedRequest);
-            return; // Завершаем, так как перемещение внутри одного номера обработано
-        }
+        //     console.log("Заявка перемещена на новую позицию:", draggedRequest);
+        //     return; // Завершаем, так как перемещение внутри одного номера обработано
+        // }
 
         // Вариант с попыткой изменить бд
         // if (currentRoom.id === targetRoom.id) {
@@ -1009,7 +1019,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     
                     let bookingInput;
     
-                    if (draggedRequest.isRequest) {
+                    if (draggedRequest.isRequest && draggedRequest.status !== 'Архив') {
                         bookingInput = {
                             hotelChesses: [
                                 {
@@ -1023,7 +1033,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 },
                             ],
                         };
-                    } else if (!draggedRequest.isRequest) {
+                    } else if (!draggedRequest.isRequest && draggedRequest.status !== 'Архив') {
                         bookingInput = {
                             hotelChesses: [
                                 {
@@ -1037,6 +1047,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 },
                             ],
                         };
+                    } else {
+                        addNotification("Эту заявку нельзя перемещать, так как она в архиве", "error");
+                        return;
                     }
     
                     // console.log(bookingInput)

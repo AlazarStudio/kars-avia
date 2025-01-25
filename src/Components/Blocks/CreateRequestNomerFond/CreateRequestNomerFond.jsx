@@ -88,13 +88,14 @@ function CreateRequestNomerFond({
       alert("Пожалуйста, заполните все поля формы перед отправкой.");
       return;
     }
+    
+    const reserveBoolean = formData.reserve === "true";
 
     const nomerName =
-      filter == 'quote' ? formData.nomerName :
-        filter == 'reserve' && formData.nomerName.includes('резерв') ? formData.nomerName : `${formData.nomerName} (резерв)`;
+      reserveBoolean === false ? formData.nomerName :
+        reserveBoolean === true && formData.nomerName.includes('резерв') ? formData.nomerName : `${formData.nomerName} (резерв)`;
 
     // Преобразование reserve в булево значение
-    const reserveBoolean = formData.reserve === "true";
 
     let response_update_room;
 
