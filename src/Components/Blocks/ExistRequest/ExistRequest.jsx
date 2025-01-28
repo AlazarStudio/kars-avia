@@ -604,17 +604,6 @@ function ExistRequest({
                 {user.role !== roles.superAdmin &&
                 user.role !== roles.dispatcerAdmin ? null : (
                   <div className={classes.separatorWrapper}>
-                    {isHaveTwoChats === false ? (
-                      <button
-                        onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                        className={
-                          separator === "airline" ? classes.active : null
-                        }
-                      >
-                        Авиакомпания
-                      </button>
-                    ) : (
-                      <>
                         <button
                           onClick={() => setSeparator("airline")} // Установить separator как 'airline'
                           className={
@@ -631,13 +620,11 @@ function ExistRequest({
                         >
                           Гостиница
                         </button>
-                      </>
-                    )}
                   </div>
                 )}
                 <Message
                   activeTab={activeTab}
-                  setIsHaveTwoChats={setIsHaveTwoChats}
+                  // setIsHaveTwoChats={setIsHaveTwoChats}
                   chooseRequestID={chooseRequestID}
                   chooseReserveID={""}
                   formData={formData}

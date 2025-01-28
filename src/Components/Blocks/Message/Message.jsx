@@ -34,6 +34,8 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
 
     const [messages, setMessages] = useState({ messages: [] });
 
+    // console.log(data);
+
     useEffect(() => {
         if (data && data.chats) {
             let selectedChats = [];
@@ -44,7 +46,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
             } else if (user?.hotelId) {
                 // Фильтруем чаты по separator 'hotel'
                 selectedChats = data.chats.filter(chat => chat.separator === 'hotel');
-            } else if (user.role === roles.superAdmin || user.dispatcher) {
+            } else if (user.role === roles.superAdmin || user.role === roles.dispatcerAdmin) {
                 // Фильтруем чаты по separator, переданному через пропсы
                 selectedChats = data.chats.filter(chat => chat.separator === separator);
             }
@@ -55,11 +57,14 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
             if (selectedChats.length > 0) {
                 setMessages(selectedChats[0]);
             }
-            if (data?.chats.length === 1) {
-                setIsHaveTwoChats(false)
-            } else {
-                setIsHaveTwoChats(true)
-            }
+
+            // console.log(selectedChats);
+            
+            // if (data?.chats.length === 1) {
+            //     setIsHaveTwoChats(false);
+            // } else {
+            //     setIsHaveTwoChats(true);
+            // }
             // console.log(data?.chats);
             
     
@@ -159,6 +164,9 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
             },
         },
     });
+
+    // console.log(messageText);
+    
 
     const handleSubmitMessage = async () => {
         if (messageText.text) {
