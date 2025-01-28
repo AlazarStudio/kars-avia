@@ -37,6 +37,7 @@
 .InfoTable_data_elem_img {
     width: 30px;
     height: 30px;
+    border-radius: 50%;
 }
 
 .InfoTable_data_elem_img img {
@@ -63,11 +64,15 @@
 }
 
 .w12 {
-    width: 12.5%;
+    width: 12%;
 }
 
 .w10 {
     width: 10%;
+}
+
+.w11 {
+    width: 11%;
 }
 
 .w8 {
@@ -137,4 +142,12 @@
     top: 10px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+    .InfoTable_title_elem {
+        font-size: 14px;
+    }
+
+    .InfoTable_data_elem {
+        font-size: 14px;
+    }
+}

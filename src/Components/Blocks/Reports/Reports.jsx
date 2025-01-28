@@ -159,7 +159,7 @@ function Reports({ children, ...props }) {
     }
 
     // Подписка
-    refetch()
+    refetch();
   }, [companyData, refetch, dataSubscription]);
 
   const filteredRequests = reports.filter((request) => {
@@ -192,14 +192,16 @@ function Reports({ children, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          <Filter
-            toggleSidebar={toggleCreateSidebar}
-            handleChange={handleChange}
-            filterData={filterData}
-            buttonTitle={"Создать отчет"}
-            filterList={filterList}
-            needDate={false}
-          />
+          {user.airlineId || user.hotelId ? null : (
+            <Filter
+              toggleSidebar={toggleCreateSidebar}
+              handleChange={handleChange}
+              filterData={filterData}
+              buttonTitle={"Создать отчет"}
+              filterList={filterList}
+              needDate={false}
+            />
+          )}
         </div>
 
         <InfoTableDataReports
@@ -215,7 +217,8 @@ function Reports({ children, ...props }) {
         <CreateRequestReport
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
-        //   addDispatcher={addDispatcher}
+          isAirline={isAirline}
+          //   addDispatcher={addDispatcher}
         />
         {/* 
                 <ExistRequestReport 

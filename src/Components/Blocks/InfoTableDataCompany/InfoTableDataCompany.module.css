@@ -141,7 +141,7 @@
 }
 
 .InfoTable_data_elem_avatar {
-    width: 40px;
+    min-width: 40px;
     height: 40px;
     border-radius: 50px;
     overflow: hidden;
@@ -153,4 +153,14 @@
     object-fit: cover;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1499px) {
+    .InfoTable_title_elem {
+        font-size: 14px;
+    }
+
+    .InfoTable_data_elem {
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {}

@@ -166,4 +166,18 @@
     display: none;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1450px) {
+    .menu {
+        min-width: 300px;
+    }
+
+    .menu_logo {
+        width: 100%;
+        padding-left: 20px;
+    }
+
+    .menu_logo img {
+        width: 220px;
+        height: 93px;
+    }
+}

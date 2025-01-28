@@ -1,0 +1,31 @@
+.notifyWrapper {
+  display: flex;
+  flex-direction: column;
+  /* gap: 15px; */
+}
+
+.notifyMessageWrapper {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-bottom: 1px solid #E4E4EF;
+  transition: all ease-in-out 0.2s;
+}
+
+.notifyMessageWrapper:hover {
+  background-color: var(--hover-gray);
+}
+
+.notifyMessageHeader {
+  display: flex;
+  justify-content: space-between;
+}
+
+.notifyMessageText :last-child {
+  width: fit-content;
+  border-bottom: 1px solid #3232e7;
+  cursor: pointer;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}

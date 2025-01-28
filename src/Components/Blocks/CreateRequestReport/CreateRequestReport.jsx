@@ -4,6 +4,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import {
+  CREATE_HOTEL_REPORT,
   CREATE_REPORT,
   decodeJWT,
   GET_AIRLINES_RELAY,
@@ -12,7 +13,7 @@ import {
 } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList";
 
-function CreateRequestReport({ show, onClose, addDispatcher }) {
+function CreateRequestReport({ show, onClose, isAirline }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
@@ -96,7 +97,7 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
   }, [selectData]);
 
   // Мутация для создания нового отчета
-  const [createReport] = useMutation(CREATE_REPORT, {
+  const [createReport] = useMutation(isAirline ? CREATE_REPORT : CREATE_HOTEL_REPORT, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -139,7 +140,6 @@ function CreateRequestReport({ show, onClose, addDispatcher }) {
         hotelId: formData.hotelId,
       },
       format: "xlsx",
-      type: airOrHotel === "airline" ? "airline" : "hotel",
     };
 
     try {

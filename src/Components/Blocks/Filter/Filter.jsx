@@ -64,13 +64,47 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
 
     let filter = filterLocalData || "all"
 
+    const [dropdownWidth, setDropdownWidth] = useState('200px'); // Начальное значение ширины
+
+    // Функция для расчета ширины в зависимости от ширины экрана
+    const calculateWidth = () => {
+        const screenWidth = window.innerWidth;
+        if (screenWidth <= 480) {
+            return '150px'; // Для маленьких экранов
+        } else if (screenWidth <= 1399) {
+            return '180px'; // Для планшетов
+        } else {
+            return '200px'; // Для больших экранов
+        }
+    };
+
+    useEffect(() => {
+        // Устанавливаем начальную ширину при загрузке компонента
+        setDropdownWidth(calculateWidth());
+
+        // Обновляем ширину при изменении размера экрана
+        const handleResize = () => {
+            setDropdownWidth(calculateWidth());
+        };
+
+        window.addEventListener('resize', handleResize);
+
+        // Убираем слушатель при размонтировании компонента
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+
     return (
         <div className={classes.filter}>
 
             {isVisibleAirFiler && (
                 <>
+
+                {user?.role === roles.airlineAdmin ? null : (
                     <DropDownList
-                        width={'200px'}
+                        width={dropdownWidth}
                         placeholder="Выберите авиакомпанию"
                         searchable={true}
                         options={['Все авиакомпании', ...airlines.map(airline => airline.name)]} // Добавляем 'Все авиакомпании'
@@ -86,8 +120,10 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
                             }
                         }}
                     />
+                )}
+
                     <DropDownList
-                        width={'200px'}
+                        width={dropdownWidth}
                         placeholder="Выберите аэропорт"
                         searchable={true}
                         options={['Все аэропорты', ...airports.map(airport => airport.name)]}  // Добавляем 'Все аэропорты'
@@ -110,7 +146,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
                 <>
                     {/* <div className={classes.filter_title}>Статус:</div> */}
                     <DropDownList
-                        width={'200px'}
+                        width={dropdownWidth}
                         placeholder="Выберите состояние"
                         searchable={false}
                         options={statusOptions.map(option => option.label)}
@@ -152,7 +188,7 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
             {
                 user?.role == roles.hotelAdmin
                     ? null
-                    : <Button onClick={toggleSidebar} minwidth={'200px'}>{buttonTitle}</Button>
+                    : <Button onClick={toggleSidebar} minwidth={dropdownWidth}>{buttonTitle}</Button>
             }
         </div>
     );

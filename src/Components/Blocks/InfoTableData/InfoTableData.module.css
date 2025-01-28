@@ -138,4 +138,21 @@
     top: 10px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+    .InfoTable_data_elem_position {
+        width: 81%;
+    }
+
+    .InfoTable_title_elem {
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .InfoTable_data_elem {
+        font-size: 14px;
+    }
+
+    .InfoTable_data_elem_moreInfo {
+        font-size: 13px;
+    }
+}

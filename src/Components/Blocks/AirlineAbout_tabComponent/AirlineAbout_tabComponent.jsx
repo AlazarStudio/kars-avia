@@ -125,7 +125,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
       {error && <p>Error: {error.message}</p>}
 
       {!loading && !error && airline && (
-        <div className={classes.airlineAbout}>
+        <div className={classes.airlineAbout} style={userRole === roles.airlineAdmin ? {height: 'calc(100vh - 130px)'} : {}}>
           <div className={classes.column}>
             <div className={classes.airlineAbout_top}>
               <div className={classes.airlineAbout_top_complete}>
@@ -230,7 +230,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
               </div>
             ) : displayInfo == "contacts" ? (
               <>
-                <div className={classes.airlineAbout_info_block}>
+                <div className={userRole === roles.airlineAdmin ? classes.airlineAbout_info_block : classes.airlineAbout_info_block__airline}>
                   <div className={`${classes.column} ${classes.w50}`}>
                     <div className={classes.airlineAbout_info_label}>Адрес</div>
                     <div className={classes.airlineAbout_info_item}>

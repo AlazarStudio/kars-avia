@@ -80,72 +80,72 @@ textarea {
 
 
 .opened {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #ffbd97;
 }
 
 .canceled {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #ff6a6a;
 }
 
 .done {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #7cffc0;
 }
 
 .created {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: var(--text-gray);
 }
 
 .extended {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #2196f3;
 }
 
 .reduced {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #f44336;
 }
 
 .transferred {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #ff9800;
 }
 
 .earlyStart {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #9575cd;
 }
 
 .archiving {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #d6a570;
     /* мягкий оттенок коричневого */
 }
 
 .archived {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #a0a0a0;
     /* тёмно-серый для архивных */

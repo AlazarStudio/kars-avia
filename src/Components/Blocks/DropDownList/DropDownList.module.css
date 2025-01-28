@@ -54,4 +54,12 @@
     background-color: #f0f0f0;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+    .search {
+        font-size: 13px;
+    }
+
+    .dropdownItem {
+        font-size: 13px;
+    }
+}

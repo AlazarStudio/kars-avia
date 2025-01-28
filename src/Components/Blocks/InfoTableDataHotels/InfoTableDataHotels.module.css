@@ -182,4 +182,31 @@
     object-fit: contain;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (max-width: 1580px) {
+    .bottom {
+        height: calc(100vh - 350px);
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1499px) {
+    .InfoTable_title_elem {
+        font-size: 14px;
+    }
+
+    .InfoTable_data_elem {
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .bottom {
+        height: calc(100vh - 350px);
+    }
+
+    .star {
+        width: 16px;
+        height: 14px;
+        margin-right: 3px;
+        object-fit: contain;
+    }
+}

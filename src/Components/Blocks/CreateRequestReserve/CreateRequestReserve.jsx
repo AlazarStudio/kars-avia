@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_RESERVE_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, getCookie } from "../../../../graphQL_requests";
 import { useMutation, useQuery } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
+import { roles } from "../../../roles";
 
 function CreateRequestReserve({ show, onClose, user }) {
     const token = getCookie('token');
@@ -46,7 +47,7 @@ function CreateRequestReserve({ show, onClose, user }) {
     const resetForm = () => {
         setFormData({
             reserveForPerson: '',
-            airlineId: '',
+            airlineId: user?.airlineId ? user?.airlineId : '',
             city: '',
             airportId: '',
             route: '',
@@ -236,23 +237,28 @@ function CreateRequestReserve({ show, onClose, user }) {
                         <option value={false}>Заявка для пассажиров</option>
                     </select> */}
 
-                    <label>Авиакомпания</label>
-                    <DropDownList
-                        placeholder="Введите авиакомпанию"
-                        searchable={false}
-                        options={airlines?.map((airline) => airline.name)}
-                        initialValue={airlines.find(airline => airline.id === formData.airlineId)?.name || ""}
-                        onSelect={(value) => {
-                        const selectedAirline = airlines.find(
-                            (airline) => airline.name === value
-                        );
-                        setFormData((prevFormData) => ({
-                            ...prevFormData,
-                            airlineId: selectedAirline?.id || "",
-                        }));
-                        // setIsEdited(true);
-                        }}
-                    />                    
+                    {user?.role === roles.airlineAdmin ? null : (
+                        <>
+                            <label>Авиакомпания</label>
+                            <DropDownList
+                                placeholder="Введите авиакомпанию"
+                                searchable={false}
+                                options={airlines?.map((airline) => airline.name)}
+                                initialValue={airlines.find(airline => airline.id === formData.airlineId)?.name || ""}
+                                onSelect={(value) => {
+                                const selectedAirline = airlines.find(
+                                    (airline) => airline.name === value
+                                );
+                                setFormData((prevFormData) => ({
+                                    ...prevFormData,
+                                    airlineId: selectedAirline?.id || "",
+                                }));
+                                // setIsEdited(true);
+                                }}
+                            />
+                        </>
+                    )}
+                    
                     {/* <select name="airlineId" value={formData.airlineId} onChange={handleChange}>
                         <option value="" disabled>Выберите авиакомпанию</option>
                         {airlines.map(airline => (

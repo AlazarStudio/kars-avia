@@ -54,4 +54,12 @@
   /* border-radius: 4px; */
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+  .hotelAbout_room {
+    min-height: 380px;
+  }
+
+  .roomInfoItem {
+    font-size: 14px;
+  }
+}

@@ -5,12 +5,14 @@ import Smiles from "../Smiles/Smiles";
 import { convertToDate, GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 
-function Message({ children, activeTab, separator, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
+function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
     const messagesEndRef = useRef(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [newMessagesCount, setNewMessagesCount] = useState(0);
     const [isUserMessage, setIsUserMessage] = useState(false);
+
+    const userID = user.userId ? user.userId : user.id
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -25,7 +27,9 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
         },
     });
 
-    // console.log(data?.chats.map((chat) => chat.separator === separator));
+    // console.log(data);
+
+
     
 
     const [messages, setMessages] = useState({ messages: [] });
@@ -34,13 +38,13 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
         if (data && data.chats) {
             let selectedChats = [];
     
-            if (user.role === roles.airlineAdmin) {
+            if (user?.airlineId) {
                 // Фильтруем чаты по separator 'airline'
                 selectedChats = data.chats.filter(chat => chat.separator === 'airline');
-            } else if (user.role === roles.hotelAdmin) {
+            } else if (user?.hotelId) {
                 // Фильтруем чаты по separator 'hotel'
                 selectedChats = data.chats.filter(chat => chat.separator === 'hotel');
-            } else if (user.role === roles.superAdmin || user.role === roles.dispatcerAdmin) {
+            } else if (user.role === roles.superAdmin || user.dispatcher) {
                 // Фильтруем чаты по separator, переданному через пропсы
                 selectedChats = data.chats.filter(chat => chat.separator === separator);
             }
@@ -51,6 +55,13 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
             if (selectedChats.length > 0) {
                 setMessages(selectedChats[0]);
             }
+            if (data?.chats.length === 1) {
+                setIsHaveTwoChats(false)
+            } else {
+                setIsHaveTwoChats(true)
+            }
+            // console.log(data?.chats);
+            
     
             if (isInitialLoad) {
                 setTimeout(() => {
@@ -86,13 +97,13 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
             });
 
             // Проверяем, что сообщение отправлено не текущим пользователем
-            if (newMessage.sender.id !== user.userId) {
+            if (newMessage.sender.id !== userID) {
                 setNewMessagesCount(prevCount => prevCount + 1);
                 setShowScrollButton(true);
             }
             setIsUserMessage(false);
         }
-    }, [subscriptionData, user.userId]);
+    }, [subscriptionData, userID]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
@@ -126,7 +137,7 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
 
     const handleTextareaChange = (e) => {
         setMessageText({
-            senderId: user.userId,
+            senderId: userID,
             chatId: messages.id,
             text: e.target.value
         });
@@ -134,7 +145,7 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
 
     const handleSmileChange = (emoji) => {
         setMessageText(prevState => ({
-            senderId: user.userId,
+            senderId: userID,
             chatId: messages.id,
             text: prevState.text + emoji
         }));
@@ -195,7 +206,7 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
                 <div className={classes.requestData} style={{ padding: chatPadding }}>
                     <div className={classes.requestData_messages} style={{ height: height ? `calc(100vh - ${height}px)` : formData?.status === 'done' ? 'calc(100vh - 244px)' : chatHeight }}>
                         {messages?.messages.map((message, index) => (
-                            <div className={`${classes.requestData_message_full} ${message.sender.id === user.userId && classes.myMes}`} key={index}>
+                            <div className={`${classes.requestData_message_full} ${message.sender.id === userID && classes.myMes}`} key={index}>
                                 <div className={classes.requestData_message}>
                                     <div className={classes.requestData_message_text}>
                                         <div className={classes.requestData_message_text__name}>
@@ -227,6 +238,12 @@ function Message({ children, activeTab, separator, chooseRequestID, chooseReserv
                             type="text"
                             value={messageText.text}
                             onChange={handleTextareaChange}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleSubmitMessage();
+                                }
+                            }}
                             placeholder="Введите сообщение"
                         />
                         <div className={classes.sendBlock_message} onClick={handleSubmitMessage}>

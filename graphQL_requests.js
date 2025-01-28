@@ -1878,12 +1878,17 @@ export const DELETE_DISPATCHER_USER = gql`
 // Отчеты
 
 export const CREATE_REPORT = gql`
-  mutation CreateReport($input: CreateReportInput!) {
-    createReport(input: $input) {
-      id
-      name
+  mutation CreateAirlineReport($input: CreateReportInput!) {
+    createAirlineReport(input: $input) {
       url
-      createdAt
+    }
+  }
+`;
+
+export const CREATE_HOTEL_REPORT = gql`
+  mutation CreateHotelReport($input: CreateReportInput!) {
+    createHotelReport(input: $input) {
+      url
     }
   }
 `;

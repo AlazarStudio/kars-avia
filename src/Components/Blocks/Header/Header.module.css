@@ -112,6 +112,41 @@
     pointer-events: none;
 }
 
+.notify_dropdown {
+    position: absolute;
+    width: 440px;
+    height: 600px;
+    overflow: hidden;
+    overflow-y: scroll;
+    max-height: 500px;
+    top: 90px;
+    right: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: white;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    /* padding: 15px; */
+    border-radius: 10px;
+    z-index: 10;
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+    transition: all ease-in-out 0.3s;
+}
+
+.notify_dropdown.open {
+    opacity: 1;
+    transform: scale(1);
+    pointer-events: auto;
+}
+
+.notify_dropdown.closed {
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
 
 .dropdown_info {
     display: flex;

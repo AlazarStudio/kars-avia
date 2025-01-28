@@ -280,7 +280,8 @@ function Estafeta({ user }) {
                 <input
                     type="text"
                     placeholder="Поиск"
-                    style={{ width: '500px' }}
+                    className={classes.mainSearch}
+                    // style={{ width: '500px' }}
                     value={searchQuery}
                     onChange={handleSearch}
                 />

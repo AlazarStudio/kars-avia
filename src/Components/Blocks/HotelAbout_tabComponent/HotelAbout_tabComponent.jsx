@@ -211,7 +211,7 @@ function HotelAbout_tabComponent({ id }) {
       {error && <p>Error: {error.message}</p>}
 
       {!loading && !error && hotel && (
-        <div className={classes.hotelAbout}>
+        <div className={classes.hotelAbout} style={user?.role === roles.airlineAdmin ? {height:'calc(100vh - 130px)'} : {}}>
           <div className={classes.column}>
             <div className={classes.hotelAbout_top}>
               <div className={classes.hotelAbout_top_complete}>
@@ -326,7 +326,7 @@ function HotelAbout_tabComponent({ id }) {
             </div>
           </div>
 
-          <div className={classes.hotelAbout_info}>
+          <div className={user?.role === roles.airlineAdmin ? classes.hotelAbout_info__arline : classes.hotelAbout_info}>
             {displayInfo == "generalInfo" ? (
               <div className={classes.hotelAbout_info_block}>
                 {/* <div className={classes.hotelAbout_info_label}>
@@ -547,7 +547,7 @@ function HotelAbout_tabComponent({ id }) {
                 </div>
               </div>
             ) : displayInfo === "rooms" ? (
-              <div className={classes.hotelAbout_rooms_block}>
+              <div className={user?.role === roles.airlineAdmin ? classes.hotelAbout_rooms_block__airline : classes.hotelAbout_rooms_block}>
                 <div className={classes.rooms_wrapper}>
                   {hotel.rooms?.map((room, index) => (
                     <HotelAboutRoomBlock
@@ -609,7 +609,7 @@ function HotelAbout_tabComponent({ id }) {
                     />
                   </div>
                   <div className={classes.hotelAbout_info_item}>
-                    <label>Расстояние до аэропорта</label>
+                    <label className={classes.airportDistance}>Расстояние до аэропорта</label>
                     <input
                       type="text"
                       name="airportDistance"

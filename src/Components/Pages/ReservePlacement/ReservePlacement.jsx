@@ -359,7 +359,8 @@ function ReservePlacement({ children, user, ...props }) {
                         onChange={handleSearch}
                     />
 
-                    <div className={classes.btnsReserve}>
+                    {user?.airlineId ? null : (
+                        <div className={classes.btnsReserve}>
                         {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
 
                         {!exists &&
@@ -369,6 +370,9 @@ function ReservePlacement({ children, user, ...props }) {
                             </Button>
                         }
                     </div>
+                    )}
+
+
                 </div>
                 {loading && <p>Loading...</p>}
                 {error && <p>Error: {error.message}</p>}

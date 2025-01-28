@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import classes from "./Header.module.css";
+import Notifications from "../Notifications/Notifications";
 import {
   decodeJWT,
   GET_DISPATCHER,
@@ -11,17 +12,24 @@ import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
 import Support from "../Support/Support";
 import { roles } from "../../../roles";
+import ExistRequest from "../ExistRequest/ExistRequest";
 
 function Header({ children }) {
   const token = getCookie("token");
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isFullyVisible, setIsFullyVisible] = useState(false); // Управляет полным отображением
+  const [isFullyVisible, setIsFullyVisible] = useState(false); // Управляет полным отображением профиля
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // Управляет отображением уведомлений
+  const [isNotificationsFullyVisible, setIsNotificationsFullyVisible] =
+    useState(false); // Полное отображение уведомлений
   const dropdownRef = useRef(null);
+  const notificationsRef = useRef(null);
   const [userData, setUserData] = useState(null); // Храним данные пользователя в state
 
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [showSupportSidebar, setShowSupportSidebar] = useState(false);
+  const [existRequestData, setExistRequestData] = useState(null); // Для хранения данных выбранной заявки
+  const [showERequestSidebar, setShowERequestSidebar] = useState(false);
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
@@ -31,6 +39,24 @@ function Header({ children }) {
 
   const toggleSupportSidebar = () => {
     setShowSupportSidebar(!showSupportSidebar);
+  };
+
+  const handleOpenRequest = (id) => {
+    setExistRequestData(id); // Сохраняем ID заявки
+    setShowERequestSidebar(true); // Открываем боковую панель
+    setIsNotificationsOpen(false);
+  };
+
+  const toggleNotifications = () => {
+    if (!isNotificationsOpen) {
+      setIsNotificationsFullyVisible(true);
+      setTimeout(() => setIsNotificationsOpen(true), 0);
+      setIsFullyVisible(false);
+    } else {
+      setIsNotificationsOpen(false);
+      setTimeout(() => setIsNotificationsFullyVisible(false), 300);
+      setIsFullyVisible(false);
+    }
   };
 
   const userID = useMemo(
@@ -84,9 +110,17 @@ function Header({ children }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) || // когда вернуться оповещения поставить &&
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target) &&
+        !event.target.closest(`.${classes.notify_dropdown}`)
+      ) {
         setIsDropdownOpen(false);
         setTimeout(() => setIsFullyVisible(false), 300);
+        setIsNotificationsOpen(false);
+        setTimeout(() => setIsNotificationsFullyVisible(false), 300);
       }
     };
 
@@ -100,9 +134,11 @@ function Header({ children }) {
     if (!isDropdownOpen) {
       setIsFullyVisible(true); // Показать блок
       setTimeout(() => setIsDropdownOpen(true), 0); // Включить видимость
+      setIsNotificationsFullyVisible(false);
     } else {
       setIsDropdownOpen(false);
       setTimeout(() => setIsFullyVisible(false), 300); // Убираем через 300ms
+      setIsNotificationsFullyVisible(false);
     }
   };
 
@@ -118,19 +154,25 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
-          {/* {userData?.role !== roles.superAdmin ? (
-            <div
-              className={classes.section_top_elems_support}
-              onClick={toggleSupportSidebar}
-            >
-              <img src="/support.png" alt="Поддержка" />
-            </div>
-          ) : null} */}
-
-          <div className={classes.section_top_elems_notify}>
+          {/* <div
+            className={classes.section_top_elems_notify}
+            onClick={toggleNotifications}
+            ref={notificationsRef}
+          >
             <div className={classes.section_top_elems_notify_red}></div>
             <img src="/notify.png" alt="Уведомления" />
-          </div>
+          </div> */}
+
+          {/* {isNotificationsFullyVisible && (
+            <div
+              className={`${classes.notify_dropdown} ${
+                isNotificationsOpen ? classes.open : classes.closed
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Notifications onRequestClick={handleOpenRequest} />
+            </div>
+          )} */}
 
           <div className={classes.section_top_elems_date}>
             <div>{formattedDate}</div>
@@ -200,6 +242,15 @@ function Header({ children }) {
               updateUser={handleUpdateUser}
               openDeleteComponent={null}
               deleteComponentRef={null}
+            />
+
+            <ExistRequest
+              show={showERequestSidebar}
+              onClose={() => {
+                setShowERequestSidebar(false);
+              }}
+              chooseRequestID={existRequestData}
+              user={data?.user}
             />
 
             <Support

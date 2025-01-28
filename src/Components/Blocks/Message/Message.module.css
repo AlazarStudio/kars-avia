@@ -251,6 +251,10 @@ select {
     border-radius: 20px 20px 0px 20px;
 }
 
+.requestData_message_text {
+    word-break: break-word;
+}
+
 .myMes .requestData_message_text__name {
     display: none;
 }

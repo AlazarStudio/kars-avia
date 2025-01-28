@@ -32,7 +32,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
         departureDate: '',
         departureTime: '',
         senderId: '',
-        airlineId: '',
+        airlineId: selectedAirline?.id || '',
         mealPlan: {
             included: true,
             breakfast: true,
@@ -98,10 +98,13 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
         },
     });
 
+    const airlineForAirlineAdmin = data?.airlines?.airlines.find(airline => airline.id === user.airlineId);
+    
+
     // Сброс формы к начальному состоянию
     const resetForm = useCallback(() => {
         setActiveTab('Общая');
-        setSelectedAirline(null);
+        setSelectedAirline(user?.airlineId ? airlineForAirlineAdmin : null);
         setFormData({
             personId: '',
             airportId: '',
@@ -112,7 +115,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
             departureDate: '',
             departureTime: '',
             senderId: userID,
-            airlineId: '',
+            airlineId: selectedAirline?.id || '',
             mealPlan: {
                 included: true,
                 breakfast: true,
@@ -333,6 +336,8 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
         },
     ]
 
+    const airlineOptions = user?.airlineId ? [] : ''
+
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
@@ -352,21 +357,25 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                     <div className={classes.requestData}>
                         {warningMessage && <div className={classes.warningMessage}>{warningMessage}</div>}
 
-                        <label>Авиакомпания</label>
-                        <DropDownList
-                            placeholder="Введите авиакомпанию"
-                            options={airlines.map(airline => airline.name)}
-                            initialValue={selectedAirline?.name || ""}
-                            onSelect={(value) => {
-                                const selectedAirline = airlines.find(airline => airline.name === value);
-                                setSelectedAirline(selectedAirline);
-                                setFormData(prevFormData => ({
-                                    ...prevFormData,
-                                    airlineId: selectedAirline?.id || ""
-                                }));
-                                setIsEdited(true);
-                            }}
-                        />
+                        {user?.airlineId? null : (
+                            <>
+                                <label>Авиакомпания</label>
+                                <DropDownList
+                                    placeholder="Введите авиакомпанию"
+                                    options={airlines.map(airline => airline.name)}
+                                    initialValue={selectedAirline?.name || ""}
+                                    onSelect={(value) => {
+                                        const selectedAirline = airlines.find(airline => airline.name === value);
+                                        setSelectedAirline(selectedAirline);
+                                        setFormData(prevFormData => ({
+                                            ...prevFormData,
+                                            airlineId: selectedAirline?.id || ""
+                                        }));
+                                        setIsEdited(true);
+                                    }}
+                                />
+                            </>
+                        )}
 
                         {selectedAirline && (
                             <>

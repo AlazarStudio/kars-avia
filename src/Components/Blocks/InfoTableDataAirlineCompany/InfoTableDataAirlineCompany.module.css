@@ -223,4 +223,15 @@
     width: 25%;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1499px) {
+    .InfoTable_data_elem_title {
+        font-size: 14px;
+    }
+
+    .employeeName,
+    .employeePost {
+        font-size: 14px;
+    }
+}
+
+/* @media (min-width: 0px) and (max-width: 1399px) {} */

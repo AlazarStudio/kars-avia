@@ -13,4 +13,8 @@
     color: var(--text-gray);
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+    .filter {
+        gap: 15px;
+    }
+}

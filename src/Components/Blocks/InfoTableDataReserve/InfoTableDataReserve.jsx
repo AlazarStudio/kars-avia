@@ -22,10 +22,10 @@ function InfoTableDataReserve({ children, requests, paginationHeight, pageInfo, 
         <InfoTable >
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w8}`}>Дата</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w11}`}>Дата</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Авиакомпания</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Аэропорт</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Количество человек</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w12}`}>Количество человек</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Прибытие</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Отъезд</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w12}`}>Статус</div>
@@ -37,7 +37,7 @@ function InfoTableDataReserve({ children, requests, paginationHeight, pageInfo, 
                         {item.status == 'created' && <div className={classes.newRequest}></div>}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.reserveNumber.split('-')[0]}</div>
 
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w8}`}>{convertToDate(item.createdAt)}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w11}`}>{convertToDate(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_img}>
                                 <img src={`${server}${item.airline?.images[0]}`} alt="" />
@@ -45,7 +45,7 @@ function InfoTableDataReserve({ children, requests, paginationHeight, pageInfo, 
                             {item.airline?.name}
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{item.airport?.city} ({item.airport?.code})</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 <div className={classes.InfoTable_data_elem_title}>{item.passengerCount ? item.passengerCount : 0}</div>
                             </div>

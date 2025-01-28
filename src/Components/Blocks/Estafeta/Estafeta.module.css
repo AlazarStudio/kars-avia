@@ -10,6 +10,10 @@
     position: relative;
 }
 
+.mainSearch {
+    width: 500px;
+}
+
 .section_top {
     display: flex;
     justify-content: space-between;
@@ -58,4 +62,9 @@
     border-radius: 5px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1499px) {
+    .mainSearch {
+        width: 300px;
+        font-size: 13px;
+    }
+}

@@ -130,6 +130,16 @@
     padding-right: 20px;
 }
 
+.hotelAbout_info__arline {
+    display: flex;
+    justify-content: space-between;
+    gap: 80px;
+    padding-top: 30px;
+    height: 610px;
+    overflow: scroll;
+    padding-right: 20px;
+}
+
 .hotelAbout_info_block {
     display: flex;
     flex-direction: column;
@@ -143,6 +153,15 @@
     flex-direction: column;
     gap: 40px;
     height: 500px;
+    overflow: scroll;
+}
+
+.hotelAbout_rooms_block__airline {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    height: 552px;
     overflow: scroll;
 }
 
@@ -291,10 +310,71 @@
     color: #545873;
 }
 
-@media (max-height: 900px) {
+.airportDistance {
+    /* width: 21%; */
+}
+
+@media (max-width: 1499px) {
+
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .hotelAbout_info_item {
+        font-size: 14px;
+    }
+
+    .hotelAbout_info_label {
+        /* font-size: 14px; */
+    }
+
+    .hotelAbout_info_item input {
+        font-size: 14px;
+    }
+
+    .hotelAbout_info_item_info {
+        font-size: 14px;
+    }
+
+    .hotelAbout_info_block{
+        width: 80%;
+    }
+
+    .hotelAbout_info_block_meal {
+        width: 80%;
+    }
+
     .hotelAbout_info {
-        height: 460px;
+        flex-direction: column;
+    }
+
+    .hotelAbout_info__arline {
+        flex-direction: column;
+    }
+
+    .hotelAbout_rooms_block__airline {
+        gap: 40px;
+        height: 590px;
+    }
+
+    .rooms_wrapper {
+        gap: 40px;
+    }
+
+    .rooms_wrapper article {
+        flex-basis: 30%;
     }
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (max-height: 950px) {
+    .hotelAbout_info {
+        height: 460px;
+    }
+
+    .hotelAbout_info__arline {
+        height: 590px;
+    }
+
+    .hotelAbout_rooms_block__airline {
+        height: 560px;
+    }
+}

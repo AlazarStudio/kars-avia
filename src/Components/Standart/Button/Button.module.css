@@ -22,3 +22,14 @@
 .Button svg path {
     transition: all 0.3s ease-in-out;
 }
+
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .Button {
+        height: 40px;
+        font-size: 14px;
+        padding: 0 15px;
+        gap: 10px;
+        opacity: 0.8;
+    }
+}

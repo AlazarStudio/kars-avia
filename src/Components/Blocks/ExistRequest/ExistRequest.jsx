@@ -263,7 +263,8 @@ function ExistRequest({
     }
   };
 
-  const [separator, setSeparator] = useState('airline');
+  const [separator, setSeparator] = useState("airline");
+  const [isHaveTwoChats, setIsHaveTwoChats] = useState();
 
   return (
     <>
@@ -603,30 +604,47 @@ function ExistRequest({
                 {user.role !== roles.superAdmin &&
                 user.role !== roles.dispatcerAdmin ? null : (
                   <div className={classes.separatorWrapper}>
-                    <button
-                      onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                      className={
-                        separator === "airline" ? classes.active : null
-                      }
-                    >
-                      Авиакомпания
-                    </button>
-                    <button
-                      onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
-                      className={separator === "hotel" ? classes.active : null}
-                    >
-                      Гостиница
-                    </button>
+                    {isHaveTwoChats === false ? (
+                      <button
+                        onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                        className={
+                          separator === "airline" ? classes.active : null
+                        }
+                      >
+                        Авиакомпания
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                          className={
+                            separator === "airline" ? classes.active : null
+                          }
+                        >
+                          Авиакомпания
+                        </button>
+                        <button
+                          onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
+                          className={
+                            separator === "hotel" ? classes.active : null
+                          }
+                        >
+                          Гостиница
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
                 <Message
                   activeTab={activeTab}
+                  setIsHaveTwoChats={setIsHaveTwoChats}
                   chooseRequestID={chooseRequestID}
                   chooseReserveID={""}
                   formData={formData}
                   token={token}
                   user={user}
                   separator={separator}
+                  // chatHeight={!isHaveTwoChats ? 'calc(100vh - 318px)' : 'calc(100vh - 290px)'}
                 />
               </>
             )}

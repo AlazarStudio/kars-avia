@@ -103,6 +103,7 @@ function CreateRequestAirlineOtdel({
       }
     } catch (err) {
       alert("Произошла ошибка при сохранении данных");
+      console.error('catch error:', err);
     }
   };
 
