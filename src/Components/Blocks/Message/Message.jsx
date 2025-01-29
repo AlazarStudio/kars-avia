@@ -29,12 +29,8 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
 
     // console.log(data);
 
-
-    
-
     const [messages, setMessages] = useState({ messages: [] });
 
-    // console.log(data);
 
     useEffect(() => {
         if (data && data.chats) {
@@ -60,11 +56,11 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
 
             // console.log(selectedChats);
             
-            // if (data?.chats.length === 1) {
-            //     setIsHaveTwoChats(false);
-            // } else {
-            //     setIsHaveTwoChats(true);
-            // }
+            if (data?.chats.length === 1) {
+                setIsHaveTwoChats(false);
+            } else {
+                setIsHaveTwoChats(true);
+            }
             // console.log(data?.chats);
             
     

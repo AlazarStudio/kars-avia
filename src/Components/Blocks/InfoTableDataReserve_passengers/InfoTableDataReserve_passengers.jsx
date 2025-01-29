@@ -759,9 +759,7 @@ function InfoTableDataReserve_passengers({
             token={token}
             user={user}
             chatPadding={"0"}
-            chatHeight={
-              isHaveTwoChats ? "calc(100vh - 318px)" : "calc(100vh - 290px)"
-            }
+            chatHeight={"calc(100vh - 317px)"}
             separator={separator}
           />
         </div>

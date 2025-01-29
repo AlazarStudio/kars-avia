@@ -265,9 +265,9 @@ function ExistRequestInHotel({
   const [separator, setSeparator] = useState("airline");
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
 
-const toggleTwoChats = () => {
+  const toggleTwoChats = () => {
     setIsHaveTwoChats(!isHaveTwoChats);
-}
+  };
 
   return (
     <>
@@ -569,7 +569,17 @@ const toggleTwoChats = () => {
                 {user.role !== roles.superAdmin &&
                 user.role !== roles.dispatcerAdmin ? null : (
                   <div className={classes.separatorWrapper}>
-                
+                    {isHaveTwoChats === false ? (
+                      <button
+                        onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                        className={
+                          separator === "airline" ? classes.active : null
+                        }
+                      >
+                        Авиакомпания
+                      </button>
+                    ) : (
+                      <>
                         <button
                           onClick={() => setSeparator("airline")} // Установить separator как 'airline'
                           className={
@@ -586,11 +596,13 @@ const toggleTwoChats = () => {
                         >
                           Гостиница
                         </button>
+                      </>
+                    )}
                   </div>
                 )}
                 <Message
                   activeTab={activeTab}
-                //   setIsHaveTwoChats={setIsHaveTwoChats}
+                  setIsHaveTwoChats={setIsHaveTwoChats}
                   chooseRequestID={chooseRequestID}
                   chooseReserveID={""}
                   formData={formData}

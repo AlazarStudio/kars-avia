@@ -1,11 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./Support.module.css";
 import Sidebar from "../Sidebar/Sidebar";
-import { useMutation, useQuery } from "@apollo/client";
 import { getCookie } from "../../../../graphQL_requests";
-import Message from "../Message/Message";
-import { roles } from "../../../roles";
-import { Link } from "react-router-dom";
 import SupportMessage from "../SupportMessage/SupportMessage";
 
 function Support({ show, onClose, user, selectedId }) {

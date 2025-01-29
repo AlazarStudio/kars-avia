@@ -23,12 +23,7 @@ import {
 import Message from "../Message/Message";
 import { roles } from "../../../roles";
 
-function ExistReserveMess({
-  show,
-  onClose,
-  chooseRequestID,
-  user
-}) {
+function ExistReserveMess({ show, onClose, chooseRequestID, user }) {
   const token = getCookie("token");
 
   const { data } = useQuery(GET_RESERVE_REQUEST, {
@@ -66,37 +61,70 @@ function ExistReserveMess({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton]);
 
+  const [separator, setSeparator] = useState("airline");
+  const [isHaveTwoChats, setIsHaveTwoChats] = useState();
+
   return (
     <>
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.requestTitle}>
-          <div className={classes.requestTitle_name}>
-            Сообщения
-          </div>
+          <div className={classes.requestTitle_name}>Сообщения</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
             <img src="/close.png" alt="" />
           </div>
         </div>
 
-        <div className={classes.requestMiddle} style={{
-          height:
-            (activeTab === "Комментарии" ||
-              formData.status !== "created") &&
-            "calc(100vh - 79px)",
-        }} >
+        <div
+          className={classes.requestMiddle}
+          style={{
+            height:
+              (activeTab === "Комментарии" || formData.status !== "created") &&
+              "calc(100vh - 79px)",
+          }}
+        >
           {/* Вкладка "Комментарии" */}
           {activeTab === "Комментарии" && (
-            <Message
-              activeTab={activeTab}
-              chooseRequestID={''}
-              chooseReserveID={chooseRequestID}
-              formData={formData}
-              token={token}
-              user={user}
-              height={159}
-            />
+            <>
+              <div className={classes.separatorWrapper}>
+                {isHaveTwoChats === false ? (
+                  <button
+                    onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                    className={separator === "airline" ? classes.active : null}
+                  >
+                    Авиакомпания
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                      className={
+                        separator === "airline" ? classes.active : null
+                      }
+                    >
+                      Авиакомпания
+                    </button>
+                    <button
+                      onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
+                      className={separator === "hotel" ? classes.active : null}
+                    >
+                      Гостиница
+                    </button>
+                  </>
+                )}
+              </div>
+              <Message
+                activeTab={activeTab}
+                setIsHaveTwoChats={setIsHaveTwoChats}
+                chooseRequestID={""}
+                chooseReserveID={chooseRequestID}
+                formData={formData}
+                token={token}
+                user={user}
+                separator={separator}
+                chatHeight={"calc(100vh - 180px)"}
+              />
+            </>
           )}
-
         </div>
       </Sidebar>
     </>

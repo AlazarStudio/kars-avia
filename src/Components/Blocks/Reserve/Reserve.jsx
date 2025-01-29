@@ -244,7 +244,7 @@ function Reserve({ children, user, idHotel, ...props }) {
                             requests={filteredRequests}
                             pageInfo={pageInfo.skip}
                         />
-                        {totalPages > 0 && (
+                        {totalPages > 1 && (
                             <div className={classes.pagination}>
                                 <ReactPaginate
                                     previousLabel={'←'}
