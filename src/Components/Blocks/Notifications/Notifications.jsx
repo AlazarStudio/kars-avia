@@ -10,8 +10,8 @@ function Notifications({ onRequestClick }) {
         notifyTitle: 'Название оповещения',
         notifyText: 'Какое-то действие совершенное кем-то, касающееся какой-то заявки.',
         notifyTime: '13:36',
-        requestId: '679764ab25e9958aa9bab2fc',
-        requestNumber: '0176-ABA-27.01.2025'
+        requestId: '679a0e7c7ea14f2001c5d4d3',
+        requestNumber: '0187-ABA-29.01.2025'
     },
     {
         notifyTitle: 'Название оповещения',
