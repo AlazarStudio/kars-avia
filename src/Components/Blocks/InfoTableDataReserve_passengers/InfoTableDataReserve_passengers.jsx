@@ -16,6 +16,7 @@ import Message from "../Message/Message";
 import { Link, useNavigate } from "react-router-dom";
 import { roles } from "../../../roles";
 import Logs from "../LogsHistory/Logs";
+import EditReserveDate from "../../PlacementDND/EditReserveDate/EditReserveDate";
 
 function InfoTableDataReserve_passengers({
   placement,
@@ -55,6 +56,16 @@ function InfoTableDataReserve_passengers({
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
 
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
+
+  const [isEditDateModalOpen, setIsEditDateModalOpen] = useState(false);
+
+  const handleOpenEditDateModal = () => {
+    setIsEditDateModalOpen(true);
+  };
+
+  const handleCloseEditDateModal = () => {
+    setIsEditDateModalOpen(false);
+  };
 
   const newGuestRef = useRef(null);
 
@@ -149,6 +160,42 @@ function InfoTableDataReserve_passengers({
     }
 
     navigate("/reserve");
+  };
+
+  const handleSaveEditedDates = async (updatedRequest) => {
+    try {
+      // Отправляем данные на сервер
+      await updateReserve({
+        variables: {
+          updateReserveId: request.id,
+          input: {
+            arrival: updatedRequest.arrival,
+            departure: updatedRequest.departure,
+          },
+        },
+      });
+
+      // Обновляем локальное состояние
+      setPlacement((prevPlacement) =>
+        prevPlacement.map((item) =>
+          item.hotel.id === updatedRequest.hotelId
+            ? {
+                ...item,
+                hotel: {
+                  ...item.hotel,
+                  arrival: updatedRequest.arrival,
+                  departure: updatedRequest.departure,
+                },
+              }
+            : item
+        )
+      );
+
+      // Закрываем модалку после успешного сохранения
+      setIsEditDateModalOpen(false);
+    } catch (error) {
+      console.error("Ошибка при обновлении бронирования:", error);
+    }
   };
 
   const handleAddNewPassenger = async () => {
@@ -325,6 +372,18 @@ function InfoTableDataReserve_passengers({
   const [separator, setSeparator] = useState("airline");
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
 
+  const [hotelChats, setHotelChats] = useState();
+  const [selectedHotelChatId, setSelectedHotelChatId] = useState(null);
+
+  const handleSelectHotelChat = (hotelId) => {
+    setSelectedHotelChatId(hotelId);
+    setSeparator("hotel"); // Автоматически переключаемся на вкладку "Гостиница"
+  };
+
+  const [orgName, setOrgName] = useState("");
+
+  // console.log(request.airline);
+
   return (
     // Сделать отдельную компоненту для чата
     <div style={{ display: "flex", gap: "20px", height: "100%" }}>
@@ -379,6 +438,20 @@ function InfoTableDataReserve_passengers({
                       </Link>
                       {getAllGuests(item.hotel).length} гостей из{" "}
                       {item.hotel.passengersCount}
+                      {user.role !== roles.hotelAdmin &&
+                      user.role !== roles.airlineAdmin ? (
+                        <button
+                          className={`${classes.chatButton} ${
+                            orgName === item.hotel.name ? classes.active : ""
+                          }`}
+                          onClick={() => handleSelectHotelChat(item.hotel.id)}
+                        >
+                          {orgName === item.hotel.name
+                            ? "Этот чат открыт"
+                            : "Открыть чат"}
+                        </button>
+                      ) : null}
+                      {/* {console.log(item)} */}
                     </div>
 
                     <div className={classes.blockInfoShow}>
@@ -679,10 +752,16 @@ function InfoTableDataReserve_passengers({
           })}
         </div>
 
-        {user.role != roles.hotelAdmin && (
+        {user.role !== roles.hotelAdmin && (
           <div className={classes.counting}>
             <div className={classes.hotelAbout_info__filters}>
               <button onClick={toggleLogsSidebar}>История</button>
+              {/* <button className={classes.updateReserveDate}>Редактировать даты заезда и выезда</button> */}
+              {request?.hotelChess?.length !== 0 ? null : (
+                <Button onClick={handleOpenEditDateModal}>
+                  Редактировать даты заезда и выезда
+                </Button>
+              )}
             </div>
             <div className={classes.countingPeople}>
               <img src="/peopleCount.png" alt="" />
@@ -705,65 +784,63 @@ function InfoTableDataReserve_passengers({
         )}
       </InfoTable>
 
-      {user.role != roles.hotelAdmin && (
-        <div
-          style={{
-            width: "500px",
-            backgroundColor: "#fff",
-            borderRadius: "8px",
-            padding: "20px",
-          }}
-        >
-          {user.role !== roles.superAdmin &&
-          user.role !== roles.dispatcerAdmin ? null : (
-            <div className={classes.separatorWrapper}>
-              {isHaveTwoChats === false ? (
+      {/* {user.role != roles.hotelAdmin && ( */}
+      <div className={classes.chatWrapper}>
+        {user.role !== roles.superAdmin &&
+        user.role !== roles.dispatcerAdmin ? null : (
+          <div className={classes.separatorWrapper}>
+            {isHaveTwoChats === false ? (
+              <button
+                onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                className={separator === "airline" ? classes.active : null}
+              >
+                Авиакомпания
+              </button>
+            ) : (
+              <>
                 <button
                   onClick={() => setSeparator("airline")} // Установить separator как 'airline'
                   className={separator === "airline" ? classes.active : null}
                 >
                   Авиакомпания
                 </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                    className={separator === "airline" ? classes.active : null}
-                  >
-                    Авиакомпания
-                  </button>
-                  <button
-                    onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
-                    className={separator === "hotel" ? classes.active : null}
-                  >
-                    Гостиница
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-          {/* <Message
-                  activeTab={activeTab}
-                  chooseRequestID={chooseRequestID}
-                  chooseReserveID={""}
-                  formData={formData}
-                  token={token}
-                  user={user}
-                  separator={separator}
-                /> */}
-          <Message
-            activeTab={"Комментарий"}
-            setIsHaveTwoChats={setIsHaveTwoChats}
-            chooseRequestID={""}
-            chooseReserveID={request.id}
-            token={token}
-            user={user}
-            chatPadding={"0"}
-            chatHeight={"calc(100vh - 317px)"}
-            separator={separator}
-          />
-        </div>
-      )}
+                <button
+                  onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
+                  className={separator === "hotel" ? classes.active : null}
+                >
+                  Гостиница
+                </button>
+              </>
+            )}
+          </div>
+        )}
+        {user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin ? (
+          <p className={classes.chatName}>
+            {separator === "airline" ? "" : orgName}
+            {/* {console.log(orgName)} */}
+          </p>
+        ) : null}
+
+        <Message
+          activeTab={"Комментарий"}
+          setIsHaveTwoChats={setIsHaveTwoChats}
+          setHotelChats={setHotelChats}
+          setTitle={setOrgName}
+          chooseRequestID={""}
+          chooseReserveID={request.id}
+          token={token}
+          user={user}
+          chatPadding={"0"}
+          chatHeight={
+            user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin
+              ? "calc(100vh - 318px)"
+              : "calc(100vh - 290px)"
+          }
+          separator={separator}
+          hotelChatId={selectedHotelChatId}
+        />
+      </div>
+      {/* )} */}
       <Logs
         type={"reserve"}
         queryLog={GET_RESERVE_LOGS}
@@ -772,6 +849,12 @@ function InfoTableDataReserve_passengers({
         show={showLogsSidebar}
         onClose={toggleLogsSidebar}
         name={request.reserveNumber}
+      />
+      <EditReserveDate
+        isOpen={isEditDateModalOpen}
+        onClose={handleCloseEditDateModal}
+        onSave={handleSaveEditedDates}
+        request={request}
       />
     </div>
   );

@@ -78,6 +78,11 @@ function ExistRequest({
     resetForm();
     onClose();
     setChooseRequestID("");
+    setFormDataExtend((prev) =>({
+      ...prev,
+      departureDate:'',
+      departureTime:''
+    }))
   }, [onClose, setChooseRequestID]);
 
   const resetForm = useCallback(() => setActiveTab("Общая"), []);
@@ -123,6 +128,14 @@ function ExistRequest({
     },
   });
 
+  const newStatus = formData?.departure < `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00` 
+  ? 'extended' 
+  : formData?.departure > `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00` 
+  ? 'reduced'
+  : formData?.status
+
+  // console.log(chooseRequestID);
+
   const handleExtendChangeRequest = async () => {
     try {
       await handleExtend({
@@ -130,17 +143,26 @@ function ExistRequest({
           input: {
             requestId: chooseRequestID,
             newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
+            status: newStatus
             // newEndName: formDataExtend.departureName,
           },
         },
       });
       alert("Изменения сохранены");
+      setFormDataExtend((prev) =>({
+        ...prev,
+        departureDate:'',
+        departureTime:''
+      }))
       await refetch(); // Обновляем данные после изменения
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
       alert("Ошибка при сохранении");
     }
   };
+
+  // console.log(formData);
+  
 
   // Клик вне боковой панели закрывает её
   useEffect(() => {
@@ -704,7 +726,7 @@ function ExistRequest({
                   }}
                 >
                   Разместить
-                  <img src="/user-check.png" alt="" />
+                  <img style={{width:'fit-content', height:'fit-content'}} src="/user-check.png" alt="" />
                 </Button>
               </div>
             )}

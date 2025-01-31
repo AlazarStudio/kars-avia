@@ -13,7 +13,7 @@ import {
 } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList";
 
-function CreateRequestReport({ show, onClose, isAirline }) {
+function CreateRequestReport({ show, onClose }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
@@ -97,7 +97,7 @@ function CreateRequestReport({ show, onClose, isAirline }) {
   }, [selectData]);
 
   // Мутация для создания нового отчета
-  const [createReport] = useMutation(isAirline ? CREATE_REPORT : CREATE_HOTEL_REPORT, {
+  const [createReport] = useMutation(airOrHotel === "airline" ? CREATE_REPORT : CREATE_HOTEL_REPORT, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,

@@ -11,8 +11,8 @@
     position: absolute;
     top: 45%;
     right: 10px;
-    width: 12px;
-    height: 5px;
+    width: 12px !important;
+    height: 5px !important;
     object-fit: contain;
 }
 

@@ -5,7 +5,7 @@ import Smiles from "../Smiles/Smiles";
 import { convertToDate, GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 
-function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
+function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTitle, separator, hotelChatId, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
     const messagesEndRef = useRef(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [showScrollButton, setShowScrollButton] = useState(false);
@@ -27,10 +27,11 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
         },
     });
 
-    // console.log(data);
+    // console.log(formData);
 
     const [messages, setMessages] = useState({ messages: [] });
 
+    const [selectedHotelChat, setSelectedHotelChat] = useState(null);
 
     useEffect(() => {
         if (data && data.chats) {
@@ -62,6 +63,24 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
                 setIsHaveTwoChats(true);
             }
             // console.log(data?.chats);
+
+            let hotelChats = data.chats.filter(chat => chat.separator === "hotel");
+
+            // if (hotelChats.length > 1 && separator !== 'airline') {
+            if (chooseRequestID === "" && separator !== 'airline') {
+                setHotelChats(hotelChats);
+                const chatToSelect = hotelChatId ? hotelChats.find(chat => chat.hotelId === hotelChatId) : hotelChats[0];
+                setMessages(chatToSelect);
+                setTitle(chatToSelect?.hotel?.name);
+                // console.log(chatToSelect?.hotel.name);
+                // console.log('Все чаты с отелями', hotelChats);
+                // console.log(hotelChats[0]);
+                // console.log(hotelChatId);
+                
+                
+                // setMessages(chatToSelect);
+                // setSelectedHotelChat(chatToSelect);
+            }
             
     
             if (isInitialLoad) {
@@ -72,7 +91,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, separator, chooseRequ
             }
         }
         refetch();
-    }, [data, separator, user.role, isInitialLoad, refetch]);
+    }, [data, separator, hotelChatId, user.role, isInitialLoad, refetch]);
     
 
     const { data: subscriptionData } = useSubscription(REQUEST_MESSAGES_SUBSCRIPTION, {

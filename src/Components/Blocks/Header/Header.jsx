@@ -2,17 +2,19 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import classes from "./Header.module.css";
 import Notifications from "../Notifications/Notifications";
 import {
+  CANCEL_REQUEST,
   decodeJWT,
   GET_DISPATCHER,
   getCookie,
   server,
 } from "../../../../graphQL_requests";
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
 import Support from "../Support/Support";
 import { roles } from "../../../roles";
 import ExistRequest from "../ExistRequest/ExistRequest";
+import ChooseHotel from "../ChooseHotel/ChooseHotel";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -28,8 +30,9 @@ function Header({ children }) {
 
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [showSupportSidebar, setShowSupportSidebar] = useState(false);
-  const [existRequestData, setExistRequestData] = useState(null); // Для хранения данных выбранной заявки
+  const [existRequestData, setExistRequestData] = useState(); // Для хранения данных выбранной заявки
   const [showERequestSidebar, setShowERequestSidebar] = useState(false);
+  const [showChooseHotel, setShowChooseHotel] = useState(false);
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
@@ -41,11 +44,40 @@ function Header({ children }) {
     setShowSupportSidebar(!showSupportSidebar);
   };
 
-  const handleOpenRequest = (id) => {
-    setExistRequestData(id); // Сохраняем ID заявки
-    setShowERequestSidebar(true); // Открываем боковую панель
+  // const handleOpenRequest = (id) => {
+  //   setExistRequestData(id); // Сохраняем ID заявки
+  //   setShowERequestSidebar(true); // Открываем боковую панель
+  //   setIsNotificationsOpen(false);
+  // };
+
+  const handleNotificationClick = (notificationData) => {
+    // Создаем `chooseObject` на основе пришедших данных
+    // console.log(notificationData.reserve);
+    const newChooseObject = [
+      {
+        client: notificationData.client,
+        clientId: notificationData.clientId,
+        end: undefined, // Всегда `undefined`
+        endTime: undefined, // Всегда `undefined`
+        hotelId: "", // Всегда пустая строка
+        place: "", // Всегда пустая строка
+        public: false, // Всегда `false`
+        requestId: notificationData.requestId,
+        requestNumber: notificationData.requestNumber,
+        room: "", // Всегда пустая строка
+        start: undefined, // Всегда `undefined`
+        startTime: undefined, // Всегда `undefined`
+      },
+    ];
+    
+    setChooseObject(newChooseObject);
+    setChooseCityRequest(notificationData.chooseCityRequest || "");
+    setExistRequestData(notificationData.requestId); // Устанавливаем ID заявки
+    setShowERequestSidebar(true); // Открываем боковую панель заявки
     setIsNotificationsOpen(false);
   };
+
+  const toggleChooseHotel = () => setShowChooseHotel(!showChooseHotel);
 
   const toggleNotifications = () => {
     if (!isNotificationsOpen) {
@@ -112,7 +144,7 @@ function Header({ children }) {
     const handleClickOutside = (event) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) || // когда вернуться оповещения поставить &&
+        !dropdownRef.current.contains(event.target) && // когда вернуться оповещения поставить &&
         notificationsRef.current &&
         !notificationsRef.current.contains(event.target) &&
         !event.target.closest(`.${classes.notify_dropdown}`)
@@ -146,6 +178,53 @@ function Header({ children }) {
     setUserData(updatedUser); // Обновляем данные пользователя в родительском компоненте
   };
 
+  // Запрос на отмену созданной, но не размещенной заявки
+  const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const handleCancelRequest = async (id) => {
+    try {
+      // Отправка запроса с правильным ID заявки
+      const response = await cancelRequestMutation({
+        variables: {
+          cancelRequestId: id,
+        },
+      });
+      // console.log("Заявка успешно отменена", response);
+    } catch (error) {
+      console.error("Ошибка при отмене заявки:", JSON.stringify(error));
+    }
+  };
+
+  // const chooseObject = [
+  //   {
+  //     client: "Петров П.П.",
+  //     clientId: "67444ca096ee539bb5c14666",
+  //     end: undefined,
+  //     endTime: undefined,
+  //     hotelId: "",
+  //     place: "",
+  //     public: false,
+  //     requestId: '679b6f61178473d1c88d2ebd',
+  //     requestNumber: '0190-ABA-30.01.2025',
+  //     room: "",
+  //     start: undefined,
+  //     startTime: undefined,
+  //   },
+  // ];
+
+  // const chooseCityRequest = "Абакан";
+  // const [chooseCityRequest, setChooseCityRequest] = useState("Абакан");
+  const [chooseObject, setChooseObject] = useState([]);
+  const [chooseCityRequest, setChooseCityRequest] = useState("");
+
+  // console.log(chooseCityRequest);
+
   return (
     <div className={classes.section_top}>
       <div className={classes.section_top_title}>{children}</div>
@@ -154,25 +233,25 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
-          {/* <div
+          <div
             className={classes.section_top_elems_notify}
             onClick={toggleNotifications}
             ref={notificationsRef}
           >
             <div className={classes.section_top_elems_notify_red}></div>
             <img src="/notify.png" alt="Уведомления" />
-          </div> */}
+          </div>
 
-          {/* {isNotificationsFullyVisible && (
+          {isNotificationsFullyVisible && (
             <div
               className={`${classes.notify_dropdown} ${
                 isNotificationsOpen ? classes.open : classes.closed
               }`}
               onClick={(e) => e.stopPropagation()}
             >
-              <Notifications onRequestClick={handleOpenRequest} />
+              <Notifications onRequestClick={handleNotificationClick} user={data?.user} />
             </div>
-          )} */}
+          )}
 
           <div className={classes.section_top_elems_date}>
             <div>{formattedDate}</div>
@@ -249,8 +328,21 @@ function Header({ children }) {
               onClose={() => {
                 setShowERequestSidebar(false);
               }}
+              setShowChooseHotel={setShowChooseHotel}
               chooseRequestID={existRequestData}
+              setChooseRequestID={setExistRequestData}
+              setChooseCityRequest={setChooseCityRequest}
+              handleCancelRequest={handleCancelRequest}
               user={data?.user}
+            />
+
+            <ChooseHotel
+              chooseCityRequest={chooseCityRequest}
+              show={showChooseHotel}
+              onClose={toggleChooseHotel}
+              chooseObject={chooseObject}
+              chooseRequestID={existRequestData}
+              id={"relay"}
             />
 
             <Support

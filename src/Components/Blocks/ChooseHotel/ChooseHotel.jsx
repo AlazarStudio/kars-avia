@@ -12,12 +12,22 @@ import { useQuery } from "@apollo/client";
 import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
 
-function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID, chooseCityRequest }) {
+function ChooseHotel({
+  show,
+  onClose,
+  chooseObject,
+  id,
+  chooseRequestID,
+  chooseCityRequest,
+}) {
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
-  const [formData, setFormData] = useState({ city: "", hotel: "", request: chooseRequestID });
+  const [formData, setFormData] = useState({
+    city: "",
+    hotel: "",
+    request: chooseRequestID,
+  });
   const [hotels, setHotels] = useState([]);
   const sidebarRef = useRef();
-
 
   // Получаем данные о гостиницах
   const { data: hotelsData, loading: hotelsLoading } =
@@ -31,7 +41,12 @@ function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID, chooseC
 
   useEffect(() => {
     if (chooseCityRequest) {
-      setFormData((prevState) => ({ ...prevState, city: chooseCityRequest, hotel: "", request: chooseRequestID }));
+      setFormData((prevState) => ({
+        ...prevState,
+        city: chooseCityRequest,
+        hotel: "",
+        request: chooseRequestID,
+      }));
     }
   }, [chooseCityRequest]);
 
@@ -66,12 +81,21 @@ function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID, chooseC
 
   const handleCitySelect = (value) => {
     setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-    setFormData((prevState) => ({ ...prevState, city: value, hotel: "", request: chooseRequestID })); // Сброс отеля при изменении города
+    setFormData((prevState) => ({
+      ...prevState,
+      city: value,
+      hotel: "",
+      request: chooseRequestID,
+    })); // Сброс отеля при изменении города
   };
 
   const handleHotelSelect = (value) => {
     setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-    setFormData((prevState) => ({ ...prevState, hotel: value, request: chooseRequestID }));
+    setFormData((prevState) => ({
+      ...prevState,
+      hotel: value,
+      request: chooseRequestID,
+    }));
   };
 
   useEffect(() => {
@@ -95,6 +119,10 @@ function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID, chooseC
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [show, closeButton]);
+
+  // console.log("Выбор города:", chooseCityRequest);
+  // console.log("ID запроса:", chooseRequestID);
+  // console.log("FormData:", formData);  
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -140,7 +168,7 @@ function ChooseHotel({ show, onClose, chooseObject, id, chooseRequestID, chooseC
             dataObject={chooseObject}
             disabled={true}
           >
-            Разместить <img src="/user-check.png" alt="" />
+            Разместить <img style={{width:'fit-content', height:'fit-content'}} src="/user-check.png" alt="" />
           </Button>
         </div>
       )}

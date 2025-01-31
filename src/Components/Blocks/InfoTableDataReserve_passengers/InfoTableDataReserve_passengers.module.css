@@ -224,7 +224,20 @@
     transition: all ease-in-out 0.3s;
 }
 
+.chatWrapper {
+    width: 500px;
+    background-color:#fff;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
 .separatorWrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
     display: flex;
     justify-content: space-between;
 }
@@ -247,6 +260,40 @@
     background-color: #E4E4EF;
     outline: none;
 }
+
+.chatButton {
+    padding: 10px 20px;
+    background-color: transparent;
+    border: 1px solid #54587380;
+    outline: none;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #545873;
+    cursor: pointer;
+    /* transition: all ease-in-out 0.3s; */
+}
+
+.chatButton:hover {
+    background-color: #e4e4efbd;
+    border: 1px solid transparent;
+    /* transition: all ease-in-out 0.3s; */
+}
+
+.chatButton.active {
+    background-color: #e4e4efbd;
+    border: 1px solid transparent;
+    /* transition: all ease-in-out 0.3s; */
+}
+
+.chatName {
+    padding: 13px 0 0 0;
+    height: 28px;
+    text-align: center;
+}
+
+/* .updateReserveDate {
+    
+} */
 
 @media (min-width: 0px) and (max-width: 1499px) {
     .InfoTable_title_elem {

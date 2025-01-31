@@ -19,7 +19,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         passengers: '',
         city: '',
         hotel: '',
-        requestId: ''
+        requestId: request?.id
     });
 
     const resetForm = () => {
@@ -92,7 +92,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         try {
             let reserverAddHotel = await createRequest({
                 variables: {
-                    reservationId: formData.requestId,
+                    reservationId: request?.id,
                     hotelId: formData.hotel,
                     capacity: Number(formData.passengers)
                 }
@@ -146,10 +146,14 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
             setFormData(prevFormData => ({
                 ...prevFormData,
                 city: selectedCity,
-                requestId: request.id,
+                requestId: request?.id,
                 hotel: '',
             }));
         }
+        // setFormData(prevFormData => ({
+        //     ...prevFormData,
+        //     requestId: request?.id,
+        // }));
     }, [request, uniqueCities]); // Зависимости строго ограничены
     
     
@@ -159,6 +163,8 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
     const filteredHotels = formData.city
         ? hotels.filter((hotel) => hotel.city.trim() === formData.city.trim())
         : [];
+    // console.log(request?.airport?.city);
+    
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>

@@ -197,10 +197,11 @@ function Reserve({ children, user, idHotel, ...props }) {
                 request.status?.toLowerCase()
             ].some(field => field.includes(searchQuery.toLowerCase()));
     
-            const matchesCity = hotelCity ? request.airport?.city.toLowerCase() === hotelCity.toLowerCase() : true;
+            // const matchesCity = hotelCity ? request.airport?.city.toLowerCase() === hotelCity.toLowerCase() : true;
             const matchesAirline = airlineName ? request.airline?.name.toLowerCase() === airlineName.toLowerCase() : true;
     
-            return matchesCity && matchesSelect && matchesDate && matchesSearchQuery && matchesAirline;
+            // return matchesCity && matchesSelect && matchesDate && matchesSearchQuery && matchesAirline;
+            return matchesSelect && matchesDate && matchesSearchQuery && matchesAirline;
         });
     }, [requests, filterData, searchQuery, hotelCity, airlineName]);
     
