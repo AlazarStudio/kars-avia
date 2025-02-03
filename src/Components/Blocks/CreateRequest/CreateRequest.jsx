@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery, useSubscription } from "@apollo/client";
 import classes from './CreateRequest.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
+import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRLINES_SUBSCRIPTION, GET_AIRLINES_UPDATE_SUBSCRIPTION, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList";
 
 // Компонент для создания новой заявки
@@ -16,7 +16,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
     const sidebarRef = useRef();
 
     // Запрос данных авиакомпаний и аэропортов
-    const { data } = useQuery(GET_AIRLINES_RELAY);
+    const { data, refetch } = useQuery(GET_AIRLINES_RELAY);
     const infoAirports = useQuery(GET_AIRPORTS_RELAY);
     const [airports, setAirports] = useState([]);  // Список аэропортов
 
@@ -61,6 +61,15 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
             setAirports(infoAirports.data.airports || []);
         }
     }, [infoAirports.data]);
+
+    useEffect(() => {
+            refetch();
+            setAirlines(data?.airlines?.airlines);
+            if (user?.airlineId) {
+                const selectedAirline = data.airlines.airlines.find(airline => airline.id === user.airlineId);
+                setSelectedAirline(selectedAirline);
+            }
+    }, [show]);
 
     // Обновление ID пользователя и других начальных данных при наличии токена и данных
     useEffect(() => {
@@ -362,7 +371,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                                 <label>Авиакомпания</label>
                                 <DropDownList
                                     placeholder="Введите авиакомпанию"
-                                    options={airlines.map(airline => airline.name)}
+                                    options={airlines?.map(airline => airline.name)}
                                     initialValue={selectedAirline?.name || ""}
                                     onSelect={(value) => {
                                         const selectedAirline = airlines.find(airline => airline.name === value);
