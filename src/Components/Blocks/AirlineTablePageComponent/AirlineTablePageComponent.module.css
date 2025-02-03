@@ -20,7 +20,8 @@
 .topDayBlock {
     width: 100%;
     height: 45px;
-    border-left: 1px solid #E4E4EF;
+    border-right: 1px solid #E4E4EF;
+    /* border-left: 1px solid #E4E4EF; */
     border-top: 1px solid #E4E4EF;
     border-bottom: 1px solid #E4E4EF;
     font-family: Nunito Sans;
@@ -71,7 +72,7 @@
 
 .hotelTable tbody tr>td td {
     border-right: 1px solid #E4E4EF;
-    /* width: 45px; */
+    /* width: 35px; */
     width: 55px;
     height: 45px;
 }

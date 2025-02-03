@@ -1,9 +1,10 @@
 import React, { useReducer, useEffect, useState, useRef } from 'react';
 import classes from './AirlineTablePageComponent.module.css';
 import { CircularProgress } from '@mui/material';
-import { convertToDate } from '../../../../graphQL_requests';
+import { CANCEL_REQUEST, convertToDate, getCookie } from '../../../../graphQL_requests';
 import ExistRequest from '../ExistRequest/ExistRequest';
 import { useNavigate } from 'react-router-dom';
+import { useMutation } from '@apollo/client';
 
 const initialState = (data, dataInfo) => ({
     bookings: data || [],
@@ -21,7 +22,8 @@ const reducer = (state, action) => {
     }
 };
 
-const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCategoryUpdate, setSelectedStaff, user }) => {
+const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight, toggleCategoryUpdate, setSelectedStaff, user }) => {
+    const token = getCookie('token');
     const [state, dispatch] = useReducer(reducer, initialState(dataObject, dataInfo));
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -166,14 +168,15 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
                     bookingElements.push(
                         <div
                             key={`${info.clientID}-${index}`}
-                            onClick={() => info.reserveId ? navigate(`/reserve/reservePlacement/${info.reserveId}`) : handleBookingClick(info)}
+                            onClick={() => info.reserveId ?  window.open(`/reserve/reservePlacement/${info.reserveId}`, "_blank") : handleBookingClick(info)}
                             className={classes.booking}
                             style={{
                                 left: `${left}%`,
                                 width: `${width}%`,
                                 top: '5px',
                                 transform: `translateY(${index * (staffFlightInfo.length + 35)}px)`,
-                                zIndex: staffFlightInfo.length - index,
+                                zIndex: "1",
+                                // zIndex: staffFlightInfo.length - index,
                                 backgroundColor: '#9FD923',
                                 borderRadius: '4px',
                             }}
@@ -193,6 +196,29 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
         );
     };
 
+    // Запрос на отмену созданной, но не размещенной заявки
+        const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
+            context: {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            },
+        });
+    
+        const handleCancelRequest = async (id) => {
+            try {
+                // Отправка запроса с правильным ID заявки
+                const response = await cancelRequestMutation({
+                    variables: {
+                        cancelRequestId: id,
+                    },
+                });
+                // console.log("Заявка успешно отменена", response);
+            } catch (error) {
+                console.error("Ошибка при отмене заявки:", JSON.stringify(error));
+            }
+        };
+
     const previousMonth = () => {
         setCurrentMonth((prevMonth) => (prevMonth === 0 ? 11 : prevMonth - 1));
         if (currentMonth === 0) {
@@ -211,48 +237,49 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
 
     return (
         <>
-        <div className={classes.tableData}>
-            <div className={classes.tableContainer} ref={tableContainerRef} style={{ "maxHeight": maxHeight }}>
-                <table className={classes.hotelTable}>
-                    <thead className={classes.stickyHeader}>
-                        <tr>
-                            <th className={classes.stickyColumn}>
-                                <div className={classes.controls}>
-                                    <div onClick={previousMonth}><img src="/arrow-left.png" alt="previous month" /></div>
-                                    <span>{monthNames[currentMonth]} {currentYear}</span>
-                                    <div onClick={nextMonth}><img src="/arrow-right.png" alt="next month" /></div>
-                                </div>
-                            </th>
-                            {renderDays()}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {state.bookings.map((staffMember) => (
-                            <tr key={staffMember.id}>
-                                <td className={`${classes.stickyColumn}`}>
-                                    <div className={classes.staffInfo} onClick={() => {
-                                        toggleCategoryUpdate()
-                                        setSelectedStaff(staffMember)
-
-                                    }}>
-                                        <b>{staffMember.name}</b> - {staffMember.position.split(' ')[0]}
+            <div className={classes.tableData}>
+                <div className={classes.tableContainer} ref={tableContainerRef} style={{ "maxHeight": maxHeight, height: userHeight ? userHeight : "" }}>
+                    <table className={classes.hotelTable}>
+                        <thead className={classes.stickyHeader}>
+                            <tr>
+                                <th className={classes.stickyColumn}>
+                                    <div className={classes.controls}>
+                                        <div onClick={previousMonth}><img src="/arrow-left.png" alt="previous month" /></div>
+                                        <span>{monthNames[currentMonth]} {currentYear}</span>
+                                        <div onClick={nextMonth}><img src="/arrow-right.png" alt="next month" /></div>
                                     </div>
-                                </td>
-                                {renderBookings(staffMember)}
+                                </th>
+                                {renderDays()}
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div >
-        <ExistRequest
-        show={showERequestSidebar}
-        onClose={() => setShowERequestSidebar(false)}
-        chooseRequestID={chooseRequestID}
-        setChooseRequestID={setChooseRequestID}
-        user={user}
-        />
-    </>
+                        </thead>
+                        <tbody>
+                            {state.bookings.map((staffMember) => (
+                                <tr key={staffMember.id}>
+                                    <td className={`${classes.stickyColumn}`}>
+                                        <div className={classes.staffInfo} onClick={() => {
+                                            toggleCategoryUpdate()
+                                            setSelectedStaff(staffMember)
+
+                                        }}>
+                                            <b>{staffMember.name}</b> - {staffMember.position.split(' ')[0]}
+                                        </div>
+                                    </td>
+                                    {renderBookings(staffMember)}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div >
+            <ExistRequest
+                show={showERequestSidebar}
+                onClose={() => setShowERequestSidebar(false)}
+                chooseRequestID={chooseRequestID}
+                setChooseRequestID={setChooseRequestID}
+                handleCancelRequest={handleCancelRequest}
+                user={user}
+            />
+        </>
     
     );
 };
