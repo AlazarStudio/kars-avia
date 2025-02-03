@@ -71,7 +71,8 @@
 
 .hotelTable tbody tr>td td {
     border-right: 1px solid #E4E4EF;
-    width: 45px;
+    /* width: 45px; */
+    width: 55px;
     height: 45px;
 }
 

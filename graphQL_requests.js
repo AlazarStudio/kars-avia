@@ -1766,6 +1766,8 @@ export const GET_STAFF_HOTELS = gql`
         start
         end
         clientId
+        requestId
+        reserveId
         hotel {
           name
         }

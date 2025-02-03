@@ -12,6 +12,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     const [userRole, setUserRole] = useState();
     const token = getCookie('token');
+    const user = decodeJWT(token);
 
     useEffect(() => {
         setUserRole(decodeJWT(token).role);
@@ -62,9 +63,15 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
             end: hotel.end,
             endTime: hotel.endTime,
             clientID: hotel.clientId,
+            requestId: hotel.requestId,
+            reserveId: hotel.reserveId,
             hotelName: hotel.hotel.name
         }))
     );
+
+    // console.log(dataInfo.map((item) => item.requestId));
+    // console.log(dataInfo);
+    
 
     const [searchQuery, setSearchQuery] = useState('');
     const [selectQuery, setSelectQuery] = useState('');
@@ -167,11 +174,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
 
             {(hotelBronsInfo.length === 0) &&
-                <AirlineTablePageComponent toggleCategoryUpdate={toggleCategoryUpdate} maxHeight={"635px"} dataObject={filteredRequests} dataInfo={[]} setSelectedStaff={setSelectedStaff} />
+                <AirlineTablePageComponent toggleCategoryUpdate={toggleCategoryUpdate} maxHeight={"635px"} dataObject={filteredRequests} dataInfo={[]} setSelectedStaff={setSelectedStaff} user={user} />
             }
 
             {(hotelBronsInfo.length !== 0) &&
-                <AirlineTablePageComponent toggleCategoryUpdate={toggleCategoryUpdate} maxHeight={"635px"} dataObject={filteredRequests} dataInfo={dataInfo} setSelectedStaff={setSelectedStaff} />
+                <AirlineTablePageComponent toggleCategoryUpdate={toggleCategoryUpdate} maxHeight={"635px"} dataObject={filteredRequests} dataInfo={dataInfo} setSelectedStaff={setSelectedStaff} user={user} />
             }
 
             <CreateRequestAirlineStaff id={id} show={showAddCategory} onClose={toggleCategory} addTarif={staff} setAddTarif={setStaff} />

@@ -2,6 +2,8 @@ import React, { useReducer, useEffect, useState, useRef } from 'react';
 import classes from './AirlineTablePageComponent.module.css';
 import { CircularProgress } from '@mui/material';
 import { convertToDate } from '../../../../graphQL_requests';
+import ExistRequest from '../ExistRequest/ExistRequest';
+import { useNavigate } from 'react-router-dom';
 
 const initialState = (data, dataInfo) => ({
     bookings: data || [],
@@ -19,7 +21,7 @@ const reducer = (state, action) => {
     }
 };
 
-const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCategoryUpdate, setSelectedStaff }) => {
+const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCategoryUpdate, setSelectedStaff, user }) => {
     const [state, dispatch] = useReducer(reducer, initialState(dataObject, dataInfo));
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -27,6 +29,19 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
     const today = new Date();
     const currentDayRef = useRef(null);
     const tableContainerRef = useRef(null);
+
+    // console.log(state);
+
+    const [chooseRequestID, setChooseRequestID] = useState(null);
+    const [showERequestSidebar, setShowERequestSidebar] = useState(false);
+    const navigate = useNavigate();
+
+    const handleBookingClick = (info) => {
+        // console.log(info);
+        setChooseRequestID(info.requestId); // Устанавливаем requestId в состояние
+        setShowERequestSidebar(true); // Открываем ExistRequest
+    };
+    
 
     useEffect(() => {
         if (dataObject) {
@@ -88,6 +103,9 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
             return durationA - durationB;
         });
 
+        // console.log(staffFlightInfo);
+        
+
         for (let i = 1; i <= daysInMonth; i++) {
             const isToday = i === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
             const isHighlighted = i === highlightedDay;
@@ -148,6 +166,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
                     bookingElements.push(
                         <div
                             key={`${info.clientID}-${index}`}
+                            onClick={() => info.reserveId ? navigate(`/reserve/reservePlacement/${info.reserveId}`) : handleBookingClick(info)}
                             className={classes.booking}
                             style={{
                                 left: `${left}%`,
@@ -191,6 +210,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
     return (
+        <>
         <div className={classes.tableData}>
             <div className={classes.tableContainer} ref={tableContainerRef} style={{ "maxHeight": maxHeight }}>
                 <table className={classes.hotelTable}>
@@ -225,6 +245,15 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, toggleCate
                 </table>
             </div>
         </div >
+        <ExistRequest
+        show={showERequestSidebar}
+        onClose={() => setShowERequestSidebar(false)}
+        chooseRequestID={chooseRequestID}
+        setChooseRequestID={setChooseRequestID}
+        user={user}
+        />
+    </>
+    
     );
 };
 
