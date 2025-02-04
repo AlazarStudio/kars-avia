@@ -23,7 +23,7 @@ import {
 import Message from "../Message/Message";
 import { roles } from "../../../roles";
 
-function ExistReserveMess({ show, onClose, chooseRequestID, user }) {
+function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
   const token = getCookie("token");
 
   const { data } = useQuery(GET_RESERVE_REQUEST, {
@@ -121,6 +121,7 @@ function ExistReserveMess({ show, onClose, chooseRequestID, user }) {
                 token={token}
                 user={user}
                 separator={separator}
+                hotelChatId={hotelId}
                 chatHeight={"calc(100vh - 180px)"}
               />
             </>

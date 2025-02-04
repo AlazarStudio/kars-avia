@@ -1937,7 +1937,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 setShowReserveInfo={setShowReserveInfo}
             />
 
-            <ExistReserveMess show={showRequestSidebarMess} onClose={toggleRequestSidebarMess} chooseRequestID={openReserveId} user={user} />
+            <ExistReserveMess hotelId={hotelInfo.id} show={showRequestSidebarMess} onClose={toggleRequestSidebarMess} chooseRequestID={openReserveId} user={user} />
         </>
     );
 };
