@@ -233,14 +233,14 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
-          {/* <div
+          <div
             className={classes.section_top_elems_notify}
             onClick={toggleNotifications}
             ref={notificationsRef}
           >
             <div className={classes.section_top_elems_notify_red}></div>
             <img src="/notify.png" alt="Уведомления" />
-          </div> */}
+          </div>
 
           {isNotificationsFullyVisible && (
             <div

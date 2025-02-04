@@ -1550,6 +1550,10 @@ export const GET_AIRLINE_TARIFS = gql`
       priceTwoCategory
       priceThreeCategory
       priceFourCategory
+      priceFiveCategory
+      priceSixCategory
+      priceSevenCategory
+      priceEightCategory
     }
   }
 `;
@@ -1583,6 +1587,10 @@ export const UPDATE_AIRLINE_TARIF = gql`
       priceTwoCategory
       priceThreeCategory
       priceFourCategory
+      priceFiveCategory
+      priceSixCategory
+      priceSevenCategory
+      priceEightCategory
     }
   }
 `;

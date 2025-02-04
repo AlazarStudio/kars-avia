@@ -68,10 +68,12 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
 
             // if (hotelChats.length > 1 && separator !== 'airline') {
             if (chooseRequestID === "" && separator !== 'airline') {
-                setHotelChats(hotelChats);
+                setHotelChats ? 
+                setHotelChats(hotelChats) : null;
                 const chatToSelect = hotelChatId ? hotelChats.find(chat => chat.hotelId === hotelChatId) : hotelChats[0];
                 setMessages(chatToSelect);
-                setTitle(chatToSelect?.hotel?.name);
+                setTitle ? 
+                setTitle(chatToSelect?.hotel?.name) : null;
                 // console.log(chatToSelect?.hotel.name);
                 // console.log('Все чаты с отелями', hotelChats);
                 // console.log(hotelChats[0]);

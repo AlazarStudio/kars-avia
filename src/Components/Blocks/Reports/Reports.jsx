@@ -192,7 +192,6 @@ function Reports({ children, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          {user.airlineId || user.hotelId ? null : (
             <Filter
               toggleSidebar={toggleCreateSidebar}
               handleChange={handleChange}
@@ -201,7 +200,6 @@ function Reports({ children, ...props }) {
               filterList={filterList}
               needDate={false}
             />
-          )}
         </div>
 
         <InfoTableDataReports

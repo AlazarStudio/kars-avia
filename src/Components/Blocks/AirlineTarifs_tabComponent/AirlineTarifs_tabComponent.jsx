@@ -83,6 +83,26 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
                     price: data.airline.priceFourCategory,
                     type: 4
                 },
+                {
+                    name: 'Пятиместный',
+                    price: data.airline.priceFiveCategory,
+                    type: 5
+                },
+                {
+                    name: 'Шестиместный',
+                    price: data.airline.priceSixCategory,
+                    type: 6
+                },
+                {
+                    name: 'Семиместный',
+                    price: data.airline.priceSevenCategory,
+                    type: 7
+                },
+                {
+                    name: 'Восьмиместный',
+                    price: data.airline.priceEightCategory,
+                    type: 8
+                },
             ]);
         }
     }, [data]);

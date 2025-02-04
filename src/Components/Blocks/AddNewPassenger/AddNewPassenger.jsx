@@ -18,15 +18,18 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
     const [formData, setFormData] = useState({
         passengers: '',
         city: '',
-        hotel: '',
+        hotel: hotel ? hotel : "",
         requestId: request?.id
     });
+
+    // console.log(request?.id);
+    
 
     const resetForm = () => {
         setFormData({
             passengers: '',
             city: city, // Используем значение из состояния `city`
-            hotel: hotel,
+            hotel: hotel ? hotel : "",
             requestId: request?.id
         });
     };
@@ -140,21 +143,26 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
     
     useEffect(() => {
         // Инициализация при первом рендере
-        if (!formData.city && request?.airport?.city && uniqueCities.includes(request.airport.city)) {
-            const selectedCity = request.airport.city;
+        // if (!formData.city && request?.airport?.city && uniqueCities.includes(request.airport.city)) {
+            const selectedCity = request?.airport?.city;
             setCity(selectedCity);
             setFormData(prevFormData => ({
                 ...prevFormData,
                 city: selectedCity,
                 requestId: request?.id,
-                hotel: '',
+                hotel: hotel ? hotel : "",
             }));
-        }
+        // }
         // setFormData(prevFormData => ({
         //     ...prevFormData,
         //     requestId: request?.id,
         // }));
     }, [request, uniqueCities]); // Зависимости строго ограничены
+
+    // console.log(request.id);
+    
+    // console.log(formData);
+    
     
     
 
