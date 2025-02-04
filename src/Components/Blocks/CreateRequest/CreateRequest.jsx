@@ -66,7 +66,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
             refetch();
             setAirlines(data?.airlines?.airlines);
             if (user?.airlineId) {
-                const selectedAirline = data.airlines.airlines.find(airline => airline.id === user.airlineId);
+                const selectedAirline = data?.airlines?.airlines.find(airline => airline.id === user.airlineId);
                 setSelectedAirline(selectedAirline);
             }
     }, [show]);

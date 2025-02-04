@@ -13,7 +13,7 @@ import { useMutation, useQuery } from "@apollo/client";
 function HotelCompany_tabComponent({ children, id, ...props }) {
     const token = getCookie('token');
 
-    const { loading, error, data } = useQuery(GET_HOTEL_USERS, {
+    const { loading, error, data, refetch } = useQuery(GET_HOTEL_USERS, {
         variables: { hotelId: id },
     });
 
@@ -30,8 +30,9 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
     useEffect(() => {
         if (data) {
             setCompanyData(data.hotelUsers);
+            refetch();
         }
-    }, [data]);
+    }, [data, refetch]);
 
     const addDispatcher = (newDispatcher) => {
         setCompanyData([...companyData, newDispatcher]);

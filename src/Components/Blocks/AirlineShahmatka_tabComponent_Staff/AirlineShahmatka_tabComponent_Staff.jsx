@@ -26,7 +26,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     setUserRole(decodeJWT(token).role);
   }, [token]);
 
-  const { loading, error, data } = useQuery(GET_AIRLINE_USERS, {
+  const { loading, error, data, refetch } = useQuery(GET_AIRLINE_USERS, {
     variables: { airlineId: id },
   });
 
@@ -35,8 +35,9 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   useEffect(() => {
     if (data) {
       setStaff(data.airline.staff);
+      refetch();
     }
-  }, [data]);
+  }, [data, refetch]);
 
   const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
 

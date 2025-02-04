@@ -187,28 +187,28 @@ function EditRequestTarif({
           price: isHotel
             ? response_update_tarif.data.updateHotel.priceFiveCategory
             : response_update_tarif.data.updateAirline.priceFiveCategory,
-          type: 1,
+          type: 5,
         },
         {
           name: "Шестиместный",
           price: isHotel
             ? response_update_tarif.data.updateHotel.priceSixCategory
             : response_update_tarif.data.updateAirline.priceSixCategory,
-          type: 2,
+          type: 6,
         },
         {
           name: "Семиместный",
           price: isHotel
             ? response_update_tarif.data.updateHotel.priceSevenCategory
             : response_update_tarif.data.updateAirline.priceSevenCategory,
-          type: 3,
+          type: 7,
         },
         {
           name: "Восьмиместный",
           price: isHotel
             ? response_update_tarif.data.updateHotel.priceEightCategory
             : response_update_tarif.data.updateAirline.priceEightCategory,
-          type: 4,
+          type: 8,
         },
       ]);
       resetForm();

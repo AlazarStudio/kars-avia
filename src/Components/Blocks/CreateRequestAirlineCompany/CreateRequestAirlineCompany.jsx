@@ -203,6 +203,7 @@ function CreateRequestAirlineCompany({
         onClose();
       }
     } catch (err) {
+      // console.error(err)
       alert("Произошла ошибка при сохранении данных");
     }
   };

@@ -20,7 +20,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         setUserRole(decodeJWT(token).role);
     }, [token]);
 
-    const { loading, error, data } = useQuery(GET_AIRLINE_COMPANY, {
+    const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
         variables: { airlineId: id },
     });
 
@@ -49,8 +49,9 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
             })).sort((a, b) => a.name.localeCompare(b.name));
 
             setAddTarif(sortedTarifs);
+            refetch();
         }
-    }, [data]);
+    }, [data, refetch]);
 
     const handleSearchTarif = (e) => {
         setSearchTarif(e.target.value);

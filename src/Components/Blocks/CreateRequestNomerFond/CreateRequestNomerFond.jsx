@@ -49,6 +49,18 @@ function CreateRequestNomerFond({
     setIsEdited(false); // Сброс флага изменений
   }, []);
 
+  useEffect(() => {
+    if(show) {
+      setFormData((prevState) => ({
+        ...prevState,
+        reserve: filter === 'quote' ? "false" : "true"
+      }))
+    }
+  }, [show, filter])
+
+  console.log(formData);
+  
+
   const closeButton = useCallback(() => {
     if (!isEdited) {
       resetForm();
