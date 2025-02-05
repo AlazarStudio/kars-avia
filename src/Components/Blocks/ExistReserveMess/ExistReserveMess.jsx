@@ -85,16 +85,9 @@ function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
           {/* Вкладка "Комментарии" */}
           {activeTab === "Комментарии" && (
             <>
-              <div className={classes.separatorWrapper}>
-                {isHaveTwoChats === false ? (
-                  <button
-                    onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                    className={separator === "airline" ? classes.active : null}
-                  >
-                    Авиакомпания
-                  </button>
-                ) : (
-                  <>
+              {user?.airlineId || user?.hotelId ? null : (
+                <div className={classes.separatorWrapper}>
+                  {isHaveTwoChats === false ? (
                     <button
                       onClick={() => setSeparator("airline")} // Установить separator как 'airline'
                       className={
@@ -103,15 +96,29 @@ function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
                     >
                       Авиакомпания
                     </button>
-                    <button
-                      onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
-                      className={separator === "hotel" ? classes.active : null}
-                    >
-                      Гостиница
-                    </button>
-                  </>
-                )}
-              </div>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                        className={
+                          separator === "airline" ? classes.active : null
+                        }
+                      >
+                        Авиакомпания
+                      </button>
+                      <button
+                        onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
+                        className={
+                          separator === "hotel" ? classes.active : null
+                        }
+                      >
+                        Гостиница
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
               <Message
                 activeTab={activeTab}
                 setIsHaveTwoChats={setIsHaveTwoChats}
@@ -122,7 +129,7 @@ function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
                 user={user}
                 separator={separator}
                 hotelChatId={hotelId}
-                chatHeight={"calc(100vh - 180px)"}
+                chatHeight={user?.airlineId || user?.hotelId ? "calc(100vh - 150px)" :"calc(100vh - 180px)"}
               />
             </>
           )}

@@ -3,6 +3,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 20px 20px 30px;
+    border-bottom: 1px solid #E4E4EF;
 }
 
 .requestButton {
@@ -395,6 +396,7 @@ select {
 .separatorWrapper {
     display: flex;
     justify-content: space-between;
+    border-bottom: 1px solid #E4E4EF;
 }
 
 .separatorWrapper button {

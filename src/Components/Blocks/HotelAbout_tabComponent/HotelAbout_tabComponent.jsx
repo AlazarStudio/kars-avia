@@ -26,6 +26,41 @@ function HotelAbout_tabComponent({ id }) {
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(() => {
+    return JSON.parse(localStorage.getItem("menuOpen")) ?? true;
+  });
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const updateState = () => {
+      setMenuOpen(JSON.parse(localStorage.getItem("menuOpen")));
+    };
+
+    // Отслеживание изменений localStorage в других вкладках
+    window.addEventListener("storage", updateState);
+
+    // Перехват изменений в текущей вкладке
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = function (key, value) {
+      originalSetItem.apply(this, arguments);
+      if (key === "menuOpen") {
+        updateState(); // Обновляем состояние
+      }
+    };
+
+    return () => {
+      window.removeEventListener("storage", updateState);
+      localStorage.setItem = originalSetItem; // Возвращаем исходный метод
+    };
+  }, []);
+  // console.log(menuOpen);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
@@ -211,7 +246,11 @@ function HotelAbout_tabComponent({ id }) {
       {error && <p>Error: {error.message}</p>}
 
       {!loading && !error && hotel && (
-        <div className={classes.hotelAbout} style={user?.role === roles.airlineAdmin ? {height:'calc(100vh - 130px)'} : {}}>
+        // <div className={classes.hotelAbout} style={user?.role === roles.airlineAdmin ? {height:'calc(100vh - 130px)'} : {}}>
+        <div
+          className={classes.hotelAbout}
+          style={user?.airlineId ? { height: "calc(100vh - 130px)" } : {}}
+        >
           <div className={classes.column}>
             <div className={classes.hotelAbout_top}>
               <div className={classes.hotelAbout_top_complete}>
@@ -302,16 +341,18 @@ function HotelAbout_tabComponent({ id }) {
                 Расписание
               </button>
 
-              <button
-                className={
-                  displayInfo == "requisites" ? classes.activeButton : null
-                }
-                onClick={() => {
-                  setDisplayInfo("requisites");
-                }}
-              >
-                Реквизиты
-              </button>
+              {user?.airlineId ? null : (
+                <button
+                  className={
+                    displayInfo == "requisites" ? classes.activeButton : null
+                  }
+                  onClick={() => {
+                    setDisplayInfo("requisites");
+                  }}
+                >
+                  Реквизиты
+                </button>
+              )}
 
               <button
                 className={
@@ -326,7 +367,13 @@ function HotelAbout_tabComponent({ id }) {
             </div>
           </div>
 
-          <div className={user?.role === roles.airlineAdmin ? classes.hotelAbout_info__arline : classes.hotelAbout_info}>
+          <div
+            className={
+              user?.airlineId
+                ? classes.hotelAbout_info__arline
+                : classes.hotelAbout_info
+            }
+          >
             {displayInfo == "generalInfo" ? (
               <div className={classes.hotelAbout_info_block}>
                 {/* <div className={classes.hotelAbout_info_label}>
@@ -487,7 +534,7 @@ function HotelAbout_tabComponent({ id }) {
                   </div>
                 </div>
               </div>
-            ) : displayInfo == "requisites" ? (
+            ) : displayInfo == "requisites" && !user?.airlineId ? (
               <div className={classes.hotelAbout_info_block}>
                 {/* <div className={classes.hotelAbout_info_label}>Реквизиты</div> */}
                 <div className={classes.hotelAbout_info_item}>
@@ -547,22 +594,32 @@ function HotelAbout_tabComponent({ id }) {
                 </div>
               </div>
             ) : displayInfo === "rooms" ? (
-              <div className={user?.role === roles.airlineAdmin ? classes.hotelAbout_rooms_block__airline : classes.hotelAbout_rooms_block}>
-                <div className={classes.rooms_wrapper}>
-                  {hotel.rooms?.map((room, index) => (
-                    <HotelAboutRoomBlock
-                      key={room.id}
-                      {...room}
-                      // index={index}
-                      // handleChange={handleChange}
-                      // isEditing={isEditing}
-                    />
+              <div
+                className={
+                  user?.role === roles.airlineAdmin
+                    ? classes.hotelAbout_rooms_block__airline
+                    : classes.hotelAbout_rooms_block
+                }
+              >
+                <div className={`${classes.rooms_wrapper} ${menuOpen && windowWidth <= 1578 ? classes.fb30 : ""}`}>
+                  {hotel.rooms?.map((room) => (
+                    <HotelAboutRoomBlock key={room.id} {...room} />
                   ))}
                 </div>
               </div>
             ) : (
-              <>
-                <div className={classes.hotelAbout_info_block}>
+              <div
+                className={
+                  user?.airlineId
+                    ? classes.hotelAbout_info__contacts___arline
+                    : classes.hotelAbout_info__contacts
+                }
+                style={menuOpen && windowWidth <= 1650 ? { flexDirection: "column" } : {}}
+              >
+                <div
+                  className={classes.hotelAbout_info_block}
+                  style={menuOpen ? { width: "70%" } : {}}
+                >
                   <div className={classes.hotelAbout_info_label}>Адрес</div>
                   <div className={classes.hotelAbout_info_item}>
                     <label>Страна</label>
@@ -609,7 +666,9 @@ function HotelAbout_tabComponent({ id }) {
                     />
                   </div>
                   <div className={classes.hotelAbout_info_item}>
-                    <label className={classes.airportDistance}>Расстояние до аэропорта</label>
+                    <label className={classes.airportDistance} style={ menuOpen && windowWidth <= 1699 ? {width:"18%"} : !menuOpen && windowWidth <= 1690 ? {width:"20%"} : {}}>
+                      Расстояние до аэропорта
+                    </label>
                     <input
                       type="text"
                       name="airportDistance"
@@ -620,16 +679,17 @@ function HotelAbout_tabComponent({ id }) {
                     />
                   </div>
                 </div>
-                <div className={classes.hotelAbout_info_block}>
-                  <div className={classes.hotelAbout_info_label}>Контакты</div>
+                <div className={classes.hotelAbout_info_block} style={menuOpen ? { width: "70%" } : {}}>
+                  <div className={classes.hotelAbout_info_label}>Контакты Kars Avia</div>
                   <div className={classes.hotelAbout_info_item}>
                     <label>Почта</label>
                     <input
                       type="email"
                       name="email"
-                      value={hotel.email || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
+                      // value={hotel.email || ""}
+                      value={"KarsAvia"}
+                      // onChange={handleChange}
+                      disabled={true}
                       className={classes.hotelAbout_info_input}
                     />
                   </div>
@@ -638,9 +698,10 @@ function HotelAbout_tabComponent({ id }) {
                     <input
                       type="tel"
                       name="number"
-                      value={hotel.number || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
+                      // value={hotel.number || ""}
+                      value={"8-818-888-88-88"}
+                      // onChange={handleChange}
+                      disabled={true}
                       className={classes.hotelAbout_info_input}
                     />
                   </div>
@@ -649,14 +710,15 @@ function HotelAbout_tabComponent({ id }) {
                     <input
                       type="tel"
                       name="link"
-                      value={hotel.link || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
+                      // value={hotel.link || ""}
+                      value={"KarsAvia"}
+                      // onChange={handleChange}
+                      disabled={true}
                       className={classes.hotelAbout_info_input}
                     />
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
           <Logs

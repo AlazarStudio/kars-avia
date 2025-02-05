@@ -20,6 +20,41 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(() => {
+    return JSON.parse(localStorage.getItem("menuOpen")) ?? true;
+  });
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const updateState = () => {
+      setMenuOpen(JSON.parse(localStorage.getItem("menuOpen")));
+    };
+
+    // Отслеживание изменений localStorage в других вкладках
+    window.addEventListener("storage", updateState);
+
+    // Перехват изменений в текущей вкладке
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = function (key, value) {
+      originalSetItem.apply(this, arguments);
+      if (key === "menuOpen") {
+        updateState(); // Обновляем состояние
+      }
+    };
+
+    return () => {
+      window.removeEventListener("storage", updateState);
+      localStorage.setItem = originalSetItem; // Возвращаем исходный метод
+    };
+  }, []);
+  // console.log(menuOpen);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
@@ -125,7 +160,14 @@ function AirlineAbout_tabComponent({ id, ...props }) {
       {error && <p>Error: {error.message}</p>}
 
       {!loading && !error && airline && (
-        <div className={classes.airlineAbout} style={userRole === roles.airlineAdmin ? {height: 'calc(100vh - 130px)'} : {}}>
+        <div
+          className={classes.airlineAbout}
+          style={
+            userRole === roles.airlineAdmin
+              ? { height: "calc(100vh - 130px)" }
+              : {}
+          }
+        >
           <div className={classes.column}>
             <div className={classes.airlineAbout_top}>
               <div className={classes.airlineAbout_top_complete}>
@@ -156,11 +198,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   <>
                     <div className={classes.airlineAbout_info__filters}>
                       {/* <Button onClick={toggleLogsSidebar}>История</Button> */}
-                      <button
-                        onClick={toggleLogsSidebar}
-                      >
-                        История
-                      </button>
+                      <button onClick={toggleLogsSidebar}>История</button>
                     </div>
                     <Button onClick={handleEditClick}>
                       {isEditing ? "Сохранить" : "Редактировать"}
@@ -204,7 +242,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
           </div>
           <div className={classes.airlineAbout_info}>
             {displayInfo == "generalInfo" ? (
-              <div className={`${classes.column} ${classes.w50}`}>
+              <div className={`${classes.column} ${menuOpen && windowWidth <= 1575 ? classes.w70 :classes.w50}`}>
                 <div className={classes.airlineAbout_info_item}>
                   <label>Название</label>
                   <input
@@ -230,8 +268,15 @@ function AirlineAbout_tabComponent({ id, ...props }) {
               </div>
             ) : displayInfo == "contacts" ? (
               <>
-                <div className={userRole === roles.airlineAdmin ? classes.airlineAbout_info_block : classes.airlineAbout_info_block__airline}>
-                  <div className={`${classes.column} ${classes.w50}`}>
+                <div
+                  className={
+                    userRole === roles.airlineAdmin
+                      ? classes.airlineAbout_info_block
+                      : classes.airlineAbout_info_block__airline
+                  }
+                  style={ menuOpen && windowWidth <= 1580 ? {flexDirection:"column"} : !menuOpen && windowWidth < 1305 ? {flexDirection:"column"} : {}}
+                >
+                  <div className={`${classes.column} ${menuOpen && windowWidth <= 1600 ? classes.w60 :classes.w50}`}>
                     <div className={classes.airlineAbout_info_label}>Адрес</div>
                     <div className={classes.airlineAbout_info_item}>
                       <label>Страна</label>
@@ -279,7 +324,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                     </div>
                   </div>
 
-                  <div className={`${classes.column} ${classes.w50}`}>
+                  <div className={`${classes.column} ${menuOpen && windowWidth <= 1600 ? classes.w60 :classes.w50}`}>
                     <div className={classes.airlineAbout_info_label}>
                       Контакты
                     </div>
@@ -311,7 +356,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             ) : (
               <>
                 <div className={classes.airlineAbout_info_block}>
-                  <div className={`${classes.column} ${classes.w50}`}>
+                  <div className={`${classes.column} ${menuOpen && windowWidth <= 1575 ? classes.w70 : !menuOpen && windowWidth <= 1280 ? classes.w60 : classes.w50}`}>
                     <div className={classes.airlineAbout_info_item}>
                       <label>ИНН</label>
                       <input
@@ -373,9 +418,9 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             )}
           </div>
           <Logs
-            type={'airline'}
+            type={"airline"}
             queryLog={GET_AIRLINE_LOGS}
-            queryID={'airlineId'}
+            queryID={"airlineId"}
             id={id}
             show={showLogsSidebar}
             onClose={toggleLogsSidebar}
