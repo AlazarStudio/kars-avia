@@ -666,7 +666,7 @@ function HotelAbout_tabComponent({ id }) {
                     />
                   </div>
                   <div className={classes.hotelAbout_info_item}>
-                    <label className={classes.airportDistance} style={ menuOpen && windowWidth <= 1699 ? {width:"18%"} : !menuOpen && windowWidth <= 1690 ? {width:"20%"} : {}}>
+                    <label className={classes.airportDistance} style={ menuOpen && windowWidth <= 1707 ? {width:"18%"} : !menuOpen && windowWidth <= 1690 ? {width:"20%"} : {}}>
                       Расстояние до аэропорта
                     </label>
                     <input
