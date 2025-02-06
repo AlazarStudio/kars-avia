@@ -7,9 +7,9 @@
     border-radius: 5px;
     color: #FFFFFF;
     font-family: Nunito Sans;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 400;
-    padding: 0 35px;
+    padding: 0 30px;
     transition: all 0.3s ease-in-out;
     gap: 10px;
     opacity: 0.8;
@@ -24,7 +24,7 @@
 }
 
 
-@media (min-width: 0px) and (max-width: 1399px) {
+@media (min-width: 0px) and (max-width: 1499px) {
     .Button {
         height: 40px;
         font-size: 14px;

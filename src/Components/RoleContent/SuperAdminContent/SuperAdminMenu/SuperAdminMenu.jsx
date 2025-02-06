@@ -33,7 +33,7 @@ const SuperAdminMenu = ({
             strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "Эстафета" : ""}
+        {menuOpen ? "Эскадрилья" : ""}
         {allCreatedRequests > 0 && (
           <div
             className={`${classes.countRequests} ${
@@ -43,7 +43,7 @@ const SuperAdminMenu = ({
             {allCreatedRequests}
           </div>
         )}
-        {!menuOpen && <span className={classes.tooltip}>Эстафета</span>}
+        {!menuOpen && <span className={classes.tooltip}>Эскадрилья</span>}
       </Link>
       <Link
         to={"/reserve"}

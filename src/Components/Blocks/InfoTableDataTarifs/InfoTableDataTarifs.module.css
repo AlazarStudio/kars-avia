@@ -236,4 +236,14 @@
     cursor: pointer;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+    .InfoTable_data_elem {
+        font-size: 14px;
+        line-height: 18px;
+    }
+
+    .InfoTable_data_elem_title {
+        padding: 0;
+    }
+    
+}

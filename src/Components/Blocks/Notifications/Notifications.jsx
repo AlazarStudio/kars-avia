@@ -104,7 +104,7 @@ function Notifications({ onRequestClick, user }) {
           onClick={() => setSeparator("request")}
           className={separator === "request" ? classes.active : null}
         >
-          Эстафета
+          Эскадрилья
         </button>
         <button
           onClick={() => setSeparator("reserve")}

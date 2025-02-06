@@ -275,7 +275,8 @@ function Estafeta({ user }) {
 
     return (
         <div className={classes.section}>
-            <Header>Эстафета</Header>
+            {/* <Header>Эстафета</Header> */}
+            <Header>Эскадрилья</Header>
             <div className={classes.section_searchAndFilter}>
                 <input
                     type="text"

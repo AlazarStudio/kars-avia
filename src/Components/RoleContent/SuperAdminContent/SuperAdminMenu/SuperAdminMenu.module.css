@@ -111,3 +111,9 @@
 .menu_items__activeElem .countRequests {
   opacity: 1;
 }
+
+@media (min-width: 0px) and (max-width: 1399px) {
+  .menu_items__elem {
+    font-size: 14px;
+  }
+}

@@ -274,7 +274,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       ? classes.airlineAbout_info_block
                       : classes.airlineAbout_info_block__airline
                   }
-                  style={ menuOpen && windowWidth <= 1580 ? {flexDirection:"column", height: '460px', overflow:"scroll"} : !menuOpen && windowWidth < 1305 ? {flexDirection:"column"} : {}}
+                  style={ menuOpen && windowWidth <= 1580 ? {flexDirection:"column", height: '100%', overflow:"scroll"} : !menuOpen && windowWidth < 1305 ? {flexDirection:"column"} : {}}
                 >
                   <div className={`${classes.column} ${menuOpen && windowWidth <= 1600 ? classes.w60 :classes.w50}`}>
                     <div className={classes.airlineAbout_info_label}>Адрес</div>

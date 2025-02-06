@@ -15,3 +15,9 @@
 .createRequest.show {
     transform: translateX(0); /* Когда show = true, панель будет видна */
 }
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .createRequest {
+        width: 440px;
+    }
+}

@@ -186,6 +186,7 @@ function CreateRequestAirlineStaff({
             value={formData.name}
             onChange={handleChange}
             placeholder="Пример: Иванов Иван Иванович"
+            autoComplete="new-password"
           />
 
           <label>Номер телефона</label>
@@ -195,6 +196,7 @@ function CreateRequestAirlineStaff({
             value={formData.number}
             onChange={handleChange}
             placeholder="Пример: 89283521345"
+            autoComplete="new-password"
           />
 
           <label>Должность</label>

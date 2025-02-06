@@ -74,6 +74,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
                     onFocus={handleFocus}
                     placeholder={placeholder}
                     onClick={() => setSearchTerm('')}
+                    autoComplete="new-password"
                 // disabled={!searchable}
                 />
                 <img src="/arrow-bottomx1,5.png" alt="" />

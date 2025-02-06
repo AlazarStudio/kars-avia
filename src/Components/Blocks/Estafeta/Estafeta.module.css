@@ -62,9 +62,21 @@
     border-radius: 5px;
 }
 
+@media (min-width: 0px) and (max-width: 1699px) {
+    .mainSearch {
+        width: 350px;
+    }
+}
+
 @media (min-width: 0px) and (max-width: 1499px) {
     .mainSearch {
         width: 300px;
         font-size: 13px;
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1499px) {
+    .mainSearch {
+        width: 280px;
     }
 }

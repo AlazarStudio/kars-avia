@@ -11,7 +11,7 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPri
                 <div className={classes.bottom}>
                     {requests.map((item, index) => (
                         <div className={classes.InfoTable_data} key={index} >
-                            <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>
+                            <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
                                 <div className={classes.InfoTable_data_elem_title}>Категория "{item.name}"</div>
                             </div>
 
@@ -42,7 +42,7 @@ function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPri
                 <div className={classes.bottom}>
                     {mealPrices.map((item, index) => (
                         <div className={classes.InfoTable_data} key={index} >
-                            <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>
+                            <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
                                 <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
 

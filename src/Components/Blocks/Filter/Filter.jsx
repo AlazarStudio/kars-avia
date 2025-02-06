@@ -71,10 +71,10 @@ function Filter({ toggleSidebar, isVisibleAirFiler, selectedAirline, setSelected
         const screenWidth = window.innerWidth;
         if (screenWidth <= 480) {
             return '150px'; // Для маленьких экранов
-        } else if (screenWidth <= 1399) {
-            return '180px'; // Для планшетов
+        } else if (screenWidth <= 1550) {
+            return '150px'; // Для планшетов
         } else {
-            return '200px'; // Для больших экранов
+            return '180px'; // Для больших экранов
         }
     };
 

@@ -33,7 +33,8 @@ const DisAdminMenu = ({
             strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "Эстафета" : ""}
+        {/* {menuOpen ? "Эстафета" : ""} */}
+        {menuOpen ? "Эскадрилья" : ""}
         {allCreatedRequests > 0 && (
           <div
             className={`${classes.countRequests} ${
@@ -43,7 +44,8 @@ const DisAdminMenu = ({
             {allCreatedRequests}
           </div>
         )}
-        {!menuOpen && <span className={classes.tooltip}>Эстафета</span>}
+        {/* {!menuOpen && <span className={classes.tooltip}>Эстафета</span>} */}
+        {!menuOpen && <span className={classes.tooltip}>Эскадрилья</span>}
       </Link>
       <Link
         to={"/reserve"}

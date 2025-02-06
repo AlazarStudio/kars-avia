@@ -30,3 +30,9 @@
   flex-direction: column;
   gap: 40px;
 }
+
+@media (min-width: 0px) and (max-width: 1399px) {
+  .tab {
+    font-size: 14px;
+  }
+}

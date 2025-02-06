@@ -168,12 +168,12 @@
 
 @media (min-width: 0px) and (max-width: 1450px) {
     .menu {
-        min-width: 300px;
+        min-width: 280px;
     }
 
     .menu_logo {
         width: 100%;
-        padding-left: 20px;
+        padding-left: 10px;
     }
 
     .menu_logo img {
