@@ -13,7 +13,7 @@ import {
 } from "date-fns";
 import { ru } from "date-fns/locale";
 
-const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth, setShowReserveInfo, setshowModalForAddHotelInReserve }) => {
+const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth, setShowReserveInfo, setshowModalForAddHotelInReserve }) => {
     const daysInMonth = eachDayOfInterval({
         start: startOfMonth(currentMonth),
         end: endOfMonth(currentMonth),

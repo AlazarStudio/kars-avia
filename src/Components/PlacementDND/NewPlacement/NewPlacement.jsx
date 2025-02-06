@@ -1619,6 +1619,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     <Box sx={{ overflow: 'hidden' }}>
                         <Box sx={{ position: "relative", height: 'fit-content', maxHeight: user.role == 'HOTELADMIN' ? '76vh' : '67vh', overflow: 'hidden', overflowY: 'scroll', width: '100%', borderBottom: '1px solid #ddd', borderTop: '1px solid #ddd', borderRight: '1px solid #ddd' }}>
                             <Timeline
+                                user={user}
                                 hoveredDayInMonth={hoveredDayInMonth}
                                 currentMonth={currentMonth}
                                 setCurrentMonth={setCurrentMonth}
@@ -1721,7 +1722,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     </Box>
 
 
-                    {!checkRoomsType &&
+                    {!checkRoomsType && !user?.hotelId ?
                         <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
                             <Typography variant="h6" sx={{ padding: '10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по эстафете в городе {hotelInfo.city}
@@ -1759,6 +1760,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 </Typography>
                             }
                         </Box>
+                        : null
                     }
 
                     {checkRoomsType && !showReserveInfo && !showModalForAddHotelInReserve &&
