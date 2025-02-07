@@ -187,7 +187,8 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
             <div className={classes.section_searchAndFilter}>
                 <input
                     type="text"
-                    placeholder="Поиск по номеру"
+                    placeholder="Поиск по аккаунтам"
+                    // placeholder="Поиск по номеру"
                     style={{ 'width': '500px' }}
                     value={searchTarif}
                     onChange={handleSearchTarif}

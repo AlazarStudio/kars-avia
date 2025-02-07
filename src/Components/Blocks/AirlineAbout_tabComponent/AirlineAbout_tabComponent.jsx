@@ -85,29 +85,35 @@ function AirlineAbout_tabComponent({ id, ...props }) {
     }
   }, [data]);
 
+  // console.log(data);
+
   const handleEditClick = async () => {
     if (isEditing) {
       try {
-        await updateAirline({
+        let response = await updateAirline({
           variables: {
             updateAirlineId: airline.id,
             input: {
               name: airline.name,
-              country: airline.country,
-              city: airline.city,
-              address: airline.address,
-              bank: airline.bank,
-              bik: airline.bik,
-              email: airline.email,
-              index: airline.index,
-              inn: airline.inn,
-              number: airline.number,
-              ogrn: airline.ogrn,
-              rs: airline.rs,
+              information: {
+                country: airline.information.country,
+                city: airline.information.city,
+                address: airline.information.address,
+                bank: airline.information.bank,
+                bik: airline.information.bik,
+                email: airline.information.email,
+                index: airline.information.index,
+                inn: airline.information.inn,
+                number: airline.information.number,
+                ogrn: airline.information.ogrn,
+                rs: airline.information.rs,
+              },
             },
             images: newImage ? [newImage] : null,
           },
         });
+        console.log(response);
+        
         // alert('Данные успешно сохранены');
       } catch (err) {
         console.error("Произошла ошибка при сохранении данных", err);
@@ -148,11 +154,27 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setAirline({
-      ...airline,
-      [name]: value,
+  
+    setAirline((prev) => {
+      // Проверяем, обновляется ли поле в `information`
+      if (Object.keys(prev.information || {}).includes(name)) {
+        return {
+          ...prev,
+          information: {
+            ...prev.information,
+            [name]: value, // Обновляем только нужное поле в `information`
+          },
+        };
+      }
+  
+      // Обновление верхнеуровневых полей
+      return {
+        ...prev,
+        [name]: value,
+      };
     });
   };
+  
 
   return (
     <>
@@ -187,7 +209,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   </div>
                   <div className={classes.airlineAbout_top_title_desc}>
                     <img src="/map.png" alt="" />
-                    {airline.city}, {airline.address}
+                    {airline.information?.city}, {airline.information?.address}
                   </div>
                 </div>
               </div>
@@ -242,7 +264,11 @@ function AirlineAbout_tabComponent({ id, ...props }) {
           </div>
           <div className={classes.airlineAbout_info}>
             {displayInfo == "generalInfo" ? (
-              <div className={`${classes.column} ${menuOpen && windowWidth <= 1575 ? classes.w70 :classes.w50}`}>
+              <div
+                className={`${classes.column} ${
+                  menuOpen && windowWidth <= 1575 ? classes.w70 : classes.w50
+                }`}
+              >
                 <div className={classes.airlineAbout_info_item}>
                   <label>Название</label>
                   <input
@@ -274,16 +300,32 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       ? classes.airlineAbout_info_block
                       : classes.airlineAbout_info_block__airline
                   }
-                  style={ menuOpen && windowWidth <= 1580 ? {flexDirection:"column", height: '100%', overflow:"scroll"} : !menuOpen && windowWidth < 1305 ? {flexDirection:"column"} : {}}
+                  style={
+                    menuOpen && windowWidth <= 1580
+                      ? {
+                          flexDirection: "column",
+                          height: "100%",
+                          overflow: "scroll",
+                        }
+                      : !menuOpen && windowWidth < 1305
+                      ? { flexDirection: "column" }
+                      : {}
+                  }
                 >
-                  <div className={`${classes.column} ${menuOpen && windowWidth <= 1600 ? classes.w60 :classes.w50}`}>
+                  <div
+                    className={`${classes.column} ${
+                      menuOpen && windowWidth <= 1600
+                        ? classes.w60
+                        : classes.w50
+                    }`}
+                  >
                     <div className={classes.airlineAbout_info_label}>Адрес</div>
                     <div className={classes.airlineAbout_info_item}>
                       <label>Страна</label>
                       <input
                         type="text"
                         name="country"
-                        value={airline.country}
+                        value={airline.information?.country}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -294,7 +336,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="city"
-                        value={airline.city}
+                        value={airline.information?.city}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -305,7 +347,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="address"
-                        value={airline.address}
+                        value={airline.information?.address}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -316,7 +358,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="index"
-                        value={airline.index}
+                        value={airline.information?.index}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -324,7 +366,13 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                     </div>
                   </div>
 
-                  <div className={`${classes.column} ${menuOpen && windowWidth <= 1600 ? classes.w60 :classes.w50}`}>
+                  <div
+                    className={`${classes.column} ${
+                      menuOpen && windowWidth <= 1600
+                        ? classes.w60
+                        : classes.w50
+                    }`}
+                  >
                     <div className={classes.airlineAbout_info_label}>
                       Контакты
                     </div>
@@ -333,7 +381,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="email"
                         name="email"
-                        value={airline.email}
+                        value={airline.information?.email}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -344,7 +392,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="tel"
                         name="number"
-                        value={airline.number}
+                        value={airline.information?.number}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -356,13 +404,21 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             ) : (
               <>
                 <div className={classes.airlineAbout_info_block}>
-                  <div className={`${classes.column} ${menuOpen && windowWidth <= 1575 ? classes.w70 : !menuOpen && windowWidth <= 1280 ? classes.w60 : classes.w50}`}>
+                  <div
+                    className={`${classes.column} ${
+                      menuOpen && windowWidth <= 1575
+                        ? classes.w70
+                        : !menuOpen && windowWidth <= 1280
+                        ? classes.w60
+                        : classes.w50
+                    }`}
+                  >
                     <div className={classes.airlineAbout_info_item}>
                       <label>ИНН</label>
                       <input
                         type="text"
                         name="inn"
-                        value={airline.inn}
+                        value={airline.information?.inn}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -373,7 +429,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="ogrn"
-                        value={airline.ogrn}
+                        value={airline.information?.ogrn}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -384,7 +440,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="rs"
-                        value={airline.rs}
+                        value={airline.information?.rs}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -395,7 +451,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="bank"
-                        value={airline.bank}
+                        value={airline.information?.bank}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -406,7 +462,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="bik"
-                        value={airline.bik}
+                        value={airline.information?.bik}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}

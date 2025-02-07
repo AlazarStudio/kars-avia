@@ -27,7 +27,7 @@ function InfoTableDataAirlineCompany({ children, toggleRequestSidebar, requests,
                                 <div className={`${classes.InfoTable_BottomInfo__item}`} key={employeeIndex}>
                                     <div className={`${classes.InfoTable_BottomInfo__item___elem}`}>
                                         <div className={classes.employeeImg}>
-                                            <img src={`${server}${employee.images[0]}`} alt="avatar" className={classes.employeeAvatar} />
+                                            <img src={ employee.images[0] ? `${server}${employee.images[0]}` : '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
                                         </div>
                                         <div className={classes.employeeInfo}>
                                             <div className={classes.employeeName}>{employee.name}</div>

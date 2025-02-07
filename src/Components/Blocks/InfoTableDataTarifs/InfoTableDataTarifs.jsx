@@ -4,6 +4,8 @@ import InfoTable from "../InfoTable/InfoTable";
 import { roles } from "../../../roles";
 
 function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPrices, requests, mealPrices, openDeleteComponent, openDeleteComponentCategory, toggleEditTarifsCategory, user, ...props }) {
+    // console.log(requests);
+    
     return (
         <div className={classes.tarifsWrapper}>
             Категории - цены

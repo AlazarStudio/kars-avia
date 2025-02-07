@@ -65,42 +65,42 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
             setAddTarif([
                 {
                     name: 'Одноместный',
-                    price: data.airline.priceOneCategory,
+                    price: data.airline.prices?.priceOneCategory,
                     type: 1
                 },
                 {
                     name: 'Двухместный',
-                    price: data.airline.priceTwoCategory,
+                    price: data.airline.prices?.priceTwoCategory,
                     type: 2
                 },
                 {
                     name: 'Трехместный',
-                    price: data.airline.priceThreeCategory,
+                    price: data.airline.prices?.priceThreeCategory,
                     type: 3
                 },
                 {
                     name: 'Четырехместный',
-                    price: data.airline.priceFourCategory,
+                    price: data.airline.prices?.priceFourCategory,
                     type: 4
                 },
                 {
                     name: 'Пятиместный',
-                    price: data.airline.priceFiveCategory,
+                    price: data.airline.prices?.priceFiveCategory,
                     type: 5
                 },
                 {
                     name: 'Шестиместный',
-                    price: data.airline.priceSixCategory,
+                    price: data.airline.prices?.priceSixCategory,
                     type: 6
                 },
                 {
                     name: 'Семиместный',
-                    price: data.airline.priceSevenCategory,
+                    price: data.airline.prices?.priceSevenCategory,
                     type: 7
                 },
                 {
                     name: 'Восьмиместный',
-                    price: data.airline.priceEightCategory,
+                    price: data.airline.prices?.priceEightCategory,
                     type: 8
                 },
             ]);
@@ -112,9 +112,9 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     useEffect(() => {
         if (mealPriceData) {
             setMealPrices({
-                breakfast: mealPriceData.airline.MealPrice.breakfast,
-                lunch: mealPriceData.airline.MealPrice.lunch,
-                dinner: mealPriceData.airline.MealPrice.dinner
+                breakfast: mealPriceData.airline.mealPrice.breakfast,
+                lunch: mealPriceData.airline.mealPrice.lunch,
+                dinner: mealPriceData.airline.mealPrice.dinner
             })
         }
     }, [mealPriceData]);
@@ -352,7 +352,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
             {/* <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
             {/* <CreateRequestTarifCategory user={user} id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
 
-            <EditRequestTarif id={id} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} isHotel={false} />
+            <EditRequestTarif id={id} existingPrices={data?.airline?.prices} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} isHotel={false} />
             <EditRequestMealTarif id={id} show={showEditMealPrices} mealPrices={mealPrices} onClose={toggleEditMealPrices} onSubmit={handleEditMealPrices} isHotel={false} />
             {/* <EditRequestTarifCategory user={user} id={id} setAddTarif={setAddTarif} show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} /> */}
 

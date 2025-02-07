@@ -1270,7 +1270,9 @@ export const GET_HOTEL = gql`
 export const GET_HOTEL_CITY = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
-      city
+      information {
+        city
+      }
     }
   }
 `;
@@ -1527,18 +1529,22 @@ export const GET_AIRLINE = gql`
     airline(id: $airlineId) {
       id
       name
-      country
-      city
-      address
-      index
-      email
-      number
-      inn
-      ogrn
-      rs
-      bank
-      bik
       images
+      information {
+        country
+        city
+        address
+        index
+        email
+        number
+        inn
+        ogrn
+        rs
+        bank
+        bik
+        description
+        link
+      }
     }
   }
 `;
@@ -1546,14 +1552,16 @@ export const GET_AIRLINE = gql`
 export const GET_AIRLINE_TARIFS = gql`
   query Airline($airlineId: ID!) {
     airline(id: $airlineId) {
-      priceOneCategory
-      priceTwoCategory
-      priceThreeCategory
-      priceFourCategory
-      priceFiveCategory
-      priceSixCategory
-      priceSevenCategory
-      priceEightCategory
+      prices {
+        priceOneCategory
+        priceTwoCategory
+        priceThreeCategory
+        priceFourCategory
+        priceFiveCategory
+        priceSixCategory
+        priceSevenCategory
+        priceEightCategory
+      }
     }
   }
 `;
@@ -1561,7 +1569,7 @@ export const GET_AIRLINE_TARIFS = gql`
 export const GET_AIRLINE_MEAL_PRICE = gql`
   query Airline($airlineId: ID!) {
     airline(id: $airlineId) {
-      MealPrice {
+      mealPrice {
         breakfast
         dinner
         lunch
@@ -1576,6 +1584,21 @@ export const UPDATE_AIRLINE = gql`
       name
       id
       images
+            information {
+        country
+        city
+        address
+        index
+        email
+        number
+        inn
+        ogrn
+        rs
+        bank
+        bik
+        link
+        description
+      }
     }
   }
 `;
@@ -1583,14 +1606,16 @@ export const UPDATE_AIRLINE = gql`
 export const UPDATE_AIRLINE_TARIF = gql`
   mutation UpdateAirline($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
     updateAirline(id: $updateAirlineId, input: $input) {
-      priceOneCategory
-      priceTwoCategory
-      priceThreeCategory
-      priceFourCategory
-      priceFiveCategory
-      priceSixCategory
-      priceSevenCategory
-      priceEightCategory
+      prices {
+        priceOneCategory
+        priceTwoCategory
+        priceThreeCategory
+        priceFourCategory
+        priceFiveCategory
+        priceSixCategory
+        priceSevenCategory
+        priceEightCategory
+      }
     }
   }
 `;
@@ -1598,7 +1623,7 @@ export const UPDATE_AIRLINE_TARIF = gql`
 export const UPDATE_AIRLINE_MEAL_TARIF = gql`
   mutation UpdateAirline($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
     updateAirline(id: $updateAirlineId, input: $input) {
-      MealPrice {
+      mealPrice {
         breakfast
         lunch
         dinner

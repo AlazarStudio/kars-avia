@@ -27,7 +27,7 @@ function CreateRequestAirlineCompany({
   }, [token]);
 
   const [formData, setFormData] = useState({
-    images: "",
+    images: null,
     name: "",
     email: "",
     role: "",
@@ -41,7 +41,7 @@ function CreateRequestAirlineCompany({
 
   const resetForm = useCallback(() => {
     setFormData({
-      images: "",
+      images: null,
       name: "",
       email: "",
       role: "",
@@ -119,8 +119,7 @@ function CreateRequestAirlineCompany({
       formData.position &&
       formData.login &&
       formData.password &&
-      formData.department &&
-      formData.images
+      formData.department
     );
   };
 
@@ -203,10 +202,11 @@ function CreateRequestAirlineCompany({
         onClose();
       }
     } catch (err) {
-      // console.error(err)
+      console.error(err)
       alert("Произошла ошибка при сохранении данных");
     }
   };
+
 
   useEffect(() => {
     const handleClickOutside = (event) => {

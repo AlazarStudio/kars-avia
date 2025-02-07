@@ -4,6 +4,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
 import {
+  GET_AIRLINE_TARIFS,
   getCookie,
   UPDATE_AIRLINE_TARIF,
   UPDATE_HOTEL_TARIF,
@@ -11,6 +12,7 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 
 function EditRequestTarif({
+  existingPrices,
   show,
   onClose,
   tarif,
@@ -84,138 +86,236 @@ function EditRequestTarif({
     }));
   }, []);
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   // Проверяем, заполнены ли все поля
+  //   if (!formData.name.trim() || !formData.price.trim() || !formData.type) {
+  //     alert("Пожалуйста, заполните все поля!");
+  //     return;
+  //   }
+
+  //   let dataSend;
+
+  //   if (formData.type == 1) {
+  //     dataSend = {
+  //       prices: {
+  //         priceOneCategory: Number(formData.price),
+  //       }
+  //     };
+  //   }
+
+  //   if (formData.type == 2) {
+  //     dataSend = {
+  //       prices: {
+  //         priceTwoCategory: Number(formData.price),
+  //       }
+  //     };
+  //   }
+
+  //   if (formData.type == 3) {
+  //     dataSend = {
+  //       prices: {
+  //         priceThreeCategory: Number(formData.price),
+  //       }
+  //     };
+  //   }
+
+  //   if (formData.type == 4) {
+  //     dataSend = {
+  //       prices: {
+  //         priceFourCategory: Number(formData.price),
+  //       }
+  //     };
+  //   }
+
+  //   if (formData.type == 5) {
+  //     dataSend = {
+  //       prices: {
+  //         priceFiveCategory: Number(formData.price),
+  //       }
+  //     };
+  //   }
+
+  //   if (formData.type == 6) {
+  //     dataSend = {
+  //       prices: {
+  //         priceSixCategory: Number(formData.price),
+  //       }
+  //     };
+  //   }
+
+  //   if (formData.type == 7) {
+  //     dataSend = {
+  //       prices: {
+  //         priceSevenCategory: Number(formData.price),
+  //       }
+  //     };
+  //   }
+
+  //   if (formData.type == 8) {
+  //     dataSend = {
+  //       prices: {
+  //         priceEightCategory: Number(formData.price),
+  //       }
+  //     };
+  //   }
+
+  //   let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
+
+  //   let response_update_tarif = await updateHotelTarif({
+  //     variables: {
+  //       [updateId]: id,
+  //       input: dataSend,
+  //     },
+  //   });
+
+  //   // console.log(response_update_tarif);
+    
+
+  //   if (response_update_tarif) {
+  //     onSubmit([
+  //       {
+  //         name: "Одноместный",
+  //         price: isHotel
+  //           ? response_update_tarif.data.updateHotel.priceOneCategory
+  //           : response_update_tarif.data.updateAirline.priceOneCategory,
+  //         type: 1,
+  //       },
+  //       {
+  //         name: "Двухместный",
+  //         price: isHotel
+  //           ? response_update_tarif.data.updateHotel.priceTwoCategory
+  //           : response_update_tarif.data.updateAirline.priceTwoCategory,
+  //         type: 2,
+  //       },
+  //       {
+  //         name: "Трехместный",
+  //         price: isHotel
+  //           ? response_update_tarif.data.updateHotel.priceThreeCategory
+  //           : response_update_tarif.data.updateAirline.priceThreeCategory,
+  //         type: 3,
+  //       },
+  //       {
+  //         name: "Четырехместный",
+  //         price: isHotel
+  //           ? response_update_tarif.data.updateHotel.priceFourCategory
+  //           : response_update_tarif.data.updateAirline.priceFourCategory,
+  //         type: 4,
+  //       },
+  //       {
+  //         name: "Пятиместный",
+  //         price: isHotel
+  //           ? response_update_tarif.data.updateHotel.priceFiveCategory
+  //           : response_update_tarif.data.updateAirline.priceFiveCategory,
+  //         type: 5,
+  //       },
+  //       {
+  //         name: "Шестиместный",
+  //         price: isHotel
+  //           ? response_update_tarif.data.updateHotel.priceSixCategory
+  //           : response_update_tarif.data.updateAirline.priceSixCategory,
+  //         type: 6,
+  //       },
+  //       {
+  //         name: "Семиместный",
+  //         price: isHotel
+  //           ? response_update_tarif.data.updateHotel.priceSevenCategory
+  //           : response_update_tarif.data.updateAirline.priceSevenCategory,
+  //         type: 7,
+  //       },
+  //       {
+  //         name: "Восьмиместный",
+  //         price: isHotel
+  //           ? response_update_tarif.data.updateHotel.priceEightCategory
+  //           : response_update_tarif.data.updateAirline.priceEightCategory,
+  //         type: 8,
+  //       },
+  //     ]);
+  //     resetForm();
+  //     onClose();
+  //   }
+  // };
+
+  const categoryNames = {
+    1: "Одноместный",
+    2: "Двухместный",
+    3: "Трехместный",
+    4: "Четырехместный",
+    5: "Пятиместный",
+    6: "Шестиместный",
+    7: "Семиместный",
+    8: "Восьмиместный",
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Проверяем, заполнены ли все поля
+  
     if (!formData.name.trim() || !formData.price.trim() || !formData.type) {
       alert("Пожалуйста, заполните все поля!");
       return;
     }
-
-    let dataSend;
-
-    if (formData.type == 1) {
-      dataSend = {
-        priceOneCategory: Number(formData.price),
-      };
+  
+    const typeToFieldMap = {
+      1: "priceOneCategory",
+      2: "priceTwoCategory",
+      3: "priceThreeCategory",
+      4: "priceFourCategory",
+      5: "priceFiveCategory",
+      6: "priceSixCategory",
+      7: "priceSevenCategory",
+      8: "priceEightCategory",
+    };
+  
+    const fieldToUpdate = typeToFieldMap[formData.type];
+    if (!fieldToUpdate) {
+      alert("Ошибка: Неверный тип тарифа.");
+      return;
     }
-
-    if (formData.type == 2) {
-      dataSend = {
-        priceTwoCategory: Number(formData.price),
-      };
-    }
-
-    if (formData.type == 3) {
-      dataSend = {
-        priceThreeCategory: Number(formData.price),
-      };
-    }
-
-    if (formData.type == 4) {
-      dataSend = {
-        priceFourCategory: Number(formData.price),
-      };
-    }
-
-    if (formData.type == 5) {
-      dataSend = {
-        priceFiveCategory: Number(formData.price),
-      };
-    }
-
-    if (formData.type == 6) {
-      dataSend = {
-        priceSixCategory: Number(formData.price),
-      };
-    }
-
-    if (formData.type == 7) {
-      dataSend = {
-        priceSevenCategory: Number(formData.price),
-      };
-    }
-
-    if (formData.type == 8) {
-      dataSend = {
-        priceEightCategory: Number(formData.price),
-      };
-    }
-
+  
+    // Клонируем актуальные данные перед отправкой
+    let updatedPrices = { ...existingPrices };
+  
+    // Удаляем `__typename`, так как GraphQL его не принимает
+    delete updatedPrices.__typename;
+  
+    // Обновляем только одно поле, сохраняя остальные значения
+    updatedPrices[fieldToUpdate] = Number(formData.price);
+  
     let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
-
-    let response_update_tarif = await updateHotelTarif({
-      variables: {
-        [updateId]: id,
-        input: dataSend,
-      },
-    });
-
-    if (response_update_tarif) {
-      onSubmit([
-        {
-          name: "Одноместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceOneCategory
-            : response_update_tarif.data.updateAirline.priceOneCategory,
-          type: 1,
+  
+    try {
+      let response_update_tarif = await updateHotelTarif({
+        variables: {
+          [updateId]: id,
+          input: { prices: updatedPrices },
         },
-        {
-          name: "Двухместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceTwoCategory
-            : response_update_tarif.data.updateAirline.priceTwoCategory,
-          type: 2,
-        },
-        {
-          name: "Трехместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceThreeCategory
-            : response_update_tarif.data.updateAirline.priceThreeCategory,
-          type: 3,
-        },
-        {
-          name: "Четырехместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceFourCategory
-            : response_update_tarif.data.updateAirline.priceFourCategory,
-          type: 4,
-        },
-        {
-          name: "Пятиместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceFiveCategory
-            : response_update_tarif.data.updateAirline.priceFiveCategory,
-          type: 5,
-        },
-        {
-          name: "Шестиместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceSixCategory
-            : response_update_tarif.data.updateAirline.priceSixCategory,
-          type: 6,
-        },
-        {
-          name: "Семиместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceSevenCategory
-            : response_update_tarif.data.updateAirline.priceSevenCategory,
-          type: 7,
-        },
-        {
-          name: "Восьмиместный",
-          price: isHotel
-            ? response_update_tarif.data.updateHotel.priceEightCategory
-            : response_update_tarif.data.updateAirline.priceEightCategory,
-          type: 8,
-        },
-      ]);
-      resetForm();
-      onClose();
+        refetchQueries: [{ query: GET_AIRLINE_TARIFS, variables: { airlineId: id } }], // Перезапрашиваем данные
+      });
+  
+      if (response_update_tarif) {
+        // Обновляем `existingPrices` после успешной мутации
+        // setExistingPrices(updatedPrices);
+  
+        // Обновляем UI без перезагрузки
+        setAddTarif((prevTarifs) =>
+          prevTarifs.map((tarif) =>
+            tarif.type === formData.type
+              ? { ...tarif, price: Number(formData.price) }
+              : tarif
+          )
+        );
+  
+        resetForm();
+        onClose();
+      }
+    } catch (error) {
+      console.error("Ошибка обновления тарифа:", error);
+      alert("Ошибка при обновлении тарифа. Попробуйте еще раз.");
     }
   };
-
+  
+  
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (

@@ -94,7 +94,7 @@ function EditRequestMealTarif({
     }
 
     const dataSend = {
-      MealPrice: {
+      mealPrice: {
         breakfast: Number(formData.breakfast),
         lunch: Number(formData.lunch),
         dinner: Number(formData.dinner),
@@ -114,7 +114,7 @@ function EditRequestMealTarif({
       onSubmit(
         isHotel
           ? response_update_meal_tarif.data.updateHotel.MealPrice
-          : response_update_meal_tarif.data.updateAirline.MealPrice
+          : response_update_meal_tarif.data.updateAirline.mealPrice
       );
       resetForm();
       onClose();

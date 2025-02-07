@@ -31,7 +31,7 @@ function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setCho
                         <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={`${item.images ? `${server}${item.images[0]}` : '/avatar1.png'}`} alt="" />
+                                    <img src={`${item.images[0] ? `${server}${item.images[0]}` : '/no-avatar.png'}`} alt="" />
                                 </div>
                                 <div className={classes.InfoTable_data_elem_title}>
                                     {item.name}

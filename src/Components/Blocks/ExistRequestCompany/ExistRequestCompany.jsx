@@ -194,7 +194,7 @@ function ExistRequestCompany({
         <div className={classes.requestData}>
           <div className={classes.requestDataInfo_img}>
             <div className={classes.requestDataInfo_img_imgBlock}>
-              <img src={`${server}${showIMG}`} alt="" />
+              <img src={showIMG?.length !== 0 ? `${server}${showIMG}` : '/no-avatar.png'} alt="" />
             </div>
           </div>
 

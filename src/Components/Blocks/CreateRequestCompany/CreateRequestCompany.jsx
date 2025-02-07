@@ -14,7 +14,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
-    images: "",
+    images: null,
     name: "",
     email: "",
     role: "",
@@ -27,7 +27,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
 
   const resetForm = useCallback(() => {
     setFormData({
-      images: "",
+      images: null,
       name: "",
       email: "",
       role: "",
@@ -121,10 +121,10 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
       return;
     }
 
-    if (!formData.images) {
-      alert("Пожалуйста, выберите файл для загрузки");
-      return;
-    }
+    // if (!formData.images) {
+    //   alert("Пожалуйста, выберите файл для загрузки");
+    //   return;
+    // }
 
     try {
       let response_create_user = await uploadFile({
