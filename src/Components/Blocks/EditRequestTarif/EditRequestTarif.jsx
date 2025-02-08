@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 
 import {
   GET_AIRLINE_TARIFS,
+  GET_HOTEL_TARIFS,
   getCookie,
   UPDATE_AIRLINE_TARIF,
   UPDATE_HOTEL_TARIF,
@@ -283,6 +284,8 @@ function EditRequestTarif({
     updatedPrices[fieldToUpdate] = Number(formData.price);
   
     let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
+    let refetchQuery = isHotel ? GET_HOTEL_TARIFS : GET_AIRLINE_TARIFS;
+    let refetchId = isHotel ? 'hotelId' : 'airlineId';
   
     try {
       let response_update_tarif = await updateHotelTarif({
@@ -290,7 +293,7 @@ function EditRequestTarif({
           [updateId]: id,
           input: { prices: updatedPrices },
         },
-        refetchQueries: [{ query: GET_AIRLINE_TARIFS, variables: { airlineId: id } }], // Перезапрашиваем данные
+        refetchQueries: [{ query: refetchQuery, variables: { [refetchId]: id } }], // Перезапрашиваем данные
       });
   
       if (response_update_tarif) {

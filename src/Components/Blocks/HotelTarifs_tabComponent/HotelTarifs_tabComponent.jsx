@@ -64,42 +64,42 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
             setAddTarif([
                 {
                     name: 'Одноместный',
-                    price: data.hotel.priceOneCategory,
+                    price: data.hotel.prices?.priceOneCategory,
                     type: 1
                 },
                 {
                     name: 'Двухместный',
-                    price: data.hotel.priceTwoCategory,
+                    price: data.hotel.prices?.priceTwoCategory,
                     type: 2
                 },
                 {
                     name: 'Трехместный',
-                    price: data.hotel.priceThreeCategory,
+                    price: data.hotel.prices?.priceThreeCategory,
                     type: 3
                 },
                 {
                     name: 'Четырехместный',
-                    price: data.hotel.priceFourCategory,
+                    price: data.hotel.prices?.priceFourCategory,
                     type: 4
                 },
                 {
                     name: 'Пятиместный',
-                    price: data.hotel.priceFiveCategory,
+                    price: data.hotel.prices?.priceFiveCategory,
                     type: 5
                 },
                 {
                     name: 'Шестиместный',
-                    price: data.hotel.priceSixCategory,
+                    price: data.hotel.prices?.priceSixCategory,
                     type: 6
                 },
                 {
                     name: 'Семиместный',
-                    price: data.hotel.priceSevenCategory,
+                    price: data.hotel.prices?.priceSevenCategory,
                     type: 7
                 },
                 {
                     name: 'Восьмиместный',
-                    price: data.hotel.priceEightCategory,
+                    price: data.hotel.prices?.priceEightCategory,
                     type: 8
                 },
             ]);
@@ -111,9 +111,9 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
     useEffect(() => {
         if (mealPriceData) {
             setMealPrices({
-                breakfast: mealPriceData.hotel.MealPrice.breakfast,
-                lunch: mealPriceData.hotel.MealPrice.lunch,
-                dinner: mealPriceData.hotel.MealPrice.dinner
+                breakfast: mealPriceData.hotel.mealPrice.breakfast,
+                lunch: mealPriceData.hotel.mealPrice.lunch,
+                dinner: mealPriceData.hotel.mealPrice.dinner
             })
         }
     }, [mealPriceData]);
@@ -351,7 +351,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
             {/* <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
             {/* <CreateRequestTarifCategory user={user} id={id} show={showAddTarifCategory} onClose={toggleTarifsCategory} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
 
-            <EditRequestTarif id={id} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} isHotel={true} />
+            <EditRequestTarif id={id} existingPrices={data?.hotel?.prices} setAddTarif={setAddTarif} show={showEditAddTarif} onClose={() => setEditShowAddTarif(false)} tarif={selectedTarif} onSubmit={handleEditTarif} isHotel={true} />
             <EditRequestMealTarif id={id} show={showEditMealPrices} mealPrices={mealPrices} onClose={toggleEditMealPrices} onSubmit={handleEditMealPrices} isHotel={true} />
             {/* <EditRequestTarifCategory user={user} id={id} setAddTarif={setAddTarif} show={showEditAddTarifCategory} onClose={() => setEditShowAddTarifCategory(false)} addTarif={addTarif} tarif={selectedTarif} onSubmit={handleEditTarifCategory} /> */}
 

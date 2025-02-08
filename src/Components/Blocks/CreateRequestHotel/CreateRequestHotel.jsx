@@ -67,11 +67,9 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    
-    // Проверяем размер файла (2 МБ = 2 * 1024 * 1024 байт)
-    const maxSizeInBytes = 2 * 1024 * 1024; // 2 MB
+    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
     if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 2 МБ!");
+      alert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: "",
@@ -126,8 +124,10 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         variables: {
           input: {
             name: formData.name,
-            city: formData.city,
-            address: formData.address,
+            information: {
+              city: formData.city,
+              address: formData.address,
+            },
             stars: formData.stars,
             usStars: formData.usStars,
             airportDistance: formData.airportDistance,

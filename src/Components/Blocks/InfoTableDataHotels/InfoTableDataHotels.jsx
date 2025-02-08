@@ -92,7 +92,7 @@ function InfoTableDataHotels({
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
               <div className={classes.InfoTable_data_elem_title}>
-                {item.city}
+                {item.information?.city}
               </div>
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
@@ -119,7 +119,7 @@ function InfoTableDataHotels({
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
               <div className={classes.InfoTable_data_elem_title}>
-                {item.address}
+                {item.information?.address}
               </div>
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>

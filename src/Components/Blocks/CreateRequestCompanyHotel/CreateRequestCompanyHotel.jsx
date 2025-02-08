@@ -12,7 +12,7 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
 
     const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
     const [formData, setFormData] = useState({
-        images: '',
+        images: null,
         name: '',
         email: '',
         role: '',
@@ -25,7 +25,7 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
 
     const resetForm = useCallback(() => {
         setFormData({
-            images: '',
+            images: null,
             name: '',
             email: '',
             role: '',
@@ -63,11 +63,9 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
 
     const handleFileChange = (e) => {
         const file = e.target.files[0];
-
-        // Проверяем размер файла (2 МБ = 2 * 1024 * 1024 байт)
-        const maxSizeInBytes = 2 * 1024 * 1024; // 2 MB
+        const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
         if (file.size > maxSizeInBytes) {
-          alert("Размер файла не должен превышать 2 МБ!");
+          alert("Размер файла не должен превышать 8 МБ!");
           setFormData((prevState) => ({
             ...prevState,
             images: "",
@@ -107,12 +105,8 @@ function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
             return;
         }
 
-        if (!formData.images) {
-            alert('Пожалуйста, выберите файл для загрузки.');
-            return;
-        }
         // if (!formData.images) {
-        //     alert('Пожалуйста, выберите файл для загрузки');
+        //     alert('Пожалуйста, выберите файл для загрузки.');
         //     return;
         // }
 

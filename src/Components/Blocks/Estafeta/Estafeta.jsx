@@ -220,9 +220,11 @@ function Estafeta({ user }) {
     // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
     const filteredRequests = useMemo(() => {
         const dataSource = isSearching ? allFilteredData : requests; // Используем данные из поиска или стандартные
-    
+        
+        
         return dataSource.filter(request => {
-            const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
+            // console.log(request);
+            const matchesSelect = !filterData.filterSelect || request.airline?.name.includes(filterData.filterSelect);
             const matchesDate = !filterData.filterDate || convertToDate(Number(request.createdAt)) === filterData.filterDate;
             const matchesSearch = searchQuery.toLowerCase();
     

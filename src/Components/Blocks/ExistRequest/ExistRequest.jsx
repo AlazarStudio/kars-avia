@@ -38,7 +38,7 @@ function ExistRequest({
   const token = getCookie("token");
 
   // Запросы данных о заявке и логе
-  const { data, refetch } = useQuery(GET_REQUEST, {
+  const { data, error, refetch } = useQuery(GET_REQUEST, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -47,6 +47,21 @@ function ExistRequest({
     },
     variables: { requestId: chooseRequestID },
   });
+  
+  // useEffect(() => {
+  //   if (error) {
+  //     console.error("Ошибка в GET_REQUEST:", error);
+  //     // Если доступно, выведите error.graphQLErrors:
+  //     if (error.graphQLErrors) {
+  //       error.graphQLErrors.forEach(({ message }) =>
+  //         console.error("GraphQL Error:", message)
+  //       );
+  //     }
+  //   }
+  // }, [error]);
+  
+  // console.log(data);
+  
   const { data: dataLogs } = useQuery(GET_LOGS, {
     context: {
       headers: {

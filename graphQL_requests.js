@@ -128,11 +128,8 @@ export const GET_REQUESTS = gql`
 `;
 
 export const GET_REQUESTS_ARCHIVED = gql`
-  query RequestArchive($pagination: PaginationInput) {
-    requestArchive(pagination: $pagination) {
-      totalCount
-        totalPages
-        requests {
+    subscription RequestCreated {
+        requestCreated {
           id
           airportId
           airport {
@@ -169,9 +166,24 @@ export const GET_REQUESTS_ARCHIVED = gql`
             images
           }
           requestNumber
+          hotelChess {
+            start
+            end
+            room {
+              id
+              name
+              category
+              places
+              active
+              reserve
+              description
+              images
+            }
+            id
+            place
+          }
         }
     }
-  }
 `;
 
 export const REQUEST_CREATED_SUBSCRIPTION = gql`
@@ -272,7 +284,16 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
           hotelChess {
             start
             end
-            room
+            room {
+              id
+              name
+              category
+              places
+              active
+              reserve
+              description
+              images
+            }
             id
             place
           }
@@ -438,7 +459,16 @@ export const GET_REQUEST = gql`
             name
           }
           hotelChess {
-            room
+            room {
+              id
+              name
+              category
+              places
+              active
+              reserve
+              description
+              images
+            }
             place
           }
       }
@@ -492,7 +522,16 @@ export const GET_BRONS_HOTEL = gql`
         start
         end
         place
-        room
+        room {
+          id
+          name
+          category
+          places
+          active
+          reserve
+          description
+          images
+        }
         client {
           id
           name
@@ -1157,8 +1196,10 @@ export const CREATE_HOTEL = gql`
       id
       images
       name
-      city
-      address
+      information {
+        address
+        city
+      }
       stars
       usStars
       airportDistance
@@ -1174,14 +1215,16 @@ export const GET_HOTELS = gql`
       hotels {
         id
         name
-        city
-        address
+        information {
+          city
+          address
+        }
         quote
         provision
         images
         stars
         usStars
-        airportDistance
+        airportDistance    
       }
     }
   }
@@ -1192,8 +1235,10 @@ export const GET_HOTELS_SUBSCRIPTION = gql`
     hotelCreated {
       id
       name
-      city
-      address
+      information {
+        city
+        address
+      }
       quote
       provision
       images
@@ -1208,8 +1253,10 @@ export const GET_HOTELS_UPDATE_SUBSCRIPTION = gql`
     hotelUpdated {
       id
       name
-      city
-      address
+      information {
+        city
+        address
+      }
       quote
       provision
       images
@@ -1227,20 +1274,22 @@ export const GET_HOTEL = gql`
       stars
       usStars
       airportDistance
-      country
-      city
-      address
-      index
-      email
-      number
-      inn
-      ogrn
-      rs
-      bank
-      bik
+      information {
+        country
+        city
+        address
+        index
+        email
+        number
+        inn
+        ogrn
+        rs
+        bank
+        bik
+        link
+        description
+      }
       images
-      link
-      description
       rooms {
         id
         name
@@ -1280,14 +1329,16 @@ export const GET_HOTEL_CITY = gql`
 export const GET_HOTEL_TARIFS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
-      priceOneCategory
-      priceTwoCategory
-      priceThreeCategory
-      priceFourCategory
-      priceFiveCategory
-      priceSixCategory
-      priceSevenCategory
-      priceEightCategory
+      prices {
+        priceOneCategory
+        priceTwoCategory
+        priceThreeCategory
+        priceFourCategory
+        priceFiveCategory
+        priceSixCategory
+        priceSevenCategory
+        priceEightCategory
+      }
     }
   }
 `;
@@ -1295,7 +1346,7 @@ export const GET_HOTEL_TARIFS = gql`
 export const GET_HOTEL_MEAL_PRICE = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
-      MealPrice {
+      mealPrice {
         breakfast
         lunch
         dinner
@@ -1362,14 +1413,16 @@ export const UPDATE_HOTEL = gql`
 export const UPDATE_HOTEL_TARIF = gql`
   mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
     updateHotel(id: $updateHotelId, input: $input) {
-      priceOneCategory
-      priceTwoCategory
-      priceThreeCategory
-      priceFourCategory
-      priceFiveCategory
-      priceSixCategory
-      priceSevenCategory
-      priceEightCategory
+      prices {
+        priceOneCategory
+        priceTwoCategory
+        priceThreeCategory
+        priceFourCategory
+        priceFiveCategory
+        priceSixCategory
+        priceSevenCategory
+        priceEightCategory
+      }
     }
   }
 `;
@@ -1377,7 +1430,7 @@ export const UPDATE_HOTEL_TARIF = gql`
 export const UPDATE_HOTEL_MEAL_TARIF = gql`
   mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
     updateHotel(id: $updateHotelId, input: $input) {
-      MealPrice {
+      mealPrice {
         breakfast
         lunch
         dinner

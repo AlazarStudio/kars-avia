@@ -13,17 +13,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 function HotelsList({ children, user, ...props }) {
     const [showCreateSidebar, setShowCreateSidebar] = useState(false);
     const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-
-    const { data: dataSubscription } = useSubscription(GET_HOTELS_SUBSCRIPTION);
-    const { data: dataSubscriptionUpd } = useSubscription(GET_HOTELS_UPDATE_SUBSCRIPTION);
-    
     const [companyData, setCompanyData] = useState([]);
     const [filterData, setFilterData] = useState({ filterSelect: '' });
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
     const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
-    
+    const { data: dataSubscription } = useSubscription(GET_HOTELS_SUBSCRIPTION);
+    const { data: dataSubscriptionUpd } = useSubscription(GET_HOTELS_UPDATE_SUBSCRIPTION);
+
     const location = useLocation();
     const navigate = useNavigate();
     
@@ -37,24 +35,49 @@ function HotelsList({ children, user, ...props }) {
         variables: {pagination: {skip: pageInfo.skip, take: pageInfo.take}}
     });
 
+    // в этой версии проблема с дублированием
+    // useEffect(() => {
+    //     if (data && data.hotels) {
+    //         const sortedHotels = [...data.hotels.hotels].sort((a, b) => a.city.localeCompare(b.city));
+    //         setCompanyData(sortedHotels);
+    //     }
+
+    //     if (dataSubscription && dataSubscription.hotelCreated) {
+    //         setCompanyData((prevCompanyData) => {
+    //             const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
+    //             return updatedData.sort((a, b) => a.information?.city.localeCompare(b.city));
+    //         });
+    //     }
+
+    //     refetch();
+    // }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
+
     useEffect(() => {
         if (data && data.hotels) {
-            const sortedHotels = [...data.hotels.hotels].sort((a, b) => a.city.localeCompare(b.city));
-            setCompanyData(sortedHotels);
+          const sortedHotels = [...data.hotels.hotels].sort((a, b) =>
+            a.information?.city.localeCompare(b.information?.city)
+          );
+          setCompanyData(sortedHotels);
         }
-
+      
         if (dataSubscription && dataSubscription.hotelCreated) {
-            setCompanyData((prevCompanyData) => {
-                const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
-                return updatedData.sort((a, b) => a.city.localeCompare(b.city));
-            });
+          setCompanyData((prevCompanyData) => {
+            // Если отель уже существует, не добавляем его повторно
+            if (prevCompanyData.some(hotel => hotel.id === dataSubscription.hotelCreated.id)) {
+              return prevCompanyData;
+            }
+            const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
+            return updatedData.sort((a, b) =>
+              a.information?.city.localeCompare(b.information?.city)
+            );
+          });
         }
-
+      
         refetch();
-    }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
+      }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
 
     const addHotel = (newHotel) => {
-        setCompanyData([...companyData, newHotel].sort((a, b) => a.city.localeCompare(b.city)));
+        setCompanyData([...companyData, newHotel].sort((a, b) => a.information?.city.localeCompare(b.city)));
     };
 
     const toggleCreateSidebar = () => {
@@ -106,15 +129,17 @@ function HotelsList({ children, user, ...props }) {
 
         return dataSource.filter(request => {
             return (
-                (filterData.filterSelect === '' || request.city.includes(filterData.filterSelect)) &&
+                (filterData.filterSelect === '' || request.information?.city.includes(filterData.filterSelect)) &&
                 (
                     request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    request.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    request.address.toLowerCase().includes(searchQuery.toLowerCase())
+                    request.information?.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    request.information?.address.toLowerCase().includes(searchQuery.toLowerCase())
                 )
             );
         });
     }, [isSearching, allFilteredData, companyData, filterData, searchQuery]);
+
+    
 
     // Пагинация: общее количество страниц
     const totalPages = data?.hotels?.totalPages;

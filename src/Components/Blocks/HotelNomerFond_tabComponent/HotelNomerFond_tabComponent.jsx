@@ -10,16 +10,17 @@ import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequ
 import EditRequestCategory from "../EditRequestCategory/EditRequestCategory";
 import EditRequestNomerFond from "../EditRequestNomerFond/EditRequestNomerFond";
 
-import { getCookie, GET_HOTEL_ROOMS, DELETE_HOTEL_ROOM, DELETE_HOTEL_CATEGORY } from '../../../../graphQL_requests.js';
-import { useMutation, useQuery } from "@apollo/client";
+import { getCookie, GET_HOTEL_ROOMS, DELETE_HOTEL_ROOM, DELETE_HOTEL_CATEGORY, GET_HOTELS_UPDATE_SUBSCRIPTION } from '../../../../graphQL_requests.js';
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
 
 function HotelNomerFond_tabComponent({ children, id, ...props }) {
     const token = getCookie('token');
 
-    const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+    const { loading, error, data, refetch } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: id },
     });
+    const { data: dataSubscriptionUpd } = useSubscription(GET_HOTELS_UPDATE_SUBSCRIPTION);
 
     const [addTarif, setAddTarif] = useState([]);
     const [showAddTarif, setShowAddTarif] = useState(false);
@@ -94,7 +95,9 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
             setAddTarif(sortedTarifs);
         }
-    }, [data]);
+
+        if (dataSubscriptionUpd) refetch();
+    }, [data, dataSubscriptionUpd, refetch]);
 
     const handleSearchTarif = (e) => {
         setSearchTarif(e.target.value);

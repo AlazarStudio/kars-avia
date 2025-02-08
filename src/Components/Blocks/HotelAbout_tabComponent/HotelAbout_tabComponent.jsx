@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import classes from "./HotelAbout_tabComponent.module.css";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useSubscription } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
 import HotelAboutRoomBlock from "../HotelAboutRoomBlock/HotelAboutRoomBlock.jsx";
 import {
@@ -11,6 +11,7 @@ import {
   decodeJWT,
   DELETE_HOTEL,
   GET_HOTEL_LOGS,
+  GET_HOTELS_UPDATE_SUBSCRIPTION,
 } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
@@ -68,9 +69,12 @@ function HotelAbout_tabComponent({ id }) {
     setUserRole(decodeJWT(token).role);
   }, [token]);
 
-  const { loading, error, data } = useQuery(GET_HOTEL, {
+  const { loading, error, data, refetch } = useQuery(GET_HOTEL, {
     variables: { hotelId: id },
   });
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_HOTELS_UPDATE_SUBSCRIPTION
+  );
 
   const [hotel, setHotel] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -99,7 +103,8 @@ function HotelAbout_tabComponent({ id }) {
     if (data) {
       setHotel(data.hotel);
     }
-  }, [data]);
+    if (dataSubscriptionUpd) refetch();
+  }, [data, dataSubscriptionUpd, refetch]);
 
   const handleEditClick = async () => {
     if (isEditing) {
@@ -112,19 +117,21 @@ function HotelAbout_tabComponent({ id }) {
               stars: hotel.stars,
               usStars: hotel.usStars,
               airportDistance: hotel.airportDistance,
-              country: hotel.country,
-              city: hotel.city,
-              address: hotel.address,
-              bank: hotel.bank,
-              bik: hotel.bik,
-              email: hotel.email,
-              index: hotel.index,
-              inn: hotel.inn,
-              number: hotel.number,
-              link: hotel.link,
-              description: hotel.description,
-              ogrn: hotel.ogrn,
-              rs: hotel.rs,
+              information: {
+                country: hotel.information?.country,
+                city: hotel.information?.city,
+                address: hotel.information?.address,
+                bank: hotel.information?.bank,
+                bik: hotel.information?.bik,
+                email: hotel.information?.email,
+                index: hotel.information?.index,
+                inn: hotel.information?.inn,
+                number: hotel.information?.number,
+                link: hotel.information?.link,
+                description: hotel.information?.description,
+                ogrn: hotel.information?.ogrn,
+                rs: hotel.information?.rs,
+              },
               breakfast: {
                 start: hotel.breakfast.start,
                 end: hotel.breakfast.end,
@@ -153,11 +160,9 @@ function HotelAbout_tabComponent({ id }) {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-
-    // Проверяем размер файла (2 МБ = 2 * 1024 * 1024 байт)
-    const maxSizeInBytes = 2 * 1024 * 1024; // 2 MB
+    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
     if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 2 МБ!");
+      alert("Размер файла не должен превышать 8 МБ!");
       setHotel((prevState) => ({
         ...prevState,
         images: [`${data.hotel.images[0]}`],
@@ -178,10 +183,22 @@ function HotelAbout_tabComponent({ id }) {
     }
   };
 
+  // console.log(hotel);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     setHotel((prevHotel) => {
+      // Проверяем, обновляется ли поле в `information`
+      if (Object.keys(prevHotel.information || {}).includes(name)) {
+        return {
+          ...prevHotel,
+          information: {
+            ...prevHotel.information,
+            [name]: value, // Обновляем только нужное поле в `information`
+          },
+        };
+      }
       // Проверяем, начинается ли name с "breakfast", "lunch" или "dinner"
       if (name.startsWith("breakfast")) {
         return {
@@ -269,13 +286,13 @@ function HotelAbout_tabComponent({ id }) {
                     {hotel.name}
                   </div>
                   <div className={classes.hotelAbout_top_title_desc}>
-                    {hotel.city && hotel.city && (
+                    {hotel.information?.city && hotel.information?.city && (
                       <>
                         <img src="/map.png" alt="" />
-                        {hotel.city}, {hotel.address}
+                        {hotel.information?.city}, {hotel.information?.address}
                       </>
                     )}
-                    {hotel.link && (
+                    {hotel.information?.link && (
                       <>
                         <img src="/web.png" alt="" />
                         <a
@@ -418,7 +435,7 @@ function HotelAbout_tabComponent({ id }) {
                   <textarea
                     type="text"
                     name="description"
-                    value={hotel.description || ""}
+                    value={hotel.information?.description || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     style={!isEditing ? { resize: "none" } : null}
@@ -542,7 +559,7 @@ function HotelAbout_tabComponent({ id }) {
                   <input
                     type="text"
                     name="inn"
-                    value={hotel.inn || ""}
+                    value={hotel.information?.inn || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={classes.hotelAbout_info_input}
@@ -553,7 +570,7 @@ function HotelAbout_tabComponent({ id }) {
                   <input
                     type="text"
                     name="ogrn"
-                    value={hotel.ogrn || ""}
+                    value={hotel.information?.ogrn || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={classes.hotelAbout_info_input}
@@ -564,7 +581,7 @@ function HotelAbout_tabComponent({ id }) {
                   <input
                     type="text"
                     name="rs"
-                    value={hotel.rs || ""}
+                    value={hotel.information?.rs || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={classes.hotelAbout_info_input}
@@ -575,7 +592,7 @@ function HotelAbout_tabComponent({ id }) {
                   <input
                     type="text"
                     name="bank"
-                    value={hotel.bank || ""}
+                    value={hotel.information?.bank || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={classes.hotelAbout_info_input}
@@ -586,7 +603,7 @@ function HotelAbout_tabComponent({ id }) {
                   <input
                     type="text"
                     name="bik"
-                    value={hotel.bik || ""}
+                    value={hotel.information?.bik || ""}
                     onChange={handleChange}
                     disabled={!isEditing}
                     className={classes.hotelAbout_info_input}
@@ -601,7 +618,11 @@ function HotelAbout_tabComponent({ id }) {
                     : classes.hotelAbout_rooms_block
                 }
               >
-                <div className={`${classes.rooms_wrapper} ${menuOpen && windowWidth <= 1578 ? classes.fb30 : ""}`}>
+                <div
+                  className={`${classes.rooms_wrapper} ${
+                    menuOpen && windowWidth <= 1578 ? classes.fb30 : ""
+                  }`}
+                >
                   {hotel.rooms?.map((room) => (
                     <HotelAboutRoomBlock key={room.id} {...room} />
                   ))}
@@ -614,7 +635,11 @@ function HotelAbout_tabComponent({ id }) {
                     ? classes.hotelAbout_info__contacts___arline
                     : classes.hotelAbout_info__contacts
                 }
-                style={menuOpen && windowWidth <= 1650 ? { flexDirection: "column" } : {}}
+                style={
+                  menuOpen && windowWidth <= 1650
+                    ? { flexDirection: "column" }
+                    : {}
+                }
               >
                 <div
                   className={classes.hotelAbout_info_block}
@@ -626,7 +651,7 @@ function HotelAbout_tabComponent({ id }) {
                     <input
                       type="text"
                       name="country"
-                      value={hotel.country || ""}
+                      value={hotel.information?.country || ""}
                       onChange={handleChange}
                       disabled={!isEditing}
                       className={classes.hotelAbout_info_input}
@@ -637,7 +662,7 @@ function HotelAbout_tabComponent({ id }) {
                     <input
                       type="text"
                       name="city"
-                      value={hotel.city || ""}
+                      value={hotel.information?.city || ""}
                       onChange={handleChange}
                       disabled={!isEditing}
                       className={classes.hotelAbout_info_input}
@@ -648,7 +673,7 @@ function HotelAbout_tabComponent({ id }) {
                     <input
                       type="text"
                       name="address"
-                      value={hotel.address || ""}
+                      value={hotel.information?.address || ""}
                       onChange={handleChange}
                       disabled={!isEditing}
                       className={classes.hotelAbout_info_input}
@@ -659,14 +684,23 @@ function HotelAbout_tabComponent({ id }) {
                     <input
                       type="text"
                       name="index"
-                      value={hotel.index || ""}
+                      value={hotel.information?.index || ""}
                       onChange={handleChange}
                       disabled={!isEditing}
                       className={classes.hotelAbout_info_input}
                     />
                   </div>
                   <div className={classes.hotelAbout_info_item}>
-                    <label className={classes.airportDistance} style={ menuOpen && windowWidth <= 1707 ? {width:"18%"} : !menuOpen && windowWidth <= 1690 ? {width:"20%"} : {}}>
+                    <label
+                      className={classes.airportDistance}
+                      style={
+                        menuOpen && windowWidth <= 1707
+                          ? { width: "18%" }
+                          : !menuOpen && windowWidth <= 1690
+                          ? { width: "20%" }
+                          : {}
+                      }
+                    >
                       Расстояние до аэропорта
                     </label>
                     <input
@@ -679,8 +713,13 @@ function HotelAbout_tabComponent({ id }) {
                     />
                   </div>
                 </div>
-                <div className={classes.hotelAbout_info_block} style={menuOpen ? { width: "70%" } : {}}>
-                  <div className={classes.hotelAbout_info_label}>Контакты Kars Avia</div>
+                <div
+                  className={classes.hotelAbout_info_block}
+                  style={menuOpen ? { width: "70%" } : {}}
+                >
+                  <div className={classes.hotelAbout_info_label}>
+                    Контакты Kars Avia
+                  </div>
                   <div className={classes.hotelAbout_info_item}>
                     <label>Почта</label>
                     <input
