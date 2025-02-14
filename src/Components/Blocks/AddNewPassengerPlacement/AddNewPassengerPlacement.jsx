@@ -129,8 +129,11 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
     const { data } = useQuery(GET_HOTELS_RELAY);
     const hotels = data?.hotels.hotels || [];
     const uniqueCities = useMemo(() => {
-        return [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
+        return [...new Set(hotels.map(hotel => hotel.information?.city.trim()))].sort();
     }, [data]);
+
+    // console.log(request);
+    
 
     useEffect(() => {
         if (request && request.airport && uniqueCities.length > 0) {  // Добавляем проверку request.airport
@@ -148,7 +151,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
 
     const addedHotelIds = placement.map((item) => item.hotel.name);
     const filteredHotels = formData.city
-        ? hotels.filter((hotel) => hotel.city.trim() === formData.city.trim())
+        ? hotels.filter((hotel) => hotel.information?.city.trim() === formData.city.trim())
         : [];
 
     return (

@@ -366,11 +366,11 @@ function ExistRequestInHotel({
                 <div className={classes.requestDataInfo}>
                   <div className={classes.requestDataInfo_title}>Питание</div>
                   <div className={classes.requestDataInfo_desc}>
-                    {formData.mealPlan.included ? "Включено" : "Не включено"}
+                    {formData?.mealPlan?.included ? "Включено" : "Не включено"}
                   </div>
                 </div>
 
-                {formData.mealPlan.included &&
+                {formData?.mealPlan?.included &&
                   formData.status !== "created" &&
                   formData.status !== "opened" && (
                     <>
@@ -429,7 +429,7 @@ function ExistRequestInHotel({
                           Номер комнаты
                         </div>
                         <div className={classes.requestDataInfo_desc}>
-                          {formData.hotelChess?.room}
+                          {formData.hotelChess?.room?.name}
                         </div>
                       </div>
                       <div className={classes.requestDataInfo}>

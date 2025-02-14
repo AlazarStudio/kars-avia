@@ -164,7 +164,7 @@ function AirlinesList({ children, ...props }) {
                             pageInfo={pageInfo.skip}
                         />
 
-                        {totalPages > 1 && (
+                        {totalPages > 0 && (
                             <div className={classes.pagination}>
                                 <ReactPaginate
                                     previousLabel={"←"}

@@ -66,6 +66,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             // .filter((room) => room.reserve === checkRoomsType)
             .map((room) => ({
                 id: room.name,
+                roomId: room.id,
                 reserve: room.reserve,
                 active: room.active,
                 // type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
@@ -157,7 +158,14 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         if (bronData && bronData.hotel && bronData.hotel.hotelChesses) {
             const transformedData = bronData.hotel.hotelChesses.map((chess, index) => ({
                 id: generateTimestampId(),
-                room: chess.room,
+                room: {
+                    id: chess.room?.id,  
+                    name: chess.room?.name,
+                    category: chess.room?.category,
+                    places: chess.room?.places,
+                    active: chess.room?.active,
+                    reserve: chess.room?.reserve,
+                },
                 position: chess.place - 1,
                 checkInDate: new Date(chess.start).toISOString().split("T")[0],
                 checkInTime: new Date(chess.start).toISOString().split("T")[1].slice(0, 5),
@@ -177,6 +185,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         }
     }, [bronData]);
 
+    // console.log(requests);
+    
+
+    
+
     // Получение новых заявок для размещения
     const [newRequests, setNewRequests] = useState([])
 
@@ -189,6 +202,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         variables: { pagination: { skip: 0, take: 99999999, status: "all" } },
         fetchPolicy: 'network-only',
     });
+
+    // console.log(dataBrons);
 
     useEffect(() => {
         if (subscriptionData?.requestCreated) {
@@ -215,12 +230,12 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             dataBrons &&
             dataBrons.requests &&
             dataBrons.requests.requests &&
-            hotelInfo.city // Проверяем, что `hotelInfo.city` установлен
+            hotelInfo.information?.city // Проверяем, что `hotelInfo.city` установлен
         ) {
             const filteredRequests = dataBrons.requests.requests.filter(
                 (request) =>
                     (request.status === "created" || request.status === "opened") &&
-                    request.airport.city === hotelInfo.city
+                    request.airport.city === hotelInfo.information?.city
             );
 
             const transformedRequests = filteredRequests.map((request) => ({
@@ -232,6 +247,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 status: "Ожидает",
                 guest: request.person ? request.person.name : "Неизвестный гость",
                 requestID: request.id,
+                requestNumber: request.requestNumber,
                 isRequest: true,
                 airline: request.airline,
                 personID: request.person.id,
@@ -239,9 +255,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
             setNewRequests(transformedRequests);
         }
-    }, [dataBrons, hotelInfo.city, refetchBrons]);
+    }, [dataBrons, hotelInfo.information?.city, refetchBrons]);
 
-    // console.log(newRequests)
+    // console.log(dataBrons?.requests?.requests)
+    // console.log(newRequests);
+    
 
     // ----------------------------------------------------------------
 
@@ -684,7 +702,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         }
     
         const targetRoom = rooms.find((room) => room.id === targetRoomId);
-        const currentRoom = rooms.find((room) => room.id === draggedRequest.room);
+        const currentRoom = rooms.find((room) => room.id === draggedRequest.room?.name);
+        // console.log(draggedRequest);
+        // console.log(targetRoomId);
+        
+        
 
         // console.log(currentRoom);
         
@@ -718,6 +740,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             const newRequest = {
                 ...draggedRequest,
                 room: targetRoomId,
+                roomId: targetRoom.roomId,
                 position: availablePosition,
                 status: "Ожидает",
             };
@@ -726,6 +749,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 const exists = prevRequests.some((req) => req.id === newRequest.id);
                 if (exists) {
                     addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
+                    console.log('This is here');
                     return prevRequests;
                 }
                 return [...prevRequests, newRequest];
@@ -744,7 +768,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             return;
         }
 
-         // Если перемещение в ту же комнату (обновляем только позицию)
+        // Если перемещение в ту же комнату (обновляем только позицию)
         // if (currentRoom.id === targetRoom.id) {
         //     // console.log("Перемещение внутри одного номера");
 
@@ -851,7 +875,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     
         const overlappingRequests = requests.filter(
             (req) =>
-                req.room === targetRoomId &&
+                req.room?.name === targetRoomId &&
                 !(
                     new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
                     new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
@@ -875,6 +899,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 const newRequest = {
                     ...draggedRequest,
                     room: targetRoomId,
+                    roomId: targetRoom.roomId,
                     position: availablePosition,
                     status: "Ожидает",
                 };
@@ -883,6 +908,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     const exists = prevRequests.some((req) => req.id === newRequest.id);
                     if (exists) {
                         addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
+                        console.log('This is here');
                         return prevRequests;
                     }
                     return [...prevRequests, newRequest];
@@ -937,6 +963,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 const newRequest = {
                     ...draggedRequest,
                     room: targetRoomId,
+                    roomId: targetRoom.roomId,
                     position: availablePosition,
                     status: "Ожидает",
                 };
@@ -1015,33 +1042,35 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                         return;
                     }
     
-                    // console.log(draggedRequest)
-    
                     let bookingInput;
     
                     if (draggedRequest.isRequest && draggedRequest.status !== 'Архив') {
                         bookingInput = {
                             hotelChesses: [
                                 {
-                                    clientId: draggedRequest.personID, // ID клиента
-                                    status: "transferred",
-                                    hotelId: hotelId, // ID отеля
                                     requestId: draggedRequest.requestID, // ID заявки
-                                    room: `${targetRoomId}`, // Номер комнаты
+                                    roomId: targetRoom.roomId,
                                     place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
+                                    clientId: draggedRequest.personID, // ID клиента
                                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
+                                    // status: "transferred",
+                                    // hotelId: hotelId, // ID отеля
+                                    // room: `${targetRoomId}`, // Номер комнаты
                                 },
                             ],
                         };
+                        // console.log(bookingInput);
+                        
                     } else if (!draggedRequest.isRequest && draggedRequest.status !== 'Архив') {
                         bookingInput = {
                             hotelChesses: [
                                 {
                                     clientId: draggedRequest.personID, // ID клиента
-                                    status: "transferred",
+                                    // status: "transferred",
                                     hotelId: hotelId, // ID отеля
                                     reserveId: draggedRequest.requestID, // ID заявки
-                                    room: `${targetRoomId}`, // Номер комнаты
+                                    // room: `${targetRoomId}`, // Номер комнаты
+                                    roomId: targetRoom.roomId,
                                     place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
                                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
                                 },
@@ -1065,7 +1094,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                         addNotification("Бронь успешно перемещена", "success");
                     } catch (err) {
                         addNotification("Произошла ошибка при подтверждении бронирования", "error");
-                        console.log("Произошла ошибка при подтверждении бронирования", err);
+                        console.error("Произошла ошибка при подтверждении бронирования", err);
+                        // console.log(bookingInput);
+                        
                     }
     
                     // } else {
@@ -1127,6 +1158,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             }
         }
     };
+    // console.log(selectedRequest);
+
     
     const handleOpenModal = (request, originalRequest) => {
         setOriginalRequest(originalRequest)
@@ -1250,7 +1283,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                         end: `${request.checkOutDate}T${request.checkOutTime}:00.000Z`, // Форматируем дату выезда
                         hotelId: hotelId, // ID отеля
                         reserveId: request.reserveId ? request.reserveId : '', // ID заявки
-                        room: `${request.room}`, // Номер комнаты
+                        // room: `${request.room}`, // Номер комнаты
+                        roomId: `${request.roomId}`,
                         place: Number(request.position) + 1, // Позиция в комнате (если двухместная)
                         public: true, // Флаг публичности (если применимо)
                         status: 'done'
@@ -1266,7 +1300,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                         end: `${request.checkOutDate}T${request.checkOutTime}:00.000Z`, // Форматируем дату выезда
                         hotelId: hotelId, // ID отеля
                         requestId: request.requestID ? request.requestID : '', // ID заявки
-                        room: `${request.room}`, // Номер комнаты
+                        // room: `${request.room}`, // Номер комнаты
+                        roomId: `${request.roomId}`,
                         place: Number(request.position) + 1, // Позиция в комнате (если двухместная)
                         public: true, // Флаг публичности (если применимо)
                     },
@@ -1284,12 +1319,19 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             addNotification("Бронь успешно добавлена", "success");
             refetchHotelReserveOne()
         } catch (err) {
-            console.log("Произошла ошибка при подтверждении бронирования", err);
+            console.error("Произошла ошибка при подтверждении бронирования", err);
+            console.log(bookingInput);
+            
+            // console.log(request);
+            
         }
 
         setSelectedRequest(null);
         setIsConfirmModalOpen(false);
     };
+
+    // console.log(requests);
+    
 
     const handleCancelBooking = async () => {
         if (selectedRequest) {
@@ -1404,6 +1446,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         variables: { pagination: { skip: 0, take: 999999999 } },
     });
 
+    // console.log(dataReserves);
+    
+
     const { loading: loadingReserveOne, error: errorReserveOne, data: dataReserveOne, refetch: refetchReserveOne } = useQuery(GET_RESERVE_REQUEST, {
         context: {
             headers: {
@@ -1426,10 +1471,13 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     const [newReservePassangers, setnewReservePassangers] = useState([]);
 
+    // console.log(requestsReserves);
+    
+
     useEffect(() => {
         if (dataReserves && dataReserves.reserves.reserves) {
             const sortedRequests = dataReserves.reserves.reserves.filter(
-                (reserve) => reserve.airport?.city === hotelInfo.city
+                (reserve) => reserve.airport?.city === hotelInfo.information?.city
             );
             setRequestsReserves(sortedRequests);
         }
@@ -1441,7 +1489,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         if (openReserveId && dataHotelReserveOne) {
             setRequestsHotelReserveOne(dataHotelReserveOne.reservationHotels);
         }
-    }, [dataReserves, dataReserveOne, dataHotelReserveOne, hotelInfo.city, openReserveId]);
+    }, [dataReserves, dataReserveOne, dataHotelReserveOne, hotelInfo.information?.city, openReserveId]);
 
     const handleOpenReserveInfo = async (reserveId) => {
         setOpenReserveId(reserveId);
@@ -1607,6 +1655,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         return request.passengerCount > totalCapacity || !!infoHotel;
     });
 
+    // console.log(requestsReserves);
+    
+
 
     const [showRequestSidebarMess, setShowChooseHotelMess] = useState(false);
 
@@ -1643,6 +1694,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                         zIndex: 2,
                                     }}
                                 >
+
+                                    {/* {console.log(filteredRooms)} */}
                                     {filteredRooms.map((room, index) => (
                                         <Box
                                             key={index}
@@ -1689,6 +1742,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 >
                                     <Box sx={{ overflow: 'hidden' }}>
                                         {/* <CurrentTimeIndicator dayWidth={DAY_WIDTH} /> */}
+                                        {/* {console.log(filteredRequests)} */}
                                         {filteredRooms.map((room, index) => (
                                             <RoomRow
                                                 requestId={requestId}
@@ -1701,7 +1755,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                 weekendColor={WEEKEND_COLOR}
                                                 monthColor={MONTH_COLOR}
                                                 room={room}
-                                                requests={filteredRequests.filter((req) => req.room === room.id)}
+                                                // requests={filteredRequests.filter((req) => req.room === room.id)}
+                                                requests={filteredRequests.filter((req) => req.room?.name === room.id)}
                                                 allRequests={filteredRequests} // Передаем все заявки
                                                 currentMonth={currentMonth}
                                                 onUpdateRequest={handleUpdateRequest}
@@ -1725,7 +1780,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     {!checkRoomsType && !user?.hotelId ?
                         <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
                             <Typography variant="h6" sx={{ padding: '10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                Заявки по эстафете в городе {hotelInfo.city}
+                                Заявки по эскадрильи в городе {hotelInfo.information?.city}
                             </Typography>
 
                             {newRequests?.length > 0 ?
@@ -1765,8 +1820,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
                     {checkRoomsType && !showReserveInfo && !showModalForAddHotelInReserve &&
                         <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
-                            <Typography variant="h6" sx={{ borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                Заявки по резерву в городе {hotelInfo.city}
+                            <Typography variant="h6" sx={{ padding:'10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                Заявки по пассажирам в городе {hotelInfo.information?.city}
                             </Typography>
 
                             {filteredRequestsReserves?.length > 0 ?

@@ -15,8 +15,8 @@ import { roles } from "../../../roles.js";
 import Logs from "../LogsHistory/Logs.jsx";
 
 function AirlineAbout_tabComponent({ id, ...props }) {
-  const [userRole, setUserRole] = useState();
   const token = getCookie("token");
+  const user = decodeJWT(token);
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
@@ -57,10 +57,6 @@ function AirlineAbout_tabComponent({ id, ...props }) {
   }, []);
 
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
-
-  useEffect(() => {
-    setUserRole(decodeJWT(token).role);
-  }, [token]);
 
   const { loading, error, data } = useQuery(GET_AIRLINE, {
     variables: { airlineId: id },
@@ -172,6 +168,9 @@ function AirlineAbout_tabComponent({ id, ...props }) {
       };
     });
   };
+
+  // console.log(user);
+  
   
 
   return (
@@ -183,7 +182,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
         <div
           className={classes.airlineAbout}
           style={
-            userRole === roles.airlineAdmin
+            user?.airlineId
               ? { height: "calc(100vh - 130px)" }
               : {}
           }
@@ -212,9 +211,9 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                 </div>
               </div>
               <div className={classes.airlineAbout_top_button}>
-                {(userRole == roles.superAdmin ||
-                  userRole == roles.airlineAdmin ||
-                  userRole == roles.dispatcerAdmin) && (
+                {(user?.role == roles.superAdmin ||
+                  user?.role == roles.airlineAdmin ||
+                  user?.role == roles.dispatcerAdmin) && (
                   <>
                     <div className={classes.airlineAbout_info__filters}>
                       {/* <Button onClick={toggleLogsSidebar}>История</Button> */}
@@ -294,7 +293,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
               <>
                 <div
                   className={
-                    userRole === roles.airlineAdmin
+                    user?.role === roles.airlineAdmin
                       ? classes.airlineAbout_info_block
                       : classes.airlineAbout_info_block__airline
                   }

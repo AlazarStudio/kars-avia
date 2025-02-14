@@ -138,7 +138,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
     
     // Уникальные города с мемоизацией
     const uniqueCities = useMemo(() => {
-        return [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
+        return [...new Set(hotels.map(hotel => hotel.information?.city.trim()))].sort();
     }, [hotels]);
     
     useEffect(() => {
@@ -169,7 +169,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
 
     const addedHotelIds = placement.map((item) => item.hotel.name);
     const filteredHotels = formData.city
-        ? hotels.filter((hotel) => hotel.city.trim() === formData.city.trim())
+        ? hotels.filter((hotel) => hotel.information?.city.trim() === formData.city.trim())
         : [];
     // console.log(request?.airport?.city);
     

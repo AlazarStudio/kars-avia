@@ -200,7 +200,7 @@ function HotelsList({ children, user, ...props }) {
                             pageInfo={pageInfo.skip}
                         />
 
-                        {totalPages > 1 && (
+                        {totalPages > 0 && (
                             <div className={classes.pagination}>
                                 <ReactPaginate
                                     previousLabel={"←"}

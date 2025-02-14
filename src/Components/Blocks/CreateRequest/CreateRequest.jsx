@@ -263,7 +263,8 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
         };
 
         try {
-            await createRequest({ variables: { input } });
+            const response = await createRequest({ variables: { input } });
+            // console.log(response);
             resetForm();
             onClose();
         } catch (error) {
@@ -277,6 +278,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
         }
     };
 
+    // console.log(formData);
     // Проверка на пересечение бронирований
     const checkBookingOverlap = useCallback((arrivalDate, arrivalTime, departureDate, departureTime, bronList) => {
         const arrivalDateTime = new Date(`${arrivalDate}T${arrivalTime}`);
@@ -454,29 +456,6 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                             <input type="time" name="departureTime" value={formData.departureTime} onChange={handleChange} placeholder="Время" />
                         </div>
 
-                        {
-                            matchingRequest 
-                            ? 
-                            <div className={classes.matchingRequest}>
-                                Заявка с такими же параметрами уже существует. {' '}
-                                <span 
-                                onClick={() => {
-                                    onMatchFound(matchingRequest);
-                                    setMatchingRequest(null)
-                                    resetForm();
-                                    onClose();
-                                    }}>
-                                        Перейти к заявке
-                                </span>
-                            </div> 
-                            : null
-                        }
-                    </div>
-                )}
-
-                {/* Вкладка "Доп. услуги" */}
-                {activeTab === 'Доп. услуги' && (
-                    <div className={classes.requestData}>
                         <label>Питание</label>
                         {/* <select name="included" value={formData.mealPlan.included} onChange={handleChange}>
                             <option value={true}>Включено</option>
@@ -514,6 +493,31 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                                 Ужин
                             </label>
                         </div>
+
+                        {
+                            matchingRequest 
+                            ? 
+                            <div className={classes.matchingRequest}>
+                                Заявка с такими же параметрами уже существует. {' '}
+                                <span 
+                                onClick={() => {
+                                    onMatchFound(matchingRequest);
+                                    setMatchingRequest(null)
+                                    resetForm();
+                                    onClose();
+                                    }}>
+                                        Перейти к заявке
+                                </span>
+                            </div> 
+                            : null
+                        }
+                    </div>
+                )}
+
+                {/* Вкладка "Доп. услуги" */}
+                {activeTab === 'Доп. услуги' && (
+                    <div className={classes.requestData}>
+
                     </div>
                 )}
             </div>

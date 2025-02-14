@@ -10,12 +10,13 @@ import CreateRequestCategoryNomer from "../CreateRequestCategoryNomer/CreateRequ
 import EditRequestCategory from "../EditRequestCategory/EditRequestCategory";
 import EditRequestNomerFond from "../EditRequestNomerFond/EditRequestNomerFond";
 
-import { getCookie, GET_HOTEL_ROOMS, DELETE_HOTEL_ROOM, DELETE_HOTEL_CATEGORY, GET_HOTELS_UPDATE_SUBSCRIPTION } from '../../../../graphQL_requests.js';
+import { getCookie, GET_HOTEL_ROOMS, DELETE_HOTEL_ROOM, DELETE_HOTEL_CATEGORY, GET_HOTELS_UPDATE_SUBSCRIPTION, decodeJWT } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
 
 function HotelNomerFond_tabComponent({ children, id, ...props }) {
     const token = getCookie('token');
+    const user = decodeJWT(token);
 
     const { loading, error, data, refetch } = useQuery(GET_HOTEL_ROOMS, {
         variables: { hotelId: id },
@@ -261,6 +262,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
                     <InfoTableDataNomerFond
                         filter={filter}
+                        user={user}
                         setFilter={setFilter}
                         toggleRequestSidebar={toggleEditCategory}
                         toggleRequestEditNumber={toggleEditNomer}

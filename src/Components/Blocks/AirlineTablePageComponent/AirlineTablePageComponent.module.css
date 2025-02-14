@@ -129,6 +129,7 @@
 }
 
 .controls {
+    /* margin-left: 1px; */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -362,6 +363,20 @@
 
 @media (min-width: 0px) and (max-width: 1399px) {
     .staffInfo {
-        font-size: 13px;
+        font-size: 12px;
+    }
+
+    .hotelTable tbody th,
+    .hotelTable tbody tr>td {
+        width: 45px;
+        height: 45px;
+        font-size: 12px;
+        line-height: 16px;
+    }
+
+
+    .topDayBlock {
+        font-size: 12px;
+        line-height: 16px;
     }
 }

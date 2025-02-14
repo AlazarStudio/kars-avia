@@ -7,11 +7,12 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import CreateRequestCompanyHotel from "../CreateRequestCompanyHotel/CreateRequestCompanyHotel";
 import ExistRequestCompanyHotel from "../ExistRequestCompanyHotel/ExistRequestCompanyHotel";
 
-import { getCookie, GET_HOTEL_USERS, DELETE_HOTEL_USER } from '../../../../graphQL_requests.js';
+import { getCookie, GET_HOTEL_USERS, DELETE_HOTEL_USER, decodeJWT } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 
 function HotelCompany_tabComponent({ children, id, ...props }) {
     const token = getCookie('token');
+    const user = decodeJWT(token);
 
     const { loading, error, data, refetch } = useQuery(GET_HOTEL_USERS, {
         variables: { hotelId: id },
@@ -141,6 +142,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
             {!loading && !error && (
                 <InfoTableDataCompany
                     id={id}
+                    user={user}
                     toggleRequestSidebar={toggleRequestSidebar}
                     requests={filteredRequests}
                     setChooseObject={setChooseObject}

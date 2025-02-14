@@ -212,7 +212,7 @@ function Reserve({ children, user, idHotel, ...props }) {
     return (
         <>
             <div className={classes.section}>
-                <Header>Резерв</Header>
+                <Header>Пассажиры</Header>
                 <div className={classes.section_searchAndFilter}>
                     <input
                         type="text"
@@ -245,7 +245,7 @@ function Reserve({ children, user, idHotel, ...props }) {
                             requests={filteredRequests}
                             pageInfo={pageInfo.skip}
                         />
-                        {totalPages > 1 && (
+                        {totalPages > 0 && (
                             <div className={classes.pagination}>
                                 <ReactPaginate
                                     previousLabel={'←'}

@@ -139,7 +139,7 @@
     overflow: scroll;
 }
 
-.hotelAbout_info__arline {
+.hotelAbout_info__hotel {
     display: flex;
     justify-content: space-between;
     gap: 80px;
@@ -177,7 +177,7 @@
     overflow: scroll;
 }
 
-.hotelAbout_rooms_block__airline {
+.hotelAbout_rooms_block__hotel {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -379,7 +379,7 @@
         flex-direction: column;
     }
 
-    .hotelAbout_info__arline {
+    .hotelAbout_info__hotel {
         flex-direction: column;
     }
 
@@ -390,7 +390,7 @@
         flex-direction: column;
     }
 
-    .hotelAbout_rooms_block__airline {
+    .hotelAbout_rooms_block__hotel {
         gap: 40px;
         height: 590px;
     }
@@ -415,11 +415,11 @@
         height: 460px;
     }
 
-    .hotelAbout_info__arline {
+    .hotelAbout_info__hotel {
         height: 590px;
     }
 
-    .hotelAbout_rooms_block__airline {
+    .hotelAbout_rooms_block__hotel {
         height: 560px;
     }
 }

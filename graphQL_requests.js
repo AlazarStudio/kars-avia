@@ -128,6 +128,53 @@ export const GET_REQUESTS = gql`
 `;
 
 export const GET_REQUESTS_ARCHIVED = gql`
+  query RequestArchive($pagination: PaginationInput) {
+    requestArchive(pagination: $pagination) {
+      totalCount
+        totalPages
+        requests {
+          id
+          airportId
+          airport {
+            id
+            name
+            city
+            code
+          }
+          arrival
+          departure
+          roomCategory
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
+          senderId
+          receiverId
+          createdAt
+          updatedAt
+          hotelId
+          roomNumber
+          status
+          person {
+            id
+            name
+            number
+            position
+            gender
+          }
+          airline {
+            name
+            images
+          }
+          requestNumber
+        }
+    }
+  }
+`;
+
+export const REQUEST_CREATED_SUBSCRIPTION = gql`
     subscription RequestCreated {
         requestCreated {
           id
@@ -179,56 +226,6 @@ export const GET_REQUESTS_ARCHIVED = gql`
               description
               images
             }
-            id
-            place
-          }
-        }
-    }
-`;
-
-export const REQUEST_CREATED_SUBSCRIPTION = gql`
-    subscription RequestCreated {
-        requestCreated {
-          id
-          airportId
-          airport {
-            id
-            name
-            city
-            code
-          }
-          arrival
-          departure
-          roomCategory
-          mealPlan {
-            included
-            breakfast
-            lunch
-            dinner
-          }
-          senderId
-          receiverId
-          createdAt
-          updatedAt
-          hotelId
-          roomNumber
-          status
-          person {
-            id
-            name
-            number
-            position
-            gender
-          }
-          airline {
-            name
-            images
-          }
-          requestNumber
-          hotelChess {
-            start
-            end
-            room
             id
             place
           }
@@ -403,14 +400,16 @@ export const GET_HOTELS_RELAY = gql`
       hotels {
         id
         name
-        city
+        information {
+          city
+        }
       }
     }
   }
 `;
 
 export const GET_REQUEST = gql`
-    query Query($requestId: ID) {
+    query Query($requestId: ID!) {
       request(id: $requestId) {
           id
           airportId
@@ -497,7 +496,16 @@ export const UPDATE_HOTEL_BRON = gql`
         clientId
         requestId
         place
-        room
+        room {
+          id
+          name
+          category
+          places
+          active
+          reserve
+          description
+          images
+        }
       }
     }
   }
@@ -618,7 +626,7 @@ export const GET_MESSAGES_HOTEL = gql`
 `;
 
 export const UPDATE_MESSAGE_BRON = gql`
-  mutation ($chatId: ID, $senderId: ID!, $text: String!) {
+  mutation ($chatId: ID!, $senderId: ID!, $text: String!) {
     sendMessage(chatId: $chatId, senderId: $senderId, text: $text) {
       id
       text
@@ -763,7 +771,15 @@ export const SAVE_HANDLE_EXTEND_MUTATION = gql`
       hotelChess {
         start
         end
-        room
+        room {
+          id
+          name
+          category
+          places
+          active
+          reserve
+          description
+        }
       }
       mealPlan {
         included
@@ -818,13 +834,6 @@ export const CREATE_REQUEST_RESERVE_MUTATION = gql`
       createdAt
       updatedAt
       status
-      person {
-        id
-        name
-        number
-        position
-        gender
-      }
       airline {
         name
         images
@@ -864,20 +873,12 @@ export const GET_RESERVE_REQUESTS = gql`
         createdAt
         updatedAt
         status
-        person {
-          id
-          name
-          number
-          position
-          gender
-        }
         airline {
           name
           images
         }
         reserveNumber
         passengerCount
-        reserveForPerson
       }
     }
   }
@@ -974,13 +975,6 @@ export const GET_RESERVE_REQUEST = gql`
       createdAt
       updatedAt
       status
-      person {
-        id
-        name
-        number
-        position
-        gender
-      }
       airline {
         id
         name
@@ -988,7 +982,6 @@ export const GET_RESERVE_REQUEST = gql`
       }
       reserveNumber
       passengerCount
-      reserveForPerson
     }
   }
 `;
@@ -1008,7 +1001,9 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
       hotel {
         id
         name
-        city
+        information {
+          city
+        }
       }
       hotelChess {
         status
@@ -1020,7 +1015,16 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
           id
           name
         }
-        room
+        room {
+          id
+          name
+          category
+          places
+          active
+          reserve
+          description
+          images
+        }
       }
       passengers {
         id
@@ -1029,12 +1033,6 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
         gender
       }
       capacity
-      person {
-        id
-        name
-        number
-        gender
-      }
       reserve {
         id
         arrival
@@ -1053,7 +1051,16 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
             id
             name
           }
-          room
+        room {
+          id
+          name
+          category
+          places
+          active
+          reserve
+          description
+          images
+        }
         }
       }
     }
@@ -1067,7 +1074,9 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION = gql`
       hotel {
         id
         name
-        city
+        information {
+          city
+        }
       }
       passengers {
         id
@@ -1637,7 +1646,7 @@ export const UPDATE_AIRLINE = gql`
       name
       id
       images
-            information {
+      information {
         country
         city
         address

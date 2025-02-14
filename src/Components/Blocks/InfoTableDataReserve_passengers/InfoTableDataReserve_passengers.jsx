@@ -43,14 +43,14 @@ function InfoTableDataReserve_passengers({
     type: "Пассажир",
     order: "",
   });
-  const [newPersonData, setNewPersonData] = useState({
-    name: "",
-    gender: "",
-    number: "",
-    type: "Сотрудник",
-    order: "",
-    id: "",
-  });
+  // const [newPersonData, setNewPersonData] = useState({
+  //   name: "",
+  //   gender: "",
+  //   number: "",
+  //   type: "Сотрудник",
+  //   order: "",
+  //   id: "",
+  // });
   const [currentHotelIndex, setCurrentHotelIndex] = useState(null);
 
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
@@ -198,9 +198,11 @@ function InfoTableDataReserve_passengers({
     }
   };
 
+  // console.log(currentHotelIndex)
+
   const handleAddNewPassenger = async () => {
     try {
-      if (currentHotelIndex === null) return;
+      // if (currentHotelIndex === null) return;
 
       let reserverAddHotelPassenger = await createRequestPassenger({
         variables: {
@@ -305,10 +307,10 @@ function InfoTableDataReserve_passengers({
         ...name,
         type: "Пассажир",
       })),
-      ...hotel.person.map((person) => ({
-        ...person,
-        type: "Сотрудник",
-      })),
+      // ...hotel.person.map((person) => ({
+      //   ...person,
+      //   type: "Сотрудник",
+      // })),
     ];
   };
 
@@ -333,9 +335,9 @@ function InfoTableDataReserve_passengers({
   }, [data, airline]);
 
   // Получаем имена сотрудников, которые уже добавлены в текущем отеле
-  const addedStaffNames = placement.flatMap((item) =>
-    item.hotel.person.map((person) => person.name)
-  );
+  // const addedStaffNames = placement.flatMap((item) =>
+  //   item.hotel.person.map((person) => person.name)
+  // );
 
   const handleChangePerson = (field, value, selectedName) => {
     const selectedStaff = selectedAirline.find(
@@ -398,16 +400,16 @@ function InfoTableDataReserve_passengers({
           <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>
             Номер телефона
           </div>
-          <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
+          <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>
             Пол
           </div>
-          <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
+          {/* <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
             Тип
-          </div>
+          </div> */}
           <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
             Комната
           </div>
-          <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
+          <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>
             Статус
           </div>
           <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>
@@ -430,12 +432,14 @@ function InfoTableDataReserve_passengers({
                   >
                     <div className={classes.blockInfoShow}>
                       <b>{item.hotel.name}</b>
-                      <Link
-                        to={`/hotels/${item.hotel.id}/${item.hotel.requestId}`}
-                      >
-                        {" "}
-                        <img src="/placement_icon.png" alt="" />
-                      </Link>
+                      {user?.airlineId ? null : (
+                        <Link
+                          to={`/hotels/${item.hotel.id}/${item.hotel.requestId}`}
+                        >
+                          {" "}
+                          <img src="/placement_icon.png" alt="" />
+                        </Link>
+                      )}
                       {getAllGuests(item.hotel).length} гостей из{" "}
                       {item.hotel.passengersCount}
                       {user.role !== roles.hotelAdmin &&
@@ -455,18 +459,20 @@ function InfoTableDataReserve_passengers({
                     </div>
 
                     <div className={classes.blockInfoShow}>
-                      {request.reserveForPerson == false &&
-                        getAllGuests(item.hotel).length <
-                          item.hotel.passengersCount && (
-                          <Button
-                            onClick={() =>
-                              startAddingNewPassenger(hotelIndex, item.hotel.id)
-                            }
-                          >
-                            <img src="/plus.png" alt="" /> Пассажир
-                          </Button>
-                        )}
-                      {request.reserveForPerson == true &&
+                      {/* {console.log(request)} */}
+                      {/* {request.reserveForPerson == false && */}
+                      {getAllGuests(item.hotel).length <
+                        item.hotel.passengersCount && (
+                        <Button
+                          onClick={() =>
+                            startAddingNewPassenger(hotelIndex, item.hotel.id)
+                          }
+                        >
+                          <img src="/plus.png" alt="" /> Пассажир
+                        </Button>
+                      )}
+                      {/* } */}
+                      {/* {request.reserveForPerson == true &&
                         getAllGuests(item.hotel).length <
                           item.hotel.passengersCount && (
                           <Button
@@ -476,7 +482,7 @@ function InfoTableDataReserve_passengers({
                           >
                             <img src="/plus.png" alt="" /> Сотрудник
                           </Button>
-                        )}
+                        )} */}
                     </div>
                   </div>
                 </div>
@@ -550,7 +556,7 @@ function InfoTableDataReserve_passengers({
                         )}
                       </div>
                       <div
-                        className={`${classes.InfoTable_data_elem} ${classes.w10}`}
+                        className={`${classes.InfoTable_data_elem} ${classes.w15}`}
                       >
                         {editingId === guest.id ? (
                           <select
@@ -569,18 +575,18 @@ function InfoTableDataReserve_passengers({
                         )}
                       </div>
 
-                      <div
+                      {/* <div
                         className={`${classes.InfoTable_data_elem} ${classes.w10}`}
                       >
                         {guest.type}
-                      </div>
+                      </div> */}
                       <div
                         className={`${classes.InfoTable_data_elem} ${classes.w10}`}
                       >
-                        {guest.room}
+                        {guest.room?.name}
                       </div>
                       <div
-                        className={`${classes.InfoTable_data_elem} ${classes.w10}`}
+                        className={`${classes.InfoTable_data_elem} ${classes.w15}`}
                       >
                         {statusLabels[guest.status]}
                       </div>
@@ -666,7 +672,7 @@ function InfoTableDataReserve_passengers({
                     </div>
                   </div>
                 )}
-                {isAddingNewPerson && currentHotelIndex === hotelIndex && (
+                {/* {isAddingNewPerson && currentHotelIndex === hotelIndex && (
                   <div className={classes.InfoTable_data} ref={newGuestRef}>
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w5}`}
@@ -746,7 +752,7 @@ function InfoTableDataReserve_passengers({
                       </Button>
                     </div>
                   </div>
-                )}
+                )} */}
               </React.Fragment>
             );
           })}

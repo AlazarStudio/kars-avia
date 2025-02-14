@@ -10,9 +10,12 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         id: request.id.toString(),
         data: {
             position: request.position,
-            roomId: request.room,
+            roomId: request.room?.id,
         },
     });
+
+    // console.log(request);
+    
 
     const startDate = startOfMonth(currentMonth);
     const checkIn = new Date(`${request.checkInDate}T${request.checkInTime}`);
@@ -115,6 +118,9 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
     const handleResize = (type, deltaDays) => {
         const updatedRequest = { ...request };
 
+        // console.log(updatedRequest);
+        
+
         if (type === "start") {
             const newCheckIn = new Date(checkIn);
             newCheckIn.setDate(newCheckIn.getDate() + deltaDays);
@@ -149,9 +155,15 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         return updatedRequest;
     };
 
+    // console.log(allRequests);
+    
+
 
     const isOverlap = (updatedRequest) => {
-        const roomRequests = allRequests.filter((req) => req.room === updatedRequest.room);
+        const roomRequests = allRequests.filter((req) => req.room?.id === updatedRequest.room?.id);
+
+        // console.log(updatedRequest);
+        
 
         // Проверяем пересечения с каждой заявкой в той же комнате
         return roomRequests.some((otherRequest) => {
@@ -438,9 +450,9 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                     {/* <Typography variant="body2">
                         <div style={styleToolTip}> Бронирование: <b>{request.id}</b></div>
                     </Typography> */}
-                    {request.room &&
+                    {request.room?.name &&
                         <Typography variant="body2">
-                            <div style={styleToolTip}> Комната: <b>{request.room}</b></div>
+                            <div style={styleToolTip}> Комната: <b>{request.room?.name}</b></div>
                         </Typography>
                     }
                     <Typography variant="body2">

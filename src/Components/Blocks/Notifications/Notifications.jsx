@@ -110,7 +110,7 @@ function Notifications({ onRequestClick, user }) {
           onClick={() => setSeparator("reserve")}
           className={separator === "reserve" ? classes.active : null}
         >
-          Резерв
+          Пассажиры
         </button>
       </div>
       {filteredNotifyData.map((notify, index) => {

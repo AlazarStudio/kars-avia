@@ -266,7 +266,7 @@ function HotelAbout_tabComponent({ id }) {
         // <div className={classes.hotelAbout} style={user?.role === roles.airlineAdmin ? {height:'calc(100vh - 130px)'} : {}}>
         <div
           className={classes.hotelAbout}
-          style={user?.airlineId ? { height: "calc(100vh - 130px)" } : {}}
+          style={user?.hotelId ? { height: "calc(100vh - 130px)" } : {}}
         >
           <div className={classes.column}>
             <div className={classes.hotelAbout_top}>
@@ -311,9 +311,9 @@ function HotelAbout_tabComponent({ id }) {
                 </div>
               </div>
               <div className={classes.hotelAbout_top_button}>
-                {(userRole == roles.superAdmin ||
-                  userRole == roles.hotelAdmin ||
-                  userRole == roles.dispatcerAdmin) && (
+                {(user?.role == roles.superAdmin ||
+                  user?.role == roles.hotelAdmin ||
+                  user?.role == roles.dispatcerAdmin) && (
                   <>
                     {/* <Button onClick={toggleLogsSidebar}>История</Button> */}
                     <div className={classes.hotelAbout_info__filters}>
@@ -386,8 +386,8 @@ function HotelAbout_tabComponent({ id }) {
 
           <div
             className={
-              user?.airlineId
-                ? classes.hotelAbout_info__arline
+              user?.hotelId
+                ? classes.hotelAbout_info__hotel
                 : classes.hotelAbout_info
             }
           >
@@ -415,7 +415,7 @@ function HotelAbout_tabComponent({ id }) {
                     name="stars"
                     value={hotel.stars || ""}
                     onChange={handleChange}
-                    disabled={!isEditing}
+                    disabled={user?.hotelId ? true : !isEditing}
                     className={classes.hotelAbout_info_input}
                   />
                 </div>
@@ -426,7 +426,7 @@ function HotelAbout_tabComponent({ id }) {
                     name="usStars"
                     value={hotel.usStars || ""}
                     onChange={handleChange}
-                    disabled={!isEditing}
+                    disabled={user?.hotelId ? true : !isEditing}
                     className={classes.hotelAbout_info_input}
                   />
                 </div>
@@ -614,7 +614,7 @@ function HotelAbout_tabComponent({ id }) {
               <div
                 className={
                   user?.role === roles.airlineAdmin
-                    ? classes.hotelAbout_rooms_block__airline
+                    ? classes.hotelAbout_rooms_block__hotel
                     : classes.hotelAbout_rooms_block
                 }
               >

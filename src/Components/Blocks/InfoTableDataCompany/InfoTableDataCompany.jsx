@@ -4,7 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 
 import { server } from '../../../../graphQL_requests.js';
 
-function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setChooseObject, id, ...props }) {
+function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, setChooseObject, id, ...props }) {
     const handleObject = (item, index) => {
         setChooseObject({ ...item, index });
         toggleRequestSidebar();
@@ -20,7 +20,7 @@ function InfoTableDataCompany({ children, toggleRequestSidebar, requests, setCho
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Уровень доступа</div>
             </div>
 
-            <div className={classes.bottom}>
+            <div className={classes.bottom} style={user?.hotelId ? {height: 'calc(100vh - 269px)'} : {}}>
                 {requests.map((item, index) => (
                     <div
                         className={classes.InfoTable_data}

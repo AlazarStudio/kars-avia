@@ -121,7 +121,7 @@
 .bottom {
     /* height: fit-content;
     max-height: calc(100vh - 350px); */
-    height: calc(100vh - 296px);
+    height: calc(100vh - 350px);
     overflow: hidden;
     overflow-y: scroll;
 }

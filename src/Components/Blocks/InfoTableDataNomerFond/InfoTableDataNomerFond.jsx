@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import classes from './InfoTableDataNomerFond.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, setFilter, ...props }) {
+function InfoTableDataNomerFond({ children, user, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, setFilter, ...props }) {
     const quotaRequests = [];
     const reserveRequests = [];
 
@@ -66,7 +66,7 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
                 <button onClick={() => setFilter('reserve')} className={filter === 'reserve' ? classes.activeButton : null}>Резерв</button>
             </div>
             <InfoTable>
-                <div className={classes.bottom}>
+                <div className={classes.bottom} style={user?.hotelId ? {height: 'calc(100vh - 290px)'} : {}}>
                     {filteredRequests.map((item, index) => (
                         <div key={index}>
                             <div

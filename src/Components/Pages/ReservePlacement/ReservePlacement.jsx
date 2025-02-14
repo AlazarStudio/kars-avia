@@ -70,16 +70,16 @@ function ReservePlacement({ children, user, ...props }) {
                         order: index + 1,
                         id: passenger.id || `id-${index}`
                     })),
-                    person: item.person.map((pers, index) => ({
-                        status: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).status : 'waiting',
-                        room: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).room : '-',
-                        name: pers.name || "не указано",
-                        gender: pers.gender || "не указано",
-                        number: pers.number || "не указано",
-                        type: pers.type || "не указано",
-                        order: index + 1,
-                        id: pers.id || `id-${index}`
-                    })),
+                    // person: item.person.map((pers, index) => ({
+                    //     status: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).status : 'waiting',
+                    //     room: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).room : '-',
+                    //     name: pers.name || "не указано",
+                    //     gender: pers.gender || "не указано",
+                    //     number: pers.number || "не указано",
+                    //     type: pers.type || "не указано",
+                    //     order: index + 1,
+                    //     id: pers.id || `id-${index}`
+                    // })),
                 }
             }));
 
@@ -303,19 +303,22 @@ function ReservePlacement({ children, user, ...props }) {
             const filteredPassengers = item.hotel.passengers.filter((passenger) =>
                 passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
             );
-            const filteredPersons = item.hotel.person.filter((person) =>
-                person.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+
+            // console.log(filteredPassengers);
+            
+            // const filteredPersons = item.hotel.person.filter((person) =>
+            //     person.name.toLowerCase().includes(searchQuery.toLowerCase())
+            // );
 
             const isHotelMatch = item.hotel.name.toLowerCase().includes(searchQuery.toLowerCase());
 
-            if (filteredPassengers.length > 0 || filteredPersons.length > 0 || isHotelMatch) {
+            if (filteredPassengers.length > 0 || isHotelMatch) {
                 return {
                     ...item,
                     hotel: {
                         ...item.hotel,
                         passengers: filteredPassengers,
-                        person: filteredPersons,
+                        // person: filteredPersons,
                     },
                 };
             }
@@ -323,6 +326,9 @@ function ReservePlacement({ children, user, ...props }) {
             return null;
         })
         .filter((item) => item !== null);
+
+        // console.log(filteredPlacement);
+        
 
     const [showChooseHotels, setShowChooseHotels] = useState(0);
 

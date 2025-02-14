@@ -39,12 +39,15 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     }
   }, [data, refetch]);
 
+  
+
   const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
 
   const {
     loading: bronLoading,
     error: bronError,
     data: bronData,
+    refetch: bronRefetch
   } = useQuery(GET_STAFF_HOTELS, {
     variables: { airlineStaffsId: id },
   });
@@ -53,7 +56,9 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     if (bronData && bronData.airlineStaffs) {
       setHotelBronsInfo(bronData.airlineStaffs);
     }
-  }, [bronData]);
+    bronRefetch();
+  }, [bronData, bronRefetch]);
+  // console.log(hotelBronsInfo);
 
   const [showAddCategory, setshowAddCategory] = useState(false);
   const [showUpdateCategory, setshowUpdateCategory] = useState(false);

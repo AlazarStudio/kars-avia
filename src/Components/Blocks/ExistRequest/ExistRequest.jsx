@@ -47,6 +47,11 @@ function ExistRequest({
     },
     variables: { requestId: chooseRequestID },
   });
+
+  // console.error(error);
+  
+
+  
   
   // useEffect(() => {
   //   if (error) {
@@ -229,9 +234,12 @@ function ExistRequest({
   // Обновляем mealData, когда formData меняется и данные mealPlan доступны
   useEffect(() => {
     if (formData?.mealPlan?.dailyMeals) {
-      setMealData(formData.mealPlan.dailyMeals);
+      setMealData(formData?.mealPlan?.dailyMeals);
     }
   }, [formData]);
+
+  // console.log(formData);
+  
 
   // Изменение в питании
   const handleMealChange = (index, mealType, value) => {
@@ -302,6 +310,9 @@ function ExistRequest({
 
   const [separator, setSeparator] = useState("airline");
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
+
+  // console.log(formData);
+
 
   return (
     <>
@@ -431,11 +442,11 @@ function ExistRequest({
                 <div className={classes.requestDataInfo}>
                   <div className={classes.requestDataInfo_title}>Питание</div>
                   <div className={classes.requestDataInfo_desc}>
-                    {formData.mealPlan.included ? "Включено" : "Не включено"}
+                    {formData?.mealPlan?.included ? "Включено" : "Не включено"}
                   </div>
                 </div>
 
-                {formData.mealPlan.included &&
+                {formData?.mealPlan?.included &&
                   formData.status !== "created" &&
                   formData.status !== "opened" && (
                     <>
@@ -494,7 +505,7 @@ function ExistRequest({
                           Номер комнаты
                         </div>
                         <div className={classes.requestDataInfo_desc}>
-                          {formData.hotelChess?.room}
+                          {formData.hotelChess?.room?.name}
                         </div>
                       </div>
                       <div className={classes.requestDataInfo}>
@@ -738,8 +749,10 @@ function ExistRequest({
                     onClose();
                     setShowChooseHotel(true);
                     setChooseCityRequest(formData.airport.city);
+                    localStorage.setItem("selectedTab", 0);
                   }}
                 >
+                  {/* {console.log(formData)} */}
                   Разместить
                   <img style={{width:'fit-content', height:'fit-content'}} src="/user-check.png" alt="" />
                 </Button>

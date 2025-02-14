@@ -112,9 +112,9 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     useEffect(() => {
         if (mealPriceData) {
             setMealPrices({
-                breakfast: mealPriceData.airline.mealPrice.breakfast,
-                lunch: mealPriceData.airline.mealPrice.lunch,
-                dinner: mealPriceData.airline.mealPrice.dinner
+                breakfast: mealPriceData.airline.mealPrice?.breakfast,
+                lunch: mealPriceData.airline.mealPrice?.lunch,
+                dinner: mealPriceData.airline.mealPrice?.dinner
             })
         }
     }, [mealPriceData]);

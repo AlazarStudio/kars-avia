@@ -111,9 +111,9 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
     useEffect(() => {
         if (mealPriceData) {
             setMealPrices({
-                breakfast: mealPriceData.hotel.mealPrice.breakfast,
-                lunch: mealPriceData.hotel.mealPrice.lunch,
-                dinner: mealPriceData.hotel.mealPrice.dinner
+                breakfast: mealPriceData.hotel.mealPrice?.breakfast,
+                lunch: mealPriceData.hotel.mealPrice?.lunch,
+                dinner: mealPriceData.hotel.mealPrice?.dinner
             })
         }
     }, [mealPriceData]);

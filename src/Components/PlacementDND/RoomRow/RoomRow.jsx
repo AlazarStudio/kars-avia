@@ -9,6 +9,9 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDr
         id: room.id,
     });
 
+    // console.log(requests);
+    
+
     const daysInMonth = eachDayOfInterval({
         start: startOfMonth(currentMonth),
         end: endOfMonth(currentMonth),

@@ -12,7 +12,7 @@ function CreateRequestReserve({ show, onClose, user }) {
     const [userID, setUserID] = useState();
 
     const [formData, setFormData] = useState({
-        reserveForPerson: '',
+        // reserveForPerson: '',
         airlineId: '',
         city: '',
         airportId: '',
@@ -46,7 +46,7 @@ function CreateRequestReserve({ show, onClose, user }) {
 
     const resetForm = () => {
         setFormData({
-            reserveForPerson: '',
+            // reserveForPerson: '',
             airlineId: user?.airlineId ? user?.airlineId : '',
             city: '',
             airportId: '',
@@ -77,12 +77,13 @@ function CreateRequestReserve({ show, onClose, user }) {
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
 
-        if (name === 'reserveForPerson') {
-            setFormData(prevState => ({
-                ...prevState,
-                [name]: value === 'true' // Преобразуем строку в boolean
-            }));
-        } else if (type === 'checkbox') {
+        // if (name === 'reserveForPerson') {
+        //     setFormData(prevState => ({
+        //         ...prevState,
+        //         [name]: value === 'true' // Преобразуем строку в boolean
+        //     }));
+        // } else 
+        if (type === 'checkbox') {
             setFormData(prevState => ({
                 ...prevState,
                 mealPlan: {
@@ -194,7 +195,7 @@ function CreateRequestReserve({ show, onClose, user }) {
             senderId: formData.senderId,
             airlineId: formData.airlineId,
             passengerCount: Number(formData.passengerCount),
-            reserveForPerson: formData.reserveForPerson
+            // reserveForPerson: formData.reserveForPerson
         };
 
         try {
@@ -216,7 +217,7 @@ function CreateRequestReserve({ show, onClose, user }) {
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
 
-                    <label>Тип заявки</label>
+                    {/* <label>Тип заявки</label>
                     <DropDownList
                         placeholder="Выберите тип"
                         searchable={false}
@@ -230,7 +231,7 @@ function CreateRequestReserve({ show, onClose, user }) {
                         }));
                         // setIsEdited(true);
                         }}
-                    />
+                    /> */}
                     {/* <select name="reserveForPerson" value={formData.reserveForPerson} onChange={handleChange}>
                         <option value="" disabled>Выберите тип</option>
                         <option value={true}>Заявка для экипажа</option>

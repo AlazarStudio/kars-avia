@@ -51,6 +51,10 @@ function Estafeta({ user }) {
     const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION);
     const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION);
 
+    // console.log(subscriptionData);
+    // console.log(subscriptionUpdateData);
+    
+
     // Локальное состояние для хранения новых заявок и всех заявок
     const [newRequests, setNewRequests] = useState([]);
     const [requests, setRequests] = useState([]);
@@ -73,8 +77,8 @@ function Estafeta({ user }) {
                     return prevRequests;
                 });
             }
-            refetch();
         }
+        refetch();
     }, [subscriptionData, currentPageRelay, refetch, statusFilter]);
 
     // Обновление списка заявок на основе данных запроса и новых заявок

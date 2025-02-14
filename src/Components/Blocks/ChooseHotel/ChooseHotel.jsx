@@ -52,12 +52,12 @@ function ChooseHotel({
 
   // Получаем уникальные города и фильтруем отели по выбранному городу
   const uniqueCities = useMemo(
-    () => [...new Set(hotels.map((hotel) => hotel.city?.trim()))].sort(),
+    () => [...new Set(hotels.map((hotel) => hotel.information?.city?.trim()))].sort(),
     [hotels]
   );
   const filteredHotels = useMemo(() => {
     return formData.city
-      ? hotels.filter((hotel) => hotel.city.trim() === formData.city.trim())
+      ? hotels.filter((hotel) => hotel.information?.city.trim() === formData.city.trim())
       : [];
   }, [formData.city, hotels]);
 
@@ -168,6 +168,7 @@ function ChooseHotel({
             dataObject={chooseObject}
             disabled={true}
           >
+            {/* {console.log(formData)} */}
             Разместить <img style={{width:'fit-content', height:'fit-content'}} src="/user-check.png" alt="" />
           </Button>
         </div>

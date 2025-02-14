@@ -139,7 +139,7 @@ function CreateRequestReport({ show, onClose }) {
         airlineId: formData.airlineId,
         hotelId: formData.hotelId,
       },
-      format: "EXCEL",
+      format: "xlsx",
     };
 
     try {
