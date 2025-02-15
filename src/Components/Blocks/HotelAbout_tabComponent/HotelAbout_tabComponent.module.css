@@ -355,9 +355,9 @@
         font-size: 14px;
     }
 
-    .hotelAbout_info_label {
-        /* font-size: 14px; */
-    }
+    /* .hotelAbout_info_label {
+        font-size: 14px;
+    } */
 
     .hotelAbout_info_item input {
         font-size: 14px;
@@ -388,6 +388,8 @@
     }
     .hotelAbout_info__contacts___arline {
         flex-direction: column;
+        padding-top: 0;
+        gap: 65px;
     }
 
     .hotelAbout_rooms_block__hotel {
@@ -412,11 +414,27 @@
 
 @media (min-height: 0px) and (max-height: 900px) {
     .hotelAbout_info {
-        height: 460px;
+        height: 400px;
     }
 
     .hotelAbout_info__hotel {
-        height: 590px;
+        /* height: 590px; */
+        height: 440px;
+    }
+
+    .hotelAbout_rooms_block__hotel {
+        height: 560px;
+    }
+}
+
+@media (min-height: 0px) and (max-height: 800px) {
+    .hotelAbout_info {
+        height: 360px;
+    }
+
+    .hotelAbout_info__hotel {
+        /* height: 590px; */
+        height: 400px;
     }
 
     .hotelAbout_rooms_block__hotel {

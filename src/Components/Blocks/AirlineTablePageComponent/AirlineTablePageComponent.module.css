@@ -361,7 +361,7 @@
     cursor: pointer;
 }
 
-@media (min-width: 0px) and (max-width: 1399px) {
+@media (min-width: 0px) and (max-width: 1499px) {
     .staffInfo {
         font-size: 12px;
     }

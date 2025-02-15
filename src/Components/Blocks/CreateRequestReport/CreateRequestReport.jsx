@@ -26,6 +26,7 @@ function CreateRequestReport({ show, onClose }) {
     endDate: "",
     airlineId: user.airlineId ? user.airlineId : "",
     hotelId: user.hotelId ? user.hotelId : "",
+    personId: "",
   });
 
   const [airlines, setAirlines] = useState([]);
@@ -40,6 +41,7 @@ function CreateRequestReport({ show, onClose }) {
       endDate: "",
       airlineId: user.airlineId ? user.airlineId : "",
       hotelId: user.hotelId ? user.hotelId : "",
+      personId: "",
     });
     setAirOrHotel("");
     setIsEdited(false); // Сброс флага изменений
@@ -90,20 +92,24 @@ function CreateRequestReport({ show, onClose }) {
     airOrHotel === "airline" ? GET_AIRLINES_RELAY : GET_HOTELS_RELAY
   );
 
-  const selectData = airOrHotel === "airline" ? data?.airlines.airlines : data?.hotels.hotels;
+  const selectData =
+    airOrHotel === "airline" ? data?.airlines.airlines : data?.hotels.hotels;
 
   useEffect(() => {
     setAirlines(selectData);
   }, [selectData]);
 
   // Мутация для создания нового отчета
-  const [createReport] = useMutation(airOrHotel === "airline" ? CREATE_REPORT : CREATE_HOTEL_REPORT, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  const [createReport] = useMutation(
+    airOrHotel === "airline" ? CREATE_REPORT : CREATE_HOTEL_REPORT,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    },
-  });
+    }
+  );
 
   const isFormValid = () => {
     return (
@@ -119,12 +125,12 @@ function CreateRequestReport({ show, onClose }) {
     e.preventDefault();
 
     if (!isFormValid()) {
-      alert('Пожалуйста, заполните все обязательные поля.')
+      alert("Пожалуйста, заполните все обязательные поля.");
       return;
     }
 
     if (formData.endDate < formData.startDate) {
-      alert('Конечная дата не может быть раньше начальной.')
+      alert("Конечная дата не может быть раньше начальной.");
       setFormData((prevFormData) => ({
         ...prevFormData,
         endDate: "",
@@ -138,6 +144,7 @@ function CreateRequestReport({ show, onClose }) {
         endDate: formData.endDate,
         airlineId: formData.airlineId,
         hotelId: formData.hotelId,
+        personId: formData.personId,
       },
       format: "xlsx",
     };
@@ -172,6 +179,8 @@ function CreateRequestReport({ show, onClose }) {
     // Очистка эффекта при демонтировании компонента
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton]);
+
+  // console.log(formData);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -227,6 +236,32 @@ function CreateRequestReport({ show, onClose }) {
                       setIsEdited(true);
                     }}
                   />
+                  {selectedAirline?.staff ? (
+                    <>
+                      <label>Сотрудник авиакомпании</label>
+                      <DropDownList
+                        placeholder="Введите сотрудника"
+                        options={selectedAirline.staff.map(
+                          (person) => person.name
+                        )}
+                        initialValue={
+                          selectedAirline.staff.find(
+                            (person) => person.id === formData.personId
+                          )?.name || ""
+                        }
+                        onSelect={(value) => {
+                          const selectedPerson = selectedAirline.staff.find(
+                            (person) => person.name === value
+                          );
+                          setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            personId: selectedPerson?.id || "",
+                          }));
+                          setIsEdited(true);
+                        }}
+                      />
+                    </>
+                  ) : null}
                 </>
               ) : airOrHotel === "hotel" ? (
                 <>

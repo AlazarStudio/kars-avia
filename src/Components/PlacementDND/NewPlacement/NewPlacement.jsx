@@ -722,12 +722,14 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             // Проверяем доступные позиции в целевой комнате
             const overlappingRequests = requests.filter(
                 (req) =>
-                    req.room === targetRoomId &&
+                    req.room?.name === targetRoomId &&
                     !(
                         new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
                         new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
                     )
             );
+
+            
 
             const occupiedPositions = overlappingRequests.map((req) => req.position);
             const availablePosition = getAvailablePosition(targetRoom.type, occupiedPositions);
@@ -873,14 +875,30 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     
         const isDouble = targetRoom?.type === 2;
     
-        const overlappingRequests = requests.filter(
-            (req) =>
+        // overlappingRequests old version
+        // const overlappingRequests = requests.filter(
+        //     (req) =>
+        //         req.room?.name === targetRoomId &&
+        //         !(
+        //             new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
+        //             new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
+        //         )
+        // );
+
+        const overlappingRequests = requests.filter((req) => {
+            // Собираем дату + время для каждой заявки и для draggedRequest
+            const reqStart = new Date(`${req.checkInDate}T${req.checkInTime}:00`);
+            const reqEnd   = new Date(`${req.checkOutDate}T${req.checkOutTime}:00`);
+            const dragStart = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}:00`);
+            const dragEnd   = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}:00`);
+        
+            // Проверяем, что заявка в той же комнате
+            // и интервалы [reqStart, reqEnd] и [dragStart, dragEnd] пересекаются
+            return (
                 req.room?.name === targetRoomId &&
-                !(
-                    new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
-                    new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
-                )
-        );
+                !(reqEnd <= dragStart || reqStart >= dragEnd)
+            );
+        });
 
         const occupiedPositions = overlappingRequests.map((req) => req.position);
 
@@ -1014,14 +1032,14 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         } else {
             // Перемещение существующих заявок
             if (targetRoom.active) {
-                if (draggedRequest.room === targetRoomId) {
+                if (draggedRequest.room?.name === targetRoomId) {
                     // Перемещение внутри одной комнаты
                     const targetPosition = parseInt(over.data.current?.position || 0);
     
                     if (draggedRequest.position !== targetPosition) {
                         setRequests((prevRequests) =>
                             prevRequests.map((request) => {
-                                if (request.room === targetRoomId) {
+                                if (request.room?.name === targetRoomId) {
                                     if (request.id === draggedRequest.id) {
                                         return { ...request, position: targetPosition };
                                     } else if (request.position === targetPosition) {
@@ -1167,6 +1185,47 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         setIsModalOpen(true);
     };
 
+    // Функция проверки пересечения заявок с учетом приведения room к идентификатору
+    const isOverlap = (updatedRequest) => {
+        // Получаем идентификатор комнаты для updatedRequest
+        const updatedRoomId =
+        updatedRequest.room && typeof updatedRequest.room === "object"
+            ? updatedRequest.room.id
+            : updatedRequest.room;
+    
+        // Фильтруем заявки в той же комнате, используя идентификатор
+        const roomRequests = requests.filter((req) => {
+        const reqRoomId =
+            req.room && typeof req.room === "object" ? req.room.id : req.room;
+        return reqRoomId === updatedRoomId;
+        });
+    
+        const updatedCheckIn = new Date(
+        `${updatedRequest.checkInDate}T${updatedRequest.checkInTime}`
+        );
+        const updatedCheckOut = new Date(
+        `${updatedRequest.checkOutDate}T${updatedRequest.checkOutTime}`
+        );
+    
+        return roomRequests.some((otherRequest) => {
+        // Пропускаем саму заявку
+        if (otherRequest.id === updatedRequest.id) return false;
+        // Если заявки находятся на разных позициях в комнате – пересечение не учитываем
+        if (otherRequest.position !== updatedRequest.position) return false;
+    
+        const otherCheckIn = new Date(
+            `${otherRequest.checkInDate}T${otherRequest.checkInTime}`
+        );
+        const otherCheckOut = new Date(
+            `${otherRequest.checkOutDate}T${otherRequest.checkOutTime}`
+        );
+        // Если интервалы не пересекаются, возвращаем false
+        return !(updatedCheckOut <= otherCheckIn || updatedCheckIn >= otherCheckOut);
+        });
+    };
+  
+  
+
     const handleSaveChanges = async (updatedRequest) => {
         // Определяем изменения в дате заезда или выезда
         const originalCheckIn = new Date(`${editableRequest.checkInDate}T${editableRequest.checkInTime}`);
@@ -1202,6 +1261,12 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             ...updatedRequest,
             status: newStatus,
         };
+
+        // Добавляем проверку пересечения
+        if (isOverlap(requestToSave)) {
+            addNotification("Изменение заявки недопустимо: пересечение с другой заявкой!", "error");
+            return; // Не сохраняем изменения, если есть пересечение
+        }
     
         // Сохраняем изменения локально
         setRequests((prevRequests) =>

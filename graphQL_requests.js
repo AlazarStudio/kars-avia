@@ -1085,12 +1085,6 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION = gql`
         gender
       }
       capacity
-      person {
-        id
-        name
-        number
-        gender
-      }
       reserve {
         id
       }

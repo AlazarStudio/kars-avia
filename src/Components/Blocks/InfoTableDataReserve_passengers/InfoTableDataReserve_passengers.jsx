@@ -383,6 +383,7 @@ function InfoTableDataReserve_passengers({
   };
 
   const [orgName, setOrgName] = useState("");
+  const [messageCount, setMessageCount] = useState(0);
 
   // console.log(request.airline);
 
@@ -453,6 +454,11 @@ function InfoTableDataReserve_passengers({
                           {orgName === item.hotel.name
                             ? "Этот чат открыт"
                             : "Открыть чат"}
+                          {/* {messageCount > 0 ? (
+                            <div className={classes.messageCount}>
+                              {messageCount}
+                            </div>
+                          ) : null} */}
                         </button>
                       ) : null}
                       {/* {console.log(item)} */}
@@ -832,6 +838,7 @@ function InfoTableDataReserve_passengers({
           setIsHaveTwoChats={setIsHaveTwoChats}
           setHotelChats={setHotelChats}
           setTitle={setOrgName}
+          setMessageCount={setMessageCount}
           chooseRequestID={""}
           chooseReserveID={request.id}
           token={token}

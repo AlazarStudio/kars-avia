@@ -5,7 +5,7 @@ import Smiles from "../Smiles/Smiles";
 import { convertToDate, GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 
-function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTitle, separator, hotelChatId, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
+function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTitle, setMessageCount, separator, hotelChatId, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
     const messagesEndRef = useRef(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [showScrollButton, setShowScrollButton] = useState(false);
@@ -17,6 +17,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         setNewMessagesCount(0);
+        setMessageCount ? setMessageCount(0) : null
         setShowScrollButton(false);
     };
 
@@ -122,10 +123,14 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
             if (newMessage.sender.id !== userID) {
                 setNewMessagesCount(prevCount => prevCount + 1);
                 setShowScrollButton(true);
+                setMessageCount ? setMessageCount(prev => prev + 1) : null
             }
             setIsUserMessage(false);
         }
     }, [subscriptionData, userID]);
+
+    // console.log(subscriptionData);
+    
 
     useEffect(() => {
         const observer = new IntersectionObserver(

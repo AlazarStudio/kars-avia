@@ -266,7 +266,7 @@ function HotelAbout_tabComponent({ id }) {
         // <div className={classes.hotelAbout} style={user?.role === roles.airlineAdmin ? {height:'calc(100vh - 130px)'} : {}}>
         <div
           className={classes.hotelAbout}
-          style={user?.hotelId ? { height: "calc(100vh - 130px)" } : {}}
+          style={user?.hotelId || user?.airlineId ? { height: "calc(100vh - 130px)" } : {}}
         >
           <div className={classes.column}>
             <div className={classes.hotelAbout_top}>
@@ -386,7 +386,7 @@ function HotelAbout_tabComponent({ id }) {
 
           <div
             className={
-              user?.hotelId
+              user?.hotelId || user?.airlineId
                 ? classes.hotelAbout_info__hotel
                 : classes.hotelAbout_info
             }

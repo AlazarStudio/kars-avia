@@ -90,8 +90,9 @@ function HotelShahmatka_tabComponent({ id }) {
             <div className={classes.section_searchAndFilter}>
                 <input
                     type="text"
+                    className={classes.searchInput}
                     placeholder="Поиск по номеру комнаты или ФИО клиента"
-                    style={{ 'width': '500px' }}
+                    // style={{ 'width': '500px' }}
                     value={searchQuery}
                     onChange={handleSearch}
                 />

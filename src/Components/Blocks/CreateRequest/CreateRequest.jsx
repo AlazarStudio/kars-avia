@@ -20,6 +20,9 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
     const infoAirports = useQuery(GET_AIRPORTS_RELAY);
     const [airports, setAirports] = useState([]);  // Список аэропортов
 
+    const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
+    const { data: dataSubscriptionUpd } = useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION);
+
     // Состояние активной вкладки и данных формы
     const [activeTab, setActiveTab] = useState('Общая');
     const [formData, setFormData] = useState({
@@ -63,13 +66,16 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
     }, [infoAirports.data]);
 
     useEffect(() => {
-            refetch();
-            setAirlines(data?.airlines?.airlines);
-            if (user?.airlineId) {
-                const selectedAirline = data?.airlines?.airlines.find(airline => airline.id === user.airlineId);
-                setSelectedAirline(selectedAirline);
-            }
-    }, [show]);
+        setAirlines(data?.airlines?.airlines);
+        if (user?.airlineId) {
+            const selectedAirline = data?.airlines?.airlines.find(airline => airline.id === user.airlineId);
+            setSelectedAirline(selectedAirline);
+        }
+        refetch();
+    }, [show, dataSubscription, dataSubscriptionUpd, refetch]);
+
+    // console.log(dataSubscriptionUpd);
+    
 
     // Обновление ID пользователя и других начальных данных при наличии токена и данных
     useEffect(() => {

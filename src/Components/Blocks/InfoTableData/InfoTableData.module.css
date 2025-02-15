@@ -49,7 +49,8 @@
 
 .InfoTable_data_elem {
     font-family: Nunito Sans;
-    font-size: 16px;
+    /* font-size: 16px; */
+    font-size: 15px;
     font-weight: 400;
     color: var(--main-gray);
     width: 100%;
@@ -138,6 +139,20 @@
     top: 10px;
 }
 
+@media (min-width: 0px) and (max-width: 1599px) {
+    .InfoTable_data_elem {
+        font-size: 14px;
+    }
+
+    .InfoTable_data_elem_information{
+        gap: 0;
+    }
+
+    .InfoTable_data_elem_moreInfo {
+        font-size: 13px;
+    }
+}
+
 @media (min-width: 0px) and (max-width: 1399px) {
     .InfoTable_data_elem_position {
         width: 81%;
@@ -148,9 +163,9 @@
         text-align: center;
     }
 
-    .InfoTable_data_elem {
-        font-size: 14px;
-    }
+    /* .InfoTable_data_elem {
+        font-size: 12px;
+    } */
 
     .InfoTable_data_elem_moreInfo {
         font-size: 13px;

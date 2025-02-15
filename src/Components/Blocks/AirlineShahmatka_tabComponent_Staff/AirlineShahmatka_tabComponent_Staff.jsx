@@ -9,8 +9,10 @@ import {
   GET_BRONS_HOTEL,
   GET_STAFF_HOTELS,
   getCookie,
+  REQUEST_CREATED_SUBSCRIPTION,
+  REQUEST_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import AirlineTablePageComponent from "../AirlineTablePageComponent/AirlineTablePageComponent.jsx";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import UpdateRequestAirlineStaff from "../UpdateRequestAirlineStaff/UpdateRequestAirlineStaff.jsx";
@@ -18,13 +20,8 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { roles } from "../../../roles.js";
 
 function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
-  const [userRole, setUserRole] = useState();
   const token = getCookie("token");
   const user = decodeJWT(token);
-
-  useEffect(() => {
-    setUserRole(decodeJWT(token).role);
-  }, [token]);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_USERS, {
     variables: { airlineId: id },
@@ -38,8 +35,6 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
       refetch();
     }
   }, [data, refetch]);
-
-  
 
   const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
 
@@ -59,6 +54,30 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     bronRefetch();
   }, [bronData, bronRefetch]);
   // console.log(hotelBronsInfo);
+
+    // Подписки для отслеживания создания и обновления заявок
+    const { data: subscriptionData } = useSubscription(
+      REQUEST_CREATED_SUBSCRIPTION,
+      {
+        onData: () => {
+          bronRefetch(); // Обновляем данные после новых событий
+          refetch();
+        },
+      }
+    );
+  
+    const { data: subscriptionUpdateData } = useSubscription(
+      REQUEST_UPDATED_SUBSCRIPTION,
+      {
+        onData: () => {
+          bronRefetch(); // Обновляем данные после новых событий
+          refetch();
+        },
+      }
+    );
+  
+  // console.log(subscriptionUpdateData);
+  
 
   const [showAddCategory, setshowAddCategory] = useState(false);
   const [showUpdateCategory, setshowUpdateCategory] = useState(false);

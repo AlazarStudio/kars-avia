@@ -49,10 +49,6 @@ function ExistRequest({
   });
 
   // console.error(error);
-  
-
-  
-  
   // useEffect(() => {
   //   if (error) {
   //     console.error("Ошибка в GET_REQUEST:", error);
@@ -98,6 +94,7 @@ function ExistRequest({
     resetForm();
     onClose();
     setChooseRequestID("");
+    setMealData([]);
     setFormDataExtend((prev) =>({
       ...prev,
       departureDate:'',
@@ -325,7 +322,7 @@ function ExistRequest({
                 formData.status == "extended" ||
                 formData.status == "reduced" ||
                 formData.status == "transferred" ||
-                formData.status == "earlyStart") && (
+                formData.status == "earlyStart") && handleCancelRequest && (
                 <button
                   className={classes.canceledButton}
                   onClick={() => {

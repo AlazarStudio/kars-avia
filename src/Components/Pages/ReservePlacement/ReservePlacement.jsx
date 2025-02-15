@@ -103,14 +103,14 @@ function ReservePlacement({ children, user, ...props }) {
                             order: index + 1,
                             id: passenger.id || `id-${index}`
                         })),
-                        person: subscriptionData.reserveHotel.person.map((pers, index) => ({
-                            name: pers.name || "не указано",
-                            gender: pers.gender || "не указано",
-                            number: pers.number || "не указано",
-                            type: pers.type || "не указано",
-                            order: index + 1,
-                            id: pers.id || `id-${index}`
-                        })),
+                        // person: subscriptionData.reserveHotel.person.map((pers, index) => ({
+                        //     name: pers.name || "не указано",
+                        //     gender: pers.gender || "не указано",
+                        //     number: pers.number || "не указано",
+                        //     type: pers.type || "не указано",
+                        //     order: index + 1,
+                        //     id: pers.id || `id-${index}`
+                        // })),
                     }
                 };
 
@@ -143,15 +143,15 @@ function ReservePlacement({ children, user, ...props }) {
                                             id: passenger.id || `id-${index}`
                                         }))
                                     ],
-                                    person: [
-                                        ...hotelData.hotel.person,
-                                        ...reservePersons.person.map(person => ({
-                                            id: person.id,
-                                            name: person.name,
-                                            number: person.number || "не указано",
-                                            gender: person.gender || "не указано",
-                                        }))
-                                    ]
+                                    // person: [
+                                    //     ...hotelData.hotel.person,
+                                    //     ...reservePersons.person.map(person => ({
+                                    //         id: person.id,
+                                    //         name: person.name,
+                                    //         number: person.number || "не указано",
+                                    //         gender: person.gender || "не указано",
+                                    //     }))
+                                    // ]
                                 }
                             };
                         }

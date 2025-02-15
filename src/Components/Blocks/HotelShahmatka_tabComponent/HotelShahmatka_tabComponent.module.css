@@ -11,6 +11,10 @@
     gap: 20px;
 }
 
+.searchInput {
+    width: 500px;
+}
+
 .legend {
     display: flex;
     justify-content: space-between;
@@ -38,4 +42,24 @@
     font-size: 12px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1499px) {
+    .searchInput {
+        width: 400px;
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {
+    .legendInfoText {
+        font-size: 11px;
+    }
+
+    .legendInfoColor {
+        width: 15px;
+        height: 15px;
+    }
+
+    .searchInput {
+        width: 350px;
+        font-size: 14px;
+    }
+}

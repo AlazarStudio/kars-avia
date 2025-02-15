@@ -64,6 +64,11 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
         }
     }, [currentMonth, currentYear]);
 
+    useEffect(() => {
+        dispatch({ type: 'SET_FLIGHT_INFO', payload: dataInfo });
+    }, [dataInfo]);
+    
+
     const getDaysInMonth = (month, year) => {
         return new Date(year, month + 1, 0).getDate();
     };
@@ -276,7 +281,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
                 onClose={() => setShowERequestSidebar(false)}
                 chooseRequestID={chooseRequestID}
                 setChooseRequestID={setChooseRequestID}
-                handleCancelRequest={handleCancelRequest}
+                // handleCancelRequest={handleCancelRequest}
                 user={user}
             />
         </>
