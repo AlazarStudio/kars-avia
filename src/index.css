@@ -184,3 +184,37 @@ textarea {
     opacity: 0.5;
     pointer-events: none;
 }
+
+.swiper {
+    position: static;
+    /* max-width: 65vw;
+    max-height: 65vh;
+    min-width: 65vw;
+    min-height: 65vh; */
+}
+
+/* Стиль для контейнера пагинации */
+.swiper-pagination {
+    position: absolute !important;
+    bottom: -50px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 1000 !important;
+}
+
+/* Стиль для точек пагинации */
+.swiper-pagination-bullet {
+    background-color: rgb(255, 255, 255) !important;
+    width: 12px !important;
+    height: 12px !important;
+    margin: 0 5px !important;
+    border-radius: 50% !important;
+    opacity: 0.5;
+    transition: background-color 0.3s ease !important;
+}
+
+/* Стиль для активной точки пагинации */
+.swiper-pagination-bullet-active {
+    background-color: #0057C3 !important;
+    opacity: 1;
+}

@@ -799,7 +799,7 @@ export const SAVE_HANDLE_EXTEND_MUTATION = gql`
 
 export const CHANGE_TO_ARCHIVE = gql`
   mutation Mutation($archivingRequstId: ID!) {
-    archivingRequst(id: $archivingRequstId) {
+    archivingRequest(id: $archivingRequstId) {
       id
     }
   }

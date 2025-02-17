@@ -21,7 +21,7 @@ function EditRequestNomerFond({
   addTarif,
   setAddTarif,
   selectedNomer,
-  filter
+  filter,
 }) {
   const token = getCookie("token");
   // console.log(category);
@@ -78,13 +78,20 @@ function EditRequestNomerFond({
   }, []);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        roomImages: file, // Сохраняем файл напрямую
-      }));
+    const files = e.target.files;
+    if (files.length > 8) {
+      alert("Вы можете загрузить не более 8 изображений.");
+      e.target.value = null;
+      return;
     }
+
+    // Преобразуем файлы в массив
+    const fileArray = Array.from(files);
+
+    setFormData((prevState) => ({
+      ...prevState,
+      roomImages: fileArray, // Сохраняем массив файлов
+    }));
   };
 
   const [updateHotel] = useMutation(UPDATE_HOTEL, {
@@ -100,8 +107,11 @@ function EditRequestNomerFond({
     e.preventDefault();
 
     const nomerName =
-      filter == 'quote' ? formData.nomerName :
-        filter == 'reserve' && formData.nomerName.includes('резерв') ? formData.nomerName : `${formData.nomerName} (резерв)`;
+      filter == "quote"
+        ? formData.nomerName
+        : filter == "reserve" && formData.nomerName.includes("резерв")
+        ? formData.nomerName
+        : `${formData.nomerName} (резерв)`;
 
     let response_update_room = await updateHotel({
       variables: {
@@ -130,20 +140,20 @@ function EditRequestNomerFond({
                 room.category === "onePlace"
                   ? "Одноместный"
                   : room.category === "twoPlace"
-                    ? "Двухместный"
-                    : room.category === "threePlace"
-                      ? "Трехместный"
-                      : room.category === "fourPlace"
-                        ? "Четырехместный"
-                          : room.category === "fivePlace"
-                          ? "Пятиместный"
-                          : room.category === "sixPlace"
-                            ? "Шестиместный"
-                            : room.category === "sevenPlace"
-                              ? "Семиместный"
-                              : room.category === "eightPlace"
-                                ? "Восьмиместный"
-                                  : "",
+                  ? "Двухместный"
+                  : room.category === "threePlace"
+                  ? "Трехместный"
+                  : room.category === "fourPlace"
+                  ? "Четырехместный"
+                  : room.category === "fivePlace"
+                  ? "Пятиместный"
+                  : room.category === "sixPlace"
+                  ? "Шестиместный"
+                  : room.category === "sevenPlace"
+                  ? "Семиместный"
+                  : room.category === "eightPlace"
+                  ? "Восьмиместный"
+                  : "",
               origName: room.category,
               rooms: [],
             };
@@ -201,7 +211,11 @@ function EditRequestNomerFond({
           <input
             type="text"
             name="nomerName"
-            value={formData.nomerName.includes('резерв') ? formData.nomerName.split(' (резерв)')[0] : `${formData.nomerName}`}
+            value={
+              formData.nomerName.includes("резерв")
+                ? formData.nomerName.split(" (резерв)")[0]
+                : `${formData.nomerName}`
+            }
             onChange={handleChange}
             placeholder="Пример: № 151"
           />
@@ -232,8 +246,8 @@ function EditRequestNomerFond({
               formData.reserve === true
                 ? "true"
                 : formData.reserve === false
-                  ? "false"
-                  : ""
+                ? "false"
+                : ""
             }
             onChange={(e) => {
               const value = e.target.value === "true"; // Преобразование строки в булевое значение
@@ -258,8 +272,8 @@ function EditRequestNomerFond({
               formData.active === true
                 ? "true"
                 : formData.active === false
-                  ? "false"
-                  : ""
+                ? "false"
+                : ""
             }
             onChange={(e) => {
               const value = e.target.value === "true";
@@ -286,7 +300,12 @@ function EditRequestNomerFond({
           ></textarea>
 
           <label>Изображение</label>
-          <input type="file" name="roomImages" onChange={handleFileChange} />
+          <input
+            type="file"
+            name="roomImages"
+            onChange={handleFileChange}
+            multiple
+          />
         </div>
       </div>
 

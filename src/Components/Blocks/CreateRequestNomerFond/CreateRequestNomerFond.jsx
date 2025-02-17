@@ -84,13 +84,20 @@ function CreateRequestNomerFond({
   }, []);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        roomImages: file, // Сохраняем файл напрямую
-      }));
+    const files = e.target.files;
+    if (files.length > 8) {
+      alert("Вы можете загрузить не более 8 изображений.");
+      e.target.value = null;
+      return;
     }
+    
+    // Преобразуем файлы в массив
+    const fileArray = Array.from(files);
+    
+    setFormData((prevState) => ({
+      ...prevState,
+      roomImages: fileArray, // Сохраняем массив файлов
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -111,7 +118,7 @@ function CreateRequestNomerFond({
 
     let response_update_room;
 
-    if (formData.roomImages) {
+    if (formData.roomImages.length > 0) {
       response_update_room = await updateHotel({
         variables: {
           updateHotelId: id,
@@ -274,7 +281,7 @@ function CreateRequestNomerFond({
           ></textarea>
 
           <label>Изображение</label>
-          <input type="file" name="roomImages" onChange={handleFileChange} />
+          <input type="file" name="roomImages" onChange={handleFileChange} multiple/>
         </div>
       </div>
 
