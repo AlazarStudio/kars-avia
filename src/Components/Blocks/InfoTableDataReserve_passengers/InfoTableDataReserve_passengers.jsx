@@ -282,7 +282,7 @@ function InfoTableDataReserve_passengers({
     setTimeout(() => {
       newGuestRef.current?.scrollIntoView({
         behavior: "smooth",
-        block: "center",
+        block: "end", // было center
       });
     }, 100);
   };
@@ -420,7 +420,7 @@ function InfoTableDataReserve_passengers({
 
         <div
           className={classes.bottom}
-          style={{ height: user.role == "HOTELADMIN" && "calc(100vh)" }}
+          style={{ height: user.role == roles.hotelAdmin && "calc(100vh - 280px)" }}
         >
           {filteredPlacement.map((item, hotelIndex) => {
             return (
@@ -640,6 +640,21 @@ function InfoTableDataReserve_passengers({
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                     >
+                      <input
+                        type="text"
+                        placeholder="Номер телефона"
+                        value={newPassengerData.number}
+                        onChange={(e) =>
+                          setNewPassengerData({
+                            ...newPassengerData,
+                            number: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div
+                      className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                    >
                       <select
                         value={newPassengerData.gender}
                         onChange={(e) =>
@@ -653,21 +668,6 @@ function InfoTableDataReserve_passengers({
                         <option value="Мужской">Мужской</option>
                         <option value="Женский">Женский</option>
                       </select>
-                    </div>
-                    <div
-                      className={`${classes.InfoTable_data_elem} ${classes.w20}`}
-                    >
-                      <input
-                        type="text"
-                        placeholder="Номер телефона"
-                        value={newPassengerData.number}
-                        onChange={(e) =>
-                          setNewPassengerData({
-                            ...newPassengerData,
-                            number: e.target.value,
-                          })
-                        }
-                      />
                     </div>
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}

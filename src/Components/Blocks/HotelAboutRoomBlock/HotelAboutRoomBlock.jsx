@@ -62,11 +62,11 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
                 </SwiperSlide>
               ))
             ) : (
-              <img
-                src={"/no-image.png"}
-                className={classes.modalImage}
-                alt="Room"
-              />
+                <img
+                  src={"/no-image.png"}
+                  alt="Room"
+                  className={classes.modalImage}
+                />
             )}
           </Swiper>
           <button
@@ -75,7 +75,10 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
           >
             X
           </button>
-          <div className={classes.swiperButtons}>
+          <div
+            className={classes.swiperButtons}
+            style={props.images.length <= 1 ? { display: "none" } : {}}
+          >
             <button
               onClick={() => swiper.slidePrev()}
               style={{ position: "absolute", left: "-100px" }}
