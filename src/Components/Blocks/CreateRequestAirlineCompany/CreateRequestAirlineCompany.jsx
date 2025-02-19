@@ -125,7 +125,7 @@ function CreateRequestAirlineCompany({
     e.preventDefault();
 
     if (!isFormValid()) {
-      alert('Пожалуйста, заполните все обязательные поля.')
+      alert("Пожалуйста, заполните все обязательные поля.");
       return;
     }
 
@@ -200,11 +200,10 @@ function CreateRequestAirlineCompany({
         onClose();
       }
     } catch (err) {
-      console.error(err)
+      console.error(err);
       alert("Произошла ошибка при сохранении данных");
     }
   };
-
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -248,6 +247,7 @@ function CreateRequestAirlineCompany({
             value={formData.name}
             onChange={handleChange}
             placeholder="Введите ФИО"
+            autoComplete="new-password"
           />
 
           <label>Почта</label>
@@ -257,6 +257,7 @@ function CreateRequestAirlineCompany({
             value={formData.email}
             onChange={handleChange}
             placeholder="Введите email"
+            autoComplete="new-password"
           />
 
           <label>Роль</label>
@@ -296,6 +297,7 @@ function CreateRequestAirlineCompany({
             value={formData.login}
             onChange={handleChange}
             placeholder="Введите логин"
+            autoComplete="new-password"
           />
 
           <label>Пароль</label>
@@ -305,6 +307,7 @@ function CreateRequestAirlineCompany({
             value={formData.password}
             onChange={handleChange}
             placeholder="Введите пароль"
+            autoComplete="new-password"
           />
 
           <label>Отдел</label>
@@ -324,7 +327,12 @@ function CreateRequestAirlineCompany({
           </select>
 
           <label>Аватар</label>
-          <input type="file" name="images" onChange={handleFileChange} ref={fileInputRef} />
+          <input
+            type="file"
+            name="images"
+            onChange={handleFileChange}
+            ref={fileInputRef}
+          />
         </div>
       </div>
 

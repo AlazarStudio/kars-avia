@@ -147,6 +147,13 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
+      if (e.startsWith("ApolloError: Пользователь с таким логином уже существует")) {
+        alert("Пользователь с таким логином уже существует");
+      } else if (e.startsWith("ApolloError: Пользователь с таким email уже существует")) {
+        alert("Пользователь с такой почтой уже существует");
+      } else if (e.startsWith("ApolloError: Пользователь с таким email и логином уже существует")) {
+        alert("Пользователь с такой почтой и логином уже существует");
+      }
     }
     // addDispatcher({
     //     ...formData,
@@ -204,6 +211,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
             placeholder="Иванов Иван Иванович"
             value={formData.name}
             onChange={handleChange}
+            autoComplete="new-password"
           />
 
           <label>Почта</label>
@@ -213,6 +221,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
             placeholder="example@mail.ru"
             value={formData.email}
             onChange={handleChange}
+            autoComplete="new-password"
           />
 
           <label>Роль</label>
@@ -277,7 +286,8 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
             placeholder="Логин"
             value={formData.login}
             onChange={handleChange}
-          />
+            autoComplete="new-password"
+            />
 
           <label>Пароль</label>
           <input
@@ -286,6 +296,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
             placeholder="Пароль"
             value={formData.password}
             onChange={handleChange}
+            autoComplete="new-password"
           />
 
           <label>Аватар</label>
