@@ -10,6 +10,8 @@ import Header from "../Header/Header";
 import { GET_REQUESTS, GET_AIRLINE, REQUEST_CREATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, GET_REQUESTS_ARCHIVED, getCookie, CANCEL_REQUEST } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ReactPaginate from 'react-paginate';
+import { TextField } from "@mui/material";
+import MUITextField from "../MUITextField/MUITextField.jsx";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 function Estafeta({ user }) {
@@ -221,6 +223,20 @@ function Estafeta({ user }) {
         if (airlineData) setAirlineName(airlineData.airline.name);
     }, [airlineData]);
 
+    // Маппинг статусов: ключ – внутреннее значение, значение – отображаемое название
+    const statusMapping = {
+        opened: "В обработке",
+        canceled: "Отменен",
+        done: "Размещен",
+        created: "Создан",
+        extended: "Продлен",
+        reduced: "Сокращен",
+        transferred: "Перенесен",
+        earlyStart: "Ранний заезд",
+        archiving: "Готов к архиву",
+        archived: "Архив"
+    };
+
     // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
     const filteredRequests = useMemo(() => {
         const dataSource = isSearching ? allFilteredData : requests; // Используем данные из поиска или стандартные
@@ -237,8 +253,12 @@ function Estafeta({ user }) {
     
             // Если выбран аэропорт, фильтруем по аэропорту. Если "Все аэропорты", не фильтруем.
             const matchesAirport = selectedAirport?.name ? request.airport.id === selectedAirport.id : true;
+
+            // Получаем читаемое название статуса
+            const statusDisplay = statusMapping[request.status] || request.status;
     
             const searchFields = [
+                request.requestNumber,
                 request.person.name,
                 request.person.number,
                 request.person.position,
@@ -248,7 +268,8 @@ function Estafeta({ user }) {
                 request.airport.code,
                 request.arrival,
                 request.departure,
-                request.status
+                request.status,
+                statusDisplay
             ];
     
             return matchesAirline && matchesAirport && matchesSelect && matchesDate && searchFields.some(field => field.toLowerCase().includes(matchesSearch));
@@ -284,14 +305,21 @@ function Estafeta({ user }) {
             {/* <Header>Эстафета</Header> */}
             <Header>Эскадрилья</Header>
             <div className={classes.section_searchAndFilter}>
-                <input
+                {/* <input
                     type="text"
                     placeholder="Поиск"
                     className={classes.mainSearch}
                     // style={{ width: '500px' }}
                     value={searchQuery}
                     onChange={handleSearch}
+                /> */}
+                <MUITextField
+                    className={classes.mainSearch}
+                    label={'Поиск'}
+                    value={searchQuery}
+                    onChange={handleSearch}
                 />
+
                 <Filter
                     user={user}
                     isVisibleAirFiler={true}

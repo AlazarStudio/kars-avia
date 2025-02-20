@@ -5,6 +5,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_REQUEST_MUTATION, decodeJWT, GET_AIRLINES_RELAY, GET_AIRLINES_SUBSCRIPTION, GET_AIRLINES_UPDATE_SUBSCRIPTION, GET_AIRPORTS_RELAY, GET_USER_BRONS, getCookie } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 // Компонент для создания новой заявки
 function CreateRequest({ show, onClose, onMatchFound, user }) {
@@ -364,7 +365,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
 
             <div className={classes.tabs}>
                 <div className={`${classes.tab} ${activeTab === 'Общая' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Общая')}>Общая</div>
-                <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
+                {/* <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div> */}
             </div>
 
             <div className={classes.requestMiddle}>
@@ -376,8 +377,23 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
 
                         {user?.airlineId? null : (
                             <>
-                                <label>Авиакомпания</label>
-                                <DropDownList
+                                {/* <label>Авиакомпания</label> */}
+                                <MUIAutocomplete
+                                    dropdownWidth={'100%'}
+                                    label={"Авиакомпания"}
+                                    options={airlines?.map(airline => airline.name)}
+                                    value={selectedAirline ? selectedAirline?.name : ""}
+                                    onChange={(event, newValue) => {
+                                        const selectedAirline = airlines.find(airline => airline.name === newValue);
+                                        setSelectedAirline(selectedAirline);
+                                        setFormData(prevFormData => ({
+                                            ...prevFormData,
+                                            airlineId: selectedAirline?.id || ""
+                                        }));
+                                        setIsEdited(true);
+                                    }}
+                                />
+                                {/* <DropDownList
                                     placeholder="Введите авиакомпанию"
                                     options={airlines?.map(airline => airline.name)}
                                     initialValue={selectedAirline?.name || ""}
@@ -390,14 +406,28 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                                         }));
                                         setIsEdited(true);
                                     }}
-                                />
+                                /> */}
                             </>
                         )}
 
                         {selectedAirline && (
                             <>
-                                <label>Сотрудник авиакомпании</label>
-                                <DropDownList
+                                {/* <label>Сотрудник авиакомпании</label> */}
+                                <MUIAutocomplete
+                                    dropdownWidth={'100%'}
+                                    label={"Сотрудник авиакомпании"}
+                                    options={selectedAirline.staff.map(person => person.name)}
+                                    value={selectedAirline.staff.find(person => person.id === formData.personId)?.name || ""}
+                                    onChange={(event, newValue) => {
+                                        const selectedPerson = selectedAirline.staff.find(person => person.name === newValue);
+                                        setFormData(prevFormData => ({
+                                            ...prevFormData,
+                                            personId: selectedPerson?.id || ""
+                                        }));
+                                        setIsEdited(true);
+                                    }}
+                                />
+                                {/* <DropDownList
                                     placeholder="Введите сотрудника"
                                     options={selectedAirline.staff.map(person => person.name)}
                                     initialValue={selectedAirline.staff.find(person => person.id === formData.personId)?.name || ""}
@@ -409,12 +439,26 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                                         }));
                                         setIsEdited(true);
                                     }}
-                                />
+                                /> */}
                             </>
                         )}
 
-                        <label>Город</label>
-                        <DropDownList
+                        {/* <label>Город</label> */}
+                        <MUIAutocomplete
+                            dropdownWidth={'100%'}
+                            label={"Город"}
+                            options={uniqueCities}
+                            value={formData.city}
+                            onChange={(event, newValue) => {
+                                setFormData(prevFormData => ({
+                                    ...prevFormData,
+                                    city: newValue,
+                                    airportId: ""
+                                }));
+                                setIsEdited(true);
+                            }}
+                        />
+                        {/* <DropDownList
                             placeholder="Введите город"
                             options={uniqueCities}
                             initialValue={formData.city}
@@ -426,12 +470,26 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                                 }));
                                 setIsEdited(true);
                             }}
-                        />
+                        /> */}
 
                         {formData.city && (
                             <>
-                                <label>Аэропорт</label>
-                                <DropDownList
+                                {/* <label>Аэропорт</label> */}
+                                <MUIAutocomplete
+                                    dropdownWidth={'100%'}
+                                    label={"Аэропорт"}
+                                    options={airports.filter(airport => airport.city.trim() === formData.city.trim()).map(airport => airport.name)}
+                                    value={airports.find(airport => airport.id === formData.airportId)?.name || ""}
+                                    onChange={(event, newValue) => {
+                                        const selectedAirport = airports.find(airport => airport.name === newValue);
+                                        setFormData(prevFormData => ({
+                                            ...prevFormData,
+                                            airportId: selectedAirport?.id || ""
+                                        }));
+                                        setIsEdited(true);
+                                    }}
+                                />
+                                {/* <DropDownList
                                     placeholder="Введите аэропорт"
                                     options={airports.filter(airport => airport.city.trim() === formData.city.trim()).map(airport => airport.name)}
                                     initialValue={airports.find(airport => airport.id === formData.airportId)?.name || ""}
@@ -443,7 +501,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                                         }));
                                         setIsEdited(true);
                                     }}
-                                />
+                                /> */}
                             </>
                         )}
 

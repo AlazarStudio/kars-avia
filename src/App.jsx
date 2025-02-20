@@ -19,7 +19,7 @@ import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlaceme
 import NewPlacement from "./Components/PlacementDND/NewPlacement/NewPlacement";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-import { server, path, getCookie, decodeJWT } from "../graphQL_requests";
+import { server, path, getCookie } from "../graphQL_requests";
 import { useAuth } from "./AuthContext";
 import Login from "./Components/Pages/Login/Login";
 

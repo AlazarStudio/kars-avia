@@ -309,6 +309,8 @@
 .requestDataInfo_img_imgBlock {
     width: 80px;
     height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 .requestDataInfo_img_imgBlock img {

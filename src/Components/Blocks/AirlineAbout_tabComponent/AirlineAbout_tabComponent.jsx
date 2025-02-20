@@ -92,17 +92,17 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             input: {
               name: airline.name,
               information: {
-                country: airline.information.country,
-                city: airline.information.city,
-                address: airline.information.address,
-                bank: airline.information.bank,
-                bik: airline.information.bik,
-                email: airline.information.email,
-                index: airline.information.index,
-                inn: airline.information.inn,
-                number: airline.information.number,
-                ogrn: airline.information.ogrn,
-                rs: airline.information.rs,
+                country: airline.information?.country,
+                city: airline.information?.city,
+                address: airline.information?.address,
+                bank: airline.information?.bank,
+                bik: airline.information?.bik,
+                email: airline.information?.email,
+                index: airline.information?.index,
+                inn: airline.information?.inn,
+                number: airline.information?.number,
+                ogrn: airline.information?.ogrn,
+                rs: airline.information?.rs,
               },
             },
             images: newImage ? [newImage] : null,
@@ -322,7 +322,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="country"
-                        value={airline.information?.country}
+                        value={airline.information?.country || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -333,7 +333,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="city"
-                        value={airline.information?.city}
+                        value={airline.information?.city || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -344,7 +344,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="address"
-                        value={airline.information?.address}
+                        value={airline.information?.address || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -355,7 +355,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="index"
-                        value={airline.information?.index}
+                        value={airline.information?.index || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -378,7 +378,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="email"
                         name="email"
-                        value={airline.information?.email}
+                        value={airline.information?.email || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -389,7 +389,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="tel"
                         name="number"
-                        value={airline.information?.number}
+                        value={airline.information?.number || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -415,7 +415,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="inn"
-                        value={airline.information?.inn}
+                        value={airline.information?.inn || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -426,7 +426,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="ogrn"
-                        value={airline.information?.ogrn}
+                        value={airline.information?.ogrn || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -437,7 +437,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="rs"
-                        value={airline.information?.rs}
+                        value={airline.information?.rs || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -448,7 +448,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="bank"
-                        value={airline.information?.bank}
+                        value={airline.information?.bank || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
@@ -459,7 +459,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       <input
                         type="text"
                         name="bik"
-                        value={airline.information?.bik}
+                        value={airline.information?.bik || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}

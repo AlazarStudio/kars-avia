@@ -241,7 +241,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
                                     <div className={classes.requestData_message_text}>
                                         <div className={classes.requestData_message_text__name}>
                                             <div className={classes.requestData_message_name}>{message.sender.name}</div>
-                                            <div className={classes.requestData_message_post}>{message.sender.role}</div>
+                                            {/* <div className={classes.requestData_message_post}>{message.sender.role}</div> */}
                                         </div>
                                         {message.text}
                                         <div className={classes.requestData_message_time}>{convertToDate(message.createdAt)} {convertToDate(message.createdAt, true)}</div>

@@ -48,7 +48,7 @@ function ExistRequestProfile({
         login: user?.login || "",
         password: user?.password || "",
       });
-      setShowIMG(user?.images[0]);
+      setShowIMG(user?.images[0] ? user?.images[0] : []);
       setIndex(user?.index);
     }
   }, [show, user]);
@@ -153,7 +153,7 @@ function ExistRequestProfile({
         <div className={classes.requestData}>
           <div className={classes.requestDataInfo_img}>
             <div className={classes.requestDataInfo_img_imgBlock}>
-              <img src={`${server}${showIMG}`} alt="" />
+              <img src={(showIMG?.length !== 0) ? `${server}${showIMG}` : '/no-avatar.png'} alt="" />
             </div>
           </div>
 
