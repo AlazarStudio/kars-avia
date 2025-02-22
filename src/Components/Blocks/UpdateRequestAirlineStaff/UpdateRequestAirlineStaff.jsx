@@ -9,6 +9,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
+import MUILoader from "../MUILoader/MUILoader";
 
 function UpdateRequestAirlineStaff({
   show,
@@ -18,6 +19,7 @@ function UpdateRequestAirlineStaff({
   setAddTarif,
   setShowDelete,
   setDeleteIndex,
+  addNotification,
 }) {
   const [userRole, setUserRole] = useState();
   const token = getCookie("token");
@@ -91,8 +93,11 @@ function UpdateRequestAirlineStaff({
     },
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       let request = await updateAirlineStaff({
         variables: {
@@ -120,8 +125,11 @@ function UpdateRequestAirlineStaff({
 
         resetForm();
         onClose();
+        setIsLoading(false);
+        addNotification("Редактирование прошло успешно.", "success");
       }
     } catch (err) {
+      setIsLoading(false);
       alert("Произошла ошибка при сохранении данных");
     }
   };
@@ -169,74 +177,80 @@ function UpdateRequestAirlineStaff({
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>ФИО</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Пример: Иванов Иван Иванович"
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>ФИО</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Пример: Иванов Иван Иванович"
+              />
 
-          <label>Номер телефона</label>
-          <input
-            type="text"
-            name="number"
-            value={formData.number}
-            onChange={handleChange}
-            placeholder="Пример: 89283521345"
-          />
+              <label>Номер телефона</label>
+              <input
+                type="text"
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                placeholder="Пример: 89283521345"
+              />
 
-          <label>Должность</label>
-          <DropDownList
-            placeholder={"Выберите должность"}
-            searchable={false}
-            options={positions}
-            initialValue={formData.position}
-            onSelect={(value) => {
-              setIsEdited(true);
-              setFormData((prevData) => ({
-                ...prevData,
-                position: value,
-              }));
-            }}
-          />
+              <label>Должность</label>
+              <DropDownList
+                placeholder={"Выберите должность"}
+                searchable={false}
+                options={positions}
+                initialValue={formData.position}
+                onSelect={(value) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    position: value,
+                  }));
+                }}
+              />
 
-          <label>Пол</label>
-          <DropDownList
-            placeholder="Выберите пол"
-            searchable={false}
-            options={["Мужской", "Женский"]}
-            initialValue={formData.gender}
-            onSelect={(value) => {
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                gender: value,
-              }));
-              setIsEdited(true);
-            }}
-          />
-        </div>
-      </div>
+              <label>Пол</label>
+              <DropDownList
+                placeholder="Выберите пол"
+                searchable={false}
+                options={["Мужской", "Женский"]}
+                initialValue={formData.gender}
+                onSelect={(value) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    gender: value,
+                  }));
+                  setIsEdited(true);
+                }}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button
-          type="submit"
-          style={{ "background-color": "#ff5151" }}
-          onClick={() => {
-            setDeleteIndex(selectedStaff);
-            setShowDelete(true);
-            onClose();
-          }}
-        >
-          Удалить
-        </Button>
-        <Button type="submit" onClick={handleSubmit}>
-          Изменить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button
+              type="submit"
+              style={{ "background-color": "#ff5151" }}
+              onClick={() => {
+                setDeleteIndex(selectedStaff);
+                setShowDelete(true);
+                onClose();
+              }}
+            >
+              Удалить
+            </Button>
+            <Button type="submit" onClick={handleSubmit}>
+              Изменить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

@@ -4,8 +4,9 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_AIRLINE, getCookie } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader";
 
-function CreateRequestAirline({ show, onClose, addHotel }) {
+function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
   const token = getCookie("token");
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -46,7 +47,6 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
     }));
   }, []);
 
-
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
@@ -85,11 +85,14 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
     return formData.name && formData.images;
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!isFormValid()) {
-      alert('Пожалуйста, заполните все обязательные поля.')
+      alert("Пожалуйста, заполните все обязательные поля.");
       return;
     }
 
@@ -122,10 +125,16 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
       if (response_create_airline) {
         addHotel(response_create_airline.data.createAirline);
         resetForm();
-        onClose();
+        // onClose();
+        addNotification("Авиакомпания создана успешно.", "success");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
+    } finally {
+      // resetForm();
+      // onClose();
+      setIsLoading(false);
+      // addNotification("Авиакомпания создана успешно.", "success");
     }
   };
 
@@ -160,27 +169,38 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название</label>
-          <input
-            type="text"
-            name="name"
-            placeholder="Авиакомпания Азимут"
-            value={formData.name}
-            onChange={handleChange}
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>Название</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Авиакомпания Азимут"
+                value={formData.name}
+                onChange={handleChange}
+              />
 
-          <label>Картинка</label>
-          <input type="file" name="images" onChange={handleFileChange} ref={fileInputRef} />
-        </div>
-      </div>
+              <label>Картинка</label>
+              <input
+                type="file"
+                name="images"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

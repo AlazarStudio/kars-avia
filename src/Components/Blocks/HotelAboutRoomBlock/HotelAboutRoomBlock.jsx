@@ -13,6 +13,8 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
   const [swiper, setSwiper] = useState();
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // console.log(activeIndex);
+
   return (
     <article key={props.id} className={classes.hotelAbout_room}>
       <div className={classes.roomImages_wrapper}>
@@ -34,7 +36,12 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
         <p>{props.description ? props.description : "Описания нет"}</p>
       </div>
 
-      <Modal open={modalIsOpen} onClose={() => setModalIsOpen(false)}>
+      <Modal
+        open={modalIsOpen}
+        onClose={() => {
+          setModalIsOpen(false), setActiveIndex(0);
+        }}
+      >
         <Box className={classes.modalContent}>
           <Swiper
             className={classes.sliderBox}
@@ -62,15 +69,17 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
                 </SwiperSlide>
               ))
             ) : (
-                <img
-                  src={"/no-image.png"}
-                  alt="Room"
-                  className={classes.modalImage}
-                />
+              <img
+                src={"/no-image.png"}
+                alt="Room"
+                className={classes.modalImage}
+              />
             )}
           </Swiper>
           <button
-            onClick={() => setModalIsOpen(false)}
+            onClick={() => {
+              setModalIsOpen(false), setActiveIndex(0);
+            }}
             className={classes.closeButton}
           >
             X
@@ -81,7 +90,14 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
           >
             <button
               onClick={() => swiper.slidePrev()}
-              style={{ position: "absolute", left: "-100px" }}
+              style={{
+                position: "absolute",
+                left: "-100px",
+                opacity: activeIndex === 0 ? 0.5 : 1, // Затемняем, если первый слайд
+                // pointerEvents: activeIndex === 0 ? "none" : "auto", // Блокируем клик
+                cursor: activeIndex === 0 ? "auto" : "pointer",
+              }}
+              disabled={activeIndex === 0}
             >
               <img
                 src="/swiper-arrow.png"
@@ -91,7 +107,16 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
             </button>
             <button
               onClick={() => swiper.slideNext()}
-              style={{ position: "absolute", right: "-100px" }}
+              style={{
+                position: "absolute",
+                right: "-100px",
+                opacity: activeIndex === props.images.length - 1 ? 0.5 : 1, // Затемняем, если последний слайд
+                // pointerEvents:
+                //   activeIndex === props.images.length - 1 ? "none" : "auto", // Блокируем клик
+                cursor:
+                  activeIndex === props.images.length - 1 ? "auto" : "pointer",
+              }}
+              disabled={activeIndex === props.images.length - 1}
             >
               <img src="/swiper-arrow.png" alt="" />
             </button>

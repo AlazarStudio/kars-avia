@@ -4,6 +4,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, server, UPDATE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader";
 
 function ExistRequestProfile({
   show,
@@ -11,6 +12,7 @@ function ExistRequestProfile({
   user,
   updateUser,
   openDeleteComponent,
+  addNotification,
 }) {
   const token = getCookie("token");
 
@@ -97,24 +99,56 @@ function ExistRequestProfile({
     }
   };
 
-  const handleUpdate = async () => {
-    let response_update_user = await uploadFile({
-      variables: {
-        input: {
-          id: formData.id,
-          name: formData.name,
-          email: formData.email,
-          login: formData.login,
-          password: formData.password,
-        },
-        images: formData.images,
-      },
-    });
+  const [isLoading, setIsLoading] = useState(false);
 
-    if (response_update_user) {
-      updateUser(response_update_user.data.updateUser);
-      resetForm();
-      onClose();
+  const handleUpdate = async () => {
+    setIsLoading(true);
+    try {
+      let response_update_user = await uploadFile({
+        variables: {
+          input: {
+            id: formData.id,
+            name: formData.name,
+            email: formData.email,
+            login: formData.login,
+            password: formData.password,
+          },
+          images: formData.images,
+        },
+      });
+
+      if (response_update_user) {
+        updateUser(response_update_user.data.updateUser);
+        resetForm();
+        onClose();
+        addNotification("Редактирование профиля прошло успешно.", "success");
+      }
+    } catch (error) {
+      console.error("Ошибка обновления пользователя:", error);
+      if (
+        String(error).startsWith(
+          "ApolloError: Пользователь с таким логином уже существует"
+        )
+      ) {
+        alert("Пользователь с таким логином уже существует");
+      } else if (
+        String(error).startsWith(
+          "ApolloError: Пользователь с таким email уже существует"
+        )
+      ) {
+        alert("Пользователь с такой почтой уже существует");
+      } else if (
+        String(error).startsWith(
+          "ApolloError: Пользователь с таким email и логином уже существует"
+        )
+      ) {
+        alert("Пользователь с такой почтой и логином уже существует");
+      }
+    } finally {
+      // resetForm();
+      // onClose();
+      setIsLoading(false);
+      // addNotification("Редактирование профиля прошло успешно.", "success");
     }
   };
 
@@ -148,66 +182,76 @@ function ExistRequestProfile({
           <img src="/close.png" alt="Close" />
         </div>
       </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <div className={classes.requestDataInfo_img}>
+                <div className={classes.requestDataInfo_img_imgBlock}>
+                  <img
+                    src={
+                      showIMG?.length !== 0
+                        ? `${server}${showIMG}`
+                        : "/no-avatar.png"
+                    }
+                    alt=""
+                  />
+                </div>
+              </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <div className={classes.requestDataInfo_img}>
-            <div className={classes.requestDataInfo_img_imgBlock}>
-              <img src={(showIMG?.length !== 0) ? `${server}${showIMG}` : '/no-avatar.png'} alt="" />
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>ФИО</div>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Иванов Иван Иванович"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Почта</div>
+                <input
+                  type="text"
+                  name="email"
+                  placeholder="example@mail.ru"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Логин</div>
+                <input
+                  type="text"
+                  name="login"
+                  placeholder="Логин"
+                  value={formData.login}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Пароль</div>
+                <input
+                  type="text"
+                  name="password"
+                  placeholder="Пароль"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Аватар</div>
+                <input type="file" name="images" onChange={handleFileChange} />
+              </div>
             </div>
           </div>
 
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>ФИО</div>
-            <input
-              type="text"
-              name="name"
-              placeholder="Иванов Иван Иванович"
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Почта</div>
-            <input
-              type="text"
-              name="email"
-              placeholder="example@mail.ru"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Логин</div>
-            <input
-              type="text"
-              name="login"
-              placeholder="Логин"
-              value={formData.login}
-              onChange={handleChange}
-            />
-          </div>
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Пароль</div>
-            <input
-              type="text"
-              name="password"
-              placeholder="Пароль"
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Аватар</div>
-            <input type="file" name="images" onChange={handleFileChange} />
-          </div>
-        </div>
-      </div>
-
-      <div className={classes.requestButton}>
-        {/* <Button
+          <div className={classes.requestButton}>
+            {/* <Button
           onClick={() => openDeleteComponent(index, formData.id)}
           backgroundcolor={"#FF9C9C"}
         >
@@ -218,19 +262,21 @@ function ExistRequestProfile({
             alt=""
           />
         </Button> */}
-        <Button
-          onClick={handleUpdate}
-          backgroundcolor={"#3CBC6726"}
-          color={"#3B6C54"}
-        >
-          Изменить{" "}
-          <img
-            style={{ width: "fit-content", height: "fit-content" }}
-            src="/editDispetcher.png"
-            alt=""
-          />
-        </Button>
-      </div>
+            <Button
+              onClick={handleUpdate}
+              backgroundcolor={"#3CBC6726"}
+              color={"#3B6C54"}
+            >
+              Изменить{" "}
+              <img
+                style={{ width: "fit-content", height: "fit-content" }}
+                src="/editDispetcher.png"
+                alt=""
+              />
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

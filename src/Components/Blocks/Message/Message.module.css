@@ -201,9 +201,9 @@ select {
 }
 
 .requestData_message_text {
-    background-color: #F6F6FC;
-    padding: 10px 15px;
-    border-radius: 20px 20px 20px 0px;
+    /* background-color: #F6F6FC; */
+    /* padding: 10px 15px; */
+    /* border-radius: 20px 20px 20px 0px; */
     font-family: Nunito Sans;
     font-size: 14px;
     font-weight: 500;
@@ -213,8 +213,19 @@ select {
     gap: 5px;
 }
 
+.requestData_message__message {
+    background-color: #F6F6FC;
+    border-radius: 7px 7px 7px 0px;
+    padding: 10px 15px;
+}
+
+.myMesBorderRadius {
+    border-radius: 7px 7px 0px 7px;
+}
+
 .requestData_message_text__name {
-    margin-bottom: 20px;
+    /* margin-bottom: 20px; */
+    padding: 10px 0px 5px 5px;
     font-size: 12px;
     display: flex;
     flex-direction: column;

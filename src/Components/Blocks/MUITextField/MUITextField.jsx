@@ -34,6 +34,7 @@ function MUITextField({
             padding: "0 12px",
             transform: "translateY(-50%)",
             transition: "all 0.1s ease-out", // Плавная анимация при фокусе
+            fontSize: "14px",
           },
           "& .MuiInputBase-root": {
             minHeight: "40px",

@@ -8,6 +8,7 @@ import {
   UPDATE_HOTEL_MEAL_TARIF,
 } from "../../../../graphQL_requests.js";
 import { useMutation } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader.jsx";
 
 function EditRequestMealTarif({
   show,
@@ -16,6 +17,7 @@ function EditRequestMealTarif({
   onSubmit,
   id,
   isHotel,
+  addNotification,
 }) {
   const token = getCookie("token");
 
@@ -81,8 +83,11 @@ function EditRequestMealTarif({
     }));
   }, []);
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (
       !String(formData.breakfast).trim() ||
@@ -93,31 +98,38 @@ function EditRequestMealTarif({
       return;
     }
 
-    const dataSend = {
-      mealPrice: {
-        breakfast: Number(formData.breakfast),
-        lunch: Number(formData.lunch),
-        dinner: Number(formData.dinner),
-      },
-    };
+    try {
+      const dataSend = {
+        mealPrice: {
+          breakfast: Number(formData.breakfast),
+          lunch: Number(formData.lunch),
+          dinner: Number(formData.dinner),
+        },
+      };
 
-    let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
+      let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
 
-    let response_update_meal_tarif = await updateHotelMealTarif({
-      variables: {
-        [updateId]: id,
-        input: dataSend, // передаем MealPrice
-      },
-    });
+      let response_update_meal_tarif = await updateHotelMealTarif({
+        variables: {
+          [updateId]: id,
+          input: dataSend, // передаем MealPrice
+        },
+      });
 
-    if (response_update_meal_tarif) {
-      onSubmit(
-        isHotel
-          ? response_update_meal_tarif.data.updateHotel.mealPrice
-          : response_update_meal_tarif.data.updateAirline.mealPrice
-      );
-      resetForm();
-      onClose();
+      if (response_update_meal_tarif) {
+        onSubmit(
+          isHotel
+            ? response_update_meal_tarif.data.updateHotel.mealPrice
+            : response_update_meal_tarif.data.updateAirline.mealPrice
+        );
+        resetForm();
+        onClose();
+        setIsLoading(false);
+        addNotification("Редактирование прошло успешно.", "success");
+      }
+    } catch (error) {
+      console.error("Catch: ", error);
+      setIsLoading(false);
     }
   };
 
@@ -154,37 +166,43 @@ function EditRequestMealTarif({
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Цена завтрака</label>
-          <input
-            type="number"
-            name="breakfast"
-            value={formData.breakfast}
-            onChange={handleChange}
-          />
-          <label>Цена обеда</label>
-          <input
-            type="number"
-            name="lunch"
-            value={formData.lunch}
-            onChange={handleChange}
-          />
-          <label>Цена ужина</label>
-          <input
-            type="number"
-            name="dinner"
-            value={formData.dinner}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>Цена завтрака</label>
+              <input
+                type="number"
+                name="breakfast"
+                value={formData.breakfast}
+                onChange={handleChange}
+              />
+              <label>Цена обеда</label>
+              <input
+                type="number"
+                name="lunch"
+                value={formData.lunch}
+                onChange={handleChange}
+              />
+              <label>Цена ужина</label>
+              <input
+                type="number"
+                name="dinner"
+                value={formData.dinner}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Изменить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Изменить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

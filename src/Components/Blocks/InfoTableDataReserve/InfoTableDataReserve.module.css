@@ -39,6 +39,7 @@
     width: 30px;
     height: 30px;
     border-radius: 50%;
+    overflow: hidden;
 }
 
 .InfoTable_data_elem_img img {

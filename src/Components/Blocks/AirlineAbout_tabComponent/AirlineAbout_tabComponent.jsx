@@ -6,6 +6,7 @@ import {
   decodeJWT,
   GET_AIRLINE,
   GET_AIRLINE_LOGS,
+  GET_CITIES,
   getCookie,
   server,
   UPDATE_AIRLINE,
@@ -13,6 +14,9 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 import { roles } from "../../../roles.js";
 import Logs from "../LogsHistory/Logs.jsx";
+import MUILoader from "../MUILoader/MUILoader.jsx";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import Notification from "../../Notification/Notification.jsx";
 
 function AirlineAbout_tabComponent({ id, ...props }) {
   const token = getCookie("token");
@@ -62,6 +66,20 @@ function AirlineAbout_tabComponent({ id, ...props }) {
     variables: { airlineId: id },
   });
 
+  let infoCities = useQuery(GET_CITIES);
+  const [cities, setCities] = useState([]);
+
+  useEffect(() => {
+    if (infoCities.data) {
+      setCities(
+        infoCities.data?.citys.map(
+          // (item) => `${item.city}, регион: ${item.region}`
+          (item) => item.city
+        ) || []
+      );
+    }
+  }, [infoCities]);
+
   const [airline, setAirline] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [newImage, setNewImage] = useState(null);
@@ -83,8 +101,21 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
   // console.log(data);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+  };
+
   const handleEditClick = async () => {
     if (isEditing) {
+      setIsLoading(true);
       try {
         let response = await updateAirline({
           variables: {
@@ -109,10 +140,22 @@ function AirlineAbout_tabComponent({ id, ...props }) {
           },
         });
         // console.log(response);
-        
+        addNotification(
+          "Редактирование авиакомпании прошло успешно.",
+          "success"
+        );
+
         // alert('Данные успешно сохранены');
       } catch (err) {
         console.error("Произошла ошибка при сохранении данных", err);
+        alert("Произошла ошибка при сохранении данных");
+        // addNotification("Произошла ошибка при сохранении данных", "error")
+      } finally {
+        setIsLoading(false);
+        // addNotification(
+        //   "Редактирование авиакомпании прошло успешно.",
+        //   "success"
+        // );
       }
     }
     setIsEditing(!isEditing);
@@ -148,7 +191,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-  
+
     setAirline((prev) => {
       // Проверяем, обновляется ли поле в `information`
       if (Object.keys(prev.information || {}).includes(name)) {
@@ -160,7 +203,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
           },
         };
       }
-  
+
       // Обновление верхнеуровневых полей
       return {
         ...prev,
@@ -170,22 +213,16 @@ function AirlineAbout_tabComponent({ id, ...props }) {
   };
 
   // console.log(user);
-  
-  
 
   return (
     <>
-      {loading && <p>Loading...</p>}
       {error && <p>Error: {error.message}</p>}
+      {(loading || isLoading) && <MUILoader fullHeight={"70vh"} />}
 
-      {!loading && !error && airline && (
+      {!loading && !isLoading && !error && airline && (
         <div
           className={classes.airlineAbout}
-          style={
-            user?.airlineId
-              ? { height: "calc(100vh - 130px)" }
-              : {}
-          }
+          style={user?.airlineId ? { height: "calc(100vh - 130px)" } : {}}
         >
           <div className={classes.column}>
             <div className={classes.airlineAbout_top}>
@@ -330,14 +367,29 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                     </div>
                     <div className={classes.airlineAbout_info_item}>
                       <label>Город</label>
-                      <input
+                      <MUIAutocomplete
+                        dropdownWidth={"400px"}
+                        isDisabled={!isEditing}
+                        options={cities}
+                        value={airline.information?.city || ""}
+                        onChange={(event, newValue) => {
+                          setAirline((prev) => ({
+                            ...prev,
+                            information: {
+                              ...prev.information,
+                              city: newValue || "", // Обновляем поле `city`
+                            },
+                          }));
+                        }}
+                      />
+                      {/* <input
                         type="text"
                         name="city"
                         value={airline.information?.city || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
-                      />
+                      /> */}
                     </div>
                     <div className={classes.airlineAbout_info_item}>
                       <label>Улица</label>
@@ -479,6 +531,19 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             onClose={toggleLogsSidebar}
             name={airline?.name}
           />
+          {notifications.map((n, index) => (
+            <Notification
+              key={n.id}
+              text={n.text}
+              status={n.status}
+              index={index}
+              onClose={() => {
+                setNotifications((prev) =>
+                  prev.filter((notif) => notif.id !== n.id)
+                );
+              }}
+            />
+          ))}
         </div>
       )}
     </>

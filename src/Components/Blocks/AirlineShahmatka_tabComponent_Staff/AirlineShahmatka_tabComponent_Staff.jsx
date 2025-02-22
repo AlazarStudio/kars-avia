@@ -18,6 +18,9 @@ import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateReques
 import UpdateRequestAirlineStaff from "../UpdateRequestAirlineStaff/UpdateRequestAirlineStaff.jsx";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { roles } from "../../../roles.js";
+import MUILoader from "../MUILoader/MUILoader.jsx";
+import MUITextField from "../MUITextField/MUITextField.jsx";
+import Notification from "../../Notification/Notification.jsx";
 
 function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const token = getCookie("token");
@@ -42,7 +45,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     loading: bronLoading,
     error: bronError,
     data: bronData,
-    refetch: bronRefetch
+    refetch: bronRefetch,
   } = useQuery(GET_STAFF_HOTELS, {
     variables: { airlineStaffsId: id },
   });
@@ -55,29 +58,39 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   }, [bronData, bronRefetch]);
   // console.log(hotelBronsInfo);
 
-    // Подписки для отслеживания создания и обновления заявок
-    const { data: subscriptionData } = useSubscription(
-      REQUEST_CREATED_SUBSCRIPTION,
-      {
-        onData: () => {
-          bronRefetch(); // Обновляем данные после новых событий
-          refetch();
-        },
-      }
-    );
-  
-    const { data: subscriptionUpdateData } = useSubscription(
-      REQUEST_UPDATED_SUBSCRIPTION,
-      {
-        onData: () => {
-          bronRefetch(); // Обновляем данные после новых событий
-          refetch();
-        },
-      }
-    );
-  
+  // Подписки для отслеживания создания и обновления заявок
+  const { data: subscriptionData } = useSubscription(
+    REQUEST_CREATED_SUBSCRIPTION,
+    {
+      onData: () => {
+        bronRefetch(); // Обновляем данные после новых событий
+        refetch();
+      },
+    }
+  );
+
+  const { data: subscriptionUpdateData } = useSubscription(
+    REQUEST_UPDATED_SUBSCRIPTION,
+    {
+      onData: () => {
+        bronRefetch(); // Обновляем данные после новых событий
+        refetch();
+      },
+    }
+  );
+
   // console.log(subscriptionUpdateData);
-  
+
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+  };
 
   const [showAddCategory, setshowAddCategory] = useState(false);
   const [showUpdateCategory, setshowUpdateCategory] = useState(false);
@@ -184,17 +197,23 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     }
   };
 
-  if (loading || bronLoading) return <p>Loading...</p>;
+  if (loading || bronLoading) return <MUILoader fullHeight={"70vh"} />;
   if (error || bronError)
     return <p>Error: {error ? error.message : bronError.message}</p>;
 
   return (
     <>
       <div className={classes.section_searchAndFilter}>
-        <input
+        {/* <input
           type="text"
           placeholder="Поиск по ФИО сотрудника или должности"
           style={{ width: "500px" }}
+          value={searchQuery}
+          onChange={handleSearch}
+        /> */}
+        <MUITextField
+          label={"Поиск по ФИО сотрудника или должности"}
+          className={classes.mainSearch}
           value={searchQuery}
           onChange={handleSearch}
         />
@@ -260,6 +279,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         onClose={toggleCategory}
         addTarif={staff}
         setAddTarif={setStaff}
+        addNotification={addNotification}
       />
       <UpdateRequestAirlineStaff
         id={id}
@@ -269,6 +289,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         onClose={toggleCategoryUpdate}
         selectedStaff={selectedStaff}
         setAddTarif={setStaff}
+        addNotification={addNotification}
       />
 
       {showDelete && (
@@ -279,6 +300,20 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           title={`Вы действительно хотите удалить сотрудника?`}
         />
       )}
+
+      {notifications.map((n, index) => (
+        <Notification
+          key={n.id}
+          text={n.text}
+          status={n.status}
+          index={index}
+          onClose={() => {
+            setNotifications((prev) =>
+              prev.filter((notif) => notif.id !== n.id)
+            );
+          }}
+        />
+      ))}
     </>
   );
 }

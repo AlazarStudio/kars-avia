@@ -8,8 +8,16 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader";
 
-function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
+function EditRequestAirlineOtdel({
+  show,
+  onClose,
+  id,
+  category,
+  onSubmit,
+  addNotification,
+}) {
   const [userRole, setUserRole] = useState();
   const token = getCookie("token");
 
@@ -67,8 +75,12 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
     },
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
     try {
       let request = await createAirlineDepartment({
         variables: {
@@ -96,8 +108,11 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
 
         onSubmit(sortedDepartments);
         resetForm();
+        setIsLoading(false);
+        addNotification("Редактирование отдела прошло успешно.", "success");
       }
     } catch (err) {
+      setIsLoading(false);
       alert("Произошла ошибка при сохранении данных");
     }
   };
@@ -132,25 +147,30 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
           <img src="/close.png" alt="" />
         </div>
       </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>Название отдела</label>
+              <input
+                type="text"
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                placeholder="Пример: 1"
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название отдела</label>
-          <input
-            type="text"
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            placeholder="Пример: 1"
-          />
-        </div>
-      </div>
-
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Изменить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Изменить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

@@ -359,6 +359,15 @@
 
 .staffInfo {
     cursor: pointer;
+    /* display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; */
+}
+
+.staffInfoPosition {
+    display: inline;
+    font-size: 12px;
 }
 
 @media (min-width: 0px) and (max-width: 1499px) {

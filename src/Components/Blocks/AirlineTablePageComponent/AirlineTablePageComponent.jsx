@@ -266,7 +266,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
                                             setSelectedStaff(staffMember)
 
                                         }}>
-                                            <b>{staffMember.name}</b> - {staffMember.position.split(' ')[0]}
+                                            <b>{staffMember.name}</b> <p className={classes.staffInfoPosition}>{staffMember.position.split(' ')[0]}</p>
                                         </div>
                                     </td>
                                     {renderBookings(staffMember)}

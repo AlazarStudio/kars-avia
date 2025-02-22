@@ -201,6 +201,10 @@ function InfoTableDataReserve_passengers({
   // console.log(currentHotelIndex)
 
   const handleAddNewPassenger = async () => {
+    if (!newPassengerData.name || !newPassengerData.number || !newPassengerData.gender) {
+      alert('Введите все данные пассажира.');
+      return;
+    }
     try {
       // if (currentHotelIndex === null) return;
 
@@ -436,6 +440,7 @@ function InfoTableDataReserve_passengers({
                       {user?.airlineId ? null : (
                         <Link
                           to={`/hotels/${item.hotel.id}/${item.hotel.requestId}`}
+                          onClick={() => localStorage.setItem("selectedTab", 0)}
                         >
                           {" "}
                           <img src="/placement_icon.png" alt="" />
@@ -769,11 +774,11 @@ function InfoTableDataReserve_passengers({
             <div className={classes.hotelAbout_info__filters}>
               <button onClick={toggleLogsSidebar}>История</button>
               {/* <button className={classes.updateReserveDate}>Редактировать даты заезда и выезда</button> */}
-              {request?.hotelChess?.length !== 0 ? null : (
+              {request?.hotelChess?.length === 0 && (user.role === roles.dispatcerAdmin || user.role === roles.superAdmin) ? (
                 <Button onClick={handleOpenEditDateModal}>
                   Редактировать даты заезда и выезда
                 </Button>
-              )}
+              ) : null }
             </div>
             <div className={classes.countingPeople}>
               <img src="/peopleCount.png" alt="" />

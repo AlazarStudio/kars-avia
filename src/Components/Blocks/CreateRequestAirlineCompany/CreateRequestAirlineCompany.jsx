@@ -10,6 +10,8 @@ import {
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
 import DropDownListObj from "../DropDownListObj/DropDownListObj";
+import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 function CreateRequestAirlineCompany({
   show,
@@ -17,6 +19,7 @@ function CreateRequestAirlineCompany({
   id,
   addTarif,
   setAddTarif,
+  addNotification,
 }) {
   const [userRole, setUserRole] = useState();
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -121,8 +124,11 @@ function CreateRequestAirlineCompany({
     );
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
@@ -154,6 +160,9 @@ function CreateRequestAirlineCompany({
     // }
 
     try {
+      const selectedDepartment = addTarif.find(
+        (dept) => dept.name === formData.department
+      );
       let request = await createAirlineUser({
         variables: {
           input: {
@@ -165,7 +174,7 @@ function CreateRequestAirlineCompany({
             hotelId: null,
             login: formData.login,
             password: formData.password,
-            airlineDepartmentId: formData.department,
+            airlineDepartmentId: selectedDepartment?.id,
           },
           images: formData.images,
         },
@@ -183,7 +192,8 @@ function CreateRequestAirlineCompany({
         };
 
         const updatedTarifs = addTarif.map((department) => {
-          if (department.id === formData.department) {
+          // if (department.id === formData.department) {
+          if (department.id === selectedDepartment?.id) {
             const updatedUsers = [...department.users, newUser].sort((a, b) =>
               a.name.localeCompare(b.name)
             );
@@ -198,10 +208,33 @@ function CreateRequestAirlineCompany({
         setAddTarif(updatedTarifs);
         resetForm();
         onClose();
+        setIsLoading(false);
+        addNotification("Создание аккаунта прошло успешно.", "success");
       }
-    } catch (err) {
-      console.error(err);
-      alert("Произошла ошибка при сохранении данных");
+    } catch (e) {
+      setIsLoading(false);
+      console.error("Ошибка при загрузке файла:", e);
+      if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким логином уже существует"
+        )
+      ) {
+        alert("Пользователь с таким логином уже существует");
+      } else if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким email уже существует"
+        )
+      ) {
+        alert("Пользователь с такой почтой уже существует");
+      } else if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким email и логином уже существует"
+        )
+      ) {
+        alert("Пользователь с такой почтой и логином уже существует");
+      } else {
+        alert("Ошибка при создании аккаунта");
+      }
     }
   };
 
@@ -238,109 +271,154 @@ function CreateRequestAirlineCompany({
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>ФИО</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Введите ФИО"
-            autoComplete="new-password"
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>ФИО</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Введите ФИО"
+                autoComplete="new-password"
+              />
 
-          <label>Почта</label>
-          <input
-            type="text"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Введите email"
-            autoComplete="new-password"
-          />
+              <label>Почта</label>
+              <input
+                type="text"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Введите email"
+                autoComplete="new-password"
+              />
 
-          <label>Роль</label>
-          <DropDownList
-            placeholder="Выберите роль"
-            searchable={false}
-            options={["AIRLINEADMIN"]}
-            initialValue={formData.role}
-            onSelect={(value) => {
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                role: value,
-              }));
-              setIsEdited(true);
-            }}
-          />
+              <label>Роль</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите роль"}
+                options={["AIRLINEADMIN"]}
+                value={formData.role}
+                onChange={(event, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    role: newValue,
+                  }));
+                  setIsEdited(true);
+                }}
+              />
+              {/* <DropDownList
+                placeholder="Выберите роль"
+                searchable={false}
+                options={["AIRLINEADMIN"]}
+                initialValue={formData.role}
+                onSelect={(value) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    role: value,
+                  }));
+                  setIsEdited(true);
+                }}
+              /> */}
 
-          <label>Должность</label>
-          <DropDownList
-            placeholder="Выберите должность"
-            searchable={false}
-            options={positions}
-            initialValue={formData.position}
-            onSelect={(value) => {
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                position: value,
-              }));
-              setIsEdited(true);
-            }}
-          />
+              <label>Должность</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите должность"}
+                options={positions}
+                value={formData.position}
+                onChange={(event, newValue) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    position: newValue,
+                  }));
+                }}
+              />
+              {/* <DropDownList
+                placeholder="Выберите должность"
+                searchable={false}
+                options={positions}
+                initialValue={formData.position}
+                onSelect={(value) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    position: value,
+                  }));
+                  setIsEdited(true);
+                }}
+              /> */}
 
-          <label>Логин</label>
-          <input
-            type="text"
-            name="login"
-            value={formData.login}
-            onChange={handleChange}
-            placeholder="Введите логин"
-            autoComplete="new-password"
-          />
+              <label>Логин</label>
+              <input
+                type="text"
+                name="login"
+                value={formData.login}
+                onChange={handleChange}
+                placeholder="Введите логин"
+                autoComplete="new-password"
+              />
 
-          <label>Пароль</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Введите пароль"
-            autoComplete="new-password"
-          />
+              <label>Пароль</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Введите пароль"
+                autoComplete="new-password"
+              />
 
-          <label>Отдел</label>
-          <select
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-          >
-            <option value="" disabled>
-              Выберите отдел
-            </option>
-            {addTarif.map((category, index) => (
-              <option key={index} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+              <label>Отдел</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите отдел"}
+                options={addTarif.map((department) => department.name)}
+                value={formData.department}
+                onChange={(event, newValue) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    department: newValue,
+                  }));
+                }}
+              />
+              {/* <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+              >
+                <option value="" disabled>
+                  Выберите отдел
+                </option>
+                {addTarif.map((category, index) => (
+                  <option key={index} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select> */}
 
-          <label>Аватар</label>
-          <input
-            type="file"
-            name="images"
-            onChange={handleFileChange}
-            ref={fileInputRef}
-          />
-        </div>
-      </div>
+              <label>Аватар</label>
+              <input
+                type="file"
+                name="images"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

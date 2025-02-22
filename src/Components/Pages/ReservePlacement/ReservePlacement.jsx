@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import classes from './ReservePlacement.module.css';
+import classes from "./ReservePlacement.module.css";
 import { Link, useParams } from "react-router-dom";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
-import Header from "../../Blocks/Header/Header"
+import Header from "../../Blocks/Header/Header";
 import Filter from "../../Blocks/Filter/Filter";
 import Button from "../../Standart/Button/Button";
 import InfoTableDataReserve_passengers from "../../Blocks/InfoTableDataReserve_passengers/InfoTableDataReserve_passengers";
@@ -13,423 +13,530 @@ import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
 import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
-import { DELETE_PASSENGER_FROM_HOTEL, DELETE_PERSON_FROM_HOTEL, GET_HOTELS_RELAY, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS, getCookie } from "../../../../graphQL_requests";
+import {
+  DELETE_PASSENGER_FROM_HOTEL,
+  DELETE_PERSON_FROM_HOTEL,
+  GET_HOTELS_RELAY,
+  GET_RESERVE_REQUEST,
+  GET_RESERVE_REQUEST_HOTELS,
+  GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
+  GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
+  getCookie,
+} from "../../../../graphQL_requests";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
+import MUILoader from "../../Blocks/MUILoader/MUILoader";
 
 function ReservePlacement({ children, user, ...props }) {
-    const token = getCookie('token');
+  const token = getCookie("token");
 
-    let { idRequest } = useParams();
-    const [request, setRequest] = useState([]);
-    const [placement, setPlacement] = useState([]);
+  let { idRequest } = useParams();
+  const [request, setRequest] = useState([]);
+  const [placement, setPlacement] = useState([]);
 
-    const [showCreateSidebarHotel, setShowCreateSidebarHotel] = useState(false);
+  const [showCreateSidebarHotel, setShowCreateSidebarHotel] = useState(false);
 
-    const { data: subscriptionData } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION);
-    const { data: subscriptionDataPerson } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS);
+  const { data: subscriptionData } = useSubscription(
+    GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+        refetchHotel();
+      },
+    }
+  );
+  const { data: subscriptionDataPerson } = useSubscription(
+    GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
+    {
+      onData: () => {
+        refetch();
+        refetchHotel();
+      },
+    }
+  );
 
-    const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUEST, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                // 'Apollo-Require-Preflight': 'true',
-            },
+  const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUEST, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // 'Apollo-Require-Preflight': 'true',
+      },
+    },
+    variables: { reserveId: idRequest },
+  });
+
+  const {
+    loading: loadingHotel,
+    error: errorHotel,
+    data: dataHotel,
+    refetch: refetchHotel,
+  } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+    variables: { reservationHotelsId: idRequest },
+  });
+
+  useEffect(() => {
+    if (data && data.reserve && dataHotel) {
+      setRequest(data.reserve);
+
+      const getClientInfo = (client, hotelChess, isPassenger) => {
+        const clientInfo = isPassenger
+          ? hotelChess.find((entry) => entry.passenger?.id === client)
+          : hotelChess.find((entry) => entry.client?.id === client);
+        return clientInfo;
+      };
+
+      const transformedData = dataHotel.reservationHotels.map((item) => ({
+        hotel: {
+          reservationHotelId: item.id,
+          id: item.hotel.id,
+          name: item.hotel.name,
+          passengersCount: item.capacity.toString(),
+          city: item.hotel.city,
+          requestId: item.reserve.id,
+          passengers: item.passengers.map((passenger, index) => ({
+            status: getClientInfo(passenger.id, item.hotelChess, true)
+              ? getClientInfo(passenger.id, item.hotelChess, true).status
+              : "waiting",
+            room: getClientInfo(passenger.id, item.hotelChess, true)
+              ? getClientInfo(passenger.id, item.hotelChess, true).room
+              : "-",
+            name: passenger.name || "не указано",
+            gender: passenger.gender || "не указано",
+            number: passenger.number || "не указано",
+            type: passenger.type || "не указано",
+            order: index + 1,
+            id: passenger.id || `id-${index}`,
+          })),
+          // person: item.person.map((pers, index) => ({
+          //     status: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).status : 'waiting',
+          //     room: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).room : '-',
+          //     name: pers.name || "не указано",
+          //     gender: pers.gender || "не указано",
+          //     number: pers.number || "не указано",
+          //     type: pers.type || "не указано",
+          //     order: index + 1,
+          //     id: pers.id || `id-${index}`
+          // })),
         },
-        variables: { reserveId: idRequest },
-    });
+      }));
 
-    const { loading: loadingHotel, error: errorHotel, data: dataHotel, refetch: refetchHotel } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
-        variables: { reservationHotelsId: idRequest },
-    });
+      setPlacement(transformedData);
 
-    useEffect(() => {
-        if (data && data.reserve && dataHotel) {
-            setRequest(data.reserve);
+      // Обработка подписки для новой гостиницы
+    //   if (subscriptionData) {
+    //     const newHotelData = {
+    //       hotel: {
+    //         reservationHotelId: subscriptionData.reserveHotel.id,
+    //         id: subscriptionData.reserveHotel.hotel.id,
+    //         name: subscriptionData.reserveHotel.hotel.name,
+    //         passengersCount: subscriptionData.reserveHotel.capacity.toString(),
+    //         city: subscriptionData.reserveHotel.hotel.city,
+    //         requestId: subscriptionData.reserveHotel.reserve.id,
+    //         passengers: subscriptionData.reserveHotel.passengers.map(
+    //           (passenger, index) => ({
+    //             name: passenger.name || "не указано",
+    //             gender: passenger.gender || "не указано",
+    //             number: passenger.number || "не указано",
+    //             type: passenger.type || "не указано",
+    //             order: index + 1,
+    //             id: passenger.id || `id-${index}`,
+    //           })
+    //         ),
+    //         // person: subscriptionData.reserveHotel.person.map((pers, index) => ({
+    //         //     name: pers.name || "не указано",
+    //         //     gender: pers.gender || "не указано",
+    //         //     number: pers.number || "не указано",
+    //         //     type: pers.type || "не указано",
+    //         //     order: index + 1,
+    //         //     id: pers.id || `id-${index}`
+    //         // })),
+    //       },
+    //     };
 
-            const getClientInfo = (client, hotelChess, isPassenger) => {
-                const clientInfo = isPassenger ? hotelChess.find(entry => entry.passenger?.id === client) : hotelChess.find(entry => entry.client?.id === client);
-                return clientInfo;
-            };
+    //     setPlacement((prevPlacement) => {
+    //       const isDuplicate = prevPlacement.some(
+    //         (item) => item.hotel.id === newHotelData.hotel.id
+    //       );
+    //       return isDuplicate ? prevPlacement : [...prevPlacement, newHotelData];
+    //     });
+    //     refetch();
+    //     // refetchHotel();
+    //   }
 
-            const transformedData = dataHotel.reservationHotels.map(item => ({
-                hotel: {
-                    reservationHotelId: item.id,
-                    id: item.hotel.id,
-                    name: item.hotel.name,
-                    passengersCount: item.capacity.toString(),
-                    city: item.hotel.city,
-                    requestId: item.reserve.id,
-                    passengers: item.passengers.map((passenger, index) => ({
-                        status: getClientInfo(passenger.id, item.hotelChess, true) ? getClientInfo(passenger.id, item.hotelChess, true).status : 'waiting',
-                        room: getClientInfo(passenger.id, item.hotelChess, true) ? getClientInfo(passenger.id, item.hotelChess, true).room : '-',
-                        name: passenger.name || "не указано",
-                        gender: passenger.gender || "не указано",
-                        number: passenger.number || "не указано",
-                        type: passenger.type || "не указано",
-                        order: index + 1,
-                        id: passenger.id || `id-${index}`
-                    })),
-                    // person: item.person.map((pers, index) => ({
-                    //     status: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).status : 'waiting',
-                    //     room: getClientInfo(pers.id, item.hotelChess, false) ? getClientInfo(pers.id, item.hotelChess, false).room : '-',
-                    //     name: pers.name || "не указано",
-                    //     gender: pers.gender || "не указано",
-                    //     number: pers.number || "не указано",
-                    //     type: pers.type || "не указано",
-                    //     order: index + 1,
-                    //     id: pers.id || `id-${index}`
-                    // })),
-                }
-            }));
+    //   // Обработка подписки для сотрудников и пассажиров
+    //   if (subscriptionDataPerson) {
+    //     const { reservePersons } = subscriptionDataPerson;
+    //     const hotelId = reservePersons.reserveHotel.id;
 
-            setPlacement(transformedData);
+    //     setPlacement((prevPlacement) =>
+    //       prevPlacement.map((hotelData) => {
+    //         if (hotelData.hotel.id === hotelId) {
+    //           return {
+    //             ...hotelData,
+    //             hotel: {
+    //               ...hotelData.hotel,
+    //               passengers: [
+    //                 ...hotelData.hotel.passengers,
+    //                 ...reservePersons.passengers.map((passenger, index) => ({
+    //                   name: passenger.name || "не указано",
+    //                   gender: passenger.gender || "не указано",
+    //                   number: passenger.number || "не указано",
+    //                   type: passenger.type || "не указано",
+    //                   order: hotelData.hotel.passengers.length + index + 1,
+    //                   id: passenger.id || `id-${index}`,
+    //                 })),
+    //               ],
+    //               // person: [
+    //               //     ...hotelData.hotel.person,
+    //               //     ...reservePersons.person.map(person => ({
+    //               //         id: person.id,
+    //               //         name: person.name,
+    //               //         number: person.number || "не указано",
+    //               //         gender: person.gender || "не указано",
+    //               //     }))
+    //               // ]
+    //             },
+    //           };
+    //         }
+    //         return hotelData;
+    //       })
+    //     );
+    //     refetch();
+    //     // refetchHotel();
+    //   }
+      // refetch();
+    }
+  }, [data, dataHotel, subscriptionData, subscriptionDataPerson]);
 
-            // Обработка подписки для новой гостиницы
-            if (subscriptionData) {
-                const newHotelData = {
-                    hotel: {
-                        reservationHotelId: subscriptionData.reserveHotel.id,
-                        id: subscriptionData.reserveHotel.hotel.id,
-                        name: subscriptionData.reserveHotel.hotel.name,
-                        passengersCount: subscriptionData.reserveHotel.capacity.toString(),
-                        city: subscriptionData.reserveHotel.hotel.city,
-                        requestId: subscriptionData.reserveHotel.reserve.id,
-                        passengers: subscriptionData.reserveHotel.passengers.map((passenger, index) => ({
-                            name: passenger.name || "не указано",
-                            gender: passenger.gender || "не указано",
-                            number: passenger.number || "не указано",
-                            type: passenger.type || "не указано",
-                            order: index + 1,
-                            id: passenger.id || `id-${index}`
-                        })),
-                        // person: subscriptionData.reserveHotel.person.map((pers, index) => ({
-                        //     name: pers.name || "не указано",
-                        //     gender: pers.gender || "не указано",
-                        //     number: pers.number || "не указано",
-                        //     type: pers.type || "не указано",
-                        //     order: index + 1,
-                        //     id: pers.id || `id-${index}`
-                        // })),
-                    }
-                };
+//   useEffect(() => {
+//     if (subscriptionDataPerson) {
+//       const { reservePersons } = subscriptionDataPerson;
+//       const hotelId = reservePersons.reserveHotel.id;
 
-                setPlacement(prevPlacement => {
-                    const isDuplicate = prevPlacement.some(item => item.hotel.id === newHotelData.hotel.id);
-                    return isDuplicate ? prevPlacement : [...prevPlacement, newHotelData];
-                });
-            }
+//       setPlacement((prevPlacement) =>
+//         prevPlacement.map((hotelData) => {
+//           if (hotelData.hotel.id === hotelId) {
+//             return {
+//               ...hotelData,
+//               hotel: {
+//                 ...hotelData.hotel,
+//                 passengers: [
+//                   ...hotelData.hotel.passengers,
+//                   ...reservePersons.passengers.map((passenger, index) => ({
+//                     name: passenger.name || "не указано",
+//                     gender: passenger.gender || "не указано",
+//                     number: passenger.number || "не указано",
+//                     type: passenger.type || "не указано",
+//                     order: hotelData.hotel.passengers.length + index + 1,
+//                     id: passenger.id || `id-${index}`,
+//                   })),
+//                 ],
+//                 // person: [
+//                 //     ...hotelData.hotel.person,
+//                 //     ...reservePersons.person.map(person => ({
+//                 //         id: person.id,
+//                 //         name: person.name,
+//                 //         number: person.number || "не указано",
+//                 //         gender: person.gender || "не указано",
+//                 //     }))
+//                 // ]
+//               },
+//             };
+//           }
+//           return hotelData;
+//         })
+//       );
+//       refetchHotel();
+//     }
+//   }, [refetchHotel, subscriptionDataPerson]);
 
-            // Обработка подписки для сотрудников и пассажиров
-            if (subscriptionDataPerson) {
-                const { reservePersons } = subscriptionDataPerson;
-                const hotelId = reservePersons.reserveHotel.id;
+  // console.log(subscriptionData);
+//   console.log(subscriptionDataPerson);
 
-                setPlacement(prevPlacement =>
-                    prevPlacement.map(hotelData => {
-                        if (hotelData.hotel.id === hotelId) {
-                            return {
-                                ...hotelData,
-                                hotel: {
-                                    ...hotelData.hotel,
-                                    passengers: [
-                                        ...hotelData.hotel.passengers,
-                                        ...reservePersons.passengers.map((passenger, index) => ({
-                                            name: passenger.name || "не указано",
-                                            gender: passenger.gender || "не указано",
-                                            number: passenger.number || "не указано",
-                                            type: passenger.type || "не указано",
-                                            order: hotelData.hotel.passengers.length + index + 1,
-                                            id: passenger.id || `id-${index}`
-                                        }))
-                                    ],
-                                    // person: [
-                                    //     ...hotelData.hotel.person,
-                                    //     ...reservePersons.person.map(person => ({
-                                    //         id: person.id,
-                                    //         name: person.name,
-                                    //         number: person.number || "не указано",
-                                    //         gender: person.gender || "не указано",
-                                    //     }))
-                                    // ]
-                                }
-                            };
-                        }
-                        return hotelData;
-                    })
-                );
-            }
+  const [showCreateSidebar, setShowCreateSidebar] = useState(false);
 
-            refetch();
-            refetchHotel();
+  const toggleCreateSidebar = () => {
+    setShowCreateSidebar(!showCreateSidebar);
+  };
+
+  const [showUpdateSidebar, setShowUpdateSidebar] = useState(false);
+
+  const toggleUpdateSidebar = () => {
+    setShowUpdateSidebar(!showUpdateSidebar);
+  };
+
+  const [idDelete, setIdDelete] = useState();
+  const [showDelete, setshowDelete] = useState(false);
+
+  const openDeletecomponent = (guest, hotel) => {
+    setshowDelete(true);
+    setIdDelete({ guest, hotel });
+  };
+
+  const closeDeletecomponent = () => {
+    setshowDelete(false);
+  };
+
+  const [idPassangerForUpdate, setIdPassangerForUpdate] = useState();
+
+  const addPassenger = (newPassenger) => {
+    setPlacement((prevPlacement) => [...prevPlacement, newPassenger]);
+  };
+
+  const updatePassenger = (updatedPassenger, index) => {
+    setPlacement((prevPlacement) =>
+      prevPlacement.map((passenger, i) =>
+        i === index ? updatedPassenger : passenger
+      )
+    );
+  };
+
+  const [deletePersonFromHotel] = useMutation(DELETE_PERSON_FROM_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // 'Apollo-Require-Preflight': 'true',
+      },
+    },
+  });
+
+  const [deletePassengerFromHotel] = useMutation(DELETE_PASSENGER_FROM_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // 'Apollo-Require-Preflight': 'true',
+      },
+    },
+  });
+
+  const removePassenger = async (guest) => {
+    if (guest.guest.type == "Сотрудник") {
+      try {
+        let deletePerson = await deletePersonFromHotel({
+          variables: {
+            reserveHotelId: guest.hotel.hotel.reservationHotelId,
+            airlinePersonalId: guest.guest.id,
+          },
+        });
+
+        if (deletePerson.data) {
+          closeDeletecomponent();
         }
-    }, [data, dataHotel, subscriptionData, subscriptionDataPerson]);
-
-    const [showCreateSidebar, setShowCreateSidebar] = useState(false);
-
-    const toggleCreateSidebar = () => {
-        setShowCreateSidebar(!showCreateSidebar);
-    };
-
-    const [showUpdateSidebar, setShowUpdateSidebar] = useState(false);
-
-    const toggleUpdateSidebar = () => {
-        setShowUpdateSidebar(!showUpdateSidebar);
-    };
-
-    const [idDelete, setIdDelete] = useState();
-    const [showDelete, setshowDelete] = useState(false);
-
-    const openDeletecomponent = (guest, hotel) => {
-        setshowDelete(true);
-        setIdDelete({ guest, hotel })
-    };
-
-    const closeDeletecomponent = () => {
-        setshowDelete(false);
-    };
-
-    const [idPassangerForUpdate, setIdPassangerForUpdate] = useState();
-
-    const addPassenger = (newPassenger) => {
-        setPlacement(prevPlacement => [...prevPlacement, newPassenger]);
-    };
-
-    const updatePassenger = (updatedPassenger, index) => {
-        setPlacement(prevPlacement =>
-            prevPlacement.map((passenger, i) =>
-                i === index ? updatedPassenger : passenger
-            )
-        );
-    };
-
-    const [deletePersonFromHotel] = useMutation(DELETE_PERSON_FROM_HOTEL, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                // 'Apollo-Require-Preflight': 'true',
-            },
-        },
-    });
-
-    const [deletePassengerFromHotel] = useMutation(DELETE_PASSENGER_FROM_HOTEL, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                // 'Apollo-Require-Preflight': 'true',
-            },
-        },
-    });
-
-    const removePassenger = async (guest) => {
-        if (guest.guest.type == 'Сотрудник') {
-            try {
-                let deletePerson = await deletePersonFromHotel({
-                    variables: {
-                        reserveHotelId: guest.hotel.hotel.reservationHotelId,
-                        airlinePersonalId: guest.guest.id,
-                    }
-                });
-
-                if (deletePerson.data) {
-                    closeDeletecomponent();
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        if (guest.guest.type == 'Пассажир') {
-            try {
-                let deletePassenger = await deletePassengerFromHotel({
-                    variables: {
-                        deletePassengerFromReserveId: guest.guest.id,
-                    }
-                });
-
-                if (deletePassenger.data) {
-                    closeDeletecomponent();
-                }
-            } catch (e) {
-                console.error(e);
-            }
-        }
-    };
-
-    const [showChooseHotel, setShowChooseHotel] = useState(false);
-    const toggleChooseHotel = () => {
-        setShowChooseHotel(!showChooseHotel);
-    };
-
-    const [formData, setFormData] = useState({
-        city: '',
-        hotel: '',
-    });
-
-    const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        if (type === 'checkbox') {
-            setFormData(prevState => ({
-                ...prevState,
-                meals: {
-                    ...prevState.meals,
-                    [name]: checked
-                }
-            }));
-        } else if (name === 'included') {
-            setFormData(prevState => ({
-                ...prevState,
-                meals: {
-                    ...prevState.meals,
-                    included: value
-                }
-            }));
-        } else {
-            setFormData(prevState => ({
-                ...prevState,
-                [name]: value
-            }));
-        }
+      } catch (e) {
+        console.error(e);
+      }
     }
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
-    };
+    if (guest.guest.type == "Пассажир") {
+      try {
+        let deletePassenger = await deletePassengerFromHotel({
+          variables: {
+            deletePassengerFromReserveId: guest.guest.id,
+          },
+        });
 
-    const filteredPlacement = placement
-        .map((item) => {
+        if (deletePassenger.data) {
+          closeDeletecomponent();
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
 
-            const filteredPassengers = item.hotel.passengers.filter((passenger) =>
-                passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+  const [showChooseHotel, setShowChooseHotel] = useState(false);
+  const toggleChooseHotel = () => {
+    setShowChooseHotel(!showChooseHotel);
+  };
 
-            // console.log(filteredPassengers);
-            
-            // const filteredPersons = item.hotel.person.filter((person) =>
-            //     person.name.toLowerCase().includes(searchQuery.toLowerCase())
-            // );
+  const [formData, setFormData] = useState({
+    city: "",
+    hotel: "",
+  });
 
-            const isHotelMatch = item.hotel.name.toLowerCase().includes(searchQuery.toLowerCase());
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    if (type === "checkbox") {
+      setFormData((prevState) => ({
+        ...prevState,
+        meals: {
+          ...prevState.meals,
+          [name]: checked,
+        },
+      }));
+    } else if (name === "included") {
+      setFormData((prevState) => ({
+        ...prevState,
+        meals: {
+          ...prevState.meals,
+          included: value,
+        },
+      }));
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
+  };
 
-            if (filteredPassengers.length > 0 || isHotelMatch) {
-                return {
-                    ...item,
-                    hotel: {
-                        ...item.hotel,
-                        passengers: filteredPassengers,
-                        // person: filteredPersons,
-                    },
-                };
-            }
+  const [searchQuery, setSearchQuery] = useState("");
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
 
-            return null;
-        })
-        .filter((item) => item !== null);
+  const filteredPlacement = placement
+    .map((item) => {
+      const filteredPassengers = item.hotel.passengers.filter((passenger) =>
+        passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
-        // console.log(filteredPlacement);
-        
+      // console.log(filteredPassengers);
 
-    const [showChooseHotels, setShowChooseHotels] = useState(0);
+      // const filteredPersons = item.hotel.person.filter((person) =>
+      //     person.name.toLowerCase().includes(searchQuery.toLowerCase())
+      // );
 
-    useEffect(() => {
-        const totalPassengers = placement.reduce((acc, item) => acc + Number(item.hotel.passengersCount), 0);
-        setShowChooseHotels(totalPassengers);
-    }, [placement]);
+      const isHotelMatch = item.hotel.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
-    const toggleCreateSidebarHotel = () => {
-        setShowCreateSidebarHotel(!showCreateSidebarHotel);
-    };
+      if (filteredPassengers.length > 0 || isHotelMatch) {
+        return {
+          ...item,
+          hotel: {
+            ...item.hotel,
+            passengers: filteredPassengers,
+            // person: filteredPersons,
+          },
+        };
+      }
 
-    const exists = filteredPlacement.some(item => item.hotel.id === user.hotelId);
-    
-    
-    return (
-        <div className={classes.main}>
-            <MenuDispetcher id={'reserve'} />
+      return null;
+    })
+    .filter((item) => item !== null);
 
-            <div className={classes.section}>
-                <Header>
-                    <div className={classes.titleHeader}>
-                        <Link to={user.role == 'HOTELADMIN' ? '/reserveRequests' : '/reserve'} className={classes.backButton}><img src="/arrow.png" alt="" /></Link>
-                        Заявка {request.reserveNumber}
-                    </div>
-                </Header>
+  // console.log(filteredPlacement);
 
-                <div className={classes.section_searchAndFilter}>
-                    <input
-                        type="text"
-                        placeholder="Поиск"
-                        style={{ width: '500px' }}
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    />
+  const [showChooseHotels, setShowChooseHotels] = useState(0);
 
-                    {user?.airlineId ? null : (
-                        <div className={classes.btnsReserve}>
-                        {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
-
-                        {!exists &&
-                        request.passengerCount === showChooseHotels ? null :
-                            <Button onClick={toggleCreateSidebar}>
-                                {user.role == 'HOTELADMIN' ? 'Выбрать количество пассажиров' : 'Добавить гостиницу'}
-                            </Button>
-                        }
-                    </div>
-                    )}
-
-
-                </div>
-                {loading && <p>Loading...</p>}
-                {error && <p>Error: {error.message}</p>}
-
-                {!loading && !error && request && (
-                    <>
-                        <InfoTableDataReserve_passengers
-                            placement={filteredPlacement}
-                            setPlacement={setPlacement}
-                            toggleUpdateSidebar={toggleUpdateSidebar}
-                            setIdPassangerForUpdate={setIdPassangerForUpdate}
-                            openDeletecomponent={openDeletecomponent}
-                            toggleChooseHotel={toggleChooseHotel}
-                            user={user}
-                            request={request}
-                            airline={request.airline}
-                        />
-
-                        <AddNewPassenger
-                            show={showCreateSidebar}
-                            onClose={toggleCreateSidebar}
-                            request={request}
-                            placement={placement ? placement : []}
-                            setPlacement={setPlacement}
-                            user={user}
-                            showChooseHotels={showChooseHotels}
-                            setShowChooseHotels={setShowChooseHotels}
-                        />
-
-                        <UpdatePassanger
-                            show={showUpdateSidebar}
-                            onClose={toggleUpdateSidebar}
-                            placement={placement ? placement[idPassangerForUpdate] : []}
-                            idPassangerForUpdate={idPassangerForUpdate}
-                            updatePassenger={updatePassenger}
-                        />
-
-                        <CreateRequestHotelReserve
-                            show={showCreateSidebarHotel}
-                            onClose={toggleCreateSidebarHotel}
-                        />
-
-                        <ChooseHotel show={showChooseHotel} onClose={toggleChooseHotel} chooseObject={placement} id={'reserve'} />
-
-                        {showDelete && <DeleteComponent remove={removePassenger} index={idDelete} close={closeDeletecomponent} title={`Вы действительно хотите удалить гостя? `} />}
-                    </>
-                )}
-            </div>
-
-        </div>
+  useEffect(() => {
+    const totalPassengers = placement.reduce(
+      (acc, item) => acc + Number(item.hotel.passengersCount),
+      0
     );
+    setShowChooseHotels(totalPassengers);
+  }, [placement]);
+
+  const toggleCreateSidebarHotel = () => {
+    setShowCreateSidebarHotel(!showCreateSidebarHotel);
+  };
+
+  const exists = filteredPlacement.some(
+    (item) => item.hotel.id === user.hotelId
+  );
+
+  return (
+    <div className={classes.main}>
+      <MenuDispetcher id={"reserve"} />
+
+      <div className={classes.section}>
+        <Header>
+          <div className={classes.titleHeader}>
+            <Link
+              to={user.role == "HOTELADMIN" ? "/reserveRequests" : "/reserve"}
+              className={classes.backButton}
+            >
+              <img src="/arrow.png" alt="" />
+            </Link>
+            Заявка {request.reserveNumber}
+          </div>
+        </Header>
+
+        <div className={classes.section_searchAndFilter}>
+          <input
+            type="text"
+            placeholder="Поиск"
+            style={{ width: "500px" }}
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+
+          {user?.airlineId ? null : (
+            <div className={classes.btnsReserve}>
+              {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
+
+              {!exists && request.passengerCount === showChooseHotels ? null : (
+                <Button onClick={toggleCreateSidebar}>
+                  {user.role == "HOTELADMIN"
+                    ? "Выбрать количество пассажиров"
+                    : "Добавить гостиницу"}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+        {loading && <MUILoader />}
+        {error && <p>Error: {error.message}</p>}
+
+        {!loading && !error && request && (
+          <>
+            <InfoTableDataReserve_passengers
+              placement={filteredPlacement}
+              setPlacement={setPlacement}
+              toggleUpdateSidebar={toggleUpdateSidebar}
+              setIdPassangerForUpdate={setIdPassangerForUpdate}
+              openDeletecomponent={openDeletecomponent}
+              toggleChooseHotel={toggleChooseHotel}
+              user={user}
+              request={request}
+              airline={request.airline}
+            />
+
+            <AddNewPassenger
+              show={showCreateSidebar}
+              onClose={toggleCreateSidebar}
+              request={request}
+              placement={placement ? placement : []}
+              setPlacement={setPlacement}
+              user={user}
+              showChooseHotels={showChooseHotels}
+              setShowChooseHotels={setShowChooseHotels}
+            />
+
+            <UpdatePassanger
+              show={showUpdateSidebar}
+              onClose={toggleUpdateSidebar}
+              placement={placement ? placement[idPassangerForUpdate] : []}
+              idPassangerForUpdate={idPassangerForUpdate}
+              updatePassenger={updatePassenger}
+            />
+
+            <CreateRequestHotelReserve
+              show={showCreateSidebarHotel}
+              onClose={toggleCreateSidebarHotel}
+            />
+
+            <ChooseHotel
+              show={showChooseHotel}
+              onClose={toggleChooseHotel}
+              chooseObject={placement}
+              id={"reserve"}
+            />
+
+            {showDelete && (
+              <DeleteComponent
+                remove={removePassenger}
+                index={idDelete}
+                close={closeDeletecomponent}
+                title={`Вы действительно хотите удалить гостя? `}
+              />
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default ReservePlacement;

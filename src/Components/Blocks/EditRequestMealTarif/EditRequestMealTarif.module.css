@@ -16,7 +16,8 @@
 
 .requestTitle_name {
     font-family: Inter;
-    font-size: 24px;
+    /* font-size: 24px; */
+    font-size: 22px;
     font-weight: 600;
     line-height: 38.73px;
     color: var(--main-gray);
@@ -74,7 +75,8 @@ select {
 }
 
 .requestMiddle {
-    height: calc(96% - 90px - 71px);
+    /* height: calc(96% - 90px - 71px); */
+    height: calc(96% - 90px - 32px);
     overflow: hidden;
     overflow-y: scroll;
 }
@@ -115,4 +117,8 @@ select {
     line-height: 19.36px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+    .requestTitle_name {
+        font-size: 20px;
+    }
+}

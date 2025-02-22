@@ -12,11 +12,15 @@ import {
   DELETE_HOTEL,
   GET_HOTEL_LOGS,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
+  GET_CITIES,
 } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { useNavigate } from "react-router-dom";
 import Logs from "../LogsHistory/Logs.jsx";
+import MUILoader from "../MUILoader/MUILoader.jsx";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import Notification from "../../Notification/Notification.jsx";
 
 function HotelAbout_tabComponent({ id }) {
   const [userRole, setUserRole] = useState();
@@ -76,6 +80,20 @@ function HotelAbout_tabComponent({ id }) {
     GET_HOTELS_UPDATE_SUBSCRIPTION
   );
 
+  let infoCities = useQuery(GET_CITIES);
+  const [cities, setCities] = useState([]);
+
+  useEffect(() => {
+    if (infoCities.data) {
+      setCities(
+        infoCities.data?.citys.map(
+          // (item) => `${item.city}, регион: ${item.region}`
+          (item) => item.city
+        ) || []
+      );
+    }
+  }, [infoCities]);
+
   const [hotel, setHotel] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [newImage, setNewImage] = useState(null);
@@ -106,8 +124,21 @@ function HotelAbout_tabComponent({ id }) {
     if (dataSubscriptionUpd) refetch();
   }, [data, dataSubscriptionUpd, refetch]);
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+  };
+
   const handleEditClick = async () => {
     if (isEditing) {
+      setIsLoading(true);
       try {
         await updateHotel({
           variables: {
@@ -148,9 +179,13 @@ function HotelAbout_tabComponent({ id }) {
             images: newImage ? [newImage] : null,
           },
         });
+        addNotification("Редактирование гостиницы прошло успешно.", "success");
         // alert('Данные успешно сохранены');
       } catch (err) {
         console.error("Произошла ошибка при сохранении данных", err);
+      } finally {
+        setIsLoading(false);
+        // addNotification("Редактирование гостиницы прошло успешно.", "success");
       }
     }
     setIsEditing(!isEditing);
@@ -259,14 +294,18 @@ function HotelAbout_tabComponent({ id }) {
 
   return (
     <>
-      {loading && <p>Loading...</p>}
+      {(loading || isLoading) && <MUILoader fullHeight={"70vh"} />}
       {error && <p>Error: {error.message}</p>}
 
-      {!loading && !error && hotel && (
+      {!loading && !isLoading && !error && hotel && (
         // <div className={classes.hotelAbout} style={user?.role === roles.airlineAdmin ? {height:'calc(100vh - 130px)'} : {}}>
         <div
           className={classes.hotelAbout}
-          style={user?.hotelId || user?.airlineId ? { height: "calc(100vh - 130px)" } : {}}
+          style={
+            user?.hotelId || user?.airlineId
+              ? { height: "calc(100vh - 130px)" }
+              : {}
+          }
         >
           <div className={classes.column}>
             <div className={classes.hotelAbout_top}>
@@ -659,14 +698,30 @@ function HotelAbout_tabComponent({ id }) {
                   </div>
                   <div className={classes.hotelAbout_info_item}>
                     <label>Город</label>
-                    <input
+                    <MUIAutocomplete
+                      dropdownWidth={"400px"}
+                      isDisabled={!isEditing}
+                      options={cities}
+                      value={hotel.information?.city || ""}
+                      onChange={(event, newValue) => {
+                        setHotel((prevHotel) => ({
+                          ...prevHotel,
+                          information: {
+                            ...prevHotel.information,
+                            city: newValue || "", // Обновляем поле `city`
+                          },
+                        }));
+                      }}
+                    />
+
+                    {/* <input
                       type="text"
                       name="city"
                       value={hotel.information?.city || ""}
                       onChange={handleChange}
                       disabled={!isEditing}
                       className={classes.hotelAbout_info_input}
-                    />
+                    /> */}
                   </div>
                   <div className={classes.hotelAbout_info_item}>
                     <label>Улица</label>
@@ -769,6 +824,19 @@ function HotelAbout_tabComponent({ id }) {
             onClose={toggleLogsSidebar}
             name={hotel?.name}
           />
+          {notifications.map((n, index) => (
+            <Notification
+              key={n.id}
+              text={n.text}
+              status={n.status}
+              index={index}
+              onClose={() => {
+                setNotifications((prev) =>
+                  prev.filter((notif) => notif.id !== n.id)
+                );
+              }}
+            />
+          ))}
         </div>
       )}
     </>

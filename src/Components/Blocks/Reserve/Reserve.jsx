@@ -9,6 +9,9 @@ import { GET_AIRLINE, GET_HOTEL_CITY, GET_HOTEL_TARIFS, GET_RESERVE_REQUESTS, RE
 import { useQuery, useSubscription } from "@apollo/client";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReactPaginate from 'react-paginate';
+import MUILoader from "../MUILoader/MUILoader";
+import MUITextField from "../MUITextField/MUITextField";
+import { statusMapping } from "../../../roles";
 
 function Reserve({ children, user, idHotel, ...props }) {
     const location = useLocation();
@@ -186,15 +189,19 @@ function Reserve({ children, user, idHotel, ...props }) {
         return requests.filter(request => {
             const matchesSelect = !filterData.filterSelect || request.aviacompany.includes(filterData.filterSelect);
             const matchesDate = !filterData.filterDate || request.date === filterData.filterDate;
+            // Получаем читаемое название статуса
+            const statusDisplay = statusMapping[request.status] || request.status;
             const matchesSearchQuery = [
                 request.id.toLowerCase(),
+                request.reserveNumber.toLowerCase(),
                 request.airport?.city.toLowerCase(),
                 request.airline?.name.toLowerCase(),
                 request.airport?.name.toLowerCase(),
                 request.airport?.code.toLowerCase(),
                 request.arrival.toLowerCase(),
                 request.departure.toLowerCase(),
-                request.status?.toLowerCase()
+                request.status?.toLowerCase(),
+                (statusDisplay?.toLowerCase() || '')
             ].some(field => field.includes(searchQuery.toLowerCase()));
     
             const matchesCity = hotelCity ? request.airport?.city.toLowerCase() === hotelCity.toLowerCase() : true;
@@ -214,10 +221,16 @@ function Reserve({ children, user, idHotel, ...props }) {
             <div className={classes.section}>
                 <Header>Пассажиры</Header>
                 <div className={classes.section_searchAndFilter}>
-                    <input
+                    {/* <input
                         type="text"
                         placeholder="Поиск"
                         style={{ 'width': '500px' }}
+                        value={searchQuery}
+                        onChange={handleSearch}
+                    /> */}
+                    <MUITextField
+                        className={classes.mainSearch}
+                        label={'Поиск'}
                         value={searchQuery}
                         onChange={handleSearch}
                     />
@@ -234,7 +247,7 @@ function Reserve({ children, user, idHotel, ...props }) {
                     />
                 </div>
 
-                {loading && <p>Loading...</p>}
+                {loading && <MUILoader fullHeight={'75vh'}/>}
                 {error && <p>Error: {error.message}</p>}
 
                 {!loading && !error && requests && (

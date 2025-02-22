@@ -4,6 +4,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Smiles from "../Smiles/Smiles";
 import { convertToDate, GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
+import MUILoader from "../MUILoader/MUILoader";
 
 function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTitle, setMessageCount, separator, hotelChatId, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
     const messagesEndRef = useRef(null);
@@ -227,9 +228,12 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
         setShowEmojiPicker(!showEmojiPicker);
     };
 
+    // console.log(messages);
+    
+
     return (
         <>
-            {loading && <p>Loading...</p>}
+            {loading && <MUILoader loadSize={'50px'}/>}
             {error && <p>Error: {error.message}</p>}
 
             {!loading && !error && messages?.messages && data &&
@@ -242,9 +246,12 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
                                         <div className={classes.requestData_message_text__name}>
                                             <div className={classes.requestData_message_name}>{message.sender.name}</div>
                                             {/* <div className={classes.requestData_message_post}>{message.sender.role}</div> */}
+                                            <div className={classes.requestData_message_post}>{message.sender.position}</div>
                                         </div>
-                                        {message.text}
-                                        <div className={classes.requestData_message_time}>{convertToDate(message.createdAt)} {convertToDate(message.createdAt, true)}</div>
+                                        <div className={`${classes.requestData_message__message} ${message.sender.id === userID ? classes.myMesBorderRadius : ''}`}>
+                                            {message.text}
+                                            <div className={classes.requestData_message_time}>{convertToDate(message.createdAt)} {convertToDate(message.createdAt, true)}</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

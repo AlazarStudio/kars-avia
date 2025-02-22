@@ -20,6 +20,8 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
+import MUILoader from "../MUILoader/MUILoader";
+import Notification from "../../Notification/Notification";
 
 function Reports({ children, ...props }) {
   const token = getCookie("token");
@@ -74,25 +76,27 @@ function Reports({ children, ...props }) {
   // Устанавливаем endDate как последний день текущего года
   const endDate1 = new Date(currentYear, 11, 31).toISOString().split("T")[0];
 
-  const { data: companyData, refetch } = useQuery(
-    isAirline ? GET_AIRLINE_REPORT : GET_HOTEL_REPORT,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const {
+    data: companyData,
+    loading,
+    error,
+    refetch,
+  } = useQuery(isAirline ? GET_AIRLINE_REPORT : GET_HOTEL_REPORT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      variables: {
-        filter: {
-          startDate: "0000-00-00T12:00:00.000Z",
-          endDate: endDate1,
-          airlineId: null,
-          hotelId: null,
-          personId: null,
-        },
+    },
+    variables: {
+      filter: {
+        startDate: "0000-00-00T12:00:00.000Z",
+        endDate: endDate1,
+        airlineId: null,
+        hotelId: null,
+        personId: null,
       },
-    }
-  );
+    },
+  });
 
   const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIOPTION);
 
@@ -136,6 +140,16 @@ function Reports({ children, ...props }) {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -192,31 +206,35 @@ function Reports({ children, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-            <Filter
-              toggleSidebar={toggleCreateSidebar}
-              handleChange={handleChange}
-              filterData={filterData}
-              buttonTitle={"Создать отчет"}
-              filterList={filterList}
-              needDate={false}
-            />
+          <Filter
+            toggleSidebar={toggleCreateSidebar}
+            handleChange={handleChange}
+            filterData={filterData}
+            buttonTitle={"Создать отчет"}
+            filterList={filterList}
+            needDate={false}
+          />
         </div>
-
-        <InfoTableDataReports
-          user={user}
-          toggleRequestSidebar={toggleRequestSidebar}
-          requests={filteredRequests}
-          isAirline={isAirline}
-          setIsAirline={setIsAirline}
-          setChooseObject={setChooseObject}
-          openDeleteComponent={openDeleteComponent}
-        />
+        {loading ? (
+          <MUILoader fullHeight={"70vh"} />
+        ) : (
+          <InfoTableDataReports
+            user={user}
+            toggleRequestSidebar={toggleRequestSidebar}
+            requests={filteredRequests}
+            isAirline={isAirline}
+            setIsAirline={setIsAirline}
+            setChooseObject={setChooseObject}
+            openDeleteComponent={openDeleteComponent}
+          />
+        )}
 
         <CreateRequestReport
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
           isAirline={isAirline}
           //   addDispatcher={addDispatcher}
+          addNotification={addNotification}
         />
         {/* 
                 <ExistRequestReport 
@@ -237,6 +255,20 @@ function Reports({ children, ...props }) {
             title={`Вы действительно хотите удалить отчет?`}
           />
         )}
+
+        {notifications.map((n, index) => (
+          <Notification
+            key={n.id}
+            text={n.text}
+            status={n.status}
+            index={index}
+            onClose={() => {
+              setNotifications((prev) =>
+                prev.filter((notif) => notif.id !== n.id)
+              );
+            }}
+          />
+        ))}
       </div>
     </>
   );

@@ -11,4 +11,9 @@
     justify-content: space-between;
     gap: 20px;
 }
+
+.mainSearch {
+    width: 500px;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

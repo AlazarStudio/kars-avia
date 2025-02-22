@@ -12,8 +12,10 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList";
+import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
-function CreateRequestReport({ show, onClose }) {
+function CreateRequestReport({ show, onClose, addNotification }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
@@ -44,6 +46,7 @@ function CreateRequestReport({ show, onClose }) {
       personId: "",
     });
     setAirOrHotel("");
+    setSelectedAirline("");
     setIsEdited(false); // Сброс флага изменений
   }, [user.airlineId, user.hotelId]);
 
@@ -121,8 +124,11 @@ function CreateRequestReport({ show, onClose }) {
 
   const today = new Date().toISOString().split("T")[0];
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
@@ -153,10 +159,38 @@ function CreateRequestReport({ show, onClose }) {
       await createReport({ variables: { input } });
       resetForm();
       onClose();
+      addNotification(
+        `Отчет по ${formData.personId !== "" ? "сотруднику" : ""} ${
+          airOrHotel === "airline" ? "авиакомпании" : "гостинице"
+        } создан успешно.`,
+        "success"
+      );
     } catch (error) {
       console.error("Catch: ", error);
+    } finally {
+      // onClose();
+      // resetForm();
+      setIsLoading(false);
+      // addNotification(
+      //   `Отчет по ${formData.personId !== "" ? "сотруднику" : ""} ${
+      //     airOrHotel === "airline" ? "авиакомпании" : "гостинице"
+      //   } создан успешно.`,
+      //   "success"
+      // );
     }
   };
+
+  useEffect(() => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      personId: "", // Обнуляем сотрудника
+      airlineId: user.airlineId ? user.airlineId : "", // Сбрасываем, если выбрана гостиница
+      hotelId: user.hotelId ? user.hotelId : "", // Сбрасываем, если выбрана авиакомпания
+    }));
+    setSelectedAirline(null); // Сбрасываем выбранную компанию
+  }, [airOrHotel]);
+
+  // console.log(formData);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -191,132 +225,214 @@ function CreateRequestReport({ show, onClose }) {
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          {/* <label>Авиакомпания</label>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              {/* <label>Авиакомпания</label>
                     <input type="text" name="airline" placeholder="Авиакомпания" value={formData.airline} onChange={handleChange} /> */}
 
-          {user.airlineId || user.hotelId ? null : (
-            <>
-              <label>Авиакомпания или гостиница</label>
-              <DropDownList
-                placeholder="Выберите тип отчета"
-                searchable={false}
-                options={["Авиакомпания", "Гостиница"]}
-                initialValue={
-                  airOrHotel
-                    ? airOrHotel === "airline"
-                      ? "Авиакомпания"
-                      : "Гостиница"
-                    : ""
-                }
-                onSelect={(value) => {
-                  setAirOrHotel(value === "Авиакомпания" ? "airline" : "hotel");
-                  setIsEdited(true);
-                }}
-              />
-
-              {airOrHotel === "airline" ? (
+              {user.airlineId || user.hotelId ? null : (
                 <>
-                  <label>Авиакомпания</label>
-                  <DropDownList
-                    placeholder="Введите авиакомпанию"
-                    searchable={false}
-                    options={airlines?.map((airline) => airline.name)}
-                    initialValue={selectedAirline?.name || ""}
-                    onSelect={(value) => {
-                      const selectedAirline = airlines.find(
-                        (airline) => airline.name === value
+                  <label>Авиакомпания или гостиница</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите тип отчета"}
+                    options={["Авиакомпания", "Гостиница"]}
+                    value={
+                      airOrHotel
+                        ? airOrHotel === "airline"
+                          ? "Авиакомпания"
+                          : "Гостиница"
+                        : ""
+                    }
+                    onChange={(event, newValue) => {
+                      setAirOrHotel(
+                        newValue === "Авиакомпания" ? "airline" : "hotel"
                       );
-                      setSelectedAirline(selectedAirline);
-                      setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        airlineId: selectedAirline?.id || "",
-                      }));
                       setIsEdited(true);
                     }}
                   />
-                  {selectedAirline?.staff ? (
+                  {/* <DropDownList
+                    placeholder="Выберите тип отчета"
+                    searchable={false}
+                    options={["Авиакомпания", "Гостиница"]}
+                    initialValue={
+                      airOrHotel
+                        ? airOrHotel === "airline"
+                          ? "Авиакомпания"
+                          : "Гостиница"
+                        : ""
+                    }
+                    onSelect={(value) => {
+                      setAirOrHotel(
+                        value === "Авиакомпания" ? "airline" : "hotel"
+                      );
+                      setIsEdited(true);
+                    }}
+                  /> */}
+
+                  {airOrHotel === "airline" ? (
                     <>
-                      <label>Сотрудник авиакомпании</label>
-                      <DropDownList
-                        placeholder="Введите сотрудника"
-                        options={selectedAirline.staff.map(
-                          (person) => person.name
-                        )}
-                        initialValue={
-                          selectedAirline.staff.find(
-                            (person) => person.id === formData.personId
-                          )?.name || ""
-                        }
-                        onSelect={(value) => {
-                          const selectedPerson = selectedAirline.staff.find(
-                            (person) => person.name === value
+                      <label>Авиакомпания</label>
+                      <MUIAutocomplete
+                        dropdownWidth={"100%"}
+                        label={"Выберите авиакомпанию"}
+                        options={airlines?.map((airline) => airline.name)}
+                        value={selectedAirline?.name || ""}
+                        onChange={(event, newValue) => {
+                          const selectedAirline = airlines.find(
+                            (airline) => airline.name === newValue
                           );
+                          setSelectedAirline(selectedAirline);
                           setFormData((prevFormData) => ({
                             ...prevFormData,
-                            personId: selectedPerson?.id || "",
+                            airlineId: selectedAirline?.id || "",
                           }));
                           setIsEdited(true);
                         }}
                       />
+                      {/* <DropDownList
+                        placeholder="Введите авиакомпанию"
+                        searchable={false}
+                        options={airlines?.map((airline) => airline.name)}
+                        initialValue={selectedAirline?.name || ""}
+                        onSelect={(value) => {
+                          const selectedAirline = airlines.find(
+                            (airline) => airline.name === value
+                          );
+                          setSelectedAirline(selectedAirline);
+                          setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            airlineId: selectedAirline?.id || "",
+                          }));
+                          setIsEdited(true);
+                        }}
+                      /> */}
+                      {selectedAirline?.staff ? (
+                        <>
+                          <label>Сотрудник авиакомпании</label>
+                          <MUIAutocomplete
+                            dropdownWidth={"100%"}
+                            label={"Выберите сотрудника авиакомпании"}
+                            options={selectedAirline.staff.map(
+                              (person) => person.name
+                            )}
+                            value={
+                              selectedAirline.staff.find(
+                                (person) => person.id === formData.personId
+                              )?.name || ""
+                            }
+                            onChange={(event, newValue) => {
+                              const selectedPerson = selectedAirline.staff.find(
+                                (person) => person.name === newValue
+                              );
+                              setFormData((prevFormData) => ({
+                                ...prevFormData,
+                                personId: selectedPerson?.id || "",
+                              }));
+                              setIsEdited(true);
+                            }}
+                          />
+                          {/* <DropDownList
+                            placeholder="Введите сотрудника"
+                            options={selectedAirline.staff.map(
+                              (person) => person.name
+                            )}
+                            initialValue={
+                              selectedAirline.staff.find(
+                                (person) => person.id === formData.personId
+                              )?.name || ""
+                            }
+                            onSelect={(value) => {
+                              const selectedPerson = selectedAirline.staff.find(
+                                (person) => person.name === value
+                              );
+                              setFormData((prevFormData) => ({
+                                ...prevFormData,
+                                personId: selectedPerson?.id || "",
+                              }));
+                              setIsEdited(true);
+                            }}
+                          /> */}
+                        </>
+                      ) : null}
+                    </>
+                  ) : airOrHotel === "hotel" ? (
+                    <>
+                      <label>Гостиница</label>
+                      <MUIAutocomplete
+                        dropdownWidth={"100%"}
+                        label={"Выберите гостиницу"}
+                        options={airlines?.map((airline) => airline.name)}
+                        value={selectedAirline?.name || ""}
+                        onChange={(event, newValue) => {
+                          const selectedAirline = airlines.find(
+                            (airline) => airline.name === newValue
+                          );
+                          setSelectedAirline(selectedAirline);
+                          setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            hotelId: selectedAirline?.id || "",
+                          }));
+                          setIsEdited(true);
+                        }}
+                      />
+                      {/* <DropDownList
+                        placeholder="Введите гостиницу"
+                        searchable={false}
+                        options={airlines?.map((airline) => airline.name)}
+                        initialValue={selectedAirline?.name || ""}
+                        onSelect={(value) => {
+                          const selectedAirline = airlines.find(
+                            (airline) => airline.name === value
+                          );
+                          setSelectedAirline(selectedAirline);
+                          setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            hotelId: selectedAirline?.id || "",
+                          }));
+                          setIsEdited(true);
+                        }}
+                      /> */}
                     </>
                   ) : null}
                 </>
-              ) : airOrHotel === "hotel" ? (
-                <>
-                  <label>Гостиница</label>
-                  <DropDownList
-                    placeholder="Введите гостиницу"
-                    searchable={false}
-                    options={airlines?.map((airline) => airline.name)}
-                    initialValue={selectedAirline?.name || ""}
-                    onSelect={(value) => {
-                      const selectedAirline = airlines.find(
-                        (airline) => airline.name === value
-                      );
-                      setSelectedAirline(selectedAirline);
-                      setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        hotelId: selectedAirline?.id || "",
-                      }));
-                      setIsEdited(true);
-                    }}
-                  />
-                </>
-              ) : null}
-            </>
-          )}
+              )}
 
-          <label>Начальная дата</label>
-          <input
-            type="date"
-            name="startDate"
-            placeholder="Начальная дата"
-            value={formData.startDate}
-            onChange={handleChange}
-          />
+              <label>Начальная дата</label>
+              <input
+                type="date"
+                name="startDate"
+                placeholder="Начальная дата"
+                value={formData.startDate}
+                onChange={handleChange}
+              />
 
-          <label>Конечная дата</label>
-          <input
-            type="date"
-            name="endDate"
-            min={formData.startDate}
-            placeholder="Конечная дата"
-            value={formData.endDate}
-            onChange={handleChange}
-          />
+              <label>Конечная дата</label>
+              <input
+                type="date"
+                name="endDate"
+                min={formData.startDate}
+                placeholder="Конечная дата"
+                value={formData.endDate}
+                onChange={handleChange}
+              />
 
-          {/* <label>Картинка</label>
+              {/* <label>Картинка</label>
                     <input type="file" name="airlineImg" onChange={handleFileChange} /> */}
-        </div>
-      </div>
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

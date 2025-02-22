@@ -5,6 +5,8 @@ import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, UPDATE_AIRLINE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
+import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 function EditRequestAirlineCompany({
   show,
@@ -14,6 +16,7 @@ function EditRequestAirlineCompany({
   onSubmit,
   addTarif,
   id,
+  addNotification,
 }) {
   const token = getCookie("token");
 
@@ -95,7 +98,7 @@ function EditRequestAirlineCompany({
   }, []);
 
   const fileInputRef = useRef(null);
-  
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
@@ -119,83 +122,87 @@ function EditRequestAirlineCompany({
     }
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     try {
-        const selectedDepartment = addTarif.find(
-            (dept) => dept.name === formData.department
-        );
+      const selectedDepartment = addTarif.find(
+        (dept) => dept.name === formData.department
+      );
 
-        let response_update_user = await uploadFile({
-            variables: {
-                input: {
-                    id: user.id,
-                    name: formData.name,
-                    email: formData.email,
-                    role: formData.role,
-                    position: formData.position,
-                    login: formData.login,
-                    password: formData.password,
-                    airlineId: id,
-                    airlineDepartmentId: selectedDepartment?.id,
-                },
-                images: formData.images,
-            },
+      let response_update_user = await uploadFile({
+        variables: {
+          input: {
+            id: user.id,
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            position: formData.position,
+            login: formData.login,
+            password: formData.password,
+            airlineId: id,
+            airlineDepartmentId: selectedDepartment?.id,
+          },
+          images: formData.images,
+        },
+      });
+
+      // console.log("Response from uploadFile:", response_update_user);
+
+      if (response_update_user) {
+        const updatedUser = response_update_user.data.updateUser;
+
+        const updatedTarif = addTarif.map((department) => {
+          // Если пользователь находится в этом отделе
+          if (department.users.some((u) => u.id === user.id)) {
+            // Если это старый отдел и отдел изменился, удаляем пользователя
+            if (department.name !== formData.department) {
+              return {
+                ...department,
+                users: department.users.filter((u) => u.id !== user.id),
+              };
+            } else {
+              // Если отдел не изменился, просто обновляем данные пользователя
+              return {
+                ...department,
+                users: department.users.map((u) =>
+                  u.id === updatedUser.id ? { ...u, ...updatedUser } : u
+                ),
+              };
+            }
+          }
+
+          // Если это новый отдел, добавляем пользователя
+          if (department.name === formData.department) {
+            return {
+              ...department,
+              users: [...department.users, { ...user, ...updatedUser }].sort(
+                (a, b) => a.name.localeCompare(b.name)
+              ),
+            };
+          }
+
+          // Если отдел не связан с изменениями, возвращаем как есть
+          return department;
         });
 
-        // console.log("Response from uploadFile:", response_update_user);
+        // console.log("Updated Tarif:", updatedTarif);
 
-        if (response_update_user) {
-            const updatedUser = response_update_user.data.updateUser;
-
-            const updatedTarif = addTarif.map((department) => {
-                // Если пользователь находится в этом отделе
-                if (department.users.some((u) => u.id === user.id)) {
-                    // Если это старый отдел и отдел изменился, удаляем пользователя
-                    if (department.name !== formData.department) {
-                        return {
-                            ...department,
-                            users: department.users.filter((u) => u.id !== user.id),
-                        };
-                    } else {
-                        // Если отдел не изменился, просто обновляем данные пользователя
-                        return {
-                            ...department,
-                            users: department.users.map((u) =>
-                                u.id === updatedUser.id ? { ...u, ...updatedUser } : u
-                            ),
-                        };
-                    }
-                }
-
-                // Если это новый отдел, добавляем пользователя
-                if (department.name === formData.department) {
-                    return {
-                        ...department,
-                        users: [
-                            ...department.users,
-                            { ...user, ...updatedUser },
-                        ].sort((a, b) => a.name.localeCompare(b.name)),
-                    };
-                }
-
-                // Если отдел не связан с изменениями, возвращаем как есть
-                return department;
-            });
-
-            // console.log("Updated Tarif:", updatedTarif);
-
-            onSubmit(updatedTarif); // Обновляем состояние в родительском компоненте
-            resetForm();
-            onClose();
-        }
+        onSubmit(updatedTarif); // Обновляем состояние в родительском компоненте
+        resetForm();
+        onClose();
+        setIsLoading(false);
+        addNotification("Редактирование аккаунта прошло успешно.", "success");
+      }
     } catch (err) {
-        console.error("Error during update:", err);
-        alert("Произошла ошибка при обновлении пользователя");
+      setIsLoading(false);
+      console.error("Error during update:", err);
+      alert("Произошла ошибка при обновлении пользователя");
     }
-};
-
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -230,97 +237,147 @@ function EditRequestAirlineCompany({
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>ФИО</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Введите ФИО"
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>ФИО</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Введите ФИО"
+              />
 
-          <label>Почта</label>
-          <input
-            type="text"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="Введите email"
-          />
+              <label>Почта</label>
+              <input
+                type="text"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Введите email"
+              />
 
-          <label>Роль</label>
-          <DropDownList
-            placeholder="Выберите роль"
-            searchable={false}
-            options={["AIRLINEADMIN"]}
-            initialValue={formData.role}
-            onSelect={(value) => {
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                role: value,
-              }));
-              setIsEdited(true);
-            }}
-          />
+              <label>Роль</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите роль"}
+                options={["AIRLINEADMIN"]}
+                value={formData.role}
+                onChange={(event, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    role: newValue,
+                  }));
+                  setIsEdited(true);
+                }}
+              />
+              {/* <DropDownList
+                placeholder="Выберите роль"
+                searchable={false}
+                options={["AIRLINEADMIN"]}
+                initialValue={formData.role}
+                onSelect={(value) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    role: value,
+                  }));
+                  setIsEdited(true);
+                }}
+              /> */}
 
-          <label>Должность</label>
-          <DropDownList
-            placeholder="Выберите должность"
-            searchable={false}
-            options={positions}
-            initialValue={formData.position}
-            onSelect={(value) => {
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                position: value,
-              }));
-              setIsEdited(true);
-            }}
-          />
+              <label>Должность</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите должность"}
+                options={positions}
+                value={formData.position}
+                onChange={(event, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    position: newValue,
+                  }));
+                  setIsEdited(true);
+                }}
+              />
+              {/* <DropDownList
+                placeholder="Выберите должность"
+                searchable={false}
+                options={positions}
+                initialValue={formData.position}
+                onSelect={(value) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    position: value,
+                  }));
+                  setIsEdited(true);
+                }}
+              /> */}
 
-          <label>Отдел</label>
-          <select
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-          >
-            {addTarif.map((department, index) => (
-              <option key={index} value={department.name}>
-                {department.name}
-              </option>
-            ))}
-          </select>
+              <label>Отдел</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите отдел"}
+                options={addTarif.map((department) => department.name)}
+                value={formData.department}
+                onChange={(event, newValue) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    department: newValue,
+                  }));
+                }}
+              />
+              {/* <select
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+              >
+                {addTarif.map((department, index) => (
+                  <option key={index} value={department.name}>
+                    {department.name}
+                  </option>
+                ))}
+              </select> */}
 
-          <label>Логин</label>
-          <input
-            type="text"
-            name="login"
-            value={formData.login}
-            onChange={handleChange}
-            placeholder="Введите логин"
-          />
+              <label>Логин</label>
+              <input
+                type="text"
+                name="login"
+                value={formData.login}
+                onChange={handleChange}
+                placeholder="Введите логин"
+              />
 
-          <label>Пароль</label>
-          <input
-            type="text"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Введите пароль"
-          />
+              <label>Пароль</label>
+              <input
+                type="text"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Введите пароль"
+              />
 
-          <label>Аватар</label>
-          <input type="file" name="images" onChange={handleFileChange} ref={fileInputRef} />
-        </div>
-      </div>
+              <label>Аватар</label>
+              <input
+                type="file"
+                name="images"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Сохранить изменения
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Сохранить изменения
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

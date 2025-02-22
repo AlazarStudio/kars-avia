@@ -8,6 +8,7 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader";
 
 function CreateRequestAirlineOtdel({
   show,
@@ -15,6 +16,7 @@ function CreateRequestAirlineOtdel({
   id,
   addTarif,
   setAddTarif,
+  addNotification,
 }) {
   const [userRole, setUserRole] = useState();
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -68,8 +70,11 @@ function CreateRequestAirlineOtdel({
     },
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Проверка на заполненность поля
     if (!formData.category.trim()) {
@@ -100,10 +105,13 @@ function CreateRequestAirlineOtdel({
 
         resetForm();
         onClose();
+        setIsLoading(false);
+        addNotification("Добавление отдела прошло успешно.", "success");
       }
     } catch (err) {
+      setIsLoading(false);
       alert("Произошла ошибка при сохранении данных");
-      console.error('catch error:', err);
+      console.error("catch error:", err);
     }
   };
 
@@ -138,24 +146,30 @@ function CreateRequestAirlineOtdel({
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название</label>
-          <input
-            type="text"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            placeholder="Пример: Отдел продаж"
-          />
-        </div>
-      </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>Название</label>
+              <input
+                type="text"
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                placeholder="Пример: Отдел продаж"
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

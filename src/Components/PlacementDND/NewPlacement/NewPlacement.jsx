@@ -18,6 +18,7 @@ import Notification from "../../Notification/Notification";
 import AddNewPassengerPlacement from "../../Blocks/AddNewPassengerPlacement/AddNewPassengerPlacement";
 import ExistReserveMess from "../../Blocks/ExistReserveMess/ExistReserveMess";
 import { roles } from "../../../roles";
+import MUILoader from "../../Blocks/MUILoader/MUILoader";
 
 const DAY_WIDTH = 40;
 const LEFT_WIDTH = 220;
@@ -1453,10 +1454,19 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     const filteredRequests = useMemo(() => {
         if (!searchQuery) return requests
 
+        // console.log(requests.filter((request) =>
+        // {
+        //     request.guest.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        //     (request.room?.name && request.room?.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        //     request.requestID.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        //     request.airline.name.toLowerCase().includes(searchQuery.toLowerCase())
+        // }))
+        
+
         return requests.filter((request) =>
             (
                 request.guest.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (request.room && request.room.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (request.room?.name && request.room?.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
                 request.requestID.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.airline.name.toLowerCase().includes(searchQuery.toLowerCase())
             ) && (
@@ -1466,6 +1476,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             )
         );
     }, [requests, searchQuery, startOfCurrentMonth, endOfCurrentMonth]);
+
+    // console.log(filteredRequests);
+    
 
     const filteredRooms = useMemo(() => {
         if (!searchQuery) return rooms
@@ -1730,7 +1743,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     return (
         <>
-            <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
+        {(loading) ? <MUILoader fullHeight={'60vh'}/> : 
+        <>
+                    <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
                     <Box sx={{ overflow: 'hidden' }}>
                         <Box sx={{ position: "relative", height: 'fit-content', maxHeight: user.role == 'HOTELADMIN' ? '76vh' : '67vh', overflow: 'hidden', overflowY: 'scroll', width: '100%', borderBottom: '1px solid #ddd', borderTop: '1px solid #ddd', borderRight: '1px solid #ddd' }}>
@@ -2060,6 +2075,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             />
 
             <ExistReserveMess hotelId={hotelInfo.id} show={showRequestSidebarMess} onClose={toggleRequestSidebarMess} chooseRequestID={openReserveId} user={user} />
+        </>    
+        }
+
         </>
     );
 };

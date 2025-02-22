@@ -90,17 +90,19 @@
   top: -120px;
   right: -130px;
   padding: 8px 16px;
-  background-color: #81212D;
+  /* background-color: #81212D; */
+  background-color: transparent;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 28px;
+  font-weight: bold;
 }
 
-.closeButton:hover {
+/* .closeButton:hover {
   background-color: #6a1a24;
-}
+} */
 
 .sliderBox {
   display: flex;

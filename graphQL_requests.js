@@ -619,6 +619,7 @@ export const GET_MESSAGES_HOTEL = gql`
           id
           name
           role
+          position
         }
       }
     }
@@ -1097,12 +1098,6 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS = gql`
     reservePersons {
       reserveHotel {
         id
-        person {
-          id
-          name
-          number
-          gender
-        }
         passengers {
           id
           name
@@ -1116,12 +1111,6 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS = gql`
         number
         gender
       }
-      person {
-        id
-        name
-        number
-        gender
-      }
     }
   }
 `;
@@ -1130,12 +1119,6 @@ export const GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT = gql`
     reservePersons {
       reserveHotel {
         id
-        person {
-          id
-          name
-          number
-          gender
-        }
         passengers {
           id
           name

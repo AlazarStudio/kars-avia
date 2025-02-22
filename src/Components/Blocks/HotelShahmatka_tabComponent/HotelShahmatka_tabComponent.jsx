@@ -5,6 +5,7 @@ import classes from './HotelShahmatka_tabComponent.module.css';
 import { GET_BRONS_HOTEL, GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
 import { useQuery } from "@apollo/client";
 import NewPlacement from "../../PlacementDND/NewPlacement/NewPlacement.jsx";
+import MUILoader from "../MUILoader/MUILoader.jsx";
 
 function HotelShahmatka_tabComponent({ id }) {
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
@@ -82,7 +83,7 @@ function HotelShahmatka_tabComponent({ id }) {
     });
 
 
-    if (loading || bronLoading) return <p>Loading...</p>;
+    // if (loading || bronLoading) return <MUILoader fullHeight={'70vh'}/>;
     if (error || bronError) return <p>Error: {error ? error.message : bronError.message}</p>;
 
     return (

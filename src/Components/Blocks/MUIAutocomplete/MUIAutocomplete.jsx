@@ -8,6 +8,7 @@ function MUIAutocomplete({
   value,
   onChange,
   dropdownWidth,
+  isDisabled,
   children,
   ...props
 }) {
@@ -16,6 +17,8 @@ function MUIAutocomplete({
       <Autocomplete
         options={options ? options : []}
         disablePortal
+        disabled={isDisabled ? isDisabled : false}
+        autoComplete={false}
         slotProps={{
           popper: {
             modifiers: [
@@ -61,7 +64,8 @@ function MUIAutocomplete({
                 fontSize: "14px",
               },
               "& .MuiInputBase-root": {
-                minHeight: "40px",
+                // minHeight: "40px",
+                height: "40px",
                 display: "flex",
                 alignItems: "center",
               },

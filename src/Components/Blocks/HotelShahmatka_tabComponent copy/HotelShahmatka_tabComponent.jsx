@@ -5,6 +5,7 @@ import Filter from "../Filter/Filter.jsx";
 
 import { GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader.jsx";
 
 function HotelShahmatka_tabComponent({ children, id, ...props }) {
 
@@ -116,7 +117,7 @@ function HotelShahmatka_tabComponent({ children, id, ...props }) {
                 </div>
             </div>
 
-            {loading && <p>Loading...</p>}
+            {/* {!loading && <MUILoader/>} */}
             {error && <p>Error: {error.message}</p>}
 
             {!loading && !error && (

@@ -9,6 +9,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
+import MUILoader from "../MUILoader/MUILoader";
 
 function CreateRequestAirlineStaff({
   show,
@@ -16,6 +17,7 @@ function CreateRequestAirlineStaff({
   id,
   addTarif,
   setAddTarif,
+  addNotification,
 }) {
   const [userRole, setUserRole] = useState();
   const [isEdited, setIsEdited] = useState(false);
@@ -81,11 +83,14 @@ function CreateRequestAirlineStaff({
     );
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!isFormValid()) {
-      alert('Пожалуйста, заполните все обязательные поля.')
+      alert("Пожалуйста, заполните все обязательные поля.");
       return;
     }
 
@@ -126,9 +131,12 @@ function CreateRequestAirlineStaff({
 
         resetForm();
         onClose();
+        addNotification("Сотрудник добавлен успешно.", "success");
+        setIsLoading(false);
       }
     } catch (err) {
       alert("Произошла ошибка при сохранении данных");
+      setIsLoading(false);
     }
   };
 
@@ -177,65 +185,71 @@ function CreateRequestAirlineStaff({
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>ФИО</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Пример: Иванов Иван Иванович"
-            autoComplete="new-password"
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>ФИО</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Пример: Иванов Иван Иванович"
+                autoComplete="new-password"
+              />
 
-          <label>Номер телефона</label>
-          <input
-            type="text"
-            name="number"
-            value={formData.number}
-            onChange={handleChange}
-            placeholder="Пример: 89283521345"
-            autoComplete="new-password"
-          />
+              <label>Номер телефона</label>
+              <input
+                type="text"
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                placeholder="Пример: 89283521345"
+                autoComplete="new-password"
+              />
 
-          <label>Должность</label>
-          <DropDownList
-            placeholder="Выберите должность"
-            searchable={false}
-            options={positions}
-            initialValue={formData.position}
-            onSelect={(value) => {
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                position: value,
-              }));
-              setIsEdited(true);
-            }}
-          />
+              <label>Должность</label>
+              <DropDownList
+                placeholder="Выберите должность"
+                searchable={false}
+                options={positions}
+                initialValue={formData.position}
+                onSelect={(value) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    position: value,
+                  }));
+                  setIsEdited(true);
+                }}
+              />
 
-          <label>Пол</label>
-          <DropDownList
-            placeholder="Выберите пол"
-            searchable={false}
-            options={["Мужской", "Женский"]}
-            initialValue={formData.gender}
-            onSelect={(value) => {
-              setFormData((prevFormData) => ({
-                ...prevFormData,
-                gender: value,
-              }));
-              setIsEdited(true);
-            }}
-          />
-        </div>
-      </div>
+              <label>Пол</label>
+              <DropDownList
+                placeholder="Выберите пол"
+                searchable={false}
+                options={["Мужской", "Женский"]}
+                initialValue={formData.gender}
+                onSelect={(value) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    gender: value,
+                  }));
+                  setIsEdited(true);
+                }}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

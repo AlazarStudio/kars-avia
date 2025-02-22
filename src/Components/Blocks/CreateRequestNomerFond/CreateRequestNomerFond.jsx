@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 
 import { getCookie, UPDATE_HOTEL } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader.jsx";
 
 function CreateRequestNomerFond({
   show,
@@ -14,7 +15,8 @@ function CreateRequestNomerFond({
   setAddTarif,
   uniqueCategories,
   tarifs,
-  filter
+  filter,
+  addNotification,
 }) {
   const token = getCookie("token");
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -50,16 +52,15 @@ function CreateRequestNomerFond({
   }, []);
 
   useEffect(() => {
-    if(show) {
+    if (show) {
       setFormData((prevState) => ({
         ...prevState,
-        reserve: filter === 'quote' ? "false" : "true"
-      }))
+        reserve: filter === "quote" ? "false" : "true",
+      }));
     }
-  }, [show, filter])
+  }, [show, filter]);
 
   // console.log(formData);
-  
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
@@ -90,108 +91,127 @@ function CreateRequestNomerFond({
       e.target.value = null;
       return;
     }
-    
+
     // Преобразуем файлы в массив
     const fileArray = Array.from(files);
-    
+
     setFormData((prevState) => ({
       ...prevState,
       roomImages: fileArray, // Сохраняем массив файлов
     }));
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!formData.nomerName.trim() || !formData.category || !formData.reserve) {
       alert("Пожалуйста, заполните все поля формы перед отправкой.");
       return;
     }
-    
-    const reserveBoolean = formData.reserve === "true";
 
-    const nomerName =
-      reserveBoolean === false ? formData.nomerName :
-        reserveBoolean === true && formData.nomerName.includes('резерв') ? formData.nomerName : `${formData.nomerName} (резерв)`;
+    try {
+      const reserveBoolean = formData.reserve === "true";
 
-    // Преобразование reserve в булево значение
+      const nomerName =
+        reserveBoolean === false
+          ? formData.nomerName
+          : reserveBoolean === true && formData.nomerName.includes("резерв")
+          ? formData.nomerName
+          : `${formData.nomerName} (резерв)`;
 
-    let response_update_room;
+      // Преобразование reserve в булево значение
 
-    if (formData.roomImages.length > 0) {
-      response_update_room = await updateHotel({
-        variables: {
-          updateHotelId: id,
-          input: {
-            rooms: [
-              {
-                name: nomerName,
-                category: formData.category,
-                reserve: reserveBoolean,
-                description: formData.description,
-              },
-            ],
+      let response_update_room;
+
+      if (formData.roomImages.length > 0) {
+        response_update_room = await updateHotel({
+          variables: {
+            updateHotelId: id,
+            input: {
+              rooms: [
+                {
+                  name: nomerName,
+                  category: formData.category,
+                  reserve: reserveBoolean,
+                  description: formData.description,
+                },
+              ],
+            },
+            roomImages: formData.roomImages,
           },
-          roomImages: formData.roomImages,
-        },
-      });
-    } else {
-      response_update_room = await updateHotel({
-        variables: {
-          updateHotelId: id,
-          input: {
-            rooms: [
-              {
-                name: nomerName,
-                category: formData.category,
-                reserve: reserveBoolean,
-                description: formData.description,
-              },
-            ],
-          }
-        },
-      });
-    }
+        });
+      } else {
+        response_update_room = await updateHotel({
+          variables: {
+            updateHotelId: id,
+            input: {
+              rooms: [
+                {
+                  name: nomerName,
+                  category: formData.category,
+                  reserve: reserveBoolean,
+                  description: formData.description,
+                },
+              ],
+            },
+          },
+        });
+      }
 
-    if (response_update_room) {
-      const sortedTarifs = Object.values(
-        response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
-          if (!acc[room.category]) {
-            acc[room.category] = {
-              name:
-                room.category === "onePlace"
-                  ? "Одноместный"
-                  : room.category === "twoPlace"
+      if (response_update_room) {
+        const sortedTarifs = Object.values(
+          response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
+            if (!acc[room.category]) {
+              acc[room.category] = {
+                name:
+                  room.category === "onePlace"
+                    ? "Одноместный"
+                    : room.category === "twoPlace"
                     ? "Двухместный"
                     : room.category === "threePlace"
-                      ? "Трехместный"
-                      : room.category === "fourPlace"
-                        ? "Четырехместный"
-                        : room.category === "fivePlace"
-                          ? "Пятиместный"
-                          : room.category === "sixPlace"
-                            ? "Шестиместный"
-                            : room.category === "sevenPlace"
-                              ? "Семиместный"
-                              : room.category === "eightPlace"
-                                ? "Восьмиместный"
-                                  : "",
-              origName: room.category,
-              rooms: [],
-            };
-          }
-          acc[room.category].rooms.push(room);
-          return acc;
-        }, {})
-      );
+                    ? "Трехместный"
+                    : room.category === "fourPlace"
+                    ? "Четырехместный"
+                    : room.category === "fivePlace"
+                    ? "Пятиместный"
+                    : room.category === "sixPlace"
+                    ? "Шестиместный"
+                    : room.category === "sevenPlace"
+                    ? "Семиместный"
+                    : room.category === "eightPlace"
+                    ? "Восьмиместный"
+                    : "",
+                origName: room.category,
+                rooms: [],
+              };
+            }
+            acc[room.category].rooms.push(room);
+            return acc;
+          }, {})
+        );
 
-      sortedTarifs.forEach((category) => {
-        category.rooms.sort((a, b) => a.name.localeCompare(b.name));
-      });
+        sortedTarifs.forEach((category) => {
+          category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+        });
 
-      setAddTarif(sortedTarifs);
+        setAddTarif(sortedTarifs);
+        // resetForm();
+        // onClose();
+      }
       resetForm();
       onClose();
+      setIsLoading(false);
+      addNotification("Создание номера прошло успешно.", "success");
+    } catch (error) {
+      console.error("Ошибка при обновлении номеров:", error);
+    } finally {
+      // resetForm();
+      // onClose();
+      setIsLoading(false);
+      // addNotification("Создание номера прошло успешно.", "success");
     }
   };
 
@@ -226,70 +246,81 @@ function CreateRequestNomerFond({
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название номера</label>
-          <input
-            type="text"
-            name="nomerName"
-            value={formData.nomerName}
-            onChange={handleChange}
-            placeholder="Пример: № 151"
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>Название номера</label>
+              <input
+                type="text"
+                name="nomerName"
+                value={formData.nomerName}
+                onChange={handleChange}
+                placeholder="Пример: № 151"
+              />
 
-          <label>Категория</label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-          >
-            {/* {uniqueCategories.map(category => ( */}
-            <option value={""} disabled>
-              Выберите категорию
-            </option>
-            <option value={"onePlace"}>Одноместный</option>
-            <option value={"twoPlace"}>Двухместный</option>
-            <option value={"threePlace"}>Трехместный</option>
-            <option value={"fourPlace"}>Четырехместный</option>
-            <option value={"fivePlace"}>Пятиместный</option>
-            <option value={"sixPlace"}>Шестиместный</option>
-            <option value={"sevenPlace"}>Семиместный</option>
-            <option value={"eightPlace"}>Восьмиместный</option>
-            {/* ))} */}
-          </select>
+              <label>Категория</label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+              >
+                {/* {uniqueCategories.map(category => ( */}
+                <option value={""} disabled>
+                  Выберите категорию
+                </option>
+                <option value={"onePlace"}>Одноместный</option>
+                <option value={"twoPlace"}>Двухместный</option>
+                <option value={"threePlace"}>Трехместный</option>
+                <option value={"fourPlace"}>Четырехместный</option>
+                <option value={"fivePlace"}>Пятиместный</option>
+                <option value={"sixPlace"}>Шестиместный</option>
+                <option value={"sevenPlace"}>Семиместный</option>
+                <option value={"eightPlace"}>Восьмиместный</option>
+                {/* ))} */}
+              </select>
 
-          <label>Квота или резерв</label>
-          <select
-            name="reserve"
-            id="reserve"
-            value={formData.reserve}
-            onChange={handleChange}
-          >
-            <option value="" disabled>
-              Выберите тип
-            </option>
-            <option value={false}>Квота</option>
-            <option value={true}>Резерв</option>
-          </select>
+              <label>Квота или резерв</label>
+              <select
+                name="reserve"
+                id="reserve"
+                value={formData.reserve}
+                onChange={handleChange}
+              >
+                <option value="" disabled>
+                  Выберите тип
+                </option>
+                <option value={false}>Квота</option>
+                <option value={true}>Резерв</option>
+              </select>
 
-          <label>Описание</label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-          ></textarea>
+              <label>Описание</label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+              ></textarea>
 
-          <label>Изображение</label>
-          <input type="file" name="roomImages" onChange={handleFileChange} multiple/>
-        </div>
-      </div>
+              <label>Изображение</label>
+              <input
+                type="file"
+                name="roomImages"
+                onChange={handleFileChange}
+                multiple
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

@@ -3,12 +3,16 @@ import classes from "./ExistRequestCompany.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
+  decodeJWT,
   getCookie,
   server,
   UPDATE_DISPATCHER_USER,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
+import { roles } from "../../../roles";
+import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 function ExistRequestCompany({
   show,
@@ -17,8 +21,10 @@ function ExistRequestCompany({
   updateDispatcher,
   openDeleteComponent,
   filterList,
+  addNotification,
 }) {
   const token = getCookie("token");
+  const user = decodeJWT(token);
 
   const [uploadFile, { data, loading, error }] = useMutation(
     UPDATE_DISPATCHER_USER,
@@ -127,26 +133,40 @@ function ExistRequestCompany({
     }
   };
 
-  const handleUpdate = async () => {
-    let response_update_user = await uploadFile({
-      variables: {
-        input: {
-          id: formData.id,
-          name: formData.name,
-          email: formData.email,
-          role: formData.role,
-          position: formData.position,
-          login: formData.login,
-          password: formData.password,
-        },
-        images: formData.images,
-      },
-    });
+  const [isLoading, setIsLoading] = useState(false);
 
-    if (response_update_user) {
-      updateDispatcher(response_update_user.data.updateUser, index);
-      resetForm();
-      onClose();
+  const handleUpdate = async () => {
+    setIsLoading(true);
+    try {
+      let response_update_user = await uploadFile({
+        variables: {
+          input: {
+            id: formData.id,
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            position: formData.position,
+            login: formData.login,
+            password: formData.password,
+          },
+          images: formData.images,
+        },
+      });
+
+      if (response_update_user) {
+        updateDispatcher(response_update_user.data.updateUser, index);
+        resetForm();
+        onClose();
+        setIsLoading(false);
+        addNotification("Редактирование диспетчера прошло успешно.", "success");
+      }
+    } catch (error) {
+      console.error("Ошибка обновления пользователя:", error);
+    } finally {
+      // resetForm();
+      // onClose();
+      setIsLoading(false); // Сбрасываем isLoading после завершения запроса
+      // addNotification("Редактирование диспетчера прошло успешно.", "success");
     }
   };
 
@@ -188,114 +208,160 @@ function ExistRequestCompany({
           <img src="/close.png" alt="Close" />
         </div>
       </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <div className={classes.requestDataInfo_img}>
+                <div className={classes.requestDataInfo_img_imgBlock}>
+                  <img
+                    src={
+                      showIMG?.length !== 0
+                        ? `${server}${showIMG}`
+                        : "/no-avatar.png"
+                    }
+                    alt=""
+                  />
+                </div>
+              </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <div className={classes.requestDataInfo_img}>
-            <div className={classes.requestDataInfo_img_imgBlock}>
-              <img src={showIMG?.length !== 0 ? `${server}${showIMG}` : '/no-avatar.png'} alt="" />
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>ФИО</div>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Иванов Иван Иванович"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Почта</div>
+                <input
+                  type="text"
+                  name="email"
+                  placeholder="example@mail.ru"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Роль</div>
+                <div className={classes.dropdown}>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите роль"}
+                    options={["DISPATCHERADMIN"]}
+                    value={formData.role}
+                    onChange={(event, newValue) => {
+                      setIsEdited(true);
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        role: newValue,
+                      }));
+                    }}
+                  />
+                  {/* <DropDownList
+                    placeholder="Выберите роль"
+                    searchable={false}
+                    options={["DISPATCHERADMIN"]}
+                    initialValue={formData.role}
+                    onSelect={(value) => {
+                      setIsEdited(true);
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        role: value,
+                      }));
+                    }}
+                  /> */}
+                </div>
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Должность</div>
+                <div className={classes.dropdown}>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите должность"}
+                    options={positions}
+                    value={formData.position}
+                    onChange={(event, newValue) => {
+                      setIsEdited(true);
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        position: newValue,
+                      }));
+                    }}
+                  />
+                  {/* <DropDownList
+                    placeholder="Выберите должность"
+                    searchable={false}
+                    options={positions}
+                    initialValue={formData.position}
+                    onSelect={(value) => {
+                      setIsEdited(true);
+                      setFormData((prevData) => ({
+                        ...prevData,
+                        position: value,
+                      }));
+                    }}
+                  /> */}
+                </div>
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Логин</div>
+                <input
+                  type="text"
+                  name="login"
+                  placeholder="Логин"
+                  value={formData.login}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Пароль</div>
+                <input
+                  type="text"
+                  name="password"
+                  placeholder="Пароль"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Аватар</div>
+                <input
+                  type="file"
+                  name="images"
+                  onChange={handleFileChange}
+                  ref={fileInputRef}
+                />
+              </div>
             </div>
           </div>
 
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>ФИО</div>
-            <input
-              type="text"
-              name="name"
-              placeholder="Иванов Иван Иванович"
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </div>
+          <div className={classes.requestButton}>
+            {user.role !== roles.superAdmin ? null : (
+              <Button
+                onClick={() => openDeleteComponent(index, formData.id)}
+                backgroundcolor={"#FF9C9C"}
+              >
+                Удалить <img src="/delete.png" alt="" />
+              </Button>
+            )}
 
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Почта</div>
-            <input
-              type="text"
-              name="email"
-              placeholder="example@mail.ru"
-              value={formData.email}
-              onChange={handleChange}
-            />
+            <Button
+              onClick={handleUpdate}
+              backgroundcolor={"#3CBC6726"}
+              color={"#3B6C54"}
+            >
+              Изменить <img src="/editDispetcher.png" alt="" />
+            </Button>
           </div>
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Роль</div>
-            <div className={classes.dropdown}>
-              <DropDownList
-                placeholder="Выберите роль"
-                searchable={false}
-                options={["DISPATCHERADMIN"]}
-                initialValue={formData.role}
-                onSelect={(value) => {
-                  setIsEdited(true);
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    role: value,
-                  }));
-                }}
-              />
-            </div>
-          </div>
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Должность</div>
-            <div className={classes.dropdown}>
-              <DropDownList
-                placeholder="Выберите должность"
-                searchable={false}
-                options={positions}
-                initialValue={formData.position}
-                onSelect={(value) => {
-                  setIsEdited(true);
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    position: value,
-                  }));
-                }}
-              />
-            </div>
-          </div>
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Логин</div>
-            <input
-              type="text"
-              name="login"
-              placeholder="Логин"
-              value={formData.login}
-              onChange={handleChange}
-            />
-          </div>
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Пароль</div>
-            <input
-              type="text"
-              name="password"
-              placeholder="Пароль"
-              value={formData.password}
-              onChange={handleChange}
-            />
-          </div>
-          <div className={classes.requestDataInfo}>
-            <div className={classes.requestDataInfo_title}>Аватар</div>
-            <input type="file" name="images" onChange={handleFileChange} ref={fileInputRef} />
-          </div>
-        </div>
-      </div>
-
-      <div className={classes.requestButton}>
-        <Button
-          onClick={() => openDeleteComponent(index, formData.id)}
-          backgroundcolor={"#FF9C9C"}
-        >
-          Удалить <img src="/delete.png" alt="" />
-        </Button>
-        <Button
-          onClick={handleUpdate}
-          backgroundcolor={"#3CBC6726"}
-          color={"#3B6C54"}
-        >
-          Изменить <img src="/editDispetcher.png" alt="" />
-        </Button>
-      </div>
+        </>
+      )}
     </Sidebar>
   );
 }

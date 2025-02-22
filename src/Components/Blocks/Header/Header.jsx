@@ -15,6 +15,7 @@ import Support from "../Support/Support";
 import { roles } from "../../../roles";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
+import Notification from "../../Notification/Notification";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -69,7 +70,7 @@ function Header({ children }) {
         startTime: undefined, // Всегда `undefined`
       },
     ];
-    
+
     setChooseObject(newChooseObject);
     setChooseCityRequest(notificationData.chooseCityRequest || "");
     setExistRequestData(notificationData.requestId); // Устанавливаем ID заявки
@@ -174,6 +175,17 @@ function Header({ children }) {
     }
   };
 
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+  };
+
   const handleUpdateUser = (updatedUser) => {
     setUserData(updatedUser); // Обновляем данные пользователя в родительском компоненте
   };
@@ -249,7 +261,10 @@ function Header({ children }) {
               }`}
               onClick={(e) => e.stopPropagation()}
             >
-              <Notifications onRequestClick={handleNotificationClick} user={data?.user} />
+              <Notifications
+                onRequestClick={handleNotificationClick}
+                user={data?.user}
+              />
             </div>
           )}
 
@@ -321,6 +336,7 @@ function Header({ children }) {
               updateUser={handleUpdateUser}
               openDeleteComponent={null}
               deleteComponentRef={null}
+              addNotification={addNotification}
             />
 
             <ExistRequest
@@ -350,6 +366,20 @@ function Header({ children }) {
               onClose={toggleSupportSidebar}
               user={data?.user}
             />
+
+            {notifications.map((n, index) => (
+              <Notification
+                key={n.id}
+                text={n.text}
+                status={n.status}
+                index={index}
+                onClose={() => {
+                  setNotifications((prev) =>
+                    prev.filter((notif) => notif.id !== n.id)
+                  );
+                }}
+              />
+            ))}
           </div>
         </div>
       )}

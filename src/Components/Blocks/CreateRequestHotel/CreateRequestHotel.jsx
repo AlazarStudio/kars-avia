@@ -10,8 +10,10 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation, useQuery } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
+import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
-function CreateRequestHotel({ show, onClose, addHotel }) {
+function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
   const token = getCookie("token");
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -62,7 +64,6 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
     }));
   }, []);
 
-
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
@@ -97,8 +98,11 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
     },
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Проверяем, заполнены ли все поля
     if (
@@ -140,9 +144,15 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         addHotel(response_create_hotel.data.createHotel);
         resetForm();
         onClose();
+        addNotification("Гостиница создана успешно.", "success");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
+    } finally {
+      // resetForm();
+      // onClose();
+      setIsLoading(false);
+      // addNotification("Гостиница создана успешно.", "success");
     }
   };
 
@@ -169,43 +179,46 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
   // }, [show, closeButton]);
 
   useEffect(() => {
-      const handleClickOutside = (event) => {
-          if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-              closeButton();
-          }
-      };
-
-      if (show) {
-          document.addEventListener("mousedown", handleClickOutside);
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        closeButton();
       }
+    };
 
-      return () => {
-          document.removeEventListener("mousedown", handleClickOutside);
-      };
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, [show, closeButton]);
 
-
-  // let infoAirports = useQuery(GET_AIRPORTS_RELAY);
-  let infoAirports = useQuery(GET_CITIES);
-  const [airports, setAirports] = useState([]);
+  // let infoCities = useQuery(GET_AIRPORTS_RELAY);
+  let infoCities = useQuery(GET_CITIES);
+  const [cities, setCities] = useState([]);
 
   // useEffect(() => {
-  //   if (infoAirports.data) {
-  //     setAirports(infoAirports.data?.airports || []);
+  //   if (infoCities.data) {
+  //     setCities(infoCities.data?.cities || []);
   //   }
-  // }, [infoAirports]);
+  // }, [infoCities]);
 
   useEffect(() => {
-    if (infoAirports.data) {
-      setAirports(infoAirports.data?.citys.map((item) => item.city) || []);
+    if (infoCities.data) {
+      setCities(
+        infoCities.data?.citys.map(
+          // (item) => `${item.city}, регион: ${item.region}`
+          (item) => item.city
+        ) || []
+      );
     }
-  }, [infoAirports]);
+  }, [infoCities]);
 
-  // console.log(airports);
-  
+  // console.log(cities);
 
   // const uniqueCities = [
-  //   ...new Set(airports.map((airport) => airport.city.trim())),
+  //   ...new Set(cities.map((airport) => airport.city.trim())),
   // ].sort((a, b) => a.localeCompare(b));
 
   return (
@@ -217,19 +230,36 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            placeholder="Гостиница Славянка"
-            onChange={handleChange}
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>Название</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                placeholder="Гостиница Славянка"
+                onChange={handleChange}
+              />
 
-          <label>Город</label>
-          {/* <select name="city" value={formData.city} onChange={handleChange}>
+              <label>Город</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите город"}
+                options={cities}
+                value={formData.city}
+                onChange={(event, newValue) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    city: newValue,
+                  }));
+                }}
+              />
+              {/* <select name="city" value={formData.city} onChange={handleChange}>
             <option value="" disabled>
               Выберите город
             </option>
@@ -239,66 +269,73 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
               </option>
             ))}
           </select> */}
-          <DropDownList
-            placeholder="Выберите город"
-            searchable={true}
-            options={airports}
-            initialValue={formData.city}
-            onSelect={(value) => {
-              setIsEdited(true);
-              setFormData((prevData) => ({
-                ...prevData,
-                city: value,
-              }));
-            }}
-          />
+              {/* <DropDownList
+                placeholder="Выберите город"
+                searchable={true}
+                options={cities}
+                initialValue={formData.city}
+                onSelect={(value) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    city: value,
+                  }));
+                }}
+              /> */}
 
-          <label>Адрес</label>
-          <input
-            type="text"
-            name="address"
-            value={formData.address}
-            placeholder="ул. Лесная  147"
-            onChange={handleChange}
-          />
+              <label>Адрес</label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                placeholder="ул. Лесная  147"
+                onChange={handleChange}
+              />
 
-          <label>Рейтинг (количество звезд)</label>
-          <input
-            type="text"
-            name="stars"
-            value={formData.stars}
-            placeholder="от 1 до 5"
-            onChange={handleChange}
-          />
+              <label>Рейтинг (количество звезд)</label>
+              <input
+                type="text"
+                name="stars"
+                value={formData.stars}
+                placeholder="от 1 до 5"
+                onChange={handleChange}
+              />
 
-          <label>Звёздность</label>
-          <input
-            type="text"
-            name="usStars"
-            value={formData.usStars}
-            placeholder="от 1 до 5"
-            onChange={handleChange}
-          />
+              <label>Звёздность</label>
+              <input
+                type="text"
+                name="usStars"
+                value={formData.usStars}
+                placeholder="от 1 до 5"
+                onChange={handleChange}
+              />
 
-          <label>Расстояние до аэропорта</label>
-          <input
-            type="text"
-            name="airportDistance"
-            value={formData.airportDistance}
-            placeholder="2 км"
-            onChange={handleChange}
-          />
+              <label>Расстояние до аэропорта</label>
+              <input
+                type="text"
+                name="airportDistance"
+                value={formData.airportDistance}
+                placeholder="2 км"
+                onChange={handleChange}
+              />
 
-          <label>Картинка</label>
-          <input type="file" name="images" onChange={handleFileChange} ref={fileInputRef}/>
-        </div>
-      </div>
+              <label>Картинка</label>
+              <input
+                type="file"
+                name="images"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

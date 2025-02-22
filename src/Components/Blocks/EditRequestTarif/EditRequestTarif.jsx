@@ -11,6 +11,7 @@ import {
   UPDATE_HOTEL_TARIF,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader.jsx";
 
 function EditRequestTarif({
   existingPrices,
@@ -21,6 +22,7 @@ function EditRequestTarif({
   id,
   setAddTarif,
   isHotel,
+  addNotification,
 }) {
   const token = getCookie("token");
 
@@ -172,7 +174,6 @@ function EditRequestTarif({
   //   });
 
   //   // console.log(response_update_tarif);
-    
 
   //   if (response_update_tarif) {
   //     onSubmit([
@@ -248,15 +249,18 @@ function EditRequestTarif({
     7: "Семиместный",
     8: "Восьмиместный",
   };
-  
+
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    setIsLoading(true);
+
     if (!formData.name.trim() || !formData.price.trim() || !formData.type) {
       alert("Пожалуйста, заполните все поля!");
       return;
     }
-  
+
     const typeToFieldMap = {
       1: "priceOneCategory",
       2: "priceTwoCategory",
@@ -267,39 +271,41 @@ function EditRequestTarif({
       7: "priceSevenCategory",
       8: "priceEightCategory",
     };
-  
+
     const fieldToUpdate = typeToFieldMap[formData.type];
     if (!fieldToUpdate) {
       alert("Ошибка: Неверный тип тарифа.");
       return;
     }
-  
+
     // Клонируем актуальные данные перед отправкой
     let updatedPrices = { ...existingPrices };
-  
+
     // Удаляем `__typename`, так как GraphQL его не принимает
     delete updatedPrices.__typename;
-  
+
     // Обновляем только одно поле, сохраняя остальные значения
     updatedPrices[fieldToUpdate] = Number(formData.price);
-  
+
     let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
     let refetchQuery = isHotel ? GET_HOTEL_TARIFS : GET_AIRLINE_TARIFS;
-    let refetchId = isHotel ? 'hotelId' : 'airlineId';
-  
+    let refetchId = isHotel ? "hotelId" : "airlineId";
+
     try {
       let response_update_tarif = await updateHotelTarif({
         variables: {
           [updateId]: id,
           input: { prices: updatedPrices },
         },
-        refetchQueries: [{ query: refetchQuery, variables: { [refetchId]: id } }], // Перезапрашиваем данные
+        refetchQueries: [
+          { query: refetchQuery, variables: { [refetchId]: id } },
+        ], // Перезапрашиваем данные
       });
-  
+
       if (response_update_tarif) {
         // Обновляем `existingPrices` после успешной мутации
         // setExistingPrices(updatedPrices);
-  
+
         // Обновляем UI без перезагрузки
         setAddTarif((prevTarifs) =>
           prevTarifs.map((tarif) =>
@@ -308,17 +314,19 @@ function EditRequestTarif({
               : tarif
           )
         );
-  
+
         resetForm();
         onClose();
+        setIsLoading(false);
+        addNotification("Редактирование прошло успешно.", "success");
       }
     } catch (error) {
       console.error("Ошибка обновления тарифа:", error);
-      alert("Ошибка при обновлении тарифа. Попробуйте еще раз.");
+      setIsLoading(false);
+      // alert("Ошибка при обновлении тарифа. Попробуйте еще раз.");
     }
   };
-  
-  
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -350,31 +358,37 @@ function EditRequestTarif({
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название категории</label>
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            disabled
-          />
-          <label>Цена категории</label>
-          <input
-            type="text"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-          />
-        </div>
-      </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>Название категории</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                disabled
+              />
+              <label>Цена категории</label>
+              <input
+                type="text"
+                name="price"
+                value={formData.price}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Изменить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Изменить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }
