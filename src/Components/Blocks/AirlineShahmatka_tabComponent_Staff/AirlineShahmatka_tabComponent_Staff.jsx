@@ -6,6 +6,7 @@ import {
   decodeJWT,
   DELETE_AIRLINE_STAFF,
   GET_AIRLINE_USERS,
+  GET_AIRLINES_UPDATE_SUBSCRIPTION,
   GET_BRONS_HOTEL,
   GET_STAFF_HOTELS,
   getCookie,
@@ -29,6 +30,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_USERS, {
     variables: { airlineId: id },
   });
+
 
   const [staff, setStaff] = useState([]);
 
@@ -78,6 +80,17 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
       },
     }
   );
+
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_AIRLINES_UPDATE_SUBSCRIPTION, 
+    {
+      onData: () => {
+        bronRefetch();
+        refetch();
+      }
+    }
+  );
+
 
   // console.log(subscriptionUpdateData);
 
