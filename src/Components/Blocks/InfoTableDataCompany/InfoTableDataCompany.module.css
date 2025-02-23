@@ -119,9 +119,9 @@
 }
 
 .bottom {
-    /* height: fit-content;
-    max-height: calc(100vh - 350px); */
-    height: calc(100vh - 335px);
+    /* height: fit-content; */
+    height: calc(100vh - 350px);
+    /* height: calc(100vh - 335px); */
     overflow: hidden;
     overflow-y: scroll;
 }

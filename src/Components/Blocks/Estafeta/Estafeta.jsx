@@ -22,6 +22,8 @@ import { Box, CircularProgress, TextField } from "@mui/material";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import { statusMapping } from "../../../roles.js";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
+import Notification from "../../Notification/Notification.jsx";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 function Estafeta({ user }) {
@@ -174,6 +176,17 @@ function Estafeta({ user }) {
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+  };
+
   const handleChange = (e) =>
     setFilterData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   const handleSearch = async (e) => {
@@ -226,6 +239,16 @@ function Estafeta({ user }) {
     setShowRequestSidebar(true); // Открываем ExistRequest
   };
 
+  const [showDelete, setShowDelete] = useState(false);
+
+  const [requestId, setRequestId] = useState();
+
+  const setChooseRequestId = (id) => {
+    setRequestId(id);
+  };
+
+  // console.log(requestId);
+
   // Запрос на отмену созданной, но не размещенной заявки
   const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
     context: {
@@ -249,6 +272,14 @@ function Estafeta({ user }) {
     }
   };
 
+  const openDeleteComponent = () => {
+    setShowDelete(true);
+  };
+
+  const closeDeleteComponent = () => {
+    setShowDelete(false);
+  };
+
   // Запрос для получения имени авиакомпании пользователя
   const [airlineName, setAirlineName] = useState();
   const { data: airlineData } = useQuery(GET_AIRLINE, {
@@ -260,18 +291,18 @@ function Estafeta({ user }) {
   }, [airlineData]);
 
   // Маппинг статусов: ключ – внутреннее значение, значение – отображаемое название
-//   const statusMapping = {
-//     opened: "В обработке",
-//     canceled: "Отменен",
-//     done: "Размещен",
-//     created: "Создан",
-//     extended: "Продлен",
-//     reduced: "Сокращен",
-//     transferred: "Перенесен",
-//     earlyStart: "Ранний заезд",
-//     archiving: "Готов к архиву",
-//     archived: "Архив",
-//   };
+  //   const statusMapping = {
+  //     opened: "В обработке",
+  //     canceled: "Отменен",
+  //     done: "Размещен",
+  //     created: "Создан",
+  //     extended: "Продлен",
+  //     reduced: "Сокращен",
+  //     transferred: "Перенесен",
+  //     earlyStart: "Ранний заезд",
+  //     archiving: "Готов к архиву",
+  //     archived: "Архив",
+  //   };
 
   // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
   const filteredRequests = useMemo(() => {
@@ -430,6 +461,7 @@ function Estafeta({ user }) {
         onClose={toggleCreateSidebar}
         onMatchFound={handleOpenExistRequest}
         user={user}
+        addNotification={addNotification}
       />
       <ExistRequest
         setChooseCityRequest={setChooseCityRequest}
@@ -440,6 +472,8 @@ function Estafeta({ user }) {
         chooseRequestID={chooseRequestID ? chooseRequestID : existRequestData}
         handleCancelRequest={handleCancelRequest}
         user={user}
+        openDeleteComponent={openDeleteComponent}
+        setRequestId={setChooseRequestId}
       />
       <ChooseHotel
         chooseCityRequest={chooseCityRequest}
@@ -449,6 +483,33 @@ function Estafeta({ user }) {
         chooseRequestID={chooseRequestID}
         id={"relay"}
       />
+
+      {showDelete && (
+        <DeleteComponent
+          remove={() => {
+            handleCancelRequest(requestId);
+            closeDeleteComponent();
+          }}
+          index={requestId}
+          close={closeDeleteComponent}
+          title={`Вы действительно хотите отменить заявку? `}
+          isCancel={true}
+        />
+      )}
+
+      {notifications.map((n, index) => (
+        <Notification
+          key={n.id}
+          text={n.text}
+          status={n.status}
+          index={index}
+          onClose={() => {
+            setNotifications((prev) =>
+              prev.filter((notif) => notif.id !== n.id)
+            );
+          }}
+        />
+      ))}
     </div>
   );
 }

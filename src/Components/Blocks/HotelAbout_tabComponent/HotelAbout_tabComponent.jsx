@@ -671,7 +671,7 @@ function HotelAbout_tabComponent({ id }) {
               <div
                 className={
                   user?.airlineId
-                    ? classes.hotelAbout_info__contacts___arline
+                    ? classes.hotelAbout_info__contacts___airline
                     : classes.hotelAbout_info__contacts
                 }
                 style={
@@ -773,7 +773,7 @@ function HotelAbout_tabComponent({ id }) {
                   style={menuOpen ? { width: "70%" } : {}}
                 >
                   <div className={classes.hotelAbout_info_label}>
-                    Контакты Kars Avia
+                    Контакты
                   </div>
                   <div className={classes.hotelAbout_info_item}>
                     <label>Почта</label>

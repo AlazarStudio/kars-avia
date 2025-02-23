@@ -120,6 +120,7 @@ export const GET_REQUESTS = gql`
           name
           images
         }
+        reserve
         requestNumber
       }
     }
@@ -307,6 +308,7 @@ export const REQUEST_MESSAGES_SUBSCRIPTION = gql`
         id
         name
         role
+        position
       }
       createdAt
     }
@@ -351,6 +353,7 @@ export const CREATE_REQUEST_MUTATION = gql`
             name
             images
           }
+          reserve
         }
     }
 `;
@@ -613,6 +616,7 @@ export const GET_MESSAGES_HOTEL = gql`
       }
       airlineId
       messages {
+        separator
         text
         createdAt
         sender {
@@ -798,6 +802,19 @@ export const SAVE_HANDLE_EXTEND_MUTATION = gql`
   }
 `;
 
+export const EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION = gql`
+  subscription Notification {
+    notification {
+      ... on ExtendRequestNotification {
+        requestId
+        newStart
+        newEnd
+        dispatcherId
+      }
+    }
+  }
+`;
+
 export const CHANGE_TO_ARCHIVE = gql`
   mutation Mutation($archivingRequstId: ID!) {
     archivingRequest(id: $archivingRequstId) {
@@ -814,8 +831,8 @@ export const CHANGE_TO_ARCHIVE = gql`
 // Запросы к заявкам на резерв
 
 export const CREATE_REQUEST_RESERVE_MUTATION = gql`
-  mutation CreateReserve($input: CreateReserveInput!) {
-    createReserve(input: $input) {
+  mutation CreateReserve($input: CreateReserveInput!, $files: [Upload!]) {
+    createReserve(input: $input, files: $files) {
       id
       airport {
         id
@@ -880,6 +897,7 @@ export const GET_RESERVE_REQUESTS = gql`
         }
         reserveNumber
         passengerCount
+        files
       }
     }
   }
@@ -983,6 +1001,7 @@ export const GET_RESERVE_REQUEST = gql`
       }
       reserveNumber
       passengerCount
+      files
     }
   }
 `;

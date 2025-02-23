@@ -220,6 +220,7 @@ function CreateRequestCompany({
     "Региональный руководитель",
   ];
 
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -247,7 +248,7 @@ function CreateRequestCompany({
 
               <label>Почта</label>
               <input
-                type="text"
+                type="email"
                 name="email"
                 placeholder="example@mail.ru"
                 value={formData.email}

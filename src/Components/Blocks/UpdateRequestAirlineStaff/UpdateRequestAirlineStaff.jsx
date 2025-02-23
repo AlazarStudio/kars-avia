@@ -236,7 +236,7 @@ function UpdateRequestAirlineStaff({
           <div className={classes.requestButton}>
             <Button
               type="submit"
-              style={{ "background-color": "#ff5151" }}
+              style={{ backgroundColor: "#ff5151" }}
               onClick={() => {
                 setDeleteIndex(selectedStaff);
                 setShowDelete(true);

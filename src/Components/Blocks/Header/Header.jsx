@@ -145,7 +145,7 @@ function Header({ children }) {
     const handleClickOutside = (event) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) && // когда вернуться оповещения поставить &&
+        !dropdownRef.current.contains(event.target) || // когда вернуться оповещения поставить &&
         notificationsRef.current &&
         !notificationsRef.current.contains(event.target) &&
         !event.target.closest(`.${classes.notify_dropdown}`)
@@ -245,16 +245,16 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
-          <div
+          {/* <div
             className={classes.section_top_elems_notify}
             onClick={toggleNotifications}
             ref={notificationsRef}
           >
             <div className={classes.section_top_elems_notify_red}></div>
             <img src="/notify.png" alt="Уведомления" />
-          </div>
+          </div> */}
 
-          {isNotificationsFullyVisible && (
+          {/* {isNotificationsFullyVisible && (
             <div
               className={`${classes.notify_dropdown} ${
                 isNotificationsOpen ? classes.open : classes.closed
@@ -266,7 +266,7 @@ function Header({ children }) {
                 user={data?.user}
               />
             </div>
-          )}
+          )} */}
 
           <div className={classes.section_top_elems_date}>
             <div>{formattedDate}</div>

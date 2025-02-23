@@ -66,6 +66,23 @@
     gap: 20px;
 }
 
+.downloadsButtonsWrapper {
+    display: flex;
+    gap: 15px;
+}
+
+.downloadsButton {
+    height: 40px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    border: 1px solid #5458739e;
+    border-radius: 5px;
+    color: #545873;
+    cursor: pointer;
+}
+
 @media (min-width: 0px) and (max-width: 1399px) {
 
     .titleHeader {

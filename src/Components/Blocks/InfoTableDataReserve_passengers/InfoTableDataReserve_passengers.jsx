@@ -28,6 +28,8 @@ function InfoTableDataReserve_passengers({
   user,
   request,
   airline,
+  manifest,
+  addNotification,
 }) {
   const token = getCookie("token");
 
@@ -193,16 +195,46 @@ function InfoTableDataReserve_passengers({
 
       // Закрываем модалку после успешного сохранения
       setIsEditDateModalOpen(false);
+      addNotification(
+        user?.airlineId
+          ? "Запрос на изменение даты отправлен в чат успешно."
+          : "Редактирование даты прошло успешно.",
+        "success"
+      );
     } catch (error) {
       console.error("Ошибка при обновлении бронирования:", error);
     }
   };
 
+  useEffect(() => {
+    const uploadManifest = async () => {
+      if (manifest) {
+        try {
+          await updateReserve({
+            variables: {
+              updateReserveId: request.id,
+              file: manifest,
+            },
+          });
+        } catch (error) {
+          console.error("Ошибка при загрузке манифеста:", error);
+          alert("Ошибка при загрузке манифеста");
+        }
+      }
+    };
+
+    uploadManifest();
+  }, [manifest]);
+
   // console.log(currentHotelIndex)
 
   const handleAddNewPassenger = async () => {
-    if (!newPassengerData.name || !newPassengerData.number || !newPassengerData.gender) {
-      alert('Введите все данные пассажира.');
+    if (
+      !newPassengerData.name ||
+      !newPassengerData.number ||
+      !newPassengerData.gender
+    ) {
+      alert("Введите все данные пассажира.");
       return;
     }
     try {
@@ -389,7 +421,7 @@ function InfoTableDataReserve_passengers({
   const [orgName, setOrgName] = useState("");
   const [messageCount, setMessageCount] = useState(0);
 
-  // console.log(request.airline);
+  // console.log(request);
 
   return (
     // Сделать отдельную компоненту для чата
@@ -424,7 +456,9 @@ function InfoTableDataReserve_passengers({
 
         <div
           className={classes.bottom}
-          style={{ height: user.role == roles.hotelAdmin && "calc(100vh - 280px)" }}
+          style={{
+            height: user.role == roles.hotelAdmin && "calc(100vh - 280px)",
+          }}
         >
           {filteredPlacement.map((item, hotelIndex) => {
             return (
@@ -774,11 +808,13 @@ function InfoTableDataReserve_passengers({
             <div className={classes.hotelAbout_info__filters}>
               <button onClick={toggleLogsSidebar}>История</button>
               {/* <button className={classes.updateReserveDate}>Редактировать даты заезда и выезда</button> */}
-              {request?.hotelChess?.length === 0 && (user.role === roles.dispatcerAdmin || user.role === roles.superAdmin) ? (
-                <Button onClick={handleOpenEditDateModal}>
-                  Редактировать даты заезда и выезда
-                </Button>
-              ) : null }
+              {/* {(user.role === roles.dispatcerAdmin || user.role === roles.superAdmin) ? ( */}
+              <Button onClick={handleOpenEditDateModal}>
+                {!user?.airlineId
+                  ? "Редактировать даты заезда и выезда"
+                  : "Запрос на изменение даты"}
+              </Button>
+              {/* ) : null } */}
             </div>
             <div className={classes.countingPeople}>
               <img src="/peopleCount.png" alt="" />

@@ -22,6 +22,13 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
         setShowScrollButton(false);
     };
 
+    const isUserAtBottom = () => {
+        if (!messagesEndRef.current) return false;
+        
+        const { scrollHeight, scrollTop, clientHeight } = messagesEndRef.current.parentElement;
+        return scrollHeight - scrollTop <= clientHeight + 10; // 10px запас для погрешности
+    };    
+
     const { loading, error, data, refetch } = useQuery(GET_MESSAGES_HOTEL, {
         variables: {
             requestId: chooseRequestID,
@@ -29,7 +36,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
         },
     });
 
-    // console.log(formData);
+    // console.log(activeTab);
 
     const [messages, setMessages] = useState({ messages: [] });
 
@@ -96,12 +103,44 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
         }
         refetch();
     }, [data, separator, hotelChatId, user.role, isInitialLoad, refetch]);
+
+    useEffect(() => {
+        if (separator) {
+            setTimeout(() => {
+                scrollToBottom();
+            }, 100); // Даем время на рендер
+            setIsInitialLoad(false);
+        }
+    
+    }, [separator]);
+
+    // useEffect(() => {
+    //     if (isInitialLoad) {
+    //         setTimeout(() => {
+    //             scrollToBottom();
+    //         }, 100); // Даем время на рендер
+    //         setIsInitialLoad(false);
+    //     }
+    
+    //     if (activeTab === "Комментарии") {
+    //         setTimeout(() => {
+    //             scrollToBottom();
+    //         }, 100);
+    //     }
+    // }, [isInitialLoad, activeTab, messages]);
+    
+    
     
 
     const { data: subscriptionData } = useSubscription(REQUEST_MESSAGES_SUBSCRIPTION, {
         variables: { chatId: messages?.id },
+        onData: () => {
+            refetch()
+        }
     });
 
+    // console.log(subscriptionData);
+    
     useEffect(() => {
         if (subscriptionData) {
             const newMessage = subscriptionData.messageSent;
@@ -123,7 +162,13 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
             // Проверяем, что сообщение отправлено не текущим пользователем
             if (newMessage.sender.id !== userID) {
                 setNewMessagesCount(prevCount => prevCount + 1);
-                setShowScrollButton(true);
+                // setShowScrollButton(true); //old
+                setTimeout(() => {
+                    if (!isUserAtBottom()) { 
+                        setShowScrollButton(true);
+                        setMessageCount ? setMessageCount(prev => prev + 1) : null;
+                    }
+                }, 500); // Задержка в 500 мс (можно изменить)
                 setMessageCount ? setMessageCount(prev => prev + 1) : null
             }
             setIsUserMessage(false);
@@ -228,7 +273,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
         setShowEmojiPicker(!showEmojiPicker);
     };
 
-    // console.log(messages);
+    // console.log(data);
     
 
     return (
@@ -246,11 +291,21 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
                                         <div className={classes.requestData_message_text__name}>
                                             <div className={classes.requestData_message_name}>{message.sender.name}</div>
                                             {/* <div className={classes.requestData_message_post}>{message.sender.role}</div> */}
-                                            <div className={classes.requestData_message_post}>{message.sender.position}</div>
+                                            <div className={classes.requestData_message_post}>{message.sender?.position}</div>
                                         </div>
-                                        <div className={`${classes.requestData_message__message} ${message.sender.id === userID ? classes.myMesBorderRadius : ''}`}>
+                                        <div className={`${classes.requestData_message__message} ${message.sender.id === userID ? classes.myMesBorderRadius : ''}`} style={message?.separator ? {backgroundColor:'#3CBC6726', color:'#3B6C54'} : {}}>
                                             {message.text}
-                                            <div className={classes.requestData_message_time}>{convertToDate(message.createdAt)} {convertToDate(message.createdAt, true)}</div>
+                                            {/* <div className={classes.requestData_message_time}>{convertToDate(message.createdAt)} {convertToDate(message.createdAt, true)}</div> */}
+
+                                        </div>
+                                        <div className={classes.requestData_message_time} style={message.sender.id === userID ? {textAlign:'right'} : {}}>
+                                            {new Date(message.createdAt).toLocaleDateString("ru-RU", 
+                                                {day: "numeric",
+                                                month: "long",
+                                                year: "numeric",
+                                                })} 
+                                                {convertToDate(message.createdAt, true)}
+                                                {/* <p>{new Date(message.createdAt).toLocaleDateString("ru-RU", {year: "numeric",})} год</p>  */}
                                         </div>
                                     </div>
                                 </div>

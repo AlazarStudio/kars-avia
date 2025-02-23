@@ -22,10 +22,12 @@ import {
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
   getCookie,
+  server,
 } from "../../../../graphQL_requests";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
+import Notification from "../../Notification/Notification";
 
 function ReservePlacement({ children, user, ...props }) {
   const token = getCookie("token");
@@ -123,135 +125,135 @@ function ReservePlacement({ children, user, ...props }) {
       setPlacement(transformedData);
 
       // Обработка подписки для новой гостиницы
-    //   if (subscriptionData) {
-    //     const newHotelData = {
-    //       hotel: {
-    //         reservationHotelId: subscriptionData.reserveHotel.id,
-    //         id: subscriptionData.reserveHotel.hotel.id,
-    //         name: subscriptionData.reserveHotel.hotel.name,
-    //         passengersCount: subscriptionData.reserveHotel.capacity.toString(),
-    //         city: subscriptionData.reserveHotel.hotel.city,
-    //         requestId: subscriptionData.reserveHotel.reserve.id,
-    //         passengers: subscriptionData.reserveHotel.passengers.map(
-    //           (passenger, index) => ({
-    //             name: passenger.name || "не указано",
-    //             gender: passenger.gender || "не указано",
-    //             number: passenger.number || "не указано",
-    //             type: passenger.type || "не указано",
-    //             order: index + 1,
-    //             id: passenger.id || `id-${index}`,
-    //           })
-    //         ),
-    //         // person: subscriptionData.reserveHotel.person.map((pers, index) => ({
-    //         //     name: pers.name || "не указано",
-    //         //     gender: pers.gender || "не указано",
-    //         //     number: pers.number || "не указано",
-    //         //     type: pers.type || "не указано",
-    //         //     order: index + 1,
-    //         //     id: pers.id || `id-${index}`
-    //         // })),
-    //       },
-    //     };
+      //   if (subscriptionData) {
+      //     const newHotelData = {
+      //       hotel: {
+      //         reservationHotelId: subscriptionData.reserveHotel.id,
+      //         id: subscriptionData.reserveHotel.hotel.id,
+      //         name: subscriptionData.reserveHotel.hotel.name,
+      //         passengersCount: subscriptionData.reserveHotel.capacity.toString(),
+      //         city: subscriptionData.reserveHotel.hotel.city,
+      //         requestId: subscriptionData.reserveHotel.reserve.id,
+      //         passengers: subscriptionData.reserveHotel.passengers.map(
+      //           (passenger, index) => ({
+      //             name: passenger.name || "не указано",
+      //             gender: passenger.gender || "не указано",
+      //             number: passenger.number || "не указано",
+      //             type: passenger.type || "не указано",
+      //             order: index + 1,
+      //             id: passenger.id || `id-${index}`,
+      //           })
+      //         ),
+      //         // person: subscriptionData.reserveHotel.person.map((pers, index) => ({
+      //         //     name: pers.name || "не указано",
+      //         //     gender: pers.gender || "не указано",
+      //         //     number: pers.number || "не указано",
+      //         //     type: pers.type || "не указано",
+      //         //     order: index + 1,
+      //         //     id: pers.id || `id-${index}`
+      //         // })),
+      //       },
+      //     };
 
-    //     setPlacement((prevPlacement) => {
-    //       const isDuplicate = prevPlacement.some(
-    //         (item) => item.hotel.id === newHotelData.hotel.id
-    //       );
-    //       return isDuplicate ? prevPlacement : [...prevPlacement, newHotelData];
-    //     });
-    //     refetch();
-    //     // refetchHotel();
-    //   }
+      //     setPlacement((prevPlacement) => {
+      //       const isDuplicate = prevPlacement.some(
+      //         (item) => item.hotel.id === newHotelData.hotel.id
+      //       );
+      //       return isDuplicate ? prevPlacement : [...prevPlacement, newHotelData];
+      //     });
+      //     refetch();
+      //     // refetchHotel();
+      //   }
 
-    //   // Обработка подписки для сотрудников и пассажиров
-    //   if (subscriptionDataPerson) {
-    //     const { reservePersons } = subscriptionDataPerson;
-    //     const hotelId = reservePersons.reserveHotel.id;
+      //   // Обработка подписки для сотрудников и пассажиров
+      //   if (subscriptionDataPerson) {
+      //     const { reservePersons } = subscriptionDataPerson;
+      //     const hotelId = reservePersons.reserveHotel.id;
 
-    //     setPlacement((prevPlacement) =>
-    //       prevPlacement.map((hotelData) => {
-    //         if (hotelData.hotel.id === hotelId) {
-    //           return {
-    //             ...hotelData,
-    //             hotel: {
-    //               ...hotelData.hotel,
-    //               passengers: [
-    //                 ...hotelData.hotel.passengers,
-    //                 ...reservePersons.passengers.map((passenger, index) => ({
-    //                   name: passenger.name || "не указано",
-    //                   gender: passenger.gender || "не указано",
-    //                   number: passenger.number || "не указано",
-    //                   type: passenger.type || "не указано",
-    //                   order: hotelData.hotel.passengers.length + index + 1,
-    //                   id: passenger.id || `id-${index}`,
-    //                 })),
-    //               ],
-    //               // person: [
-    //               //     ...hotelData.hotel.person,
-    //               //     ...reservePersons.person.map(person => ({
-    //               //         id: person.id,
-    //               //         name: person.name,
-    //               //         number: person.number || "не указано",
-    //               //         gender: person.gender || "не указано",
-    //               //     }))
-    //               // ]
-    //             },
-    //           };
-    //         }
-    //         return hotelData;
-    //       })
-    //     );
-    //     refetch();
-    //     // refetchHotel();
-    //   }
+      //     setPlacement((prevPlacement) =>
+      //       prevPlacement.map((hotelData) => {
+      //         if (hotelData.hotel.id === hotelId) {
+      //           return {
+      //             ...hotelData,
+      //             hotel: {
+      //               ...hotelData.hotel,
+      //               passengers: [
+      //                 ...hotelData.hotel.passengers,
+      //                 ...reservePersons.passengers.map((passenger, index) => ({
+      //                   name: passenger.name || "не указано",
+      //                   gender: passenger.gender || "не указано",
+      //                   number: passenger.number || "не указано",
+      //                   type: passenger.type || "не указано",
+      //                   order: hotelData.hotel.passengers.length + index + 1,
+      //                   id: passenger.id || `id-${index}`,
+      //                 })),
+      //               ],
+      //               // person: [
+      //               //     ...hotelData.hotel.person,
+      //               //     ...reservePersons.person.map(person => ({
+      //               //         id: person.id,
+      //               //         name: person.name,
+      //               //         number: person.number || "не указано",
+      //               //         gender: person.gender || "не указано",
+      //               //     }))
+      //               // ]
+      //             },
+      //           };
+      //         }
+      //         return hotelData;
+      //       })
+      //     );
+      //     refetch();
+      //     // refetchHotel();
+      //   }
       // refetch();
     }
   }, [data, dataHotel, subscriptionData, subscriptionDataPerson]);
 
-//   useEffect(() => {
-//     if (subscriptionDataPerson) {
-//       const { reservePersons } = subscriptionDataPerson;
-//       const hotelId = reservePersons.reserveHotel.id;
+  //   useEffect(() => {
+  //     if (subscriptionDataPerson) {
+  //       const { reservePersons } = subscriptionDataPerson;
+  //       const hotelId = reservePersons.reserveHotel.id;
 
-//       setPlacement((prevPlacement) =>
-//         prevPlacement.map((hotelData) => {
-//           if (hotelData.hotel.id === hotelId) {
-//             return {
-//               ...hotelData,
-//               hotel: {
-//                 ...hotelData.hotel,
-//                 passengers: [
-//                   ...hotelData.hotel.passengers,
-//                   ...reservePersons.passengers.map((passenger, index) => ({
-//                     name: passenger.name || "не указано",
-//                     gender: passenger.gender || "не указано",
-//                     number: passenger.number || "не указано",
-//                     type: passenger.type || "не указано",
-//                     order: hotelData.hotel.passengers.length + index + 1,
-//                     id: passenger.id || `id-${index}`,
-//                   })),
-//                 ],
-//                 // person: [
-//                 //     ...hotelData.hotel.person,
-//                 //     ...reservePersons.person.map(person => ({
-//                 //         id: person.id,
-//                 //         name: person.name,
-//                 //         number: person.number || "не указано",
-//                 //         gender: person.gender || "не указано",
-//                 //     }))
-//                 // ]
-//               },
-//             };
-//           }
-//           return hotelData;
-//         })
-//       );
-//       refetchHotel();
-//     }
-//   }, [refetchHotel, subscriptionDataPerson]);
+  //       setPlacement((prevPlacement) =>
+  //         prevPlacement.map((hotelData) => {
+  //           if (hotelData.hotel.id === hotelId) {
+  //             return {
+  //               ...hotelData,
+  //               hotel: {
+  //                 ...hotelData.hotel,
+  //                 passengers: [
+  //                   ...hotelData.hotel.passengers,
+  //                   ...reservePersons.passengers.map((passenger, index) => ({
+  //                     name: passenger.name || "не указано",
+  //                     gender: passenger.gender || "не указано",
+  //                     number: passenger.number || "не указано",
+  //                     type: passenger.type || "не указано",
+  //                     order: hotelData.hotel.passengers.length + index + 1,
+  //                     id: passenger.id || `id-${index}`,
+  //                   })),
+  //                 ],
+  //                 // person: [
+  //                 //     ...hotelData.hotel.person,
+  //                 //     ...reservePersons.person.map(person => ({
+  //                 //         id: person.id,
+  //                 //         name: person.name,
+  //                 //         number: person.number || "не указано",
+  //                 //         gender: person.gender || "не указано",
+  //                 //     }))
+  //                 // ]
+  //               },
+  //             };
+  //           }
+  //           return hotelData;
+  //         })
+  //       );
+  //       refetchHotel();
+  //     }
+  //   }, [refetchHotel, subscriptionDataPerson]);
 
   // console.log(subscriptionData);
-//   console.log(subscriptionDataPerson);
+  //   console.log(subscriptionDataPerson);
 
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
 
@@ -354,6 +356,17 @@ function ReservePlacement({ children, user, ...props }) {
     hotel: "",
   });
 
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
@@ -436,6 +449,17 @@ function ReservePlacement({ children, user, ...props }) {
     (item) => item.hotel.id === user.hotelId
   );
 
+  const [file, setFile] = useState(null);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+    }
+  };
+
+  // console.log(file);
+
   return (
     <div className={classes.main}>
       <MenuDispetcher id={"reserve"} />
@@ -462,19 +486,74 @@ function ReservePlacement({ children, user, ...props }) {
             onChange={handleSearch}
           />
 
-          {user?.airlineId ? null : (
-            <div className={classes.btnsReserve}>
-              {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
+          <div className={classes.downloadsButtonsWrapper}>
+            {request?.files && request?.files.length !== 0 ? (
+              <a
+                href={request?.files ? `${server}${request?.files[0]}` : ""}
+                target="_blank"
+                className={classes.downloadsButton}
+              >
+                Манифест
+                <img src="/download.png" alt="" />{" "}
+              </a>
+            ) : ( null
+              // <>
+              //   <input
+              //     type="file"
+              //     id="fileUpload"
+              //     style={{ display: "none" }}
+              //     onChange={handleFileChange}
+              //   />
 
-              {!exists && request.passengerCount === showChooseHotels ? null : (
+              //   {/* Кастомная кнопка загрузки */}
+              //   <label htmlFor="fileUpload" className={classes.downloadsButton}>
+              //     <img
+              //       src="/plus.png"
+              //       alt=""
+              //       style={{ width: "15px", filter: "invert(100%)" }}
+              //     />{" "}
+              //     {file ? file?.name : "Манифест"}
+              //   </label>
+
+              //   {/* Отображение выбранного файла */}
+              //   {/* {file && (
+              //     <p style={{ marginTop: "10px", color: "#fff" }}>
+              //       Файл: {file?.name} ({(file?.size / 1024).toFixed(2)} KB)
+              //     </p>
+              //   )} */}
+              // </>
+            )}
+
+            {/* <a
+              // href={`${server}${request?.files[0]}`}
+              target="_blank"
+              className={classes.downloadsButton}
+            >
+              Расселение
+              <img src="/download.png" alt="" />{" "}
+            </a> */}
+            {user?.airlineId ? null : (
+              <div className={classes.btnsReserve}>
+                {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
+                {/* {console.log(!exists && request.passengerCount === showChooseHotels)} */}
+                {/* {!exists && request.passengerCount === showChooseHotels ? null : (
                 <Button onClick={toggleCreateSidebar}>
                   {user.role == "HOTELADMIN"
                     ? "Выбрать количество пассажиров"
                     : "Добавить гостиницу"}
                 </Button>
-              )}
-            </div>
-          )}
+              )} */}
+                {exists &&
+                request.passengerCount === showChooseHotels ? null : (
+                  <Button onClick={toggleCreateSidebar}>
+                    {user.role == "HOTELADMIN"
+                      ? "Выбрать количество пассажиров"
+                      : "Добавить гостиницу"}
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
         {loading && <MUILoader />}
         {error && <p>Error: {error.message}</p>}
@@ -491,6 +570,8 @@ function ReservePlacement({ children, user, ...props }) {
               user={user}
               request={request}
               airline={request.airline}
+              manifest={file}
+              addNotification={addNotification}
             />
 
             <AddNewPassenger
@@ -532,6 +613,20 @@ function ReservePlacement({ children, user, ...props }) {
                 title={`Вы действительно хотите удалить гостя? `}
               />
             )}
+
+            {notifications.map((n, index) => (
+              <Notification
+                key={n.id}
+                text={n.text}
+                status={n.status}
+                index={index}
+                onClose={() => {
+                  setNotifications((prev) =>
+                    prev.filter((notif) => notif.id !== n.id)
+                  );
+                }}
+              />
+            ))}
           </>
         )}
       </div>

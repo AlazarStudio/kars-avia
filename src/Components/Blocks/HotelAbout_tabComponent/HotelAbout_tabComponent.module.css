@@ -149,7 +149,7 @@
     padding-right: 20px;
 }
 
-.hotelAbout_info__contacts___arline {
+.hotelAbout_info__contacts___airline {
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -157,7 +157,7 @@
     padding-top: 30px;
     height: 100%;
     overflow: scroll;
-    padding-right: 20px;
+    /* padding-right: 20px; */
 }
 
 .hotelAbout_info_block {
@@ -386,7 +386,7 @@
     .hotelAbout_info__contacts {
         flex-direction: column;
     }
-    .hotelAbout_info__contacts___arline {
+    .hotelAbout_info__contacts___airline {
         flex-direction: column;
         padding-top: 0;
         gap: 65px;

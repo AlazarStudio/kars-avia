@@ -218,3 +218,8 @@ textarea {
     background-color: #0057C3 !important;
     opacity: 1;
 }
+
+.historyLogTime {
+    color: #54587380;
+    margin-right: 8px;
+}

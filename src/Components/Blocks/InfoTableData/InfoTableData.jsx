@@ -52,6 +52,9 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
       }
     }, [pageInfo]);
 
+    // console.log(requests);
+    
+
     return (
         <InfoTable>
             {/* Заголовки колонок */}
@@ -76,11 +79,11 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
                         key={index}
                     >
                         {item.status === 'created' && <div className={classes.newRequest}></div>}
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.split('-')[0]}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.slice(0, 4)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.person.name}</div>
-                                <div className={classes.InfoTable_data_elem_moreInfo}>{item.person.position}</div>
+                                <div className={classes.InfoTable_data_elem_title}>{item.person.name} {' '} {item?.reserve ? '(Резерв)' : ''} </div>
+                                <div className={classes.InfoTable_data_elem_moreInfo}>{item.person.position.split(' ')[0]}</div>
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{convertToDate(item.createdAt)}</div>

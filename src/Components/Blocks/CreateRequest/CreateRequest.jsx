@@ -25,7 +25,7 @@ import { Box, CircularProgress } from "@mui/material";
 import MUILoader from "../MUILoader/MUILoader";
 
 // Компонент для создания новой заявки
-function CreateRequest({ show, onClose, onMatchFound, user }) {
+function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   const token = getCookie("token");
   const [userID, setUserID] = useState();
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -63,6 +63,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
       dinner: true,
     },
     city: "",
+    reserve: false,
   });
 
   const [warningMessage, setWarningMessage] = useState(""); // Предупреждение при пересечении бронирования
@@ -165,6 +166,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
         dinner: true,
       },
       city: "",
+      reserve: false,
     });
     setIsEdited(false); // Сбрасываем флаг, что форма не изменена
     setWarningMessage("");
@@ -244,6 +246,8 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
 
   // Отправка формы на сервер
   const handleSubmit = async () => {
+    setIsLoading(true);
+
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
       return;
@@ -299,14 +303,15 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
       mealPlan: { included: formData.mealPlan.included },
       senderId: formData.senderId,
       airlineId: formData.airlineId,
+      reserve: formData.reserve,
     };
 
     try {
-      setIsLoading(true);
       const response = await createRequest({ variables: { input } });
       // console.log(response);
       resetForm();
       onClose();
+      addNotification("Создание заявки для экипажа прошло успешно.", "success");
     } catch (error) {
       if (error.message.startsWith("requestId")) {
         const match = error.message.match(/requestId:\s*([a-zA-Z0-9]+)/);
@@ -449,6 +454,19 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                 {warningMessage && (
                   <div className={classes.warningMessage}>{warningMessage}</div>
                 )}
+                <MUIAutocomplete
+                  dropdownWidth={"100%"}
+                  label={"Выберите тип"}
+                  options={["Квота", "Резерв"]}
+                  value={formData.reserve ? "Резерв" : "Квота"}
+                  onChange={(event, newValue) => {
+                    setFormData((prevFormData) => ({
+                      ...prevFormData,
+                      reserve: newValue === "Резерв",
+                    }));
+                    setIsEdited(true);
+                  }}
+                />
 
                 {user?.airlineId ? null : (
                   <>
@@ -721,6 +739,21 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                     Ужин
                   </label>
                 </div>
+
+                {/* <label style={{ alignItems: "center" }}>
+                  <input
+                    type="checkbox"
+                    name="reserve"
+                    checked={formData.reserve}
+                    onChange={(e) =>
+                      setFormData((prevState) => ({
+                        ...prevState,
+                        reserve: e.target.checked, // ✅ Записываем булево значение
+                      }))
+                    }
+                  />
+                  Резерв
+                </label> */}
 
                 {matchingRequest ? (
                   <div className={classes.matchingRequest}>

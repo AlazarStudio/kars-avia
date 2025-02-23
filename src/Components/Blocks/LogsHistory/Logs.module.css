@@ -237,10 +237,11 @@
 }
 
 .historyDate {
-    box-shadow: 0px 4px 16px 0px #00000026;
-    border-radius: 50px;
+    /* box-shadow: 0px 4px 16px 0px #00000026; */
+    border-radius: 5px;
     width: 190px;
-    min-height: 44px;
+    /* min-height: 44px; */
+    min-height: 38px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -248,6 +249,7 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 21.82px;
+    background-color: #f3f3f3;
     color: #545873;
 }
 
@@ -259,7 +261,7 @@
     height: auto;
     overflow: hidden;
     overflow-y: scroll;
-    padding: 10px;
+    padding: 20px 30px;
 }
 
 .logs1 {
@@ -267,6 +269,14 @@
     flex-direction: column;
     gap: 30px;
     align-items: center;
+}
+
+.historyLogWrapper {
+    text-align: center;
+}
+
+.historyLogTime {
+    color: #54587380;
 }
 
 .historyLog {
@@ -279,14 +289,14 @@
     word-break: break-word;
 }
 
-.historyLog span {
+/* .historyLog span {
     font-family: Inter;
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
     text-align: center;
     color: #545873;
-}
+} */
 
 
 @media (min-width: 0px) and (max-width: 1399px) {

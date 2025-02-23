@@ -31,7 +31,7 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const [logsData, setLogsData] = useState(null);
 
   useEffect(() => {
-    if (dataLogs)
+    if (dataLogs || show)
       setLogsData(
         type === "hotel"
           ? dataLogs.hotel
@@ -39,7 +39,7 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
           ? dataLogs.airline
           : dataLogs.reserve
       );
-  }, [dataLogs]);
+  }, [dataLogs, show]);
 
   const sidebarRef = useRef();
 
@@ -78,16 +78,26 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
               {[...logsData.logs].reverse().map((log, index) => (
                 <div className={classes.logs1} key={log.id}>
                   <div className={classes.historyDate} key={index}>
-                    {convertToDate(log.createdAt)}{" "}
-                    {convertToDate(log.createdAt, true)}
+                    {new Date(log.createdAt).toLocaleDateString("ru-RU", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                    {/* {convertToDate(log.createdAt)}{" "} */}
+                    {/* {convertToDate(log.createdAt, true)} */}
                   </div>
-                  <div
-                    className={classes.historyLog}
-                    dangerouslySetInnerHTML={{
-                      __html: log.description,
-                    }}
-                  >
-                    {/* {log.description} */}
+                  <div className={classes.historyLogWrapper}>
+                    {/* <span className={classes.historyLogTime}>
+                      {convertToDate(log.createdAt, true)}
+                    </span> */}
+                    <div
+                      className={classes.historyLog}
+                      dangerouslySetInnerHTML={{
+                        __html: `<span class='historyLogTime'>${convertToDate(log.createdAt, true)}</span> ${log.description}`,
+                      }}
+                    >
+                      {/* {log.description} */}
+                    </div>
                   </div>
                 </div>
               ))}

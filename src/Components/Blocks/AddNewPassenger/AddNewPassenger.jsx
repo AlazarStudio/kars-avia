@@ -143,7 +143,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
     
     useEffect(() => {
         // Инициализация при первом рендере
-        // if (!formData.city && request?.airport?.city && uniqueCities.includes(request.airport.city)) {
+        if (!formData.city && request?.airport?.city && uniqueCities.includes(request.airport.city)) {
             const selectedCity = request?.airport?.city;
             setCity(selectedCity);
             setFormData(prevFormData => ({
@@ -152,7 +152,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
                 requestId: request?.id,
                 hotel: hotel ? hotel : "",
             }));
-        // }
+        }
         // setFormData(prevFormData => ({
         //     ...prevFormData,
         //     requestId: request?.id,

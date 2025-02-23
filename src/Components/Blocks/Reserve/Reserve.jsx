@@ -12,6 +12,7 @@ import ReactPaginate from 'react-paginate';
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import { statusMapping } from "../../../roles";
+import Notification from "../../Notification/Notification";
 
 function Reserve({ children, user, idHotel, ...props }) {
     const location = useLocation();
@@ -51,6 +52,17 @@ function Reserve({ children, user, idHotel, ...props }) {
     const [newRequests, setNewRequests] = useState([]);
     const [requests, setRequests] = useState([]);
     const [totalPages, setTotalPages] = useState(1);
+
+    const [notifications, setNotifications] = useState([]);
+
+    const addNotification = (text, status) => {
+      const id = Date.now(); // Уникальный ID
+      setNotifications((prev) => [...prev, { id, text, status }]);
+
+      setTimeout(() => {
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+      }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    };
 
     // Сохранение текущей страницы в localStorage
     useEffect(() => {
@@ -278,7 +290,21 @@ function Reserve({ children, user, idHotel, ...props }) {
                     </>
                 )}
 
-                <CreateRequestReserve show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} />
+                <CreateRequestReserve show={showCreateSidebar} onClose={toggleCreateSidebar} user={user} addNotification={addNotification} />
+
+                {notifications.map((n, index) => (
+                    <Notification
+                        key={n.id}
+                        text={n.text}
+                        status={n.status}
+                        index={index}
+                        onClose={() => {
+                        setNotifications((prev) =>
+                            prev.filter((notif) => notif.id !== n.id)
+                        );
+                        }}
+                    />
+                    ))}
             </div>
         </>
     );

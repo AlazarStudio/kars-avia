@@ -35,7 +35,7 @@ function InfoTableDataReserve({ children, requests, paginationHeight, pageInfo, 
                 {requests.map((item, index) => (
                     <Link to={`/reserve/reservePlacement/${item.id}`} className={classes.InfoTable_data} key={index} style={{ opacity: item.status == 'done' && '0.5' }} >
                         {item.status == 'created' && <div className={classes.newRequest}></div>}
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.reserveNumber.split('-')[0]}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.reserveNumber.slice(0, 4)}</div>
 
                         <div className={`${classes.InfoTable_data_elem} ${classes.w11}`}>{convertToDate(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>

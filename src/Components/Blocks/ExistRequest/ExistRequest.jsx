@@ -8,12 +8,13 @@ import React, {
 import classes from "./ExistRequest.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
   CANCEL_REQUEST,
   CHANGE_TO_ARCHIVE,
   convertToDate,
   decodeJWT,
+  EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
   GET_LOGS,
   GET_REQUEST,
   getCookie,
@@ -34,6 +35,8 @@ function ExistRequest({
   setChooseRequestID,
   totalMeals,
   setChooseCityRequest,
+  openDeleteComponent,
+  setRequestId,
 }) {
   const token = getCookie("token");
 
@@ -48,6 +51,12 @@ function ExistRequest({
     variables: { requestId: chooseRequestID },
   });
 
+  useEffect(() => {
+    if (chooseRequestID) {
+      setRequestId(chooseRequestID);
+    }
+  }, [chooseRequestID]); // Срабатывает только при изменении chooseRequestID
+
   // console.error(error);
   // useEffect(() => {
   //   if (error) {
@@ -60,9 +69,9 @@ function ExistRequest({
   //     }
   //   }
   // }, [error]);
-  
+
   // console.log(data);
-  
+
   const { data: dataLogs } = useQuery(GET_LOGS, {
     context: {
       headers: {
@@ -72,7 +81,21 @@ function ExistRequest({
     },
     variables: { requestId: chooseRequestID },
   });
+  const { data: subscriptionData } = useSubscription(
+    EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION
+  );
 
+  // console.log(subscriptionData);
+
+  // Функция для разделения даты и времени
+  const parseDateTime = (dateTime) => {
+    if (!dateTime) return { date: "", time: "" };
+    const dateObj = new Date(dateTime);
+    return {
+      date: dateObj.toISOString().split("T")[0], // YYYY-MM-DD
+      time: dateObj.toISOString().split("T")[1].slice(0, 5), // HH:MM
+    };
+  };
   const [activeTab, setActiveTab] = useState("Общая");
   const [formData, setFormData] = useState(null);
   const [logsData, setLogsData] = useState(null);
@@ -80,6 +103,8 @@ function ExistRequest({
     departureName: "",
     departureDate: "",
     departureTime: "",
+    arrivalDate: "",
+    arrivalTime: "",
   });
   const sidebarRef = useRef();
 
@@ -87,7 +112,28 @@ function ExistRequest({
   useEffect(() => {
     if (data && data.request) setFormData(data.request);
     if (dataLogs && dataLogs.request) setLogsData(dataLogs.request);
-  }, [data, dataLogs]);
+  }, [data, dataLogs, show]);
+
+  useEffect(() => {
+    if (formData) {
+      setFormDataExtend({
+        departureDate: formData.departure
+          ? parseDateTime(formData.departure).date
+          : "",
+        departureTime: formData.departure
+          ? parseDateTime(formData.departure).time
+          : "",
+        arrivalDate: formData.arrival
+          ? parseDateTime(formData.arrival).date
+          : "",
+        arrivalTime: formData.arrival
+          ? parseDateTime(formData.arrival).time
+          : "",
+      });
+    }
+  }, [formData, show]); // Следим за изменением formData
+
+  // console.log(formDataExtend);
 
   // Функция закрытия формы
   const closeButton = useCallback(() => {
@@ -95,11 +141,13 @@ function ExistRequest({
     onClose();
     setChooseRequestID("");
     setMealData([]);
-    setFormDataExtend((prev) =>({
+    setFormDataExtend((prev) => ({
       ...prev,
-      departureDate:'',
-      departureTime:''
-    }))
+      departureDate: "",
+      departureTime: "",
+      arrivalDate: "",
+      arrivalTime: "",
+    }));
   }, [onClose, setChooseRequestID]);
 
   const resetForm = useCallback(() => setActiveTab("Общая"), []);
@@ -145,32 +193,50 @@ function ExistRequest({
     },
   });
 
-  const newStatus = formData?.departure < `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00` 
-  ? 'extended' 
-  : formData?.departure > `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00` 
-  ? 'reduced'
-  : formData?.status
+  const newStatus =
+    formData?.departure <
+    `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`
+      ? "extended"
+      : formData?.departure >
+        `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`
+      ? "reduced"
+      : formData?.arrival >
+        `${formDataExtend.arrivalDate}T${formDataExtend.arrivalDate}:00+00:00`
+      ? "earlyStart"
+      : formData?.arrival <
+        `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`
+      ? "reduced"
+      : formData?.status;
 
   // console.log(chooseRequestID);
 
   const handleExtendChangeRequest = async () => {
     try {
-      await handleExtend({
+      const response = await handleExtend({
         variables: {
           input: {
             requestId: chooseRequestID,
+            newStart: `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`,
             newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
-            status: newStatus
+            status: newStatus,
             // newEndName: formDataExtend.departureName,
           },
         },
       });
-      alert("Изменения сохранены");
-      setFormDataExtend((prev) =>({
+      alert(
+        user?.airlineId
+          ? "Запрос отправлен, можете посмотреть в комментариях."
+          : "Изменения сохранены"
+      );
+      setFormDataExtend((prev) => ({
         ...prev,
-        departureDate:'',
-        departureTime:''
-      }))
+        departureDate: "",
+        departureTime: "",
+        arrivalDate: "",
+        arrivalTime: "",
+      }));
+      console.log(response);
+      
       await refetch(); // Обновляем данные после изменения
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
@@ -178,8 +244,7 @@ function ExistRequest({
     }
   };
 
-  // console.log(formData);
-  
+  // console.log(formDataExtend);
 
   // Клик вне боковой панели закрывает её
   useEffect(() => {
@@ -233,10 +298,9 @@ function ExistRequest({
     if (formData?.mealPlan?.dailyMeals) {
       setMealData(formData?.mealPlan?.dailyMeals);
     }
-  }, [formData]);
+  }, [formData, show]);
 
   // console.log(formData);
-  
 
   // Изменение в питании
   const handleMealChange = (index, mealType, value) => {
@@ -310,7 +374,6 @@ function ExistRequest({
 
   // console.log(formData);
 
-
   return (
     <>
       {formData && (
@@ -322,18 +385,21 @@ function ExistRequest({
                 formData.status == "extended" ||
                 formData.status == "reduced" ||
                 formData.status == "transferred" ||
-                formData.status == "earlyStart") && handleCancelRequest && (
-                <button
-                  className={classes.canceledButton}
-                  onClick={() => {
-                    onClose();
-                    handleCancelRequest(chooseRequestID);
-                  }}
-                >
-                  Отменить
-                  {/* <img src="/user-check.png" alt="" /> */}
-                </button>
-              )}
+                formData.status == "earlyStart") &&
+                handleCancelRequest &&
+                !user?.airlineId && (
+                  <button
+                    className={classes.canceledButton}
+                    onClick={() => {
+                      // onClose();
+                      openDeleteComponent();
+                      // handleCancelRequest(chooseRequestID);
+                    }}
+                  >
+                    Отменить
+                    {/* <img src="/user-check.png" alt="" /> */}
+                  </button>
+                )}
             </div>
             <div className={classes.requestTitle_close} onClick={closeButton}>
               <img src="/close.png" alt="" />
@@ -491,6 +557,14 @@ function ExistRequest({
                       </div>
                       <div className={classes.requestDataInfo}>
                         <div className={classes.requestDataInfo_title}>
+                          Город
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData?.airport?.city}
+                        </div>
+                      </div>
+                      <div className={classes.requestDataInfo}>
+                        <div className={classes.requestDataInfo_title}>
                           Гостиница
                         </div>
                         <div className={classes.requestDataInfo_desc}>
@@ -533,7 +607,27 @@ function ExistRequest({
                   formData.status !== "canceled" && (
                     // formData.status !== "archiving" &&
                     <>
-                      <div className={classes.requestDataTitle}>Продление</div>
+                      <div className={classes.requestDataTitle}>
+                        Изменение даты
+                      </div>
+                      <label>Заезд</label>
+                      <div className={classes.reis_info}>
+                        <input
+                          type="date"
+                          name="arrivalDate"
+                          value={formDataExtend.arrivalDate}
+                          onChange={handleExtendChange}
+                          placeholder="Дата"
+                        />
+                        <input
+                          type="time"
+                          name="arrivalTime"
+                          value={formDataExtend.arrivalTime}
+                          onChange={handleExtendChange}
+                          placeholder="Время"
+                        />
+                      </div>
+                      <label>Выезд</label>
                       <div className={classes.reis_info}>
                         {/* <input
                           type="text"
@@ -558,7 +652,7 @@ function ExistRequest({
                         />
                       </div>
                       <Button onClick={handleExtendChangeRequest}>
-                        Продлить
+                        {user?.airlineId ? "Отправить запрос" : "Изменить даты"}
                       </Button>
                     </>
                   )}
@@ -689,7 +783,9 @@ function ExistRequest({
                   token={token}
                   user={user}
                   separator={separator}
-                  // chatHeight={!isHaveTwoChats ? 'calc(100vh - 318px)' : 'calc(100vh - 290px)'}
+                  chatHeight={
+                    (user?.airlineId || user?.hotelId) && "calc(100vh - 225px)"
+                  }
                 />
               </>
             )}
@@ -701,13 +797,21 @@ function ExistRequest({
                   {[...logsData.logs].reverse().map((log, index) => (
                     <>
                       <div className={classes.historyDate} key={index}>
-                        {convertToDate(log.createdAt)}{" "}
-                        {convertToDate(log.createdAt, true)}
+                        {new Date(log.createdAt).toLocaleDateString("ru-RU", {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        })}
+                        {/* {convertToDate(log.createdAt)}{" "}
+                        {convertToDate(log.createdAt, true)} */}
                       </div>
                       <div
                         className={classes.historyLog}
                         dangerouslySetInnerHTML={{
-                          __html: log.description,
+                          __html: `<span class='historyLogTime'>${convertToDate(
+                            log.createdAt,
+                            true
+                          )}</span> ${log.description}`,
                         }}
                       >
                         {/* {log.description} */}
@@ -734,8 +838,9 @@ function ExistRequest({
               <div className={classes.requestButton}>
                 <button
                   onClick={() => {
-                    onClose();
-                    handleCancelRequest(chooseRequestID);
+                    // onClose();
+                    // handleCancelRequest(chooseRequestID);
+                    openDeleteComponent();
                   }}
                 >
                   Отменить
@@ -745,13 +850,17 @@ function ExistRequest({
                   onClick={() => {
                     onClose();
                     setShowChooseHotel(true);
-                    setChooseCityRequest(formData.airport.city);
+                    setChooseCityRequest(formData?.airport?.city);
                     localStorage.setItem("selectedTab", 0);
                   }}
                 >
                   {/* {console.log(formData)} */}
                   Разместить
-                  <img style={{width:'fit-content', height:'fit-content'}} src="/user-check.png" alt="" />
+                  <img
+                    style={{ width: "fit-content", height: "fit-content" }}
+                    src="/user-check.png"
+                    alt=""
+                  />
                 </Button>
               </div>
             )}
