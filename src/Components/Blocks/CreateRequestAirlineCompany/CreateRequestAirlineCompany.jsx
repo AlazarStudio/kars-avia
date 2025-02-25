@@ -294,7 +294,7 @@ function CreateRequestAirlineCompany({
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="Введите email"
-                autoComplete="new-password"
+                // autoComplete="new-password"
               />
 
               <label>Роль</label>

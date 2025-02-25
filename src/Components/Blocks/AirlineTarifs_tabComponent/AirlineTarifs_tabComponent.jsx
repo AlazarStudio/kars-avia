@@ -22,6 +22,7 @@ import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTar
 import EditRequestMealTarif from "../EditRequestMealTarif/EditRequestMealTarif.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import Notification from "../../Notification/Notification.jsx";
+import { fullNotifyTime, notifyTime } from "../../../roles.js";
 
 function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const token = getCookie("token");
@@ -63,7 +64,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const [deleteHotelCategory] = useMutation(DELETE_AIRLINE_CATEGORY, {
@@ -415,6 +416,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
           text={n.text}
           status={n.status}
           index={index}
+          time={notifyTime}
           onClose={() => {
             setNotifications((prev) =>
               prev.filter((notif) => notif.id !== n.id)

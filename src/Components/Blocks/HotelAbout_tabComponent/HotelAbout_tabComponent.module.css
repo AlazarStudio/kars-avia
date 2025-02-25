@@ -100,7 +100,7 @@
     background-color: transparent;
     border: 1px solid #54587380;
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-size: 14px;
     color: #545873;
     cursor: pointer;
@@ -144,7 +144,7 @@
     justify-content: space-between;
     gap: 80px;
     padding-top: 30px;
-    height: 610px;
+    height: 590px;
     overflow: scroll;
     padding-right: 20px;
 }
@@ -153,7 +153,7 @@
     width: 100%;
     display: flex;
     justify-content: space-between;
-    gap: 80px;
+    gap: 50px;
     padding-top: 30px;
     height: 100%;
     overflow: scroll;
@@ -269,7 +269,7 @@
     gap: 10px;
     color: #fff;
     background-color: rgb(255, 156, 156);
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
     transition: all ease-in-out 0.3s;
     opacity: 0.8;
@@ -340,15 +340,20 @@
     gap: 40px;
 }
 
+.star {
+    width: 17px;
+    height: 15px;
+    margin-right: 3px;
+    object-fit: contain;
+}
+
 
 
 /* .airportDistance {
     width: 21%;
 } */
 
-@media (max-width: 1499px) {
-
-}
+@media (max-width: 1499px) {}
 
 @media (min-width: 0px) and (max-width: 1399px) {
     .hotelAbout_info_item {
@@ -367,7 +372,7 @@
         font-size: 14px;
     }
 
-    .hotelAbout_info_block{
+    .hotelAbout_info_block {
         width: 80%;
     }
 
@@ -386,6 +391,7 @@
     .hotelAbout_info__contacts {
         flex-direction: column;
     }
+
     .hotelAbout_info__contacts___airline {
         flex-direction: column;
         padding-top: 0;
@@ -404,11 +410,25 @@
     .rooms_wrapper article {
         flex-basis: 30%;
     }
+
+    .star {
+        width: 16px;
+        height: 14px;
+        margin-right: 3px;
+        object-fit: contain;
+    }
 }
 
 @media (min-width: 0px) and (max-width: 1310px) {
     .hotelAbout_info_block {
         width: 80% !important;
+    }
+
+    .star {
+        width: 16px;
+        height: 14px;
+        margin-right: 3px;
+        object-fit: contain;
     }
 }
 

@@ -39,7 +39,7 @@ select {
     height: 40px;
     border: 1px solid var(--text-gray);
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-family: Inter;
     padding: 0 10px;
 }
@@ -55,12 +55,13 @@ textarea {
     resize: vertical;
     border: 1px solid var(--text-gray);
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-family: Inter;
     padding: 10px;
 }
 
 ::-webkit-scrollbar {
+    /* width: 6px; */
     width: 8px;
     height: 8px;
     /* background-color: #fff; */

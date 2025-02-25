@@ -25,7 +25,7 @@
     background-color: var(--white);
     width: 40px;
     height: 40px;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
     position: relative;
 }
@@ -37,7 +37,7 @@
     background-color: var(--white);
     width: 40px;
     height: 40px;
-    border-radius: 5px;
+    border-radius: 10px;
     cursor: pointer;
     position: relative;
 }
@@ -58,7 +58,7 @@
     align-items: center;
     background-color: var(--white);
     height: 40px;
-    border-radius: 5px;
+    border-radius: 10px;
     padding: 0 20px;
     font-family: Inter;
     font-size: 12px;

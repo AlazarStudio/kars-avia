@@ -153,7 +153,7 @@ select {
     color: #721c24;
     border: 1px solid #f5c6cb;
     padding: 15px;
-    border-radius: 5px;
+    border-radius: 10px;
     font-size: 14px;
     margin: 10px 0;
     text-align: center;
@@ -168,7 +168,7 @@ select {
     font-size: 14px;
     color: #721c24;
     background-color: #f8d7da;
-    border-radius: 5px;
+    border-radius: 10px;
     transition: all ease-in-out 0.3s;
 }
 

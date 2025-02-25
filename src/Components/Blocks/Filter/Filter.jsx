@@ -335,12 +335,12 @@ function Filter({
           <MUIAutocomplete
             dropdownWidth={dropdownWidth}
             label={"Статус"}
-            options={statusOptions.map((option) => option.label)}
+            options={statusOptions?.map((option) => option.label)}
             value={
-              statusOptions.find((option) => option.value === filter)?.label ===
+              statusOptions?.find((option) => option.value === filter)?.label ===
               "Все заявки"
                 ? ""
-                : statusOptions.find((option) => option.value === filter)
+                : statusOptions?.find((option) => option.value === filter)
                     ?.label || ""
             }
             onChange={(event, newValue) => {

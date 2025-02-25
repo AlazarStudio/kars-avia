@@ -18,7 +18,7 @@ import AirlineTablePageComponent from "../AirlineTablePageComponent/AirlineTable
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import UpdateRequestAirlineStaff from "../UpdateRequestAirlineStaff/UpdateRequestAirlineStaff.jsx";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
-import { roles } from "../../../roles.js";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Notification from "../../Notification/Notification.jsx";
@@ -92,7 +92,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   );
 
 
-  // console.log(subscriptionUpdateData);
+  // console.log(dataSubscriptionUpd);
 
   const [notifications, setNotifications] = useState([]);
 
@@ -102,7 +102,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const [showAddCategory, setshowAddCategory] = useState(false);
@@ -320,6 +320,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           text={n.text}
           status={n.status}
           index={index}
+          time={notifyTime}
           onClose={() => {
             setNotifications((prev) =>
               prev.filter((notif) => notif.id !== n.id)

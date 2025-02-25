@@ -56,7 +56,7 @@
     background-color: transparent;
     border: 1px solid #54587380;
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-size: 14px;
     color: #545873;
     cursor: pointer;
@@ -181,7 +181,7 @@
 
 @media (min-width: 0px) and (max-width: 1599px) {
     .airlineAbout_info {
-        height: 470px;
+        height: 560px;
     }
 }
 

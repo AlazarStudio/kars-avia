@@ -22,6 +22,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Notification from "../../Notification/Notification.jsx";
+import { fullNotifyTime, notifyTime } from "../../../roles.js";
 
 function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const token = getCookie("token");
@@ -59,7 +60,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const [deleteHotelRoom] = useMutation(DELETE_HOTEL_ROOM, {
@@ -359,6 +360,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
               text={n.text}
               status={n.status}
               index={index}
+              time={notifyTime}
               onClose={() => {
                 setNotifications((prev) =>
                   prev.filter((notif) => notif.id !== n.id)

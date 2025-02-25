@@ -18,7 +18,8 @@ function MUIAutocomplete({
         options={options ? options : []}
         disablePortal
         disabled={isDisabled ? isDisabled : false}
-        autoComplete={false}
+        // autoComplete={false}
+        // aria-autocomplete="none"
         slotProps={{
           popper: {
             modifiers: [
@@ -34,10 +35,12 @@ function MUIAutocomplete({
             sx: {
               fontSize: "14px", // Уменьшаем размер шрифта списка
               padding: "0",
+              borderRadius: "10px !important",
             },
           },
           paper: {
             sx: {
+              borderRadius: "10px !important",
               "& .MuiAutocomplete-noOptions": {
                 fontSize: "14px", // Уменьшаем шрифт текста "Нет вариантов"
                 textAlign: "center",
@@ -55,6 +58,11 @@ function MUIAutocomplete({
             {...params}
             label={label}
             variant="outlined"
+            // slotProps={{
+            //   htmlInput: {
+            //     "aria-autocomplete": "none",
+            //   },
+            // }}
             sx={{
               "& label": {
                 top: "50%",
@@ -68,9 +76,11 @@ function MUIAutocomplete({
                 height: "40px",
                 display: "flex",
                 alignItems: "center",
+                borderRadius: "10px !important",
               },
               "& .MuiOutlinedInput-root": {
                 padding: "0 px",
+                borderRadius: "10px !important",
               },
               "& .MuiInputLabel-shrink": {
                 padding: "0",
@@ -83,6 +93,7 @@ function MUIAutocomplete({
         sx={{
           width: dropdownWidth ? dropdownWidth : "",
           bgcolor: "white",
+          borderRadius: "10px !important",
           // Стили для самого Autocomplete
           "& .MuiOutlinedInput-root": {
             // уменьшаем высоту

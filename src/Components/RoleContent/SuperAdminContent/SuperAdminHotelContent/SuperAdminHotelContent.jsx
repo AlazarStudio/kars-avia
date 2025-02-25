@@ -18,7 +18,7 @@ const SuperAdminHotelContent = ({ id, user, selectedTab, handleTabSelect }) => (
 			<Tab className={classes.tab}>Шахматка</Tab>
 			<Tab className={classes.tab}>Цены</Tab>
 			<Tab className={classes.tab}>Номерной фонд</Tab>
-			<Tab className={classes.tab}>Компания</Tab>
+			<Tab className={classes.tab}>Пользователи</Tab>
 			<Tab className={classes.tab}>О гостинице</Tab>
 		</TabList>
 

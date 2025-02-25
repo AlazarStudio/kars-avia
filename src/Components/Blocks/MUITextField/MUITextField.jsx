@@ -21,12 +21,14 @@ function MUITextField({
         sx={{
           bgcolor: "white",
           height: "40px",
+          borderRadius: "10px !important",
           "& .MuiOutlinedInput-root": {
             height: "40px", // Устанавливаем фиксированную высоту
             borderRadius: "5px",
             fontFamily: "Inter",
             // padding: "0 10px",
             fontSize: "14px",
+            borderRadius: "10px !important",
           },
 
           "& label": {
@@ -42,6 +44,7 @@ function MUITextField({
             alignItems: "center",
             fontSize: "14px",
             padding: "0",
+            borderRadius: "10px !important",
           },
           "& .MuiOutlinedInput-root": {
             padding: "0 8px",

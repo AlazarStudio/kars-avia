@@ -15,6 +15,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
+import { fullNotifyTime, notifyTime } from "../../../roles";
 
 function AirlinesList({ children, ...props }) {
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
@@ -86,7 +87,7 @@ function AirlinesList({ children, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -228,6 +229,7 @@ function AirlinesList({ children, ...props }) {
             text={n.text}
             status={n.status}
             index={index}
+            time={notifyTime}
             onClose={() => {
               setNotifications((prev) =>
                 prev.filter((notif) => notif.id !== n.id)

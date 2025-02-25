@@ -12,11 +12,14 @@ import {
   GET_HOTEL_USERS,
   DELETE_HOTEL_USER,
   decodeJWT,
+  GET_HOTELS_UPDATE_SUBSCRIPTION,
+  GET_DISPATCHERS_SUBSCRIPTION,
 } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Notification from "../../Notification/Notification.jsx";
+import { fullNotifyTime, notifyTime } from "../../../roles.js";
 
 function HotelCompany_tabComponent({ children, id, ...props }) {
   const token = getCookie("token");
@@ -25,6 +28,26 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_USERS, {
     variables: { hotelId: id },
   });
+
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_HOTELS_UPDATE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
+  const { data: dataSubscription } = useSubscription(
+    GET_DISPATCHERS_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
+  // console.log(dataSubscriptionUpd);
 
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -111,7 +134,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -211,6 +234,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
           text={n.text}
           status={n.status}
           index={index}
+          time={notifyTime}
           onClose={() => {
             setNotifications((prev) =>
               prev.filter((notif) => notif.id !== n.id)

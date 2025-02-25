@@ -1,20 +1,15 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./ExistRequestInHotel.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
   CHANGE_TO_ARCHIVE,
   convertToDate,
-  GET_LOGS,
+  EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
   GET_REQUEST,
   getCookie,
+  REQUEST_UPDATED_SUBSCRIPTION,
   SAVE_HANDLE_EXTEND_MUTATION,
   SAVE_MEALS_MUTATION,
 } from "../../../../graphQL_requests";
@@ -37,17 +32,6 @@ function ExistRequestInHotel({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true'
-      },
-    },
-    variables: { requestId: chooseRequestID },
-  });
-
-  const { data: dataLogs } = useQuery(GET_LOGS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true'
       },
     },
     variables: { requestId: chooseRequestID },
@@ -60,21 +44,50 @@ function ExistRequestInHotel({
     departureName: "",
     departureDate: "",
     departureTime: "",
+    arrivalDate: "",
+    arrivalTime: "",
   });
   const sidebarRef = useRef();
 
+  const { data: subscriptionData } = useSubscription(
+    EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
+  const { data: subscriptionUpdateData } = useSubscription(
+    REQUEST_UPDATED_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
   // Обновление состояния при изменении данных запроса
   useEffect(() => {
-    if (data && data.request) setFormData(data.request);
-    if (dataLogs && dataLogs.request) setLogsData(dataLogs.request);
-  }, [data, dataLogs]);
+    if (data && data.request) {
+      setFormData(data?.request);
+      setLogsData(data?.request);
+    }
+  }, [data, show]);
 
   // Функция закрытия формы
   const closeButton = useCallback(() => {
     resetForm();
     onClose();
-    // setFormData(null)
-    // setChooseRequestID('');
+    setChooseRequestID("");
+    setMealData([]);
+    setFormDataExtend((prev) => ({
+      ...prev,
+      departureDate: "",
+      departureTime: "",
+      arrivalDate: "",
+      arrivalTime: "",
+    }));
   }, [onClose, setChooseRequestID]);
 
   const resetForm = useCallback(() => setActiveTab("Общая"), []);
@@ -83,27 +96,27 @@ function ExistRequestInHotel({
   const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
   // Обработчик изменений в форме
-  const handleChange = useCallback(
-    (e) => {
-      const { name, value, type, checked } = e.target;
-      setFormData((prevState) => ({
-        ...prevState,
-        meals:
-          name === "included"
-            ? { ...prevState.meals, included: value }
-            : prevState.meals,
-        [name]: type === "checkbox" ? checked : value,
-      }));
+  // const handleChange = useCallback(
+  //   (e) => {
+  //     const { name, value, type, checked } = e.target;
+  //     setFormData((prevState) => ({
+  //       ...prevState,
+  //       meals:
+  //         name === "included"
+  //           ? { ...prevState.meals, included: value }
+  //           : prevState.meals,
+  //       [name]: type === "checkbox" ? checked : value,
+  //     }));
 
-      if (formData?.meals.included === "Не включено") {
-        setFormData((prevState) => ({
-          ...prevState,
-          meals: { breakfast: false, lunch: false, dinner: false },
-        }));
-      }
-    },
-    [formData]
-  );
+  //     if (formData?.meals.included === "Не включено") {
+  //       setFormData((prevState) => ({
+  //         ...prevState,
+  //         meals: { breakfast: false, lunch: false, dinner: false },
+  //       }));
+  //     }
+  //   },
+  //   [formData]
+  // );
 
   // Обработчик для продления бронирования
   const handleExtendChange = useCallback((e) => {
@@ -115,22 +128,66 @@ function ExistRequestInHotel({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
       },
     },
   });
 
+  const formatDateTime = (date, time) => {
+    if (!date || !time) {
+      // console.error("Некорректные данные для даты или времени:", {
+      //   date,
+      //   time,
+      // });
+      return null;
+    }
+    return new Date(`${date}T${time}:00+00:00`);
+  };
+
+  const departureTime = formatDateTime(
+    formDataExtend?.departureDate,
+    formDataExtend?.departureTime
+  );
+  const arrivalTime = formatDateTime(
+    formDataExtend?.arrivalDate,
+    formDataExtend?.arrivalTime
+  );
+
+  const newStatus =
+    formData?.departure && new Date(formData.departure) < departureTime
+      ? "extended"
+      : formData?.departure && new Date(formData.departure) > departureTime
+      ? "reduced"
+      : formData?.arrival && new Date(formData.arrival) > arrivalTime
+      ? "earlyStart"
+      : formData?.arrival && new Date(formData.arrival) < arrivalTime
+      ? "reduced"
+      : formData?.status;
+
   const handleExtendChangeRequest = async () => {
     try {
-      await handleExtend({
+      const response = await handleExtend({
         variables: {
           input: {
             requestId: chooseRequestID,
+            newStart: `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`,
             newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
+            status: newStatus,
+            // newEndName: formDataExtend.departureName,
           },
         },
       });
-      alert("Изменения сохранены");
+      alert(
+        user?.airlineId
+          ? "Запрос отправлен, можете посмотреть в комментариях."
+          : "Изменения сохранены"
+      );
+      setFormDataExtend((prev) => ({
+        ...prev,
+        departureDate: "",
+        departureTime: "",
+        arrivalDate: "",
+        arrivalTime: "",
+      }));
       await refetch(); // Обновляем данные после изменения
     } catch (error) {
       console.error("Ошибка при сохранении:", error);

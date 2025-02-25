@@ -47,6 +47,7 @@ function ExistRequestCompany({
     role: chooseObject?.role || "",
     position: chooseObject?.position || "",
     login: chooseObject?.login || "",
+    oldPassword: "",
     password: chooseObject?.password || "",
   });
 
@@ -65,6 +66,7 @@ function ExistRequestCompany({
         role: chooseObject.role || "",
         position: chooseObject.position || "",
         login: chooseObject.login || "",
+        oldPassword: "",
         password: chooseObject.password || "",
       });
       setShowIMG(chooseObject.images);
@@ -81,23 +83,33 @@ function ExistRequestCompany({
       role: chooseObject?.role || "",
       position: chooseObject?.position || "",
       login: chooseObject?.login || "",
+      oldPassword: "",
       password: chooseObject?.password || "",
     });
     setIsEdited(false); // Сброс флага изменений
+    setShowOldPassword(false);
+    setShowNewPassword(false);
   }, []);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
       resetForm();
       onClose();
+      setIsEditing(false);
       return;
     }
 
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       onClose();
+      setIsEditing(false);
     }
-  }, [isEdited, onClose]);
+  }, [isEdited, isEditing, onClose]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -133,41 +145,58 @@ function ExistRequestCompany({
     }
   };
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const handleUpdate = async () => {
-    setIsLoading(true);
-    try {
-      let response_update_user = await uploadFile({
-        variables: {
-          input: {
-            id: formData.id,
-            name: formData.name,
-            email: formData.email,
-            role: formData.role,
-            position: formData.position,
-            login: formData.login,
-            password: formData.password,
+    if (isEditing) {
+      setIsLoading(true);
+      try {
+        let response_update_user = await uploadFile({
+          variables: {
+            input: {
+              id: formData.id,
+              name: formData.name,
+              email: formData.email,
+              role: formData.role,
+              position: formData.position,
+              login: formData.login,
+              password: formData.password,
+              oldPassword: formData.oldPassword,
+            },
+            images: formData.images,
           },
-          images: formData.images,
-        },
-      });
+        });
 
-      if (response_update_user) {
-        updateDispatcher(response_update_user.data.updateUser, index);
-        resetForm();
-        onClose();
-        setIsLoading(false);
-        addNotification("Редактирование диспетчера прошло успешно.", "success");
+        if (response_update_user) {
+          updateDispatcher(response_update_user.data.updateUser, index);
+          resetForm();
+          onClose();
+          setIsLoading(false);
+          addNotification(
+            "Редактирование диспетчера прошло успешно.",
+            "success"
+          );
+        }
+      } catch (error) {
+        console.error("Ошибка обновления пользователя:", error);
+        if (String(error).startsWith("ApolloError: Указан неверный пароль.")) {
+          alert("Указан неверный старый пароль.");
+        } else {
+          alert("Ошибка обновления пользователя.");
+        }
+      } finally {
+        // resetForm();
+        // onClose();
+        setIsLoading(false); // Сбрасываем isLoading после завершения запроса
+        // addNotification("Редактирование диспетчера прошло успешно.", "success");
+        setShowOldPassword(false);
+        setShowNewPassword(false);
+        setFormData((prevData) => ({
+          ...prevData,
+          oldPassword: "",
+          password: chooseObject?.password || "",
+        }));
       }
-    } catch (error) {
-      console.error("Ошибка обновления пользователя:", error);
-    } finally {
-      // resetForm();
-      // onClose();
-      setIsLoading(false); // Сбрасываем isLoading после завершения запроса
-      // addNotification("Редактирование диспетчера прошло успешно.", "success");
     }
+    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
@@ -199,6 +228,8 @@ function ExistRequestCompany({
     "Коммерческий директор",
     "Региональный руководитель",
   ];
+
+  // console.log(user);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -235,6 +266,7 @@ function ExistRequestCompany({
                   placeholder="Иванов Иван Иванович"
                   value={formData.name}
                   onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
 
@@ -246,25 +278,29 @@ function ExistRequestCompany({
                   placeholder="example@mail.ru"
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
-              <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Роль</div>
-                <div className={classes.dropdown}>
-                  <MUIAutocomplete
-                    dropdownWidth={"100%"}
-                    label={"Выберите роль"}
-                    options={["DISPATCHERADMIN"]}
-                    value={formData.role}
-                    onChange={(event, newValue) => {
-                      setIsEdited(true);
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        role: newValue,
-                      }));
-                    }}
-                  />
-                  {/* <DropDownList
+              {user.role === roles.dispatcherModerator ? null : (
+                <>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>Роль</div>
+                    <div className={classes.dropdown}>
+                      <MUIAutocomplete
+                        dropdownWidth={"100%"}
+                        isDisabled={!isEditing}
+                        label={"Выберите роль"}
+                        options={["DISPATCHERADMIN"]}
+                        value={formData.role}
+                        onChange={(event, newValue) => {
+                          setIsEdited(true);
+                          setFormData((prevData) => ({
+                            ...prevData,
+                            role: newValue,
+                          }));
+                        }}
+                      />
+                      {/* <DropDownList
                     placeholder="Выберите роль"
                     searchable={false}
                     options={["DISPATCHERADMIN"]}
@@ -277,13 +313,17 @@ function ExistRequestCompany({
                       }));
                     }}
                   /> */}
-                </div>
-              </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
               <div className={classes.requestDataInfo}>
                 <div className={classes.requestDataInfo_title}>Должность</div>
                 <div className={classes.dropdown}>
                   <MUIAutocomplete
                     dropdownWidth={"100%"}
+                    isDisabled={!isEditing}
                     label={"Выберите должность"}
                     options={positions}
                     value={formData.position}
@@ -318,16 +358,61 @@ function ExistRequestCompany({
                   placeholder="Логин"
                   value={formData.login}
                   onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Пароль</div>
+                <div className={classes.requestDataInfo_title}>
+                  Старый пароль
+                </div>
                 <input
-                  type="text"
+                  type={showOldPassword ? "text" : "password"}
+                  name="oldPassword"
+                  placeholder="Старый пароль"
+                  value={formData.oldPassword}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                />
+                <img
+                  src={showOldPassword ? "/eyeOpen.png" : "/eyeClose.png"}
+                  style={{
+                    width: "20px",
+                    objectFit: "contain",
+                    position: "absolute",
+                    right: "40px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    isEditing ? setShowOldPassword((prev) => !prev) : null
+                  }
+                  alt=""
+                />
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Новый пароль
+                </div>
+                <input
+                  type={showNewPassword ? "text" : "password"}
                   name="password"
-                  placeholder="Пароль"
+                  placeholder="Новый пароль"
                   value={formData.password}
                   onChange={handleChange}
+                  disabled={!isEditing}
+                />
+                <img
+                  src={showNewPassword ? "/eyeOpen.png" : "/eyeClose.png"}
+                  style={{
+                    width: "20px",
+                    objectFit: "contain",
+                    position: "absolute",
+                    right: "40px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    isEditing ? setShowNewPassword((prev) => !prev) : null
+                  }
+                  alt=""
                 />
               </div>
               <div className={classes.requestDataInfo}>
@@ -337,27 +422,34 @@ function ExistRequestCompany({
                   name="images"
                   onChange={handleFileChange}
                   ref={fileInputRef}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
           </div>
 
           <div className={classes.requestButton}>
-            {user.role !== roles.superAdmin ? null : (
-              <Button
-                onClick={() => openDeleteComponent(index, formData.id)}
-                backgroundcolor={"#FF9C9C"}
-              >
-                Удалить <img src="/delete.png" alt="" />
-              </Button>
-            )}
+            <Button
+              onClick={() => openDeleteComponent(index, formData.id)}
+              backgroundcolor={"#FF9C9C"}
+            >
+              Удалить <img src="/delete.png" alt="" />
+            </Button>
 
             <Button
               onClick={handleUpdate}
-              backgroundcolor={"#3CBC6726"}
-              color={"#3B6C54"}
+              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+              color={!isEditing ? "#3B6C54" : "#fff"}
             >
-              Изменить <img src="/editDispetcher.png" alt="" />
+              {isEditing ? (
+                <>
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </>
+              ) : (
+                <>
+                  Изменить <img src="/editDispetcher.png" alt="" />
+                </>
+              )}
             </Button>
           </div>
         </>

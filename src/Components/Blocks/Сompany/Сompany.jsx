@@ -17,6 +17,7 @@ import {
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
+import { fullNotifyTime, notifyTime } from "../../../roles";
 
 function Company({ children, user, ...props }) {
   const token = getCookie("token");
@@ -70,15 +71,25 @@ function Company({ children, user, ...props }) {
   });
 
   const deleteDispatcher = async (index, userID) => {
-    let response_delete_user = await deleteDispatcherUser({
-      variables: {
-        deleteUserId: userID,
-      },
-    });
-    if (response_delete_user) {
-      setCompanyData(companyData.filter((_, i) => i !== index));
-      setShowDelete(false);
-      setShowRequestSidebar(false);
+    try {
+      let response_delete_user = await deleteDispatcherUser({
+        variables: {
+          deleteUserId: userID,
+        },
+      });
+      if (response_delete_user) {
+        setCompanyData(companyData.filter((_, i) => i !== index));
+        setShowDelete(false);
+        setShowRequestSidebar(false);
+        addNotification("Удаление диспетчера прошло успешно.", "success");
+      }
+    } catch (error) {
+      console.error("Ошибка при удалении пользователя", error);
+      // addNotification(
+      //   "Ошибка, у вас недостаточно прав для удаления диспетчера.",
+      //   "error"
+      // );
+      alert("Ошибка при удалении пользователя");
     }
   };
 
@@ -114,7 +125,7 @@ function Company({ children, user, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -144,7 +155,7 @@ function Company({ children, user, ...props }) {
   return (
     <>
       <div className={classes.section}>
-        <Header>Компания</Header>
+        <Header>Пользователи</Header>
 
         <div className={classes.section_searchAndFilter}>
           {/* <input
@@ -214,6 +225,7 @@ function Company({ children, user, ...props }) {
             text={n.text}
             status={n.status}
             index={index}
+            time={notifyTime}
             onClose={() => {
               setNotifications((prev) =>
                 prev.filter((notif) => notif.id !== n.id)

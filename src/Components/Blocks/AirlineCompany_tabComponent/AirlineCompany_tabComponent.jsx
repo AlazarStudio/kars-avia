@@ -14,12 +14,15 @@ import {
   DELETE_AIRLINE_DEPARTMENT,
   DELETE_AIRLINE_MANAGER,
   GET_AIRLINE_COMPANY,
+  GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  GET_DISPATCHERS_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
+import { fullNotifyTime, notifyTime } from "../../../roles";
 
 function AirlineCompany_tabComponent({ children, id, ...props }) {
   const [userRole, setUserRole] = useState();
@@ -33,6 +36,26 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
     variables: { airlineId: id },
   });
 
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_AIRLINES_UPDATE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
+  const { data: dataSubscription } = useSubscription(
+    GET_DISPATCHERS_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
+  // console.log(dataSubscriptionUpd);
+
   const [notifications, setNotifications] = useState([]);
 
   const addNotification = (text, status) => {
@@ -41,7 +64,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime); // 5 секунд уведомление + 300 мс для анимации
   };
 
   const [addTarif, setAddTarif] = useState([]);
@@ -331,6 +354,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
           text={n.text}
           status={n.status}
           index={index}
+          time={notifyTime}
           onClose={() => {
             setNotifications((prev) =>
               prev.filter((notif) => notif.id !== n.id)

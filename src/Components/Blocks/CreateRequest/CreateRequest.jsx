@@ -308,7 +308,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
     try {
       const response = await createRequest({ variables: { input } });
-      // console.log(response);
+      console.log(response);
       resetForm();
       onClose();
       addNotification("Создание заявки для экипажа прошло успешно.", "success");

@@ -193,8 +193,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "Компания" : ""}
-        {!menuOpen && <span className={classes.tooltip}>Компания</span>}
+        {menuOpen ? "Пользователи" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Пользователи</span>}
       </Link>
       <Link
         to={"/hotelAbout"}

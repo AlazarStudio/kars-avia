@@ -34,7 +34,7 @@
     width: 35px;
     height: 35px;
     border: 1px dotted #545873;
-    border-radius: 5px;
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -74,7 +74,7 @@
     margin-right: 5px;
     cursor: pointer;
     border: 1px solid transparent;
-    border-radius: 5px;
+    border-radius: 10px;
     background-color: #E4E4EF;
     color: #545873;
     opacity: 0.5;

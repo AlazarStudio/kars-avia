@@ -19,6 +19,7 @@ import AddNewPassengerPlacement from "../../Blocks/AddNewPassengerPlacement/AddN
 import ExistReserveMess from "../../Blocks/ExistReserveMess/ExistReserveMess";
 import { roles } from "../../../roles";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
+import ExistRequest from "../../Blocks/ExistRequest/ExistRequest";
 
 const DAY_WIDTH = 40;
 const LEFT_WIDTH = 220;
@@ -1857,13 +1858,13 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     </Box>
 
 
-                    {!checkRoomsType && !user?.hotelId ?
+                    {!checkRoomsType && 
                         <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
                             <Typography variant="h6" sx={{ padding: '10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по эскадрильи в городе {hotelInfo.information?.city}
                             </Typography>
 
-                            {newRequests?.length > 0 ?
+                            {newRequests?.length > 0 && !user?.hotelId ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
                                     {newRequests
                                         .slice() // Создаём копию массива, чтобы не мутировать исходный
@@ -1895,7 +1896,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 </Typography>
                             }
                         </Box>
-                        : null
+                        
                     }
 
                     {checkRoomsType && !showReserveInfo && !showModalForAddHotelInReserve &&
@@ -2041,9 +2042,19 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 request={selectedRequest}
             />
 
-            <ExistRequestInHotel
+            {/* <ExistRequestInHotel
                 show={showRequestSidebar}
                 onClose={() => setShowRequestSidebar(false)}
+                setShowChooseHotel={setShowChooseHotel}
+                chooseRequestID={selectedRequestID}
+                setChooseRequestID={setSelectedRequestID}
+                user={user}
+            /> */}
+
+            <ExistRequest
+                show={showRequestSidebar}
+                onClose={() => setShowRequestSidebar(false)}
+                setChooseRequestID={setSelectedRequestID}
                 setShowChooseHotel={setShowChooseHotel}
                 chooseRequestID={selectedRequestID}
                 user={user}

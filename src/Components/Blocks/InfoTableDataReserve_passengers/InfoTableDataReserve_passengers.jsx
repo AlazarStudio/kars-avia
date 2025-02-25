@@ -30,6 +30,8 @@ function InfoTableDataReserve_passengers({
   airline,
   manifest,
   addNotification,
+  refetch,
+  refetchHotel,
 }) {
   const token = getCookie("token");
 
@@ -136,7 +138,7 @@ function InfoTableDataReserve_passengers({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
+        "Apollo-Require-Preflight": "true",
       },
     },
   });
@@ -206,6 +208,8 @@ function InfoTableDataReserve_passengers({
     }
   };
 
+  // console.log(request);
+
   useEffect(() => {
     const uploadManifest = async () => {
       if (manifest) {
@@ -213,9 +217,15 @@ function InfoTableDataReserve_passengers({
           await updateReserve({
             variables: {
               updateReserveId: request.id,
-              file: manifest,
+              input: {
+                status: request?.status,
+              },
+              files: manifest,
             },
           });
+          refetch();
+          refetchHotel();
+          addNotification("Манифест добавлен успешно.", "success");
         } catch (error) {
           console.error("Ошибка при загрузке манифеста:", error);
           alert("Ошибка при загрузке манифеста");
@@ -226,7 +236,7 @@ function InfoTableDataReserve_passengers({
     uploadManifest();
   }, [manifest]);
 
-  // console.log(currentHotelIndex)
+  // console.log(manifest)
 
   const handleAddNewPassenger = async () => {
     if (
@@ -421,7 +431,7 @@ function InfoTableDataReserve_passengers({
   const [orgName, setOrgName] = useState("");
   const [messageCount, setMessageCount] = useState(0);
 
-  // console.log(request);
+  // console.log(filteredPlacement);
 
   return (
     // Сделать отдельную компоненту для чата
@@ -711,9 +721,7 @@ function InfoTableDataReserve_passengers({
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                     >
-                      <Button onClick={handleAddNewPassenger}>
-                        Добавить пассажира
-                      </Button>
+                      <Button onClick={handleAddNewPassenger}>Добавить</Button>
                     </div>
                   </div>
                 )}
@@ -811,7 +819,7 @@ function InfoTableDataReserve_passengers({
               {/* {(user.role === roles.dispatcerAdmin || user.role === roles.superAdmin) ? ( */}
               <Button onClick={handleOpenEditDateModal}>
                 {!user?.airlineId
-                  ? "Редактировать даты заезда и выезда"
+                  ? "Редактировать даты"
                   : "Запрос на изменение даты"}
               </Button>
               {/* ) : null } */}
@@ -827,10 +835,12 @@ function InfoTableDataReserve_passengers({
                     Все гости размещены
                   </Button>
                 )}
-              {!showButton && <div>Все гости успешно размещены</div>}
+              {/* {!showButton && <div>Все гости успешно размещены</div>} */}
+              {!showButton && <div>Все заселены</div>}
               {getTotalGuests() == request.passengerCount &&
                 request.status == "done" && (
-                  <div>Все гости успешно размещены</div>
+                  // <div>Все гости успешно размещены</div>
+                  <div>Все заселены</div>
                 )}
             </div>
           </div>
@@ -838,62 +848,71 @@ function InfoTableDataReserve_passengers({
       </InfoTable>
 
       {/* {user.role != roles.hotelAdmin && ( */}
-      <div className={classes.chatWrapper}>
-        {user.role !== roles.superAdmin &&
-        user.role !== roles.dispatcerAdmin ? null : (
-          <div className={classes.separatorWrapper}>
-            {isHaveTwoChats === false ? (
-              <button
-                onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                className={separator === "airline" ? classes.active : null}
-              >
-                Авиакомпания
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                  className={separator === "airline" ? classes.active : null}
-                >
-                  Авиакомпания
-                </button>
-                <button
-                  onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
-                  className={separator === "hotel" ? classes.active : null}
-                >
-                  Гостиница
-                </button>
-              </>
+      {filteredPlacement.length === 0 && user?.hotelId ? null : (
+        <>
+          <div className={classes.chatWrapper}>
+            {user.role !== roles.superAdmin &&
+            user.role !== roles.dispatcerAdmin ? null : (
+              <div className={classes.separatorWrapper}>
+                {isHaveTwoChats === false ? (
+                  <button
+                    onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                    className={separator === "airline" ? classes.active : null}
+                  >
+                    Авиакомпания
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                      className={
+                        separator === "airline" ? classes.active : null
+                      }
+                    >
+                      Авиакомпания
+                    </button>
+                    <button
+                      onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
+                      className={separator === "hotel" ? classes.active : null}
+                    >
+                      Гостиница
+                    </button>
+                  </>
+                )}
+              </div>
             )}
-          </div>
-        )}
-        {user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin ? (
-          <p className={classes.chatName}>
-            {separator === "airline" ? "" : orgName}
-            {/* {console.log(orgName)} */}
-          </p>
-        ) : null}
+            {user.role !== roles.hotelAdmin &&
+            user.role !== roles.airlineAdmin ? (
+              <p className={classes.chatName}>
+                {separator === "airline" ? "" : orgName}
+                {/* {console.log(orgName)} */}
+              </p>
+            ) : null}
 
-        <Message
-          activeTab={"Комментарий"}
-          setIsHaveTwoChats={setIsHaveTwoChats}
-          setHotelChats={setHotelChats}
-          setTitle={setOrgName}
-          setMessageCount={setMessageCount}
-          chooseRequestID={""}
-          chooseReserveID={request.id}
-          token={token}
-          user={user}
-          chatPadding={"0"}
-          chatHeight={
-            user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin
-              ? "calc(100vh - 318px)"
-              : "calc(100vh - 290px)"
-          }
-          separator={separator}
-          hotelChatId={selectedHotelChatId}
-        />
-      </div>
+            <Message
+              activeTab={"Комментарий"}
+              setIsHaveTwoChats={setIsHaveTwoChats}
+              setHotelChats={setHotelChats}
+              setTitle={setOrgName}
+              setMessageCount={setMessageCount}
+              chooseRequestID={""}
+              chooseReserveID={request.id}
+              filteredPlacement={filteredPlacement}
+              token={token}
+              user={user}
+              chatPadding={"0"}
+              chatHeight={
+                user.role !== roles.hotelAdmin &&
+                user.role !== roles.airlineAdmin
+                  ? "calc(100vh - 318px)"
+                  : "calc(100vh - 290px)"
+              }
+              separator={separator}
+              hotelChatId={selectedHotelChatId}
+            />
+          </div>
+        </>
+      )}
       {/* )} */}
       <Logs
         type={"reserve"}

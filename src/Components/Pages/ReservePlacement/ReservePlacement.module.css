@@ -30,7 +30,7 @@
     width: 35px;
     height: 35px;
     border: 1px dotted #545873;
-    border-radius: 5px;
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -77,10 +77,18 @@
     display: flex;
     align-items: center;
     gap: 5px;
+    font-size: 16px;
     border: 1px solid #5458739e;
-    border-radius: 5px;
+    border-radius: 10px;
     color: #545873;
     cursor: pointer;
+}
+
+
+@media (min-width: 0px) and (max-width: 1499px) {
+    .downloadsButton {
+        font-size: 14px;
+    }
 }
 
 @media (min-width: 0px) and (max-width: 1399px) {

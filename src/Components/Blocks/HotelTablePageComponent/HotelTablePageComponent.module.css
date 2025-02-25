@@ -180,7 +180,7 @@
     color: white;
     border: none;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 10px;
     opacity: 0.8;
     display: flex;
     justify-content: center;
@@ -196,7 +196,7 @@
     background-color: #fff;
     color: #545873;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 10px;
     opacity: 1;
     border: 1px solid #545873;
 }
@@ -207,7 +207,7 @@
 
 .conflictBlock {
     border: 2px solid red;
-    border-radius: 5px;
+    border-radius: 10px;
     color: red;
     padding: 10px;
     text-align: center;

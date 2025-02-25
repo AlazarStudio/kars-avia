@@ -119,30 +119,16 @@ function ExistRequestProfile({
 
       if (response_update_user) {
         updateUser(response_update_user.data.updateUser);
-        resetForm();
-        onClose();
-        addNotification("Редактирование профиля прошло успешно.", "success");
       }
+      resetForm();
+      onClose();
+      addNotification("Редактирование профиля прошло успешно.", "success");
     } catch (error) {
       console.error("Ошибка обновления пользователя:", error);
-      if (
-        String(error).startsWith(
-          "ApolloError: Пользователь с таким логином уже существует"
-        )
-      ) {
-        alert("Пользователь с таким логином уже существует");
-      } else if (
-        String(error).startsWith(
-          "ApolloError: Пользователь с таким email уже существует"
-        )
-      ) {
-        alert("Пользователь с такой почтой уже существует");
-      } else if (
-        String(error).startsWith(
-          "ApolloError: Пользователь с таким email и логином уже существует"
-        )
-      ) {
-        alert("Пользователь с такой почтой и логином уже существует");
+      if (String(error).startsWith("ApolloError: Указан неверный пароль.")) {
+        alert("Указан неверный старый пароль.");
+      } else {
+        alert("Ошибка обновления пользователя.");
       }
     } finally {
       // resetForm();

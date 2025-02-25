@@ -20,7 +20,7 @@
     width: 100%;
     padding: 8px 24px 8px 8px;
     border: 1px solid var(--text-gray);
-    border-radius: 5px;
+    border-radius: 10px;
     outline: none;
 }
 
@@ -37,7 +37,7 @@
     list-style: none;
     background-color: white;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 10px;
     /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
     overflow-y: auto;
     z-index: 10;

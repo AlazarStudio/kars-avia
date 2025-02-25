@@ -88,7 +88,7 @@ function Notifications({ onRequestClick, user }) {
   });
   
 
-  console.log(filteredNotifyData);
+  // console.log(filteredNotifyData);
   
 
   return (

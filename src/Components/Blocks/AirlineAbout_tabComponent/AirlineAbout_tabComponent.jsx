@@ -12,7 +12,7 @@ import {
   UPDATE_AIRLINE,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
-import { roles } from "../../../roles.js";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
 import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
@@ -110,7 +110,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleEditClick = async () => {
@@ -214,6 +214,20 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
   // console.log(user);
 
+  const renderField = ({ label, value }) => {
+    return (
+      <div className={classes.airlineAbout_info_item}>
+        <label style={{ flexBasis: "50%" }}>{label}</label>
+        <div
+          className={classes.hotelAbout_info_value}
+          style={{ width: "400px" }}
+        >
+          {value || " "}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {error && <p>Error: {error.message}</p>}
@@ -303,28 +317,41 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   menuOpen && windowWidth <= 1575 ? classes.w70 : classes.w50
                 }`}
               >
-                <div className={classes.airlineAbout_info_item}>
-                  <label>Название</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={airline.name || ""}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className={classes.airlineAbout_info_input}
-                  />
-                </div>
-                <div className={classes.airlineAbout_info_item}>
-                  <label>Изображение</label>
-                  <input
-                    type="file"
-                    name="images"
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                    disabled={!isEditing}
-                    className={classes.airlineAbout_info_input}
-                  />
-                </div>
+                {
+                  // user?.hotelId &&
+                  user?.role !== roles.airlineAdmin &&
+                  user?.role !== roles.dispatcerAdmin &&
+                  user?.role !== roles.superAdmin ? (
+                    <>
+                      {renderField({ label: "Название", value: airline?.name })}
+                    </>
+                  ) : (
+                    <>
+                      <div className={classes.airlineAbout_info_item}>
+                        <label>Название</label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={airline.name || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.airlineAbout_info_input}
+                        />
+                      </div>
+                      <div className={classes.airlineAbout_info_item}>
+                        <label>Изображение</label>
+                        <input
+                          type="file"
+                          name="images"
+                          onChange={handleFileChange}
+                          ref={fileInputRef}
+                          disabled={!isEditing}
+                          className={classes.airlineAbout_info_input}
+                        />
+                      </div>
+                    </>
+                  )
+                }
               </div>
             ) : displayInfo == "contacts" ? (
               <>
@@ -354,35 +381,58 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                     }`}
                   >
                     <div className={classes.airlineAbout_info_label}>Адрес</div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>Страна</label>
-                      <input
-                        type="text"
-                        name="country"
-                        value={airline.information?.country || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>Город</label>
-                      <MUIAutocomplete
-                        dropdownWidth={"400px"}
-                        isDisabled={!isEditing}
-                        options={cities}
-                        value={airline.information?.city || ""}
-                        onChange={(event, newValue) => {
-                          setAirline((prev) => ({
-                            ...prev,
-                            information: {
-                              ...prev.information,
-                              city: newValue || "", // Обновляем поле `city`
-                            },
-                          }));
-                        }}
-                      />
-                      {/* <input
+                    {user?.role !== roles.airlineAdmin &&
+                    user?.role !== roles.dispatcerAdmin &&
+                    user?.role !== roles.superAdmin ? (
+                      <>
+                        {renderField({
+                          label: "Страна",
+                          value: airline.information?.country,
+                        })}
+                        {renderField({
+                          label: "Город",
+                          value: airline.information?.city,
+                        })}
+                        {renderField({
+                          label: "Улица",
+                          value: airline.information?.address,
+                        })}
+                        {renderField({
+                          label: "Индекс",
+                          value: airline.information?.index,
+                        })}
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.airlineAbout_info_item}>
+                          <label>Страна</label>
+                          <input
+                            type="text"
+                            name="country"
+                            value={airline.information?.country || ""}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            className={classes.airlineAbout_info_input}
+                          />
+                        </div>
+                        <div className={classes.airlineAbout_info_item}>
+                          <label>Город</label>
+                          <MUIAutocomplete
+                            dropdownWidth={"400px"}
+                            isDisabled={!isEditing}
+                            options={cities}
+                            value={airline.information?.city || ""}
+                            onChange={(event, newValue) => {
+                              setAirline((prev) => ({
+                                ...prev,
+                                information: {
+                                  ...prev.information,
+                                  city: newValue || "", // Обновляем поле `city`
+                                },
+                              }));
+                            }}
+                          />
+                          {/* <input
                         type="text"
                         name="city"
                         value={airline.information?.city || ""}
@@ -390,29 +440,31 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
                       /> */}
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>Улица</label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={airline.information?.address || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>Индекс</label>
-                      <input
-                        type="text"
-                        name="index"
-                        value={airline.information?.index || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
+                        </div>
+                        <div className={classes.airlineAbout_info_item}>
+                          <label>Улица</label>
+                          <input
+                            type="text"
+                            name="address"
+                            value={airline.information?.address || ""}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            className={classes.airlineAbout_info_input}
+                          />
+                        </div>
+                        <div className={classes.airlineAbout_info_item}>
+                          <label>Индекс</label>
+                          <input
+                            type="text"
+                            name="index"
+                            value={airline.information?.index || ""}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                            className={classes.airlineAbout_info_input}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div
@@ -537,6 +589,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
               text={n.text}
               status={n.status}
               index={index}
+              time={notifyTime}
               onClose={() => {
                 setNotifications((prev) =>
                   prev.filter((notif) => notif.id !== n.id)

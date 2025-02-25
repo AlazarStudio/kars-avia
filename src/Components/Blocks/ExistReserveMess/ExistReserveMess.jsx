@@ -1,27 +1,9 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./ExistReserveMess.module.css";
-import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { useMutation, useQuery } from "@apollo/client";
-import {
-  CANCEL_REQUEST,
-  CHANGE_TO_ARCHIVE,
-  convertToDate,
-  GET_LOGS,
-  GET_REQUEST,
-  GET_RESERVE_REQUEST,
-  getCookie,
-  SAVE_HANDLE_EXTEND_MUTATION,
-  SAVE_MEALS_MUTATION,
-} from "../../../../graphQL_requests";
+import { useQuery } from "@apollo/client";
+import { GET_RESERVE_REQUEST, getCookie } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
-import { roles } from "../../../roles";
 
 function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
   const token = getCookie("token");
@@ -129,7 +111,11 @@ function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
                 user={user}
                 separator={separator}
                 hotelChatId={hotelId}
-                chatHeight={user?.airlineId || user?.hotelId ? "calc(100vh - 150px)" :"calc(100vh - 180px)"}
+                chatHeight={
+                  user?.airlineId || user?.hotelId
+                    ? "calc(100vh - 150px)"
+                    : "calc(100vh - 180px)"
+                }
               />
             </>
           )}

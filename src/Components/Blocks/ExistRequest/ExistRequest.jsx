@@ -1,23 +1,15 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./ExistRequest.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
-  CANCEL_REQUEST,
   CHANGE_TO_ARCHIVE,
   convertToDate,
-  decodeJWT,
   EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
-  GET_LOGS,
   GET_REQUEST,
   getCookie,
+  REQUEST_UPDATED_SUBSCRIPTION,
   SAVE_HANDLE_EXTEND_MUTATION,
   SAVE_MEALS_MUTATION,
 } from "../../../../graphQL_requests";
@@ -45,47 +37,25 @@ function ExistRequest({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        "Apollo-Require-Preflight": "true",
       },
     },
     variables: { requestId: chooseRequestID },
   });
 
   useEffect(() => {
-    if (chooseRequestID) {
+    if (chooseRequestID && setRequestId) {
       setRequestId(chooseRequestID);
     }
   }, [chooseRequestID]); // Срабатывает только при изменении chooseRequestID
 
-  // console.error(error);
-  // useEffect(() => {
-  //   if (error) {
-  //     console.error("Ошибка в GET_REQUEST:", error);
-  //     // Если доступно, выведите error.graphQLErrors:
-  //     if (error.graphQLErrors) {
-  //       error.graphQLErrors.forEach(({ message }) =>
-  //         console.error("GraphQL Error:", message)
-  //       );
-  //     }
-  //   }
-  // }, [error]);
-
-  // console.log(data);
-
-  const { data: dataLogs } = useQuery(GET_LOGS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Apollo-Require-Preflight": "true",
-      },
-    },
-    variables: { requestId: chooseRequestID },
-  });
   const { data: subscriptionData } = useSubscription(
-    EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION
+    EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
   );
-
-  // console.log(subscriptionData);
 
   // Функция для разделения даты и времени
   const parseDateTime = (dateTime) => {
@@ -108,11 +78,22 @@ function ExistRequest({
   });
   const sidebarRef = useRef();
 
+  const { data: subscriptionUpdateData } = useSubscription(
+    REQUEST_UPDATED_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
   // Обновление состояния при изменении данных запроса
   useEffect(() => {
-    if (data && data.request) setFormData(data.request);
-    if (dataLogs && dataLogs.request) setLogsData(dataLogs.request);
-  }, [data, dataLogs, show]);
+    if (data && data.request) {
+      setFormData(data?.request);
+      setLogsData(data?.request);
+    }
+  }, [data, show]);
 
   useEffect(() => {
     if (formData) {
@@ -132,8 +113,6 @@ function ExistRequest({
       });
     }
   }, [formData, show]); // Следим за изменением formData
-
-  // console.log(formDataExtend);
 
   // Функция закрытия формы
   const closeButton = useCallback(() => {
@@ -156,29 +135,31 @@ function ExistRequest({
   const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
   // Обработчик изменений в форме
-  const handleChange = useCallback(
-    (e) => {
-      const { name, value, type, checked } = e.target;
-      setFormData((prevState) => ({
-        ...prevState,
-        meals:
-          name === "included"
-            ? { ...prevState.meals, included: value }
-            : prevState.meals,
-        [name]: type === "checkbox" ? checked : value,
-      }));
 
-      if (formData?.meals.included === "Не включено") {
-        setFormData((prevState) => ({
-          ...prevState,
-          meals: { breakfast: false, lunch: false, dinner: false },
-        }));
-      }
-    },
-    [formData]
-  );
+  // const handleChange = useCallback(
+  //   (e) => {
+  //     const { name, value, type, checked } = e.target;
+  //     setFormData((prevState) => ({
+  //       ...prevState,
+  //       meals:
+  //         name === "included"
+  //           ? { ...prevState.meals, included: value }
+  //           : prevState.meals,
+  //       [name]: type === "checkbox" ? checked : value,
+  //     }));
+
+  //     if (formData?.meals.included === "Не включено") {
+  //       setFormData((prevState) => ({
+  //         ...prevState,
+  //         meals: { breakfast: false, lunch: false, dinner: false },
+  //       }));
+  //     }
+  //   },
+  //   [formData]
+  // );
 
   // Обработчик для продления бронирования
+
   const handleExtendChange = useCallback((e) => {
     const { name, value } = e.target;
     setFormDataExtend((prevState) => ({ ...prevState, [name]: value }));
@@ -188,27 +169,47 @@ function ExistRequest({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        "Apollo-Require-Preflight": "true",
       },
     },
   });
 
+  const formatDateTime = (date, time) => {
+    if (!date || !time) {
+      // console.error("Некорректные данные для даты или времени:", {
+      //   date,
+      //   time,
+      // });
+      return null;
+    }
+    return new Date(`${date}T${time}:00+00:00`);
+  };
+
+  const departureTime = formatDateTime(
+    formDataExtend?.departureDate,
+    formDataExtend?.departureTime
+  );
+  const arrivalTime = formatDateTime(
+    formDataExtend?.arrivalDate,
+    formDataExtend?.arrivalTime
+  );
+
+  // console.log("departureTime:", departureTime);
+  // console.log("arrivalTime:", arrivalTime);
+  // console.log("formData.arrival:", formData?.arrival);
+  // console.log("formData.departure:", formData?.departure);
+
   const newStatus =
-    formData?.departure <
-    `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`
+    formData?.departure && new Date(formData.departure) < departureTime
       ? "extended"
-      : formData?.departure >
-        `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`
+      : formData?.departure && new Date(formData.departure) > departureTime
       ? "reduced"
-      : formData?.arrival >
-        `${formDataExtend.arrivalDate}T${formDataExtend.arrivalDate}:00+00:00`
+      : formData?.arrival && new Date(formData.arrival) > arrivalTime
       ? "earlyStart"
-      : formData?.arrival <
-        `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`
+      : formData?.arrival && new Date(formData.arrival) < arrivalTime
       ? "reduced"
       : formData?.status;
 
-  // console.log(chooseRequestID);
+  // console.log("newStatus:", newStatus);
 
   const handleExtendChangeRequest = async () => {
     try {
@@ -235,8 +236,6 @@ function ExistRequest({
         arrivalDate: "",
         arrivalTime: "",
       }));
-      console.log(response);
-      
       await refetch(); // Обновляем данные после изменения
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
@@ -261,8 +260,8 @@ function ExistRequest({
   }, [show, closeButton]);
 
   // Вспомогательные функции для преобразования данных
-  const getJsonParce = (data) => JSON.parse(data);
-  const formatDate = (dateString) => dateString.split("-").reverse().join(".");
+  // const getJsonParce = (data) => JSON.parse(data);
+  // const formatDate = (dateString) => dateString.split("-").reverse().join(".");
 
   // Функция для генерации HTML-описания для логов
   // function getLogDescription(log, logsData) {
@@ -291,6 +290,7 @@ function ExistRequest({
   //   }
   // }
   // Инициализируем mealData с пустым массивом
+
   const [mealData, setMealData] = useState([]);
 
   // Обновляем mealData, когда formData меняется и данные mealPlan доступны
@@ -299,8 +299,6 @@ function ExistRequest({
       setMealData(formData?.mealPlan?.dailyMeals);
     }
   }, [formData, show]);
-
-  // console.log(formData);
 
   // Изменение в питании
   const handleMealChange = (index, mealType, value) => {
@@ -372,8 +370,6 @@ function ExistRequest({
   const [separator, setSeparator] = useState("airline");
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
 
-  // console.log(formData);
-
   return (
     <>
       {formData && (
@@ -441,7 +437,7 @@ function ExistRequest({
               История
             </div>
 
-            {user.role !== roles.airlineAdmin
+            {user.role !== roles.airlineAdmin && handleCancelRequest
               ? formData.status !== "created" &&
                 formData.status !== "opened" &&
                 formData.status !== "canceled" && (
@@ -604,7 +600,8 @@ function ExistRequest({
                 {formData.status !== "archived" &&
                   formData.status !== "created" &&
                   formData.status !== "opened" &&
-                  formData.status !== "canceled" && (
+                  formData.status !== "canceled" &&
+                  !user?.hotelId && (
                     // formData.status !== "archiving" &&
                     <>
                       <div className={classes.requestDataTitle}>

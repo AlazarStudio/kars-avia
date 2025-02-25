@@ -16,7 +16,7 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const query = queryLog;
   const ID = queryID;
 
-  const { data: dataLogs } = useQuery(query, {
+  const { data: dataLogs, refetch } = useQuery(query, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -31,7 +31,7 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const [logsData, setLogsData] = useState(null);
 
   useEffect(() => {
-    if (dataLogs || show)
+    if (dataLogs) {
       setLogsData(
         type === "hotel"
           ? dataLogs.hotel
@@ -39,6 +39,8 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
           ? dataLogs.airline
           : dataLogs.reserve
       );
+    }
+    if (show) refetch();
   }, [dataLogs, show]);
 
   const sidebarRef = useRef();
@@ -93,7 +95,10 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
                     <div
                       className={classes.historyLog}
                       dangerouslySetInnerHTML={{
-                        __html: `<span class='historyLogTime'>${convertToDate(log.createdAt, true)}</span> ${log.description}`,
+                        __html: `<span class='historyLogTime'>${convertToDate(
+                          log.createdAt,
+                          true
+                        )}</span> ${log.description}`,
                       }}
                     >
                       {/* {log.description} */}

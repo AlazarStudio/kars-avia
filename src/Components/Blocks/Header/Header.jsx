@@ -5,17 +5,19 @@ import {
   CANCEL_REQUEST,
   decodeJWT,
   GET_DISPATCHER,
+  GET_DISPATCHERS_SUBSCRIPTION,
   getCookie,
   server,
 } from "../../../../graphQL_requests";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
 import Support from "../Support/Support";
-import { roles } from "../../../roles";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Notification from "../../Notification/Notification";
+import MUILoader from "../MUILoader/MUILoader";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -97,10 +99,19 @@ function Header({ children }) {
     [token]
   );
 
-  const { loading, error, data } = useQuery(GET_DISPATCHER, {
+  const { loading, error, data, refetch } = useQuery(GET_DISPATCHER, {
     variables: { userId: userID },
     skip: !userID,
   });
+
+  const { data: dataSubscription } = useSubscription(
+    GET_DISPATCHERS_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
 
   useEffect(() => {
     if (data?.user) {
@@ -144,11 +155,10 @@ function Header({ children }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) || // когда вернуться оповещения поставить &&
-        notificationsRef.current &&
-        !notificationsRef.current.contains(event.target) &&
-        !event.target.closest(`.${classes.notify_dropdown}`)
+        (dropdownRef.current && !dropdownRef.current.contains(event.target)) || // когда вернуться оповещения поставить &&
+        (notificationsRef.current &&
+          !notificationsRef.current.contains(event.target) &&
+          !event.target.closest(`.${classes.notify_dropdown}`))
       ) {
         setIsDropdownOpen(false);
         setTimeout(() => setIsFullyVisible(false), 300);
@@ -183,7 +193,7 @@ function Header({ children }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleUpdateUser = (updatedUser) => {
@@ -240,7 +250,7 @@ function Header({ children }) {
   return (
     <div className={classes.section_top}>
       <div className={classes.section_top_title}>{children}</div>
-      {loading && <p>Загрузка...</p>}
+      {loading && <MUILoader loadSize={"30px"} />}
       {error && <p>Ошибка: {error.message}</p>}
 
       {!loading && !error && (
@@ -373,6 +383,7 @@ function Header({ children }) {
                 text={n.text}
                 status={n.status}
                 index={index}
+                time={notifyTime}
                 onClose={() => {
                   setNotifications((prev) =>
                     prev.filter((notif) => notif.id !== n.id)

@@ -211,7 +211,7 @@
     background-color: transparent;
     border: 1px solid #54587380;
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-size: 14px;
     color: #545873;
     cursor: pointer;
@@ -248,7 +248,7 @@
     border: none;
     border: 1px solid transparent;
     color: #545873;
-    background-color: transparent;
+    background-color: #E4E4EF;
     cursor: pointer;
     transition: all ease-in-out 0.3s;
     opacity: 0.5;
@@ -257,7 +257,7 @@
 .separatorWrapper button.active {
     color: #000;
     opacity: 1;
-    background-color: #E4E4EF;
+    background-color: transparent;
     outline: none;
 }
 
@@ -267,7 +267,7 @@
     background-color: transparent;
     border: 1px solid #54587380;
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-size: 14px;
     color: #545873;
     cursor: pointer;
@@ -299,7 +299,7 @@
     background-color: red;
     color: var(--white);
     padding: 4px 8px;
-    border-radius: 5px;
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;

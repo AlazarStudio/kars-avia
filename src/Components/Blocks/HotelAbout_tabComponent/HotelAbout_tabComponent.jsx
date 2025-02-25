@@ -14,7 +14,7 @@ import {
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   GET_CITIES,
 } from "../../../../graphQL_requests.js";
-import { roles } from "../../../roles.js";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { useNavigate } from "react-router-dom";
 import Logs from "../LogsHistory/Logs.jsx";
@@ -133,7 +133,7 @@ function HotelAbout_tabComponent({ id }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleEditClick = async () => {
@@ -292,6 +292,36 @@ function HotelAbout_tabComponent({ id }) {
     }
   };
 
+  const renderField = ({ label, value, isStars }) => {
+    if (isStars) {
+      return (
+        <div className={classes.hotelAbout_info_item}>
+          <label style={{ flexBasis: "50%" }}>{label}</label>
+          <div className={classes.starsWrapper} style={{ width: "400px" }}>
+            {Array.from({ length: 5 }, (_, index) => (
+              <img
+                key={index}
+                src={index < value ? "/star.png" : "/op_star.png"}
+                className={classes.star}
+              />
+            ))}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className={classes.hotelAbout_info_item}>
+        <label style={{ flexBasis: "50%" }}>{label}</label>
+        <div
+          className={classes.hotelAbout_info_value}
+          style={{ width: "400px" }}
+        >
+          {value || " "}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {(loading || isLoading) && <MUILoader fullHeight={"70vh"} />}
@@ -435,81 +465,110 @@ function HotelAbout_tabComponent({ id }) {
                 {/* <div className={classes.hotelAbout_info_label}>
                   Информация об отеле
                 </div> */}
-
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Название</label>
-                  <input
-                    type="tel"
-                    name="name"
-                    value={hotel.name || ""}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    className={classes.hotelAbout_info_input}
-                  />
-                </div>
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Рейтинг</label>
-                  <input
-                    type="text"
-                    name="stars"
-                    value={hotel.stars || ""}
-                    onChange={handleChange}
-                    disabled={user?.hotelId ? true : !isEditing}
-                    className={classes.hotelAbout_info_input}
-                  />
-                </div>
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Звездность</label>
-                  <input
-                    type="text"
-                    name="usStars"
-                    value={hotel.usStars || ""}
-                    onChange={handleChange}
-                    disabled={user?.hotelId ? true : !isEditing}
-                    className={classes.hotelAbout_info_input}
-                  />
-                </div>
-                <div className={classes.hotelAbout_info_item_info}>
-                  <label>Описание</label>
-                  <textarea
-                    type="text"
-                    name="description"
-                    value={hotel.information?.description || ""}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    style={!isEditing ? { resize: "none" } : null}
-                    className={classes.hotelAbout_info_input}
-                  />
-                </div>
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Изображение</label>
-                  <input
-                    type="file"
-                    name="images"
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                    disabled={!isEditing}
-                    className={classes.hotelAbout_info_input}
-                  />
-                </div>
-                {user.role === roles.superAdmin ? (
-                  <div className={classes.hotelAbout_info_item}>
-                    <div
-                      className={classes.deleteHotel}
-                      onClick={openDeleteComponent}
-                    >
-                      Удалить гостиницу
-                      <img src="/delete.png" alt="" />
+                {user?.airlineId &&
+                user?.role !== roles.hotelAdmin &&
+                user?.role !== roles.dispatcerAdmin &&
+                user?.role !== roles.superAdmin ? (
+                  <>
+                    {renderField({ label: "Название", value: hotel?.name })}
+                    {renderField({
+                      label: "Рейтинг",
+                      value: hotel?.stars,
+                      isStars: true,
+                    })}
+                    {renderField({
+                      label: "Звездность",
+                      value: hotel?.usStars,
+                      isStars: true,
+                    })}
+                    {renderField({
+                      label: "Описание",
+                      value: hotel.information?.description
+                        ? hotel.information.description
+                        : "Нет описания",
+                    })}
+                  </>
+                ) : (
+                  <>
+                    <div className={classes.hotelAbout_info_item}>
+                      <label>Название</label>
+                      <input
+                        type="tel"
+                        name="name"
+                        value={hotel.name || ""}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={classes.hotelAbout_info_input}
+                      />
                     </div>
-                  </div>
-                ) : null}
+                    <div className={classes.hotelAbout_info_item}>
+                      <label>Рейтинг</label>
+                      <input
+                        type="text"
+                        name="stars"
+                        value={hotel.stars || ""}
+                        onChange={handleChange}
+                        disabled={user?.hotelId ? true : !isEditing}
+                        className={classes.hotelAbout_info_input}
+                      />
+                    </div>
+                    <div className={classes.hotelAbout_info_item}>
+                      <label>Звездность</label>
+                      <input
+                        type="text"
+                        name="usStars"
+                        value={hotel.usStars || ""}
+                        onChange={handleChange}
+                        disabled={user?.hotelId ? true : !isEditing}
+                        className={classes.hotelAbout_info_input}
+                      />
+                    </div>
+                    <div className={classes.hotelAbout_info_item_info}>
+                      <label>Описание</label>
+                      <textarea
+                        type="text"
+                        name="description"
+                        value={hotel.information?.description || ""}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        style={!isEditing ? { resize: "none" } : null}
+                        className={classes.hotelAbout_info_input}
+                      />
+                    </div>
+                    {user?.airlineId ? null : (
+                      <div className={classes.hotelAbout_info_item}>
+                        <label>Изображение</label>
+                        <input
+                          type="file"
+                          name="images"
+                          onChange={handleFileChange}
+                          ref={fileInputRef}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                    )}
 
-                {showDelete && (
-                  <DeleteComponent
-                    remove={handleDeleteHotel}
-                    close={closeDeleteComponent}
-                    title={`Вы действительно хотите удалить гостиницу "${hotel?.name}"?`}
-                  />
+                    {user.role === roles.superAdmin ? (
+                      <div className={classes.hotelAbout_info_item}>
+                        <div
+                          className={classes.deleteHotel}
+                          onClick={openDeleteComponent}
+                        >
+                          Удалить гостиницу
+                          <img src="/delete.png" alt="" />
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {showDelete && (
+                      <DeleteComponent
+                        remove={handleDeleteHotel}
+                        close={closeDeleteComponent}
+                        title={`Вы действительно хотите удалить гостиницу "${hotel?.name}"?`}
+                      />
+                    )}
+                  </>
                 )}
               </div>
             ) : displayInfo == "schedule" ? (
@@ -517,78 +576,100 @@ function HotelAbout_tabComponent({ id }) {
                 <div className={classes.hotelAbout_info_label}>
                   Расписание питания
                 </div>
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Завтрак</label>
-                  <div className={classes.mealTime}>
-                    <label>с</label>
-                    <input
-                      type="time"
-                      name="breakfastStart"
-                      value={hotel.breakfast.start || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
+                {user?.airlineId &&
+                user?.role !== roles.hotelAdmin &&
+                user?.role !== roles.dispatcerAdmin &&
+                user?.role !== roles.superAdmin ? (
+                  <>
+                    {renderField({
+                      label: "Завтрак",
+                      value: `с ${hotel?.breakfast?.start} до ${hotel?.breakfast?.end}`,
+                    })}
+                    {renderField({
+                      label: "Обед",
+                      value: `с ${hotel?.lunch?.start} до ${hotel?.lunch?.end}`,
+                    })}
+                    {renderField({
+                      label: "Ужин",
+                      value: `с ${hotel?.dinner?.start} до ${hotel?.dinner?.end}`,
+                    })}
+                  </>
+                ) : (
+                  <>
+                    <div className={classes.hotelAbout_info_item}>
+                      <label>Завтрак</label>
+                      <div className={classes.mealTime}>
+                        <label>с</label>
+                        <input
+                          type="time"
+                          name="breakfastStart"
+                          value={hotel.breakfast.start || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
 
-                    <label>до</label>
-                    <input
-                      type="time"
-                      name="breakfastEnd"
-                      value={hotel.breakfast.end || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
-                </div>
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Обед</label>
-                  <div className={classes.mealTime}>
-                    <label>с</label>
-                    <input
-                      type="time"
-                      name="lunchStart"
-                      value={hotel.lunch.start || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
+                        <label>до</label>
+                        <input
+                          type="time"
+                          name="breakfastEnd"
+                          value={hotel.breakfast.end || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                    </div>
+                    <div className={classes.hotelAbout_info_item}>
+                      <label>Обед</label>
+                      <div className={classes.mealTime}>
+                        <label>с</label>
+                        <input
+                          type="time"
+                          name="lunchStart"
+                          value={hotel.lunch.start || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
 
-                    <label>до</label>
-                    <input
-                      type="time"
-                      name="lunchEnd"
-                      value={hotel.lunch.end || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
-                </div>
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Ужин</label>
-                  <div className={classes.mealTime}>
-                    <label>с</label>
-                    <input
-                      type="time"
-                      name="dinnerStart"
-                      value={hotel.dinner.start || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
+                        <label>до</label>
+                        <input
+                          type="time"
+                          name="lunchEnd"
+                          value={hotel.lunch.end || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                    </div>
+                    <div className={classes.hotelAbout_info_item}>
+                      <label>Ужин</label>
+                      <div className={classes.mealTime}>
+                        <label>с</label>
+                        <input
+                          type="time"
+                          name="dinnerStart"
+                          value={hotel.dinner.start || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
 
-                    <label>до</label>
-                    <input
-                      type="time"
-                      name="dinnerEnd"
-                      value={hotel.dinner.end || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
-                </div>
+                        <label>до</label>
+                        <input
+                          type="time"
+                          name="dinnerEnd"
+                          value={hotel.dinner.end || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             ) : displayInfo == "requisites" && !user?.airlineId ? (
               <div className={classes.hotelAbout_info_block}>
@@ -685,36 +766,64 @@ function HotelAbout_tabComponent({ id }) {
                   style={menuOpen ? { width: "70%" } : {}}
                 >
                   <div className={classes.hotelAbout_info_label}>Адрес</div>
-                  <div className={classes.hotelAbout_info_item}>
-                    <label>Страна</label>
-                    <input
-                      type="text"
-                      name="country"
-                      value={hotel.information?.country || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
-                  <div className={classes.hotelAbout_info_item}>
-                    <label>Город</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"400px"}
-                      isDisabled={!isEditing}
-                      options={cities}
-                      value={hotel.information?.city || ""}
-                      onChange={(event, newValue) => {
-                        setHotel((prevHotel) => ({
-                          ...prevHotel,
-                          information: {
-                            ...prevHotel.information,
-                            city: newValue || "", // Обновляем поле `city`
-                          },
-                        }));
-                      }}
-                    />
+                  {user?.airlineId &&
+                  user?.role !== roles.hotelAdmin &&
+                  user?.role !== roles.dispatcerAdmin &&
+                  user?.role !== roles.superAdmin ? (
+                    <>
+                      {renderField({
+                        label: "Страна",
+                        value: hotel.information?.country,
+                      })}
+                      {renderField({
+                        label: "Город",
+                        value: hotel.information?.city,
+                      })}
+                      {renderField({
+                        label: "Улица",
+                        value: hotel.information?.address,
+                      })}
+                      {renderField({
+                        label: "Индекс",
+                        value: hotel.information?.index,
+                      })}
+                      {renderField({
+                        label: "Расстояние до аэропорта",
+                        value: hotel?.airportDistance,
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      <div className={classes.hotelAbout_info_item}>
+                        <label>Страна</label>
+                        <input
+                          type="text"
+                          name="country"
+                          value={hotel.information?.country || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                      <div className={classes.hotelAbout_info_item}>
+                        <label>Город</label>
+                        <MUIAutocomplete
+                          dropdownWidth={"400px"}
+                          isDisabled={!isEditing}
+                          options={cities}
+                          value={hotel.information?.city || ""}
+                          onChange={(event, newValue) => {
+                            setHotel((prevHotel) => ({
+                              ...prevHotel,
+                              information: {
+                                ...prevHotel.information,
+                                city: newValue || "", // Обновляем поле `city`
+                              },
+                            }));
+                          }}
+                        />
 
-                    {/* <input
+                        {/* <input
                       type="text"
                       name="city"
                       value={hotel.information?.city || ""}
@@ -722,95 +831,114 @@ function HotelAbout_tabComponent({ id }) {
                       disabled={!isEditing}
                       className={classes.hotelAbout_info_input}
                     /> */}
-                  </div>
-                  <div className={classes.hotelAbout_info_item}>
-                    <label>Улица</label>
-                    <input
-                      type="text"
-                      name="address"
-                      value={hotel.information?.address || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
-                  <div className={classes.hotelAbout_info_item}>
-                    <label>Индекс</label>
-                    <input
-                      type="text"
-                      name="index"
-                      value={hotel.information?.index || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
-                  <div className={classes.hotelAbout_info_item}>
-                    <label
-                      className={classes.airportDistance}
-                      style={
-                        menuOpen && windowWidth <= 1707
-                          ? { width: "18%" }
-                          : !menuOpen && windowWidth <= 1690
-                          ? { width: "20%" }
-                          : {}
-                      }
-                    >
-                      Расстояние до аэропорта
-                    </label>
-                    <input
-                      type="text"
-                      name="airportDistance"
-                      value={hotel.airportDistance || ""}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
+                      </div>
+                      <div className={classes.hotelAbout_info_item}>
+                        <label>Улица</label>
+                        <input
+                          type="text"
+                          name="address"
+                          value={hotel.information?.address || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                      <div className={classes.hotelAbout_info_item}>
+                        <label>Индекс</label>
+                        <input
+                          type="text"
+                          name="index"
+                          value={hotel.information?.index || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                      <div className={classes.hotelAbout_info_item}>
+                        <label
+                          className={classes.airportDistance}
+                          style={
+                            menuOpen && windowWidth <= 1707
+                              ? { width: "18%" }
+                              : !menuOpen && windowWidth <= 1690
+                              ? { width: "20%" }
+                              : {}
+                          }
+                        >
+                          Расстояние до аэропорта
+                        </label>
+                        <input
+                          type="text"
+                          name="airportDistance"
+                          value={hotel.airportDistance || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div
                   className={classes.hotelAbout_info_block}
                   style={menuOpen ? { width: "70%" } : {}}
                 >
-                  <div className={classes.hotelAbout_info_label}>
-                    Контакты
-                  </div>
-                  <div className={classes.hotelAbout_info_item}>
-                    <label>Почта</label>
-                    <input
-                      type="email"
-                      name="email"
-                      // value={hotel.email || ""}
-                      value={"KarsAvia"}
-                      // onChange={handleChange}
-                      disabled={true}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
-                  <div className={classes.hotelAbout_info_item}>
-                    <label>Телефон</label>
-                    <input
-                      type="tel"
-                      name="number"
-                      // value={hotel.number || ""}
-                      value={"8-818-888-88-88"}
-                      // onChange={handleChange}
-                      disabled={true}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
-                  <div className={classes.hotelAbout_info_item}>
-                    <label>Ссылка</label>
-                    <input
-                      type="tel"
-                      name="link"
-                      // value={hotel.link || ""}
-                      value={"KarsAvia"}
-                      // onChange={handleChange}
-                      disabled={true}
-                      className={classes.hotelAbout_info_input}
-                    />
-                  </div>
+                  <div className={classes.hotelAbout_info_label}>Контакты</div>
+                  {user?.airlineId ? (
+                    <>
+                      {renderField({
+                        label: "Почта",
+                        value: "KarsAvia",
+                      })}
+                      {renderField({
+                        label: "Телефон",
+                        value: "8-818-888-88-88",
+                      })}
+                      {renderField({
+                        label: "Ссылка",
+                        value: "KarsAvia",
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      <div className={classes.hotelAbout_info_item}>
+                        <label>Почта</label>
+                        <input
+                          type="email"
+                          name="email"
+                          // value={hotel.email || ""}
+                          value={"KarsAvia"}
+                          // onChange={handleChange}
+                          disabled={true}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                      <div className={classes.hotelAbout_info_item}>
+                        <label>Телефон</label>
+                        <input
+                          type="tel"
+                          name="number"
+                          // value={hotel.number || ""}
+                          value={"8-818-888-88-88"}
+                          // onChange={handleChange}
+                          disabled={true}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                      <div className={classes.hotelAbout_info_item}>
+                        <label>Ссылка</label>
+                        <input
+                          type="tel"
+                          name="link"
+                          // value={hotel.link || ""}
+                          value={"KarsAvia"}
+                          // onChange={handleChange}
+                          disabled={true}
+                          className={classes.hotelAbout_info_input}
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -830,6 +958,7 @@ function HotelAbout_tabComponent({ id }) {
               text={n.text}
               status={n.status}
               index={index}
+              time={notifyTime}
               onClose={() => {
                 setNotifications((prev) =>
                   prev.filter((notif) => notif.id !== n.id)

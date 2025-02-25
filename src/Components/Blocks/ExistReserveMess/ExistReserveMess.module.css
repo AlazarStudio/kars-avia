@@ -124,7 +124,7 @@ select {
     justify-content: center;
     align-items: center;
     background-color: var(--red);
-    border-radius: 5px;
+    border-radius: 10px;
     color: #FFFFFF;
     font-family: Nunito Sans;
     font-size: 16px;
@@ -175,7 +175,7 @@ select {
     font-weight: 400;
     width: 60%;
     padding: 10px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 .requestDataInfo input {
@@ -199,7 +199,7 @@ select {
 .requestData_date_info {
     background-color: #F3F3F3;
     padding: 5px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
     font-family: Nunito Sans;
     font-size: 14px;
     font-weight: 400;
@@ -323,7 +323,7 @@ select {
     padding: 10px;
     cursor: pointer;
     resize: none;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 .historyDate {

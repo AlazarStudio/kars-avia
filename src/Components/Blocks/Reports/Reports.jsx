@@ -19,7 +19,7 @@ import {
   GET_REPORTS_SUBSCRIOPTION,
   getCookie,
 } from "../../../../graphQL_requests";
-import { roles } from "../../../roles";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import Notification from "../../Notification/Notification";
 
@@ -148,7 +148,7 @@ function Reports({ children, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -262,6 +262,7 @@ function Reports({ children, ...props }) {
             text={n.text}
             status={n.status}
             index={index}
+            time={notifyTime}
             onClose={() => {
               setNotifications((prev) =>
                 prev.filter((notif) => notif.id !== n.id)

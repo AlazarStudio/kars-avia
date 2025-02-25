@@ -4,7 +4,7 @@
     /* Скрыто за пределами экрана */
     width: fit-content;
     padding: 15px 30px 15px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
     color: #fff;
     font-size: 14px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);

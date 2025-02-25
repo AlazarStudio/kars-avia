@@ -28,6 +28,7 @@ import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHot
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Notification from "../../Notification/Notification";
+import { fullNotifyTime, notifyTime } from "../../../roles";
 
 function ReservePlacement({ children, user, ...props }) {
   const token = getCookie("token");
@@ -364,7 +365,7 @@ function ReservePlacement({ children, user, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -481,57 +482,81 @@ function ReservePlacement({ children, user, ...props }) {
           <input
             type="text"
             placeholder="Поиск"
-            style={{ width: "500px" }}
+            style={{ width: "400px" }}
             value={searchQuery}
             onChange={handleSearch}
           />
 
           <div className={classes.downloadsButtonsWrapper}>
             {request?.files && request?.files.length !== 0 ? (
-              <a
-                href={request?.files ? `${server}${request?.files[0]}` : ""}
-                target="_blank"
-                className={classes.downloadsButton}
-              >
-                Манифест
-                <img src="/download.png" alt="" />{" "}
-              </a>
-            ) : ( null
-              // <>
-              //   <input
-              //     type="file"
-              //     id="fileUpload"
-              //     style={{ display: "none" }}
-              //     onChange={handleFileChange}
-              //   />
+              <>
+                <input
+                  type="file"
+                  id="fileUpload"
+                  style={{ display: "none" }}
+                  onChange={handleFileChange}
+                />
 
-              //   {/* Кастомная кнопка загрузки */}
-              //   <label htmlFor="fileUpload" className={classes.downloadsButton}>
-              //     <img
-              //       src="/plus.png"
-              //       alt=""
-              //       style={{ width: "15px", filter: "invert(100%)" }}
-              //     />{" "}
-              //     {file ? file?.name : "Манифест"}
-              //   </label>
+                {/* Кастомная кнопка загрузки */}
+                <label htmlFor="fileUpload" className={classes.downloadsButton}>
+                  <img src="/edit.svg.png" alt="" style={{ width: "15px" }} />{" "}
+                  Манифест
+                  {/* {file ? file?.name : "Манифест"} */}
+                </label>
+                <a
+                  href={request?.files ? `${server}${request?.files[0]}` : ""}
+                  target="_blank"
+                  className={classes.downloadsButton}
+                >
+                  Манифест
+                  <img src="/download.png" alt="" />
+                </a>
+              </>
+            ) : !request?.files ? (
+              <MUILoader loadSize={"35px"} />
+            ) : (
+              <>
+                {user?.hotelId ? null : (
+                  <>
+                    <input
+                      type="file"
+                      id="fileUpload"
+                      style={{ display: "none" }}
+                      onChange={handleFileChange}
+                    />
 
-              //   {/* Отображение выбранного файла */}
-              //   {/* {file && (
-              //     <p style={{ marginTop: "10px", color: "#fff" }}>
-              //       Файл: {file?.name} ({(file?.size / 1024).toFixed(2)} KB)
-              //     </p>
-              //   )} */}
-              // </>
+                    {/* Кастомная кнопка загрузки */}
+                    <label
+                      htmlFor="fileUpload"
+                      className={classes.downloadsButton}
+                    >
+                      <img
+                        src="/plus.png"
+                        alt=""
+                        style={{ width: "15px", filter: "invert(100%)" }}
+                      />{" "}
+                      {file ? file?.name : "Манифест"}
+                    </label>
+                  </>
+                )}
+
+                {/* Отображение выбранного файла */}
+                {/* {file && (
+                  <p style={{ marginTop: "10px", color: "#fff" }}>
+                    Файл: {file?.name} ({(file?.size / 1024).toFixed(2)} KB)
+                  </p>
+                )} */}
+              </>
             )}
 
-            {/* <a
+            <a
               // href={`${server}${request?.files[0]}`}
               target="_blank"
               className={classes.downloadsButton}
             >
               Расселение
               <img src="/download.png" alt="" />{" "}
-            </a> */}
+            </a>
             {user?.airlineId ? null : (
               <div className={classes.btnsReserve}>
                 {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
@@ -572,6 +597,8 @@ function ReservePlacement({ children, user, ...props }) {
               airline={request.airline}
               manifest={file}
               addNotification={addNotification}
+              refetch={refetch}
+              refetchHotel={refetchHotel}
             />
 
             <AddNewPassenger
@@ -620,6 +647,7 @@ function ReservePlacement({ children, user, ...props }) {
                 text={n.text}
                 status={n.status}
                 index={index}
+                time={notifyTime}
                 onClose={() => {
                   setNotifications((prev) =>
                     prev.filter((notif) => notif.id !== n.id)

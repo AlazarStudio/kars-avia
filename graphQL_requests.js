@@ -444,6 +444,18 @@ export const GET_REQUEST = gql`
           hotelId
           roomNumber
           status
+         logs {
+            id
+            action
+            description
+            oldData
+            newData
+            createdAt
+            user {
+              name
+              role
+            }
+          }
           person {
             id
             name
@@ -1182,8 +1194,8 @@ export const DELETE_PASSENGER_FROM_HOTEL = gql`
 `;
 
 export const UPDATE_RESERVE = gql`
-  mutation Mutation($updateReserveId: ID!, $input: UpdateReserveInput!) {
-    updateReserve(id: $updateReserveId, input: $input) {
+  mutation Mutation($updateReserveId: ID!, $input: UpdateReserveInput!, $files: [Upload!]) {
+    updateReserve(id: $updateReserveId, input: $input, files: $files) {
       id
     }
   }
@@ -1895,6 +1907,11 @@ export const GET_DISPATCHERS_SUBSCRIPTION = gql`
       position
       email
       login
+      airlineDepartmentId
+      hotelId
+      dispatcher
+      airlineId
+      support
     }
   }
 `;

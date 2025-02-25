@@ -4,6 +4,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
 import {
+  decodeJWT,
   getCookie,
   server,
   UPDATE_HOTEL_USER,
@@ -12,6 +13,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import { roles } from "../../../roles.js";
 
 function ExistRequestCompanyHotel({
   show,
@@ -24,6 +26,7 @@ function ExistRequestCompanyHotel({
   id,
 }) {
   const token = getCookie("token");
+  const user = decodeJWT(token);
 
   const [uploadFile, { data, loading, error }] = useMutation(
     UPDATE_HOTEL_USER,
@@ -46,6 +49,7 @@ function ExistRequestCompanyHotel({
     role: chooseObject?.role || "",
     position: chooseObject?.position || "",
     login: chooseObject?.login || "",
+    oldPassword: "",
     password: chooseObject?.password || "",
   });
 
@@ -64,6 +68,7 @@ function ExistRequestCompanyHotel({
         role: chooseObject.role || "",
         position: chooseObject.position || "",
         login: chooseObject.login || "",
+        oldPassword: "",
         password: chooseObject.password || "",
       });
       setShowIMG(chooseObject.images);
@@ -80,23 +85,33 @@ function ExistRequestCompanyHotel({
       role: chooseObject?.role || "",
       position: chooseObject?.position || "",
       login: chooseObject?.login || "",
+      oldPassword: "",
       password: chooseObject?.password || "",
     });
     setIsEdited(false); // Сброс флага изменений
+    setShowOldPassword(false);
+    setShowNewPassword(false);
   }, []);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
       resetForm();
       onClose();
+      setIsEditing(false);
       return;
     }
 
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       onClose();
+      setIsEditing(false);
     }
-  }, [isEdited, onClose]);
+  }, [isEdited, isEditing, onClose]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -132,42 +147,55 @@ function ExistRequestCompanyHotel({
     }
   };
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const handleUpdate = async () => {
-    setIsLoading(true); // Устанавливаем isLoading перед началом загрузки
-
-    try {
-      let response_update_user = await uploadFile({
-        variables: {
-          input: {
-            id: formData.id,
-            name: formData.name,
-            email: formData.email,
-            role: formData.role,
-            position: formData.position,
-            login: formData.login,
-            password: formData.password,
-            hotelId: id,
+    if (isEditing) {
+      setIsLoading(true); // Устанавливаем isLoading перед началом загрузки
+      try {
+        let response_update_user = await uploadFile({
+          variables: {
+            input: {
+              id: formData.id,
+              name: formData.name,
+              email: formData.email,
+              role: formData.role,
+              position: formData.position,
+              login: formData.login,
+              password: formData.password,
+              oldPassword: formData.oldPassword,
+              hotelId: id,
+            },
+            images: formData.images,
           },
-          images: formData.images,
-        },
-      });
+        });
 
-      if (response_update_user) {
-        updateDispatcher(response_update_user.data.updateUser, index);
-        resetForm();
-        onClose();
-        addNotification("Редактирование аккаунта прошло успешно.", "success");
+        if (response_update_user) {
+          updateDispatcher(response_update_user.data.updateUser, index);
+          resetForm();
+          onClose();
+          addNotification("Редактирование аккаунта прошло успешно.", "success");
+        }
+      } catch (error) {
+        console.error("Ошибка обновления пользователя:", error);
+        if (String(error).startsWith("ApolloError: Указан неверный пароль.")) {
+          alert("Указан неверный старый пароль.");
+        } else {
+          alert("Ошибка обновления пользователя.");
+        }
+      } finally {
+        // resetForm();
+        // onClose();
+        setIsLoading(false); // Сбрасываем isLoading после завершения запроса
+        // addNotification("Редактирование аккаунта прошло успешно.", "success");
+        setShowOldPassword(false);
+        setShowNewPassword(false);
+        setFormData((prevData) => ({
+          ...prevData,
+          oldPassword: "",
+          password: chooseObject?.password || "",
+        }));
       }
-    } catch (error) {
-      console.error("Ошибка обновления пользователя:", error);
-    } finally {
-      // resetForm();
-      // onClose();
-      setIsLoading(false); // Сбрасываем isLoading после завершения запроса
-      // addNotification("Редактирование аккаунта прошло успешно.", "success");
     }
+    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
@@ -230,6 +258,7 @@ function ExistRequestCompanyHotel({
                   placeholder="Иванов Иван Иванович"
                   value={formData.name}
                   onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
               <div className={classes.requestDataInfo}>
@@ -240,25 +269,29 @@ function ExistRequestCompanyHotel({
                   placeholder="example@mail.ru"
                   value={formData.email}
                   onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
-              <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Роль</div>
-                <div className={classes.dropdown}>
-                  <MUIAutocomplete
-                    dropdownWidth={"100%"}
-                    label={"Выберите должность"}
-                    options={["HOTELADMIN"]}
-                    value={formData.role}
-                    onChange={(event, newValue) => {
-                      setIsEdited(true);
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        role: newValue,
-                      }));
-                    }}
-                  />
-                  {/* <DropDownList
+              {user?.role === roles.hotelModerator ? null : (
+                <>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>Роль</div>
+                    <div className={classes.dropdown}>
+                      <MUIAutocomplete
+                        dropdownWidth={"100%"}
+                        isDisabled={!isEditing}
+                        label={"Выберите должность"}
+                        options={["HOTELADMIN"]}
+                        value={formData.role}
+                        onChange={(event, newValue) => {
+                          setIsEdited(true);
+                          setFormData((prevData) => ({
+                            ...prevData,
+                            role: newValue,
+                          }));
+                        }}
+                      />
+                      {/* <DropDownList
                     placeholder="Выберите роль"
                     options={["HOTELADMIN"]} // Роли
                     initialValue={formData.role}
@@ -270,17 +303,21 @@ function ExistRequestCompanyHotel({
                       }));
                     }}
                   /> */}
-                </div>
+                    </div>
 
-                {/* <select name="role" value={formData.role} onChange={handleChange}>
+                    {/* <select name="role" value={formData.role} onChange={handleChange}>
               <option value="HOTELADMIN">HOTELADMIN</option>
             </select> */}
-              </div>
+                  </div>
+                </>
+              )}
+
               <div className={classes.requestDataInfo}>
                 <div className={classes.requestDataInfo_title}>Должность</div>
                 <div className={classes.dropdown}>
                   <MUIAutocomplete
                     dropdownWidth={"100%"}
+                    isDisabled={!isEditing}
                     label={"Выберите должность"}
                     options={["Модератор", "Администратор"]}
                     value={formData.position}
@@ -322,16 +359,61 @@ function ExistRequestCompanyHotel({
                   placeholder="Логин"
                   value={formData.login}
                   onChange={handleChange}
+                  disabled={!isEditing}
                 />
               </div>
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Пароль</div>
+                <div className={classes.requestDataInfo_title}>
+                  Старый пароль
+                </div>
                 <input
-                  type="text"
+                  type={showOldPassword ? "text" : "password"}
+                  name="oldPassword"
+                  placeholder="Старый пароль"
+                  value={formData.oldPassword}
+                  onChange={handleChange}
+                  disabled={!isEditing}
+                />
+                <img
+                  src={showOldPassword ? "/eyeOpen.png" : "/eyeClose.png"}
+                  style={{
+                    width: "20px",
+                    objectFit: "contain",
+                    position: "absolute",
+                    right: "40px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    isEditing ? setShowOldPassword((prev) => !prev) : null
+                  }
+                  alt=""
+                />
+              </div>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Новый пароль
+                </div>
+                <input
+                  type={showNewPassword ? "text" : "password"}
                   name="password"
-                  placeholder="Пароль"
+                  placeholder="Новый пароль"
                   value={formData.password}
                   onChange={handleChange}
+                  disabled={!isEditing}
+                />
+                <img
+                  src={showNewPassword ? "/eyeOpen.png" : "/eyeClose.png"}
+                  style={{
+                    width: "20px",
+                    objectFit: "contain",
+                    position: "absolute",
+                    right: "40px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    isEditing ? setShowNewPassword((prev) => !prev) : null
+                  }
+                  alt=""
                 />
               </div>
               <div className={classes.requestDataInfo}>
@@ -341,6 +423,7 @@ function ExistRequestCompanyHotel({
                   name="images"
                   onChange={handleFileChange}
                   ref={fileInputRef}
+                  disabled={!isEditing}
                 />
               </div>
             </div>
@@ -355,10 +438,18 @@ function ExistRequestCompanyHotel({
             </Button>
             <Button
               onClick={handleUpdate}
-              backgroundcolor={"#3CBC6726"}
-              color={"#3B6C54"}
+              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+              color={!isEditing ? "#3B6C54" : "#fff"}
             >
-              Изменить <img src="/editDispetcher.png" alt="" />
+              {isEditing ? (
+                <>
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </>
+              ) : (
+                <>
+                  Изменить <img src="/editDispetcher.png" alt="" />
+                </>
+              )}
             </Button>
           </div>
         </>

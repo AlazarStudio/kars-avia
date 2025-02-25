@@ -10,7 +10,7 @@ import {
   GET_HOTELS_SUBSCRIPTION,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
-import { roles } from "../../../roles";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles";
 import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
@@ -113,7 +113,7 @@ function HotelsList({ children, user, ...props }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -267,6 +267,7 @@ function HotelsList({ children, user, ...props }) {
             text={n.text}
             status={n.status}
             index={index}
+            time={notifyTime}
             onClose={() => {
               setNotifications((prev) =>
                 prev.filter((notif) => notif.id !== n.id)

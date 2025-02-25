@@ -22,7 +22,7 @@
   right: -44px;
   background-color: #4e4e4e;
   color: #fff;
-  border-radius: 5px;
+  border-radius: 10px;
   padding: 5px;
   font-size: 12px;
   text-align: center;
@@ -77,7 +77,7 @@
   background-color: red;
   color: var(--white);
   padding: 0px 8px;
-  border-radius: 5px;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;

@@ -21,7 +21,7 @@ import ReactPaginate from "react-paginate";
 import { Box, CircularProgress, TextField } from "@mui/material";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import { statusMapping } from "../../../roles.js";
+import { fullNotifyTime, notifyTime, statusMapping } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import Notification from "../../Notification/Notification.jsx";
 
@@ -73,7 +73,12 @@ function Estafeta({ user }) {
     REQUEST_CREATED_SUBSCRIPTION
   );
   const { data: subscriptionUpdateData } = useSubscription(
-    REQUEST_UPDATED_SUBSCRIPTION
+    REQUEST_UPDATED_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
   );
 
   // console.log(subscriptionData);
@@ -138,9 +143,11 @@ function Estafeta({ user }) {
   }, [data, currentPageRelay, newRequests, refetch]);
 
   // Обновление данных при получении новой информации по подписке на обновление заявок
-  useEffect(() => {
-    if (subscriptionUpdateData) refetch();
-  }, [subscriptionUpdateData, refetch]);
+  // useEffect(() => {
+  //   if (subscriptionUpdateData) refetch();
+  // }, [subscriptionUpdateData, refetch]);
+
+  // console.log(subscriptionUpdateData);
 
   // Обновление состояния фильтрации по статусу
   const handleStatusChange = (value) => {
@@ -184,7 +191,7 @@ function Estafeta({ user }) {
 
     setTimeout(() => {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, 5300); // 5 секунд уведомление + 300 мс для анимации
+    }, fullNotifyTime);
   };
 
   const handleChange = (e) =>
@@ -489,6 +496,7 @@ function Estafeta({ user }) {
           remove={() => {
             handleCancelRequest(requestId);
             closeDeleteComponent();
+            toggleRequestSidebar();
           }}
           index={requestId}
           close={closeDeleteComponent}
@@ -503,6 +511,7 @@ function Estafeta({ user }) {
           text={n.text}
           status={n.status}
           index={index}
+          time={notifyTime}
           onClose={() => {
             setNotifications((prev) =>
               prev.filter((notif) => notif.id !== n.id)

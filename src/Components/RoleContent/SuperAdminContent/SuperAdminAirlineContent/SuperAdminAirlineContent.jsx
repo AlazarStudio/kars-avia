@@ -18,7 +18,7 @@ const SuperAdminAirlineContent = ({
     onSelect={handleTabSelect}
   >
     <TabList className={classes.tabList}>
-      <Tab className={classes.tab}>Компания</Tab>
+      <Tab className={classes.tab}>Пользователи</Tab>
       <Tab className={classes.tab}>Цены</Tab>
       <Tab className={classes.tab}>Экипаж</Tab>
       <Tab className={classes.tab}>О авиакомпании</Tab>

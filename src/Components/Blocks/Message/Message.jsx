@@ -2,11 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import classes from './Message.module.css';
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Smiles from "../Smiles/Smiles";
-import { convertToDate, GET_MESSAGES_HOTEL, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
+import { convertToDate, GET_MESSAGES_HOTEL, getCookie, REQUEST_MESSAGES_SUBSCRIPTION, UPDATE_MESSAGE_BRON } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 
-function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTitle, setMessageCount, separator, hotelChatId, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
+function Message({ children, filteredPlacement, activeTab, setIsHaveTwoChats, setHotelChats, setTitle, setMessageCount, separator, hotelChatId, chooseRequestID, chooseReserveID, formData, token, user, chatPadding, chatHeight, height, ...props }) {
     const messagesEndRef = useRef(null);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
     const [showScrollButton, setShowScrollButton] = useState(false);
@@ -30,6 +30,11 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
     };    
 
     const { loading, error, data, refetch } = useQuery(GET_MESSAGES_HOTEL, {
+        context: {
+            headers : {
+                Authorization: `Bearer ${token}`,
+            },
+        },
         variables: {
             requestId: chooseRequestID,
             reserveId: chooseReserveID
@@ -43,24 +48,24 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
     const [selectedHotelChat, setSelectedHotelChat] = useState(null);
 
     useEffect(() => {
-        if (data && data.chats) {
+        if (data && data.chats || (filteredPlacement && filteredPlacement.length !== 0)) {
             let selectedChats = [];
     
             if (user?.airlineId) {
                 // Фильтруем чаты по separator 'airline'
-                selectedChats = data.chats.filter(chat => chat.separator === 'airline');
+                selectedChats = data?.chats.filter(chat => chat.separator === 'airline');
             } else if (user?.hotelId) {
                 // Фильтруем чаты по separator 'hotel'
-                selectedChats = data.chats.filter(chat => chat.separator === 'hotel');
+                selectedChats = data?.chats.filter(chat => chat.separator === 'hotel');
             } else if (user.role === roles.superAdmin || user.role === roles.dispatcerAdmin) {
                 // Фильтруем чаты по separator, переданному через пропсы
-                selectedChats = data.chats.filter(chat => chat.separator === separator);
+                selectedChats = data?.chats.filter(chat => chat.separator === separator);
             }
             // console.log(selectedChats);
             
     
             // Устанавливаем первый чат из отфильтрованных как текущий
-            if (selectedChats.length > 0) {
+            if (selectedChats?.length > 0) {
                 setMessages(selectedChats[0]);
             }
 
@@ -73,7 +78,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
             }
             // console.log(data?.chats);
 
-            let hotelChats = data.chats.filter(chat => chat.separator === "hotel");
+            let hotelChats = data?.chats.filter(chat => chat.separator === "hotel");
 
             // if (hotelChats.length > 1 && separator !== 'airline') {
             if (chooseRequestID === "" && separator !== 'airline') {
@@ -102,7 +107,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
             }
         }
         refetch();
-    }, [data, separator, hotelChatId, user.role, isInitialLoad, refetch]);
+    }, [data, separator, hotelChatId, user.role, isInitialLoad, refetch, filteredPlacement]);
 
     useEffect(() => {
         if (separator) {
@@ -139,7 +144,6 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
         }
     });
 
-    // console.log(subscriptionData);
     
     useEffect(() => {
         if (subscriptionData) {
@@ -337,6 +341,7 @@ function Message({ children, activeTab, setIsHaveTwoChats, setHotelChats, setTit
                                 }
                             }}
                             placeholder="Введите сообщение"
+                            style={{borderRadius:'20px'}}
                         />
                         <div className={classes.sendBlock_message} onClick={handleSubmitMessage}>
                             <img src="/message.png" alt="Отправить" />
