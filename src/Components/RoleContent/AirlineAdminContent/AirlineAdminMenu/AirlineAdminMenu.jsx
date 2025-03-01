@@ -258,8 +258,8 @@ const AirlineAdminMenu = ({
             strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "О авиакомпании" : ""}
-        {!menuOpen && <span className={classes.tooltip}>О авиакомпании</span>}
+        {menuOpen ? "Об авиакомпании" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Об авиакомпании</span>}
       </Link>
       <Link
         to={"/reports"}

@@ -21,7 +21,7 @@ const SuperAdminAirlineContent = ({
       <Tab className={classes.tab}>Пользователи</Tab>
       <Tab className={classes.tab}>Цены</Tab>
       <Tab className={classes.tab}>Экипаж</Tab>
-      <Tab className={classes.tab}>О авиакомпании</Tab>
+      <Tab className={classes.tab}>Об авиакомпании</Tab>
     </TabList>
 
     <TabPanel className={classes.tabPanel}>
