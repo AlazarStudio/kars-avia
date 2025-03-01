@@ -95,6 +95,7 @@ function EditRequestMealTarif({
       !String(formData.dinner).trim()
     ) {
       alert("Пожалуйста, заполните все поля!");
+      setIsLoading(false);
       return;
     }
 

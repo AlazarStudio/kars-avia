@@ -17,6 +17,7 @@ import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import Notification from "../../Notification/Notification.jsx";
+import { InputMask } from "@react-input/mask";
 
 function AirlineAbout_tabComponent({ id, ...props }) {
   const token = getCookie("token");
@@ -490,14 +491,26 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                     </div>
                     <div className={classes.airlineAbout_info_item}>
                       <label>Телефон</label>
-                      <input
+                      <InputMask
+                        className={classes.airlineAbout_info_input}
+                        type="text"
+                        mask="+7 (___) ___-__-__"
+                        replacement={{ _: /\d/ }}
+                        name="number"
+                        value={airline.information?.number || ""}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        placeholder="+7 (___) ___-__-__"
+                        autoComplete="new-password"
+                      />
+                      {/* <input
                         type="tel"
                         name="number"
                         value={airline.information?.number || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.airlineAbout_info_input}
-                      />
+                      /> */}
                     </div>
                   </div>
                 </div>

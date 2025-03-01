@@ -11,6 +11,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { useQuery } from "@apollo/client";
 import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 function ChooseHotel({
   show,
@@ -34,13 +35,13 @@ function ChooseHotel({
     useQuery(GET_HOTELS_RELAY);
 
   useEffect(() => {
-    if (!hotelsLoading && hotelsData) {
+    if (!hotelsLoading && hotelsData && show) {
       setHotels(hotelsData.hotels.hotels || []);
     }
-  }, [hotelsLoading, hotelsData]);
+  }, [hotelsLoading, hotelsData, show]);
 
   useEffect(() => {
-    if (chooseCityRequest) {
+    if (chooseCityRequest && show) {
       setFormData((prevState) => ({
         ...prevState,
         city: chooseCityRequest,
@@ -48,16 +49,21 @@ function ChooseHotel({
         request: chooseRequestID,
       }));
     }
-  }, [chooseCityRequest]);
+  }, [chooseCityRequest, show]);
 
   // Получаем уникальные города и фильтруем отели по выбранному городу
   const uniqueCities = useMemo(
-    () => [...new Set(hotels.map((hotel) => hotel.information?.city?.trim()))].sort(),
+    () =>
+      [
+        ...new Set(hotels.map((hotel) => hotel.information?.city?.trim())),
+      ].sort(),
     [hotels]
   );
   const filteredHotels = useMemo(() => {
     return formData.city
-      ? hotels.filter((hotel) => hotel.information?.city.trim() === formData.city.trim())
+      ? hotels.filter(
+          (hotel) => hotel.information?.city.trim() === formData.city.trim()
+        )
       : [];
   }, [formData.city, hotels]);
 
@@ -122,7 +128,7 @@ function ChooseHotel({
 
   // console.log("Выбор города:", chooseCityRequest);
   // console.log("ID запроса:", chooseRequestID);
-  // console.log("FormData:", formData);  
+  // console.log("FormData:", formData);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -136,15 +142,24 @@ function ChooseHotel({
       <div className={classes.requestMiddle}>
         <div className={classes.requestData}>
           <label>Город</label>
-          <DropDownList
+          {/* <DropDownList
             placeholder="Выберите город"
             options={uniqueCities}
             initialValue={formData.city}
             onSelect={handleCitySelect}
+          /> */}
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            label={"Введите город"}
+            options={uniqueCities}
+            value={formData.city}
+            onChange={(event, newValue) => {
+              handleCitySelect(newValue);
+            }}
           />
 
           <label>Гостиница</label>
-          <DropDownList
+          {/* <DropDownList
             placeholder="Выберите гостиницу"
             options={filteredHotels.map((hotel) => hotel.name)}
             initialValue={
@@ -154,6 +169,21 @@ function ChooseHotel({
             onSelect={(value) => {
               const selectedHotel = filteredHotels.find(
                 (hotel) => hotel.name === value
+              );
+              handleHotelSelect(selectedHotel?.id || "");
+            }}
+          /> */}
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            label={"Введите гостиницу"}
+            options={filteredHotels.map((hotel) => hotel.name)}
+            value={
+              filteredHotels.find((hotel) => hotel.id === formData.hotel)
+                ?.name || ""
+            }
+            onChange={(event, newValue) => {
+              const selectedHotel = filteredHotels.find(
+                (hotel) => hotel.name === newValue
               );
               handleHotelSelect(selectedHotel?.id || "");
             }}
@@ -169,7 +199,12 @@ function ChooseHotel({
             disabled={true}
           >
             {/* {console.log(formData)} */}
-            Разместить <img style={{width:'fit-content', height:'fit-content'}} src="/user-check.png" alt="" />
+            Разместить{" "}
+            <img
+              style={{ width: "fit-content", height: "fit-content" }}
+              src="/user-check.png"
+              alt=""
+            />
           </Button>
         </div>
       )}

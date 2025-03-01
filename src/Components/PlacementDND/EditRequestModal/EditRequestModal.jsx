@@ -18,6 +18,15 @@ const EditRequestModal = ({ isOpen, onClose, onSave, request, changes }) => {
     }, [request]);
 
     const handleSave = () => {
+        const checkInDateTime = new Date(`${checkInDate}T${checkInTime}`);
+        const checkOutDateTime = new Date(`${checkOutDate}T${checkOutTime}`);
+
+        // Проверка, если дата и время выезда раньше даты и времени заезда
+        if (checkOutDateTime < checkInDateTime) {
+            alert("Дата и время выезда не могут быть раньше даты и времени заезда.");
+            return;
+        }
+
         onSave({
             ...request,
             checkInDate,

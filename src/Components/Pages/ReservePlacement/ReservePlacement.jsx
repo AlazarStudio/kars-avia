@@ -22,6 +22,7 @@ import {
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
   getCookie,
+  REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
   server,
 } from "../../../../graphQL_requests";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
@@ -57,6 +58,16 @@ function ReservePlacement({ children, user, ...props }) {
       },
     }
   );
+
+  const { data: subscriptionDataUpdate } = useSubscription(
+    REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
 
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUEST, {
     context: {

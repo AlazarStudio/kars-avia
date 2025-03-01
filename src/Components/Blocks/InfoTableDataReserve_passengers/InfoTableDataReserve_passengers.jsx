@@ -17,6 +17,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { roles } from "../../../roles";
 import Logs from "../LogsHistory/Logs";
 import EditReserveDate from "../../PlacementDND/EditReserveDate/EditReserveDate";
+import { InputMask } from "@react-input/mask";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 function InfoTableDataReserve_passengers({
   placement,
@@ -203,6 +205,7 @@ function InfoTableDataReserve_passengers({
           : "Редактирование даты прошло успешно.",
         "success"
       );
+      // refetch();
     } catch (error) {
       console.error("Ошибка при обновлении бронирования:", error);
     }
@@ -689,7 +692,22 @@ function InfoTableDataReserve_passengers({
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                     >
-                      <input
+                      <InputMask
+                        type="text"
+                        mask="+7 (___) ___-__-__"
+                        replacement={{ _: /\d/ }}
+                        name="number"
+                        value={newPassengerData.number}
+                        onChange={(e) =>
+                          setNewPassengerData({
+                            ...newPassengerData,
+                            number: e.target.value,
+                          })
+                        }
+                        placeholder="Номер телефона"
+                        autoComplete="new-password"
+                      />
+                      {/* <input
                         type="text"
                         placeholder="Номер телефона"
                         value={newPassengerData.number}
@@ -699,12 +717,24 @@ function InfoTableDataReserve_passengers({
                             number: e.target.value,
                           })
                         }
-                      />
+                      /> */}
                     </div>
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                     >
-                      <select
+                      <MUIAutocomplete
+                        dropdownWidth={"100%"}
+                        label={"Выберите пол"}
+                        options={["Мужской", "Женский"]}
+                        value={newPassengerData.gender}
+                        onChange={(event, newValue) => {
+                          setNewPassengerData({
+                            ...newPassengerData,
+                            gender: newValue,
+                          })
+                        }}
+                      />
+                      {/* <select
                         value={newPassengerData.gender}
                         onChange={(e) =>
                           setNewPassengerData({
@@ -716,7 +746,7 @@ function InfoTableDataReserve_passengers({
                         <option value="">Выберите пол</option>
                         <option value="Мужской">Мужской</option>
                         <option value="Женский">Женский</option>
-                      </select>
+                      </select> */}
                     </div>
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}

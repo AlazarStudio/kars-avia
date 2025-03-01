@@ -219,13 +219,16 @@ function ExistRequest({
             requestId: chooseRequestID,
             newStart: `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`,
             newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
-            status: newStatus,
+            status:
+              formData.status === "opened" || formData.status === "created"
+                ? formData.status
+                : newStatus,
             // newEndName: formDataExtend.departureName,
           },
         },
       });
       alert(
-        user?.airlineId
+        user?.airlineId && formData.status !== "created"
           ? "Запрос отправлен, можете посмотреть в комментариях."
           : "Изменения сохранены"
       );
@@ -598,8 +601,8 @@ function ExistRequest({
 
                 {/* Продление */}
                 {formData.status !== "archived" &&
-                  formData.status !== "created" &&
-                  formData.status !== "opened" &&
+                  // formData.status !== "created" &&
+                  // formData.status !== "opened" &&
                   formData.status !== "canceled" &&
                   !user?.hotelId && (
                     // formData.status !== "archiving" &&
@@ -649,14 +652,17 @@ function ExistRequest({
                         />
                       </div>
                       <Button onClick={handleExtendChangeRequest}>
-                        {user?.airlineId ? "Отправить запрос" : "Изменить даты"}
+                        {user?.airlineId && formData.status !== "created"
+                          ? "Отправить запрос"
+                          : "Изменить даты"}
                       </Button>
                     </>
                   )}
 
                 {/* Продление */}
                 {formData.status == "archiving" &&
-                  formData.status !== "opened" && (
+                  formData.status !== "opened" &&
+                  user?.role === roles.dispatcerAdmin && (
                     <Button onClick={handleСhangeToArchive}>
                       Отправить в архив
                     </Button>
@@ -829,9 +835,7 @@ function ExistRequest({
             formData.status !== "transferred" &&
             formData.status !== "earlyStart" &&
             formData.status !== "canceled" &&
-            activeTab === "Общая" &&
-            (user.role === roles.superAdmin ||
-              user.role === roles.dispatcerAdmin) && (
+            activeTab === "Общая" && (
               <div className={classes.requestButton}>
                 <button
                   onClick={() => {
@@ -840,25 +844,30 @@ function ExistRequest({
                     openDeleteComponent();
                   }}
                 >
-                  Отменить
+                  {user?.airlineId && formData.status === "opened"
+                    ? "Запрос на отмену"
+                    : "Отменить"}
                   {/* <img src="/user-check.png" alt="" /> */}
                 </button>
-                <Button
-                  onClick={() => {
-                    onClose();
-                    setShowChooseHotel(true);
-                    setChooseCityRequest(formData?.airport?.city);
-                    localStorage.setItem("selectedTab", 0);
-                  }}
-                >
-                  {/* {console.log(formData)} */}
-                  Разместить
-                  <img
-                    style={{ width: "fit-content", height: "fit-content" }}
-                    src="/user-check.png"
-                    alt=""
-                  />
-                </Button>
+                {user.role === roles.superAdmin ||
+                  (user.role === roles.dispatcerAdmin && (
+                    <Button
+                      onClick={() => {
+                        onClose();
+                        setShowChooseHotel(true);
+                        setChooseCityRequest(formData?.airport?.city);
+                        localStorage.setItem("selectedTab", 0);
+                      }}
+                    >
+                      {/* {console.log(formData)} */}
+                      Разместить
+                      <img
+                        style={{ width: "fit-content", height: "fit-content" }}
+                        src="/user-check.png"
+                        alt=""
+                      />
+                    </Button>
+                  ))}
               </div>
             )}
         </Sidebar>

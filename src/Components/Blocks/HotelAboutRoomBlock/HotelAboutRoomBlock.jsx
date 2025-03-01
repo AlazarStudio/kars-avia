@@ -13,7 +13,17 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
   const [swiper, setSwiper] = useState();
   const [activeIndex, setActiveIndex] = useState(0);
 
-  // console.log(activeIndex);
+  const closeModal = () => {
+    setModalIsOpen(false);
+    setActiveIndex(0);
+  };
+
+  const handleModalClick = (e) => {
+    // Если клик был по фону (а не по изображению), закрыть модальное окно
+    if (e.target === e.currentTarget) {
+      closeModal();
+    }
+  };
 
   return (
     <article key={props.id} className={classes.hotelAbout_room}>
@@ -36,23 +46,22 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
         <p>{props.description ? props.description : "Описания нет"}</p>
       </div>
 
-      <Modal
-        open={modalIsOpen}
-        onClose={() => {
-          setModalIsOpen(false), setActiveIndex(0);
-        }}
-      >
-        <Box className={classes.modalContent}>
+      <Modal open={modalIsOpen} onClose={closeModal}>
+        <Box
+          className={classes.modalContent}
+          onClick={handleModalClick} // Закрытие при клике на фон
+        >
+          <img
+            onClick={closeModal}
+            className={classes.closeButton}
+            src="/closeSwiper.webp"
+            alt=""
+          />
           <Swiper
             className={classes.sliderBox}
             spaceBetween={50}
             slidesPerView={1}
             direction="horizontal"
-            // loop={true}
-            // autoplay={{
-            //   delay: 3000,
-            //   disableOnInteraction: false,
-            // }}
             pagination={{ clickable: true }}
             onSwiper={setSwiper}
             onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
@@ -63,7 +72,7 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
                 <SwiperSlide key={index} className={classes.swiperSlide}>
                   <img
                     src={`${server}${slide}`}
-                    alt=""
+                    alt="Room"
                     className={classes.modalImage}
                   />
                 </SwiperSlide>
@@ -76,14 +85,6 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
               />
             )}
           </Swiper>
-          <button
-            onClick={() => {
-              setModalIsOpen(false), setActiveIndex(0);
-            }}
-            className={classes.closeButton}
-          >
-            X
-          </button>
           <div
             className={classes.swiperButtons}
             style={props.images.length <= 1 ? { display: "none" } : {}}
@@ -91,11 +92,9 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
             <button
               onClick={() => swiper.slidePrev()}
               style={{
-                position: "absolute",
-                left: "-100px",
-                opacity: activeIndex === 0 ? 0.5 : 1, // Затемняем, если первый слайд
-                // pointerEvents: activeIndex === 0 ? "none" : "auto", // Блокируем клик
+                opacity: activeIndex === 0 ? 0.5 : 1,
                 cursor: activeIndex === 0 ? "auto" : "pointer",
+                userSelect: "none",
               }}
               disabled={activeIndex === 0}
             >
@@ -108,29 +107,16 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
             <button
               onClick={() => swiper.slideNext()}
               style={{
-                position: "absolute",
-                right: "-100px",
-                opacity: activeIndex === props.images.length - 1 ? 0.5 : 1, // Затемняем, если последний слайд
-                // pointerEvents:
-                //   activeIndex === props.images.length - 1 ? "none" : "auto", // Блокируем клик
+                opacity: activeIndex === props.images.length - 1 ? 0.5 : 1,
                 cursor:
                   activeIndex === props.images.length - 1 ? "auto" : "pointer",
+                userSelect: "none",
               }}
               disabled={activeIndex === props.images.length - 1}
             >
               <img src="/swiper-arrow.png" alt="" />
             </button>
           </div>
-          {/* <img
-            src={
-              props.images.length !== 0
-                ? `${server}${props.images[0]}`
-                : "/no-image.png"
-            }
-            className={classes.modalImage}
-            alt="Room"
-          />
-          <button onClick={() => setModalIsOpen(false)} className={classes.closeButton}>X</button> */}
         </Box>
       </Modal>
     </article>

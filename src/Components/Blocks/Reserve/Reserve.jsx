@@ -36,7 +36,7 @@ function Reserve({ children, user, idHotel, ...props }) {
 
   // Состояние для фильтрации по статусу
   const [statusFilter, setStatusFilter] = useState(() => {
-    return localStorage.getItem("statusFilterReserve") || "created / opened";
+    return localStorage.getItem("statusFilterReserve") || "all";
   });
 
   // Состояние для управления параметрами пагинации

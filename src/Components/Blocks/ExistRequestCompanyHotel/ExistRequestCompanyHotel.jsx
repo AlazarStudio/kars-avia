@@ -178,6 +178,12 @@ function ExistRequestCompanyHotel({
         console.error("Ошибка обновления пользователя:", error);
         if (String(error).startsWith("ApolloError: Указан неверный пароль.")) {
           alert("Указан неверный старый пароль.");
+        } else if (
+          String(error).startsWith(
+            "ApolloError: Для обновления пароля необходимо указать предыдущий пароль."
+          )
+        ) {
+          alert("Для обновления пароля необходимо указать предыдущий пароль.");
         } else {
           alert("Ошибка обновления пользователя.");
         }

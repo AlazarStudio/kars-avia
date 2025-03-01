@@ -258,6 +258,7 @@ function EditRequestTarif({
 
     if (!formData.name.trim() || !formData.price.trim() || !formData.type) {
       alert("Пожалуйста, заполните все поля!");
+      setIsLoading(false);
       return;
     }
 
@@ -324,6 +325,8 @@ function EditRequestTarif({
       console.error("Ошибка обновления тарифа:", error);
       setIsLoading(false);
       // alert("Ошибка при обновлении тарифа. Попробуйте еще раз.");
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -93,6 +93,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
 
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
       return;
     }
 

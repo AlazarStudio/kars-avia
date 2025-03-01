@@ -865,11 +865,12 @@ function HotelAbout_tabComponent({ id }) {
                               : {}
                           }
                         >
-                          Расстояние до аэропорта
+                          Расстояние до аэропорта (км)
                         </label>
                         <input
-                          type="text"
+                          type="number"
                           name="airportDistance"
+                          step={0.1}
                           value={hotel.airportDistance || ""}
                           onChange={handleChange}
                           disabled={!isEditing}

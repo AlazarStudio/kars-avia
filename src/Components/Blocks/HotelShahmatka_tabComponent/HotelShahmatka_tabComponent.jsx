@@ -6,6 +6,7 @@ import { GET_BRONS_HOTEL, GET_HOTEL_ROOMS } from '../../../../graphQL_requests.j
 import { useQuery } from "@apollo/client";
 import NewPlacement from "../../PlacementDND/NewPlacement/NewPlacement.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import MUITextField from "../MUITextField/MUITextField.jsx";
 
 function HotelShahmatka_tabComponent({ id }) {
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
@@ -89,11 +90,17 @@ function HotelShahmatka_tabComponent({ id }) {
     return (
         <>
             <div className={classes.section_searchAndFilter}>
-                <input
+                {/* <input
                     type="text"
                     className={classes.searchInput}
                     placeholder="Поиск по номеру комнаты или ФИО клиента"
                     // style={{ 'width': '500px' }}
+                    value={searchQuery}
+                    onChange={handleSearch}
+                /> */}
+                <MUITextField
+                    className={classes.searchInput}
+                    label={"Поиск по номеру комнаты или ФИО клиента"}
                     value={searchQuery}
                     onChange={handleSearch}
                 />

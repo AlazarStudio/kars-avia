@@ -198,6 +198,7 @@ function CreateRequestReserve({ show, onClose, user, addNotification }) {
     setIsLoading(true);
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
       return;
     }
 

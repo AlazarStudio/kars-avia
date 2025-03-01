@@ -21,10 +21,10 @@ function InfoTableDataHotels({
   // Прокрутка наверх при изменении `pageInfo`
   useEffect(() => {
     if (listContainerRef.current) {
-        listContainerRef.current.scrollTo({
-            top: 0,
-            behavior: "instant",
-        });
+      listContainerRef.current.scrollTo({
+        top: 0,
+        behavior: "instant",
+      });
     }
   }, [pageInfo]);
 
@@ -125,6 +125,7 @@ function InfoTableDataHotels({
             <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
               <div className={classes.InfoTable_data_elem_title}>
                 {item.airportDistance}
+                {" км"}
               </div>
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>

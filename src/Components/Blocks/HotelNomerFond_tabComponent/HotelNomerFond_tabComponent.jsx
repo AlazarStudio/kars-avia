@@ -32,8 +32,16 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     variables: { hotelId: id },
   });
   const { data: dataSubscriptionUpd } = useSubscription(
-    GET_HOTELS_UPDATE_SUBSCRIPTION
+    GET_HOTELS_UPDATE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
   );
+
+  // console.log(dataSubscriptionUpd);
+  
 
   const [addTarif, setAddTarif] = useState([]);
   const [showAddTarif, setShowAddTarif] = useState(false);

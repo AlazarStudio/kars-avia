@@ -132,6 +132,7 @@ function CreateRequestReport({ show, onClose, addNotification }) {
 
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
       return;
     }
 

@@ -113,10 +113,12 @@ function EditRequestNomerFond({
 
     try {
       const nomerName =
-        filter == "quote"
+        filter == "quote" && !formData.reserve
           ? formData.nomerName
-          : filter == "reserve" && formData.nomerName.includes("резерв")
-          ? formData.nomerName
+          : filter == "reserve" &&
+            formData.nomerName.includes("резерв") &&
+            !formData.reserve
+          ? formData.nomerName.replace(/\s*\(?\s*резерв\s*\)?\s*/i, "")
           : `${formData.nomerName} (резерв)`;
 
       let response_update_room = await updateHotel({

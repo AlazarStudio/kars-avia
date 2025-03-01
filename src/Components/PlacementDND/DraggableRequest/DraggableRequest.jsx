@@ -10,6 +10,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         id: request.id.toString(),
         data: {
             position: request.position,
+            // roomId: request.room?.id,
             roomId: request.room?.id,
         },
     });
@@ -68,11 +69,18 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         }
     `;
 
+    // console.log(request);
+    
+
     const style = {
-        position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
-        top: request.room ? `${position * 50 + 2}px` : "auto",
-        left: request.room ? `${checkInOffset}px` : "auto",
-        width: request.room ? `${duration}px` : '100%',
+        // position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
+        // top: request.room ? `${position * 50 + 2}px` : "auto",
+        // left: request.room ? `${checkInOffset}px` : "auto",
+        // width: request.room ? `${duration}px` : '100%',
+        position: request.room && request.room.id ? "absolute" : "relative", // Новые заявки позиционируются иначе
+        top: request.room && request.room.id ? `${position * 50 + 2}px` : "auto",
+        left: request.room && request.room.id ? `${checkInOffset}px` : "auto",
+        width: request.room && request.room.id ? `${duration}px` : '100%',
         height: "45px",
         backgroundColor: backgroundColor,
         animation: requestId && request.requestID === requestId && request.status == "Ожидает"
@@ -155,7 +163,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         return updatedRequest;
     };
 
-    // console.log(allRequests);
+    // console.log(allRequests.map((item) => item.room));
     
 
 
@@ -312,7 +320,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
                             <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
                             <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                                {request.guest}
+                                {`${request.guestPosition.split('(')[0].trim()} ${request.guest}`}
                             </div>
                         </div>
                     </Box>
@@ -457,6 +465,9 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                     }
                     <Typography variant="body2">
                         <div style={styleToolTip}> Гость: <b>{request.guest}</b></div>
+                    </Typography>
+                    <Typography variant="body2">
+                        <div style={styleToolTip}> Должность: <b>{request.guestPosition}</b></div>
                     </Typography>
                     <Typography variant="body2">
                         <div style={styleToolTip}> Статус: <b>{request.status}</b></div>

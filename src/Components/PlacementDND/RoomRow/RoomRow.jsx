@@ -6,10 +6,10 @@ import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
 const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
     const { setNodeRef } = useDroppable({
-        id: room.id,
+        id: room.roomId,  // Влияет на значение over в handleDragEnd
     });
 
-    // console.log(requests);
+    // console.log(room);
     
 
     const daysInMonth = eachDayOfInterval({

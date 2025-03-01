@@ -124,6 +124,7 @@ function CreateRequestCompany({
 
     if (emptyFields.length > 0) {
       alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
       return;
     }
 

@@ -175,6 +175,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 checkOutTime: new Date(chess.end).toISOString().split("T")[1].slice(0, 5),
                 status: translateStatus(chess.request ? chess.request?.status : chess.status),
                 guest: chess.client ? chess.client.name : chess.passenger?.name,
+                guestPosition: chess.client?.position,
                 requestID: chess.request ? chess.request?.id : chess.reserve?.id,
                 isRequest: chess.request ? true : false,
                 airline: chess.request ? chess.request?.airline : chess.reserve?.airline,
@@ -248,6 +249,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 checkOutTime: new Date(request.departure).toISOString().split("T")[1].slice(0, 5),
                 status: "Ожидает",
                 guest: request.person ? request.person.name : "Неизвестный гость",
+                guestPosition: request.person ? request.person.position : "",
                 requestID: request.id,
                 requestNumber: request.requestNumber,
                 isRequest: true,
@@ -697,19 +699,26 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     
         const targetRoomId = over?.id;
+
+        // console.log(over);
+        // console.log(targetRoomId);
+        // console.log(draggedRequest);
+        
     
         if (!targetRoomId) {
             addNotification("Целевая комната не определена!", "error");
             return;
         }
     
-        const targetRoom = rooms.find((room) => room.id === targetRoomId);
-        const currentRoom = rooms.find((room) => room.id === draggedRequest.room?.name);
+        // const targetRoom = rooms.find((room) => room.id === targetRoomId);
+        // const currentRoom = rooms.find((room) => room.id === draggedRequest.room?.name);
+        const targetRoom = rooms.find((room) => room.roomId === targetRoomId);
+        const currentRoom = rooms.find((room) => room.roomId === draggedRequest?.room?.id);
         // console.log(draggedRequest);
         // console.log(targetRoomId);
         
         
-
+        // console.log(targetRoom)
         // console.log(currentRoom);
         
 
@@ -717,20 +726,28 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             addNotification("Текущая или целевая комната не найдена", "error");
             return;
         }
-            // Проверяем случай, если у новой заявки нет currentRoom
+        // Проверяем случай, если у новой заявки нет currentRoom
         if (!currentRoom) {
-            console.log("Новая заявка: определяем комнату для размещения");
+            // console.log("Новая заявка: определяем комнату для размещения");
             
             // Проверяем доступные позиции в целевой комнате
-            const overlappingRequests = requests.filter(
-                (req) =>
-                    req.room?.name === targetRoomId &&
+            const overlappingRequests = requests.filter((req) => {
+                const reqCheckIn = new Date(`${req.checkInDate}T${req.checkInTime}:00`);
+                const reqCheckOut = new Date(`${req.checkOutDate}T${req.checkOutTime}:00`);
+                const draggedCheckIn = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}:00`);
+                const draggedCheckOut = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}:00`);
+            
+                return (
+                    // req.room?.name === targetRoomId &&
+                    req.room?.id === targetRoomId &&
                     !(
-                        new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
-                        new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
+                        reqCheckOut <= draggedCheckIn || // Если выезд заявки до заезда перетаскиваемой заявки
+                        reqCheckIn >= draggedCheckOut    // Если заезд заявки после выезда перетаскиваемой заявки
                     )
-            );
-
+                );
+            });
+            
+            // console.log(requests)
             
 
             const occupiedPositions = overlappingRequests.map((req) => req.position);
@@ -767,7 +784,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     
         // // Проверяем принадлежность к одному номеру
-        if (currentRoom.id === targetRoom.id) {
+        // if (currentRoom.id === targetRoom.id) {
+        //     // addNotification("Нельзя перемещать заявку внутри одного номера", "error");
+        //     return;
+        // }
+        if (currentRoom.roomId === targetRoom.roomId) {
             // addNotification("Нельзя перемещать заявку внутри одного номера", "error");
             return;
         }
@@ -897,7 +918,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             // Проверяем, что заявка в той же комнате
             // и интервалы [reqStart, reqEnd] и [dragStart, dragEnd] пересекаются
             return (
-                req.room?.name === targetRoomId &&
+                // req.room?.name === targetRoomId &&
+                req.room?.id === targetRoomId &&
                 !(reqEnd <= dragStart || reqStart >= dragEnd)
             );
         });
@@ -1034,14 +1056,18 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         } else {
             // Перемещение существующих заявок
             if (targetRoom.active) {
-                if (draggedRequest.room?.name === targetRoomId) {
+                // console.log(draggedRequest.room?.id)
+                // console.log(targetRoomId)
+                // if (draggedRequest.room?.name === targetRoomId) {
+                if (draggedRequest.room?.id === targetRoomId) {
                     // Перемещение внутри одной комнаты
                     const targetPosition = parseInt(over.data.current?.position || 0);
     
                     if (draggedRequest.position !== targetPosition) {
                         setRequests((prevRequests) =>
                             prevRequests.map((request) => {
-                                if (request.room?.name === targetRoomId) {
+                                // if (request.room?.name === targetRoomId) {
+                                if (request.room?.id === targetRoomId) {
                                     if (request.id === draggedRequest.id) {
                                         return { ...request, position: targetPosition };
                                     } else if (request.position === targetPosition) {
@@ -1467,9 +1493,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         return requests.filter((request) =>
             (
                 request.guest.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (request.room?.name && request.room?.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (request?.room && request.room?.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
                 request.requestID.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.airline.name.toLowerCase().includes(searchQuery.toLowerCase())
+                request.airline?.name.toLowerCase().includes(searchQuery.toLowerCase())
             ) && (
                 isWithinInterval(new Date(request.checkInDate), { start: startOfCurrentMonth, end: endOfCurrentMonth }) ||
                 isWithinInterval(new Date(request.checkOutDate), { start: startOfCurrentMonth, end: endOfCurrentMonth }) ||
@@ -1478,18 +1504,46 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         );
     }, [requests, searchQuery, startOfCurrentMonth, endOfCurrentMonth]);
 
+    // const filteredRequests = useMemo(() => {
+    //     if (!searchQuery) return requests;
+      
+    //     return requests.filter((request) => {
+    //       const lowerSearch = searchQuery.toLowerCase();
+    //       return (
+    //         (request.guest?.toLowerCase() || "").includes(lowerSearch) ||
+    //         (request.room && request.room.name.toLowerCase().includes(lowerSearch)) ||
+    //         (request.requestID?.toLowerCase() || "").includes(lowerSearch) ||
+    //         (request.airline?.name?.toLowerCase() || "").includes(lowerSearch)
+    //       );
+    //     });
+    //   }, [requests, searchQuery]);
+      
+    
+
     // console.log(filteredRequests);
     
+    
+
+
+    // const filteredRooms = useMemo(() => {
+    //     if (!searchQuery) return rooms
+
+    //     return rooms.filter((room) =>
+    //         filteredRequests.some((request) => request.room === room.id) ||
+    //         room.id.toLowerCase().includes(searchQuery.toLowerCase())
+    //     );
+    // }, [rooms, filteredRequests, searchQuery]);
 
     const filteredRooms = useMemo(() => {
         if (!searchQuery) return rooms
 
         return rooms.filter((room) =>
-            filteredRequests.some((request) => request.room === room.id) ||
+            filteredRequests.some((request) => request.room?.name === room.id) ||
             room.id.toLowerCase().includes(searchQuery.toLowerCase())
         );
     }, [rooms, filteredRequests, searchQuery]);
 
+    // console.log(rooms);
 
     const [notifications, setNotifications] = useState([]);
 
@@ -1806,11 +1860,12 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                         padding: '0 10px',
                                                         overflow: 'hidden',
                                                         display: '-webkit-box',
+                                                        color: '#545873',
                                                         WebkitBoxOrient: 'vertical',
                                                         WebkitLineClamp: 2
                                                     }}
                                                 >
-                                                    {room.id} {!room.active ? '(не работает)' : ''}
+                                                    {room.id} {<img src="/roomPlace.png"/>} {`X ${room.type}`} {!room.active ? '(не работает)' : ''}
                                                 </Typography>
                                             </Tooltip>
                                         </Box>
@@ -1831,13 +1886,14 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                 setHoveredDayInMonth={setHoveredDayInMonth}
                                                 borderBottomDraw={index + 1 == filteredRooms.length ? true : false}
                                                 userRole={user.role}
-                                                key={room.id}
+                                                key={room.roomId}
                                                 dayWidth={DAY_WIDTH}
                                                 weekendColor={WEEKEND_COLOR}
                                                 monthColor={MONTH_COLOR}
                                                 room={room}
                                                 // requests={filteredRequests.filter((req) => req.room === room.id)}
-                                                requests={filteredRequests.filter((req) => req.room?.name === room.id)}
+                                                // requests={filteredRequests.filter((req) => req.room?.name === room.id)}
+                                                requests={filteredRequests.filter((req) => req.room?.id === room.roomId)}
                                                 allRequests={filteredRequests} // Передаем все заявки
                                                 currentMonth={currentMonth}
                                                 onUpdateRequest={handleUpdateRequest}

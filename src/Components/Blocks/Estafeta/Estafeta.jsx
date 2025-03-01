@@ -496,7 +496,7 @@ function Estafeta({ user }) {
           remove={() => {
             handleCancelRequest(requestId);
             closeDeleteComponent();
-            toggleRequestSidebar();
+            setShowRequestSidebar(false);
           }}
           index={requestId}
           close={closeDeleteComponent}

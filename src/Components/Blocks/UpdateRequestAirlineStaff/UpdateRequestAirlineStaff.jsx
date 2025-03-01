@@ -10,6 +10,8 @@ import {
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
+import { InputMask } from "@react-input/mask";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 function UpdateRequestAirlineStaff({
   show,
@@ -193,16 +195,26 @@ function UpdateRequestAirlineStaff({
               />
 
               <label>Номер телефона</label>
-              <input
+              <InputMask
+                type="text"
+                mask="+7 (___) ___-__-__"
+                replacement={{ _: /\d/ }}
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                placeholder="+7 (___) ___-__-__"
+                autoComplete="new-password"
+              />
+              {/* <input
                 type="text"
                 name="number"
                 value={formData.number}
                 onChange={handleChange}
                 placeholder="Пример: 89283521345"
-              />
+              /> */}
 
               <label>Должность</label>
-              <DropDownList
+              {/* <DropDownList
                 placeholder={"Выберите должность"}
                 searchable={false}
                 options={positions}
@@ -214,10 +226,23 @@ function UpdateRequestAirlineStaff({
                     position: value,
                   }));
                 }}
+              /> */}
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите должность"}
+                options={positions}
+                value={formData.position}
+                onChange={(event, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    position: newValue,
+                  }));
+                  setIsEdited(true);
+                }}
               />
 
               <label>Пол</label>
-              <DropDownList
+              {/* <DropDownList
                 placeholder="Выберите пол"
                 searchable={false}
                 options={["Мужской", "Женский"]}
@@ -226,6 +251,20 @@ function UpdateRequestAirlineStaff({
                   setFormData((prevFormData) => ({
                     ...prevFormData,
                     gender: value,
+                  }));
+                  setIsEdited(true);
+                }}
+              /> */}
+              
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите пол"}
+                options={["Мужской", "Женский"]}
+                value={formData.gender}
+                onChange={(event, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    gender: newValue,
                   }));
                   setIsEdited(true);
                 }}

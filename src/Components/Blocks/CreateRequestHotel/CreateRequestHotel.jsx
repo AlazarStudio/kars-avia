@@ -115,6 +115,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
       !formData.images
     ) {
       alert("Пожалуйста, заполните все поля!");
+      setIsLoading(false);
       return;
     }
 
@@ -200,26 +201,26 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
 
   // useEffect(() => {
   //   if (infoCities.data) {
-  //     setCities(infoCities.data?.cities || []);
+  //     setCities(
+  //       infoCities.data?.citys.map(
+  //         // (item) => `${item.city}, регион: ${item.region}`
+  //         (item) => item.city
+  //       ) || []
+  //     );
   //   }
   // }, [infoCities]);
 
   useEffect(() => {
     if (infoCities.data) {
-      setCities(
-        infoCities.data?.citys.map(
-          // (item) => `${item.city}, регион: ${item.region}`
-          (item) => item.city
-        ) || []
-      );
+      // Преобразуем данные в объекты с полями label и value
+      const mappedCities =
+        infoCities.data?.citys.map((item) => ({
+          label: `${item.city}, ${item.region}`,
+          value: item.city,
+        })) || [];
+      setCities(mappedCities);
     }
   }, [infoCities]);
-
-  // console.log(cities);
-
-  // const uniqueCities = [
-  //   ...new Set(cities.map((airport) => airport.city.trim())),
-  // ].sort((a, b) => a.localeCompare(b));
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -250,15 +251,20 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                 dropdownWidth={"100%"}
                 label={"Выберите город"}
                 options={cities}
-                value={formData.city}
+                getOptionLabel={(option) => option.label} // показываем label (город и регион)
+                value={
+                  cities.find((option) => option.value === formData.city) ||
+                  null
+                }
                 onChange={(event, newValue) => {
                   setIsEdited(true);
                   setFormData((prevData) => ({
                     ...prevData,
-                    city: newValue,
+                    city: newValue ? newValue.value : "",
                   }));
                 }}
               />
+
               {/* <select name="city" value={formData.city} onChange={handleChange}>
             <option value="" disabled>
               Выберите город
@@ -310,10 +316,11 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                 onChange={handleChange}
               />
 
-              <label>Расстояние до аэропорта</label>
+              <label>Расстояние до аэропорта (км)</label>
               <input
-                type="text"
+                type="number"
                 name="airportDistance"
+                step={0.1}
                 value={formData.airportDistance}
                 placeholder="2 км"
                 onChange={handleChange}

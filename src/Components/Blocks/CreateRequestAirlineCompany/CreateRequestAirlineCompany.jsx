@@ -132,6 +132,7 @@ function CreateRequestAirlineCompany({
 
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
       return;
     }
 

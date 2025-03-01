@@ -58,9 +58,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     airlineId: selectedAirline?.id || "",
     mealPlan: {
       included: true,
-      breakfast: true,
-      lunch: true,
-      dinner: true,
+      breakfastEnabled: true,
+      lunchEnabled: true,
+      dinnerEnabled: true,
     },
     city: "",
     reserve: false,
@@ -161,9 +161,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       airlineId: selectedAirline?.id || "",
       mealPlan: {
         included: true,
-        breakfast: true,
-        lunch: true,
-        dinner: true,
+        breakfastEnabled: true,
+        lunchEnabled: true,
+        dinnerEnabled: true,
       },
       city: "",
       reserve: false,
@@ -195,26 +195,38 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     // Обновляем флаг, что данные были изменены
     setIsEdited(true);
 
-    setFormData((prevState) => {
-      if (type === "checkbox") {
+    if (type === "checkbox") {
+      // Обработка изменений для чекбоксов mealPlan
+      setFormData((prevState) => {
+        const updatedMealPlan = {
+          ...prevState.mealPlan,
+          [name]: checked,
+        };
+
+        // Если не выбран ни один чекбокс, устанавливаем mealPlan.included в false
+        const isAnyMealSelected =
+          updatedMealPlan.breakfastEnabled ||
+          updatedMealPlan.lunchEnabled ||
+          updatedMealPlan.dinnerEnabled;
+
         return {
           ...prevState,
           mealPlan: {
-            ...prevState.mealPlan,
-            [name]: checked,
+            ...updatedMealPlan,
+            included: isAnyMealSelected, // Устанавливаем included в true, если хотя бы один чекбокс выбран
           },
         };
-      } else {
-        return {
-          ...prevState,
-          [name]: value,
-          mealPlan:
-            name === "included"
-              ? { ...prevState.mealPlan, included: value === "true" }
-              : prevState.mealPlan,
-        };
-      }
-    });
+      });
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: value,
+        mealPlan:
+          name === "included"
+            ? { ...prevState.mealPlan, included: value === "true" }
+            : prevState.mealPlan,
+      }));
+    }
   }, []);
 
   // Обработчик переключения вкладок
@@ -250,6 +262,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
       return;
     }
 
@@ -308,17 +321,21 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
     try {
       const response = await createRequest({ variables: { input } });
-      console.log(response);
       resetForm();
       onClose();
       addNotification("Создание заявки для экипажа прошло успешно.", "success");
     } catch (error) {
-      if (error.message.startsWith("requestId")) {
-        const match = error.message.match(/requestId:\s*([a-zA-Z0-9]+)/);
+      console.error(error);
+      if (error.message.startsWith("Request already exists with id:")) {
+        const match = error.message.match(
+          /Request already exists with id:\s*([a-zA-Z0-9]+)/
+        );
         if (match) {
           const requestId = match[1];
           setMatchingRequest(requestId);
         }
+      } else {
+        alert("Ошибка при создании заявки");
       }
     } finally {
       // resetForm();
@@ -454,6 +471,21 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                 {warningMessage && (
                   <div className={classes.warningMessage}>{warningMessage}</div>
                 )}
+                {matchingRequest ? (
+                  <div className={classes.matchingRequest}>
+                    Заявка с такими же параметрами уже существует.{" "}
+                    <span
+                      onClick={() => {
+                        onMatchFound(matchingRequest);
+                        setMatchingRequest(null);
+                        resetForm();
+                        onClose();
+                      }}
+                    >
+                      Перейти к заявке
+                    </span>
+                  </div>
+                ) : null}
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите тип"}
@@ -586,15 +618,26 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                           (airport) =>
                             airport.city.trim() === formData.city.trim()
                         )
-                        .map((airport) => airport.name)}
+                        .map((airport) => `${airport.name} ${airport.code}`)}
                       value={
                         airports.find(
                           (airport) => airport.id === formData.airportId
-                        )?.name || ""
+                        )
+                          ? `${
+                              airports.find(
+                                (airport) => airport.id === formData.airportId
+                              )?.name
+                            } (${
+                              airports.find(
+                                (airport) => airport.id === formData.airportId
+                              )?.code
+                            })`
+                          : ""
                       }
                       onChange={(event, newValue) => {
                         const selectedAirport = airports.find(
-                          (airport) => airport.name === newValue
+                          (airport) =>
+                            `${airport.name} ${airport.code}` === newValue
                         );
                         setFormData((prevFormData) => ({
                           ...prevFormData,
@@ -680,6 +723,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                       mealPlan: {
                         ...prevFormData.mealPlan,
                         included: isIncluded,
+                        breakfastEnabled: isIncluded,
+                        lunchEnabled: isIncluded,
+                        dinnerEnabled: isIncluded,
                       },
                     }));
                     setIsEdited(true);
@@ -714,8 +760,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                   <label>
                     <input
                       type="checkbox"
-                      name="breakfast"
-                      checked={formData.mealPlan.breakfast}
+                      name="breakfastEnabled"
+                      checked={formData.mealPlan.breakfastEnabled}
                       onChange={handleChange}
                     />
                     Завтрак
@@ -723,8 +769,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                   <label>
                     <input
                       type="checkbox"
-                      name="lunch"
-                      checked={formData.mealPlan.lunch}
+                      name="lunchEnabled"
+                      checked={formData.mealPlan.lunchEnabled}
                       onChange={handleChange}
                     />
                     Обед
@@ -732,8 +778,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                   <label>
                     <input
                       type="checkbox"
-                      name="dinner"
-                      checked={formData.mealPlan.dinner}
+                      name="dinnerEnabled"
+                      checked={formData.mealPlan.dinnerEnabled}
                       onChange={handleChange}
                     />
                     Ужин
@@ -754,22 +800,6 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                   />
                   Резерв
                 </label> */}
-
-                {matchingRequest ? (
-                  <div className={classes.matchingRequest}>
-                    Заявка с такими же параметрами уже существует.{" "}
-                    <span
-                      onClick={() => {
-                        onMatchFound(matchingRequest);
-                        setMatchingRequest(null);
-                        resetForm();
-                        onClose();
-                      }}
-                    >
-                      Перейти к заявке
-                    </span>
-                  </div>
-                ) : null}
               </div>
             )}
 

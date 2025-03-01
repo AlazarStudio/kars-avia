@@ -6,6 +6,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, UPDATE_HOTEL } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 
 function CreateRequestNomerFond({
   show,
@@ -55,7 +56,7 @@ function CreateRequestNomerFond({
     if (show) {
       setFormData((prevState) => ({
         ...prevState,
-        reserve: filter === "quote" ? "false" : "true",
+        reserve: filter === "quote" ? false : true,
       }));
     }
   }, [show, filter]);
@@ -107,8 +108,9 @@ function CreateRequestNomerFond({
     e.preventDefault();
     setIsLoading(true);
 
-    if (!formData.nomerName.trim() || !formData.category || !formData.reserve) {
+    if (!formData.nomerName.trim() || !formData.category) {
       alert("Пожалуйста, заполните все поля формы перед отправкой.");
+      setIsLoading(false);
       return;
     }
 
@@ -116,9 +118,9 @@ function CreateRequestNomerFond({
       const reserveBoolean = formData.reserve === "true";
 
       const nomerName =
-        reserveBoolean === false
+      formData.reserve === false
           ? formData.nomerName
-          : reserveBoolean === true && formData.nomerName.includes("резерв")
+          : formData.reserve === true && formData.nomerName.includes("резерв")
           ? formData.nomerName
           : `${formData.nomerName} (резерв)`;
 
@@ -135,7 +137,7 @@ function CreateRequestNomerFond({
                 {
                   name: nomerName,
                   category: formData.category,
-                  reserve: reserveBoolean,
+                  reserve: formData.reserve,
                   description: formData.description,
                 },
               ],
@@ -152,7 +154,7 @@ function CreateRequestNomerFond({
                 {
                   name: nomerName,
                   category: formData.category,
-                  reserve: reserveBoolean,
+                  reserve: formData.reserve,
                   description: formData.description,
                 },
               ],
@@ -237,6 +239,41 @@ function CreateRequestNomerFond({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton]);
 
+  const categories = [
+    {
+      value: "onePlace",
+      label: "Одноместный",
+    },
+    {
+      value: "twoPlace",
+      label: "Двухместный",
+    },
+    {
+      value: "threePlace",
+      label: "Трехместный",
+    },
+    {
+      value: "fourPlace",
+      label: "Четырехместный",
+    },
+    {
+      value: "fivePlace",
+      label: "Пятиместный",
+    },
+    {
+      value: "sixPlace",
+      label: "Шестиместный",
+    },
+    {
+      value: "sevenPlace",
+      label: "Семиместный",
+    },
+    {
+      value: "eightPlace",
+      label: "Восьмиместный",
+    },
+  ];
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -262,12 +299,31 @@ function CreateRequestNomerFond({
               />
 
               <label>Категория</label>
-              <select
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите категорию"}
+                options={categories.map((category) => category.label)}
+                value={
+                  categories.find(
+                    (category) => category.value === formData.category
+                  ) || ""
+                }
+                onChange={(event, newValue) => {
+                  const selectedCategory = categories.find(
+                    (category) => category.label === newValue
+                  );
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    category: selectedCategory.value,
+                  }));
+                  setIsEdited(true);
+                }}
+              />
+              {/* <select
                 name="category"
                 value={formData.category}
                 onChange={handleChange}
               >
-                {/* {uniqueCategories.map(category => ( */}
                 <option value={""} disabled>
                   Выберите категорию
                 </option>
@@ -279,11 +335,23 @@ function CreateRequestNomerFond({
                 <option value={"sixPlace"}>Шестиместный</option>
                 <option value={"sevenPlace"}>Семиместный</option>
                 <option value={"eightPlace"}>Восьмиместный</option>
-                {/* ))} */}
-              </select>
+              </select> */}
 
               <label>Квота или резерв</label>
-              <select
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите тип"}
+                options={["Квота", "Резерв"]}
+                value={formData.reserve === "true" ? "Резерв" : "Квота"}
+                onChange={(event, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    reserve: newValue === "Резерв",
+                  }));
+                  setIsEdited(true);
+                }}
+              />
+              {/* <select
                 name="reserve"
                 id="reserve"
                 value={formData.reserve}
@@ -294,7 +362,7 @@ function CreateRequestNomerFond({
                 </option>
                 <option value={false}>Квота</option>
                 <option value={true}>Резерв</option>
-              </select>
+              </select> */}
 
               <label>Описание</label>
               <textarea
