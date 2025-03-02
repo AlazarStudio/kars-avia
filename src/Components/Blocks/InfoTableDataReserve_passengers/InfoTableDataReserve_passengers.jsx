@@ -22,6 +22,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 function InfoTableDataReserve_passengers({
   placement,
+  allHotelPlacement,
   setPlacement,
   toggleUpdateSidebar,
   setIdPassangerForUpdate,
@@ -32,6 +33,7 @@ function InfoTableDataReserve_passengers({
   airline,
   manifest,
   addNotification,
+  setFile,
   refetch,
   refetchHotel,
 }) {
@@ -229,6 +231,7 @@ function InfoTableDataReserve_passengers({
           refetch();
           refetchHotel();
           addNotification("Манифест добавлен успешно.", "success");
+          setFile(null);
         } catch (error) {
           console.error("Ошибка при загрузке манифеста:", error);
           alert("Ошибка при загрузке манифеста");
@@ -406,6 +409,8 @@ function InfoTableDataReserve_passengers({
     ? placement.filter((item) => item.hotel.id === user.hotelId)
     : placement;
 
+  const hotelPlacement = allHotelPlacement.filter((item) => item.hotel.id === user.hotelId)
+
   const statusLabels = {
     created: "Создан",
     opened: "В обработке",
@@ -484,17 +489,22 @@ function InfoTableDataReserve_passengers({
                   >
                     <div className={classes.blockInfoShow}>
                       <b>{item.hotel.name}</b>
+                      {getAllGuests(item.hotel).length} гостей из{" "}
+                      {item.hotel.passengersCount}
+                      {/* {console.log(item)} */}
+                    </div>
+
+                    <div className={classes.blockInfoShow}>
                       {user?.airlineId ? null : (
                         <Link
                           to={`/hotels/${item.hotel.id}/${item.hotel.requestId}`}
                           onClick={() => localStorage.setItem("selectedTab", 0)}
+                          className={`${classes.chatButton} ${classes.active}`}
                         >
-                          {" "}
+                          {"Шахматка"}
                           <img src="/placement_icon.png" alt="" />
                         </Link>
                       )}
-                      {getAllGuests(item.hotel).length} гостей из{" "}
-                      {item.hotel.passengersCount}
                       {user.role !== roles.hotelAdmin &&
                       user.role !== roles.airlineAdmin ? (
                         <button
@@ -503,9 +513,18 @@ function InfoTableDataReserve_passengers({
                           }`}
                           onClick={() => handleSelectHotelChat(item.hotel.id)}
                         >
-                          {orgName === item.hotel.name
+                          {/* {orgName === item.hotel.name
                             ? "Этот чат открыт"
-                            : "Открыть чат"}
+                            : "Открыть чат"} */}
+                          Чат
+                          <img
+                            src="/chatReserve.png"
+                            style={{
+                              width: "fit-content",
+                              height: "fit-content",
+                            }}
+                            alt=""
+                          />
                           {/* {messageCount > 0 ? (
                             <div className={classes.messageCount}>
                               {messageCount}
@@ -513,10 +532,6 @@ function InfoTableDataReserve_passengers({
                           ) : null} */}
                         </button>
                       ) : null}
-                      {/* {console.log(item)} */}
-                    </div>
-
-                    <div className={classes.blockInfoShow}>
                       {/* {console.log(request)} */}
                       {/* {request.reserveForPerson == false && */}
                       {getAllGuests(item.hotel).length <
@@ -731,7 +746,7 @@ function InfoTableDataReserve_passengers({
                           setNewPassengerData({
                             ...newPassengerData,
                             gender: newValue,
-                          })
+                          });
                         }}
                       />
                       {/* <select
@@ -934,7 +949,7 @@ function InfoTableDataReserve_passengers({
               chatHeight={
                 user.role !== roles.hotelAdmin &&
                 user.role !== roles.airlineAdmin
-                  ? "calc(100vh - 318px)"
+                  ? "calc(100vh - 360px)"
                   : "calc(100vh - 290px)"
               }
               separator={separator}

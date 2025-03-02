@@ -114,7 +114,7 @@ function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
                 chatHeight={
                   user?.airlineId || user?.hotelId
                     ? "calc(100vh - 150px)"
-                    : "calc(100vh - 180px)"
+                    : "calc(100vh - 210px)"
                 }
               />
             </>

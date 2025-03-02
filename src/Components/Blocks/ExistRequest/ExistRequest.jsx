@@ -234,10 +234,22 @@ function ExistRequest({
       );
       setFormDataExtend((prev) => ({
         ...prev,
-        departureDate: "",
-        departureTime: "",
-        arrivalDate: "",
-        arrivalTime: "",
+        departureDate:
+          user?.airlineId && formData.status !== "created"
+            ? parseDateTime(formData.departure).date
+            : "",
+        departureTime:
+          user?.airlineId && formData.status !== "created"
+            ? parseDateTime(formData.departure).time
+            : "",
+        arrivalDate:
+          user?.airlineId && formData.status !== "created"
+            ? parseDateTime(formData.arrival).date
+            : "",
+        arrivalTime:
+          user?.airlineId && formData.status !== "created"
+            ? parseDateTime(formData.arrival).time
+            : "",
       }));
       await refetch(); // Обновляем данные после изменения
     } catch (error) {
@@ -787,7 +799,9 @@ function ExistRequest({
                   user={user}
                   separator={separator}
                   chatHeight={
-                    (user?.airlineId || user?.hotelId) && "calc(100vh - 225px)"
+                    (user?.airlineId || user?.hotelId)
+                      ? "calc(100vh - 225px)"
+                      : "calc(100vh - 275px)"
                   }
                 />
               </>

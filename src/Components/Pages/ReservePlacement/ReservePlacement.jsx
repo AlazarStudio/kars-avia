@@ -30,6 +30,8 @@ import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/Cr
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Notification from "../../Notification/Notification";
 import { fullNotifyTime, notifyTime } from "../../../roles";
+import MUITextField from "../../Blocks/MUITextField/MUITextField";
+import ManifestModal from "../../Blocks/ManifestModal/ManifestModal";
 
 function ReservePlacement({ children, user, ...props }) {
   const token = getCookie("token");
@@ -68,6 +70,9 @@ function ReservePlacement({ children, user, ...props }) {
     }
   );
 
+  // console.log(subscriptionDataUpdate);
+  // console.log(subscriptionData);
+  
 
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUEST, {
     context: {
@@ -457,7 +462,10 @@ function ReservePlacement({ children, user, ...props }) {
     setShowCreateSidebarHotel(!showCreateSidebarHotel);
   };
 
-  const exists = filteredPlacement.some(
+  // const exists = filteredPlacement.some(
+  //   (item) => item.hotel.id === user.hotelId
+  // );
+  const exists = placement.some(
     (item) => item.hotel.id === user.hotelId
   );
 
@@ -470,7 +478,8 @@ function ReservePlacement({ children, user, ...props }) {
     }
   };
 
-  // console.log(file);
+  // console.log(request);
+  const [openManifestModal, setOpenManifestModal] = useState(false);
 
   return (
     <div className={classes.main}>
@@ -490,10 +499,16 @@ function ReservePlacement({ children, user, ...props }) {
         </Header>
 
         <div className={classes.section_searchAndFilter}>
-          <input
+          {/* <input
             type="text"
             placeholder="Поиск"
             style={{ width: "400px" }}
+            value={searchQuery}
+            onChange={handleSearch}
+          /> */}
+          <MUITextField
+            className={classes.mainSearch}
+            label={"Поиск"}
             value={searchQuery}
             onChange={handleSearch}
           />
@@ -501,18 +516,22 @@ function ReservePlacement({ children, user, ...props }) {
           <div className={classes.downloadsButtonsWrapper}>
             {request?.files && request?.files.length !== 0 ? (
               <>
-                <input
+                <Button
+                  onClick={() => setOpenManifestModal(true)}
+                  className={classes.downloadsButton}
+                >
+                  Манифест
+                </Button>
+                {/* <input
                   type="file"
                   id="fileUpload"
                   style={{ display: "none" }}
                   onChange={handleFileChange}
                 />
 
-                {/* Кастомная кнопка загрузки */}
                 <label htmlFor="fileUpload" className={classes.downloadsButton}>
                   <img src="/edit.svg.png" alt="" style={{ width: "15px" }} />{" "}
                   Манифест
-                  {/* {file ? file?.name : "Манифест"} */}
                 </label>
                 <a
                   href={request?.files ? `${server}${request?.files[0]}` : ""}
@@ -521,7 +540,7 @@ function ReservePlacement({ children, user, ...props }) {
                 >
                   Манифест
                   <img src="/download.png" alt="" />
-                </a>
+                </a> */}
               </>
             ) : !request?.files ? (
               <MUILoader loadSize={"35px"} />
@@ -550,13 +569,6 @@ function ReservePlacement({ children, user, ...props }) {
                     </label>
                   </>
                 )}
-
-                {/* Отображение выбранного файла */}
-                {/* {file && (
-                  <p style={{ marginTop: "10px", color: "#fff" }}>
-                    Файл: {file?.name} ({(file?.size / 1024).toFixed(2)} KB)
-                  </p>
-                )} */}
               </>
             )}
 
@@ -598,6 +610,7 @@ function ReservePlacement({ children, user, ...props }) {
           <>
             <InfoTableDataReserve_passengers
               placement={filteredPlacement}
+              allHotelPlacement={placement}
               setPlacement={setPlacement}
               toggleUpdateSidebar={toggleUpdateSidebar}
               setIdPassangerForUpdate={setIdPassangerForUpdate}
@@ -608,6 +621,7 @@ function ReservePlacement({ children, user, ...props }) {
               airline={request.airline}
               manifest={file}
               addNotification={addNotification}
+              setFile={setFile}
               refetch={refetch}
               refetchHotel={refetchHotel}
             />
@@ -641,6 +655,16 @@ function ReservePlacement({ children, user, ...props }) {
               onClose={toggleChooseHotel}
               chooseObject={placement}
               id={"reserve"}
+            />
+
+            <ManifestModal
+              open={openManifestModal}
+              onClose={() => setOpenManifestModal(false)}
+              handleFileChange={handleFileChange}
+              file={file}
+              request={request}
+              server={server}
+              classes={classes}
             />
 
             {showDelete && (

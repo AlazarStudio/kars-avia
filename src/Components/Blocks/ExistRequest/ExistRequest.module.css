@@ -160,7 +160,7 @@ select {
     font-family: Nunito Sans;
     font-size: 16px;
     font-weight: 400;
-    padding: 0 35px;
+    padding: 0 30px;
     transition: all 0.3s ease-in-out;
     gap: 10px;
     opacity: 0.8;
@@ -426,18 +426,24 @@ select {
 }
 
 .separatorWrapper {
+    /* position: absolute; */
+    /* top: 0; */
+    /* left: 0; */
+    width: 100%;
     display: flex;
     justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #CBDEFB;
 }
 
 .separatorWrapper button {
-    padding: 5px;
-    flex-basis: 50%;
-    border: none;
-    border: 1px solid transparent;
+    padding: 10px;
+    flex-basis: 48%;
     color: #545873;
-    background-color: transparent;
+    background-color: #F1F4FB;
     cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 10px;
     transition: all ease-in-out 0.3s;
     opacity: 0.5;
 }
@@ -445,7 +451,7 @@ select {
 .separatorWrapper button.active {
     color: #000;
     opacity: 1;
-    background-color: #E4E4EF;
+    background-color: #F1F4FB;
     outline: none;
 }
 

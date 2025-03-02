@@ -376,15 +376,31 @@ function CreateRequestReserve({ show, onClose, user, addNotification }) {
                   <MUIAutocomplete
                     dropdownWidth={"100%"}
                     label={"Введите аэропорт"}
-                    options={filteredAirports.map((airport) => airport.name)}
+                    options={airports
+                      .filter(
+                        (airport) =>
+                          airport.city.trim() === formData.city.trim()
+                      )
+                      .map((airport) => `${airport.name} ${airport.code}`)}
                     value={
-                      filteredAirports.find(
+                      airports.find(
                         (airport) => airport.id === formData.airportId
-                      )?.name || ""
+                      )
+                        ? `${
+                            airports.find(
+                              (airport) => airport.id === formData.airportId
+                            )?.name
+                          } (${
+                            airports.find(
+                              (airport) => airport.id === formData.airportId
+                            )?.code
+                          })`
+                        : ""
                     }
                     onChange={(event, newValue) => {
-                      const selectedAirport = filteredAirports.find(
-                        (airport) => airport.name === newValue
+                      const selectedAirport = airports.find(
+                        (airport) =>
+                          `${airport.name} ${airport.code}` === newValue
                       );
                       setFormData((prevFormData) => ({
                         ...prevFormData,

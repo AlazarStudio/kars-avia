@@ -2,6 +2,10 @@
     display: flex;
 }
 
+.mainSearch {
+    width: 400px;
+}
+
 .section {
     /* width: calc(100% - var(--menu-width)); */
     width: 100%;

@@ -287,7 +287,8 @@ function Message({ children, filteredPlacement, activeTab, setIsHaveTwoChats, se
 
             {!loading && !error && messages?.messages && data &&
                 <div className={classes.requestData} style={{ padding: chatPadding }}>
-                    <div className={classes.requestData_messages} style={{ height: height ? `calc(100vh - ${height}px)` : formData?.status === 'done' ? 'calc(100vh - 244px)' : chatHeight }}>
+                    <div className={classes.requestData_messages} style={{ height: height ? `calc(100vh - ${height}px)` : chatHeight }}>
+                    {/* <div className={classes.requestData_messages} style={{ height: height ? `calc(100vh - ${height}px)` : formData?.status === 'done' ? 'calc(100vh - 244px)' : chatHeight }}> */}
                         {messages?.messages.map((message, index) => (
                             <div className={`${classes.requestData_message_full} ${message.sender.id === userID && classes.myMes}`} key={index}>
                                 <div className={classes.requestData_message}>

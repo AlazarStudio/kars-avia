@@ -149,7 +149,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 30px;
-    height: 97px;
+    height: 80px;
 }
 
 .countingPeople {
@@ -175,7 +175,8 @@
 .blockInfoShow {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 10px;
+    /* gap: 20px; */
 }
 
 .blockInfoShow a {
@@ -228,28 +229,30 @@
     width: 500px;
     background-color:#fff;
     border-radius: 8px;
-    padding: 20px;
+    padding: 15px;
     position: relative;
     overflow: hidden;
 }
 
 .separatorWrapper {
-    position: absolute;
-    top: 0;
-    left: 0;
+    /* position: absolute; */
+    /* top: 0; */
+    /* left: 0; */
     width: 100%;
     display: flex;
     justify-content: space-between;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #CBDEFB;
 }
 
 .separatorWrapper button {
-    padding: 5px;
-    flex-basis: 50%;
-    border: none;
-    border: 1px solid transparent;
+    padding: 10px;
+    flex-basis: 48%;
     color: #545873;
-    background-color: #E4E4EF;
+    background-color: #F1F4FB;
     cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 10px;
     transition: all ease-in-out 0.3s;
     opacity: 0.5;
 }
@@ -257,7 +260,7 @@
 .separatorWrapper button.active {
     color: #000;
     opacity: 1;
-    background-color: transparent;
+    background-color: #F1F4FB;
     outline: none;
 }
 
@@ -271,6 +274,10 @@
     font-size: 14px;
     color: #545873;
     cursor: pointer;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: center;
     /* transition: all ease-in-out 0.3s; */
 }
 
@@ -287,9 +294,12 @@
 }
 
 .chatName {
-    padding: 13px 0 0 0;
+    /* padding: 13px 0 0 0; */
+    width: 100%;
     height: 28px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .messageCount {

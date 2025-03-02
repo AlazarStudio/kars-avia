@@ -1846,7 +1846,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                 overflow: 'hidden',
                                             }}
                                         >
-                                            <Tooltip title={`${room.id} ${!room.active ? '(не работает)' : ''}`}
+                                            <Tooltip 
+                                                title={`${room.id} ${!room.active ? '(не работает)' : ''}`}
                                                 arrow
                                                 placement="top"
                                                 enterDelay={1000}
@@ -1865,7 +1866,18 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                         WebkitLineClamp: 2
                                                     }}
                                                 >
-                                                    {room.id} {<img src="/roomPlace.png"/>} {`X ${room.type}`} {!room.active ? '(не работает)' : ''}
+                                                    <Box
+                                                        component="span"
+                                                        sx={{
+                                                            float: 'right',
+                                                            marginLeft: '5px' // отступ между обтеканием и текстом
+                                                        }}
+                                                        >
+                                                        <img src="/roomPlace.png" style={{ verticalAlign: 'top' }} alt="" />
+                                                        {`X ${room.type}`}
+                                                    </Box> 
+                                                    {room.id}
+                                                    {!room.active ? '(не работает)' : ''}
                                                 </Typography>
                                             </Tooltip>
                                         </Box>
