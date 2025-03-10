@@ -11,7 +11,7 @@ import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
-import { roles } from "../../../roles";
+import { roles, rolesObject } from "../../../roles";
 
 function EditRequestAirlineCompany({
   show,
@@ -142,11 +142,32 @@ function EditRequestAirlineCompany({
     }
   };
 
+  const isFormValid = () => {
+    return (
+      formData.name &&
+      formData.email &&
+      formData.role &&
+      formData.position &&
+      formData.login &&
+      formData.department
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isEditing) {
-      setIsLoading(true);
+      if (!isFormValid()) {
+        alert("Пожалуйста, заполните все обязательные поля.");
+        setIsLoading(false);
+        return;
+      }
 
+      setIsLoading(true);
+      if (formData.password !== "" && formData.password.length < 8) {
+        alert("Новый пароль должен содержать минимум 8 символов.");
+        setIsLoading(false);
+        return;
+      }
       try {
         const selectedDepartment = addTarif.find(
           (dept) => dept.name === formData.department
@@ -320,31 +341,18 @@ function EditRequestAirlineCompany({
                         dropdownWidth={"100%"}
                         isDisabled={!isEditing}
                         label={"Выберите роль"}
-                        options={["AIRLINEADMIN"]}
-                        value={formData.role}
+                        options={rolesObject.airline}
+                        value={rolesObject.airline.find((option) => option.value === formData.role) || null}
                         onChange={(event, newValue) => {
                           setFormData((prevFormData) => ({
                             ...prevFormData,
-                            role: newValue,
+                            role: newValue ? newValue.value : "",
                           }));
                           setIsEdited(true);
                         }}
                       />
                     </div>
                   </div>
-                  {/* <DropDownList
-                placeholder="Выберите роль"
-                searchable={false}
-                options={["AIRLINEADMIN"]}
-                initialValue={formData.role}
-                onSelect={(value) => {
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    role: value,
-                  }));
-                  setIsEdited(true);
-                }}
-              /> */}
                 </>
               )}
 

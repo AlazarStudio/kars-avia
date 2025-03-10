@@ -18,6 +18,9 @@ function MUIAutocomplete({
         options={options ? options : []}
         disablePortal
         disabled={isDisabled ? isDisabled : false}
+        clearText="Очистить"
+        openText="Открыть"
+        closeText="Закрыть"
         // autoComplete={false}
         // aria-autocomplete="none"
         slotProps={{

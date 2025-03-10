@@ -36,6 +36,7 @@ function InfoTableDataReserve_passengers({
   setFile,
   refetch,
   refetchHotel,
+  createPassengerList
 }) {
   const token = getCookie("token");
 
@@ -235,6 +236,8 @@ function InfoTableDataReserve_passengers({
         } catch (error) {
           console.error("Ошибка при загрузке манифеста:", error);
           alert("Ошибка при загрузке манифеста");
+        } finally {
+          setFile(null);
         }
       }
     };
@@ -267,6 +270,7 @@ function InfoTableDataReserve_passengers({
           reservationId: request.id,
         },
       });
+      await createPassengerList(request.id);
 
       if (reserverAddHotelPassenger.data) {
         setIsAddingNewPassenger(false);
@@ -289,7 +293,6 @@ function InfoTableDataReserve_passengers({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
       },
     },
   });
@@ -409,7 +412,9 @@ function InfoTableDataReserve_passengers({
     ? placement.filter((item) => item.hotel.id === user.hotelId)
     : placement;
 
-  const hotelPlacement = allHotelPlacement.filter((item) => item.hotel.id === user.hotelId)
+  const hotelPlacement = allHotelPlacement.filter(
+    (item) => item.hotel.id === user.hotelId
+  );
 
   const statusLabels = {
     created: "Создан",
@@ -437,9 +442,13 @@ function InfoTableDataReserve_passengers({
   };
 
   const [orgName, setOrgName] = useState("");
-  const [messageCount, setMessageCount] = useState(0);
+  // const [messageCount, setMessageCount] = useState([]);
+  const messageCount = request?.chat;
+  // useEffect(() => {
+  //   setMessageCount(request.chat)
+  // }, [request.chat])
 
-  // console.log(filteredPlacement);
+  // console.log(messageCount);
 
   return (
     // Сделать отдельную компоненту для чата
@@ -479,6 +488,11 @@ function InfoTableDataReserve_passengers({
           }}
         >
           {filteredPlacement.map((item, hotelIndex) => {
+            const currentHotelMessageCount = messageCount?.find(
+              (count) => count.hotelId === item.hotel.id
+            );
+            // console.log(currentHotelMessageCount);
+            
             return (
               <React.Fragment key={hotelIndex}>
                 <div
@@ -525,11 +539,12 @@ function InfoTableDataReserve_passengers({
                             }}
                             alt=""
                           />
-                          {/* {messageCount > 0 ? (
-                            <div className={classes.messageCount}>
-                              {messageCount}
-                            </div>
-                          ) : null} */}
+                          {currentHotelMessageCount &&
+                            currentHotelMessageCount.unreadMessagesCount > 0 && (
+                              <div className={classes.messageCount}>
+                                {currentHotelMessageCount.unreadMessagesCount}
+                              </div>
+                            )}
                         </button>
                       ) : null}
                       {/* {console.log(request)} */}
@@ -939,7 +954,7 @@ function InfoTableDataReserve_passengers({
               setIsHaveTwoChats={setIsHaveTwoChats}
               setHotelChats={setHotelChats}
               setTitle={setOrgName}
-              setMessageCount={setMessageCount}
+              // setMessageCount={setMessageCount}
               chooseRequestID={""}
               chooseReserveID={request.id}
               filteredPlacement={filteredPlacement}
@@ -950,7 +965,7 @@ function InfoTableDataReserve_passengers({
                 user.role !== roles.hotelAdmin &&
                 user.role !== roles.airlineAdmin
                   ? "calc(100vh - 360px)"
-                  : "calc(100vh - 290px)"
+                  : "calc(100vh - 280px)"
               }
               separator={separator}
               hotelChatId={selectedHotelChatId}

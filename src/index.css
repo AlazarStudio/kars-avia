@@ -199,7 +199,8 @@ textarea {
 /* Стиль для контейнера пагинации */
 .swiper-pagination {
     position: absolute !important;
-    bottom: 20% !important;
+    /* bottom: 20% !important; */
+    bottom: 15% !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 1000 !important;

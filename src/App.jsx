@@ -26,7 +26,7 @@ import Login from "./Components/Pages/Login/Login";
 function App() {
   const { user } = useAuth();
 
-  const token = getCookie('token')
+  const token = getCookie("token");
 
   const uploadLink = createUploadLink({
     uri: `${server}/graphql`,
@@ -37,14 +37,17 @@ function App() {
     createClient({
       // url: `wss://${path}/graphql`,
       url: `ws://${path}/graphql`,
-      connectionParams: () => {
-        if (!token) {
-          return {};
-        }
-        return {
-          Authorization: `Bearer ${token}`,
-        };
+      connectionParams: {
+        Authorization: `Bearer ${token}`,
       },
+      // connectionParams: () => {
+      // if (!token) {
+      //   return {};
+      // }
+      // return {
+      //   Authorization: `Bearer ${token}`,
+      // };
+      // },
     })
   );
 
@@ -97,13 +100,9 @@ function App() {
               element={<Placement user={user} />}
             /> */}
 
-            <Route
-              path="/newPlacement/:idHotel"
-              element={<NewPlacement />}
-            />
+            <Route path="/newPlacement/:idHotel" element={<NewPlacement />} />
 
             <Route path="*" element={<Non_Found_Page />} />
-
           </Route>
         ) : (
           <>

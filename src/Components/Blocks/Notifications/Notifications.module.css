@@ -24,10 +24,14 @@
   justify-content: space-between;
 }
 
-.notifyMessageText :last-child {
+.toRequest {
   width: fit-content;
   border-bottom: 1px solid #3232e7;
   cursor: pointer;
+}
+
+.notifyDescription {
+  font-size: 16px;
 }
 
 .separatorWrapper {
@@ -37,13 +41,14 @@
   display: flex;
   justify-content: space-between;
   background-color: #fff;
-  -webkit-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15);
+  border-bottom: 1px solid #E4E4EF;
+  /* -webkit-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15);
   -moz-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15);
-  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15);
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15); */
 }
 
 .separatorWrapper button {
-  padding: 5px;
+  padding: 10px 0;
   flex-basis: 50%;
   border: none;
   border: 1px solid transparent;
@@ -59,6 +64,44 @@
   opacity: 1;
   background-color: #E4E4EF;
   outline: none;
+}
+
+/* Пагинация */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+}
+
+.paginationNumber {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  border: 1px solid var(--menu-bg);
+  border-radius: 5px;
+  color: var(--menu-bg);
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-decoration: none;
+}
+
+.paginationNumber:hover {
+  background-color: #e0e0e0;
+  color: var(--menu-bg);
+}
+
+.pagination .activePaginationNumber,
+.pagination .activePaginationNumber a {
+  background-color: var(--menu-bg) !important;
+  color: #fff !important;
+  border-radius: 5px;
+  font-size: 12px;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

@@ -103,6 +103,7 @@ function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
 
               <Message
                 activeTab={activeTab}
+                show={show}
                 setIsHaveTwoChats={setIsHaveTwoChats}
                 chooseRequestID={""}
                 chooseReserveID={chooseRequestID}

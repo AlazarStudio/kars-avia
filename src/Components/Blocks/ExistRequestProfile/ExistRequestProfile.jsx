@@ -114,6 +114,11 @@ function ExistRequestProfile({
   const handleUpdate = async () => {
     if (isEditing) {
       setIsLoading(true);
+      if (formData.password !== "" && formData.password.length < 8) {
+        alert("Новый пароль должен содержать минимум 8 символов.");
+        setIsLoading(false);
+        return;
+      }
       try {
         let response_update_user = await uploadFile({
           variables: {
@@ -157,7 +162,7 @@ function ExistRequestProfile({
         setShowNewPassword(false);
         setFormData((prevData) => ({
           ...prevData,
-          password:  "",
+          password: "",
           oldPassword: "",
         }));
       }
@@ -265,7 +270,7 @@ function ExistRequestProfile({
                   src={showOldPassword ? "/eyeOpen.png" : "/eyeClose.png"}
                   style={{
                     width: "20px",
-                    height:"20px",
+                    height: "20px",
                     objectFit: "contain",
                     position: "absolute",
                     right: "40px",
@@ -293,7 +298,7 @@ function ExistRequestProfile({
                   src={showNewPassword ? "/eyeOpen.png" : "/eyeClose.png"}
                   style={{
                     width: "20px",
-                    height:"20px",
+                    height: "20px",
                     objectFit: "contain",
                     position: "absolute",
                     right: "40px",

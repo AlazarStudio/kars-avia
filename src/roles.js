@@ -21,5 +21,19 @@ export const statusMapping = {
   archived: "Архив",
 };
 
+export const rolesObject = {
+  dispatcher: [{
+    label: "Администратор",
+    value: "DISPATCHERADMIN"
+  }],
+  airline: [{
+    label: "Администратор",
+    value: "AIRLINEADMIN"
+  }],
+  hotel: [{
+    label: "Администратор",
+    value: "HOTELADMIN"
+  }]
+}
 export const fullNotifyTime = 3300;
 export const notifyTime = 3000;

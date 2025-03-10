@@ -10,7 +10,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
-import { roles } from "../../../roles";
+import { roles, rolesObject } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
@@ -148,6 +148,22 @@ function ExistRequestCompany({
   const handleUpdate = async () => {
     if (isEditing) {
       setIsLoading(true);
+      // Проверяем обязательные поля
+      const requiredFields = ["name", "email", "role", "position", "login"];
+      const emptyFields = requiredFields.filter(
+        (field) => !formData[field]?.trim()
+      );
+
+      if (emptyFields.length > 0) {
+        alert("Пожалуйста, заполните все обязательные поля.");
+        setIsLoading(false);
+        return;
+      }
+      if (formData.password !== "" && formData.password.length < 8) {
+        alert("Новый пароль должен содержать минимум 8 символов.");
+        setIsLoading(false);
+        return;
+      }
       try {
         let response_update_user = await uploadFile({
           variables: {
@@ -296,29 +312,20 @@ function ExistRequestCompany({
                         dropdownWidth={"100%"}
                         isDisabled={!isEditing}
                         label={"Выберите роль"}
-                        options={["DISPATCHERADMIN"]}
-                        value={formData.role}
+                        options={rolesObject.dispatcher}
+                        value={
+                          rolesObject.dispatcher.find(
+                            (option) => option.value === formData.role
+                          ) || null
+                        }
                         onChange={(event, newValue) => {
                           setIsEdited(true);
                           setFormData((prevData) => ({
                             ...prevData,
-                            role: newValue,
+                            role: newValue ? newValue.value : "",
                           }));
                         }}
                       />
-                      {/* <DropDownList
-                    placeholder="Выберите роль"
-                    searchable={false}
-                    options={["DISPATCHERADMIN"]}
-                    initialValue={formData.role}
-                    onSelect={(value) => {
-                      setIsEdited(true);
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        role: value,
-                      }));
-                    }}
-                  /> */}
                     </div>
                   </div>
                 </>

@@ -417,5 +417,20 @@ select {
     font-weight: bold;
 }
 
+.unreadBanner {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    background-color: #0057C3;
+    color: #fff;
+    font-size: 13px;
+    /* border-radius: 10px; */
+    opacity: 0.8;
+}
+
+.unreadBanner img {
+    height: 8px;
+    rotate: 270deg;
+}
 
 @media (min-width: 0px) and (max-width: 1299px) {}

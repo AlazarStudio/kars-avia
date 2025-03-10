@@ -122,6 +122,11 @@ export const GET_REQUESTS = gql`
         }
         reserve
         requestNumber
+        chat {
+          unreadMessagesCount
+          airlineId
+          hotelId
+        }
       }
     }
 }
@@ -315,6 +320,90 @@ export const REQUEST_MESSAGES_SUBSCRIPTION = gql`
   }
 `;
 
+export const QUERY_NOTIFICATIONS = gql`
+  query Notifications($pagination: PaginationInput) {
+    getAllNotifications(pagination: $pagination) {
+      notifications {
+        id
+        createdAt
+        requestId
+        reserveId
+        description {
+          action
+          description
+          reason
+        }
+        request {
+          requestNumber
+          person {
+            id
+            name
+          }
+        }
+        reserve {
+          reserveNumber
+        }
+        readBy {
+          id
+          user {
+            id
+            name
+          }
+          readAt
+        }
+        chatId
+      }
+      totalCount
+      totalPages
+    }
+  }
+`;
+
+export const NOTIFICATIONS_SUBSCRIPTION = gql`
+  subscription Notifications {
+    notification {
+      ... on ExtendRequestNotification {
+        requestId
+        newStart
+        newEnd
+        airline {
+          name
+        }
+      }
+      ... on RequestCreatedNotification {
+        requestId
+        arrival
+        departure
+        airline {
+          name
+        }
+      }
+      ... on ReserveCreatedNotification {
+        reserveId
+        arrival
+        departure
+        airline {
+          name
+        }
+      }
+      ... on ReserveUpdatedNotification {
+        reserveId
+        arrival
+        departure
+        airline {
+          name
+        }
+      }
+      ... on MessageSentNotification {
+        chat {
+          id
+        }
+        text
+      }
+    }
+  }
+`;
+
 export const CREATE_REQUEST_MUTATION = gql`
     mutation CreateRequest($input: CreateRequestInput!) {
         createRequest(input: $input) {
@@ -485,6 +574,11 @@ export const GET_REQUEST = gql`
             }
             place
           }
+        chat {
+          unreadMessagesCount
+          airlineId
+          hotelId
+        }
       }
     }
 `;
@@ -618,7 +712,7 @@ export const GET_BRONS_HOTEL = gql`
 `;
 
 export const GET_MESSAGES_HOTEL = gql`
-  query Requests($requestId: ID!, $reserveId: ID) {
+  query Chats($requestId: ID, $reserveId: ID) {
     chats(requestId: $requestId, reserveId: $reserveId) {
       id
       separator
@@ -627,7 +721,9 @@ export const GET_MESSAGES_HOTEL = gql`
         name
       }
       airlineId
+      unreadMessagesCount
       messages {
+        id
         separator
         text
         createdAt
@@ -637,8 +733,38 @@ export const GET_MESSAGES_HOTEL = gql`
           role
           position
         }
+        readBy {
+          user {
+            id
+            name
+          }
+        }
       }
     }
+  }
+`;
+
+export const MARK_MESSAGE_AS_READ = gql`
+  mutation markMessageAsRead($messageId: ID!, $userId: ID!) {
+    markMessageAsRead(messageId: $messageId, userId: $userId) {
+      id
+      message {
+        text
+        sender {
+          name
+        }
+      }
+      user {
+        name
+      }
+      readAt
+    }
+  }
+`;
+
+export const MARK_ALL_MESSAGES_AS_READ = gql`
+  mutation MarkAllMessagesAsRead($chatId: ID!, $userId: ID!) {
+    markAllMessagesAsRead(chatId: $chatId, userId: $userId)
   }
 `;
 
@@ -910,6 +1036,11 @@ export const GET_RESERVE_REQUESTS = gql`
         reserveNumber
         passengerCount
         files
+        chat {
+          unreadMessagesCount
+          hotelId
+          airlineId
+        }
       }
     }
   }
@@ -949,6 +1080,16 @@ export const REQUEST_RESERVE_CREATED_SUBSCRIPTION = gql`
 `;
 
 export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION = gql`
+  subscription ReserveUpdated {
+    reserveUpdated {
+      id
+      chat {
+        unreadMessagesCount
+      }
+    }
+  }
+`;
+export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION1 = gql`
   subscription ReserveUpdated {
     reserveUpdated {
       id
@@ -1014,6 +1155,20 @@ export const GET_RESERVE_REQUEST = gql`
       reserveNumber
       passengerCount
       files
+      passengerList
+      chat {
+        unreadMessagesCount
+        hotelId
+        airlineId
+      }
+    }
+  }
+`;
+
+export const CREATE_RESERVE_REPORT = gql`
+  mutation GenerateReserveReport($reserveId: ID!, $format: ReportFormat!) {
+    generateReservePassengerFile(reserveId: $reserveId, format: $format) {
+      url
     }
   }
 `;

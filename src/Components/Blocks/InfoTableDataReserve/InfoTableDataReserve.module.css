@@ -144,6 +144,16 @@
     top: 10px;
 }
 
+.unreadMessages {
+    position: absolute;
+    top: 11px;
+    right: 0;
+    width: 6px;
+    height: 6px;
+    background-color: red;
+    /* border-radius: 50px; */
+}
+
 @media (min-width: 0px) and (max-width: 1399px) {
     .InfoTable_title_elem {
         font-size: 14px;

@@ -256,6 +256,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // console.log(formData);
+
   // Отправка формы на сервер
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -313,7 +315,12 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       airportId: formData.airportId,
       arrival: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00`,
       departure: `${formData.departureDate}T${formData.departureTime}:00+00:00`,
-      mealPlan: { included: formData.mealPlan.included },
+      mealPlan: {
+        included: formData.mealPlan.included,
+        breakfastEnabled: formData.mealPlan.breakfastEnabled,
+        lunchEnabled: formData.mealPlan.lunchEnabled,
+        dinnerEnabled: formData.mealPlan.dinnerEnabled,
+      },
       senderId: formData.senderId,
       airlineId: formData.airlineId,
       reserve: formData.reserve,
@@ -324,6 +331,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       resetForm();
       onClose();
       addNotification("Создание заявки для экипажа прошло успешно.", "success");
+      // console.log(response);
     } catch (error) {
       console.error(error);
       if (error.message.startsWith("Request already exists with id:")) {

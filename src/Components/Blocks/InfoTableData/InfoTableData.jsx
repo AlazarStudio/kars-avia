@@ -4,7 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, server } from "../../../../graphQL_requests";
 
 // Основная таблица с данными о заявках
-function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
+function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
     // Функция для установки выбранного объекта и переключения боковой панели
     const handleObject = useCallback((id, arrival, departure, person, requestNumber) => {
         setChooseObject([{
@@ -78,8 +78,15 @@ function InfoTableData({ toggleRequestSidebar, requests, setChooseObject, choose
                         onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
                         key={index}
                     >
-                        {item.status === 'created' && <div className={classes.newRequest}></div>}
+                        {/* {item.status === 'created' && <div className={classes.newRequest}></div>} */}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.requestNumber?.slice(0, 4)}</div>
+                        {item?.chat?.some(chat => 
+                            chat.unreadMessagesCount > 0 && (
+                                (user.hotelId && chat.hotelId === user.hotelId) ||
+                                (user.airlineId && chat.airlineId === user.airlineId) ||
+                                (!user.hotelId && !user.airlineId)
+                            )
+                            ) && <div className={classes.newRequest}></div>}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 <div className={classes.InfoTable_data_elem_title}>{item.person.name} {' '} {item?.reserve ? '(Резерв)' : ''} </div>

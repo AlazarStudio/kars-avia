@@ -9,7 +9,7 @@ import classes from "./ChooseHotel.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useQuery } from "@apollo/client";
-import { GET_HOTELS_RELAY } from "../../../../graphQL_requests";
+import { GET_CITIES, GET_HOTELS_RELAY } from "../../../../graphQL_requests";
 import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
@@ -34,6 +34,8 @@ function ChooseHotel({
   const { data: hotelsData, loading: hotelsLoading } =
     useQuery(GET_HOTELS_RELAY);
 
+  const { data: citiesData, loading: citiesLoading } = useQuery(GET_CITIES);
+
   useEffect(() => {
     if (!hotelsLoading && hotelsData && show) {
       setHotels(hotelsData.hotels.hotels || []);
@@ -55,17 +57,30 @@ function ChooseHotel({
   const uniqueCities = useMemo(
     () =>
       [
-        ...new Set(hotels.map((hotel) => hotel.information?.city?.trim())),
+        ...new Set(hotels.map((hotel) => hotel.information?.city? hotel.information.city.trim() : '')),
       ].sort(),
     [hotels]
   );
+  // const uniqueCities = useMemo(
+  //   () =>
+  //     [
+  //       ...new Set(
+  //         citiesData?.citys.map((item) =>
+  //           item.city ? item.city.trim() : "kdsjf"
+  //         )
+  //       ),
+  //     ].sort(),
+  //   [citiesData]
+  // );
   const filteredHotels = useMemo(() => {
     return formData.city
       ? hotels.filter(
-          (hotel) => hotel.information?.city.trim() === formData.city.trim()
+          (hotel) => hotel.information?.city?.trim() === formData.city.trim()
         )
       : [];
   }, [formData.city, hotels]);
+
+  // console.log(hotelsData?.hotels?.hotels);
 
   const resetForm = useCallback(() => {
     setFormData({ city: "", hotel: "", request: chooseRequestID });
@@ -197,6 +212,9 @@ function ChooseHotel({
             link={`/hotels/${formData.hotel}/${formData.request}`}
             dataObject={chooseObject}
             disabled={true}
+            onClick={() => {
+              onClose();
+            }}
           >
             {/* {console.log(formData)} */}
             Разместить{" "}

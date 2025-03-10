@@ -130,7 +130,7 @@ function AirlinesList({ children, ...props }) {
   const filteredRequests = useMemo(() => {
     const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
     return dataSource.filter((request) =>
-      request.name.toLowerCase().includes(searchQuery.toLowerCase())
+      request.name?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [isSearching, allFilteredData, companyData, searchQuery]);
 

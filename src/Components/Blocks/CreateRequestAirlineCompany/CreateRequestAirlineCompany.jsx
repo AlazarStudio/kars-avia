@@ -12,6 +12,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import DropDownListObj from "../DropDownListObj/DropDownListObj";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import { rolesObject } from "../../../roles";
 
 function CreateRequestAirlineCompany({
   show,
@@ -132,6 +133,12 @@ function CreateRequestAirlineCompany({
 
     if (!isFormValid()) {
       alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      alert("Пароль должен содержать минимум 8 символов.");
       setIsLoading(false);
       return;
     }
@@ -302,29 +309,16 @@ function CreateRequestAirlineCompany({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
-                options={["AIRLINEADMIN"]}
-                value={formData.role}
+                options={rolesObject.airline}
+                value={rolesObject.airline.find((option) => option.value === formData.role) || null}
                 onChange={(event, newValue) => {
                   setFormData((prevFormData) => ({
                     ...prevFormData,
-                    role: newValue,
+                    role: newValue ? newValue.value : "",
                   }));
                   setIsEdited(true);
                 }}
               />
-              {/* <DropDownList
-                placeholder="Выберите роль"
-                searchable={false}
-                options={["AIRLINEADMIN"]}
-                initialValue={formData.role}
-                onSelect={(value) => {
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    role: value,
-                  }));
-                  setIsEdited(true);
-                }}
-              /> */}
 
               <label>Должность</label>
               <MUIAutocomplete
@@ -340,19 +334,6 @@ function CreateRequestAirlineCompany({
                   }));
                 }}
               />
-              {/* <DropDownList
-                placeholder="Выберите должность"
-                searchable={false}
-                options={positions}
-                initialValue={formData.position}
-                onSelect={(value) => {
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    position: value,
-                  }));
-                  setIsEdited(true);
-                }}
-              /> */}
 
               <label>Логин</label>
               <input

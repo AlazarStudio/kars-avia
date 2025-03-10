@@ -12,6 +12,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import { rolesObject } from "../../../roles.js";
 
 function CreateRequestCompanyHotel({
   show,
@@ -132,6 +133,12 @@ function CreateRequestCompanyHotel({
       return;
     }
 
+    if (formData.password.length < 8) {
+      alert("Пароль должен содержать минимум 8 символов.");
+      setIsLoading(false);
+      return;
+    }
+
     // if (!formData.images) {
     //     alert('Пожалуйста, выберите файл для загрузки.');
     //     return;
@@ -248,13 +255,13 @@ function CreateRequestCompanyHotel({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
-                options={["HOTELADMIN"]}
-                value={formData.role}
+                options={rolesObject.hotel}
+                value={rolesObject.hotel.find((option) => option.value === formData.role) || null}
                 onChange={(event, newValue) => {
                   setIsEdited(true);
                   setFormData((prevData) => ({
                     ...prevData,
-                    role: newValue,
+                    role: newValue ? newValue.value : "",
                   }));
                 }}
               />
@@ -276,7 +283,7 @@ function CreateRequestCompanyHotel({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={["Модератор", "Администратор"]}
+                options={["Директор", "Администратор", "Менеджер"]}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setIsEdited(true);
@@ -286,24 +293,6 @@ function CreateRequestCompanyHotel({
                   }));
                 }}
               />
-              {/* <DropDownList
-                placeholder="Выберите должность"
-                searchable={false}
-                options={["Модератор", "Администратор"]} // Должности
-                initialValue={formData.position}
-                onSelect={(value) => {
-                  setIsEdited(true);
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    position: value,
-                  }));
-                }}
-              /> */}
-              {/* <select name="position" value={formData.position} onChange={handleChange}>
-                        <option value="" disabled>Выберите должность</option>
-                        <option value="Модератор">Модератор</option>
-                        <option value="Администратор">Администратор</option>
-                    </select> */}
 
               <label>Логин</label>
               <input

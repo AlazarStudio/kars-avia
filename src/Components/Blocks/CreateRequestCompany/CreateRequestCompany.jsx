@@ -10,6 +10,7 @@ import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import { rolesObject } from "../../../roles";
 
 function CreateRequestCompany({
   show,
@@ -127,6 +128,11 @@ function CreateRequestCompany({
       setIsLoading(false);
       return;
     }
+    if (formData.password.length < 8) {
+      alert("Пароль должен содержать минимум 8 символов.");
+      setIsLoading(false);
+      return;
+    }
 
     // if (!formData.images) {
     //   alert("Пожалуйста, выберите файл для загрузки");
@@ -221,6 +227,9 @@ function CreateRequestCompany({
     "Региональный руководитель",
   ];
 
+  // const roles = [
+  //   { label: "Администратор", value: "DISPATCHERADMIN" }
+  // ];  
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -261,29 +270,17 @@ function CreateRequestCompany({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
-                options={["DISPATCHERADMIN"]}
-                value={formData.role}
+                options={rolesObject.dispatcher}
+                value={rolesObject.dispatcher.find((option) => option.value === formData.role) || null}
                 onChange={(event, newValue) => {
                   setIsEdited(true);
+                  // Если выбрана опция, сохраняем её value, иначе очищаем поле
                   setFormData((prevData) => ({
                     ...prevData,
-                    role: newValue,
+                    role: newValue ? newValue.value : "",
                   }));
                 }}
               />
-              {/* <DropDownList
-                placeholder="Выберите роль"
-                searchable={false}
-                options={["DISPATCHERADMIN"]}
-                initialValue={formData.role}
-                onSelect={(value) => {
-                  setIsEdited(true);
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    role: value,
-                  }));
-                }}
-              /> */}
 
               <label>Должность</label>
               <MUIAutocomplete
@@ -299,19 +296,6 @@ function CreateRequestCompany({
                   }));
                 }}
               />
-              {/* <DropDownList
-                placeholder="Выберите должность"
-                searchable={false}
-                options={positions}
-                initialValue={formData.position}
-                onSelect={(value) => {
-                  setIsEdited(true);
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    position: value,
-                  }));
-                }}
-              /> */}
 
               <label>Логин</label>
               <input

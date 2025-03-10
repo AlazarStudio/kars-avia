@@ -7,6 +7,7 @@ import {
   GET_DISPATCHER,
   GET_DISPATCHERS_SUBSCRIPTION,
   getCookie,
+  NOTIFICATIONS_SUBSCRIPTION,
   server,
 } from "../../../../graphQL_requests";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
@@ -53,25 +54,29 @@ function Header({ children }) {
   //   setIsNotificationsOpen(false);
   // };
 
+  const toggleChooseHotel = () => setShowChooseHotel(!showChooseHotel);
+
   const handleNotificationClick = (notificationData) => {
     // Создаем `chooseObject` на основе пришедших данных
-    // console.log(notificationData.reserve);
+    // console.log(notificationData);
     const newChooseObject = [
       {
-        client: notificationData.client,
-        clientId: notificationData.clientId,
+        client: notificationData.request?.person?.name,
+        clientId: notificationData.request?.person?.id,
         end: undefined, // Всегда `undefined`
         endTime: undefined, // Всегда `undefined`
         hotelId: "", // Всегда пустая строка
         place: "", // Всегда пустая строка
         public: false, // Всегда `false`
         requestId: notificationData.requestId,
-        requestNumber: notificationData.requestNumber,
+        requestNumber: notificationData.request?.requestNumber,
         room: "", // Всегда пустая строка
         start: undefined, // Всегда `undefined`
         startTime: undefined, // Всегда `undefined`
       },
     ];
+
+    // console.log(newChooseObject);
 
     setChooseObject(newChooseObject);
     setChooseCityRequest(notificationData.chooseCityRequest || "");
@@ -79,8 +84,6 @@ function Header({ children }) {
     setShowERequestSidebar(true); // Открываем боковую панель заявки
     setIsNotificationsOpen(false);
   };
-
-  const toggleChooseHotel = () => setShowChooseHotel(!showChooseHotel);
 
   const toggleNotifications = () => {
     if (!isNotificationsOpen) {
@@ -155,10 +158,11 @@ function Header({ children }) {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
-        (dropdownRef.current && !dropdownRef.current.contains(event.target)) || // когда вернуться оповещения поставить &&
-        (notificationsRef.current &&
-          !notificationsRef.current.contains(event.target) &&
-          !event.target.closest(`.${classes.notify_dropdown}`))
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) && // когда вернуться оповещения поставить &&
+        notificationsRef.current &&
+        !notificationsRef.current.contains(event.target) &&
+        !event.target.closest(`.${classes.notify_dropdown}`)
       ) {
         setIsDropdownOpen(false);
         setTimeout(() => setIsFullyVisible(false), 300);
@@ -247,6 +251,10 @@ function Header({ children }) {
 
   // console.log(chooseCityRequest);
 
+  const { data: notifySubscriptionData } = useSubscription(
+    NOTIFICATIONS_SUBSCRIPTION
+  );
+
   return (
     <div className={classes.section_top}>
       <div className={classes.section_top_title}>{children}</div>
@@ -255,16 +263,16 @@ function Header({ children }) {
 
       {!loading && !error && (
         <div className={classes.section_top_elems}>
-          {/* <div
+          <div
             className={classes.section_top_elems_notify}
             onClick={toggleNotifications}
             ref={notificationsRef}
           >
-            <div className={classes.section_top_elems_notify_red}></div>
+            {notifySubscriptionData ? <div className={classes.section_top_elems_notify_red}></div> : null}
             <img src="/notify.png" alt="Уведомления" />
-          </div> */}
+          </div>
 
-          {/* {isNotificationsFullyVisible && (
+          {isNotificationsFullyVisible && (
             <div
               className={`${classes.notify_dropdown} ${
                 isNotificationsOpen ? classes.open : classes.closed
@@ -274,9 +282,10 @@ function Header({ children }) {
               <Notifications
                 onRequestClick={handleNotificationClick}
                 user={data?.user}
+                token={token}
               />
             </div>
-          )} */}
+          )}
 
           <div className={classes.section_top_elems_date}>
             <div>{formattedDate}</div>

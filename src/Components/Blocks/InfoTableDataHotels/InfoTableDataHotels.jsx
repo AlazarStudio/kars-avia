@@ -124,8 +124,7 @@ function InfoTableDataHotels({
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
               <div className={classes.InfoTable_data_elem_title}>
-                {item.airportDistance}
-                {" км"}
+                {item?.airportDistance ? `${item.airportDistance} км` : ''}
               </div>
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>

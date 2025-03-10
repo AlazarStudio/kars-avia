@@ -120,7 +120,7 @@
     overflow-y: scroll;
     max-height: 500px;
     top: 90px;
-    right: 250px;
+    right: 220px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -133,7 +133,12 @@
     transform: scale(0.95);
     pointer-events: none;
     transition: all ease-in-out 0.3s;
+    scrollbar-width: none;
 }
+
+/* .notify_dropdown::-webkit-scrollbar {
+    display: none;
+} */
 
 .notify_dropdown.open {
     opacity: 1;
@@ -209,6 +214,4 @@
 
 
 
-@media (min-width: 0px) and (max-width: 1399px) {
-    
-}
+@media (min-width: 0px) and (max-width: 1399px) {}

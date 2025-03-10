@@ -7,20 +7,25 @@ import {
   Button,
 } from "@mui/material";
 
+import classes from "./ManifestModal.module.css";
+import { roles } from "../../../roles";
+
 function ManifestModal({
+  user,
   open,
   onClose,
   handleFileChange,
   file,
   request,
   server,
-  classes,
 }) {
   const fileInputRef = useRef(null);
 
   const handleLabelClick = () => {
     fileInputRef.current && fileInputRef.current.click();
   };
+
+  // console.log(user);
 
   return (
     <Dialog open={open} onClose={onClose}>
@@ -32,21 +37,24 @@ function ManifestModal({
           style={{ display: "none" }}
           onChange={handleFileChange}
         />
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+        <div className={classes.downloadsButtonsWrapper}>
           {/* Кастомная кнопка загрузки */}
-          <label
-            onClick={handleLabelClick}
-            className={classes.downloadsButton}
-            style={{ cursor: "pointer" }}
-          >
-            <img
-              src="/edit.svg.png"
-              alt="Редактировать"
-              style={{ width: "15px" }}
-            />{" "}
-            Обновить манифест
-            {/* {file ? file.name : ""} */}
-          </label>
+          {user?.role === roles.hotelAdmin ? null : (
+            <label
+              onClick={handleLabelClick}
+              className={classes.downloadsButton}
+              style={{ cursor: "pointer" }}
+            >
+              Обновить манифест
+              <img
+                src="/edit.svg.png"
+                alt="Редактировать"
+                style={{ width: "15px" }}
+              />{" "}
+              {/* {file ? file.name : ""} */}
+            </label>
+          )}
+
           {/* Ссылка для скачивания манифеста */}
           {request?.files && (
             <a
@@ -55,7 +63,7 @@ function ManifestModal({
               className={classes.downloadsButton}
               rel="noopener noreferrer"
             >
-              Загрузить манифест
+              Скачать манифест
               <img src="/download.png" alt="Скачать" />
             </a>
           )}

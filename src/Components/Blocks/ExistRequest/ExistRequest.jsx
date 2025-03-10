@@ -385,6 +385,13 @@ function ExistRequest({
   const [separator, setSeparator] = useState("airline");
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
 
+  useEffect(() => {
+    setSeparator('airline')
+  }, [show])
+
+  // console.log(formData);
+  
+
   return (
     <>
       {formData && (
@@ -439,9 +446,17 @@ function ExistRequest({
               className={`${classes.tab} ${
                 activeTab === "Комментарии" ? classes.activeTab : ""
               }`}
+              style={{position:'relative'}}
               onClick={() => handleTabChange("Комментарии")}
             >
               Комментарии
+            {formData?.chat?.some(chat => 
+                chat.unreadMessagesCount > 0 && (
+                    (user.hotelId && chat.hotelId === user.hotelId) ||
+                    (user.airlineId && chat.airlineId === user.airlineId) ||
+                    (!user.hotelId && !user.airlineId)
+                )
+                ) && <div className={classes.unreadMessages}></div>}
             </div>
             <div
               className={`${classes.tab} ${
@@ -790,7 +805,9 @@ function ExistRequest({
                   </div>
                 )}
                 <Message
+                  key={`${chooseRequestID? chooseRequestID : chooseReserveID}-${activeTab}`}
                   activeTab={activeTab}
+                  show={show}
                   setIsHaveTwoChats={setIsHaveTwoChats}
                   chooseRequestID={chooseRequestID}
                   chooseReserveID={""}

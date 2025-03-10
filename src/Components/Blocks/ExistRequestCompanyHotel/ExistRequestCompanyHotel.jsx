@@ -13,7 +13,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
-import { roles } from "../../../roles.js";
+import { roles, rolesObject } from "../../../roles.js";
 
 function ExistRequestCompanyHotel({
   show,
@@ -150,6 +150,28 @@ function ExistRequestCompanyHotel({
   const handleUpdate = async () => {
     if (isEditing) {
       setIsLoading(true); // Устанавливаем isLoading перед началом загрузки
+      // Проверяем обязательные поля
+      const requiredFields = [
+        "name",
+        "email",
+        "role",
+        "position",
+        "login",
+      ];
+      const emptyFields = requiredFields.filter(
+        (field) => !formData[field]?.trim()
+      );
+
+      if (emptyFields.length > 0) {
+        alert("Пожалуйста, заполните все обязательные поля.");
+        setIsLoading(false);
+        return;
+      }
+      if (formData.password !== "" && formData.password.length < 8) {
+        alert("Новый пароль должен содержать минимум 8 символов.");
+        setIsLoading(false);
+        return;
+      }
       try {
         let response_update_user = await uploadFile({
           variables: {
@@ -287,33 +309,21 @@ function ExistRequestCompanyHotel({
                         dropdownWidth={"100%"}
                         isDisabled={!isEditing}
                         label={"Выберите должность"}
-                        options={["HOTELADMIN"]}
-                        value={formData.role}
+                        options={rolesObject.hotel}
+                        value={
+                          rolesObject.hotel.find(
+                            (option) => option.value === formData.role
+                          ) || null
+                        }
                         onChange={(event, newValue) => {
                           setIsEdited(true);
                           setFormData((prevData) => ({
                             ...prevData,
-                            role: newValue,
+                            role: newValue ? newValue.value : "",
                           }));
                         }}
                       />
-                      {/* <DropDownList
-                    placeholder="Выберите роль"
-                    options={["HOTELADMIN"]} // Роли
-                    initialValue={formData.role}
-                    onSelect={(value) => {
-                      setIsEdited(true);
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        role: value,
-                      }));
-                    }}
-                  /> */}
                     </div>
-
-                    {/* <select name="role" value={formData.role} onChange={handleChange}>
-              <option value="HOTELADMIN">HOTELADMIN</option>
-            </select> */}
                   </div>
                 </>
               )}
@@ -325,7 +335,7 @@ function ExistRequestCompanyHotel({
                     dropdownWidth={"100%"}
                     isDisabled={!isEditing}
                     label={"Выберите должность"}
-                    options={["Модератор", "Администратор"]}
+                    options={["Директор", "Администратор", "Менеджер"]}
                     value={formData.position}
                     onChange={(event, newValue) => {
                       setIsEdited(true);
@@ -335,27 +345,7 @@ function ExistRequestCompanyHotel({
                       }));
                     }}
                   />
-                  {/* <DropDownList
-                    placeholder="Выберите должность"
-                    options={["Модератор", "Администратор"]} // Должности
-                    initialValue={formData.position}
-                    onSelect={(value) => {
-                      setIsEdited(true);
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        position: value,
-                      }));
-                    }}
-                  /> */}
                 </div>
-                {/* <select
-              name="position"
-              value={formData.position}
-              onChange={handleChange}
-            >
-              <option value="Модератор">Модератор</option>
-              <option value="Администратор">Администратор</option>
-            </select> */}
               </div>
               <div className={classes.requestDataInfo}>
                 <div className={classes.requestDataInfo_title}>Логин</div>

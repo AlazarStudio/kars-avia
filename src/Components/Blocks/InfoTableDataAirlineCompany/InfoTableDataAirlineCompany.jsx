@@ -31,7 +31,7 @@ function InfoTableDataAirlineCompany({ children, toggleRequestSidebar, requests,
                                         </div>
                                         <div className={classes.employeeInfo}>
                                             <div className={classes.employeeName}>{employee.name}</div>
-                                            <div className={classes.employeePost}>{employee.role}</div>
+                                            <div className={classes.employeePost}>{employee.role === "AIRLINEADMIN" ? "Администратор" : "Модератор"}</div>
                                             <div className={classes.employeePost}>{employee.position}</div>
                                         </div>
                                         <div className={classes.infoTable_buttons}>

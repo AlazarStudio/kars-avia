@@ -4,7 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
 import { convertToDate, server } from "../../../../graphQL_requests";
 
-function InfoTableDataReserve({ children, requests, paginationHeight, pageInfo, ...props }) {
+function InfoTableDataReserve({ children, requests, user, paginationHeight, pageInfo, ...props }) {
     // Ref для контейнера списка
     const listContainerRef = useRef(null);
 
@@ -33,9 +33,23 @@ function InfoTableDataReserve({ children, requests, paginationHeight, pageInfo, 
 
             <div className={classes.bottom} style={{ height: `calc(100vh - ${paginationHeight})` }} ref={listContainerRef} >
                 {requests.map((item, index) => (
-                    <Link to={`/reserve/reservePlacement/${item.id}`} className={classes.InfoTable_data} key={index} style={{ opacity: item.status == 'done' && '0.5' }} >
-                        {item.status == 'created' && <div className={classes.newRequest}></div>}
+                    <Link to={`/reserve/reservePlacement/${item.id}`} className={classes.InfoTable_data} key={index} style={{ opacity: (item.status == 'done' && !item?.chat?.some(chat => 
+                        chat.unreadMessagesCount > 0 && (
+                            (user.hotelId && chat.hotelId === user.hotelId) ||
+                            (user.airlineId && chat.airlineId === user.airlineId) ||
+                            (!user.hotelId && !user.airlineId)
+                        )
+                        )) && '0.5' }} >
+                        {/* {item.status == 'created' && <div className={classes.newRequest}></div>} */}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.reserveNumber.slice(0, 4)}</div>
+                        {item?.chat?.some(chat => 
+                            chat.unreadMessagesCount > 0 && (
+                                (user.hotelId && chat.hotelId === user.hotelId) ||
+                                (user.airlineId && chat.airlineId === user.airlineId) ||
+                                (!user.hotelId && !user.airlineId)
+                            )
+                            ) && <div className={classes.newRequest}></div>}
+
 
                         <div className={`${classes.InfoTable_data_elem} ${classes.w11}`}>{convertToDate(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>

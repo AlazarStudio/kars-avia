@@ -10,6 +10,7 @@ import {
   GET_HOTEL_CITY,
   GET_HOTEL_TARIFS,
   GET_RESERVE_REQUESTS,
+  getCookie,
   REQUEST_RESERVE_CREATED_SUBSCRIPTION,
   REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
@@ -24,6 +25,7 @@ import Notification from "../../Notification/Notification";
 function Reserve({ children, user, idHotel, ...props }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const token = getCookie("token")
 
   // Получение текущей страницы из URL или localStorage
   let pageNumberReserve = new URLSearchParams(location.search).get("page");
@@ -39,6 +41,9 @@ function Reserve({ children, user, idHotel, ...props }) {
     return localStorage.getItem("statusFilterReserve") || "all";
   });
 
+  // console.log(user);
+  
+
   // Состояние для управления параметрами пагинации
   const [pageInfo, setPageInfo] = useState({
     skip: currentPageReserve,
@@ -47,6 +52,11 @@ function Reserve({ children, user, idHotel, ...props }) {
 
   // Запрос на получение списка заявок с учетом пагинации
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
+    context: {
+      headers : {
+          Authorization: `Bearer ${token}`,
+      },
+    },
     variables: {
       pagination: {
         skip: pageInfo.skip,
@@ -64,10 +74,18 @@ function Reserve({ children, user, idHotel, ...props }) {
 
   // Подписки на создание и обновление заявок
   const { data: subscriptionData } = useSubscription(
-    REQUEST_RESERVE_CREATED_SUBSCRIPTION
+    REQUEST_RESERVE_CREATED_SUBSCRIPTION, {
+      onData: () => {
+        refetch()
+      }
+    }
   );
   const { data: subscriptionUpdateData } = useSubscription(
-    REQUEST_RESERVE_UPDATED_SUBSCRIPTION
+    REQUEST_RESERVE_UPDATED_SUBSCRIPTION, {
+      onComplete: () => {
+        refetch()
+      }
+    }
   );
 
   const [newRequests, setNewRequests] = useState([]);
@@ -93,34 +111,34 @@ function Reserve({ children, user, idHotel, ...props }) {
   }, [pageNumberReserve]);
 
   // Обновление списка заявок при добавлении новых через подписку
-  useEffect(() => {
-    if (subscriptionData) {
-      const newRequest = subscriptionData.reserveCreated;
-      const statusMatchesFilter = statusFilter
-        .split(" / ")
-        .includes(newRequest.status);
+  // useEffect(() => {
+  //   if (subscriptionData) {
+  //     const newRequest = subscriptionData.reserveCreated;
+  //     const statusMatchesFilter = statusFilter
+  //       .split(" / ")
+  //       .includes(newRequest.status);
 
-      if (statusMatchesFilter) {
-        setRequests((prevRequests) => {
-          const exists = prevRequests.some(
-            (request) => request.id === newRequest.id
-          );
-          if (!exists) {
-            if (currentPageReserve === 0) {
-              return [newRequest, ...prevRequests];
-            } else {
-              setNewRequests((prevNewRequests) => [
-                newRequest,
-                ...prevNewRequests,
-              ]);
-            }
-          }
-          return prevRequests;
-        });
-      }
-      refetch();
-    }
-  }, [subscriptionData, currentPageReserve, refetch]);
+  //     if (statusMatchesFilter) {
+  //       setRequests((prevRequests) => {
+  //         const exists = prevRequests.some(
+  //           (request) => request.id === newRequest.id
+  //         );
+  //         if (!exists) {
+  //           if (currentPageReserve === 0) {
+  //             return [newRequest, ...prevRequests];
+  //           } else {
+  //             setNewRequests((prevNewRequests) => [
+  //               newRequest,
+  //               ...prevNewRequests,
+  //             ]);
+  //           }
+  //         }
+  //         return prevRequests;
+  //       });
+  //     }
+  //     refetch();
+  //   }
+  // }, [subscriptionData, currentPageReserve, refetch]);
 
   // Обновление данных заявок из запроса и новых заявок
   useEffect(() => {
@@ -136,11 +154,11 @@ function Reserve({ children, user, idHotel, ...props }) {
   }, [data, currentPageReserve, newRequests]);
 
   // Обновление при изменении заявок через подписку на обновление
-  useEffect(() => {
-    if (subscriptionUpdateData) {
-      refetch();
-    }
-  }, [subscriptionUpdateData, refetch]);
+  // useEffect(() => {
+  //   if (subscriptionUpdateData) {
+  //     refetch();
+  //   }
+  // }, [subscriptionUpdateData, refetch]);
 
   // Обработчик смены страницы
   const handlePageClick = (event) => {
@@ -317,6 +335,7 @@ function Reserve({ children, user, idHotel, ...props }) {
         {!loading && !error && requests && (
           <>
             <InfoTableDataReserve
+              user={user}
               paginationHeight={totalPages === 1 && "329px"}
               toggleRequestSidebar={toggleRequestSidebar}
               requests={filteredRequests}

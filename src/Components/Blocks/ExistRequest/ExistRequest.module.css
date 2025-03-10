@@ -455,4 +455,14 @@ select {
     outline: none;
 }
 
+.unreadMessages {
+    position: absolute;
+    top: -5px;
+    right: 0;
+    width: 6px;
+    height: 6px;
+    background-color: red;
+    border-radius: 50px;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

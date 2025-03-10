@@ -298,7 +298,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                 onChange={handleChange}
               />
 
-              <label>Рейтинг (количество звезд)</label>
+              <label>Рейтинг</label>
               <input
                 type="text"
                 name="stars"

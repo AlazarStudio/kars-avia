@@ -41,14 +41,18 @@ const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentM
             display: "flex", position: "sticky",
             top: 0,
             zIndex: 3,
-            boxShadow: '0 0 10px #00000030'
+            // borderRight: '1px solid #ddd',
+            // borderTop: '1px solid #ddd'
+            // boxShadow: '0 0 10px #00000030'
         }}>
             <Box
                 sx={{
                     width: `${leftWidth}px`,
+                    borderTop: '1px solid #ddd',
                     borderLeft: '1px solid #ddd',
                     borderRight: '1px solid #ddd',
                     borderBottom: '1px solid #ddd',
+                    boxShadow:'0px 8px 10px -5px #00000030',
                     backgroundColor: '#f5f5f5',
                     display: 'flex',
                     justifyContent: "center",
@@ -77,7 +81,7 @@ const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentM
                 </button>
             </Box>
 
-            <Box sx={{ display: "flex", flexDirection: "column", borderBottom: "1px solid #ddd", width: `calc(100% - ${leftWidth}px)` }}>
+            <Box sx={{ display: "flex", flexDirection: "column", borderBottom: "1px solid #ddd", width: `calc(100% - 228px)`, boxShadow:'0px 8px 10px -5px #00000030' }}>
                 {/* Месяц и кнопки */}
                 <Box
                     sx={{
@@ -87,7 +91,7 @@ const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentM
                         height: "50px",
                         backgroundColor: "#f5f5f5",
                         borderBottom: "1px solid #ddd",
-                        // borderTop: "1px solid #ddd",
+                        borderTop: "1px solid #ddd",
                         borderRight: '1px solid #ddd',
                         padding: "0 10px",
                     }}
@@ -104,7 +108,7 @@ const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentM
                 </Box>
 
                 {/* Дни месяца */}
-                <Box sx={{ display: "flex", height: "30px" }}>
+                <Box sx={{ display: "flex", height: "30px"}}>
                     {daysInMonth.map((day, index) => {
                         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                         const isCurrentDay = isToday(day);

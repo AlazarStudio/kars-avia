@@ -85,11 +85,13 @@ function HotelAbout_tabComponent({ id }) {
 
   useEffect(() => {
     if (infoCities.data) {
+      const mappedCities =
+        infoCities.data?.citys.map((item) => ({
+          label: `${item.city}, ${item.region}`,
+          value: item.city,
+        })) || [];
       setCities(
-        infoCities.data?.citys.map(
-          // (item) => `${item.city}, регион: ${item.region}`
-          (item) => item.city
-        ) || []
+        mappedCities
       );
     }
   }, [infoCities]);
@@ -811,13 +813,14 @@ function HotelAbout_tabComponent({ id }) {
                           dropdownWidth={"400px"}
                           isDisabled={!isEditing}
                           options={cities}
-                          value={hotel.information?.city || ""}
+                          getOptionLabel={(option) => option.label} 
+                          value={cities.find((option) => option.value === hotel.information?.city) || ""}
                           onChange={(event, newValue) => {
                             setHotel((prevHotel) => ({
                               ...prevHotel,
                               information: {
                                 ...prevHotel.information,
-                                city: newValue || "", // Обновляем поле `city`
+                                city: newValue ? newValue.value : "", // Обновляем поле `city`
                               },
                             }));
                           }}
@@ -865,7 +868,7 @@ function HotelAbout_tabComponent({ id }) {
                               : {}
                           }
                         >
-                          Расстояние до аэропорта (км)
+                          Расстояние до аэропорта <br />(км)
                         </label>
                         <input
                           type="number"

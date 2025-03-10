@@ -1,2 +1,23 @@
+.downloadsButtonsWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.downloadsButton {
+  width: 220px;
+  height: 40px;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: space-between;
+  font-size: 16px;
+  border: 1px solid #5458739e;
+  border-radius: 10px;
+  color: #545873;
+  cursor: pointer;
+}
 
 @media (min-width: 0px) and (max-width: 1299px) {}

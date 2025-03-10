@@ -14,6 +14,7 @@ import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
+  CREATE_RESERVE_REPORT,
   DELETE_PASSENGER_FROM_HOTEL,
   DELETE_PERSON_FROM_HOTEL,
   GET_HOTELS_RELAY,
@@ -72,13 +73,11 @@ function ReservePlacement({ children, user, ...props }) {
 
   // console.log(subscriptionDataUpdate);
   // console.log(subscriptionData);
-  
 
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUEST, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
       },
     },
     variables: { reserveId: idRequest },
@@ -92,6 +91,8 @@ function ReservePlacement({ children, user, ...props }) {
   } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
     variables: { reservationHotelsId: idRequest },
   });
+
+  // console.log(dataHotel);
 
   useEffect(() => {
     if (data && data.reserve && dataHotel) {
@@ -328,6 +329,28 @@ function ReservePlacement({ children, user, ...props }) {
     },
   });
 
+  const [createReserveReport] = useMutation(CREATE_RESERVE_REPORT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const createPassengerList = async (reserveId) => {
+    try {
+      await createReserveReport({
+        variables: {
+          reserveId: reserveId,
+          format: "xlsx",
+        },
+      });
+      refetch();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const removePassenger = async (guest) => {
     if (guest.guest.type == "Сотрудник") {
       try {
@@ -353,6 +376,7 @@ function ReservePlacement({ children, user, ...props }) {
             deletePassengerFromReserveId: guest.guest.id,
           },
         });
+        await createPassengerList(request.id);
 
         if (deletePassenger.data) {
           closeDeletecomponent();
@@ -465,9 +489,7 @@ function ReservePlacement({ children, user, ...props }) {
   // const exists = filteredPlacement.some(
   //   (item) => item.hotel.id === user.hotelId
   // );
-  const exists = placement.some(
-    (item) => item.hotel.id === user.hotelId
-  );
+  const exists = placement.some((item) => item.hotel.id === user.hotelId);
 
   const [file, setFile] = useState(null);
 
@@ -565,21 +587,29 @@ function ReservePlacement({ children, user, ...props }) {
                         alt=""
                         style={{ width: "15px", filter: "invert(100%)" }}
                       />{" "}
-                      {file ? file?.name : "Манифест"}
+                      {/* {file ? file?.name : "Манифест"} */}
+                      Манифест
                     </label>
                   </>
                 )}
               </>
             )}
-
-            <a
-              // href={`${server}${request?.files[0]}`}
-              target="_blank"
-              className={classes.downloadsButton}
-            >
-              Расселение
-              <img src="/download.png" alt="" />{" "}
-            </a>
+            {request?.passengerList?.length !== 0 ? (
+              <a
+                href={`${server}${request?.passengerList}`}
+                // onClick={() => {
+                //   request?.passengerList.length === 0
+                //     ? createPassengerList(request?.id)
+                //     : null;
+                // }}
+                target="_blank"
+                className={classes.downloadsButton}
+              >
+                Расселение
+                <img src="/download.png" alt="" />{" "}
+              </a>
+            ) : null}
+            {/* {console.log(request)} */}
             {user?.airlineId ? null : (
               <div className={classes.btnsReserve}>
                 {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
@@ -624,6 +654,7 @@ function ReservePlacement({ children, user, ...props }) {
               setFile={setFile}
               refetch={refetch}
               refetchHotel={refetchHotel}
+              createPassengerList={createPassengerList}
             />
 
             <AddNewPassenger
@@ -658,6 +689,7 @@ function ReservePlacement({ children, user, ...props }) {
             />
 
             <ManifestModal
+              user={user}
               open={openManifestModal}
               onClose={() => setOpenManifestModal(false)}
               handleFileChange={handleFileChange}

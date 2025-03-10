@@ -3,6 +3,7 @@ import classes from './InfoTableDataCompany.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
 import { server } from '../../../../graphQL_requests.js';
+import { roles } from "../../../roles.js";
 
 function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, setChooseObject, id, ...props }) {
     const handleObject = (item, index) => {
@@ -45,7 +46,7 @@ function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, 
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_title}>
-                                {item.role}
+                                {(item.role === roles.hotelAdmin || item.role === roles.dispatcerAdmin) ? "Администратор" : "Модератор"}
                             </div>
                         </div>
                     </div>

@@ -45,49 +45,49 @@ function HotelsList({ children, user, ...props }) {
   });
 
   // в этой версии проблема с дублированием
-  // useEffect(() => {
-  //     if (data && data.hotels) {
-  //         const sortedHotels = [...data.hotels.hotels].sort((a, b) => a.city.localeCompare(b.city));
-  //         setCompanyData(sortedHotels);
-  //     }
-
-  //     if (dataSubscription && dataSubscription.hotelCreated) {
-  //         setCompanyData((prevCompanyData) => {
-  //             const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
-  //             return updatedData.sort((a, b) => a.information?.city.localeCompare(b.city));
-  //         });
-  //     }
-
-  //     refetch();
-  // }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
-
   useEffect(() => {
-    if (data && data.hotels) {
-      const sortedHotels = [...data.hotels.hotels].sort((a, b) =>
-        a.information?.city.localeCompare(b.information?.city)
-      );
-      setCompanyData(sortedHotels);
-    }
+      if (data && data.hotels) {
+          const sortedHotels = [...data.hotels.hotels].sort((a, b) => a.city?.localeCompare(b.city));
+          setCompanyData(sortedHotels);
+      }
 
-    if (dataSubscription && dataSubscription.hotelCreated) {
-      setCompanyData((prevCompanyData) => {
-        // Если отель уже существует, не добавляем его повторно
-        if (
-          prevCompanyData.some(
-            (hotel) => hotel.id === dataSubscription.hotelCreated.id
-          )
-        ) {
-          return prevCompanyData;
-        }
-        const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
-        return updatedData.sort((a, b) =>
-          a.information?.city.localeCompare(b.information?.city)
-        );
-      });
-    }
+      if (dataSubscription && dataSubscription.hotelCreated) {
+          setCompanyData((prevCompanyData) => {
+              const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
+              return updatedData.sort((a, b) => a.information?.city?.localeCompare(b.city));
+          });
+      }
 
-    refetch();
+      refetch();
   }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
+
+  // useEffect(() => {
+  //   if (data && data.hotels) {
+  //     const sortedHotels = [...data.hotels.hotels].sort((a, b) =>
+  //       a.information?.city.localeCompare(b.information?.city)
+  //     );
+  //     setCompanyData(sortedHotels);
+  //   }
+
+  //   if (dataSubscription && dataSubscription.hotelCreated) {
+  //     setCompanyData((prevCompanyData) => {
+  //       // Если отель уже существует, не добавляем его повторно
+  //       if (
+  //         prevCompanyData.some(
+  //           (hotel) => hotel.id === dataSubscription.hotelCreated.id
+  //         )
+  //       ) {
+  //         return prevCompanyData;
+  //       }
+  //       const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
+  //       return updatedData.sort((a, b) =>
+  //         a.information?.city.localeCompare(b.information?.city)
+  //       );
+  //     });
+  //   }
+
+  //   refetch();
+  // }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
 
   const addHotel = (newHotel) => {
     setCompanyData(
@@ -160,11 +160,9 @@ function HotelsList({ children, user, ...props }) {
         (filterData.filterSelect === "" ||
           request.information?.city.includes(filterData.filterSelect)) &&
         (request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          request.information?.city
-            .toLowerCase()
+          request?.information?.city?.toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
-          request.information?.address
-            .toLowerCase()
+          request.information?.address?.toLowerCase()
             .includes(searchQuery.toLowerCase()))
       );
     });

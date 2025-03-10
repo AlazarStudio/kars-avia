@@ -70,7 +70,12 @@ function Estafeta({ user }) {
 
   // Подписки для отслеживания создания и обновления заявок
   const { data: subscriptionData } = useSubscription(
-    REQUEST_CREATED_SUBSCRIPTION
+    REQUEST_CREATED_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
   );
   const { data: subscriptionUpdateData } = useSubscription(
     REQUEST_UPDATED_SUBSCRIPTION,
@@ -397,13 +402,13 @@ function Estafeta({ user }) {
       <Header>Эскадрилья</Header>
       <div className={classes.section_searchAndFilter}>
         {/* <input
-                    type="text"
-                    placeholder="Поиск"
-                    className={classes.mainSearch}
-                    // style={{ width: '500px' }}
-                    value={searchQuery}
-                    onChange={handleSearch}
-                /> */}
+              type="text"
+              placeholder="Поиск"
+              className={classes.mainSearch}
+              // style={{ width: '500px' }}
+              value={searchQuery}
+              onChange={handleSearch}
+            /> */}
         <MUITextField
           className={classes.mainSearch}
           label={"Поиск"}
@@ -435,6 +440,7 @@ function Estafeta({ user }) {
       {!loading && !error && requests && (
         <>
           <InfoTableData
+            user={user}
             toggleRequestSidebar={toggleRequestSidebar}
             requests={filteredRequests}
             chooseRequestID={chooseRequestID}
