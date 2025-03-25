@@ -7,7 +7,7 @@
 }
 
 .notifyMessageWrapper {
-  padding: 15px;
+  padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 5px;
