@@ -20,7 +20,7 @@
     "@react-input/mask": "^2.0.4",
     "apollo-upload-client": "^18.0.1",
     "date-fns": "^4.1.0",
-    "dayjs": "^1.11.12",
+    "dayjs": "^1.11.13",
     "emoji-picker-react": "^4.12.0",
     "graphql": "^16.9.0",
     "graphql-ws": "^5.16.0",

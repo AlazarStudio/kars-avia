@@ -107,7 +107,7 @@ function InfoTableDataReports({
                     {" "}
                     <img src="/download.png" alt="" />{" "}
                   </a>
-                  {/* <img src="/deleteReport.png" alt=""  onClick={() => openDeleteComponent(index)}/> */}
+                  <img src="/deleteReport.png" alt=""  onClick={() => openDeleteComponent(item.id)}/>
                 </div>
               </div>
             );

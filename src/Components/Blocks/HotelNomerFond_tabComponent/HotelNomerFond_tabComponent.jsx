@@ -40,8 +40,9 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     }
   );
 
-  // console.log(dataSubscriptionUpd);
-  
+  // console.log(data);
+
+  const [type, setType] = useState(null);
 
   const [addTarif, setAddTarif] = useState([]);
   const [showAddTarif, setShowAddTarif] = useState(false);
@@ -111,6 +112,10 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                   ? "Семиместный"
                   : room.category === "eightPlace"
                   ? "Восьмиместный"
+                  : room.category === "apartment"
+                  ? "Апартаменты"
+                  : room.category === "studio"
+                  ? "Студия"
                   : "",
               origName: room.category,
               rooms: [],
@@ -130,6 +135,10 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
     if (dataSubscriptionUpd) refetch();
   }, [data, dataSubscriptionUpd, refetch]);
+
+  useEffect(() => {
+    if (data && data.hotel.type) setType(data.hotel.type);
+  }, [data]);
 
   const handleSearchTarif = (e) => {
     setSearchTarif(e.target.value);
@@ -301,6 +310,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
           </div>
 
           <InfoTableDataNomerFond
+            type={type}
             filter={filter}
             user={user}
             setFilter={setFilter}
@@ -312,6 +322,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
           />
 
           <CreateRequestNomerFond
+            type={type}
             id={id}
             filter={filter}
             tarifs={requestsTarifs}
@@ -324,6 +335,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
           />
 
           <EditRequestNomerFond
+            type={type}
             id={id}
             filter={filter}
             tarifs={requestsTarifs}

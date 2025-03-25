@@ -90,9 +90,7 @@ function HotelAbout_tabComponent({ id }) {
           label: `${item.city}, ${item.region}`,
           value: item.city,
         })) || [];
-      setCities(
-        mappedCities
-      );
+      setCities(mappedCities);
     }
   }, [infoCities]);
 
@@ -147,6 +145,7 @@ function HotelAbout_tabComponent({ id }) {
             updateHotelId: hotel.id,
             input: {
               name: hotel.name,
+              capacity: parseInt(hotel.capacity),
               stars: hotel.stars,
               usStars: hotel.usStars,
               airportDistance: hotel.airportDistance,
@@ -347,7 +346,9 @@ function HotelAbout_tabComponent({ id }) {
                     src={
                       newImage
                         ? URL.createObjectURL(newImage)
-                        : `${server}${hotel.images[0]}`
+                        : hotel.images.length !== 0
+                        ? `${server}${hotel.images[0]}`
+                        : "/no-avatar.png"
                     }
                     alt={hotel.name}
                   />
@@ -473,6 +474,7 @@ function HotelAbout_tabComponent({ id }) {
                 user?.role !== roles.superAdmin ? (
                   <>
                     {renderField({ label: "Название", value: hotel?.name })}
+                    {renderField({ label: "Мощность", value: hotel?.capacity })}
                     {renderField({
                       label: "Рейтинг",
                       value: hotel?.stars,
@@ -482,6 +484,10 @@ function HotelAbout_tabComponent({ id }) {
                       label: "Звездность",
                       value: hotel?.usStars,
                       isStars: true,
+                    })}
+                    {renderField({
+                      label: "Удалённость от аэропорта",
+                      value: hotel?.airportDistance,
                     })}
                     {renderField({
                       label: "Описание",
@@ -498,6 +504,17 @@ function HotelAbout_tabComponent({ id }) {
                         type="tel"
                         name="name"
                         value={hotel.name || ""}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={classes.hotelAbout_info_input}
+                      />
+                    </div>
+                    <div className={classes.hotelAbout_info_item}>
+                      <label>Мощность</label>
+                      <input
+                        type="number"
+                        name="capacity"
+                        value={hotel.capacity || ""}
                         onChange={handleChange}
                         disabled={!isEditing}
                         className={classes.hotelAbout_info_input}
@@ -522,6 +539,29 @@ function HotelAbout_tabComponent({ id }) {
                         value={hotel.usStars || ""}
                         onChange={handleChange}
                         disabled={user?.hotelId ? true : !isEditing}
+                        className={classes.hotelAbout_info_input}
+                      />
+                    </div>
+                    <div className={classes.hotelAbout_info_item}>
+                      <label
+                        className={classes.airportDistance}
+                        style={
+                          menuOpen && windowWidth <= 1707
+                            ? { width: "18%" }
+                            : !menuOpen && windowWidth <= 1690
+                            ? { width: "20%" }
+                            : {}
+                        }
+                      >
+                        Удалённость от аэропорта (мин)
+                      </label>
+                      <input
+                        type="number"
+                        name="airportDistance"
+                        step={0.1}
+                        value={hotel.airportDistance || ""}
+                        onChange={handleChange}
+                        disabled={!isEditing}
                         className={classes.hotelAbout_info_input}
                       />
                     </div>
@@ -551,7 +591,8 @@ function HotelAbout_tabComponent({ id }) {
                       </div>
                     )}
 
-                    {user.role === roles.superAdmin ? (
+                    {user.role === roles.superAdmin ||
+                    user.role === roles.dispatcerAdmin ? (
                       <div className={classes.hotelAbout_info_item}>
                         <div
                           className={classes.deleteHotel}
@@ -789,10 +830,10 @@ function HotelAbout_tabComponent({ id }) {
                         label: "Индекс",
                         value: hotel.information?.index,
                       })}
-                      {renderField({
+                      {/* {renderField({
                         label: "Расстояние до аэропорта",
                         value: hotel?.airportDistance,
-                      })}
+                      })} */}
                     </>
                   ) : (
                     <>
@@ -813,8 +854,13 @@ function HotelAbout_tabComponent({ id }) {
                           dropdownWidth={"400px"}
                           isDisabled={!isEditing}
                           options={cities}
-                          getOptionLabel={(option) => option.label} 
-                          value={cities.find((option) => option.value === hotel.information?.city) || ""}
+                          getOptionLabel={(option) => option.label}
+                          value={
+                            cities.find(
+                              (option) =>
+                                option.value === hotel.information?.city
+                            ) || ""
+                          }
                           onChange={(event, newValue) => {
                             setHotel((prevHotel) => ({
                               ...prevHotel,
@@ -852,29 +898,6 @@ function HotelAbout_tabComponent({ id }) {
                           type="text"
                           name="index"
                           value={hotel.information?.index || ""}
-                          onChange={handleChange}
-                          disabled={!isEditing}
-                          className={classes.hotelAbout_info_input}
-                        />
-                      </div>
-                      <div className={classes.hotelAbout_info_item}>
-                        <label
-                          className={classes.airportDistance}
-                          style={
-                            menuOpen && windowWidth <= 1707
-                              ? { width: "18%" }
-                              : !menuOpen && windowWidth <= 1690
-                              ? { width: "20%" }
-                              : {}
-                          }
-                        >
-                          Расстояние до аэропорта <br />(км)
-                        </label>
-                        <input
-                          type="number"
-                          name="airportDistance"
-                          step={0.1}
-                          value={hotel.airportDistance || ""}
                           onChange={handleChange}
                           disabled={!isEditing}
                           className={classes.hotelAbout_info_input}

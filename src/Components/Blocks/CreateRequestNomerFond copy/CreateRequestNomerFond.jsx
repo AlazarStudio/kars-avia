@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestNomerFond.module.css";
-import Button from "../../Standart/Button/Button";
-import Sidebar from "../Sidebar/Sidebar";
+import Button from "../../Standart/Button/Button.jsx";
+import Sidebar from "../Sidebar/Sidebar.jsx";
 
 import { getCookie, UPDATE_HOTEL } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
@@ -9,7 +9,6 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 
 function CreateRequestNomerFond({
-  type,
   show,
   onClose,
   addTarif,
@@ -29,8 +28,6 @@ function CreateRequestNomerFond({
     beds: "",
     reserve: "",
     description: "",
-    descriptionSecond: "",
-    price: type === "apartment" ? null : "",
     roomImages: "",
   });
 
@@ -52,8 +49,6 @@ function CreateRequestNomerFond({
       beds: "",
       reserve: "",
       description: "",
-      descriptionSecond: "",
-      price: type === "apartment" ? null : "",
       roomImages: "",
     });
     setIsEdited(false); // Сброс флага изменений
@@ -147,8 +142,6 @@ function CreateRequestNomerFond({
                   beds: parseFloat(formData.beds),
                   reserve: formData.reserve,
                   description: formData.description,
-                  descriptionSecond: formData.descriptionSecond,
-                  price: parseFloat(formData.price),
                 },
               ],
             },
@@ -167,8 +160,6 @@ function CreateRequestNomerFond({
                   beds: parseFloat(formData.beds),
                   reserve: formData.reserve,
                   description: formData.description,
-                  descriptionSecond: formData.descriptionSecond,
-                  price: parseFloat(formData.price),
                 },
               ],
             },
@@ -178,6 +169,8 @@ function CreateRequestNomerFond({
 
       // console.log(response_update_room);
       // console.log(formData);
+      
+      
 
       if (response_update_room) {
         const sortedTarifs = Object.values(
@@ -201,10 +194,6 @@ function CreateRequestNomerFond({
                     ? "Семиместный"
                     : room.category === "eightPlace"
                     ? "Восьмиместный"
-                    : room.category === "apartment"
-                    ? "Апартаменты"
-                    : room.category === "studio"
-                    ? "Студия"
                     : "",
                 origName: room.category,
                 rooms: [],
@@ -294,17 +283,6 @@ function CreateRequestNomerFond({
     },
   ];
 
-  const apartmentCategories = [
-    {
-      value: "apartment",
-      label: "Апартаменты",
-    },
-    {
-      value: "studio",
-      label: "Студия",
-    },
-  ];
-
   const bedsCategories = [
     {
       value: 1.0,
@@ -340,7 +318,6 @@ function CreateRequestNomerFond({
     },
   ];
 
-  const useCategories = type === "apartment" ? apartmentCategories : categories;
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -356,24 +333,20 @@ function CreateRequestNomerFond({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              {type === "apartment" ? null : (
-                <>
-                  <label>Квота или резерв</label>
-                  <MUIAutocomplete
-                    dropdownWidth={"100%"}
-                    label={"Выберите тип"}
-                    options={["Квота", "Резерв"]}
-                    value={formData.reserve === true ? "Резерв" : "Квота"}
-                    onChange={(event, newValue) => {
-                      setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        reserve: newValue === "Резерв",
-                      }));
-                      setIsEdited(true);
-                    }}
-                  />
-                </>
-              )}
+              <label>Квота или резерв</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите тип"}
+                options={["Квота", "Резерв"]}
+                value={formData.reserve === true ? "Резерв" : "Квота"}
+                onChange={(event, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    reserve: newValue === "Резерв",
+                  }));
+                  setIsEdited(true);
+                }}
+              />
 
               <label>Название номера</label>
               <input
@@ -384,27 +357,18 @@ function CreateRequestNomerFond({
                 placeholder="Пример: № 151"
               />
 
-              <label>Дополнительная информация</label>
-              <input
-                type="text"
-                name="descriptionSecond"
-                value={formData.descriptionSecond}
-                onChange={handleChange}
-                placeholder="Пример: Снимает Сам Иванов"
-              />
-
               <label>Категория</label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите категорию"}
-                options={useCategories.map((category) => category.label)}
+                options={categories.map((category) => category.label)}
                 value={
-                  useCategories.find(
+                  categories.find(
                     (category) => category.value === formData.category
                   ) || ""
                 }
                 onChange={(event, newValue) => {
-                  const selectedCategory = useCategories.find(
+                  const selectedCategory = categories.find(
                     (category) => category.label === newValue
                   );
                   setFormData((prevFormData) => ({
@@ -436,17 +400,24 @@ function CreateRequestNomerFond({
                   setIsEdited(true);
                 }}
               />
-              {type === "apartment" ? (
-                <>
-                  <label>Цена</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price || 0}
-                    onChange={handleChange}
-                  />
-                </>
-              ) : null}
+              {/* <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+              >
+                <option value={""} disabled>
+                  Выберите категорию
+                </option>
+                <option value={"onePlace"}>Одноместный</option>
+                <option value={"twoPlace"}>Двухместный</option>
+                <option value={"threePlace"}>Трехместный</option>
+                <option value={"fourPlace"}>Четырехместный</option>
+                <option value={"fivePlace"}>Пятиместный</option>
+                <option value={"sixPlace"}>Шестиместный</option>
+                <option value={"sevenPlace"}>Семиместный</option>
+                <option value={"eightPlace"}>Восьмиместный</option>
+              </select> */}
+
               <label>Описание</label>
               <textarea
                 id="description"

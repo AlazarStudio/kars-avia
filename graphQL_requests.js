@@ -230,6 +230,7 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
               active
               reserve
               description
+              descriptionSecond
               images
             }
             id
@@ -295,6 +296,7 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
               active
               reserve
               description
+              descriptionSecond
               images
             }
             id
@@ -501,86 +503,92 @@ export const GET_HOTELS_RELAY = gql`
 `;
 
 export const GET_REQUEST = gql`
-    query Query($requestId: ID!) {
-      request(id: $requestId) {
-          id
-          airportId
-          airport {
-            id
-            name
-            city
-            code
-          }
-          arrival
-          departure
-          roomCategory
-          mealPlan {
-            included
-            breakfast
-            lunch
-            dinner
-            dailyMeals {
-              breakfast
-              date
-              dinner
-              lunch
-            }
-          }
-          senderId
-          receiverId
-          createdAt
-          updatedAt
-          hotelId
-          roomNumber
-          status
-         logs {
-            id
-            action
-            description
-            oldData
-            newData
-            createdAt
-            user {
-              name
-              role
-            }
-          }
-          person {
-            id
-            name
-            number
-            position
-            gender
-          }
-          airline {
-            name
-            images
-          }
-          requestNumber
-          hotel {
-            id
-            name
-          }
-          hotelChess {
-            room {
-              id
-              name
-              category
-              places
-              active
-              reserve
-              description
-              images
-            }
-            place
-          }
-        chat {
-          unreadMessagesCount
-          airlineId
-          hotelId
+  query Query($pagination: LogPaginationInput, $requestId: ID) {
+    request(id: $requestId) {
+      id
+      airportId
+      airport {
+        id
+        name
+        city
+        code
+      }
+      arrival
+      departure
+      roomCategory
+      mealPlan {
+        included
+        breakfast
+        lunch
+        dinner
+        dailyMeals {
+          breakfast
+          date
+          dinner
+          lunch
         }
       }
+      senderId
+      receiverId
+      createdAt
+      updatedAt
+      hotelId
+      roomNumber
+      status
+      logs(pagination: $pagination) {
+        logs {
+          id
+          action
+          description
+          oldData
+          newData
+          createdAt
+          user {
+            name
+            role
+          }
+        }
+        totalCount
+        totalPages
+      }
+      person {
+        id
+        name
+        number
+        position
+        gender
+      }
+      airline {
+        id
+        name
+        images
+      }
+      requestNumber
+      hotel {
+        id
+        name
+      }
+      hotelChess {
+        room {
+          id
+          name
+          category
+          places
+          active
+          reserve
+          description
+          descriptionSecond
+          images
+        }
+        place
+      }
+      chat {
+        unreadMessagesCount
+        airlineId
+        hotelId
+      }
     }
+  }
 `;
 
 export const CANCEL_REQUEST = gql`
@@ -613,6 +621,7 @@ export const UPDATE_HOTEL_BRON = gql`
           active
           reserve
           description
+          descriptionSecond
           images
         }
       }
@@ -647,6 +656,7 @@ export const GET_BRONS_HOTEL = gql`
           active
           reserve
           description
+          descriptionSecond
           images
         }
         client {
@@ -829,41 +839,49 @@ export const GET_LOGS = gql`
 `;
 
 export const GET_HOTEL_LOGS = gql`
-  query Hotel($hotelId: ID!) {
+  query Hotel($pagination: LogPaginationInput, $hotelId: ID!) {
     hotel(id: $hotelId) {
       id
       name
-      logs {
-        id
-        description
-        action
-        oldData
-        newData
-        user {
-          name
-          role
+      logs(pagination: $pagination) {
+        totalCount
+        totalPages
+        logs {
+          createdAt
+          id
+          description
+          action
+          oldData
+          newData
+          user {
+            name
+            role
+          }
         }
-        createdAt
       }
     }
   }
 `;
 
 export const GET_AIRLINE_LOGS = gql`
-  query Airline($airlineId: ID!) {
+  query Airline($pagination: LogPaginationInput, $airlineId: ID!) {
     airline(id: $airlineId) {
       id
       name
-      logs {
-        id
-        description
-        createdAt
-        action
-        newData
-        oldData
-        user {
-          name
-          role
+      logs(pagination: $pagination) {
+        totalCount
+        totalPages
+        logs {
+          id
+          description
+          createdAt
+          action
+          newData
+          oldData
+          user {
+            name
+            role
+          }
         }
       }
     }
@@ -871,18 +889,20 @@ export const GET_AIRLINE_LOGS = gql`
 `;
 
 export const GET_RESERVE_LOGS = gql`
-  query Reserve($reserveId: ID!) {
+  query Reserve($reserveId: ID!, $pagination: LogPaginationInput) {
     reserve(id: $reserveId) {
-      logs {
-        id
-        newData
-        oldData
-        description
-        createdAt
-        action
-        user {
-          name
-          role
+      logs(pagination: $pagination) {
+        logs {
+          id
+          newData
+          oldData
+          description
+          createdAt
+          action
+          user {
+            name
+            role
+          }
         }
       }
     }
@@ -922,6 +942,7 @@ export const SAVE_HANDLE_EXTEND_MUTATION = gql`
           active
           reserve
           description
+          descriptionSecond
         }
       }
       mealPlan {
@@ -1210,6 +1231,7 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
           active
           reserve
           description
+          descriptionSecond
           images
         }
       }
@@ -1246,6 +1268,7 @@ export const GET_RESERVE_REQUEST_HOTELS = gql`
           active
           reserve
           description
+          descriptionSecond
           images
         }
         }
@@ -1387,6 +1410,7 @@ export const GET_HOTELS = gql`
       hotels {
         id
         name
+        capacity
         information {
           city
           address
@@ -1443,6 +1467,8 @@ export const GET_HOTEL = gql`
     hotel(id: $hotelId) {
       id
       name
+      capacity
+      type
       stars
       usStars
       airportDistance
@@ -1464,6 +1490,7 @@ export const GET_HOTEL = gql`
       images
       rooms {
         id
+        type
         name
         category
         active
@@ -1530,15 +1557,20 @@ export const GET_HOTEL_MEAL_PRICE = gql`
 export const GET_HOTEL_ROOMS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
+      type
       rooms {
         id
         name
+        type
+        price
         category
+        beds
         places
         active
         reserve
         description
         images
+        descriptionSecond
       }
     }
   }
@@ -1548,6 +1580,7 @@ export const GET_HOTEL_NAME = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
       name
+      type
     }
   }
 `;
@@ -1559,6 +1592,7 @@ export const UPDATE_HOTEL = gql`
         id
         name
         category
+        beds
         places
         reserve
         active
@@ -1714,6 +1748,7 @@ export const GET_AIRLINES = gql`
         id
         images
         name
+        nameFull
       }
     }
   }
@@ -1754,6 +1789,7 @@ export const GET_AIRLINE = gql`
     airline(id: $airlineId) {
       id
       name
+      nameFull
       images
       information {
         country
@@ -1769,6 +1805,11 @@ export const GET_AIRLINE = gql`
         bik
         description
         link
+      }
+      staff {
+        id
+        name
+        position
       }
     }
   }
@@ -1786,6 +1827,8 @@ export const GET_AIRLINE_TARIFS = gql`
         priceSixCategory
         priceSevenCategory
         priceEightCategory
+        priceApartment
+        priceStudio
       }
     }
   }
@@ -2188,7 +2231,7 @@ export const GET_AIRLINE_REPORT = gql`
   }
 `;
 
-export const GET_REPORTS_SUBSCRIOPTION = gql`
+export const GET_REPORTS_SUBSCRIPTION = gql`
   subscription Subscription {
     reportCreated {
       id
@@ -2215,6 +2258,15 @@ export const GET_HOTEL_REPORT = gql`
         startDate
         endDate
       }
+    }
+  }
+`;
+
+
+export const DELETE_REPORT = gql`
+  mutation DeleteReport($deleteReportId: ID!) {
+    deleteReport(id: $deleteReportId) {
+      id
     }
   }
 `;

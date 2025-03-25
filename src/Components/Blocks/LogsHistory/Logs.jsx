@@ -9,6 +9,7 @@ import {
   GET_RESERVE_LOGS,
   getCookie,
 } from "../../../../graphQL_requests";
+import ReactPaginate from "react-paginate";
 
 function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const token = getCookie("token");
@@ -16,17 +17,32 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const query = queryLog;
   const ID = queryID;
 
-  const { data: dataLogs, refetch } = useQuery(query, {
+  const [totalPages, setTotalPages] = useState(1);
+  const currentPageRelay = 0;
+
+  // Состояние для хранения информации о странице (для пагинации)
+  const [pageInfo, setPageInfo] = useState({
+    skip: currentPageRelay,
+    take: 50,
+  });
+
+  const { data: dataLogs, error, refetch } = useQuery(query, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
         // 'Apollo-Require-Preflight': 'true'
       },
     },
-    variables: { [ID]: id },
+    variables: {
+      [ID]: id,
+      pagination: {
+        skip: pageInfo.skip,
+        take: pageInfo.take,
+      },
+    },
   });
 
-  // console.log(dataLogs);
+  // console.error(error);
 
   const [logsData, setLogsData] = useState(null);
 
@@ -34,14 +50,43 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
     if (dataLogs) {
       setLogsData(
         type === "hotel"
-          ? dataLogs.hotel
+          ? dataLogs.hotel.logs
           : type === "airline"
-          ? dataLogs.airline
-          : dataLogs.reserve
+          ? dataLogs.airline.logs
+          : dataLogs.reserve.logs
+      );
+      setTotalPages(
+        type === "hotel"
+          ? dataLogs.hotel.logs.totalPages
+          : type === "airline"
+          ? dataLogs.airline.logs.totalPages
+          : dataLogs.reserve.logs.totalPages
       );
     }
     if (show) refetch();
   }, [dataLogs, show]);
+
+  const logRef = useRef(null);
+
+  // Обработчик смены страницы в ReactPaginate
+  const handlePageClick = (event) => {
+    logRef.current.scrollTo({
+      top: 0,
+      behavior: "instant",
+    });
+    const newPageIndex = event.selected; // нумерация с 0
+    // Вычисляем skip (например, newPageIndex * take)
+    setPageInfo((prev) => ({
+      ...prev,
+      skip: newPageIndex * 50,
+    }));
+  };
+
+  // useEffect(() => {
+  //   console.log(pageInfo);
+  // }, [pageInfo]);
+
+  // console.log(totalPages);
 
   const sidebarRef = useRef();
 
@@ -75,9 +120,12 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
         </div>
 
         {logsData && (
-          <div className={classes.requestData}>
-            <div className={classes.logs}>
-              {[...logsData.logs].reverse().map((log, index) => (
+          <div
+            className={classes.requestData}
+            style={{ paddingBottom: totalPages > 1 ? "40px" : "20px" }}
+          >
+            <div ref={logRef} className={classes.logs}>
+              {[...logsData.logs].map((log, index) => (
                 <div className={classes.logs1} key={log.id}>
                   <div className={classes.historyDate} key={index}>
                     {new Date(log.createdAt).toLocaleDateString("ru-RU", {
@@ -107,6 +155,23 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
                 </div>
               ))}
             </div>
+            {totalPages > 1 && (
+              <div className={classes.pagination}>
+                <ReactPaginate
+                  previousLabel={"←"}
+                  nextLabel={"→"}
+                  breakLabel={"..."}
+                  pageCount={totalPages}
+                  marginPagesDisplayed={1}
+                  pageRangeDisplayed={2}
+                  onPageChange={handlePageClick}
+                  // forcePage={validCurrentPage}
+                  containerClassName={classes.pagination}
+                  activeClassName={classes.activePaginationNumber}
+                  pageLinkClassName={classes.paginationNumber}
+                />
+              </div>
+            )}
           </div>
         )}
       </Sidebar>

@@ -25,6 +25,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
     usStars: "",
     airportDistance: "",
     images: "",
+    capacity: "",
   });
 
   const sidebarRef = useRef();
@@ -38,6 +39,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
       usStars: "",
       airportDistance: "",
       images: "",
+      capacity: "",
     });
     setIsEdited(false); // Сброс флага изменений
   }, []);
@@ -112,7 +114,8 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
       !formData.stars.trim() ||
       !formData.usStars.trim() ||
       !formData.airportDistance.trim() ||
-      !formData.images
+      !formData.images ||
+      !formData.capacity
     ) {
       alert("Пожалуйста, заполните все поля!");
       setIsLoading(false);
@@ -129,6 +132,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
         variables: {
           input: {
             name: formData.name,
+            capacity: formData.capacity,
             information: {
               city: formData.city,
               address: formData.address,
@@ -298,7 +302,16 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                 onChange={handleChange}
               />
 
-              <label>Рейтинг</label>
+              <label>Мощность</label>
+              <input
+                type="number"
+                name="capacity"
+                value={formData.capacity}
+                placeholder="Например: 5"
+                onChange={handleChange}
+              />
+
+              <label>Оценка</label>
               <input
                 type="text"
                 name="stars"
@@ -316,13 +329,13 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                 onChange={handleChange}
               />
 
-              <label>Расстояние до аэропорта (км)</label>
+              <label>Удалённость от аэропорта (мин)</label>
               <input
                 type="number"
                 name="airportDistance"
                 step={0.1}
                 value={formData.airportDistance}
-                placeholder="2 км"
+                placeholder="20 мин"
                 onChange={handleChange}
               />
 

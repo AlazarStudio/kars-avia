@@ -21,6 +21,7 @@ import { roles } from "../../../roles";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import ExistRequest from "../../Blocks/ExistRequest/ExistRequest";
 import { VariableSizeList } from "react-window";
+import EditRequestNomerFond from "../../Blocks/EditRequestNomerFond/EditRequestNomerFond";
 
 const DAY_WIDTH = 40;
 const LEFT_WIDTH = 220;
@@ -62,18 +63,29 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         setCheckRoomsType(info);
     }
 
+
+    const [showEditNomer, setShowEditNomer] = useState(false);
+    const [selectedNomer, setSelectedNomer] = useState(null);
+
+    // console.log(selectedNomer);
+    
+
     const rooms = useMemo(() => {
         if (!data || !data.hotel || !data.hotel.rooms) return [];
 
         return data.hotel.rooms
             // .filter((room) => room.reserve === checkRoomsType)
             .map((room) => ({
-                id: room.name,
                 roomId: room.id,
                 reserve: room.reserve,
-                active: room.active,
+                id: room.name,
                 // type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
                 type: room.places,
+                category: room.category,
+                beds: room.beds,
+                active: room.active,
+                description: room.description,
+                descriptionSecond: room.descriptionSecond
             }))
             .sort((a, b) => {
                 // Сначала сортируем по reserve (false < true)
@@ -84,6 +96,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 return a.id.localeCompare(b.id, undefined, { numeric: true });
             });
     }, [data]);
+
+    // console.log(rooms);
+    
 
     // Получение броней отеля
 
@@ -102,6 +117,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION, {
         onData: () => {
             bronRefetch(); // Обновляем данные после новых событий
+            refetchBrons();
         },
     });
 
@@ -255,7 +271,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 requestNumber: request.requestNumber,
                 isRequest: true,
                 airline: request.airline,
-                personID: request.person.id,
+                personID: request?.person?.id,
             }));
 
             setNewRequests(transformedRequests);
@@ -737,7 +753,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 const reqCheckOut = new Date(`${req.checkOutDate}T${req.checkOutTime}:00`);
                 const draggedCheckIn = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}:00`);
                 const draggedCheckOut = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}:00`);
-            
+
                 return (
                     // req.room?.name === targetRoomId &&
                     req.room?.id === targetRoomId &&
@@ -771,7 +787,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 const exists = prevRequests.some((req) => req.id === newRequest.id);
                 if (exists) {
                     addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-                    console.log('This is here');
+                    // console.log('This is here');
                     return prevRequests;
                 }
                 return [...prevRequests, newRequest];
@@ -951,7 +967,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     const exists = prevRequests.some((req) => req.id === newRequest.id);
                     if (exists) {
                         addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-                        console.log('This is here');
+                        // console.log('This is here');
                         return prevRequests;
                     }
                     return [...prevRequests, newRequest];
@@ -1137,6 +1153,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 input: bookingInput,
                             },
                         });
+
+                        // console.log(bookingInput);
+                        
     
                         addNotification("Бронь успешно перемещена", "success");
                     } catch (err) {
@@ -1414,7 +1433,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             refetchHotelReserveOne()
         } catch (err) {
             console.error("Произошла ошибка при подтверждении бронирования", err);
-            console.log(bookingInput);
+            // console.log(bookingInput);
             
             // console.log(request);
             
@@ -1493,9 +1512,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
         return requests.filter((request) =>
             (
-                request.guest.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                request?.guest?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (request?.guestPosition ? request.guestPosition.toLowerCase().includes(searchQuery.toLowerCase()) : null) ||
-                (request?.room && request.room?.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (request?.room && request.room?.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
                 request.requestID.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 request.airline?.name.toLowerCase().includes(searchQuery.toLowerCase())
             ) && (
@@ -1521,34 +1540,50 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     //       );
     //     });
     //   }, [requests, searchQuery]);
-      
-    
 
     // console.log(filteredRequests);
     
     
 
-
     // const filteredRooms = useMemo(() => {
     //     if (!searchQuery) return rooms
 
     //     return rooms.filter((room) =>
-    //         filteredRequests.some((request) => request.room === room.id) ||
+    //         // filteredRequests.some((request) => request.room?.name === room.id) ||
+    //         filteredRequests.some((request) => request.room?.id === room.roomId) ||
     //         room.id.toLowerCase().includes(searchQuery.toLowerCase())
     //     );
     // }, [rooms, filteredRequests, searchQuery]);
 
     const filteredRooms = useMemo(() => {
-        if (!searchQuery) return rooms
+        // Если нет поискового запроса, просто берём все комнаты,
+        // иначе фильтруем по существующей логике
+        const baseFiltered = !searchQuery
+          ? rooms
+          : rooms.filter((room) =>
+              filteredRequests.some((request) => request.room?.id === room.roomId) ||
+              room.id.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+      
+        // Сортируем:
+        // 1) Сначала по полю `reserve` так, чтобы false шёл раньше true
+        // 2) Если `reserve` одинаковое, то сравниваем по `type` по возрастанию
+        return [...baseFiltered].sort((a, b) => {
+          if (a.reserve === b.reserve) {
+            // Если type числовой:
+            return a.type - b.type;
+            // Если type — строка, то используйте:
+            // return a.type.localeCompare(b.type);
+          }
+          // false должно идти раньше true
+          return a.reserve ? 1 : -1;
+        });
+      }, [rooms, filteredRequests, searchQuery]);
 
-        return rooms.filter((room) =>
-            // filteredRequests.some((request) => request.room?.name === room.id) ||
-            filteredRequests.some((request) => request.room?.id === room.roomId) ||
-            room.id.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [rooms, filteredRequests, searchQuery]);
+    //   console.log(filteredRooms);
+      
+      
 
-    // console.log(rooms);
 
     const [notifications, setNotifications] = useState([]);
 
@@ -1802,9 +1837,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         return request.passengerCount > totalCapacity || !!infoHotel;
     });
 
-    // console.log(requestsReserves);
-    
-
     // ref для управления списком
     const listRef = useRef(null);
 
@@ -1832,7 +1864,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     };
 
     // Для виртуального списка вычисления на уровне родительского компонента
-
     const containerRef = useRef(null);
     const [dayWidthLength, setDayWidthLength] = useState(DAY_WIDTH);
     const daysInMonth1 = eachDayOfInterval({
@@ -1868,8 +1899,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     //     setListHeight(heightContainerRef.current.offsetHeight);
     //   }
     // }, [heightContainerRef, filteredRequests, window.innerWidth]);
-        
-      
+
     return (
         <>
         {(loading) ? <MUILoader fullHeight={'60vh'}/> : 
@@ -1886,7 +1916,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 position: "relative", 
                                 height: user.role == 'HOTELADMIN' ? '76vh' : '67vh', 
                                 maxHeight: user.role == 'HOTELADMIN' ? '76vh' : '67vh', 
-                                overflow: 'hidden', width: '100%', 
+                                overflow: 'hidden', 
+                                width: '100%', 
                                 // borderBottom: '1px solid #ddd', 
                                 // borderTop: '1px solid #ddd',
                                 // borderRight: '1px solid #ddd' 
@@ -1920,7 +1951,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                     ? 520
                                     : 450} // или другое подходящее значение
                                 overscanCount={5}
-                                style={{ overflowY: 'scroll' }}
+                                style={{ overflowY: 'scroll', overflowX:'hidden' }}
                             >
                                 {({ index, style }) => {
                                     const room = filteredRooms[index];
@@ -1930,23 +1961,24 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                         {/* Левая колонка с названиями комнат */}
                                             <Box
                                                 sx={{
-                                                minWidth: `${LEFT_WIDTH}px`,
-                                                width: `${LEFT_WIDTH}px`,
-                                                maxWidth: `${LEFT_WIDTH}px`,
-                                                backgroundColor: '#f5f5f5',
-                                                borderLeft: '1px solid #ddd',
-                                                borderRight: '1px solid #ddd',
-                                                // borderTop: '1px solid #ddd',
-                                                borderBottom: '1px solid #ddd',
-                                                // borderBottom: index + 1 === filteredRooms.length ? '1px solid transparent' : '1px solid #ddd',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                overflow: 'hidden',
-                                                backgroundColor: hoveredRoom === room.roomId ? "#cce5ff" : !room.active ? '#a9a9a9' : '#f5f5f5'
+                                                    minWidth: `${LEFT_WIDTH}px`,
+                                                    width: `${LEFT_WIDTH}px`,
+                                                    maxWidth: `${LEFT_WIDTH}px`,
+                                                    backgroundColor: '#f5f5f5',
+                                                    borderLeft: '1px solid #ddd',
+                                                    borderRight: '1px solid #ddd',
+                                                    // borderTop: '1px solid #ddd',
+                                                    borderBottom: '1px solid #ddd',
+                                                    // borderBottom: index + 1 === filteredRooms.length ? '1px solid transparent' : '1px solid #ddd',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    overflow: 'hidden',
+                                                    zIndex: 15,
+                                                    backgroundColor: hoveredRoom === room.roomId ? "#cce5ff" : !room.active ? '#a9a9a9' : '#f5f5f5'
                                                 }}
                                             >
                                                 <Tooltip
-                                                    title={`${room.id} ${!room.active ? '(не работает)' : ''}`}
+                                                    title={`${room.id} ${room.descriptionSecond ? room.descriptionSecond : ""} ${!room.active ? '(не работает)' : ''}`}
                                                     arrow
                                                     placement="top"
                                                     enterDelay={1000}
@@ -1957,30 +1989,80 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                             width: '100%',
                                                             textAlign: 'left',
                                                             fontSize: '14px',
-                                                            padding: '0 10px',
+                                                            padding: '0 8px',
                                                             overflow: 'hidden',
                                                             display: 'flex',
                                                             justifyContent: 'space-between',
-                                                            alignItems: 'flex-start',
+                                                            alignItems: 'center',
+                                                            // alignItems: 'flex-start',
                                                             color: '#545873',
                                                             WebkitBoxOrient: 'vertical',
                                                             WebkitLineClamp: 2,
                                                         }}
                                                     >
-                                                        {room.id}
+                                                        <div 
+                                                            style={{ display: 'flex', flexDirection:'column', cursor: 'pointer' }}
+                                                            onClick={() => {
+                                                                setSelectedNomer(room); // room – объект с данными номера
+                                                                setShowEditNomer(true);
+                                                            }}
+                                                        >
+                                                            <p 
+                                                              style={
+                                                                room.type === 1 ?
+                                                                {
+                                                                fontSize: '12px',
+                                                                display: '-webkit-box',
+                                                                WebkitLineClamp: 1,
+                                                                WebkitBoxOrient: 'vertical',
+                                                                overflow: 'hidden',
+                                                              } : {
+                                                                fontSize: '12px',
+                                                              }}
+                                                            >
+                                                                {room.id}
+                                                            </p> 
+                                                            <p
+                                                            style={
+                                                                room.type === 1 ?
+                                                                {
+                                                                fontSize: '10px',
+                                                                display: '-webkit-box',
+                                                                WebkitLineClamp: 2,
+                                                                WebkitBoxOrient: 'vertical',
+                                                                overflow: 'hidden',
+                                                              } : {
+                                                                fontSize: '10px',
+                                                              }}
+                                                            >
+                                                                {room.descriptionSecond}
+                                                            </p> 
+                                                        </div>
                                                         {!room.active ? '(не работает)' : ''}
                                                         <Box
                                                             component="span"
                                                             sx={{
-                                                                minWidth:'50px',
+                                                                minWidth:'37px',
                                                                 display: 'flex',
-                                                                alignItems: 'center',
+                                                                flexDirection:'column',
+                                                                alignItems: 'flex-end',
                                                                 gap: '5px'
                                                             }}
                                                         >
-                                                            <img src="/roomPlace.png" style={{ verticalAlign: 'top' }} alt="" />
-                                                            {`X ${room.type}`}
+                                                            {/* <img src="/roomPlace.png" style={{ verticalAlign: 'top' }} alt="" /> */}
+                                                            {/* <img src="/roomPlacePerson.png" style={{ verticalAlign: 'top', width: '20px' }} alt="" /> */}
+                                                            <div style={{ display:'flex', alignItems:'center', gap: '2px', fontSize: '12px' }}>
+                                                                <img src="/roomPlacePersonWhite.png" style={{ verticalAlign: 'top', width: '12px'}} alt="" />
+                                                                {`x ${room.type}`}
+                                                            </div>
+                                                            {room.beds ? (
+                                                            <div style={{ display:'flex', alignItems:'center', gap: '2px', fontSize: '12px' }}>
+                                                                <img src="/roomPlace.png" style={{ verticalAlign: 'top', height: '12px'}} alt="" />
+                                                                {`x ${room.beds}`}
+                                                            </div>
+                                                            ) : null}
                                                         </Box>
+                                                        {/* {console.log(room)} */}
                                                     </Typography>
                                                 </Tooltip>
                                             </Box>
@@ -2022,7 +2104,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
 
                     {!checkRoomsType && 
-                        <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
+                        <Box sx={{ width: "330px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
                             <Typography variant="h6" sx={{ padding: '10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по эскадрильи в городе {hotelInfo.information?.city}
                             </Typography>
@@ -2063,7 +2145,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     }
 
                     {checkRoomsType && !showReserveInfo && !showModalForAddHotelInReserve &&
-                        <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
+                        <Box sx={{ width: "330px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
                             <Typography variant="h6" sx={{ padding:'10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по пассажирам в городе {hotelInfo.information?.city}
                             </Typography>
@@ -2094,7 +2176,17 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                 justifyContent: 'center',
                                                 alignItems: 'center',
                                             }}>
-                                                <img src={`${server}${request.airline.images[0]}`} alt="" style={{ height: '20px', marginRight: '5px' }} />
+                                                <img 
+                                                    src={`${server}${request.airline.images[0]}`} 
+                                                    alt="" 
+                                                    style={{ 
+                                                        height: '25px',
+                                                        width: '25px', 
+                                                        objectFit:'cover', 
+                                                        borderRadius: '50%', 
+                                                        marginRight: '5px'
+                                                        }}
+                                                />
                                                 {request.airline.name} - {request?.reserveForPerson ? 'экипаж' : 'пассажиры'}
                                             </Box>
                                             <Box sx={{
@@ -2222,6 +2314,20 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 chooseRequestID={selectedRequestID}
                 user={user}
             />
+
+            {showEditNomer && (
+                <EditRequestNomerFond
+                    show={showEditNomer}
+                    onClose={() => setShowEditNomer(false)}
+                    type={hotelInfo?.type}
+                    nomer={selectedNomer}
+                    id={hotelId}
+                    roomId={selectedNomer?.roomId}
+                    roomsRefetch={roomsRefetch}
+                    // Другие необходимые пропсы: id, category, reserve, active, onSubmit, uniqueCategories, tarifs, addTarif, setAddTarif, addNotification и т.д.
+                />
+            )}
+
 
             {notifications.map((n, index) => (
                 <Notification

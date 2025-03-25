@@ -9,6 +9,7 @@ function MUIAutocomplete({
   onChange,
   dropdownWidth,
   isDisabled,
+  listboxHeight,
   children,
   ...props
 }) {
@@ -39,6 +40,7 @@ function MUIAutocomplete({
               fontSize: "14px", // Уменьшаем размер шрифта списка
               padding: "0",
               borderRadius: "10px !important",
+              ...(listboxHeight && { maxHeight: listboxHeight }),
             },
           },
           paper: {

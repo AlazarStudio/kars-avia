@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import ReactDOM from 'react-dom'
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
@@ -11,7 +11,6 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         id: request.id.toString(),
         data: {
             position: request.position,
-            // roomId: request.room?.id,
             roomId: request.room?.id,
         },
     });
@@ -27,10 +26,13 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
     const duration = (differenceInMilliseconds(checkOut, checkIn) / (24 * 60 * 60 * 1000)) * dayWidth;
 
     // const [checkInOffset, duration] = useMemo(() => {
-    //     const offset = differenceInMilliseconds(checkIn, startDate) / DAY_IN_MS * dayWidth;
-    //     const dur = differenceInMilliseconds(checkOut, checkIn) / DAY_IN_MS * dayWidth;
+    //     const offset = differenceInMilliseconds(checkIn, startDate) / (24 * 60 * 60 * 1000) * dayWidth;
+    //     const dur = differenceInMilliseconds(checkOut, checkIn) / (24 * 60 * 60 * 1000) * dayWidth;
     //     return [offset, dur];
     //   }, [checkIn, checkOut, startDate, dayWidth]);
+
+    // console.log(duration);
+    
 
     const getStatusColors = (status) => {
         switch (status) {
@@ -103,6 +105,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         fontSize: "11px",
         zIndex: isDragging ? 10 : 2,
         userSelect: "none",
+        overflow: "hidden",
         cursor: isDragging ? "grabbing" : "grab",
         transform: transform
             ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
@@ -259,7 +262,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
         fontSize: '14px',
     }
 
-    // console.log(mouseIsMoving);
+    // console.log(request.guest === "Иванов Иван Иванович" ? request : null);
     
 
     return (
@@ -337,9 +340,20 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                         }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
-                            <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                            {request.airline && (duration > 35) ? (
+                                <img
+                                    src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} 
+                                    alt="" 
+                                    style={{ 
+                                            height: '25px',
+                                            width: '25px', 
+                                            objectFit:'cover', 
+                                            borderRadius: '50%' 
+                                        }} 
+                                />
+                            ) : null}
                             <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                                {`${request.guestPosition?.split('(')[0].trim()} ${request.guest}`}
+                                { request.guest ? `${request.guestPosition?.split('(')[0].trim()} ${request.guest}` : "Предварительная бронь"}
                             </div>
                         </div>
                     </Box>
@@ -369,7 +383,18 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                             }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
-                                <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                            {request.airline && (duration > 25) ? (
+                                <img 
+                                    src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} 
+                                    alt="" 
+                                    style={{ 
+                                        height: '25px', 
+                                        width: '25px', 
+                                        objectFit:'cover', 
+                                        borderRadius: '50%' 
+                                    }} 
+                                /> 
+                            ): null}
                                 <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                                     {request.guest}
                                 </div>
@@ -392,7 +417,18 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                             }}
                         >
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
-                                <img src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} alt="" style={{ height: '20px' }} />
+                                {request.airline ? (
+                                    <img 
+                                        src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} 
+                                        alt="" 
+                                        style={{ 
+                                            height: '25px', 
+                                            width: '25px', 
+                                            objectFit:'cover', 
+                                            borderRadius: '50%' 
+                                        }} 
+                                    />
+                                ) : null}
                                 <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                                     {request.guest}
                                 </div>
@@ -484,7 +520,7 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                         </Typography>
                     }
                     <Typography variant="body2">
-                        <div style={styleToolTip}> Гость: <b>{request.guest}</b></div>
+                        <div style={styleToolTip}> Гость: <b>{request.guest ? request.guest : "Предварительная бронь"}</b></div>
                     </Typography>
                     {request.guestPosition ? (
                         <Typography variant="body2">

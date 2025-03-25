@@ -16,7 +16,7 @@ const DisAdminAirlineContent = ({ id, user, selectedTab, handleTabSelect }) => (
     <TabList className={classes.tabList}>
       <Tab className={classes.tab}>Пользователи</Tab>
       <Tab className={classes.tab}>Цены</Tab>
-      <Tab className={classes.tab}>Экипаж</Tab>
+      <Tab className={classes.tab}>Сотрудники</Tab>
       <Tab className={classes.tab}>Об авиакомпании</Tab>
     </TabList>
 

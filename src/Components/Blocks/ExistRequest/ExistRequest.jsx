@@ -7,15 +7,20 @@ import {
   CHANGE_TO_ARCHIVE,
   convertToDate,
   EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
+  GET_AIRLINE,
   GET_REQUEST,
   getCookie,
   REQUEST_UPDATED_SUBSCRIPTION,
   SAVE_HANDLE_EXTEND_MUTATION,
   SAVE_MEALS_MUTATION,
+  UPDATE_REQUEST_RELAY,
 } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 import { roles } from "../../../roles";
 import { Link } from "react-router-dom";
+import ReactPaginate from "react-paginate";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff";
 
 function ExistRequest({
   show,
@@ -31,6 +36,14 @@ function ExistRequest({
   setRequestId,
 }) {
   const token = getCookie("token");
+  const [totalPages, setTotalPages] = useState(1);
+  const currentPageRelay = 0;
+
+  // Состояние для хранения информации о странице (для пагинации)
+  const [pageInfo, setPageInfo] = useState({
+    skip: currentPageRelay,
+    take: 50,
+  });
 
   // Запросы данных о заявке и логе
   const { data, error, refetch } = useQuery(GET_REQUEST, {
@@ -39,8 +52,16 @@ function ExistRequest({
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { requestId: chooseRequestID },
+    variables: {
+      requestId: chooseRequestID,
+      pagination: {
+        skip: pageInfo.skip,
+        take: pageInfo.take,
+      },
+    },
   });
+
+  // console.log(data);
 
   useEffect(() => {
     if (chooseRequestID && setRequestId) {
@@ -92,8 +113,19 @@ function ExistRequest({
     if (data && data.request) {
       setFormData(data?.request);
       setLogsData(data?.request);
+      setTotalPages(data?.request?.logs?.totalPages);
     }
   }, [data, show]);
+
+  // Обработчик смены страницы в ReactPaginate
+  const handlePageClick = (event) => {
+    const newPageIndex = event.selected; // нумерация с 0
+    // Вычисляем skip (например, newPageIndex * take)
+    setPageInfo((prev) => ({
+      ...prev,
+      skip: newPageIndex * prev.take,
+    }));
+  };
 
   useEffect(() => {
     if (formData) {
@@ -127,6 +159,8 @@ function ExistRequest({
       arrivalDate: "",
       arrivalTime: "",
     }));
+    setSelectedEmployee(null);
+    setNewStaffId(null);
   }, [onClose, setChooseRequestID]);
 
   const resetForm = useCallback(() => setActiveTab("Общая"), []);
@@ -227,6 +261,8 @@ function ExistRequest({
           },
         },
       });
+      // console.log(response);
+
       alert(
         user?.airlineId && formData.status !== "created"
           ? "Запрос отправлен, можете посмотреть в комментариях."
@@ -382,15 +418,77 @@ function ExistRequest({
     }
   };
 
+  const { data: airlineData, refetch: airlineRefetch } = useQuery(GET_AIRLINE, {
+    variables: { airlineId: formData?.airline?.id },
+  });
+
+  const [airlineStaff, setAirlineStaff] = useState();
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  useEffect(() => {
+    if (airlineData) {
+      setAirlineStaff(airlineData?.airline);
+    }
+  }, [airlineData]);
+
+  const [updateRequestRelay] = useMutation(UPDATE_REQUEST_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const handleSaveChanges = () => {
+    if (!chooseRequestID || selectedEmployee === null) {
+      alert("Пожалуйста, выберите сотрудника.");
+      return;
+    }
+
+    updateRequestRelay({
+      variables: {
+        updateRequestId: chooseRequestID,
+        input: {
+          personId: selectedEmployee?.id,
+        },
+      },
+    })
+      .then((res) => {
+        // console.log("Request updated:", res);
+        alert("Изменения сохранены");
+        setSelectedEmployee(null);
+        setNewStaffId(null);
+        // При необходимости можно выполнить refetch() или обновить локальные данные
+        refetch();
+      })
+      .catch((err) => {
+        console.error("Ошибка обновления заявки:", err);
+        // console.log(selectedEmployee);
+
+        alert("Ошибка обновления заявки");
+        setSelectedEmployee(null);
+        setNewStaffId(null);
+      });
+  };
+
+  const [newStaffId, setNewStaffId] = useState(null);
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const toggleAddStaff = () => setShowAddStaff((prev) => !prev);
+
+  useEffect(() => {
+    if (newStaffId) {
+      setSelectedEmployee(newStaffId);
+    }
+  }, [newStaffId]);
+
   const [separator, setSeparator] = useState("airline");
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
 
   useEffect(() => {
-    setSeparator('airline')
-  }, [show])
+    setSeparator("airline");
+  }, [show]);
 
-  // console.log(formData);
-  
+  // console.log(newStaffId);
 
   return (
     <>
@@ -446,17 +544,17 @@ function ExistRequest({
               className={`${classes.tab} ${
                 activeTab === "Комментарии" ? classes.activeTab : ""
               }`}
-              style={{position:'relative'}}
+              style={{ position: "relative" }}
               onClick={() => handleTabChange("Комментарии")}
             >
               Комментарии
-            {formData?.chat?.some(chat => 
-                chat.unreadMessagesCount > 0 && (
-                    (user.hotelId && chat.hotelId === user.hotelId) ||
+              {formData?.chat?.some(
+                (chat) =>
+                  chat.unreadMessagesCount > 0 &&
+                  ((user.hotelId && chat.hotelId === user.hotelId) ||
                     (user.airlineId && chat.airlineId === user.airlineId) ||
-                    (!user.hotelId && !user.airlineId)
-                )
-                ) && <div className={classes.unreadMessages}></div>}
+                    (!user.hotelId && !user.airlineId))
+              ) && <div className={classes.unreadMessages}></div>}
             </div>
             <div
               className={`${classes.tab} ${
@@ -496,35 +594,94 @@ function ExistRequest({
             {activeTab === "Общая" && (
               <div className={classes.requestData}>
                 {/* Информация о сотруднике */}
-                <div className={classes.requestDataTitle}>
-                  Информация о сотруднике
-                </div>
-                <div className={classes.requestDataInfo}>
-                  <div className={classes.requestDataInfo_title}>ФИО</div>
-                  <div className={classes.requestDataInfo_desc}>
-                    {formData.person.name}
-                  </div>
-                </div>
-                <div className={classes.requestDataInfo}>
-                  <div className={classes.requestDataInfo_title}>Должность</div>
-                  <div className={classes.requestDataInfo_desc}>
-                    {formData.person.position}
-                  </div>
-                </div>
-                <div className={classes.requestDataInfo}>
-                  <div className={classes.requestDataInfo_title}>Пол</div>
-                  <div className={classes.requestDataInfo_desc}>
-                    {formData.person.gender}
-                  </div>
-                </div>
-                <div className={classes.requestDataInfo}>
-                  <div className={classes.requestDataInfo_title}>
-                    Номер телефона
-                  </div>
-                  <div className={classes.requestDataInfo_desc}>
-                    {formData.person.number}
-                  </div>
-                </div>
+                {formData.person ? (
+                  <>
+                    <div className={classes.requestDataTitle}>
+                      Информация о сотруднике
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                      <div className={classes.requestDataInfo_title}>
+                        Авиакомпания
+                      </div>
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.airline.name}
+                      </div>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                      <div className={classes.requestDataInfo_title}>ФИО</div>
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData?.person?.name}
+                      </div>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                      <div className={classes.requestDataInfo_title}>
+                        Должность
+                      </div>
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData?.person?.position}
+                      </div>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                      <div className={classes.requestDataInfo_title}>Пол</div>
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData?.person?.gender}
+                      </div>
+                    </div>
+                    <div className={classes.requestDataInfo}>
+                      <div className={classes.requestDataInfo_title}>
+                        Номер телефона
+                      </div>
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData?.person?.number}
+                      </div>
+                    </div>
+                  </>
+                ) : !user?.hotelId && formData.status !== "canceled" ? (
+                  <>
+                    {/* Если сотрудник не задан, предлагаем выбрать */}
+                    <div className={classes.staffWrapper}>
+                      <label>Добавьте сотрудника авиакомпании</label>
+                      <div
+                        className={classes.addStaff}
+                        onClick={toggleAddStaff}
+                      >
+                        <img src="/plus.png" alt="" />
+                      </div>
+                    </div>
+                    {/* {console.log(selectedEmployee)} */}
+                    <MUIAutocomplete
+                      dropdownWidth={"100%"}
+                      label={"Введите сотрудника"}
+                      options={airlineStaff?.staff.map(
+                        (person) => `${person.name} ${person.position}`
+                      )}
+                      getOptionLabel={(option) =>
+                        `${option.name} ${option.position}`
+                      }
+                      value={
+                        selectedEmployee
+                          ? `${selectedEmployee?.name} ${selectedEmployee?.position}`
+                          : ""
+                      }
+                      onChange={(event, newValue) => {
+                        const selectedPerson = airlineStaff?.staff?.find(
+                          (person) =>
+                            `${person.name} ${person.position}` === newValue
+                        );
+                        const newPerson = airlineStaff?.staff?.find(
+                          (person) => person.id === newStaffId
+                        );
+                        // console.log("newPerson: ", newPerson);
+                        // console.log("selectedPerson: ", selectedPerson);
+
+                        setSelectedEmployee(selectedPerson);
+                      }}
+                    />
+                    <Button onClick={handleSaveChanges}>
+                      Добавить сотрудника
+                    </Button>
+                  </>
+                ) : null}
 
                 {/* Информация о питании */}
                 <div className={classes.requestDataTitle}>Питание</div>
@@ -630,8 +787,8 @@ function ExistRequest({
                 {formData.status !== "archived" &&
                   // formData.status !== "created" &&
                   // formData.status !== "opened" &&
-                  formData.status !== "canceled" &&
-                  !user?.hotelId && (
+                  formData.status !== "canceled" && (
+                    // !user?.hotelId &&
                     // formData.status !== "archiving" &&
                     <>
                       <div className={classes.requestDataTitle}>
@@ -696,7 +853,6 @@ function ExistRequest({
                   )}
               </div>
             )}
-
             {/* Вкладка "Питание" */}
             {activeTab === "Питание" &&
               formData.status !== "created" &&
@@ -766,7 +922,6 @@ function ExistRequest({
                   )}
                 </div>
               )}
-
             {/* Вкладка "Комментарии" */}
             {activeTab === "Комментарии" && (
               <>
@@ -805,7 +960,9 @@ function ExistRequest({
                   </div>
                 )}
                 <Message
-                  key={`${chooseRequestID? chooseRequestID : chooseReserveID}-${activeTab}`}
+                  key={`${
+                    chooseRequestID ? chooseRequestID : chooseReserveID
+                  }-${activeTab}`}
                   activeTab={activeTab}
                   show={show}
                   setIsHaveTwoChats={setIsHaveTwoChats}
@@ -816,19 +973,21 @@ function ExistRequest({
                   user={user}
                   separator={separator}
                   chatHeight={
-                    (user?.airlineId || user?.hotelId)
+                    user?.airlineId || user?.hotelId
                       ? "calc(100vh - 225px)"
                       : "calc(100vh - 275px)"
                   }
                 />
               </>
             )}
-
             {/* Вкладка "История" */}
             {activeTab === "История" && logsData && (
-              <div className={classes.requestData}>
+              <div
+                className={classes.requestData}
+                style={{ paddingBottom: totalPages > 1 ? "60px" : "20px" }}
+              >
                 <div className={classes.logs}>
-                  {[...logsData.logs].reverse().map((log, index) => (
+                  {[...logsData.logs.logs].map((log, index) => (
                     <>
                       <div className={classes.historyDate} key={index}>
                         {new Date(log.createdAt).toLocaleDateString("ru-RU", {
@@ -853,6 +1012,23 @@ function ExistRequest({
                     </>
                   ))}
                 </div>
+                {totalPages > 1 && (
+                  <div className={classes.pagination}>
+                    <ReactPaginate
+                      previousLabel={"←"}
+                      nextLabel={"→"}
+                      breakLabel={"..."}
+                      pageCount={totalPages}
+                      marginPagesDisplayed={2}
+                      pageRangeDisplayed={5}
+                      onPageChange={handlePageClick}
+                      // forcePage={validCurrentPage}
+                      containerClassName={classes.pagination}
+                      activeClassName={classes.activePaginationNumber}
+                      pageLinkClassName={classes.paginationNumber}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -901,6 +1077,15 @@ function ExistRequest({
                   ))}
               </div>
             )}
+          <CreateRequestAirlineStaff
+            id={formData?.airline?.id} // Или любое другое значение, нужное для вашего компонента
+            show={showAddStaff}
+            onClose={toggleAddStaff}
+            isExist={true}
+            // airlineRefetch={refetch}
+            setNewStaffId={setNewStaffId}
+            // setSelectedAirline={setSelectedAirline}
+          />
         </Sidebar>
       )}
     </>

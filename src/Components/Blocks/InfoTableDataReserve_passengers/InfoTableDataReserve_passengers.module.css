@@ -80,6 +80,10 @@
     width: 20%;
 }
 
+.w25 {
+    width: 25%;
+}
+
 .w35 {
     width: 35%;
 }
@@ -133,7 +137,8 @@
 }
 
 .bottom {
-    height: calc(100vh - 356px);
+    /* height: calc(100vh - 356px); */
+    height: calc(100vh - 342px);
     overflow: hidden;
     overflow-y: scroll;
 }

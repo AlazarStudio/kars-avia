@@ -299,7 +299,56 @@
 } */
 
 
+/* Пагинация */
+.pagination {
+    position: absolute;
+    bottom: 0;
+    right: 4px;
+    width: 472px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    background-color: #fff;
+}
+
+.paginationNumber {
+    width: 25px;
+    height: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    border: 1px solid var(--menu-bg);
+    border-radius: 8px;
+    color: var(--menu-bg);
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    text-decoration: none;
+  }
+
+.paginationNumber:hover {
+    background-color: #e0e0e0;
+    color: var(--menu-bg);
+}
+
+.pagination .activePaginationNumber,
+.pagination .activePaginationNumber a {
+  background-color: var(--menu-bg) !important;
+  color: #fff !important;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+
+
 @media (min-width: 0px) and (max-width: 1399px) {
+    .pagination {
+        width: 432px;
+    }
+
     .requestTitle_name {
         font-size: 20px;
         line-height: 34.73px;

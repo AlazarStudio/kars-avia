@@ -283,6 +283,7 @@ function Header({ children }) {
                 onRequestClick={handleNotificationClick}
                 user={data?.user}
                 token={token}
+                isNotificationsFullyVisible={isNotificationsFullyVisible}
               />
             </div>
           )}

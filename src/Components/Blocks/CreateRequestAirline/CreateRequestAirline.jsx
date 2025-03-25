@@ -12,6 +12,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     name: "",
+    nameFull: "",
     images: "",
   });
 
@@ -20,6 +21,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
   const resetForm = useCallback(() => {
     setFormData({
       name: "",
+      nameFull: "",
       images: "",
     });
     setIsEdited(false); // Сброс флага изменений
@@ -82,7 +84,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
   });
 
   const isFormValid = () => {
-    return formData.name && formData.images;
+    return formData.name && formData.images && formData.nameFull;
   };
 
   const [isLoading, setIsLoading] = useState(false);
@@ -118,6 +120,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
         variables: {
           input: {
             name: formData.name,
+            nameFull: formData.nameFull,
           },
           images: formData.images,
         },
@@ -126,14 +129,14 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
       if (response_create_airline) {
         addHotel(response_create_airline.data.createAirline);
         resetForm();
-        // onClose();
+        onClose();
         addNotification("Авиакомпания создана успешно.", "success");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
     } finally {
       // resetForm();
-      // onClose();
+      onClose();
       setIsLoading(false);
       // addNotification("Авиакомпания создана успешно.", "success");
     }
@@ -182,6 +185,15 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
                 name="name"
                 placeholder="Авиакомпания Азимут"
                 value={formData.name}
+                onChange={handleChange}
+              />
+
+              <label>Наименование</label>
+              <input
+                type="text"
+                name="nameFull"
+                placeholder="Азимут"
+                value={formData.nameFull}
                 onChange={handleChange}
               />
 

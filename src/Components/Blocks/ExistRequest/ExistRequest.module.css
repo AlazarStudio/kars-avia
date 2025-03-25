@@ -67,7 +67,7 @@
     align-items: center;
 }
 
-.shahmatka_icon a img{
+.shahmatka_icon a img {
     width: 15px;
     height: auto;
 }
@@ -89,6 +89,9 @@ select {
     height: 38px;
     outline: none;
     padding: 0 10px;
+}
+
+.requestData select {
     cursor: pointer;
 }
 
@@ -465,4 +468,77 @@ select {
     border-radius: 50px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+
+/* Пагинация */
+.pagination {
+    position: absolute;
+    bottom: 0;
+    right: 4px;
+    width: 472px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    background-color: #fff;
+}
+
+.paginationNumber {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--menu-bg);
+    border-radius: 10px;
+    color: var(--menu-bg);
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    text-decoration: none;
+}
+
+.paginationNumber:hover {
+    background-color: #e0e0e0;
+    color: var(--menu-bg);
+}
+
+.pagination .activePaginationNumber,
+.pagination .activePaginationNumber a {
+    background-color: var(--menu-bg) !important;
+    color: #fff !important;
+    border-radius: 10px;
+}
+
+.staffWrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.addStaff {
+    padding: 4px;
+    width: 17px !important;
+    height: 17px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0057C3;
+    border-radius: 50%;
+    transition: all ease-in-out 0.3s;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.addStaff img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .pagination {
+        width: 432px;
+    }
+}

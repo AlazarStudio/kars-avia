@@ -70,14 +70,25 @@ function AirlineAbout_tabComponent({ id, ...props }) {
   let infoCities = useQuery(GET_CITIES);
   const [cities, setCities] = useState([]);
 
+  // useEffect(() => {
+  //   if (infoCities.data) {
+  //     setCities(
+  //       infoCities.data?.citys.map(
+  //         // (item) => `${item.city}, регион: ${item.region}`
+  //         (item) => item.city
+  //       ) || []
+  //     );
+  //   }
+  // }, [infoCities]);
+
   useEffect(() => {
     if (infoCities.data) {
-      setCities(
-        infoCities.data?.citys.map(
-          // (item) => `${item.city}, регион: ${item.region}`
-          (item) => item.city
-        ) || []
-      );
+      const mappedCities =
+        infoCities.data?.citys.map((item) => ({
+          label: `${item.city}, ${item.region}`,
+          value: item.city,
+        })) || [];
+      setCities(mappedCities);
     }
   }, [infoCities]);
 
@@ -123,6 +134,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             updateAirlineId: airline.id,
             input: {
               name: airline.name,
+              nameFull: airline.nameFull,
               information: {
                 country: airline.information?.country,
                 city: airline.information?.city,
@@ -325,6 +337,10 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   user?.role !== roles.superAdmin ? (
                     <>
                       {renderField({ label: "Название", value: airline?.name })}
+                      {renderField({
+                        label: "Наименование",
+                        value: airline?.nameFull,
+                      })}
                     </>
                   ) : (
                     <>
@@ -334,6 +350,17 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                           type="text"
                           name="name"
                           value={airline.name || ""}
+                          onChange={handleChange}
+                          disabled={!isEditing}
+                          className={classes.airlineAbout_info_input}
+                        />
+                      </div>
+                      <div className={classes.airlineAbout_info_item}>
+                        <label>Наименование</label>
+                        <input
+                          type="text"
+                          name="nameFull"
+                          value={airline.nameFull || ""}
                           onChange={handleChange}
                           disabled={!isEditing}
                           className={classes.airlineAbout_info_input}
@@ -422,13 +449,19 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                             dropdownWidth={"400px"}
                             isDisabled={!isEditing}
                             options={cities}
-                            value={airline.information?.city || ""}
+                            getOptionLabel={(option) => option.label}
+                            value={
+                              cities.find(
+                                (option) =>
+                                  option.value === airline.information?.city
+                              ) || ""
+                            }
                             onChange={(event, newValue) => {
                               setAirline((prev) => ({
                                 ...prev,
                                 information: {
                                   ...prev.information,
-                                  city: newValue || "", // Обновляем поле `city`
+                                  city: newValue ? newValue.value : "", // Обновляем поле `city`
                                 },
                               }));
                             }}

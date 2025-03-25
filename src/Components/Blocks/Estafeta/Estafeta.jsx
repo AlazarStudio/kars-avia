@@ -345,10 +345,10 @@ function Estafeta({ user }) {
 
       const searchFields = [
         request.requestNumber,
-        request.person.name,
-        request.person.number,
-        request.person.position,
-        request.person.gender,
+        request?.person?.name,
+        request?.person?.number,
+        request?.person?.position,
+        request?.person?.gender,
         request.airline.name,
         request.airport.name,
         request.airport.code,

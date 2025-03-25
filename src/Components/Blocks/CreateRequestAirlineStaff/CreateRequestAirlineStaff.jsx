@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import {
   CREATE_AIRLINE_STAFF,
   decodeJWT,
+  GET_AIRLINES_RELAY,
   getCookie,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
@@ -19,7 +20,11 @@ function CreateRequestAirlineStaff({
   id,
   addTarif,
   setAddTarif,
+  airlineRefetch,
+  setSelectedAirline,
   addNotification,
+  setNewStaffId,
+  isExist,
 }) {
   const [userRole, setUserRole] = useState();
   const [isEdited, setIsEdited] = useState(false);
@@ -77,6 +82,7 @@ function CreateRequestAirlineStaff({
         "Apollo-Require-Preflight": "true",
       },
     },
+    refetchQueries: [{ query: GET_AIRLINES_RELAY }],
   });
 
   const isFormValid = () => {
@@ -125,20 +131,36 @@ function CreateRequestAirlineStaff({
         },
       });
 
-      if (request) {
-        setAddTarif(
-          request.data.updateAirline.staff.sort((a, b) =>
-            a.name.localeCompare(b.name)
-          )
-        );
+      if (request.data) {
+        // console.log(request.data.updateAirline.staff.at(-1));
+        setNewStaffId
+          ? setNewStaffId(
+              isExist
+                ? request.data.updateAirline.staff.at(-1)
+                : request.data.updateAirline.staff.at(-1).id
+            )
+          : null;
+
+        setAddTarif
+          ? setAddTarif(
+              request.data.updateAirline.staff.sort((a, b) =>
+                a.name.localeCompare(b.name)
+              )
+            )
+          : null;
 
         resetForm();
         onClose();
-        addNotification("Сотрудник добавлен успешно.", "success");
+        // setSelectedAirline ? setSelectedAirline(null) : null;
+        addNotification
+          ? addNotification("Сотрудник добавлен успешно.", "success")
+          : null;
         setIsLoading(false);
+        // airlineRefetch ? airlineRefetch() : null;
       }
     } catch (err) {
       alert("Произошла ошибка при сохранении данных");
+      console.error(err);
       setIsLoading(false);
     }
   };
@@ -165,15 +187,27 @@ function CreateRequestAirlineStaff({
     };
   }, [show, closeButton]);
 
+  // let positions = [
+  //   "КАЭ (Капитан Эскадрильи)",
+  //   "КВС (Командир воздушного судна)",
+  //   "ВП (Второй пилот)",
+  //   "СПБ (Старший бортпроводник)",
+  //   "ИБП (Инструктор-бортпроводник)",
+  //   "БП (бортпроводник)",
+  //   "СА (сотрудник авиакомпании) ",
+  //   "Зам. Дир. (заместитель директора)",
+  //   "Инженер",
+  // ];
+
   let positions = [
-    "КАЭ (Капитан Эскадрильи)",
-    "КВС (Командир воздушного судна)",
-    "ВП (Второй пилот)",
-    "СПБ (Старший бортпроводник)",
-    "ИБП (Инструктор-бортпроводник)",
-    "БП (бортпроводник)",
-    "СА (сотрудник авиакомпании) ",
-    "Зам. Дир. (заместитель директора)",
+    "КАЭ",
+    "КВС",
+    "ВП",
+    "СБ",
+    "ИБП",
+    "БП",
+    "СА",
+    "Зам. Дир.",
     "Инженер",
   ];
 

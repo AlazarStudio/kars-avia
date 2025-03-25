@@ -271,6 +271,8 @@ function EditRequestTarif({
       6: "priceSixCategory",
       7: "priceSevenCategory",
       8: "priceEightCategory",
+      228: "priceApartment",
+      229: "priceStudio"
     };
 
     const fieldToUpdate = typeToFieldMap[formData.type];
@@ -379,7 +381,7 @@ function EditRequestTarif({
               <input
                 type="text"
                 name="price"
-                value={formData.price}
+                value={formData.price || ""}
                 onChange={handleChange}
               />
             </div>

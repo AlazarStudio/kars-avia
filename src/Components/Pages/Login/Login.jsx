@@ -37,6 +37,8 @@ function Login() {
         }
     };
 
+    const [showPassword, setShowPassword] = useState(false);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -90,19 +92,37 @@ function Login() {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                     />
-                    <TextField
-                        variant="outlined"
-                        margin="normal"
-                        required
-                        fullWidth
-                        name="password"
-                        label="Пароль"
-                        type="password"
-                        id="password"
-                        autoComplete="current-password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <div style={{position:'relative', width:'396px'}}>
+                        <TextField
+                            variant="outlined"
+                            margin="normal"
+                            required
+                            fullWidth
+                            name="password"
+                            label="Пароль"
+                            type={showPassword ? "text":"password"}
+                            id="password"
+                            autoComplete="current-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <img
+                            src={showPassword ? "/eyeOpen.png" : "/eyeClose.png"}
+                            style={{
+                                width: "20px",
+                                height: "20px",
+                                objectFit: "contain",
+                                position: "absolute",
+                                right: "15px",
+                                top:'35px',
+                                cursor: "pointer",
+                            }}
+                            onClick={() =>
+                                setShowPassword((prev) => !prev)
+                            }
+                            alt=""
+                        />
+                    </div>
                     <Button
                         type="submit"
                         fullWidth

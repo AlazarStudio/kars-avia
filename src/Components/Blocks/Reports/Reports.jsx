@@ -10,13 +10,14 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import InfoTableDataReports from "../InfoTableDataReports/InfoTableDataReports";
 import CreateRequestReport from "../CreateRequestReport/CreateRequestReport";
 import ExistRequestReport from "../ExistRequestReport/ExistRequestReport";
-import { useQuery, useSubscription } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
   convertToDate,
   decodeJWT,
+  DELETE_REPORT,
   GET_AIRLINE_REPORT,
   GET_HOTEL_REPORT,
-  GET_REPORTS_SUBSCRIOPTION,
+  GET_REPORTS_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
 import { fullNotifyTime, notifyTime, roles } from "../../../roles";
@@ -98,7 +99,15 @@ function Reports({ children, ...props }) {
     },
   });
 
-  const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIOPTION);
+  const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIPTION);
+
+  const [deleteReport] = useMutation(DELETE_REPORT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   // const addDispatcher = (newDispatcher) => {
   //     setCompanyData([...companyData, newDispatcher]);
@@ -110,11 +119,19 @@ function Reports({ children, ...props }) {
   //     setCompanyData(newData);
   // };
 
-  // const deleteDispatcher = (index) => {
-  //     setCompanyData(companyData.filter((_, i) => i !== index));
-  //     setShowDelete(false);
-  //     setShowRequestSidebar(false);
-  // };
+  const deleteDispatcher = async (index) => {
+    try {
+      await deleteReport({
+        variables: {
+          deleteReportId: index,
+        },
+      });
+      setShowDelete(false);
+      setShowRequestSidebar(false);
+    } catch (error) {
+      console.error("Delete Report error: ", error);
+    }
+  };
 
   const toggleCreateSidebar = () => {
     setShowCreateSidebar(!showCreateSidebar);

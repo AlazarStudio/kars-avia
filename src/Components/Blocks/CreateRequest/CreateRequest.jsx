@@ -19,6 +19,7 @@ import {
   GET_USER_BRONS,
   getCookie,
 } from "../../../../graphQL_requests";
+import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import DropDownList from "../DropDownList/DropDownList";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { Box, CircularProgress } from "@mui/material";
@@ -31,17 +32,14 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
+  const [newStaffId, setNewStaffId] = useState(null);
   const sidebarRef = useRef();
 
   // Запрос данных авиакомпаний и аэропортов
   const { data, refetch } = useQuery(GET_AIRLINES_RELAY);
   const infoAirports = useQuery(GET_AIRPORTS_RELAY);
   const [airports, setAirports] = useState([]); // Список аэропортов
-
-  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION
-  );
+  // console.log(selectedAirline);
 
   // Состояние активной вкладки и данных формы
   const [activeTab, setActiveTab] = useState("Общая");
@@ -66,6 +64,18 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     reserve: false,
   });
 
+  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_AIRLINES_UPDATE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
+  // console.log(dataSubscriptionUpd);
+
   const [warningMessage, setWarningMessage] = useState(""); // Предупреждение при пересечении бронирования
   const [hotelBronsInfo, setHotelBronsInfo] = useState([]); // Информация о бронировании пользователя
   const [matchingRequest, setMatchingRequest] = useState(null);
@@ -88,6 +98,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       setAirports(infoAirports.data.airports || []);
     }
   }, [infoAirports.data]);
+
+  // console.log(airports)
 
   useEffect(() => {
     setAirlines(data?.airlines?.airlines);
@@ -121,7 +133,20 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         setSelectedAirline(selectedAirline);
       }
     }
-  }, [token, data, user]);
+  }, [token, data, user, dataSubscriptionUpd]);
+
+  // console.log(dataSubscriptionUpd);
+
+  useEffect(() => {
+    if (dataSubscriptionUpd && !user?.airlineId) {
+      const updatedAirline = data.airlines.airlines.find(
+        (airline) => airline?.id === selectedAirline?.id
+      );
+      if (updatedAirline) {
+        setSelectedAirline(updatedAirline);
+      }
+    }
+  }, [data, selectedAirline, dataSubscriptionUpd]);
 
   // Обновление информации о бронировании при изменении ID сотрудника
   useEffect(() => {
@@ -178,6 +203,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       resetForm();
       setMatchingRequest(null);
       onClose();
+      setNewStaffId(null)
       return;
     }
 
@@ -185,6 +211,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       resetForm();
       setMatchingRequest(null);
       onClose();
+      setNewStaffId(null)
     }
   }, [isEdited, resetForm, setMatchingRequest, onClose]);
 
@@ -234,8 +261,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
   const isFormValid = () => {
     return (
-      formData.personId &&
+      // formData.personId &&
       formData.airportId &&
+      formData.airlineId &&
       // formData.arrivalRoute &&
       formData.arrivalDate &&
       formData.arrivalTime &&
@@ -330,7 +358,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       const response = await createRequest({ variables: { input } });
       resetForm();
       onClose();
-      addNotification("Создание заявки для экипажа прошло успешно.", "success");
+      addNotification 
+      ? addNotification("Создание заявки для экипажа прошло успешно.", "success")
+      : null
       // console.log(response);
     } catch (error) {
       console.error(error);
@@ -445,90 +475,108 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     },
   ];
 
-  const airlineOptions = user?.airlineId ? [] : "";
+  // Состояние и функция для показа/скрытия окна добавления сотрудника
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const toggleAddStaff = () => setShowAddStaff((prev) => !prev);
+  const [disableAutocomplete, setDisableAutocomplete] = useState(false);
+
+  useEffect(() => {
+    if (newStaffId && !disableAutocomplete) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        personId: newStaffId,
+      }));
+    }
+  }, [newStaffId, disableAutocomplete]);
+
+  // console.log(formData);
+  
 
   return (
-    <Sidebar show={show} sidebarRef={sidebarRef}>
-      <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Создать заявку</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+    <>
+      <Sidebar show={show} sidebarRef={sidebarRef}>
+        <div className={classes.requestTitle}>
+          <div className={classes.requestTitle_name}>Создать заявку</div>
+          <div className={classes.requestTitle_close} onClick={closeButton}>
+            <img src="/close.png" alt="" />
+          </div>
         </div>
-      </div>
 
-      <div className={classes.tabs}>
-        <div
-          className={`${classes.tab} ${
-            activeTab === "Общая" ? classes.activeTab : ""
-          }`}
-          onClick={() => handleTabChange("Общая")}
-        >
-          Общая
+        <div className={classes.tabs}>
+          <div
+            className={`${classes.tab} ${
+              activeTab === "Общая" ? classes.activeTab : ""
+            }`}
+            onClick={() => handleTabChange("Общая")}
+          >
+            Общая
+          </div>
+          {/* <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div> */}
         </div>
-        {/* <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div> */}
-      </div>
 
-      {isLoading ? (
-        <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
-      ) : (
-        <>
-          <div className={classes.requestMiddle}>
-            {/* Вкладка "Общая" */}
-            {activeTab === "Общая" && (
-              <div className={classes.requestData}>
-                {warningMessage && (
-                  <div className={classes.warningMessage}>{warningMessage}</div>
-                )}
-                {matchingRequest ? (
-                  <div className={classes.matchingRequest}>
-                    Заявка с такими же параметрами уже существует.{" "}
-                    <span
-                      onClick={() => {
-                        onMatchFound(matchingRequest);
-                        setMatchingRequest(null);
-                        resetForm();
-                        onClose();
-                      }}
-                    >
-                      Перейти к заявке
-                    </span>
-                  </div>
-                ) : null}
-                <MUIAutocomplete
-                  dropdownWidth={"100%"}
-                  label={"Выберите тип"}
-                  options={["Квота", "Резерв"]}
-                  value={formData.reserve ? "Резерв" : "Квота"}
-                  onChange={(event, newValue) => {
-                    setFormData((prevFormData) => ({
-                      ...prevFormData,
-                      reserve: newValue === "Резерв",
-                    }));
-                    setIsEdited(true);
-                  }}
-                />
+        {isLoading ? (
+          <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
+        ) : (
+          <>
+            <div className={classes.requestMiddle}>
+              {/* Вкладка "Общая" */}
+              {activeTab === "Общая" && (
+                <div className={classes.requestData}>
+                  {warningMessage && (
+                    <div className={classes.warningMessage}>
+                      {warningMessage}
+                    </div>
+                  )}
+                  {matchingRequest ? (
+                    <div className={classes.matchingRequest}>
+                      Заявка с такими же параметрами уже существует.{" "}
+                      <span
+                        onClick={() => {
+                          onMatchFound(matchingRequest);
+                          setMatchingRequest(null);
+                          resetForm();
+                          onClose();
+                        }}
+                      >
+                        Перейти к заявке
+                      </span>
+                    </div>
+                  ) : null}
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите тип"}
+                    options={["Квота", "Резерв"]}
+                    value={formData.reserve ? "Резерв" : "Квота"}
+                    onChange={(event, newValue) => {
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        reserve: newValue === "Резерв",
+                      }));
+                      setIsEdited(true);
+                    }}
+                  />
 
-                {user?.airlineId ? null : (
-                  <>
-                    <label>Авиакомпания</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"100%"}
-                      label={"Введите авиакомпанию"}
-                      options={airlines?.map((airline) => airline.name)}
-                      value={selectedAirline ? selectedAirline?.name : ""}
-                      onChange={(event, newValue) => {
-                        const selectedAirline = airlines.find(
-                          (airline) => airline.name === newValue
-                        );
-                        setSelectedAirline(selectedAirline);
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          airlineId: selectedAirline?.id || "",
-                        }));
-                        setIsEdited(true);
-                      }}
-                    />
-                    {/* <DropDownList
+                  {user?.airlineId ? null : (
+                    <>
+                      <label>Авиакомпания</label>
+                      <MUIAutocomplete
+                        dropdownWidth={"100%"}
+                        label={"Введите авиакомпанию"}
+                        options={airlines?.map((airline) => airline.name)}
+                        value={selectedAirline ? selectedAirline?.name : ""}
+                        onChange={(event, newValue) => {
+                          const selectedAirline = airlines.find(
+                            (airline) => airline.name === newValue
+                          );
+                          setSelectedAirline(selectedAirline);
+                          setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            airlineId: selectedAirline?.id || "",
+                          }));
+                          setIsEdited(true);
+                        }}
+                      />
+                      {/* <DropDownList
                                     placeholder="Введите авиакомпанию"
                                     options={airlines?.map(airline => airline.name)}
                                     initialValue={selectedAirline?.name || ""}
@@ -542,51 +590,74 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                                         setIsEdited(true);
                                     }}
                                 /> */}
-                  </>
-                )}
+                    </>
+                  )}
 
-                {selectedAirline && (
-                  <>
-                    <label>Сотрудник авиакомпании</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"100%"}
-                      label={"Введите сотрудника"}
-                      options={selectedAirline.staff.map(
-                        (person) => person.name
-                      )}
-                      value={
-                        selectedAirline.staff.find(
-                          (person) => person.id === formData.personId
-                        )?.name || ""
-                      }
-                      onChange={(event, newValue) => {
-                        const selectedPerson = selectedAirline.staff.find(
-                          (person) => person.name === newValue
-                        );
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          personId: selectedPerson?.id || "",
-                        }));
-                        setIsEdited(true);
-                      }}
-                    />
-                    {/* <DropDownList
-                                    placeholder="Введите сотрудника"
-                                    options={selectedAirline.staff.map(person => person.name)}
-                                    initialValue={selectedAirline.staff.find(person => person.id === formData.personId)?.name || ""}
-                                    onSelect={(value) => {
-                                        const selectedPerson = selectedAirline.staff.find(person => person.name === value);
-                                        setFormData(prevFormData => ({
-                                            ...prevFormData,
-                                            personId: selectedPerson?.id || ""
-                                        }));
-                                        setIsEdited(true);
-                                    }}
-                                /> */}
-                  </>
-                )}
+                  {selectedAirline && (
+                    <>
+                      <div className={classes.staffWrapper}>
+                        <label>Сотрудник авиакомпании</label>
+                        <div
+                          className={classes.addStaff}
+                          onClick={toggleAddStaff}
+                        >
+                          <img src="/plus.png" alt="" />
+                        </div>
+                      </div>
 
-                <label>Город</label>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <MUIAutocomplete
+                          // listboxHeight={"200px"}
+                          isDisabled={disableAutocomplete}
+                          dropdownWidth={"100%"}
+                          label={"Введите сотрудника"}
+                          options={selectedAirline.staff.map(
+                            (person) => `${person.name} ${person.position}`
+                          )}
+                          getOptionLabel={(option) =>
+                            `${option.name} ${option.position}`
+                          }
+                          value={(() => {
+                            const selectedPerson = selectedAirline.staff.find(
+                              (person) => person.id === formData.personId
+                            );
+                            return selectedPerson
+                              ? `${selectedPerson.name} ${selectedPerson.position}`
+                              : "";
+                          })()}
+                          onChange={(event, newValue) => {
+                            const selectedPerson = selectedAirline.staff.find(
+                              (person) =>
+                                `${person.name} ${person.position}` === newValue
+                            );
+                            // console.log(selectedPerson);
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              personId: disableAutocomplete
+                                ? ""
+                                : selectedPerson?.id || "",
+                            }));
+                            setIsEdited(true);
+                          }}
+                        />
+                        <label className={classes.noPersonLabel}>
+                          <input
+                            type="checkbox"
+                            onChange={(e) => {
+                              setDisableAutocomplete(e.target.checked);
+                              setFormData((prevFormData) => ({
+                                ...prevFormData,
+                                personId: "",
+                              }));
+                            }}
+                          />
+                          Предварительная бронь
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  {/* <label>Город</label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Введите город"}
@@ -600,147 +671,121 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                     }));
                     setIsEdited(true);
                   }}
-                />
-                {/* <DropDownList
-                            placeholder="Введите город"
-                            options={uniqueCities}
-                            initialValue={formData.city}
-                            onSelect={(value) => {
-                                setFormData(prevFormData => ({
-                                    ...prevFormData,
-                                    city: value,
-                                    airportId: ""
-                                }));
-                                setIsEdited(true);
-                            }}
-                        /> */}
+                /> */}
 
-                {formData.city && (
-                  <>
-                    <label>Аэропорт</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"100%"}
-                      label={"Введите аэропорт"}
-                      options={airports
-                        .filter(
-                          (airport) =>
-                            airport.city.trim() === formData.city.trim()
-                        )
-                        .map((airport) => `${airport.name} ${airport.code}`)}
-                      value={
-                        airports.find(
-                          (airport) => airport.id === formData.airportId
-                        )
-                          ? `${
-                              airports.find(
-                                (airport) => airport.id === formData.airportId
-                              )?.name
-                            } (${
-                              airports.find(
-                                (airport) => airport.id === formData.airportId
-                              )?.code
-                            })`
-                          : ""
-                      }
-                      onChange={(event, newValue) => {
-                        const selectedAirport = airports.find(
-                          (airport) =>
-                            `${airport.name} ${airport.code}` === newValue
-                        );
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          airportId: selectedAirport?.id || "",
-                        }));
-                        setIsEdited(true);
-                      }}
+                  {/* {formData.city && (
+                  <> */}
+                  <label>Аэропорт</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Введите аэропорт"}
+                    options={airports.map(
+                      (airport) => `${airport.code} ${airport.name}`
+                    )}
+                    value={
+                      airports.find(
+                        (airport) => airport.id === formData.airportId
+                      )
+                        ? `${
+                            airports.find(
+                              (airport) => airport.id === formData.airportId
+                            )?.code
+                          } ${
+                            airports.find(
+                              (airport) => airport.id === formData.airportId
+                            )?.name
+                          }`
+                        : ""
+                    }
+                    onChange={(event, newValue) => {
+                      const selectedAirport = airports.find(
+                        (airport) =>
+                          `${airport.code} ${airport.name}` === newValue
+                      );
+                      // console.log(selectedAirport);
+
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        airportId: selectedAirport?.id || "",
+                        city: selectedAirport?.city,
+                      }));
+                      setIsEdited(true);
+                    }}
+                  />
+                  {/* </>
+                )} */}
+
+                  <label>Прибытие</label>
+                  {/* <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} /> */}
+                  <div className={classes.reis_info}>
+                    {/* <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" /> */}
+                    <input
+                      type="date"
+                      name="arrivalDate"
+                      value={formData.arrivalDate}
+                      min={minArrivalDate}
+                      onChange={handleChange}
+                      placeholder="Дата"
                     />
-                    {/* <DropDownList
-                                    placeholder="Введите аэропорт"
-                                    options={airports.filter(airport => airport.city.trim() === formData.city.trim()).map(airport => airport.name)}
-                                    initialValue={airports.find(airport => airport.id === formData.airportId)?.name || ""}
-                                    onSelect={(value) => {
-                                        const selectedAirport = airports.find(airport => airport.name === value);
-                                        setFormData(prevFormData => ({
-                                            ...prevFormData,
-                                            airportId: selectedAirport?.id || ""
-                                        }));
-                                        setIsEdited(true);
-                                    }}
-                                /> */}
-                  </>
-                )}
+                    <input
+                      type="time"
+                      name="arrivalTime"
+                      value={formData.arrivalTime}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
+                  </div>
 
-                <label>Прибытие</label>
-                {/* <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} /> */}
-                <div className={classes.reis_info}>
-                  {/* <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" /> */}
-                  <input
-                    type="date"
-                    name="arrivalDate"
-                    value={formData.arrivalDate}
-                    min={minArrivalDate}
-                    onChange={handleChange}
-                    placeholder="Дата"
-                  />
-                  <input
-                    type="time"
-                    name="arrivalTime"
-                    value={formData.arrivalTime}
-                    onChange={handleChange}
-                    placeholder="Время"
-                  />
-                </div>
+                  <label>Отъезд</label>
+                  {/* <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} /> */}
+                  <div className={classes.reis_info}>
+                    <input
+                      type="date"
+                      name="departureDate"
+                      value={formData.departureDate}
+                      min={formData.arrivalDate}
+                      onChange={handleChange}
+                      placeholder="Дата"
+                    />
+                    <input
+                      type="time"
+                      name="departureTime"
+                      value={formData.departureTime}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
+                  </div>
 
-                <label>Отъезд</label>
-                {/* <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} /> */}
-                <div className={classes.reis_info}>
-                  <input
-                    type="date"
-                    name="departureDate"
-                    value={formData.departureDate}
-                    min={formData.arrivalDate}
-                    onChange={handleChange}
-                    placeholder="Дата"
-                  />
-                  <input
-                    type="time"
-                    name="departureTime"
-                    value={formData.departureTime}
-                    onChange={handleChange}
-                    placeholder="Время"
-                  />
-                </div>
-
-                <label>Питание</label>
-                {/* <select name="included" value={formData.mealPlan.included} onChange={handleChange}>
+                  <label>Питание</label>
+                  {/* <select name="included" value={formData.mealPlan.included} onChange={handleChange}>
                             <option value={true}>Включено</option>
                             <option value={false}>Не включено</option>
                         </select> */}
 
-                <MUIAutocomplete
-                  dropdownWidth={"100%"}
-                  // label={"Питание"}
-                  options={meal.map((name) => name.title)}
-                  value={
-                    formData.mealPlan.included ? "Включено" : "Не включено"
-                  }
-                  onChange={(event, newValue) => {
-                    const isIncluded = newValue === "Включено";
-                    setFormData((prevFormData) => ({
-                      ...prevFormData,
-                      mealPlan: {
-                        ...prevFormData.mealPlan,
-                        included: isIncluded,
-                        breakfastEnabled: isIncluded,
-                        lunchEnabled: isIncluded,
-                        dinnerEnabled: isIncluded,
-                      },
-                    }));
-                    setIsEdited(true);
-                  }}
-                />
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    // label={"Питание"}
+                    options={meal.map((name) => name.title)}
+                    value={
+                      formData.mealPlan.included ? "Включено" : "Не включено"
+                    }
+                    onChange={(event, newValue) => {
+                      const isIncluded = newValue === "Включено";
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        mealPlan: {
+                          ...prevFormData.mealPlan,
+                          included: isIncluded,
+                          breakfastEnabled: isIncluded,
+                          lunchEnabled: isIncluded,
+                          dinnerEnabled: isIncluded,
+                        },
+                      }));
+                      setIsEdited(true);
+                    }}
+                  />
 
-                {/* <DropDownList
+                  {/* <DropDownList
                   placeholder="Питание"
                   options={meal.map((name) => name.title)}
                   initialValue={
@@ -759,42 +804,42 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                   }}
                 /> */}
 
-                <div
-                  className={classes.checks}
-                  style={{
-                    display: formData.mealPlan.included ? "flex" : "none",
-                  }}
-                >
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="breakfastEnabled"
-                      checked={formData.mealPlan.breakfastEnabled}
-                      onChange={handleChange}
-                    />
-                    Завтрак
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="lunchEnabled"
-                      checked={formData.mealPlan.lunchEnabled}
-                      onChange={handleChange}
-                    />
-                    Обед
-                  </label>
-                  <label>
-                    <input
-                      type="checkbox"
-                      name="dinnerEnabled"
-                      checked={formData.mealPlan.dinnerEnabled}
-                      onChange={handleChange}
-                    />
-                    Ужин
-                  </label>
-                </div>
+                  <div
+                    className={classes.checks}
+                    style={{
+                      display: formData.mealPlan.included ? "flex" : "none",
+                    }}
+                  >
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="breakfastEnabled"
+                        checked={formData.mealPlan.breakfastEnabled}
+                        onChange={handleChange}
+                      />
+                      Завтрак
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="lunchEnabled"
+                        checked={formData.mealPlan.lunchEnabled}
+                        onChange={handleChange}
+                      />
+                      Обед
+                    </label>
+                    <label>
+                      <input
+                        type="checkbox"
+                        name="dinnerEnabled"
+                        checked={formData.mealPlan.dinnerEnabled}
+                        onChange={handleChange}
+                      />
+                      Ужин
+                    </label>
+                  </div>
 
-                {/* <label style={{ alignItems: "center" }}>
+                  {/* <label style={{ alignItems: "center" }}>
                   <input
                     type="checkbox"
                     name="reserve"
@@ -808,17 +853,17 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                   />
                   Резерв
                 </label> */}
-              </div>
-            )}
+                </div>
+              )}
 
-            {/* Вкладка "Доп. услуги" */}
-            {activeTab === "Доп. услуги" && (
-              <div className={classes.requestData}></div>
-            )}
-          </div>
+              {/* Вкладка "Доп. услуги" */}
+              {activeTab === "Доп. услуги" && (
+                <div className={classes.requestData}></div>
+              )}
+            </div>
 
-          <div className={classes.requestButton}>
-            {/* {isLoading ? (
+            <div className={classes.requestButton}>
+              {/* {isLoading ? (
         //   <Box
         //     sx={{
         //       position: "fixed",
@@ -843,12 +888,24 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         //   </Box>
         <MUILoader/>
         ) : ( */}
-            <Button onClick={handleSubmit}>Создать заявку</Button>
-            {/* )} */}
-          </div>
-        </>
-      )}
-    </Sidebar>
+              <Button onClick={handleSubmit}>Создать заявку</Button>
+              {/* )} */}
+            </div>
+          </>
+        )}
+        {/* Компонент добавления сотрудника */}
+        {selectedAirline && (
+          <CreateRequestAirlineStaff
+            id={selectedAirline.id} // Или любое другое значение, нужное для вашего компонента
+            show={showAddStaff}
+            onClose={toggleAddStaff}
+            airlineRefetch={refetch}
+            setNewStaffId={setNewStaffId}
+            // setSelectedAirline={setSelectedAirline}
+          />
+        )}
+      </Sidebar>
+    </>
   );
 }
 

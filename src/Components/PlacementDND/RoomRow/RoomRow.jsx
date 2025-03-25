@@ -131,7 +131,7 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, containe
                     ref={containerRef}
                     key={index}
                     sx={{
-                        width: `${dayWidth}px`,
+                        width: `${dayWidthLength}px`,
                         borderLeft: !isClick && highlightedDatesOld[0]?.getTime() === day.getTime() ? "1px solid #75757540" : highlightedDates[0]?.getTime() === day.getTime() ? "1px solid #75757540" : "1px solid #dddddd00",
                         borderBottom: !isClick && highlightedDatesOld.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : "1px solid #dddddd00",
                         borderTop: !isClick && highlightedDatesOld.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : "1px solid #dddddd00",

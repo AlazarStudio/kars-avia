@@ -70,6 +70,9 @@
     height: 38px;
     outline: none;
     padding: 0 10px;
+}
+
+.requestData select {
     cursor: pointer;
 }
 

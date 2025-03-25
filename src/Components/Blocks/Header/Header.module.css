@@ -117,7 +117,7 @@
     width: 440px;
     height: 600px;
     overflow: hidden;
-    overflow-y: scroll;
+    /* overflow-y: scroll; */
     max-height: 500px;
     top: 90px;
     right: 220px;
@@ -133,7 +133,7 @@
     transform: scale(0.95);
     pointer-events: none;
     transition: all ease-in-out 0.3s;
-    scrollbar-width: none;
+    /* scrollbar-width: none; */
 }
 
 /* .notify_dropdown::-webkit-scrollbar {

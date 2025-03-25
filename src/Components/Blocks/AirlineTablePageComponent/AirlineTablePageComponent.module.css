@@ -64,6 +64,10 @@
     line-height: 20px;
 }
 
+.hotelTable tbody tr>td {
+    overflow: hidden;
+}
+
 .hotelTable tbody tr>td:nth-child(1) {
     border: none;
     border-bottom: 1px solid #E4E4EF;
@@ -100,6 +104,7 @@
     justify-content: center;
     opacity: 0.9;
     cursor: pointer;
+    overflow: hidden;
 }
 
 .booking:hover {
@@ -158,6 +163,15 @@
     background-color: #F5F6F8 !important;
     /* Цвет выделения для наведения */
 }
+
+.highlightedRow {
+    background-color: #F5F6F8 !important;
+}
+
+/* Если хотите, чтобы в месте пересечения цвет был особым */
+/* .highlightedDay.highlightedRow {
+    background-color: rgba(255, 100, 100, 0.4);
+} */
 
 
 .formContainer {

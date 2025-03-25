@@ -14,9 +14,9 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
             startTime: arrival.time,
             end: departure.date,
             endTime: departure.time,
-            client: person.name,
+            client: person?.name,
             public: false,
-            clientId: person.id,
+            clientId: person?.id,
             hotelId: '',
             requestId: id,
             requestNumber
@@ -74,7 +74,7 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
                 {requests.map((item, index) => (
                     <div
                         className={`${classes.InfoTable_data} ${chooseRequestID === item.id && classes.InfoTable_data_active}`}
-                        style={{ opacity: (item.status === 'done' || item.status === 'extended' || item.status === 'reduced' || item.status === 'transferred' || item.status === 'earlyStart' || item.status === 'canceled') ? 0.5 : 1 }}
+                        style={{ opacity: (item.status !== 'archiving' ) ? 1 : 0.5 }}
                         onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
                         key={index}
                     >
@@ -89,13 +89,19 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
                             ) && <div className={classes.newRequest}></div>}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_information}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.person.name} {' '} {item?.reserve ? '(Резерв)' : ''} </div>
-                                <div className={classes.InfoTable_data_elem_moreInfo}>{item.person.position.split(' ')[0]}</div>
+                                {item.person ?
+                                (
+                                    <>
+                                        <div className={classes.InfoTable_data_elem_title}>{item?.person?.name} {' '} {item?.reserve ? '(Резерв)' : ''} </div>
+                                        <div className={classes.InfoTable_data_elem_moreInfo}>{item?.person?.position.split(' ')[0]}</div>
+                                    </>
+                                )
+                                : "Предварительная бронь"}
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>{convertToDate(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`} style={{ padding: "0 10px" }}>
-                            <div className={classes.InfoTable_data_elem_img}>
+                            <div className={classes.InfoTable_data_elem_img} >
                                 <img src={`${server}${item.airline.images[0]}`} alt="" />
                             </div>
                             {item.airline.name}

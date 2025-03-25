@@ -15,7 +15,7 @@ import DisAdminHotelContent from "../../RoleContent/DispatcherAdminContent/DisAd
 import AirlineAdminHotelContent from "../../RoleContent/AirlineAdminContent/AirlineAdminHotelContent/AirlineAdminHotelContent.jsx";
 
 function HotelPage({ children, id, user, ...props }) {
-  let params = useParams();
+  const params = useParams();
 
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -34,6 +34,29 @@ function HotelPage({ children, id, user, ...props }) {
     setSelectedTab(index);
     localStorage.setItem("selectedTab", index);
   };
+
+  // Функция для определения заголовка
+  const getTitle = () => {
+    if (data && user.role !== roles.hotelAdmin) {
+      return data.hotel.name;
+    }
+    switch (params.id) {
+      case "hotelChess":
+        return "Шахматка";
+      case "hotelRooms":
+        return "Номерной фонд";
+      case "hotelCompany":
+        return "Пользователи";
+      case "hotelAbout" :
+        return "О гостинице"
+      default:
+        return "";
+    }
+  };
+
+  // console.log(params);
+  
+  
   return (
     <>
       <div className={classes.section}>
@@ -42,11 +65,14 @@ function HotelPage({ children, id, user, ...props }) {
             {(user.role == roles.superAdmin ||
               user.role == roles.airlineAdmin ||
               user.role == roles.dispatcerAdmin) && (
-                <Link to={params.requestId ? `/relay` : `/hotels`} className={classes.backButton}>
-                  <img src="/arrow.png" alt="" />
-                </Link>
+                // <Link to={params.requestId ? `/relay` : `/hotels`} className={classes.backButton}>
+                //   <img src="/arrow.png" alt="" />
+                // </Link>
+              <Link to={-1} className={classes.backButton}>
+                <img src="/arrow.png" alt="" />
+              </Link>
               )}
-            {data && data.hotel.name}
+            {getTitle()}
           </div>
         </Header>
 
@@ -67,6 +93,7 @@ function HotelPage({ children, id, user, ...props }) {
               user={user}
               selectedTab={selectedTab}
               handleTabSelect={handleTabSelect}
+              type={data?.hotel?.type}
             />
           </>
         )}

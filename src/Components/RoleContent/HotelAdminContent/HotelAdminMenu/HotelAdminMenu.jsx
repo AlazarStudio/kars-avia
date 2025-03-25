@@ -31,7 +31,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "Заявки с резерва" : ""}
+        {menuOpen ? "Пассажиры" : ""}
         {allCreatedReserves > 0 && (
           <div
             className={`${classes.countRequests} ${
@@ -41,7 +41,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             {allCreatedReserves}
           </div>
         )}
-        {!menuOpen && <span className={classes.tooltip}>Заявки с резерва</span>}
+        {!menuOpen && <span className={classes.tooltip}>Пассажиры</span>}
       </Link>
       <Link
         to={"/hotelChess"}

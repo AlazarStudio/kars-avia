@@ -37,7 +37,7 @@ function AirlinePage({ children, id, user, ...props }) {
           <div className={classes.titleHeader}>
             {(user.role === roles.superAdmin ||
               user.role === roles.dispatcerAdmin) && (
-              <Link to={`/airlines`} className={classes.backButton}>
+              <Link to={-1} className={classes.backButton}>
                 <img src="/arrow.png" alt="" />
               </Link>
             )}

@@ -127,6 +127,16 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
           price: data.airline.prices?.priceEightCategory,
           type: 8,
         },
+        {
+          name: "Апартаменты",
+          price: data.airline.prices?.priceApartment,
+          type: 228,
+        },
+        {
+          name: "Студия",
+          price: data.airline.prices?.priceStudio,
+          type: 229,
+        },
       ]);
     }
   }, [data]);

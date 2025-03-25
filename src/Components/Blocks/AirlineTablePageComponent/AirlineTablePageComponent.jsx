@@ -28,6 +28,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [highlightedDay, setHighlightedDay] = useState(null);
+    const [highlightedStaffId, setHighlightedStaffId] = useState(null);
     const today = new Date();
     const currentDayRef = useRef(null);
     const tableContainerRef = useRef(null);
@@ -120,9 +121,15 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
                 <td
                     key={i}
                     style={{ height: `${staffFlightInfo.length ? `${staffFlightInfo.length * (35 + staffFlightInfo.length - 1) + 10}px` : '45px'}` }}
-                    className={`${isToday ? classes.currentDay : ''} ${isHighlighted ? classes.highlightedDay : ''}`}
-                    onMouseEnter={() => setHighlightedDay(i)}
-                    onMouseLeave={() => setHighlightedDay(null)}
+                    className={`${isToday ? classes.currentDay : ''} ${isHighlighted ? classes.highlightedDay : ''} ${staffMember.id === highlightedStaffId ? classes.highlightedRow : ''}`}
+                    onMouseEnter={() => {
+                        setHighlightedDay(i);
+                        setHighlightedStaffId(staffMember.id);
+                      }}
+                      onMouseLeave={() => {
+                        setHighlightedDay(null);
+                        setHighlightedStaffId(null);
+                      }}
                 ></td>
             );
         }
@@ -150,14 +157,31 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
                     let getStartTime = convertToDate(start, true)
                     let getEndTime = convertToDate(end, true)
 
-                    const startTimeNew = getTimeHours(getStartTime);
-                    const endTimeNew = getTimeHours(getEndTime);
+                    // const startTimeNew = getTimeHours(getStartTime);
+                    // const endTimeNew = getTimeHours(getEndTime);
+
+                    // const startTimeNew = new Date(start).getHours();
+                    // const endTimeNew = new Date(end).getHours();
+
+                    const startTimeNew = (new Date(start).getHours() - 3) % 24;
+                    const endTimeNew = (new Date(end).getHours() - 3) % 24;
+
+                    // console.log("startTimeNew", startTimeNew)
+                    // console.log("endTimeNew", endTimeNew)
 
                     const startOffset = startDate.getMonth() === currentMonth ? (startTimeNew / 24) * dayWidth : 0;
                     const endOffset = endDate.getMonth() === currentMonth ? ((24 - endTimeNew) / 24) * dayWidth : 0;
 
+                    // const startOffset = (startTimeNew / 24) * dayWidth;
+                    // const endOffset = (endTimeNew / 24) * dayWidth;
+
+                    // console.log("startOffset", startOffset)
+                    // console.log("endOffset", endOffset)
+
                     const left = (colStart - 1) * dayWidth + startOffset;
                     const width = (colEnd - colStart + 1) * dayWidth - endOffset - startOffset;
+                    // const width = (colEnd - colStart) * dayWidth - startOffset + endOffset;
+
 
                     function shortenString(str, maxLength) {
                         if (str.length > maxLength) {
@@ -165,6 +189,28 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
                         } else {
                             return str;
                         }
+                    }
+
+                    // Получаем ширину контейнера в px
+                    const containerWidth = tableContainerRef.current?.offsetWidth || 0;
+                    // Переводим нашу процентную ширину в пиксели
+                    const bookingWidthInPx = (width / 100) * containerWidth;
+
+                    // Задаём порог, ниже которого не показываем название
+                    const minBlockPx = 38;
+
+                    // По умолчанию текст пустой
+                    let displayName = "";
+                    if (bookingWidthInPx >= minBlockPx) {
+                    // Если блок хотя бы 38px, обрезаем/оставляем название
+                    displayName = shortenString(
+                        hotelName,
+                        // Пример: если ширина >= 100px, берём maxLength=100, иначе 25
+                        bookingWidthInPx >= 100 ? 100 : 25
+                    );
+                    } else {
+                    // Иначе вообще не показываем текст
+                    displayName = "...";
                     }
 
                     // let strName = shortenString(`В ${hotelName} с ${startDate.toLocaleDateString()} по ${endDate.toLocaleDateString()}`, width >= 25 ? 100 : 25)
@@ -186,7 +232,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
                                 borderRadius: '4px',
                             }}
                         >
-                            {strName}
+                            {displayName}
                         </div>
                     );
                 }
@@ -258,7 +304,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
                             </tr>
                         </thead>
                         <tbody>
-                            {state.bookings.map((staffMember) => (
+                            {state.bookings.map((staffMember, index) => (
                                 <tr key={staffMember.id}>
                                     <td className={`${classes.stickyColumn}`}>
                                         <div className={classes.staffInfo} onClick={() => {
@@ -266,7 +312,7 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
                                             setSelectedStaff(staffMember)
 
                                         }}>
-                                            <b>{staffMember.name}</b> <p className={classes.staffInfoPosition}>{staffMember.position.split(' ')[0]}</p>
+                                            <b>{`${index+1}. ${staffMember.name}`}</b> <p className={classes.staffInfoPosition}>{staffMember.position.split(' ')[0]}</p>
                                         </div>
                                     </td>
                                     {renderBookings(staffMember)}

@@ -65,7 +65,7 @@ function ReservePlacement({ children, user, ...props }) {
   const { data: subscriptionDataUpdate } = useSubscription(
     REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
     {
-      onData: () => {
+      onComplete: () => {
         refetch();
       },
     }
@@ -612,7 +612,7 @@ function ReservePlacement({ children, user, ...props }) {
             {/* {console.log(request)} */}
             {user?.airlineId ? null : (
               <div className={classes.btnsReserve}>
-                {/* {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать новую гостиницу</Button>}  */}
+                {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать гостиницу</Button>} 
                 {/* {console.log(!exists && request.passengerCount === showChooseHotels)} */}
                 {/* {!exists && request.passengerCount === showChooseHotels ? null : (
                 <Button onClick={toggleCreateSidebar}>
