@@ -8,66 +8,58 @@ import {
   Alert,
 } from "@mui/material";
 
-import { SINGIN, SINGUP } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
-import { useNavigate } from "react-router-dom";
+import { RESET_PASSWORD } from "../../../../graphQL_requests.js";
+import { useMutation } from "@apollo/client";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
-function Login() {
-  const [signIn] = useMutation(SINGIN);
-  const [signUp] = useMutation(SINGUP);
+function ResetPassword() {
+  const [resetRequestPassword] = useMutation(RESET_PASSWORD);
 
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleSubmitSignUp = async (e) => {
-    e.preventDefault();
-
-    try {
-      let response_signIn = await signUp({
-        variables: {
-          input: {
-            login: "admin",
-            password: "admin",
-            name: "admin",
-            email: "admin",
-          },
-        },
-      });
-
-      alert("Success");
-      navigate("/");
-      window.location.reload();
-    } catch (err) {
-      setError("Ошибка авторизации. Проверьте логин или пароль.");
-    }
-  };
-
+  // Извлекаем query-параметры
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get("token"); // получаем значение токена
   const [showPassword, setShowPassword] = useState(false);
+  const [showPassword2, setShowPassword2] = useState(false);
+
+  // console.log(token);
+
+  // console.log("newPassword: ", newPassword);
+  // console.log("confirmNewPassword: ", confirmNewPassword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (newPassword !== confirmNewPassword) {
+      setError("Пароли не совпадают.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError("Пароль должен содержать минимум 8 символов.");
+      return;
+    }
+
     try {
-      let response_signIn = await signIn({
+      let response = await resetRequestPassword({
         variables: {
-          input: {
-            login: username,
-            password: password,
-          },
+          newPassword: newPassword,
+          token: token,
         },
       });
 
-      let token = response_signIn && response_signIn.data.signIn.token;
+      // let token = response_signIn && response_signIn.data.signIn.token;
+      alert("Пароль обновлён успешно.");
+      // console.log(response);
 
-      // document.cookie = `token=${token}; HttpOnly; Secure; SameSite=Lax; Max-Age=3600`; // когда будет https и заливать куки из сервака
-      document.cookie = `token=${token}; SameSite=Lax; Max-Age=86400`;
-
-      navigate("/");
-      window.location.reload();
+      navigate("/login");
     } catch (err) {
-      setError("Ошибка авторизации. Проверьте логин или пароль.");
+      setError("Ошибка при обновлении пароля.");
+      console.error(err);
     }
   };
 
@@ -105,7 +97,7 @@ function Login() {
           variant="h5"
           sx={{ fontWeight: "bold", color: "var(--main-gray)" }}
         >
-          Вход в CRM Kars Avia
+          Восстановление пароля
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mt: 2 }}>
@@ -118,37 +110,57 @@ function Login() {
           noValidate
           sx={{
             mt: 1,
+            width: "396px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
           }}
         >
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="username"
-            label="Имя пользователя"
-            name="username"
-            autoComplete="username"
-            autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
           <div style={{ position: "relative", width: "396px" }}>
             <TextField
               variant="outlined"
               margin="normal"
               required
               fullWidth
-              name="password"
-              label="Пароль"
+              id="newPassword"
+              label="Введите новый пароль"
+              type={showPassword2 ? "text" : "password"}
+              name="newPassword"
+              autoComplete="newPassword"
+              autoFocus
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <img
+              src={showPassword2 ? "/eyeOpen.png" : "/eyeClose.png"}
+              style={{
+                width: "20px",
+                height: "20px",
+                objectFit: "contain",
+                position: "absolute",
+                right: "10px",
+                top: "35px",
+                cursor: "pointer",
+              }}
+              onClick={() => setShowPassword2((prev) => !prev)}
+              alt=""
+            />
+          </div>
+
+          <div style={{ position: "relative", width: "396px" }}>
+            <TextField
+              variant="outlined"
+              margin="normal"
+              required
+              fullWidth
+              id="email"
+              label="Введите новый пароль повторно"
               type={showPassword ? "text" : "password"}
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="email"
+              autoComplete="email"
+              autoFocus
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
             />
             <img
               src={showPassword ? "/eyeOpen.png" : "/eyeClose.png"}
@@ -165,34 +177,19 @@ function Login() {
               alt=""
             />
           </div>
-          <p
-            style={{
-              marginTop: "10px",
-              width: "100%",
-              fontSize: "14px",
-              fontWeight: "600",
-              color: "var(--blue)",
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              navigate("/reset-to-email");
-            }}
-          >
-            Восстановить пароль
-          </p>
           <Button
             type="submit"
             fullWidth
             variant="contained"
             color="primary"
             sx={{
-              mt: 3,
+              mt: 1,
               height: "50px",
               fontWeight: "bold",
               backgroundColor: "var(--dark-blue)",
             }}
           >
-            Войти
+            Далее
           </Button>
         </Box>
 
@@ -212,4 +209,4 @@ function Login() {
   );
 }
 
-export default Login;
+export default ResetPassword;

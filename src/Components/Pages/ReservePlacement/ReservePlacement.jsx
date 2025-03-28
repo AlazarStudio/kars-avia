@@ -33,6 +33,7 @@ import Notification from "../../Notification/Notification";
 import { fullNotifyTime, notifyTime } from "../../../roles";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import ManifestModal from "../../Blocks/ManifestModal/ManifestModal";
+import InfoTableDataReservePassengers from "../../Blocks/InfoTableDataReservePassengers/InfoTableDataReservePassengers";
 
 function ReservePlacement({ children, user, ...props }) {
   const token = getCookie("token");
@@ -638,7 +639,7 @@ function ReservePlacement({ children, user, ...props }) {
 
         {!loading && !error && request && (
           <>
-            <InfoTableDataReserve_passengers
+            <InfoTableDataReservePassengers
               placement={filteredPlacement}
               allHotelPlacement={placement}
               setPlacement={setPlacement}

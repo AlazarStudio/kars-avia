@@ -364,7 +364,7 @@ function Estafeta({ user }) {
         matchesSelect &&
         matchesDate &&
         searchFields.some((field) =>
-          field.toLowerCase().includes(matchesSearch)
+          field?.toLowerCase().includes(matchesSearch)
         )
       );
     });

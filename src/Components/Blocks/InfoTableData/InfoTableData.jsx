@@ -74,7 +74,7 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
                 {requests.map((item, index) => (
                     <div
                         className={`${classes.InfoTable_data} ${chooseRequestID === item.id && classes.InfoTable_data_active}`}
-                        style={{ opacity: (item.status !== 'archiving' ) ? 1 : 0.5 }}
+                        style={{ opacity: (item.status !== 'archiving' && item.status !== 'canceled' ) ? 1 : 0.5 }}
                         onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
                         key={index}
                     >

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Route, Routes } from "react-router-dom";
 import {
   ApolloProvider,
@@ -22,6 +22,8 @@ import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 import { server, path, getCookie } from "../graphQL_requests";
 import { useAuth } from "./AuthContext";
 import Login from "./Components/Pages/Login/Login";
+import Email from "./Components/Pages/Email/Email";
+import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
 
 function App() {
   const { user } = useAuth();
@@ -107,6 +109,8 @@ function App() {
         ) : (
           <>
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-to-email" element={<Email />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<Login />} />
           </>
         )}

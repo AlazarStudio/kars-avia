@@ -37,3 +37,15 @@ export const rolesObject = {
 }
 export const fullNotifyTime = 3300;
 export const notifyTime = 3000;
+
+export const positions = [
+  "КАЭ",
+  "КВС",
+  "ВП",
+  "СБ",
+  "ИБП",
+  "БП",
+  "СА",
+  "Зам. Дир.",
+  "Инженер",
+];

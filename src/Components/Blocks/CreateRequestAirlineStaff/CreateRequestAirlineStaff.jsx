@@ -13,6 +13,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { InputMask } from "@react-input/mask";
+import { positions } from "../../../roles";
 
 function CreateRequestAirlineStaff({
   show,
@@ -199,17 +200,17 @@ function CreateRequestAirlineStaff({
   //   "Инженер",
   // ];
 
-  let positions = [
-    "КАЭ",
-    "КВС",
-    "ВП",
-    "СБ",
-    "ИБП",
-    "БП",
-    "СА",
-    "Зам. Дир.",
-    "Инженер",
-  ];
+  // let positions = [
+  //   "КАЭ",
+  //   "КВС",
+  //   "ВП",
+  //   "СБ",
+  //   "ИБП",
+  //   "БП",
+  //   "СА",
+  //   "Зам. Дир.",
+  //   "Инженер",
+  // ];
 
   const genders = ["Мужской", "Женский"];
 

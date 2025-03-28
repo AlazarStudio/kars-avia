@@ -877,7 +877,11 @@ function ExistRequest({
                           name="breakfastCount"
                           placeholder="Количество"
                           value={dailyMeal.breakfast}
-                          // disabled={formData.status !== 'archived' && true}
+                          disabled={
+                            (formData.status === "archived" ||
+                              formData.status === "canceled") &&
+                            true
+                          }
                           onChange={(e) =>
                             handleMealChange(index, "breakfast", e.target.value)
                           }
@@ -893,7 +897,11 @@ function ExistRequest({
                           name="lunchCount"
                           placeholder="Количество"
                           value={dailyMeal.lunch}
-                          // disabled={formData.status !== 'archived' && true}
+                          disabled={
+                            (formData.status === "archived" ||
+                              formData.status === "canceled") &&
+                            true
+                          }
                           onChange={(e) =>
                             handleMealChange(index, "lunch", e.target.value)
                           }
@@ -909,7 +917,11 @@ function ExistRequest({
                           name="dinnerCount"
                           placeholder="Количество"
                           value={dailyMeal.dinner}
-                          // disabled={formData.status !== 'archived' && true}
+                          disabled={
+                            (formData.status === "archived" ||
+                              formData.status === "canceled") &&
+                            true
+                          }
                           onChange={(e) =>
                             handleMealChange(index, "dinner", e.target.value)
                           }
@@ -917,9 +929,10 @@ function ExistRequest({
                       </div>
                     </div>
                   ))}
-                  {formData.status !== "archived" && (
-                    <Button onClick={handleSaveMeals}>Сохранить</Button>
-                  )}
+                  {formData.status !== "archived" &&
+                    formData.status !== "canceled" && (
+                      <Button onClick={handleSaveMeals}>Сохранить</Button>
+                    )}
                 </div>
               )}
             {/* Вкладка "Комментарии" */}

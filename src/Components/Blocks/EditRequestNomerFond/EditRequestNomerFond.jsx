@@ -500,7 +500,7 @@ function EditRequestNomerFond({
                   );
                   setFormData((prevFormData) => ({
                     ...prevFormData,
-                    category: selectedCategory.value,
+                    category: selectedCategory?.value,
                   }));
                   setIsEdited(true);
                 }}
@@ -522,7 +522,7 @@ function EditRequestNomerFond({
                   );
                   setFormData((prevFormData) => ({
                     ...prevFormData,
-                    beds: selectedCategory.value,
+                    beds: selectedCategory?.value,
                   }));
                   setIsEdited(true);
                 }}

@@ -12,6 +12,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import { InputMask } from "@react-input/mask";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import { positions } from "../../../roles";
 
 function UpdateRequestAirlineStaff({
   show,
@@ -170,17 +171,17 @@ function UpdateRequestAirlineStaff({
   //   "Инженер",
   // ];
 
-  let positions = [
-    "КАЭ",
-    "КВС",
-    "ВП",
-    "СБ",
-    "ИБП",
-    "БП",
-    "СА",
-    "Зам. Дир.",
-    "Инженер",
-  ];
+  // let positions = [
+  //   "КАЭ",
+  //   "КВС",
+  //   "ВП",
+  //   "СБ",
+  //   "ИБП",
+  //   "БП",
+  //   "СА",
+  //   "Зам. Дир.",
+  //   "Инженер",
+  // ];
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

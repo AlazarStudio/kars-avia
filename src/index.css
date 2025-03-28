@@ -24,6 +24,7 @@ a {
     --text-gray: #9E9E9E;
     --hover-gray: #F5F6F8;
     --blue: #007AFF;
+    --dark-blue: #0057C3;
 }
 
 body {
@@ -33,7 +34,7 @@ body {
 main {
     display: flex;
     flex-direction: column;
-    gap: 80px;
+    gap: 40px;
     padding-bottom: 80px;
 }
 

@@ -221,7 +221,7 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
                         name="passengers"
                         placeholder="Пример: 30"
                         min="1"
-                        max={request.passengerCount - showChooseHotels}
+                        max={(request.passengerCount - showChooseHotels) || 0}
                         value={formData.passengers}
                         onChange={handleChange}
                     />

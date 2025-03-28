@@ -18,10 +18,16 @@ import AirlineTablePageComponent from "../AirlineTablePageComponent/AirlineTable
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import UpdateRequestAirlineStaff from "../UpdateRequestAirlineStaff/UpdateRequestAirlineStaff.jsx";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
+import {
+  fullNotifyTime,
+  notifyTime,
+  positions,
+  roles,
+} from "../../../roles.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Notification from "../../Notification/Notification.jsx";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 
 function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const token = getCookie("token");
@@ -30,7 +36,6 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_USERS, {
     variables: { airlineId: id },
   });
-
 
   const [staff, setStaff] = useState([]);
 
@@ -82,15 +87,14 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   );
 
   const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION, 
+    GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
       onData: () => {
         bronRefetch();
         refetch();
-      }
+      },
     }
   );
-
 
   // console.log(dataSubscriptionUpd);
 
@@ -138,6 +142,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   // console.log(dataInfo);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPosition, setSelectedPosition] = useState("");
   const [selectQuery, setSelectQuery] = useState("");
   const [showAddBronForm, setShowAddBronForm] = useState(false);
 
@@ -163,16 +168,34 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     }));
   };
 
+  // Обработчик изменения выбранной должности
+  const handlePositionChange = (event, newValue) => {
+    setSelectedPosition(newValue || "");
+  };
+
+  // const filteredRequests = staff
+  //   .filter((request) => {
+  //     const matchesSearch =
+  //       searchQuery === "" ||
+  //       // request.gender.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //       // request.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //       request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  //       request.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+  //     return matchesSearch;
+  //   })
+  //   .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Фильтрация заявок по поисковому запросу и выбранной должности
   const filteredRequests = staff
     .filter((request) => {
       const matchesSearch =
         searchQuery === "" ||
-        // request.gender.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        // request.number.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-      return matchesSearch;
+      const matchesPosition =
+        selectedPosition === "" || request.position === selectedPosition;
+      return matchesSearch && matchesPosition;
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
@@ -187,7 +210,6 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
       },
     },
   });
@@ -217,27 +239,22 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   return (
     <>
       <div className={classes.section_searchAndFilter}>
-        {/* <input
-          type="text"
-          placeholder="Поиск по ФИО сотрудника или должности"
-          style={{ width: "500px" }}
-          value={searchQuery}
-          onChange={handleSearch}
-        /> */}
-        <MUITextField
-          label={"Поиск по ФИО сотрудника или должности"}
-          className={classes.mainSearch}
-          value={searchQuery}
-          onChange={handleSearch}
-        />
+        <div className={classes.section_searchAndFilter}>
+          <MUITextField
+            label={"Поиск по ФИО сотрудника или должности"}
+            className={classes.mainSearch}
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+          <MUIAutocomplete
+            dropdownWidth={"140px"}
+            label={"Должность"}
+            options={positions}
+            value={selectedPosition}
+            onChange={handlePositionChange}
+          />
+        </div>
         <div className={classes.section_searchAndFilter_filter}>
-          {/* <select onChange={handleSelect}>
-                        <option value="">Показать все</option>
-                        {uniquePlacesArray.map((item, index) => (
-                            <option value={`${item}`} key={index}>{item} - МЕСТНЫЕ</option>
-                        ))}
-                    </select> */}
-
           <Filter
             toggleSidebar={toggleCategory}
             handleChange={handleChange}

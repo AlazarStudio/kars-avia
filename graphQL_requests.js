@@ -74,6 +74,22 @@ export const SINGUP = gql`
 
 // Запросы получения пользователя
 
+// Запросы на сброс пароля
+
+export const REQUEST_RESET_PASSWORD = gql`
+  mutation RequestResetPassword($email: String!) {
+    requestResetPassword(email: $email)
+  }
+`;
+
+export const RESET_PASSWORD = gql`
+  mutation ResetPassword($token: String!, $newPassword: String!) {
+    resetPassword(token: $token, newPassword: $newPassword)
+  }
+`;
+
+// Запросы на сброс пароля
+
 // ----------------------------------------------------------------
 
 // Запросы к заявкам на эстафету

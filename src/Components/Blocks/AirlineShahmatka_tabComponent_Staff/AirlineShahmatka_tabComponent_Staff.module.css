@@ -3,6 +3,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
 }
 
 .section_searchAndFilter_filter{    
@@ -16,4 +17,8 @@
     width: 500px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1299px) {
+    .mainSearch {
+        width: 400px;
+    }
+}
