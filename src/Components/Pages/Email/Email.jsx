@@ -87,7 +87,7 @@ function Email() {
           noValidate
           sx={{
             mt: 1,
-            width: "396px",
+            width: "450px",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",

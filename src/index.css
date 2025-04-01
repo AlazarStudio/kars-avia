@@ -27,6 +27,10 @@ a {
     --dark-blue: #0057C3;
 }
 
+.blueText {
+    color: var(--blue);
+}
+
 body {
     background-color: #F1F4FB;
 }

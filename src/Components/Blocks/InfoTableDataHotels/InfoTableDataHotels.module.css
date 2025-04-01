@@ -223,7 +223,7 @@
 
 @media (min-width: 0px) and (max-width: 1399px) {
     .bottom {
-        height: calc(100vh - 350px);
+        height: calc(100vh - 270px);
     }
 
     .star {

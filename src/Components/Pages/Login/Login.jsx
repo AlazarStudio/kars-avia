@@ -136,7 +136,7 @@ function Login() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
           />
-          <div style={{ position: "relative", width: "396px" }}>
+          <div style={{ position: "relative", width: "450px" }}>
             <TextField
               variant="outlined"
               margin="normal"
