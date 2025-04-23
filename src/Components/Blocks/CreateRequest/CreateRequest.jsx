@@ -12,6 +12,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import {
   CREATE_REQUEST_MUTATION,
   decodeJWT,
+  GET_AIRLINE_POSITIONS,
   GET_AIRLINES_RELAY,
   GET_AIRLINES_SUBSCRIPTION,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
@@ -24,6 +25,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { Box, CircularProgress } from "@mui/material";
 import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 
 // Компонент для создания новой заявки
 function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
@@ -73,6 +75,13 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       },
     }
   );
+  const {
+    loading: airlinePositionsLoading,
+    error: airlinePositionsError,
+    data: airlinePositionsData,
+  } = useQuery(GET_AIRLINE_POSITIONS);
+
+  const [positions, setPositions] = useState([]);
 
   // console.log(dataSubscriptionUpd);
 
@@ -98,6 +107,12 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       setAirports(infoAirports.data.airports || []);
     }
   }, [infoAirports.data]);
+
+  useEffect(() => {
+    if (airlinePositionsData) {
+      setPositions(airlinePositionsData?.getAirlinePositions);
+    }
+  }, [airlinePositionsData]);
 
   // console.log(airports)
 
@@ -203,7 +218,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       resetForm();
       setMatchingRequest(null);
       onClose();
-      setNewStaffId(null)
+      setNewStaffId(null);
       return;
     }
 
@@ -211,7 +226,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       resetForm();
       setMatchingRequest(null);
       onClose();
-      setNewStaffId(null)
+      setNewStaffId(null);
     }
   }, [isEdited, resetForm, setMatchingRequest, onClose]);
 
@@ -358,9 +373,12 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       const response = await createRequest({ variables: { input } });
       resetForm();
       onClose();
-      addNotification 
-      ? addNotification("Создание заявки для экипажа прошло успешно.", "success")
-      : null
+      addNotification
+        ? addNotification(
+            "Создание заявки для экипажа прошло успешно.",
+            "success"
+          )
+        : null;
       // console.log(response);
     } catch (error) {
       console.error(error);
@@ -490,7 +508,6 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   }, [newStaffId, disableAutocomplete]);
 
   // console.log(formData);
-  
 
   return (
     <>
@@ -606,7 +623,64 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                       </div>
 
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        <MUIAutocomplete
+                        <MUIAutocompleteColor
+                          isDisabled={disableAutocomplete}
+                          dropdownWidth="100%"
+                          label="Введите сотрудника"
+                          // Передаём исходный массив объектов сотрудников
+                          options={selectedAirline.staff}
+                          // getOptionLabel правильно формирует строку, даже если option – объект
+                          getOptionLabel={(option) =>
+                            option
+                              ? `${option.name || ""} ${
+                                  option.position?.name
+                                } ${option.gender}`.trim()
+                              : ""
+                          }
+                          // Если нужно кастомное раскрашивание, используйте renderOption (с isColor)
+                          renderOption={(optionProps, option) => {
+                            // Формируем строку для отображения
+                            const labelText = `${option.name || ""} ${
+                              option.position?.name
+                            } ${option.gender}`.trim();
+                            // Разбиваем строку по пробелам
+                            const words = labelText.split(". ");
+                            return (
+                              <li {...optionProps} key={option.id}>
+                                {words.map((word, index) => (
+                                  <span
+                                    key={index}
+                                    style={{
+                                      color:
+                                        index === 0
+                                          ? "black"
+                                          : index === 1
+                                          ? "gray"
+                                          : "gray",
+                                      marginRight: "4px",
+                                    }}
+                                  >
+                                    {word}
+                                  </span>
+                                ))}
+                              </li>
+                            );
+                          }}
+                          // Значение контролируется объектом; если person не найден, возвращаем null
+                          value={
+                            selectedAirline.staff.find(
+                              (person) => person.id === formData.personId
+                            ) || null
+                          }
+                          onChange={(event, newValue) => {
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              personId: newValue?.id || "",
+                            }));
+                            setIsEdited(true);
+                          }}
+                        />
+                        {/* <MUIAutocomplete
                           // listboxHeight={"200px"}
                           isDisabled={disableAutocomplete}
                           dropdownWidth={"100%"}
@@ -639,7 +713,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                             }));
                             setIsEdited(true);
                           }}
-                        />
+                          isColor={true}
+                        /> */}
                         <label className={classes.noPersonLabel}>
                           <input
                             type="checkbox"
@@ -901,6 +976,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
             onClose={toggleAddStaff}
             airlineRefetch={refetch}
             setNewStaffId={setNewStaffId}
+            positions={positions}
             // setSelectedAirline={setSelectedAirline}
           />
         )}

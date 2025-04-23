@@ -22,6 +22,7 @@ function EditRequestAirlineCompany({
   addTarif,
   id,
   addNotification,
+  positions
 }) {
   const token = getCookie("token");
 
@@ -43,7 +44,7 @@ function EditRequestAirlineCompany({
     name: user?.name || "",
     email: user?.email || "",
     role: user?.role || "",
-    position: user?.position || "",
+    position: user?.position?.name || "",
     login: user?.login || "",
     oldPassword: "",
     password: "",
@@ -61,7 +62,7 @@ function EditRequestAirlineCompany({
         name: user?.name || "",
         email: user?.email || "",
         role: user?.role || "",
-        position: user?.position || "",
+        position: user?.position?.name || "",
         login: user?.login || "",
         oldPassword: "",
         password: "",
@@ -77,7 +78,7 @@ function EditRequestAirlineCompany({
       name: user?.name || "",
       email: user?.email || "",
       role: user?.role || "",
-      position: user?.position || "",
+      position: user?.position?.name || "",
       login: user?.login || "",
       oldPassword: "",
       password: "",
@@ -173,6 +174,9 @@ function EditRequestAirlineCompany({
           (dept) => dept.name === formData.department
         );
 
+        const selectedPosition = positions.find(
+          (position) => position.name === formData.position
+        );
         let response_update_user = await uploadFile({
           variables: {
             input: {
@@ -180,7 +184,7 @@ function EditRequestAirlineCompany({
               name: formData.name,
               email: formData.email,
               role: formData.role,
-              position: formData.position,
+              positionId: selectedPosition?.id,
               login: formData.login,
               oldPassword: formData.oldPassword,
               password: formData.password,
@@ -194,45 +198,45 @@ function EditRequestAirlineCompany({
         // console.log("Response from uploadFile:", response_update_user);
 
         if (response_update_user) {
-          const updatedUser = response_update_user.data.updateUser;
+          // const updatedUser = response_update_user.data.updateUser;
 
-          const updatedTarif = addTarif.map((department) => {
-            // Если пользователь находится в этом отделе
-            if (department.users.some((u) => u.id === user.id)) {
-              // Если это старый отдел и отдел изменился, удаляем пользователя
-              if (department.name !== formData.department) {
-                return {
-                  ...department,
-                  users: department.users.filter((u) => u.id !== user.id),
-                };
-              } else {
-                // Если отдел не изменился, просто обновляем данные пользователя
-                return {
-                  ...department,
-                  users: department.users.map((u) =>
-                    u.id === updatedUser.id ? { ...u, ...updatedUser } : u
-                  ),
-                };
-              }
-            }
+          // const updatedTarif = addTarif.map((department) => {
+          //   // Если пользователь находится в этом отделе
+          //   if (department.users.some((u) => u.id === user.id)) {
+          //     // Если это старый отдел и отдел изменился, удаляем пользователя
+          //     if (department.name !== formData.department) {
+          //       return {
+          //         ...department,
+          //         users: department.users.filter((u) => u.id !== user.id),
+          //       };
+          //     } else {
+          //       // Если отдел не изменился, просто обновляем данные пользователя
+          //       return {
+          //         ...department,
+          //         users: department.users.map((u) =>
+          //           u.id === updatedUser.id ? { ...u, ...updatedUser } : u
+          //         ),
+          //       };
+          //     }
+          //   }
 
-            // Если это новый отдел, добавляем пользователя
-            if (department.name === formData.department) {
-              return {
-                ...department,
-                users: [...department.users, { ...user, ...updatedUser }].sort(
-                  (a, b) => a.name.localeCompare(b.name)
-                ),
-              };
-            }
+          //   // Если это новый отдел, добавляем пользователя
+          //   if (department.name === formData.department) {
+          //     return {
+          //       ...department,
+          //       users: [...department.users, { ...user, ...updatedUser }].sort(
+          //         (a, b) => a.name.localeCompare(b.name)
+          //       ),
+          //     };
+          //   }
 
-            // Если отдел не связан с изменениями, возвращаем как есть
-            return department;
-          });
+          //   // Если отдел не связан с изменениями, возвращаем как есть
+          //   return department;
+          // });
 
           // console.log("Updated Tarif:", updatedTarif);
 
-          onSubmit(updatedTarif); // Обновляем состояние в родительском компоненте
+          // onSubmit(updatedTarif); // Обновляем состояние в родительском компоненте
           resetForm();
           onClose();
           setIsLoading(false);
@@ -240,11 +244,11 @@ function EditRequestAirlineCompany({
         }
       } catch (err) {
         setIsLoading(false);
-        console.error("Ошибка обновления пользователя:", error);
-        if (String(error).startsWith("ApolloError: Указан неверный пароль.")) {
+        console.error("Ошибка обновления пользователя:", err);
+        if (String(err).startsWith("ApolloError: Указан неверный пароль.")) {
           alert("Указан неверный старый пароль.");
         } else if (
-          String(error).startsWith(
+          String(err).startsWith(
             "ApolloError: Для обновления пароля необходимо указать предыдущий пароль."
           )
         ) {
@@ -279,7 +283,7 @@ function EditRequestAirlineCompany({
     };
   }, [show, closeButton]);
 
-  const positions = ["Директор", "Заместитель директора", "Сотрудник"];
+  // const positions = ["Директор", "Заместитель директора", "Сотрудник"];
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -363,7 +367,7 @@ function EditRequestAirlineCompany({
                     dropdownWidth={"100%"}
                     isDisabled={!isEditing}
                     label={"Выберите должность"}
-                    options={positions}
+                    options={positions.map((position) => position.name)}
                     value={formData.position}
                     onChange={(event, newValue) => {
                       setFormData((prevFormData) => ({
@@ -375,19 +379,6 @@ function EditRequestAirlineCompany({
                   />
                 </div>
               </div>
-              {/* <DropDownList
-                placeholder="Выберите должность"
-                searchable={false}
-                options={positions}
-                initialValue={formData.position}
-                onSelect={(value) => {
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    position: value,
-                  }));
-                  setIsEdited(true);
-                }}
-              /> */}
 
               <div className={classes.requestDataInfo}>
                 <label>Отдел</label>
@@ -408,17 +399,6 @@ function EditRequestAirlineCompany({
                   />
                 </div>
               </div>
-              {/* <select
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-              >
-                {addTarif.map((department, index) => (
-                  <option key={index} value={department.name}>
-                    {department.name}
-                  </option>
-                ))}
-              </select> */}
 
               <div className={classes.requestDataInfo}>
                 <label>Логин</label>

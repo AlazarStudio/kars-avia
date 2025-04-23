@@ -23,6 +23,7 @@ function ExistRequestCompanyHotel({
   openDeleteComponent,
   filterList,
   addNotification,
+  positions,
   id,
 }) {
   const token = getCookie("token");
@@ -173,6 +174,10 @@ function ExistRequestCompanyHotel({
         return;
       }
       try {
+        const selectedPosition = positions.find(
+          (position) => position.name === formData.position
+        );
+
         let response_update_user = await uploadFile({
           variables: {
             input: {
@@ -180,7 +185,7 @@ function ExistRequestCompanyHotel({
               name: formData.name,
               email: formData.email,
               role: formData.role,
-              position: formData.position,
+              positionId: selectedPosition?.id,
               login: formData.login,
               password: formData.password,
               oldPassword: formData.oldPassword,
@@ -335,7 +340,7 @@ function ExistRequestCompanyHotel({
                     dropdownWidth={"100%"}
                     isDisabled={!isEditing}
                     label={"Выберите должность"}
-                    options={["Директор", "Администратор", "Менеджер"]}
+                    options={positions?.map((position) => position.name)}
                     value={formData.position}
                     onChange={(event, newValue) => {
                       setIsEdited(true);

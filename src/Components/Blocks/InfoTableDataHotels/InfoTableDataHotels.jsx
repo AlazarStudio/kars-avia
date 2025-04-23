@@ -155,6 +155,12 @@ function InfoTableDataHotels({
                   {item.provision ? item.provision : "0"}
                 </span>
               </div>
+              <div className={classes.InfoTable_data_elem_title}>
+                Мощность{" "}
+                <span className={classes.blue}>
+                  {item.capacity ? item.capacity : "0"}
+                </span>
+              </div>
             </div>
           </Link>
         ))}

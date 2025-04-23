@@ -23,6 +23,7 @@ function UpdateRequestAirlineStaff({
   setShowDelete,
   setDeleteIndex,
   addNotification,
+  positions
 }) {
   const [userRole, setUserRole] = useState();
   const token = getCookie("token");
@@ -36,7 +37,7 @@ function UpdateRequestAirlineStaff({
     id: selectedStaff?.id || "",
     name: selectedStaff?.name || "",
     number: selectedStaff?.number || "",
-    position: selectedStaff?.position || "",
+    position: selectedStaff?.position?.name || "",
     gender: selectedStaff?.gender || "",
   });
 
@@ -48,7 +49,7 @@ function UpdateRequestAirlineStaff({
         id: selectedStaff.id,
         name: selectedStaff.name,
         number: selectedStaff.number,
-        position: selectedStaff.position,
+        position: selectedStaff?.position?.name || "",
         gender: selectedStaff.gender,
       });
     }
@@ -59,7 +60,7 @@ function UpdateRequestAirlineStaff({
       id: selectedStaff?.id || "",
       name: selectedStaff?.name || "",
       number: selectedStaff?.number || "",
-      position: selectedStaff?.position || "",
+      position: selectedStaff?.position?.name || "",
       gender: selectedStaff?.gender || "",
     });
     setIsEdited(false); // Сброс флага изменений
@@ -102,6 +103,9 @@ function UpdateRequestAirlineStaff({
     e.preventDefault();
     setIsLoading(true);
     try {
+      const selectedPosition = positions.find(
+        (position) => position.name === formData.position
+      );
       let request = await updateAirlineStaff({
         variables: {
           updateAirlineId: id,
@@ -111,7 +115,7 @@ function UpdateRequestAirlineStaff({
                 id: formData.id,
                 name: formData.name,
                 number: formData.number,
-                position: formData.position,
+                positionId: selectedPosition?.id,
                 gender: formData.gender,
               },
             ],
@@ -227,23 +231,10 @@ function UpdateRequestAirlineStaff({
               /> */}
 
               <label>Должность</label>
-              {/* <DropDownList
-                placeholder={"Выберите должность"}
-                searchable={false}
-                options={positions}
-                initialValue={formData.position}
-                onSelect={(value) => {
-                  setIsEdited(true);
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    position: value,
-                  }));
-                }}
-              /> */}
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={positions}
+                options={positions?.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setFormData((prevFormData) => ({

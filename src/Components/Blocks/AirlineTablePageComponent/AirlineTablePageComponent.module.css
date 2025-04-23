@@ -25,6 +25,7 @@
     border-top: 1px solid #E4E4EF;
     border-bottom: 1px solid #E4E4EF;
     font-family: Nunito Sans;
+    font-weight: 400;
     font-size: 14px;
     line-height: 20px;
     display: flex;
@@ -71,8 +72,7 @@
 .hotelTable tbody tr>td:nth-child(1) {
     border: none;
     border-bottom: 1px solid #E4E4EF;
-    /* padding-left: 10px; */
-    padding-left: 5px;
+    /* padding: 0 10px; */
 }
 
 .hotelTable tbody tr>td td {
@@ -143,7 +143,7 @@
     height: 45px;
     font-family: Nunito Sans;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 400;
     text-transform: uppercase;
     gap: 20px;
     border: 1px solid #E4E4EF;
@@ -246,7 +246,7 @@
 .formContainer_title {
     font-family: Nunito Sans;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 400;
     line-height: 20px;
     text-align: left;
     padding-bottom: 20px;
@@ -256,7 +256,7 @@
 .formContainer_title_success {
     font-family: Nunito Sans;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 400;
     line-height: 20px;
     text-align: center;
     margin-bottom: 20px;
@@ -307,7 +307,7 @@
 .formContainer_items_item_data_client {
     font-family: Nunito Sans;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 400;
     width: 100%;
     margin-bottom: 10px;
 }
@@ -372,17 +372,50 @@
     align-items: center;
 }
 
-.staffInfo {
-    cursor: pointer;
-    /* display: flex;
-    flex-direction: column;
+.staffWrapper {
+    height: 100%;
+    /* padding: 0 10px; */
+    display: flex;
+    /* align-items: center; */
+    /* gap: 10px; */
+}
+
+.staffIndex {
+    flex-basis: 20%;
+    border-right: 1px solid #E4E4EF;
+    border-left: 1px solid #E4E4EF;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    align-items: center; */
+    font-size: 12px;
+}
+
+.staffInfo {
+    padding: 0 10px;
+    flex-basis: 80%;
+    cursor: pointer;
+    display: flex;
+    /* gap: 15px; */
+    /* justify-content: center; */
+    align-items: center;
 }
 
 .staffInfoPosition {
     display: inline;
     font-size: 12px;
+    color: var(--main-gray);
+}
+
+
+@media (min-width: 0px) and (max-width: 1599px) {
+    .staffIndex {
+        flex-basis: 30%;
+    }
+
+    .staffInfo {
+        flex-basis: 70%;
+    }
 }
 
 @media (min-width: 0px) and (max-width: 1550px) {

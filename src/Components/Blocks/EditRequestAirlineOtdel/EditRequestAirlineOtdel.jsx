@@ -15,6 +15,7 @@ function EditRequestAirlineOtdel({
   onClose,
   id,
   category,
+  positions, // Все доступные должности
   onSubmit,
   addNotification,
 }) {
@@ -25,16 +26,23 @@ function EditRequestAirlineOtdel({
     setUserRole(decodeJWT(token).role);
   }, [token]);
 
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [isEdited, setIsEdited] = useState(false);
   const [formData, setFormData] = useState({
     type: category?.name || "",
   });
+  // Инициализируем выбранные должности из category?.position (если они есть)
+  const [selectedPositions, setSelectedPositions] = useState(
+    category && category.position ? category.position.map((pos) => pos.id) : []
+  );
 
   const sidebarRef = useRef();
 
   useEffect(() => {
     if (show && category) {
       setFormData({ type: category.name });
+      setSelectedPositions(
+        category.position ? category.position.map((pos) => pos.id) : []
+      );
     }
   }, [show, category]);
 
@@ -42,8 +50,11 @@ function EditRequestAirlineOtdel({
     setFormData({
       type: category?.name || "",
     });
-    setIsEdited(false); // Сброс флага изменений
-  }, []);
+    setSelectedPositions(
+      category && category.position ? category.position.map((pos) => pos.id) : []
+    );
+    setIsEdited(false);
+  }, [category]);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
@@ -51,7 +62,6 @@ function EditRequestAirlineOtdel({
       onClose();
       return;
     }
-
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       onClose();
@@ -60,12 +70,24 @@ function EditRequestAirlineOtdel({
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
   }, []);
+
+  // Обработка переключения чекбоксов для должностей
+  const handlePositionToggle = (id) => {
+    setIsEdited(true);
+    setSelectedPositions((prevSelected) => {
+      if (prevSelected.includes(id)) {
+        return prevSelected.filter((posId) => posId !== id);
+      } else {
+        return [...prevSelected, id];
+      }
+    });
+  };
 
   const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
     context: {
@@ -76,6 +98,11 @@ function EditRequestAirlineOtdel({
   });
 
   const [isLoading, setIsLoading] = useState(false);
+
+  // console.log(category?.id);
+  // console.log(formData.type);
+  // console.log(selectedPositions);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -90,11 +117,15 @@ function EditRequestAirlineOtdel({
               {
                 id: category.id,
                 name: formData.type,
+                positionIds: selectedPositions, // Передаём выбранные id должностей
               },
             ],
           },
         },
       });
+
+      // console.log(request);
+      
 
       if (request) {
         const sortedDepartments = request.data.updateAirline.department
@@ -114,17 +145,16 @@ function EditRequestAirlineOtdel({
     } catch (err) {
       setIsLoading(false);
       alert("Произошла ошибка при сохранении данных");
+      console.error(err);
+      
     }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
-
       closeButton();
     };
 
@@ -144,7 +174,7 @@ function EditRequestAirlineOtdel({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Изменить отдел</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <img src="/close.png" alt="Закрыть" />
         </div>
       </div>
       {isLoading ? (
@@ -159,11 +189,28 @@ function EditRequestAirlineOtdel({
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                placeholder="Пример: 1"
+                placeholder="Пример: Отдел продаж"
               />
+              <div className={classes.positionsContainer}>
+                <label>Должности:</label>
+                {positions &&
+                  positions?.map((position) => (
+                    <div key={position.id} className={classes.checkboxItem}>
+                      <input
+                        type="checkbox"
+                        id={`position-${position.id}`}
+                        value={position.id}
+                        checked={selectedPositions.includes(position.id)}
+                        onChange={() => handlePositionToggle(position.id)}
+                      />
+                      <label htmlFor={`position-${position.id}`}>
+                        {position.name}
+                      </label>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
-
           <div className={classes.requestButton}>
             <Button type="submit" onClick={handleSubmit}>
               Изменить

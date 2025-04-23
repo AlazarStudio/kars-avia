@@ -1,13 +1,21 @@
+.tariffsWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
 
 .section_searchAndFilter {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
 }
-.section_searchAndFilter_filter{    
+
+.section_searchAndFilter_filter {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
 }
+
 @media (min-width: 0px) and (max-width: 1299px) {}

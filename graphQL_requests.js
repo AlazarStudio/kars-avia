@@ -6,7 +6,10 @@ import { gql } from "@apollo/client";
 // export const path = 'backend.karsavia.ru:443';
 // export const server = `https://${path}`;
 
-export const path = '192.168.0.14:4000';
+// export const path = '192.168.0.14:4000';
+// export const server = `http://${path}`;
+
+export const path = '45.130.42.244:4000';
 export const server = `http://${path}`;
 
 export const getCookie = (name) => {
@@ -92,6 +95,57 @@ export const RESET_PASSWORD = gql`
 
 // ----------------------------------------------------------------
 
+//
+export const GET_ALL_POSITIONS = gql`
+  query getAllPositions {
+    getAllPositions {
+      id
+      name
+    }
+  }
+`;
+
+export const GET_AIRLINE_USERS_POSITIONS = gql`
+  query GetAirlineUserPositions {
+    getAirlineUserPositions {
+      id
+      name
+      separator
+    }
+  }
+`;
+
+export const GET_AIRLINE_POSITIONS = gql`
+  query GetAirlinePositions {
+    getAirlinePositions {
+      id
+      name
+      separator
+    }
+  }
+`;
+
+export const GET_HOTEL_POSITIONS = gql`
+  query GetHotelPositions {
+    getHotelPositions {
+      id
+      name
+      separator
+    }
+  }
+`;
+
+export const GET_DISPATCHER_POSITIONS = gql`
+  query GetDispatcherPositions {
+    getDispatcherPositions {
+      id
+      name
+      separator
+    }
+  }
+`;
+//
+
 // Запросы к заявкам на эстафету
 
 export const GET_REQUESTS = gql`
@@ -128,7 +182,10 @@ export const GET_REQUESTS = gql`
           id
           name
           number
-          position
+          position {
+            id
+            name
+          }
           gender
         }
         airline {
@@ -183,7 +240,10 @@ export const GET_REQUESTS_ARCHIVED = gql`
             id
             name
             number
-            position
+            position {
+              id
+              name
+            }
             gender
           }
           airline {
@@ -227,7 +287,10 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
             id
             name
             number
-            position
+            position {
+              id
+              name
+            }
             gender
           }
           airline {
@@ -293,7 +356,10 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
             id
             name
             number
-            position
+            position {
+              id
+              name
+            }
             gender
           }
           airline {
@@ -331,7 +397,10 @@ export const REQUEST_MESSAGES_SUBSCRIPTION = gql`
         id
         name
         role
-        position
+        position {
+          id
+          name
+        }
       }
       createdAt
     }
@@ -453,7 +522,10 @@ export const CREATE_REQUEST_MUTATION = gql`
             id
             name
             number
-            position
+            position {
+              id
+              name
+            }
             gender
           }
           airline {
@@ -474,7 +546,10 @@ query Airlines {
       staff { 
         id 
         name 
-        position 
+        position {
+          id
+          name
+        }
         gender 
         number 
       } 
@@ -571,7 +646,10 @@ export const GET_REQUEST = gql`
         id
         name
         number
-        position
+        position {
+          id
+          name
+        }
         gender
       }
       airline {
@@ -679,7 +757,10 @@ export const GET_BRONS_HOTEL = gql`
           id
           name
           number
-          position
+          position {
+            id
+            name
+          }
           gender
         }
         passenger {
@@ -757,7 +838,10 @@ export const GET_MESSAGES_HOTEL = gql`
           id
           name
           role
-          position
+          position {
+            id
+            name
+          }
         }
         readBy {
           user {
@@ -840,7 +924,10 @@ export const GET_LOGS = gql`
       }
       person {
         name
-        position
+        position {
+          id
+          name
+        }
       }
       airport {
         name
@@ -1487,6 +1574,11 @@ export const GET_HOTEL = gql`
       type
       stars
       usStars
+      airport {
+        id
+        name
+        code
+      }
       airportDistance
       information {
         country
@@ -1504,10 +1596,20 @@ export const GET_HOTEL = gql`
         description
       }
       images
+      gallery
+      roomKind {
+        id
+        name
+        category
+        price
+        description
+        images
+      }
       rooms {
         id
         type
         name
+        beds
         category
         active
         places
@@ -1541,18 +1643,33 @@ export const GET_HOTEL_CITY = gql`
   }
 `;
 
+// export const GET_HOTEL_TARIFS = gql`
+//   query Hotel($hotelId: ID!) {
+//     hotel(id: $hotelId) {
+//       prices {
+//         priceOneCategory
+//         priceTwoCategory
+//         priceThreeCategory
+//         priceFourCategory
+//         priceFiveCategory
+//         priceSixCategory
+//         priceSevenCategory
+//         priceEightCategory
+//       }
+//     }
+//   }
+// `;
+
 export const GET_HOTEL_TARIFS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
-      prices {
-        priceOneCategory
-        priceTwoCategory
-        priceThreeCategory
-        priceFourCategory
-        priceFiveCategory
-        priceSixCategory
-        priceSevenCategory
-        priceEightCategory
+      roomKind {
+        id
+        name
+        description
+        category
+        price
+        images
       }
     }
   }
@@ -1576,6 +1693,9 @@ export const GET_HOTEL_ROOMS = gql`
       type
       rooms {
         id
+        roomKind {
+          id
+        }
         name
         type
         price
@@ -1602,8 +1722,8 @@ export const GET_HOTEL_NAME = gql`
 `;
 
 export const UPDATE_HOTEL = gql`
-  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!, $images: [Upload!], $roomImages: [Upload!]) {
-    updateHotel(id: $updateHotelId, input: $input, images: $images, roomImages: $roomImages) {
+  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!, $images: [Upload!], $roomImages: [Upload!], $gallery: [Upload!]) {
+    updateHotel(id: $updateHotelId, input: $input, images: $images, roomImages: $roomImages, gallery: $gallery) {
       rooms {
         id
         name
@@ -1614,6 +1734,11 @@ export const UPDATE_HOTEL = gql`
         active
         description
         images
+      }
+      airport {
+        id
+        name
+        code
       }
       breakfast {
         start
@@ -1628,22 +1753,38 @@ export const UPDATE_HOTEL = gql`
         end
       }
       images
+      gallery
     }
   }
 `;
 
+// export const UPDATE_HOTEL_TARIF = gql`
+//   mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
+//     updateHotel(id: $updateHotelId, input: $input) {
+//       prices {
+//         priceOneCategory
+//         priceTwoCategory
+//         priceThreeCategory
+//         priceFourCategory
+//         priceFiveCategory
+//         priceSixCategory
+//         priceSevenCategory
+//         priceEightCategory
+//       }
+//     }
+//   }
+// `;
 export const UPDATE_HOTEL_TARIF = gql`
-  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
-    updateHotel(id: $updateHotelId, input: $input) {
-      prices {
-        priceOneCategory
-        priceTwoCategory
-        priceThreeCategory
-        priceFourCategory
-        priceFiveCategory
-        priceSixCategory
-        priceSevenCategory
-        priceEightCategory
+  mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!, $roomKindImages: [Upload!]) {
+    updateHotel(id: $updateHotelId, input: $input, roomKindImages: $roomKindImages) {
+      id
+      roomKind {
+        id
+        name
+        description
+        category
+        price
+        images
       }
     }
   }
@@ -1669,10 +1810,18 @@ export const DELETE_HOTEL_CATEGORY = gql`
   }
 `;
 
+// export const DELETE_HOTEL_TARIFF = gql`
+//   mutation Mutation($deleteTariffId: ID!) {
+//     deleteTariff(id: $deleteTariffId) {
+//       name
+//     }
+//   }
+// `;
+
 export const DELETE_HOTEL_TARIFF = gql`
-  mutation Mutation($deleteTariffId: ID!) {
-    deleteTariff(id: $deleteTariffId) {
-      name
+  mutation DeleteRoomKind($deleteRoomKindId: ID!) {
+    deleteRoomKind(id: $deleteRoomKindId) {
+      id
     }
   }
 `;
@@ -1701,7 +1850,10 @@ export const GET_HOTEL_USERS = gql`
       name
       email
       role
-      position
+      position {
+        id
+        name
+      }
       login
       images
     }
@@ -1715,7 +1867,10 @@ export const CREATE_HOTEL_USER = gql`
       name
       email
       role
-      position
+      position {
+        id
+        name
+      }
       login
       images
     }
@@ -1729,7 +1884,10 @@ export const UPDATE_HOTEL_USER = gql`
       name
       email
       role
-      position
+      position {
+        id
+        name
+      }
       login
       images
     }
@@ -1825,26 +1983,61 @@ export const GET_AIRLINE = gql`
       staff {
         id
         name
-        position
+        position {
+          id
+          name
+        }
       }
     }
   }
 `;
 
+// export const GET_AIRLINE_TARIFS = gql`
+//   query Airline($airlineId: ID!) {
+//     airline(id: $airlineId) {
+//       prices {
+//         priceOneCategory
+//         priceTwoCategory
+//         priceThreeCategory
+//         priceFourCategory
+//         priceFiveCategory
+//         priceSixCategory
+//         priceSevenCategory
+//         priceEightCategory
+//         priceApartment
+//         priceStudio
+//       }
+//     }
+//   }
+// `;
+
 export const GET_AIRLINE_TARIFS = gql`
   query Airline($airlineId: ID!) {
     airline(id: $airlineId) {
       prices {
-        priceOneCategory
-        priceTwoCategory
-        priceThreeCategory
-        priceFourCategory
-        priceFiveCategory
-        priceSixCategory
-        priceSevenCategory
-        priceEightCategory
-        priceApartment
-        priceStudio
+        airports {
+          id
+          airport {
+            id
+            name
+            code
+            city
+          }
+        }
+        id
+        name
+        prices {
+          priceApartment
+          priceStudio
+          priceOneCategory
+          priceTwoCategory
+          priceThreeCategory
+          priceFourCategory
+          priceFiveCategory
+          priceSixCategory
+          priceSevenCategory
+          priceEightCategory
+        }
       }
     }
   }
@@ -1890,16 +2083,7 @@ export const UPDATE_AIRLINE = gql`
 export const UPDATE_AIRLINE_TARIF = gql`
   mutation UpdateAirline($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
     updateAirline(id: $updateAirlineId, input: $input) {
-      prices {
-        priceOneCategory
-        priceTwoCategory
-        priceThreeCategory
-        priceFourCategory
-        priceFiveCategory
-        priceSixCategory
-        priceSevenCategory
-        priceEightCategory
-      }
+      id
     }
   }
 `;
@@ -1944,10 +2128,17 @@ export const GET_AIRLINE_COMPANY = gql`
           id
           name
           role
-          position
+          position {
+            id
+            name
+          }
           images
           email
           login
+        }
+        position {
+          id
+          name
         }
       }
     }
@@ -1961,7 +2152,10 @@ export const CREATE_AIRLINE_USER = gql`
       images
       name
       role
-      position
+      position {
+        id
+        name
+      }
       login
       password
       email
@@ -1998,7 +2192,10 @@ export const CREATE_AIRLINE_STAFF = gql`
         id
         name
         number
-        position
+        position {
+          id 
+          name
+        }
         gender
       }
     }
@@ -2012,7 +2209,10 @@ export const UPDATE_AIRLINE_USER = gql`
         name
         email
         role
-        position
+        position {
+          id
+          name
+        }
         login
         images
     }
@@ -2043,7 +2243,15 @@ export const GET_AIRLINE_USERS = gql`
         name
         gender
         number
-        position
+        hotelChess {
+          request {
+            requestNumber
+          }
+        }
+        position {
+          id
+          name
+        }
       }
     }
   }
@@ -2056,7 +2264,10 @@ export const UPDATE_AIRLINE_STAFF = gql`
         id
         name
         number
-        position
+        position {
+          id
+          name
+        }
         gender
       }
     }
@@ -2077,9 +2288,15 @@ export const GET_STAFF_HOTELS = gql`
     airlineStaffs(id: $airlineStaffsId) {
       name
       number
-      position
+      position {
+        id
+        name
+      }
       gender
       hotelChess {
+        request {
+          requestNumber
+        }
         start
         end
         clientId
@@ -2104,7 +2321,10 @@ export const GET_DISPATCHERS = gql`
       name
       images
       role
-      position
+      position {
+        id
+        name
+      }
       email
       login
     }
@@ -2118,7 +2338,10 @@ export const GET_DISPATCHERS_SUBSCRIPTION = gql`
       name
       images
       role
-      position
+      position {
+        id
+        name
+      }
       email
       login
       airlineDepartmentId
@@ -2137,7 +2360,10 @@ export const GET_DISPATCHER = gql`
       name
       role
       support
-      position
+      position {
+        id
+        name
+      }
       images
       login
       email
@@ -2156,7 +2382,10 @@ export const CREATE_DISPATCHER_USER = gql`
       name
       email
       role
-      position
+      position {
+        id
+        name
+      }
       login
       images
     }
@@ -2170,7 +2399,10 @@ export const UPDATE_DISPATCHER_USER = gql`
       name
       email
       role
-      position
+      position {
+        id
+        name
+      }
       login
       images
     }

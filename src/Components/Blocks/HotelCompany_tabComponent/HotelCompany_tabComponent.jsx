@@ -14,6 +14,7 @@ import {
   decodeJWT,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   GET_DISPATCHERS_SUBSCRIPTION,
+  GET_HOTEL_POSITIONS,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
@@ -28,6 +29,12 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_USERS, {
     variables: { hotelId: id },
   });
+
+  const {
+    loading: positionsLoading,
+    error: positionsError,
+    data: positionsData,
+  } = useQuery(GET_HOTEL_POSITIONS);
 
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_HOTELS_UPDATE_SUBSCRIPTION,
@@ -59,12 +66,20 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
 
   const [companyData, setCompanyData] = useState([]);
 
+  const [positions, setPositions] = useState([]);
+
   useEffect(() => {
     if (data) {
       setCompanyData(data.hotelUsers);
       refetch();
     }
   }, [data, refetch]);
+
+  useEffect(() => {
+    if (positionsData) {
+      setPositions(positionsData?.getHotelPositions);
+    }
+  }, [positionsData]);
 
   const addDispatcher = (newDispatcher) => {
     setCompanyData([...companyData, newDispatcher]);
@@ -204,6 +219,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
         show={showCreateSidebar}
         onClose={toggleCreateSidebar}
         addDispatcher={addDispatcher}
+        positions={positions}
         addNotification={addNotification}
       />
 
@@ -216,6 +232,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
         openDeleteComponent={openDeleteComponent}
         deleteComponentRef={deleteComponentRef}
         isLoading={isLoading}
+        positions={positions}
         addNotification={addNotification}
         // filterList={filterList}
       />

@@ -17,6 +17,7 @@ function CreateRequestAirlineOtdel({
   addTarif,
   setAddTarif,
   addNotification,
+  positions,
 }) {
   const [userRole, setUserRole] = useState();
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -30,12 +31,16 @@ function CreateRequestAirlineOtdel({
     category: "",
   });
 
+  // Состояние для выбранных должностей (id)
+  const [selectedPositions, setSelectedPositions] = useState([]);
+
   const sidebarRef = useRef();
 
   const resetForm = useCallback(() => {
     setFormData({
       category: "",
     });
+    setSelectedPositions([]);
     setIsEdited(false); // Сброс флага изменений
   }, []);
 
@@ -61,11 +66,23 @@ function CreateRequestAirlineOtdel({
     }));
   }, []);
 
+  // Обработка выбора/снятия галочки для должностей
+  const handlePositionToggle = (id) => {
+    setIsEdited(true);
+    setSelectedPositions((prevSelected) => {
+      if (prevSelected.includes(id)) {
+        return prevSelected.filter((posId) => posId !== id);
+      } else {
+        return [...prevSelected, id];
+      }
+    });
+  };
+
   const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        "Apollo-Require-Preflight": "true",
+        // "Apollo-Require-Preflight": "true",
       },
     },
   });
@@ -79,6 +96,7 @@ function CreateRequestAirlineOtdel({
     // Проверка на заполненность поля
     if (!formData.category.trim()) {
       alert("Пожалуйста, введите название отдела.");
+      setIsLoading(false);
       return;
     }
 
@@ -90,6 +108,7 @@ function CreateRequestAirlineOtdel({
             department: [
               {
                 name: formData.category,
+                positionIds: selectedPositions,
               },
             ],
           },
@@ -137,6 +156,9 @@ function CreateRequestAirlineOtdel({
     };
   }, [show, closeButton]);
 
+  // console.log(selectedPositions);
+  
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -160,6 +182,24 @@ function CreateRequestAirlineOtdel({
                 onChange={handleChange}
                 placeholder="Пример: Отдел продаж"
               />
+              <div className={classes.positionsContainer}>
+                <label>Должности:</label>
+                {positions &&
+                  positions?.map((position) => (
+                    <div key={position.id} className={classes.checkboxItem}>
+                      <label htmlFor={`position-${position.id}`}>
+                        {position.name}
+                      </label>
+                      <input
+                        type="checkbox"
+                        id={`position-${position.id}`}
+                        value={position.id}
+                        checked={selectedPositions.includes(position.id)}
+                        onChange={() => handlePositionToggle(position.id)}
+                      />
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
 

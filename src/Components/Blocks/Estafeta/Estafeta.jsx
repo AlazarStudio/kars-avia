@@ -363,8 +363,8 @@ function Estafeta({ user }) {
         matchesAirport &&
         matchesSelect &&
         matchesDate &&
-        searchFields.some((field) =>
-          field?.toLowerCase().includes(matchesSearch)
+        searchFields?.some((field) =>
+          String(field)?.toLowerCase().includes(matchesSearch)
         )
       );
     });

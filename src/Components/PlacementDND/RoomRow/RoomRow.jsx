@@ -29,10 +29,10 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, containe
     const [highlightedDates, setHighlightedDates] = useState([]);
 
     const handleMouseEnter = (index, day) => {
-        setHoveredPoint(index);
-        setHoveredDayInMonth(format(day, 'd'))
+        // setHoveredPoint(index);
+        // setHoveredDayInMonth(format(day, 'd'))
         // setHoveredRoom(room.id)
-        setHoveredRoom(room.roomId)
+        // setHoveredRoom(room.roomId)
     };
 
     const handleMouseLeave = () => {

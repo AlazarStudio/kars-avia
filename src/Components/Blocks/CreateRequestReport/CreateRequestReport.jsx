@@ -13,8 +13,15 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 
-function CreateRequestReport({ show, onClose, addNotification }) {
+function CreateRequestReport({
+  show,
+  onClose,
+  addNotification,
+  positions,
+  airports,
+}) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
@@ -25,6 +32,8 @@ function CreateRequestReport({ show, onClose, addNotification }) {
     airlineId: user.airlineId ? user.airlineId : "",
     hotelId: user.hotelId ? user.hotelId : "",
     personId: "",
+    airport: "",
+    position: "",
   });
 
   // Определяем, для чего создаётся отчёт: для авиакомпании или для гостиницы
@@ -97,6 +106,8 @@ function CreateRequestReport({ show, onClose, addNotification }) {
       airlineId: user.airlineId ? user.airlineId : "",
       hotelId: user.hotelId ? user.hotelId : "",
       personId: "",
+      airport: "",
+      position: "",
     });
     setSelectedAirline(null);
     setAirOrHotel("");
@@ -167,12 +178,22 @@ function CreateRequestReport({ show, onClose, addNotification }) {
       return;
     }
 
+    const selectedAirport = airports.find(
+      (airport) => airport.code === formData.airport
+    );
+
+    const selectedPosition = positions.find(
+      (position) => position.name === formData.position
+    );
+
     const input = {
       filter: {
         startDate: formData.startDate,
         endDate: formData.endDate,
         airlineId: formData.airlineId,
         hotelId: formData.hotelId,
+        airportId: selectedAirport?.id,
+        positionId: selectedPosition?.id,
         personId: formData.personId,
       },
       format: "xlsx",
@@ -286,39 +307,98 @@ function CreateRequestReport({ show, onClose, addNotification }) {
               {airOrHotel === "airline" &&
                 (selectedAirline?.staff || user.airlineId) && (
                   <>
-                    <label>Сотрудник авиакомпании</label>
+                    <label>Аэропорт</label>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
-                      label={"Выберите сотрудника авиакомпании"}
-                      options={[
-                        "По всем сотрудникам",
-                        ...(selectedAirline?.staff || []).map(
-                          (person) => person.name
-                        ),
-                      ]}
+                      // isDisabled={!isEditing}
+                      label={"Выберите должность"}
+                      options={airports.map((airport) => airport.code)}
+                      value={formData.airport}
+                      onChange={(event, newValue) => {
+                        setFormData((prevFormData) => ({
+                          ...prevFormData,
+                          airport: newValue,
+                        }));
+                        setIsEdited(true);
+                      }}
+                    />
+
+                    <label>Должность</label>
+                    <MUIAutocomplete
+                      dropdownWidth={"100%"}
+                      // isDisabled={!isEditing}
+                      label={"Выберите должность"}
+                      options={positions.map((position) => position.name)}
+                      value={formData.position}
+                      onChange={(event, newValue) => {
+                        setFormData((prevFormData) => ({
+                          ...prevFormData,
+                          position: newValue,
+                        }));
+                        setIsEdited(true);
+                      }}
+                    />
+                    <label>Сотрудник авиакомпании</label>
+                    <MUIAutocompleteColor
+                      dropdownWidth="100%"
+                      label="Введите сотрудника"
+                      // Фильтрация сотрудников по должности
+                      options={(selectedAirline?.staff || []).filter((person) =>
+                        formData.position
+                          ? person?.position?.name === formData.position
+                          : true
+                      )}
+                      getOptionLabel={(option) =>
+                        option
+                          ? `${option.name || ""} ${option?.position?.name} ${
+                              option.gender
+                            }`.trim()
+                          : ""
+                      }
+                      renderOption={(optionProps, option) => {
+                        // Формируем строку для отображения
+                        const labelText = `${option.name || ""} ${
+                          option?.position?.name
+                        } ${option.gender}`.trim();
+                        // Разбиваем строку по пробелам
+                        const words = labelText.split(". ");
+                        return (
+                          <li {...optionProps} key={option.id}>
+                            {words.map((word, index) => (
+                              <span
+                                key={index}
+                                style={{
+                                  color:
+                                    index === 0
+                                      ? "black"
+                                      : index === 1
+                                      ? "gray"
+                                      : "gray",
+                                  marginRight: "4px",
+                                }}
+                              >
+                                {word}
+                              </span>
+                            ))}
+                          </li>
+                        );
+                      }}
                       value={
-                        // Если personId пустой, показываем "По всем сотрудникам"
-                        formData.personId
-                          ? selectedAirline?.staff.find(
-                              (person) => person.id === formData.personId
-                            )?.name
-                          : "По всем сотрудникам"
+                        selectedAirline?.staff.find(
+                          (person) => person.id === formData.personId
+                        ) || {
+                          name: "По всем сотрудникам",
+                          position: {
+                            name: "",
+                          },
+                          gender: "",
+                        }
                       }
                       onChange={(event, newValue) => {
-                        if (newValue === "По всем сотрудникам") {
-                          setFormData((prevFormData) => ({
-                            ...prevFormData,
-                            personId: "",
-                          }));
-                        } else {
-                          const selectedPerson = selectedAirline?.staff.find(
-                            (person) => person.name === newValue
-                          );
-                          setFormData((prevFormData) => ({
-                            ...prevFormData,
-                            personId: selectedPerson?.id || "",
-                          }));
-                        }
+                        setFormData((prevFormData) => ({
+                          ...prevFormData,
+                          personId: newValue?.id || "",
+                        }));
                         setIsEdited(true);
                       }}
                     />

@@ -14,6 +14,7 @@ import ExistRequest from "../../../Blocks/ExistRequest/ExistRequest";
 import DeleteComponent from "../../../Blocks/DeleteComponent/DeleteComponent";
 import { useMutation } from "@apollo/client";
 import { CANCEL_REQUEST, getCookie } from "../../../../../graphQL_requests";
+import HotelSettings_tabComponent from "../../../Blocks/HotelSettings_tabComponent/HotelSettings_tabComponent";
 
 const DisAdminHotelContent = ({
   id,
@@ -82,12 +83,13 @@ const DisAdminHotelContent = ({
           <div style={{ display: "flex" }}>
             <Tab className={classes.tab}>Шахматка</Tab>
             {type === "apartment" ? null : (
-              <Tab className={classes.tab}>Цены</Tab>
+              <Tab className={classes.tab}>Тарифы</Tab>
             )}
 
             <Tab className={classes.tab}>Номерной фонд</Tab>
             <Tab className={classes.tab}>Пользователи</Tab>
             <Tab className={classes.tab}>О гостинице</Tab>
+            <Tab className={classes.tab}>Настройки</Tab>
           </div>
           {selectedTab === 0 ? (
             <Button onClick={toggleCreateRequest} minwidth={"200px"}>
@@ -116,6 +118,10 @@ const DisAdminHotelContent = ({
 
         <TabPanel className={classes.tabPanel}>
           <HotelAbout_tabComponent id={id} />
+        </TabPanel>
+
+        <TabPanel className={classes.tabPanel}>
+          <HotelSettings_tabComponent id={id} />
         </TabPanel>
       </Tabs>
       <CreateRequest

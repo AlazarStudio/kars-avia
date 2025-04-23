@@ -17,6 +17,7 @@ function CreateRequestCompany({
   onClose,
   addDispatcher,
   addNotification,
+  positions,
 }) {
   const token = getCookie("token");
 
@@ -109,6 +110,8 @@ function CreateRequestCompany({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+
 
     // Проверяем обязательные поля
     const requiredFields = [
@@ -140,14 +143,16 @@ function CreateRequestCompany({
     // }
 
     try {
-      setIsLoading(true);
+      const selectedPosition = positions.find(
+        (position) => position.name === formData.position
+      );
       let response_create_user = await uploadFile({
         variables: {
           input: {
             name: formData.name,
             email: formData.email,
             role: formData.role,
-            position: formData.position,
+            positionId: selectedPosition?.id,
             login: formData.login,
             password: formData.password,
             dispatcher: true,
@@ -219,13 +224,13 @@ function CreateRequestCompany({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton]);
 
-  const positions = [
-    "Руководитель службы размещения",
-    "Суточный диспетчер",
-    "Дневной диспетчер",
-    "Коммерческий директор",
-    "Региональный руководитель",
-  ];
+  // const positions = [
+  //   "Руководитель службы размещения",
+  //   "Суточный диспетчер",
+  //   "Дневной диспетчер",
+  //   "Коммерческий директор",
+  //   "Региональный руководитель",
+  // ];
 
   // const roles = [
   //   { label: "Администратор", value: "DISPATCHERADMIN" }
@@ -286,7 +291,7 @@ function CreateRequestCompany({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={positions}
+                options={positions.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setIsEdited(true);

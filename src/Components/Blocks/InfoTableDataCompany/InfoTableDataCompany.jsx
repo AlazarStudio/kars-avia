@@ -41,7 +41,7 @@ function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, 
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_title}>
-                                {item.position}
+                                {item?.position?.name}
                             </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>

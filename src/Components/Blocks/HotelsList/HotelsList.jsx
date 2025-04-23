@@ -28,7 +28,12 @@ function HotelsList({ children, user, ...props }) {
 
   const { data: dataSubscription } = useSubscription(GET_HOTELS_SUBSCRIPTION);
   const { data: dataSubscriptionUpd } = useSubscription(
-    GET_HOTELS_UPDATE_SUBSCRIPTION
+    GET_HOTELS_UPDATE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
   );
 
   const location = useLocation();
@@ -46,19 +51,22 @@ function HotelsList({ children, user, ...props }) {
 
   // в этой версии проблема с дублированием
   useEffect(() => {
-      if (data && data.hotels) {
-          const sortedHotels = [...data.hotels.hotels].sort((a, b) => a.city?.localeCompare(b.city));
-          setCompanyData(sortedHotels);
-      }
+    if (data && data.hotels) {
+      const sortedHotels = [...data.hotels.hotels].sort((a, b) =>
+        a.information?.city?.localeCompare(b.information?.city)
+      );
+      setCompanyData(sortedHotels);
+    }
 
-      if (dataSubscription && dataSubscription.hotelCreated) {
-          setCompanyData((prevCompanyData) => {
-              const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
-              return updatedData.sort((a, b) => a.information?.city?.localeCompare(b.city));
-          });
-      }
-
+    if (dataSubscription && dataSubscription.hotelCreated) {
+      // setCompanyData((prevCompanyData) => {
+      //   const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
+      //   return updatedData.sort((a, b) =>
+      //     a.information?.city?.localeCompare(b.information?.city)
+      //   );
+      // });
       refetch();
+    }
   }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
 
   // useEffect(() => {
@@ -92,7 +100,7 @@ function HotelsList({ children, user, ...props }) {
   const addHotel = (newHotel) => {
     setCompanyData(
       [...companyData, newHotel].sort((a, b) =>
-        a.information?.city.localeCompare(b.city)
+        a.information?.city?.localeCompare(b.information?.city)
       )
     );
   };
@@ -160,9 +168,11 @@ function HotelsList({ children, user, ...props }) {
         (filterData.filterSelect === "" ||
           request.information?.city.includes(filterData.filterSelect)) &&
         (request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          request?.information?.city?.toLowerCase()
+          request?.information?.city
+            ?.toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
-          request.information?.address?.toLowerCase()
+          request.information?.address
+            ?.toLowerCase()
             .includes(searchQuery.toLowerCase()))
       );
     });

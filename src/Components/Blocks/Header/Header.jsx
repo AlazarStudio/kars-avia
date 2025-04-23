@@ -299,7 +299,7 @@ function Header({ children }) {
           >
             <img
               src={
-                data?.user?.images?.[0]
+                userData?.images?.[0]
                   ? `${server}${userData?.images[0]}`
                   : "/no-avatar.png"
               }
@@ -324,7 +324,7 @@ function Header({ children }) {
                   />
                   <div className={classes.text_info}>
                     <p>{userData?.name}</p>
-                    <p>{data?.user?.position}</p>
+                    <p>{data?.user?.position?.name}</p>
                   </div>
                 </div>
                 <div>

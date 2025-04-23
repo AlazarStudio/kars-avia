@@ -192,7 +192,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 checkOutTime: new Date(chess.end).toISOString().split("T")[1].slice(0, 5),
                 status: translateStatus(chess.request ? chess.request?.status : chess.status),
                 guest: chess.client ? chess.client.name : chess.passenger?.name,
-                guestPosition: chess.client?.position,
+                guestPosition: chess.client?.position?.name,
                 requestID: chess.request ? chess.request?.id : chess.reserve?.id,
                 isRequest: chess.request ? true : false,
                 airline: chess.request ? chess.request?.airline : chess.reserve?.airline,
@@ -266,7 +266,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 checkOutTime: new Date(request.departure).toISOString().split("T")[1].slice(0, 5),
                 status: "Ожидает",
                 guest: request.person ? request.person.name : "Неизвестный гость",
-                guestPosition: request.person ? request.person.position : "",
+                guestPosition: request.person ? request.person.position?.name : "",
                 requestID: request.id,
                 requestNumber: request.requestNumber,
                 isRequest: true,
@@ -1964,7 +1964,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                     minWidth: `${LEFT_WIDTH}px`,
                                                     width: `${LEFT_WIDTH}px`,
                                                     maxWidth: `${LEFT_WIDTH}px`,
-                                                    backgroundColor: '#f5f5f5',
+                                                    // backgroundColor: '#f5f5f5',
                                                     borderLeft: '1px solid #ddd',
                                                     borderRight: '1px solid #ddd',
                                                     // borderTop: '1px solid #ddd',
@@ -1974,7 +1974,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                     alignItems: 'center',
                                                     overflow: 'hidden',
                                                     zIndex: 15,
-                                                    backgroundColor: hoveredRoom === room.roomId ? "#cce5ff" : !room.active ? '#a9a9a9' : '#f5f5f5'
+                                                    backgroundColor: hoveredRoom === room.roomId ? "#cce5ff" : !room.active ? '#a9a9a9' : '#fff',
+                                                    // backgroundColor: hoveredRoom === room.roomId ? "#cce5ff" : !room.active ? '#a9a9a9' : '#f5f5f5'
                                                 }}
                                             >
                                                 <Tooltip
@@ -1989,7 +1990,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                             width: '100%',
                                                             textAlign: 'left',
                                                             fontSize: '14px',
-                                                            padding: '0 8px',
+                                                            padding: '0 12px',
                                                             overflow: 'hidden',
                                                             display: 'flex',
                                                             justifyContent: 'space-between',
@@ -2057,7 +2058,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                             </div>
                                                             {room.beds ? (
                                                             <div style={{ display:'flex', alignItems:'center', gap: '2px', fontSize: '12px' }}>
-                                                                <img src="/roomPlace.png" style={{ verticalAlign: 'top', height: '12px'}} alt="" />
+                                                                <img src="/roomsIcon.png" style={{ verticalAlign: 'top', height: '12px'}} alt="" />
                                                                 {`x ${room.beds}`}
                                                             </div>
                                                             ) : null}

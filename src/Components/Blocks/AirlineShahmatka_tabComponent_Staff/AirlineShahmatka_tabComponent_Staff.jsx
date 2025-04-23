@@ -5,8 +5,10 @@ import Filter from "../Filter/Filter.jsx";
 import {
   decodeJWT,
   DELETE_AIRLINE_STAFF,
+  GET_AIRLINE_POSITIONS,
   GET_AIRLINE_USERS,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  GET_ALL_POSITIONS,
   GET_BRONS_HOTEL,
   GET_STAFF_HOTELS,
   getCookie,
@@ -21,7 +23,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import {
   fullNotifyTime,
   notifyTime,
-  positions,
+  // positions,
   roles,
 } from "../../../roles.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
@@ -37,6 +39,12 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     variables: { airlineId: id },
   });
 
+  const {
+    loading: positionsLoading,
+    error: positionsError,
+    data: positionsData,
+  } = useQuery(GET_AIRLINE_POSITIONS);
+
   const [staff, setStaff] = useState([]);
 
   useEffect(() => {
@@ -45,6 +53,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
       refetch();
     }
   }, [data, refetch]);
+
+  // console.log(staff);
 
   const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
 
@@ -113,6 +123,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const [showUpdateCategory, setshowUpdateCategory] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState();
 
+  const [positions, setPositions] = useState([]);
+
   const [showDelete, setShowDelete] = useState(false);
 
   const toggleCategory = () => {
@@ -128,6 +140,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     hotelBronsInfo.flatMap((person) =>
       person.hotelChess.map((hotel) => ({
         start: hotel.start,
+        requestNumber: hotel?.request?.requestNumber,
         startTime: hotel.startTime,
         end: hotel.end,
         endTime: hotel.endTime,
@@ -140,6 +153,12 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
   // console.log(dataInfo.map((item) => item.requestId));
   // console.log(dataInfo);
+
+  useEffect(() => {
+    if (positionsData) {
+      setPositions(positionsData?.getAirlinePositions);
+    }
+  }, [positionsData]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPosition, setSelectedPosition] = useState("");
@@ -191,10 +210,10 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     .filter((request) => {
       const matchesSearch =
         searchQuery === "" ||
-        request.position.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.position?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         request.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesPosition =
-        selectedPosition === "" || request.position === selectedPosition;
+        selectedPosition === "" || request.position?.name === selectedPosition;
       return matchesSearch && matchesPosition;
     })
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -249,7 +268,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           <MUIAutocomplete
             dropdownWidth={"140px"}
             label={"Должность"}
-            options={positions}
+            options={positions.map((position) => position.name)}
             value={selectedPosition}
             onChange={handlePositionChange}
           />
@@ -280,7 +299,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           dataInfo={[]}
           setSelectedStaff={setSelectedStaff}
           user={user}
-        />
+          positions={positions}
+          />
       )}
 
       {hotelBronsInfo.length !== 0 && (
@@ -300,7 +320,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           dataInfo={dataInfo}
           setSelectedStaff={setSelectedStaff}
           user={user}
-        />
+          positions={positions}
+          />
       )}
 
       <CreateRequestAirlineStaff
@@ -310,6 +331,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         addTarif={staff}
         setAddTarif={setStaff}
         addNotification={addNotification}
+        positions={positions}
       />
       <UpdateRequestAirlineStaff
         id={id}
@@ -320,6 +342,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         selectedStaff={selectedStaff}
         setAddTarif={setStaff}
         addNotification={addNotification}
+        positions={positions}
       />
 
       {showDelete && (

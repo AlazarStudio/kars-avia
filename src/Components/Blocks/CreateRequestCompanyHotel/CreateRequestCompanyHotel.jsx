@@ -19,6 +19,7 @@ function CreateRequestCompanyHotel({
   onClose,
   addDispatcher,
   addNotification,
+  positions,
   id,
 }) {
   const token = getCookie("token");
@@ -145,13 +146,17 @@ function CreateRequestCompanyHotel({
     // }
 
     try {
+      const selectedPosition = positions.find(
+        (position) => position.name === formData.position
+      );
+
       let response_create_user = await uploadFile({
         variables: {
           input: {
             name: formData.name,
             email: formData.email,
             role: formData.role,
-            position: formData.position,
+            positionId: selectedPosition?.id,
             login: formData.login,
             password: formData.password,
             hotelId: id,
@@ -283,7 +288,7 @@ function CreateRequestCompanyHotel({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={["Директор", "Администратор", "Менеджер"]}
+                options={positions?.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setIsEdited(true);

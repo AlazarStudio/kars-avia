@@ -59,9 +59,9 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
         <InfoTable>
             {/* Заголовки колонок */}
             <div className={classes.InfoTable_title}>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w5}`} style={{justifyContent:'center', padding:'0'}}>№</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>ФИО</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w15}`} style={{justifyContent:'center'}}>Дата заявки</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w12}`}>№</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>ФИО</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w13}`} style={{justifyContent:'center'}}>Дата заявки</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Авиакомпания</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w12}`} style={{justifyContent:'center', padding:'0 10px'}}>Аэропорт</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w12}`}>Прибытие</div>
@@ -79,7 +79,8 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
                         key={index}
                     >
                         {/* {item.status === 'created' && <div className={classes.newRequest}></div>} */}
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`} style={{justifyContent:'center', padding:'0'}}>{item.requestNumber?.slice(0, 4)}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.requestNumber}</div>
+                        {/* <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{justifyContent:'center', padding:'0'}}>{item.requestNumber?.slice(0, 4)}</div> */}
                         {item?.chat?.some(chat => 
                             chat.unreadMessagesCount > 0 && (
                                 (user.hotelId && chat.hotelId === user.hotelId) ||
@@ -87,26 +88,28 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
                                 (!user.hotelId && !user.airlineId)
                             )
                             ) && <div className={classes.newRequest}></div>}
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 {item.person ?
                                 (
                                     <>
                                         <div className={classes.InfoTable_data_elem_title}>{item?.person?.name} {' '} {item?.reserve ? '(Резерв)' : ''} </div>
-                                        <div className={classes.InfoTable_data_elem_moreInfo}>{item?.person?.position.split(' ')[0]}</div>
+                                        <div className={classes.InfoTable_data_elem_moreInfo}>{item?.person?.position?.name?.split(' ')[0]}</div>
+                                        {/* <div className={classes.InfoTable_data_elem_moreInfo}>{item?.person?.position?.split(' ')[0]}</div> */}
                                     </>
                                 )
                                 : "Предварительная бронь"}
                             </div>
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`} style={{justifyContent:'center', padding:'0 0 0 10px'}}>{convertToDate(item.createdAt)}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w13}`} style={{justifyContent:'center', padding:'0 0 0 10px'}}>{convertToDate(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{ padding: "0 10px" }}>
                             <div className={classes.InfoTable_data_elem_img} >
                                 <img src={`${server}${item.airline.images[0]}`} alt="" />
                             </div>
                             {item.airline.name}
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`} style={{justifyContent:'center'}}>{item.airport.name} ({item.airport?.code})</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`} style={{justifyContent:'center'}}>{item.airport?.code}</div>
+                        {/* <div className={`${classes.InfoTable_data_elem} ${classes.w12}`} style={{justifyContent:'center'}}>{item.airport.name} ({item.airport?.code})</div> */}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 {/* <div className={classes.InfoTable_data_elem_title}>{item.arrival.flight}</div> */}

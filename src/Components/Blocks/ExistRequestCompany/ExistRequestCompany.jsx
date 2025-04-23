@@ -21,6 +21,7 @@ function ExistRequestCompany({
   updateDispatcher,
   openDeleteComponent,
   filterList,
+  positions,
   addNotification,
 }) {
   const token = getCookie("token");
@@ -45,7 +46,7 @@ function ExistRequestCompany({
     name: chooseObject?.name || "",
     email: chooseObject?.email || "",
     role: chooseObject?.role || "",
-    position: chooseObject?.position || "",
+    position: chooseObject?.position?.name || "",
     login: chooseObject?.login || "",
     oldPassword: "",
     password: chooseObject?.password || "",
@@ -64,7 +65,7 @@ function ExistRequestCompany({
         name: chooseObject.name || "",
         email: chooseObject.email || "",
         role: chooseObject.role || "",
-        position: chooseObject.position || "",
+        position: chooseObject?.position?.name || "",
         login: chooseObject.login || "",
         oldPassword: "",
         password: chooseObject.password || "",
@@ -81,7 +82,7 @@ function ExistRequestCompany({
       name: chooseObject?.name || "",
       email: chooseObject?.email || "",
       role: chooseObject?.role || "",
-      position: chooseObject?.position || "",
+      position: chooseObject?.position?.name || "",
       login: chooseObject?.login || "",
       oldPassword: "",
       password: chooseObject?.password || "",
@@ -165,6 +166,9 @@ function ExistRequestCompany({
         return;
       }
       try {
+        const selectedPosition = positions.find(
+          (position) => position.name === formData.position
+        );
         let response_update_user = await uploadFile({
           variables: {
             input: {
@@ -172,7 +176,7 @@ function ExistRequestCompany({
               name: formData.name,
               email: formData.email,
               role: formData.role,
-              position: formData.position,
+              positionId: selectedPosition?.id,
               login: formData.login,
               password: formData.password,
               oldPassword: formData.oldPassword,
@@ -182,7 +186,7 @@ function ExistRequestCompany({
         });
 
         if (response_update_user) {
-          updateDispatcher(response_update_user.data.updateUser, index);
+          // updateDispatcher(response_update_user.data.updateUser, index);
           resetForm();
           onClose();
           setIsLoading(false);
@@ -242,14 +246,6 @@ function ExistRequestCompany({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [show, closeButton]);
-
-  const positions = [
-    "Руководитель службы размещения",
-    "Суточный диспетчер",
-    "Дневной диспетчер",
-    "Коммерческий директор",
-    "Региональный руководитель",
-  ];
 
   // console.log(user);
 
@@ -338,7 +334,7 @@ function ExistRequestCompany({
                     dropdownWidth={"100%"}
                     isDisabled={!isEditing}
                     label={"Выберите должность"}
-                    options={positions}
+                    options={positions.map((position) => position.name)}
                     value={formData.position}
                     onChange={(event, newValue) => {
                       setIsEdited(true);

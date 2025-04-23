@@ -14,7 +14,10 @@ import {
   DELETE_AIRLINE_DEPARTMENT,
   DELETE_AIRLINE_MANAGER,
   GET_AIRLINE_COMPANY,
+  GET_AIRLINE_POSITIONS,
+  GET_AIRLINE_USERS_POSITIONS,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  GET_ALL_POSITIONS,
   GET_DISPATCHERS_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
@@ -35,6 +38,18 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
     variables: { airlineId: id },
   });
+
+  const {
+    loading: positionsLoading,
+    error: positionsError,
+    data: positionsData,
+  } = useQuery(GET_AIRLINE_USERS_POSITIONS);
+
+  const {
+    loading: airlinePositionsLoading,
+    error: airlinePositionsError,
+    data: airlinePositionsData,
+  } = useQuery(GET_AIRLINE_POSITIONS);
 
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
@@ -71,6 +86,9 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
   const [showAddTarif, setShowAddTarif] = useState(false);
   const [showAddCategory, setshowAddCategory] = useState(false);
 
+  const [positions, setPositions] = useState([]);
+  const [airlinePositions, setAirlinePositions] = useState([]);
+
   const [showDelete, setShowDelete] = useState(false);
 
   const [deleteIndex, setDeleteIndex] = useState(null);
@@ -94,9 +112,21 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         .sort((a, b) => a.name.localeCompare(b.name));
 
       setAddTarif(sortedTarifs);
+      // setPositions(data.airline?.department?.position);
       refetch();
     }
   }, [data, refetch]);
+
+  useEffect(() => {
+    if (positionsData && airlinePositionsData) {
+      setPositions(positionsData?.getAirlineUserPositions);
+      setAirlinePositions(airlinePositionsData?.getAirlinePositions);
+    }
+  }, [positionsData, airlinePositionsData]);
+
+  // console.log(positionsData);
+
+  // console.log(positions);
 
   const handleSearchTarif = (e) => {
     setSearchTarif(e.target.value);
@@ -253,6 +283,9 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
       return null;
     })
     .filter((request) => request !== null); // Убираем пустые отделы
+
+  // console.log(filteredRequestsEmployees);
+
   return (
     <>
       <div className={classes.section_searchAndFilter}>
@@ -302,6 +335,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         onClose={toggleTarifs}
         addTarif={addTarif}
         setAddTarif={setAddTarif}
+        positions={positions}
         addNotification={addNotification}
       />
       <CreateRequestAirlineOtdel
@@ -310,6 +344,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         onClose={toggleCategory}
         addTarif={addTarif}
         setAddTarif={setAddTarif}
+        positions={airlinePositions}
         addNotification={addNotification}
       />
 
@@ -321,11 +356,13 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         department={selectedNomer.department}
         onSubmit={handleEditNomer}
         addTarif={addTarif}
+        positions={positions}
         // uniqueCategories={uniqueCategories}
         addNotification={addNotification}
       />
       <EditRequestAirlineOtdel
         id={id}
+        positions={airlinePositions}
         show={showEditCategory}
         onClose={() => setShowEditCategory(false)}
         category={selectedCategory}

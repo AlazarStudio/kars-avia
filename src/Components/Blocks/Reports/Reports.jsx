@@ -15,7 +15,9 @@ import {
   convertToDate,
   decodeJWT,
   DELETE_REPORT,
+  GET_AIRLINE_POSITIONS,
   GET_AIRLINE_REPORT,
+  GET_AIRPORTS_RELAY,
   GET_HOTEL_REPORT,
   GET_REPORTS_SUBSCRIPTION,
   getCookie,
@@ -35,6 +37,9 @@ function Reports({ children, ...props }) {
   const [deleteIndex, setDeleteIndex] = useState(null);
 
   const [reports, setReports] = useState([]);
+
+  const [airports, setAirports] = useState([]); // Список аэропортов
+  const [positions, setPositions] = useState([]);
 
   // Получаем значение isAirline из localStorage, если оно существует
   const savedIsAirline = localStorage.getItem("isAirline");
@@ -99,6 +104,14 @@ function Reports({ children, ...props }) {
     },
   });
 
+  const {
+    loading: positionsLoading,
+    error: positionsError,
+    data: positionsData,
+  } = useQuery(GET_AIRLINE_POSITIONS);
+
+  const infoAirports = useQuery(GET_AIRPORTS_RELAY);
+
   const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIPTION);
 
   const [deleteReport] = useMutation(DELETE_REPORT, {
@@ -151,6 +164,18 @@ function Reports({ children, ...props }) {
     setShowDelete(false);
     setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
   };
+
+  useEffect(() => {
+    if (infoAirports.data) {
+      setAirports(infoAirports.data.airports || []);
+    }
+  }, [infoAirports.data]);
+
+  useEffect(() => {
+    if (positionsData) {
+      setPositions(positionsData?.getAirlinePositions);
+    }
+  }, [positionsData]);
 
   const [filterData, setFilterData] = useState({
     filterSelect: "",
@@ -251,6 +276,8 @@ function Reports({ children, ...props }) {
           onClose={toggleCreateSidebar}
           isAirline={isAirline}
           //   addDispatcher={addDispatcher}
+          positions={positions}
+          airports={airports}
           addNotification={addNotification}
         />
         {/* 

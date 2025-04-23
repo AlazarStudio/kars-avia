@@ -8,6 +8,33 @@ import "swiper/css/pagination";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
 
+// Карты соответствия для категорий и количества кроватей
+const categoryMap = {
+  apartment: "Апартаменты",
+  studio: "Студия",
+  onePlace: "1 место",
+  twoPlace: "2 места",
+  threePlace: "3 места",
+  fourPlace: "4 места",
+  fivePlace: "5 мест",
+  sixPlace: "6 мест",
+  sevenPlace: "7 мест",
+  eightPlace: "8 мест",
+  ninePlace: "9 мест",
+  tenPlace: "10 мест",
+};
+
+const bedsMap = {
+  1: "1 кровать",
+  2: "2 кровати",
+  3: "3 кровати",
+  4: "4 кровати",
+  5: "5 кроватей",
+  6: "6 кроватей",
+  7: "7 кроватей",
+  8: "8 кроватей",
+};
+
 function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [swiper, setSwiper] = useState();
@@ -26,26 +53,46 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
   };
 
   return (
-    <article key={props.id} className={classes.hotelAbout_room}>
-      <div className={classes.roomImages_wrapper}>
-        <img
-          src={
-            props.images.length !== 0
-              ? `${server}${props.images[0]}`
-              : "/no-image.png"
-          }
-          className={classes.roomImage}
-          onClick={() => setModalIsOpen(true)}
-          alt="Room"
-        />
-      </div>
-      <div className={classes.roomInfoItem}>
-        <p style={{ fontWeight: "600" }}>{props.name}</p>
-      </div>
-      <div className={`${classes.roomInfoItem} ${classes.ri_textarea}`}>
-        <p>{props.description ? props.description : "Описания нет"}</p>
-      </div>
+    <>
+      <article
+        key={props.id}
+        className={classes.hotelAbout_room}
+        onClick={() => setModalIsOpen(true)}
+      >
+        <div className={classes.roomImages_wrapper}>
+          <img
+            src={
+              props.images.length !== 0
+                ? `${server}${props.images[0]}`
+                : "/no-image.png"
+            }
+            className={classes.roomImage}
+            alt="Room"
+          />
+        </div>
+        <div className={classes.roomInfoItem}>
+          <p>{props.name}</p>
+        </div>
+        {/* Отображаем категорию через карту соответствия */}
+        <div className={classes.roomInfoItem} style={{ fontWeight: "500" }}>
+          <p className="blueText">
+            {categoryMap[props.category] || "Неизвестная категория"}
+          </p>
+          {props.beds && (
+            <p className="blueText">
+              {bedsMap[props.beds] || "Количество кроватей не задано"}
+            </p>
+          )}
+        </div>
 
+        {/* Отображаем количество кроватей через карту соответствия */}
+        <div className={classes.roomInfoItem} style={{ fontWeight: "400" }}>
+          {props.description}
+        </div>
+        {/* <div className={`${classes.roomInfoItem} ${classes.ri_textarea}`}>
+        <p>{props.description ? props.description : "Описания нет"}</p>
+      </div> */}
+      </article>
       <Modal open={modalIsOpen} onClose={closeModal}>
         <Box
           className={classes.modalContent}
@@ -119,7 +166,7 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
           </div>
         </Box>
       </Modal>
-    </article>
+    </>
   );
 }
 

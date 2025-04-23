@@ -273,6 +273,9 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
   const [filter, setFilter] = useState("quote");
 
+  // console.log(filteredRequestsTarif);
+  
+
   return (
     <>
       {loading && <MUILoader fullHeight={"70vh"} />}

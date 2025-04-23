@@ -23,6 +23,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
     address: "",
     stars: "",
     usStars: "",
+    airportId: "",
     airportDistance: "",
     images: "",
     capacity: "",
@@ -37,6 +38,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
       address: "",
       stars: "",
       usStars: "",
+      airportId: "",
       airportDistance: "",
       images: "",
       capacity: "",
@@ -115,6 +117,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
       !formData.usStars.trim() ||
       !formData.airportDistance.trim() ||
       !formData.images ||
+      !formData.airportId ||
       !formData.capacity
     ) {
       alert("Пожалуйста, заполните все поля!");
@@ -132,13 +135,14 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
         variables: {
           input: {
             name: formData.name,
-            capacity: formData.capacity,
+            capacity: parseInt(formData.capacity),
             information: {
               city: formData.city,
               address: formData.address,
             },
             stars: formData.stars,
             usStars: formData.usStars,
+            airportId: formData.airportId,
             airportDistance: formData.airportDistance,
           },
           images: formData.images,
@@ -157,6 +161,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
       // resetForm();
       // onClose();
       setIsLoading(false);
+      onClose();
       // addNotification("Гостиница создана успешно.", "success");
     }
   };
@@ -199,20 +204,10 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
     };
   }, [show, closeButton]);
 
-  // let infoCities = useQuery(GET_AIRPORTS_RELAY);
   let infoCities = useQuery(GET_CITIES);
+  let infoAirports = useQuery(GET_AIRPORTS_RELAY);
   const [cities, setCities] = useState([]);
-
-  // useEffect(() => {
-  //   if (infoCities.data) {
-  //     setCities(
-  //       infoCities.data?.citys.map(
-  //         // (item) => `${item.city}, регион: ${item.region}`
-  //         (item) => item.city
-  //       ) || []
-  //     );
-  //   }
-  // }, [infoCities]);
+  const [airports, setAirports] = useState([]);
 
   useEffect(() => {
     if (infoCities.data) {
@@ -225,6 +220,17 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
       setCities(mappedCities);
     }
   }, [infoCities]);
+
+  useEffect(() => {
+    if (infoAirports.data) {
+      const mappedAirports =
+        infoAirports.data?.airports.map((item) => ({
+          label: `${item.name}, ${item.code}`,
+          value: item.id,
+        })) || [];
+      setAirports(mappedAirports);
+    }
+  }, [infoAirports]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -327,6 +333,24 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                 value={formData.usStars}
                 placeholder="от 1 до 5"
                 onChange={handleChange}
+              />
+
+              <label>Аэропорт</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите аэропорт"}
+                options={airports}
+                getOptionLabel={(option) => option.label}
+                value={
+                  airports.find((option) => option.value === formData.airportId) ||
+                  ""
+                }
+                onChange={(event, newValue) => {
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    airportId: newValue ? newValue.value : "", // Обновляем поле `city`
+                  }));
+                }}
               />
 
               <label>Удалённость от аэропорта (мин)</label>

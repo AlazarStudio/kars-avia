@@ -3,8 +3,13 @@ import classes from "./EditRequestNomerFond.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { getCookie, UPDATE_HOTEL } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import {
+  GET_HOTEL_TARIFS,
+  GET_HOTELS_UPDATE_SUBSCRIPTION,
+  getCookie,
+  UPDATE_HOTEL,
+} from "../../../../graphQL_requests.js";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 
@@ -31,11 +36,26 @@ function EditRequestNomerFond({
 }) {
   const token = getCookie("token");
   // console.log(nomer);
+  const [selectedRoomKind, setSelectedRoomKind] = useState(null);
+  const [hotelTariff, setHotelTariff] = useState([]);
+
+  const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
+    variables: { hotelId: id },
+  });
+
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_HOTELS_UPDATE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     nomerName: (nomer && nomer.name) || "",
-    category: category?.origName || "",
+    category: type === "apartment"  ? category?.origName : null,
     beds: nomer?.beds || "",
     reserve: nomer?.reserve || "",
     active: nomer?.active || "",
@@ -45,19 +65,20 @@ function EditRequestNomerFond({
     roomImages: null,
   });
 
-  // console.log(nomer);
+  // console.log(selectedRoomKind);
 
   const sidebarRef = useRef();
 
   const resetForm = useCallback(() => {
     setIsEdited(false); // Сброс флага изменений
+    setSelectedRoomKind(null);
   }, []);
 
   useEffect(() => {
     if (show) {
       setFormData({
         nomerName: nomer?.name || nomer?.id || "",
-        category: category?.origName || nomer?.category || "",
+        category: type === "apartment"  ? category?.origName : null,
         beds: nomer?.beds || "",
         reserve: typeof nomer?.reserve === "boolean" ? nomer?.reserve : false, // Установить false, если undefined
         active: typeof nomer?.active === "boolean" ? nomer?.active : false, // Установить false, если undefined
@@ -68,6 +89,30 @@ function EditRequestNomerFond({
       });
     }
   }, [show, nomer, category, reserve, active]);
+
+  useEffect(() => {
+    if (data && show) {
+      setHotelTariff(data.hotel?.roomKind);
+    }
+  }, [data, show]);
+
+  // Если в номере задан тариф (roomKind.id), ищем его в загруженных тарифах и устанавливаем selectedRoomKind
+  useEffect(() => {
+    if (
+      show &&
+      nomer &&
+      nomer.roomKind &&
+      nomer.roomKind.id &&
+      hotelTariff.length > 0
+    ) {
+      const preselectedTariff = hotelTariff.find(
+        (tariff) => tariff.id === nomer.roomKind.id
+      );
+      if (preselectedTariff) {
+        setSelectedRoomKind(preselectedTariff);
+      }
+    }
+  }, [show, nomer, hotelTariff]);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
@@ -240,23 +285,23 @@ function EditRequestNomerFond({
           .trim();
       }
 
+      const roomInput = {
+        id: roomId ? roomId : nomer.id,
+        name: nomerName,
+        roomKindId: selectedRoomKind ? selectedRoomKind.id : undefined,
+        category: formData.category,
+        beds: parseFloat(formData.beds),
+        reserve: formData.reserve,
+        description: formData.description,
+        descriptionSecond: formData.descriptionSecond,
+        price: parseFloat(formData.price),
+      };
+
       let response_update_room = await updateHotel({
         variables: {
           updateHotelId: id,
           input: {
-            rooms: [
-              {
-                id: roomId ? roomId : nomer.id,
-                name: nomerName,
-                category: formData.category,
-                beds: parseFloat(formData.beds),
-                reserve: formData.reserve,
-                active: formData.active,
-                description: formData.description,
-                descriptionSecond: formData.descriptionSecond,
-                price: parseFloat(formData.price),
-              },
-            ],
+            rooms: [roomInput],
           },
           roomImages: formData.roomImages,
         },
@@ -428,8 +473,7 @@ function EditRequestNomerFond({
     },
   ];
 
-  const useCategories =
-    type === "apartment" ? apartmentCategories : categories;
+  const useCategories = type === "apartment" ? apartmentCategories : categories;
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -461,6 +505,26 @@ function EditRequestNomerFond({
                       setIsEdited(true);
                     }}
                   />
+
+                  <label>Тариф</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите тариф"}
+                    options={hotelTariff.map((tariff) => tariff.name)}
+                    value={
+                      selectedRoomKind &&
+                      hotelTariff.find(
+                        (tariff) =>
+                          tariff && tariff.name === selectedRoomKind.name
+                      )?.name
+                    }
+                    onChange={(event, newValue) => {
+                      const tariff = hotelTariff.find(
+                        (tariff) => tariff && tariff.name === newValue
+                      );
+                      setSelectedRoomKind(tariff);
+                    }}
+                  />
                 </>
               )}
               <label>Название номера</label>
@@ -483,27 +547,6 @@ function EditRequestNomerFond({
                 value={formData.descriptionSecond}
                 onChange={handleChange}
                 placeholder="Пример: Снимает Сам Иванов"
-              />
-              <label>Категория</label>
-              <MUIAutocomplete
-                dropdownWidth={"100%"}
-                label={"Выберите категорию"}
-                options={useCategories.map((category) => category.label)}
-                value={
-                  useCategories.find(
-                    (category) => category.value === formData.category
-                  ) || ""
-                }
-                onChange={(event, newValue) => {
-                  const selectedCategory = useCategories.find(
-                    (category) => category.label === newValue
-                  );
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    category: selectedCategory?.value,
-                  }));
-                  setIsEdited(true);
-                }}
               />
 
               <label>Количество кроватей</label>
@@ -530,12 +573,49 @@ function EditRequestNomerFond({
 
               {type === "apartment" ? (
                 <>
+                  <label>Категория</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите категорию"}
+                    options={useCategories.map((category) => category.label)}
+                    value={
+                      useCategories.find(
+                        (category) => category.value === formData.category
+                      ) || ""
+                    }
+                    onChange={(event, newValue) => {
+                      const selectedCategory = useCategories.find(
+                        (category) => category.label === newValue
+                      );
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        category: selectedCategory?.value,
+                      }));
+                      setIsEdited(true);
+                    }}
+                  />
+
                   <label>Цена</label>
                   <input
                     type="number"
                     name="price"
                     value={formData.price || 0}
                     onChange={handleChange}
+                  />
+                  <label>Описание</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                  ></textarea>
+
+                  <label>Изображение</label>
+                  <input
+                    type="file"
+                    name="roomImages"
+                    onChange={handleFileChange}
+                    multiple
                   />
                 </>
               ) : null}
@@ -565,22 +645,6 @@ function EditRequestNomerFond({
                 <option value="false">Не работает</option>
                 <option value="true">Работает</option>
               </select>
-
-              <label>Описание</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-              ></textarea>
-
-              <label>Изображение</label>
-              <input
-                type="file"
-                name="roomImages"
-                onChange={handleFileChange}
-                multiple
-              />
             </div>
           </div>
 

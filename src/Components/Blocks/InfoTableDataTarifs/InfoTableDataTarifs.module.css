@@ -4,7 +4,14 @@
     flex-direction: column;
     gap: 30px;
     height: calc(100vh - 211px);
-    overflow-y: auto; /* Вертикальная прокрутка */
+    overflow-y: auto;
+    /* Вертикальная прокрутка */
+}
+
+.tarifsHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .InfoTable_title,
@@ -38,8 +45,9 @@
 .InfoTable_data_elem {
     padding: 20px;
     display: flex;
-    align-items: center;
-    /* justify-content: center; */
+    flex-direction: column;
+    /* align-items: center; */
+    justify-content: center;
     gap: 10px;
     border-right: 1px solid #E4E4EF;
 }
@@ -94,6 +102,10 @@
 
 .w30 {
     width: 30%;
+}
+
+.w45 {
+    width: 45%;
 }
 
 .w12:last-child {
@@ -245,5 +257,5 @@
     .InfoTable_data_elem_title {
         padding: 0;
     }
-    
+
 }

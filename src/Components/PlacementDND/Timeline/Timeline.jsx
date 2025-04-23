@@ -48,12 +48,14 @@ const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentM
             <Box
                 sx={{
                     width: `${leftWidth}px`,
+                    borderRadius: '10px 0px 0px 0px',
                     borderTop: '1px solid #ddd',
                     borderLeft: '1px solid #ddd',
                     borderRight: '1px solid #ddd',
                     borderBottom: '1px solid #ddd',
                     boxShadow:'0px 8px 10px -5px #00000030',
-                    backgroundColor: '#f5f5f5',
+                    // backgroundColor: '#f5f5f5',
+                    backgroundColor: '#fff',
                     display: 'flex',
                     justifyContent: "center",
                     alignItems: 'center',
@@ -85,11 +87,13 @@ const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentM
                 {/* Месяц и кнопки */}
                 <Box
                     sx={{
+                        borderRadius: '0px 10px 0px 0px',
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
                         height: "50px",
-                        backgroundColor: "#f5f5f5",
+                        backgroundColor: "#fff",
+                        // backgroundColor: "#f5f5f5",
                         borderBottom: "1px solid #ddd",
                         borderTop: "1px solid #ddd",
                         borderRight: '1px solid #ddd',

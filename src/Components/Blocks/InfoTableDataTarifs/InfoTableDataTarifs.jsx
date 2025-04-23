@@ -1,74 +1,134 @@
 import React from "react";
-import classes from './InfoTableDataTarifs.module.css';
+import classes from "./InfoTableDataTarifs.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { roles } from "../../../roles";
+import Button from "../../Standart/Button/Button";
 
-function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPrices, requests, mealPrices, openDeleteComponent, openDeleteComponentCategory, toggleEditTarifsCategory, user, ...props }) {
-    // console.log(requests);
-    
-    return (
-        <div className={classes.tarifsWrapper}>
-            Категории - цены
-            <InfoTable isScroll={true}>
-                <div className={classes.bottom}>
-                    {requests.map((item, index) => (
-                        <div className={classes.InfoTable_data} key={index} >
-                            <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
-                                <div className={classes.InfoTable_data_elem_title}>Категория "{item.name}"</div>
-                            </div>
+const categoryMap = {
+  apartment: "Апартаменты",
+  studio: "Студия",
+  onePlace: "Одноместный",
+  twoPlace: "Двухместный",
+  threePlace: "Трехместный",
+  fourPlace: "Четырехместный",
+  fivePlace: "Пятиместный",
+  sixPlace: "Шестиместный",
+  sevenPlace: "Семиместный",
+  eightPlace: "Восьмиместный",
+  ninePlace: "Девятиместный",
+  tenPlace: "Десятиместный",
+};
 
-                            {user?.role != roles.airlineAdmin &&
-                                <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                    <div className={classes.InfoTable_data_elem_title}>{item.price} ₽</div>
-                                </div>
-                            }
+function InfoTableDataTarifs({
+  children,
+  toggleRequestSidebar,
+  toggleTarifsCategory,
+  toggleEditMealPrices,
+  requests,
+  mealPrices,
+  openDeleteComponent,
+  openDeleteComponentCategory,
+  toggleEditTarifsCategory,
+  user,
+  ...props
+}) {
+  // console.log(requests);
 
-                            {/* {user?.role != "HOTELADMIN" &&
+  return (
+    <div className={classes.tarifsWrapper}>
+      <div className={classes.tarifsHeader}>
+        Тарифы - цены
+        <Button onClick={toggleTarifsCategory}>Добавить тариф</Button>
+      </div>
+      <InfoTable isScroll={true}>
+        <div className={classes.bottom}>
+          {requests.map((item, index) => (
+            <div className={classes.InfoTable_data} key={index}>
+              <div className={`${classes.InfoTable_data_elem} ${classes.w45}`}>
+                <div className={classes.InfoTable_data_elem_title}>
+                  Тариф "{item.name}"
+                </div>
+                <div className={classes.InfoTable_data_elem_title}>
+                  Категория "{categoryMap[item.category] || item.category}"
+                </div>
+              </div>
+
+              {user?.role != roles.airlineAdmin && (
+                <div
+                  className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                >
+                  <div className={classes.InfoTable_data_elem_title}>
+                    {item.price} ₽
+                  </div>
+                </div>
+              )}
+
+              {/* {user?.role != "HOTELADMIN" &&
                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                                     <div className={classes.InfoTable_data_elem_title}>Стоимость для авиакомпаний</div>
                                 </div>
                             } */}
 
-                            <div className={classes.infoTable_buttons}>
-                                <img src="/editPassenger.png" alt="" onClick={() => { toggleRequestSidebar(item) }} />
-                                {/* <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponent(index, item.id)} /> */}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </InfoTable>
-
-
-            Питание - цены
-            <InfoTable isScroll={true}>
-                <div className={classes.bottom}>
-                    {mealPrices.map((item, index) => (
-                        <div className={classes.InfoTable_data} key={index} >
-                            <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
-                            </div>
-
-                            {user?.role != roles.airlineAdmin &&
-                                <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                    <div className={classes.InfoTable_data_elem_title}>{item.price} ₽</div>
-                                </div>
-                            }
-
-                            <div className={classes.infoTable_buttons}>
-                                <img src="/editPassenger.png" alt="" onClick={() => { toggleEditMealPrices(item) }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </InfoTable>
+              <div className={classes.infoTable_buttons}>
+                <img
+                  src="/editPassenger.png"
+                  alt=""
+                  onClick={() => {
+                    toggleRequestSidebar(item);
+                  }}
+                />
+                <img
+                  src="/deletePassenger.png"
+                  alt=""
+                  onClick={() => openDeleteComponent(index, item.id)}
+                />
+              </div>
+            </div>
+          ))}
         </div>
-    );
+      </InfoTable>
+      Питание - цены
+      <InfoTable isScroll={true}>
+        <div className={classes.bottom}>
+          {mealPrices.map((item, index) => (
+            <div className={classes.InfoTable_data} key={index}>
+              <div className={`${classes.InfoTable_data_elem} ${classes.w45}`}>
+                <div className={classes.InfoTable_data_elem_title}>
+                  {item.name}
+                </div>
+              </div>
+
+              {user?.role != roles.airlineAdmin && (
+                <div
+                  className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                >
+                  <div className={classes.InfoTable_data_elem_title}>
+                    {item.price} ₽
+                  </div>
+                </div>
+              )}
+
+              <div className={classes.infoTable_buttons}>
+                <img
+                  src="/editPassenger.png"
+                  alt=""
+                  onClick={() => {
+                    toggleEditMealPrices(item);
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </InfoTable>
+    </div>
+  );
 }
 
 export default InfoTableDataTarifs;
 
-
-{/* <div className={classes.InfoTable_BottomInfo}>
+{
+  /* <div className={classes.InfoTable_BottomInfo}>
     {item.category && [...item.category].sort((a, b) => a.name.localeCompare(b.name)).map((category, index) => (
         <div className={`${classes.InfoTable_BottomInfo__item}`} key={index}>
             <div className={classes.infoTableData_items}>
@@ -88,4 +148,73 @@ export default InfoTableDataTarifs;
             </div>
         </div>
     ))}
-</div> */}
+</div> */
+}
+
+// import React from "react";
+// import classes from './InfoTableDataTarifs.module.css';
+// import InfoTable from "../InfoTable/InfoTable";
+// import { roles } from "../../../roles";
+
+// function InfoTableDataTarifs({ children, toggleRequestSidebar, toggleEditMealPrices, requests, mealPrices, openDeleteComponent, openDeleteComponentCategory, toggleEditTarifsCategory, user, ...props }) {
+//     // console.log(requests);
+
+//     return (
+//         <div className={classes.tarifsWrapper}>
+//             Категории - цены
+//             <InfoTable isScroll={true}>
+//                 <div className={classes.bottom}>
+//                     {requests.map((item, index) => (
+//                         <div className={classes.InfoTable_data} key={index} >
+//                             <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+//                                 <div className={classes.InfoTable_data_elem_title}>Категория "{item.name}"</div>
+//                             </div>
+
+//                             {user?.role != roles.airlineAdmin &&
+//                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+//                                     <div className={classes.InfoTable_data_elem_title}>{item.price} ₽</div>
+//                                 </div>
+//                             }
+
+//                             {/* {user?.role != "HOTELADMIN" &&
+//                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+//                                     <div className={classes.InfoTable_data_elem_title}>Стоимость для авиакомпаний</div>
+//                                 </div>
+//                             } */}
+
+//                             <div className={classes.infoTable_buttons}>
+//                                 <img src="/editPassenger.png" alt="" onClick={() => { toggleRequestSidebar(item) }} />
+//                                 {/* <img src="/deletePassenger.png" alt="" onClick={() => openDeleteComponent(index, item.id)} /> */}
+//                             </div>
+//                         </div>
+//                     ))}
+//                 </div>
+//             </InfoTable>
+
+//             Питание - цены
+//             <InfoTable isScroll={true}>
+//                 <div className={classes.bottom}>
+//                     {mealPrices.map((item, index) => (
+//                         <div className={classes.InfoTable_data} key={index} >
+//                             <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+//                                 <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
+//                             </div>
+
+//                             {user?.role != roles.airlineAdmin &&
+//                                 <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+//                                     <div className={classes.InfoTable_data_elem_title}>{item.price} ₽</div>
+//                                 </div>
+//                             }
+
+//                             <div className={classes.infoTable_buttons}>
+//                                 <img src="/editPassenger.png" alt="" onClick={() => { toggleEditMealPrices(item) }} />
+//                             </div>
+//                         </div>
+//                     ))}
+//                 </div>
+//             </InfoTable>
+//         </div>
+//     );
+// }
+
+// export default InfoTableDataTarifs;

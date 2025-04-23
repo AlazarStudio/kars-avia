@@ -47,16 +47,17 @@ function HotelPage({ children, id, user, ...props }) {
         return "Номерной фонд";
       case "hotelCompany":
         return "Пользователи";
-      case "hotelAbout" :
-        return "О гостинице"
+      case "hotelAbout":
+        return "О гостинице";
+      case "hotelSettings":
+        return "Настройки гостиницы";
       default:
         return "";
     }
   };
 
   // console.log(params);
-  
-  
+
   return (
     <>
       <div className={classes.section}>
@@ -65,13 +66,13 @@ function HotelPage({ children, id, user, ...props }) {
             {(user.role == roles.superAdmin ||
               user.role == roles.airlineAdmin ||
               user.role == roles.dispatcerAdmin) && (
-                // <Link to={params.requestId ? `/relay` : `/hotels`} className={classes.backButton}>
-                //   <img src="/arrow.png" alt="" />
-                // </Link>
+              // <Link to={params.requestId ? `/relay` : `/hotels`} className={classes.backButton}>
+              //   <img src="/arrow.png" alt="" />
+              // </Link>
               <Link to={-1} className={classes.backButton}>
                 <img src="/arrow.png" alt="" />
               </Link>
-              )}
+            )}
             {getTitle()}
           </div>
         </Header>

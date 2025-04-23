@@ -12,19 +12,17 @@
     /* box-shadow: 0px -1px 0px 0px #E4E4EF inset; */
 }
 
-/* .InfoTable_data:hover {
+.InfoTable_data:hover {
     background-color: var(--hover-gray);
-} */
+}
 
-.InfoTable_data:nth-child(odd) {
+/* .InfoTable_data:nth-child(odd) {
     background-color: #ffffff;
-    /* Цвет фона для нечетных элементов */
 }
 
 .InfoTable_data:nth-child(even) {
     background-color: #f3f6ff;
-    /* Цвет фона для четных элементов */
-}
+} */
 
 .InfoTable_title {
     color: var(--text-gray);

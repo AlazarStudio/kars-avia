@@ -21,6 +21,7 @@ function CreateRequestAirlineCompany({
   addTarif,
   setAddTarif,
   addNotification,
+  positions,
 }) {
   const [userRole, setUserRole] = useState();
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -171,12 +172,16 @@ function CreateRequestAirlineCompany({
       const selectedDepartment = addTarif.find(
         (dept) => dept.name === formData.department
       );
+
+      const selectedPosition = positions.find(
+        (position) => position.name === formData.position
+      );
       let request = await createAirlineUser({
         variables: {
           input: {
             name: formData.name,
             role: formData.role,
-            position: formData.position,
+            positionId: selectedPosition?.id,
             airlineId: id,
             email: formData.email,
             hotelId: null,
@@ -192,7 +197,7 @@ function CreateRequestAirlineCompany({
           id: request.data.registerUser.id, // Если возвращается ID созданного пользователя
           name: request.data.registerUser.name,
           role: request.data.registerUser.role,
-          position: request.data.registerUser.position,
+          position: request.data.registerUser.position?.name,
           images: request.data.registerUser.images,
           email: request.data.registerUser.email,
           login: request.data.registerUser.login,
@@ -268,7 +273,7 @@ function CreateRequestAirlineCompany({
     };
   }, [show, closeButton]);
 
-  const positions = ["Директор", "Заместитель директора", "Сотрудник"];
+  // const positions = ["Директор", "Заместитель директора", "Сотрудник"];
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -310,7 +315,11 @@ function CreateRequestAirlineCompany({
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
                 options={rolesObject.airline}
-                value={rolesObject.airline.find((option) => option.value === formData.role) || null}
+                value={
+                  rolesObject.airline.find(
+                    (option) => option.value === formData.role
+                  ) || null
+                }
                 onChange={(event, newValue) => {
                   setFormData((prevFormData) => ({
                     ...prevFormData,
@@ -324,7 +333,7 @@ function CreateRequestAirlineCompany({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={positions}
+                options={positions?.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setIsEdited(true);

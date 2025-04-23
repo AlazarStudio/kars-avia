@@ -618,7 +618,7 @@ function ExistRequest({
                         Должность
                       </div>
                       <div className={classes.requestDataInfo_desc}>
-                        {formData?.person?.position}
+                        {formData?.person?.position?.name}
                       </div>
                     </div>
                     <div className={classes.requestDataInfo}>

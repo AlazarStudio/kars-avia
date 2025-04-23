@@ -353,7 +353,18 @@ const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, requ
                                 />
                             ) : null}
                             <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                                { request.guest ? `${request.guestPosition?.split('(')[0].trim()} ${request.guest}` : "Предварительная бронь"}
+                                {/* { request.guest ? `${request?.guestPosition ? request.guestPosition?.split('(')[0]?.trim() : ''} ${request.guest}` : "Предварительная бронь"} */}
+                                { 
+  request.guest 
+    ? `${String(request.guestPosition).split('(')[0]?.trim()} ${request.guest}` 
+    : "Предварительная бронь"
+}
+
+{/* {request.guest 
+    ? `${String(request.guestPosition ? request.guestPosition : " ").split('(')[0]?.trim()} ${request.guest}` 
+    : "Предварительная бронь"
+} */}
+
                             </div>
                         </div>
                     </Box>

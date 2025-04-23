@@ -8,6 +8,7 @@ import HotelTarifs_tabComponent from "../../../Blocks/HotelTarifs_tabComponent/H
 
 import classes from "./HotelAdminHotelContent.module.css";
 import Non_Found_Page from "../../../Pages/Non_Found_Page";
+import HotelSettings_tabComponent from "../../../Blocks/HotelSettings_tabComponent/HotelSettings_tabComponent";
 
 const HotelAdminHotelContent = ({ id, user }) => {
   const params = useParams();
@@ -38,6 +39,11 @@ const HotelAdminHotelContent = ({ id, user }) => {
       {params.id == "hotelAbout" && (
         <div className={classes.tabPanel}>
           <HotelAbout_tabComponent id={id} />
+        </div>
+      )}
+      {params.id == "hotelSettings" && (
+        <div className={classes.tabPanel}>
+          <HotelSettings_tabComponent id={id} />
         </div>
       )}
     </>

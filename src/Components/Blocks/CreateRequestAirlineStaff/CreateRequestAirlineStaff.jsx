@@ -24,6 +24,7 @@ function CreateRequestAirlineStaff({
   airlineRefetch,
   setSelectedAirline,
   addNotification,
+  positions,
   setNewStaffId,
   isExist,
 }) {
@@ -116,6 +117,9 @@ function CreateRequestAirlineStaff({
     // }
 
     try {
+      const selectedPosition = positions.find(
+        (position) => position.name === formData.position
+      );
       let request = await createAirlineStaff({
         variables: {
           updateAirlineId: id,
@@ -124,7 +128,7 @@ function CreateRequestAirlineStaff({
               {
                 name: formData.name,
                 number: formData.number,
-                position: formData.position,
+                positionId: selectedPosition?.id,
                 gender: formData.gender,
               },
             ],
@@ -188,30 +192,6 @@ function CreateRequestAirlineStaff({
     };
   }, [show, closeButton]);
 
-  // let positions = [
-  //   "КАЭ (Капитан Эскадрильи)",
-  //   "КВС (Командир воздушного судна)",
-  //   "ВП (Второй пилот)",
-  //   "СПБ (Старший бортпроводник)",
-  //   "ИБП (Инструктор-бортпроводник)",
-  //   "БП (бортпроводник)",
-  //   "СА (сотрудник авиакомпании) ",
-  //   "Зам. Дир. (заместитель директора)",
-  //   "Инженер",
-  // ];
-
-  // let positions = [
-  //   "КАЭ",
-  //   "КВС",
-  //   "ВП",
-  //   "СБ",
-  //   "ИБП",
-  //   "БП",
-  //   "СА",
-  //   "Зам. Дир.",
-  //   "Инженер",
-  // ];
-
   const genders = ["Мужской", "Женский"];
 
   return (
@@ -229,13 +209,13 @@ function CreateRequestAirlineStaff({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>ФИО</label>
+              <label>Фамилия И. О.</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Пример: Иванов Иван Иванович"
+                placeholder="Пример: Иванов И. И."
                 autoComplete="new-password"
               />
 
@@ -250,34 +230,12 @@ function CreateRequestAirlineStaff({
                 placeholder="+7 (___) ___-__-__"
                 autoComplete="new-password"
               />
-              {/* <input
-                type="text"
-                name="number"
-                value={formData.number}
-                onChange={handleChange}
-                placeholder="Пример: 89283521345"
-                autoComplete="new-password"
-              /> */}
 
               <label>Должность</label>
-              {/* <DropDownList
-                placeholder="Выберите должность"
-                searchable={false}
-                options={positions}
-                initialValue={formData.position}
-                onSelect={(value) => {
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    position: value,
-                  }));
-                  setIsEdited(true);
-                }}
-              /> */}
-
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={positions}
+                options={positions?.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setFormData((prevFormData) => ({
@@ -289,19 +247,6 @@ function CreateRequestAirlineStaff({
               />
 
               <label>Пол</label>
-              {/* <DropDownList
-                placeholder="Выберите пол"
-                searchable={false}
-                options={["Мужской", "Женский"]}
-                initialValue={formData.gender}
-                onSelect={(value) => {
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    gender: value,
-                  }));
-                  setIsEdited(true);
-                }}
-              /> */}
 
               <MUIAutocomplete
                 dropdownWidth={"100%"}

@@ -10,6 +10,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
   DELETE_DISPATCHER_USER,
+  GET_DISPATCHER_POSITIONS,
   GET_DISPATCHERS,
   GET_DISPATCHERS_SUBSCRIPTION,
   getCookie,
@@ -27,6 +28,12 @@ function Company({ children, user, ...props }) {
     GET_DISPATCHERS_SUBSCRIPTION
   );
 
+  const {
+    loading: positionsLoading,
+    error: positionsError,
+    data: positionsData,
+  } = useQuery(GET_DISPATCHER_POSITIONS);
+
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [chooseObject, setChooseObject] = useState(null);
@@ -37,6 +44,8 @@ function Company({ children, user, ...props }) {
 
   const [companyData, setCompanyData] = useState([]);
 
+  const [positions, setPositions] = useState([]);
+
   useEffect(() => {
     if (data) {
       const sortedDispatchers = [...data.dispatcherUsers].sort((a, b) =>
@@ -46,6 +55,12 @@ function Company({ children, user, ...props }) {
     }
     refetch();
   }, [data, dataSubscription, refetch]);
+
+  useEffect(() => {
+    if (positionsData) {
+      setPositions(positionsData?.getDispatcherPositions);
+    }
+  }, [positionsData]);
 
   const addDispatcher = (newDispatcher) => {
     setCompanyData(
@@ -195,6 +210,7 @@ function Company({ children, user, ...props }) {
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
           addDispatcher={addDispatcher}
+          positions={positions}
           addNotification={addNotification}
         />
 
@@ -206,6 +222,7 @@ function Company({ children, user, ...props }) {
           openDeleteComponent={openDeleteComponent}
           deleteComponentRef={deleteComponentRef}
           filterList={filterList}
+          positions={positions}
           addNotification={addNotification}
         />
 
