@@ -84,6 +84,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 category: room.category,
                 beds: room.beds,
                 active: room.active,
+                roomKind: room.roomKind,
                 description: room.description,
                 descriptionSecond: room.descriptionSecond
             }))
@@ -97,7 +98,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             });
     }, [data]);
 
-    // console.log(rooms);
+    // console.log(data?.hotel?.rooms);
     
 
     // Получение броней отеля
