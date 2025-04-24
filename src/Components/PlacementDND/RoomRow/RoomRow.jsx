@@ -5,9 +5,13 @@ import { useDroppable } from "@dnd-kit/core";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
 const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, containerRef, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
-    const { setNodeRef } = useDroppable({
-        id: room.roomId,  // Влияет на значение over в handleDragEnd
-    });
+    // const { setNodeRef } = useDroppable({
+    //     id: room.roomId,  // Влияет на значение over в handleDragEnd
+    //     data: {
+    //         position: room?.type // room?.type это просто ОБЩЕЕ количество комнат, а не позиция конкретной комнаты
+    //     }
+    // });
+    
 
     // console.log(room);
 
@@ -109,7 +113,7 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, containe
     return (
         <Box
             ref={(node) => {
-                setNodeRef(node); // Connect to dnd-kit
+                // setNodeRef(node); // Connect to dnd-kit
                 containerRef.current = node; // Save reference for resizing
             }}
             sx={{
@@ -165,6 +169,29 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, containe
                         setIsClick={setIsClick}
                     />
                 ))}
+
+{Array.from({ length: room.type }).map((_, position) => {
+        const droppableId = `${room.roomId}-${position}`;
+        const { setNodeRef } = useDroppable({
+          id: droppableId,
+          data: { roomId: room.roomId, position },
+        });
+
+        return (
+          <div
+            key={droppableId}
+            ref={setNodeRef}
+            style={{
+              position: 'absolute',
+              top: `${position * 50}px`,
+              left: 0,
+              width: '100%',
+              height: '50px',
+              zIndex: 1,
+            }}
+          />
+        );
+      })}
 
         </Box>
     );

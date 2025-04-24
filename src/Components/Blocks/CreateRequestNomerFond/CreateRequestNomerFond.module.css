@@ -118,4 +118,10 @@ select {
     line-height: 19.36px;
 }
 
+.checkBox {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}

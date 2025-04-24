@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff";
+import MUILoader from "../MUILoader/MUILoader";
 
 function ExistRequest({
   show,
@@ -244,8 +245,10 @@ function ExistRequest({
       : formData?.status;
 
   // console.log("newStatus:", newStatus);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleExtendChangeRequest = async () => {
+    setIsLoading(true);
     try {
       const response = await handleExtend({
         variables: {
@@ -290,7 +293,31 @@ function ExistRequest({
       await refetch(); // Обновляем данные после изменения
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
-      alert("Ошибка при сохранении");
+      if (
+        String(error).startsWith(
+          "ApolloError: Невозможно разместить заявку: пересечение с заявкой"
+        )
+      ) {
+        alert("Невозможно разместить заявку: пересечение с другой заявкой");
+        setFormDataExtend((prev) => ({
+          departureDate: formData.departure
+            ? parseDateTime(formData.departure).date
+            : "",
+          departureTime: formData.departure
+            ? parseDateTime(formData.departure).time
+            : "",
+          arrivalDate: formData.arrival
+            ? parseDateTime(formData.arrival).date
+            : "",
+          arrivalTime: formData.arrival
+            ? parseDateTime(formData.arrival).time
+            : "",
+        }));
+      } else {
+        alert("Ошибка при сохранении");
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -403,6 +430,8 @@ function ExistRequest({
   });
 
   const handleСhangeToArchive = async () => {
+    setIsLoading(true);
+
     try {
       await changeToArchive({
         variables: {
@@ -415,6 +444,8 @@ function ExistRequest({
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
       alert("Ошибка при сохранении");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -440,6 +471,8 @@ function ExistRequest({
   });
 
   const handleSaveChanges = () => {
+    setIsLoading(true);
+
     if (!chooseRequestID || selectedEmployee === null) {
       alert("Пожалуйста, выберите сотрудника.");
       return;
@@ -460,6 +493,7 @@ function ExistRequest({
         setNewStaffId(null);
         // При необходимости можно выполнить refetch() или обновить локальные данные
         refetch();
+        setIsLoading(false);
       })
       .catch((err) => {
         console.error("Ошибка обновления заявки:", err);
@@ -468,6 +502,7 @@ function ExistRequest({
         alert("Ошибка обновления заявки");
         setSelectedEmployee(null);
         setNewStaffId(null);
+        setIsLoading(false);
       });
   };
 
@@ -521,575 +556,604 @@ function ExistRequest({
               <img src="/close.png" alt="" />
             </div>
           </div>
-          <div className={classes.tabs}>
-            <div
-              className={`${classes.tab} ${
-                activeTab === "Общая" ? classes.activeTab : ""
-              }`}
-              onClick={() => handleTabChange("Общая")}
-            >
-              Общая
-            </div>
-            {formData.status !== "created" && formData.status !== "opened" && (
-              <div
-                className={`${classes.tab} ${
-                  activeTab === "Питание" ? classes.activeTab : ""
-                }`}
-                onClick={() => handleTabChange("Питание")}
-              >
-                Питание
-              </div>
-            )}
-            <div
-              className={`${classes.tab} ${
-                activeTab === "Комментарии" ? classes.activeTab : ""
-              }`}
-              style={{ position: "relative" }}
-              onClick={() => handleTabChange("Комментарии")}
-            >
-              Комментарии
-              {formData?.chat?.some(
-                (chat) =>
-                  chat.unreadMessagesCount > 0 &&
-                  ((user.hotelId && chat.hotelId === user.hotelId) ||
-                    (user.airlineId && chat.airlineId === user.airlineId) ||
-                    (!user.hotelId && !user.airlineId))
-              ) && <div className={classes.unreadMessages}></div>}
-            </div>
-            <div
-              className={`${classes.tab} ${
-                activeTab === "История" ? classes.activeTab : ""
-              }`}
-              onClick={() => handleTabChange("История")}
-            >
-              История
-            </div>
-
-            {user.role !== roles.airlineAdmin && handleCancelRequest
-              ? formData.status !== "created" &&
-                formData.status !== "opened" &&
-                formData.status !== "canceled" && (
-                  <div className={classes.shahmatka_icon}>
-                    <Link
-                      to={`/hotels/${formData.hotelId}/${formData.id}`}
-                      onClick={() => localStorage.setItem("selectedTab", 0)}
-                    >
-                      <img src="/placement_icon.png" alt="" />
-                    </Link>
-                  </div>
-                )
-              : null}
-          </div>
-
-          <div
-            className={classes.requestMiddle}
-            style={{
-              height:
-                (activeTab === "Комментарии" ||
-                  formData.status !== "created") &&
-                "calc(100vh - 79px - 67px)",
-            }}
-          >
-            {/* Вкладка "Общая" */}
-            {activeTab === "Общая" && (
-              <div className={classes.requestData}>
-                {/* Информация о сотруднике */}
-                {formData.person ? (
-                  <>
-                    <div className={classes.requestDataTitle}>
-                      Информация о сотруднике
-                    </div>
-                    <div className={classes.requestDataInfo}>
-                      <div className={classes.requestDataInfo_title}>
-                        Авиакомпания
-                      </div>
-                      <div className={classes.requestDataInfo_desc}>
-                        {formData.airline.name}
-                      </div>
-                    </div>
-                    <div className={classes.requestDataInfo}>
-                      <div className={classes.requestDataInfo_title}>ФИО</div>
-                      <div className={classes.requestDataInfo_desc}>
-                        {formData?.person?.name}
-                      </div>
-                    </div>
-                    <div className={classes.requestDataInfo}>
-                      <div className={classes.requestDataInfo_title}>
-                        Должность
-                      </div>
-                      <div className={classes.requestDataInfo_desc}>
-                        {formData?.person?.position?.name}
-                      </div>
-                    </div>
-                    <div className={classes.requestDataInfo}>
-                      <div className={classes.requestDataInfo_title}>Пол</div>
-                      <div className={classes.requestDataInfo_desc}>
-                        {formData?.person?.gender}
-                      </div>
-                    </div>
-                    <div className={classes.requestDataInfo}>
-                      <div className={classes.requestDataInfo_title}>
-                        Номер телефона
-                      </div>
-                      <div className={classes.requestDataInfo_desc}>
-                        {formData?.person?.number}
-                      </div>
-                    </div>
-                  </>
-                ) : !user?.hotelId && formData.status !== "canceled" ? (
-                  <>
-                    {/* Если сотрудник не задан, предлагаем выбрать */}
-                    <div className={classes.staffWrapper}>
-                      <label>Добавьте сотрудника авиакомпании</label>
-                      <div
-                        className={classes.addStaff}
-                        onClick={toggleAddStaff}
-                      >
-                        <img src="/plus.png" alt="" />
-                      </div>
-                    </div>
-                    {/* {console.log(selectedEmployee)} */}
-                    <MUIAutocomplete
-                      dropdownWidth={"100%"}
-                      label={"Введите сотрудника"}
-                      options={airlineStaff?.staff.map(
-                        (person) => `${person.name} ${person.position}`
-                      )}
-                      getOptionLabel={(option) =>
-                        `${option.name} ${option.position}`
-                      }
-                      value={
-                        selectedEmployee
-                          ? `${selectedEmployee?.name} ${selectedEmployee?.position}`
-                          : ""
-                      }
-                      onChange={(event, newValue) => {
-                        const selectedPerson = airlineStaff?.staff?.find(
-                          (person) =>
-                            `${person.name} ${person.position}` === newValue
-                        );
-                        const newPerson = airlineStaff?.staff?.find(
-                          (person) => person.id === newStaffId
-                        );
-                        // console.log("newPerson: ", newPerson);
-                        // console.log("selectedPerson: ", selectedPerson);
-
-                        setSelectedEmployee(selectedPerson);
-                      }}
-                    />
-                    <Button onClick={handleSaveChanges}>
-                      Добавить сотрудника
-                    </Button>
-                  </>
-                ) : null}
-
-                {/* Информация о питании */}
-                <div className={classes.requestDataTitle}>Питание</div>
-                <div className={classes.requestDataInfo}>
-                  <div className={classes.requestDataInfo_title}>Питание</div>
-                  <div className={classes.requestDataInfo_desc}>
-                    {formData?.mealPlan?.included ? "Включено" : "Не включено"}
-                  </div>
+          {isLoading ? (
+            <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
+          ) : (
+            <>
+              <div className={classes.tabs}>
+                <div
+                  className={`${classes.tab} ${
+                    activeTab === "Общая" ? classes.activeTab : ""
+                  }`}
+                  onClick={() => handleTabChange("Общая")}
+                >
+                  Общая
                 </div>
-
-                {formData?.mealPlan?.included &&
-                  formData.status !== "created" &&
-                  formData.status !== "opened" && (
-                    <>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Завтрак
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {formData.mealPlan.breakfast}
-                        </div>
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Обед
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {formData.mealPlan.lunch}
-                        </div>
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Ужин
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {formData.mealPlan.dinner}
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                {/* Информация о заявке */}
                 {formData.status !== "created" &&
                   formData.status !== "opened" && (
-                    <>
-                      <div className={classes.requestDataTitle}>
-                        Информация о заявке
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Номер заявки
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {formData.requestNumber}
-                        </div>
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Город
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {formData?.airport?.city}
-                        </div>
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Гостиница
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {formData.hotel?.name}
-                        </div>
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Номер комнаты
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {formData.hotelChess?.room?.name}
-                        </div>
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Заезд
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {convertToDate(formData.arrival)} -{" "}
-                          {convertToDate(formData.arrival, true)}
-                        </div>
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Выезд
-                        </div>
-                        <div className={classes.requestDataInfo_desc}>
-                          {convertToDate(formData.departure)} -{" "}
-                          {convertToDate(formData.departure, true)}
-                        </div>
-                      </div>
-                    </>
+                    <div
+                      className={`${classes.tab} ${
+                        activeTab === "Питание" ? classes.activeTab : ""
+                      }`}
+                      onClick={() => handleTabChange("Питание")}
+                    >
+                      Питание
+                    </div>
                   )}
+                <div
+                  className={`${classes.tab} ${
+                    activeTab === "Комментарии" ? classes.activeTab : ""
+                  }`}
+                  style={{ position: "relative" }}
+                  onClick={() => handleTabChange("Комментарии")}
+                >
+                  Комментарии
+                  {formData?.chat?.some(
+                    (chat) =>
+                      chat.unreadMessagesCount > 0 &&
+                      ((user.hotelId && chat.hotelId === user.hotelId) ||
+                        (user.airlineId && chat.airlineId === user.airlineId) ||
+                        (!user.hotelId && !user.airlineId))
+                  ) && <div className={classes.unreadMessages}></div>}
+                </div>
+                <div
+                  className={`${classes.tab} ${
+                    activeTab === "История" ? classes.activeTab : ""
+                  }`}
+                  onClick={() => handleTabChange("История")}
+                >
+                  История
+                </div>
 
-                {/* Продление */}
-                {formData.status !== "archived" &&
-                  // formData.status !== "created" &&
-                  // formData.status !== "opened" &&
-                  formData.status !== "canceled" && (
-                    // !user?.hotelId &&
-                    // formData.status !== "archiving" &&
-                    <>
-                      <div className={classes.requestDataTitle}>
-                        Изменение даты
+                {user.role !== roles.airlineAdmin && handleCancelRequest
+                  ? formData.status !== "created" &&
+                    formData.status !== "opened" &&
+                    formData.status !== "canceled" && (
+                      <div className={classes.shahmatka_icon}>
+                        <Link
+                          to={`/hotels/${formData.hotelId}/${formData.id}`}
+                          onClick={() => localStorage.setItem("selectedTab", 0)}
+                        >
+                          <img src="/placement_icon.png" alt="" />
+                        </Link>
                       </div>
-                      <label>Заезд</label>
-                      <div className={classes.reis_info}>
-                        <input
-                          type="date"
-                          name="arrivalDate"
-                          value={formDataExtend.arrivalDate}
-                          onChange={handleExtendChange}
-                          placeholder="Дата"
+                    )
+                  : null}
+              </div>
+
+              <div
+                className={classes.requestMiddle}
+                style={{
+                  height:
+                    (activeTab === "Комментарии" ||
+                      formData.status !== "created") &&
+                    "calc(100vh - 79px - 67px)",
+                }}
+              >
+                {/* Вкладка "Общая" */}
+                {activeTab === "Общая" && (
+                  <div className={classes.requestData}>
+                    {/* Информация о сотруднике */}
+                    {formData.person ? (
+                      <>
+                        <div className={classes.requestDataTitle}>
+                          Информация о сотруднике
+                        </div>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>
+                            Авиакомпания
+                          </div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {formData.airline.name}
+                          </div>
+                        </div>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>
+                            ФИО
+                          </div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {formData?.person?.name}
+                          </div>
+                        </div>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>
+                            Должность
+                          </div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {formData?.person?.position?.name}
+                          </div>
+                        </div>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>
+                            Пол
+                          </div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {formData?.person?.gender}
+                          </div>
+                        </div>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>
+                            Номер телефона
+                          </div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {formData?.person?.number}
+                          </div>
+                        </div>
+                      </>
+                    ) : !user?.hotelId && formData.status !== "canceled" ? (
+                      <>
+                        {/* Если сотрудник не задан, предлагаем выбрать */}
+                        <div className={classes.staffWrapper}>
+                          <label>Добавьте сотрудника авиакомпании</label>
+                          <div
+                            className={classes.addStaff}
+                            onClick={toggleAddStaff}
+                          >
+                            <img src="/plus.png" alt="" />
+                          </div>
+                        </div>
+                        {/* {console.log(selectedEmployee)} */}
+                        <MUIAutocomplete
+                          dropdownWidth={"100%"}
+                          label={"Введите сотрудника"}
+                          options={airlineStaff?.staff.map(
+                            (person) => `${person.name} ${person.position}`
+                          )}
+                          getOptionLabel={(option) =>
+                            `${option.name} ${option.position}`
+                          }
+                          value={
+                            selectedEmployee
+                              ? `${selectedEmployee?.name} ${selectedEmployee?.position}`
+                              : ""
+                          }
+                          onChange={(event, newValue) => {
+                            const selectedPerson = airlineStaff?.staff?.find(
+                              (person) =>
+                                `${person.name} ${person.position}` === newValue
+                            );
+                            const newPerson = airlineStaff?.staff?.find(
+                              (person) => person.id === newStaffId
+                            );
+                            // console.log("newPerson: ", newPerson);
+                            // console.log("selectedPerson: ", selectedPerson);
+
+                            setSelectedEmployee(selectedPerson);
+                          }}
                         />
-                        <input
-                          type="time"
-                          name="arrivalTime"
-                          value={formDataExtend.arrivalTime}
-                          onChange={handleExtendChange}
-                          placeholder="Время"
-                        />
+                        <Button onClick={handleSaveChanges}>
+                          Добавить сотрудника
+                        </Button>
+                      </>
+                    ) : null}
+
+                    {/* Информация о питании */}
+                    <div className={classes.requestDataTitle}>Питание</div>
+                    <div className={classes.requestDataInfo}>
+                      <div className={classes.requestDataInfo_title}>
+                        Питание
                       </div>
-                      <label>Выезд</label>
-                      <div className={classes.reis_info}>
-                        {/* <input
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData?.mealPlan?.included
+                          ? "Включено"
+                          : "Не включено"}
+                      </div>
+                    </div>
+
+                    {formData?.mealPlan?.included &&
+                      formData.status !== "created" &&
+                      formData.status !== "opened" && (
+                        <>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Завтрак
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {formData.mealPlan.breakfast}
+                            </div>
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Обед
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {formData.mealPlan.lunch}
+                            </div>
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Ужин
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {formData.mealPlan.dinner}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                    {/* Информация о заявке */}
+                    {formData.status !== "created" &&
+                      formData.status !== "opened" && (
+                        <>
+                          <div className={classes.requestDataTitle}>
+                            Информация о заявке
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Номер заявки
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {formData.requestNumber}
+                            </div>
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Город
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {formData?.airport?.city}
+                            </div>
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Гостиница
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {formData.hotel?.name}
+                            </div>
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Номер комнаты
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {formData.hotelChess?.room?.name}
+                            </div>
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Заезд
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {convertToDate(formData.arrival)} -{" "}
+                              {convertToDate(formData.arrival, true)}
+                            </div>
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Выезд
+                            </div>
+                            <div className={classes.requestDataInfo_desc}>
+                              {convertToDate(formData.departure)} -{" "}
+                              {convertToDate(formData.departure, true)}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                    {/* Продление */}
+                    {formData.status !== "archived" &&
+                      // formData.status !== "created" &&
+                      // formData.status !== "opened" &&
+                      formData.status !== "canceled" && (
+                        // !user?.hotelId &&
+                        // formData.status !== "archiving" &&
+                        <>
+                          <div className={classes.requestDataTitle}>
+                            Изменение даты
+                          </div>
+                          <label>Заезд</label>
+                          <div className={classes.reis_info}>
+                            <input
+                              type="date"
+                              name="arrivalDate"
+                              value={formDataExtend.arrivalDate}
+                              onChange={handleExtendChange}
+                              placeholder="Дата"
+                            />
+                            <input
+                              type="time"
+                              name="arrivalTime"
+                              value={formDataExtend.arrivalTime}
+                              onChange={handleExtendChange}
+                              placeholder="Время"
+                            />
+                          </div>
+                          <label>Выезд</label>
+                          <div className={classes.reis_info}>
+                            {/* <input
                           type="text"
                           name="departureName"
                           value={formDataExtend.departureName}
                           onChange={handleExtendChange}
                           placeholder="Номер рейса"
                         /> */}
-                        <input
-                          type="date"
-                          name="departureDate"
-                          value={formDataExtend.departureDate}
-                          onChange={handleExtendChange}
-                          placeholder="Дата"
-                        />
-                        <input
-                          type="time"
-                          name="departureTime"
-                          value={formDataExtend.departureTime}
-                          onChange={handleExtendChange}
-                          placeholder="Время"
-                        />
-                      </div>
-                      <Button onClick={handleExtendChangeRequest}>
-                        {user?.airlineId && formData.status !== "created"
-                          ? "Отправить запрос"
-                          : "Изменить даты"}
-                      </Button>
-                    </>
-                  )}
+                            <input
+                              type="date"
+                              name="departureDate"
+                              value={formDataExtend.departureDate}
+                              onChange={handleExtendChange}
+                              placeholder="Дата"
+                            />
+                            <input
+                              type="time"
+                              name="departureTime"
+                              value={formDataExtend.departureTime}
+                              onChange={handleExtendChange}
+                              placeholder="Время"
+                            />
+                          </div>
+                          <Button onClick={handleExtendChangeRequest}>
+                            {user?.airlineId && formData.status !== "created"
+                              ? "Отправить запрос"
+                              : "Изменить даты"}
+                          </Button>
+                        </>
+                      )}
 
-                {/* Продление */}
-                {formData.status == "archiving" &&
-                  formData.status !== "opened" &&
-                  user?.role === roles.dispatcerAdmin && (
-                    <Button onClick={handleСhangeToArchive}>
-                      Отправить в архив
-                    </Button>
-                  )}
-              </div>
-            )}
-            {/* Вкладка "Питание" */}
-            {activeTab === "Питание" &&
-              formData.status !== "created" &&
-              formData.status !== "opened" && (
-                <div className={classes.requestData}>
-                  <div className={classes.requestDataTitle}>
-                    Питание сотрудника
+                    {/* Продление */}
+                    {formData.status == "archiving" &&
+                      formData.status !== "opened" &&
+                      user?.role === roles.dispatcerAdmin && (
+                        <Button onClick={handleСhangeToArchive}>
+                          Отправить в архив
+                        </Button>
+                      )}
                   </div>
+                )}
+                {/* Вкладка "Питание" */}
+                {activeTab === "Питание" &&
+                  formData.status !== "created" &&
+                  formData.status !== "opened" && (
+                    <div className={classes.requestData}>
+                      <div className={classes.requestDataTitle}>
+                        Питание сотрудника
+                      </div>
 
-                  {mealData.map((dailyMeal, index) => (
-                    <div key={index} className={classes.mealInfo}>
-                      <div className={classes.mealInfoDate}>
-                        {convertToDate(dailyMeal.date)}
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Завтрак
+                      {mealData.map((dailyMeal, index) => (
+                        <div key={index} className={classes.mealInfo}>
+                          <div className={classes.mealInfoDate}>
+                            {convertToDate(dailyMeal.date)}
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Завтрак
+                            </div>
+                            <input
+                              type="number"
+                              min={0}
+                              name="breakfastCount"
+                              placeholder="Количество"
+                              value={dailyMeal.breakfast}
+                              disabled={
+                                (formData.status === "archived" ||
+                                  formData.status === "canceled") &&
+                                true
+                              }
+                              onChange={(e) =>
+                                handleMealChange(
+                                  index,
+                                  "breakfast",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Обед
+                            </div>
+                            <input
+                              type="number"
+                              min={0}
+                              name="lunchCount"
+                              placeholder="Количество"
+                              value={dailyMeal.lunch}
+                              disabled={
+                                (formData.status === "archived" ||
+                                  formData.status === "canceled") &&
+                                true
+                              }
+                              onChange={(e) =>
+                                handleMealChange(index, "lunch", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>
+                              Ужин
+                            </div>
+                            <input
+                              type="number"
+                              min={0}
+                              name="dinnerCount"
+                              placeholder="Количество"
+                              value={dailyMeal.dinner}
+                              disabled={
+                                (formData.status === "archived" ||
+                                  formData.status === "canceled") &&
+                                true
+                              }
+                              onChange={(e) =>
+                                handleMealChange(
+                                  index,
+                                  "dinner",
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
                         </div>
-                        <input
-                          type="number"
-                          min={0}
-                          name="breakfastCount"
-                          placeholder="Количество"
-                          value={dailyMeal.breakfast}
-                          disabled={
-                            (formData.status === "archived" ||
-                              formData.status === "canceled") &&
-                            true
-                          }
-                          onChange={(e) =>
-                            handleMealChange(index, "breakfast", e.target.value)
-                          }
-                        />
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Обед
-                        </div>
-                        <input
-                          type="number"
-                          min={0}
-                          name="lunchCount"
-                          placeholder="Количество"
-                          value={dailyMeal.lunch}
-                          disabled={
-                            (formData.status === "archived" ||
-                              formData.status === "canceled") &&
-                            true
-                          }
-                          onChange={(e) =>
-                            handleMealChange(index, "lunch", e.target.value)
-                          }
-                        />
-                      </div>
-                      <div className={classes.requestDataInfo}>
-                        <div className={classes.requestDataInfo_title}>
-                          Ужин
-                        </div>
-                        <input
-                          type="number"
-                          min={0}
-                          name="dinnerCount"
-                          placeholder="Количество"
-                          value={dailyMeal.dinner}
-                          disabled={
-                            (formData.status === "archived" ||
-                              formData.status === "canceled") &&
-                            true
-                          }
-                          onChange={(e) =>
-                            handleMealChange(index, "dinner", e.target.value)
-                          }
-                        />
-                      </div>
+                      ))}
+                      {formData.status !== "archived" &&
+                        formData.status !== "canceled" && (
+                          <Button onClick={handleSaveMeals}>Сохранить</Button>
+                        )}
                     </div>
-                  ))}
-                  {formData.status !== "archived" &&
-                    formData.status !== "canceled" && (
-                      <Button onClick={handleSaveMeals}>Сохранить</Button>
-                    )}
-                </div>
-              )}
-            {/* Вкладка "Комментарии" */}
-            {activeTab === "Комментарии" && (
-              <>
-                {user.role !== roles.superAdmin &&
-                user.role !== roles.dispatcerAdmin ? null : (
-                  <div className={classes.separatorWrapper}>
-                    {isHaveTwoChats === false ? (
-                      <button
-                        onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                        className={
-                          separator === "airline" ? classes.active : null
-                        }
-                      >
-                        Авиакомпания
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                          className={
-                            separator === "airline" ? classes.active : null
-                          }
-                        >
-                          Авиакомпания
-                        </button>
-                        <button
-                          onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
-                          className={
-                            separator === "hotel" ? classes.active : null
-                          }
-                        >
-                          Гостиница
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
-                <Message
-                  key={`${
-                    chooseRequestID ? chooseRequestID : chooseReserveID
-                  }-${activeTab}`}
-                  activeTab={activeTab}
-                  show={show}
-                  setIsHaveTwoChats={setIsHaveTwoChats}
-                  chooseRequestID={chooseRequestID}
-                  chooseReserveID={""}
-                  formData={formData}
-                  token={token}
-                  user={user}
-                  separator={separator}
-                  chatHeight={
-                    user?.airlineId || user?.hotelId
-                      ? "calc(100vh - 225px)"
-                      : "calc(100vh - 275px)"
-                  }
-                />
-              </>
-            )}
-            {/* Вкладка "История" */}
-            {activeTab === "История" && logsData && (
-              <div
-                className={classes.requestData}
-                style={{ paddingBottom: totalPages > 1 ? "60px" : "20px" }}
-              >
-                <div className={classes.logs}>
-                  {[...logsData.logs.logs].map((log, index) => (
-                    <>
-                      <div className={classes.historyDate} key={index}>
-                        {new Date(log.createdAt).toLocaleDateString("ru-RU", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                        })}
-                        {/* {convertToDate(log.createdAt)}{" "}
-                        {convertToDate(log.createdAt, true)} */}
+                  )}
+                {/* Вкладка "Комментарии" */}
+                {activeTab === "Комментарии" && (
+                  <>
+                    {user.role !== roles.superAdmin &&
+                    user.role !== roles.dispatcerAdmin ? null : (
+                      <div className={classes.separatorWrapper}>
+                        {isHaveTwoChats === false ? (
+                          <button
+                            onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                            className={
+                              separator === "airline" ? classes.active : null
+                            }
+                          >
+                            Авиакомпания
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => setSeparator("airline")} // Установить separator как 'airline'
+                              className={
+                                separator === "airline" ? classes.active : null
+                              }
+                            >
+                              Авиакомпания
+                            </button>
+                            <button
+                              onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
+                              className={
+                                separator === "hotel" ? classes.active : null
+                              }
+                            >
+                              Гостиница
+                            </button>
+                          </>
+                        )}
                       </div>
-                      <div
-                        className={classes.historyLog}
-                        dangerouslySetInnerHTML={{
-                          __html: `<span class='historyLogTime'>${convertToDate(
-                            log.createdAt,
-                            true
-                          )}</span> ${log.description}`,
-                        }}
-                      >
-                        {/* {log.description} */}
-                      </div>
-                    </>
-                  ))}
-                </div>
-                {totalPages > 1 && (
-                  <div className={classes.pagination}>
-                    <ReactPaginate
-                      previousLabel={"←"}
-                      nextLabel={"→"}
-                      breakLabel={"..."}
-                      pageCount={totalPages}
-                      marginPagesDisplayed={2}
-                      pageRangeDisplayed={5}
-                      onPageChange={handlePageClick}
-                      // forcePage={validCurrentPage}
-                      containerClassName={classes.pagination}
-                      activeClassName={classes.activePaginationNumber}
-                      pageLinkClassName={classes.paginationNumber}
+                    )}
+                    <Message
+                      key={`${
+                        chooseRequestID ? chooseRequestID : chooseReserveID
+                      }-${activeTab}`}
+                      activeTab={activeTab}
+                      show={show}
+                      setIsHaveTwoChats={setIsHaveTwoChats}
+                      chooseRequestID={chooseRequestID}
+                      chooseReserveID={""}
+                      formData={formData}
+                      token={token}
+                      user={user}
+                      separator={separator}
+                      chatHeight={
+                        user?.airlineId || user?.hotelId
+                          ? "calc(100vh - 225px)"
+                          : "calc(100vh - 275px)"
+                      }
                     />
+                  </>
+                )}
+                {/* Вкладка "История" */}
+                {activeTab === "История" && logsData && (
+                  <div
+                    className={classes.requestData}
+                    style={{ paddingBottom: totalPages > 1 ? "60px" : "20px" }}
+                  >
+                    <div className={classes.logs}>
+                      {[...logsData.logs.logs].map((log, index) => (
+                        <>
+                          <div className={classes.historyDate} key={index}>
+                            {new Date(log.createdAt).toLocaleDateString(
+                              "ru-RU",
+                              {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              }
+                            )}
+                            {/* {convertToDate(log.createdAt)}{" "}
+                        {convertToDate(log.createdAt, true)} */}
+                          </div>
+                          <div
+                            className={classes.historyLog}
+                            dangerouslySetInnerHTML={{
+                              __html: `<span class='historyLogTime'>${convertToDate(
+                                log.createdAt,
+                                true
+                              )}</span> ${log.description}`,
+                            }}
+                          >
+                            {/* {log.description} */}
+                          </div>
+                        </>
+                      ))}
+                    </div>
+                    {totalPages > 1 && (
+                      <div className={classes.pagination}>
+                        <ReactPaginate
+                          previousLabel={"←"}
+                          nextLabel={"→"}
+                          breakLabel={"..."}
+                          pageCount={totalPages}
+                          marginPagesDisplayed={2}
+                          pageRangeDisplayed={5}
+                          onPageChange={handlePageClick}
+                          // forcePage={validCurrentPage}
+                          containerClassName={classes.pagination}
+                          activeClassName={classes.activePaginationNumber}
+                          pageLinkClassName={classes.paginationNumber}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
 
-          {/* Кнопка для размещения заявки */}
-          {formData.status !== "archived" &&
-            formData.status !== "done" &&
-            formData.status !== "archiving" &&
-            formData.status !== "extended" &&
-            formData.status !== "reduced" &&
-            formData.status !== "transferred" &&
-            formData.status !== "earlyStart" &&
-            formData.status !== "canceled" &&
-            activeTab === "Общая" && (
-              <div className={classes.requestButton}>
-                <button
-                  onClick={() => {
-                    // onClose();
-                    // handleCancelRequest(chooseRequestID);
-                    openDeleteComponent();
-                  }}
-                >
-                  {user?.airlineId && formData.status === "opened"
-                    ? "Запрос на отмену"
-                    : "Отменить"}
-                  {/* <img src="/user-check.png" alt="" /> */}
-                </button>
-                {user.role === roles.superAdmin ||
-                  (user.role === roles.dispatcerAdmin && (
-                    <Button
+              {/* Кнопка для размещения заявки */}
+              {formData.status !== "archived" &&
+                formData.status !== "done" &&
+                formData.status !== "archiving" &&
+                formData.status !== "extended" &&
+                formData.status !== "reduced" &&
+                formData.status !== "transferred" &&
+                formData.status !== "earlyStart" &&
+                formData.status !== "canceled" &&
+                activeTab === "Общая" && (
+                  <div className={classes.requestButton}>
+                    <button
                       onClick={() => {
-                        onClose();
-                        setShowChooseHotel(true);
-                        setChooseCityRequest(formData?.airport?.city);
-                        localStorage.setItem("selectedTab", 0);
+                        // onClose();
+                        // handleCancelRequest(chooseRequestID);
+                        openDeleteComponent();
                       }}
                     >
-                      {/* {console.log(formData)} */}
-                      Разместить
-                      <img
-                        style={{ width: "fit-content", height: "fit-content" }}
-                        src="/user-check.png"
-                        alt=""
-                      />
-                    </Button>
-                  ))}
-              </div>
-            )}
+                      {user?.airlineId && formData.status === "opened"
+                        ? "Запрос на отмену"
+                        : "Отменить"}
+                      {/* <img src="/user-check.png" alt="" /> */}
+                    </button>
+                    {user.role === roles.superAdmin ||
+                      (user.role === roles.dispatcerAdmin && (
+                        <Button
+                          onClick={() => {
+                            onClose();
+                            setShowChooseHotel(true);
+                            setChooseCityRequest(formData?.airport?.city);
+                            localStorage.setItem("selectedTab", 0);
+                          }}
+                        >
+                          {/* {console.log(formData)} */}
+                          Разместить
+                          <img
+                            style={{
+                              width: "fit-content",
+                              height: "fit-content",
+                            }}
+                            src="/user-check.png"
+                            alt=""
+                          />
+                        </Button>
+                      ))}
+                  </div>
+                )}
+            </>
+          )}
           <CreateRequestAirlineStaff
             id={formData?.airline?.id} // Или любое другое значение, нужное для вашего компонента
             show={showAddStaff}

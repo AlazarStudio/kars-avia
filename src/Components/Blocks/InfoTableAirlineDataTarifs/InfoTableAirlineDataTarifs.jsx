@@ -140,7 +140,7 @@ function InfoTableAirlineDataTarifs({
                   <div className={classes.airportListTitle}>Аэропорты:</div>
                   {item.airports.map((airportItem) => (
                     <div key={airportItem.id} className={classes.airportItem}>
-                      {airportItem.airport.name} — {airportItem.airport.city}{" "}
+                      {airportItem.airport.city} — {airportItem.airport.name}{" "}
                       {airportItem.airport.code &&
                         `(${airportItem.airport.code})`}
                     </div>

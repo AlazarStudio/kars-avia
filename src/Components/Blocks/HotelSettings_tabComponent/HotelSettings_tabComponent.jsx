@@ -102,8 +102,8 @@ function HotelSettings_tabComponent({ id }) {
     if (infoAirports.data) {
       const mappedAirports =
         infoAirports.data?.airports.map((item) => ({
-          label: `${item.name}, ${item.code}`,
-          value: item.id,
+          label: `${item.code} ${item.name}, город: ${item.city}`,
+          id: item.id,
         })) || [];
       setAirports(mappedAirports);
     }
@@ -166,7 +166,7 @@ function HotelSettings_tabComponent({ id }) {
               capacity: parseInt(hotel.capacity),
               stars: hotel.stars,
               usStars: hotel.usStars,
-              airportId: hotel.airportId,
+              airportId: hotel.airport?.id,
               airportDistance: hotel.airportDistance,
               information: {
                 country: hotel.information?.country,
@@ -566,19 +566,21 @@ function HotelSettings_tabComponent({ id }) {
                 <div className={classes.hotelAbout_info_item}>
                   <label>Аэропорт</label>
                   <MUIAutocomplete
-                    dropdownWidth={"400px"}
+                    dropdownWidth="400px"
                     isDisabled={!isEditing}
                     options={airports}
                     getOptionLabel={(option) => option.label}
                     value={
                       airports.find(
-                        (option) => option.id === hotel?.airportId
-                      ) || ""
+                        (option) => option.id === hotel.airport?.id
+                      ) || null
                     }
-                    onChange={(event, newValue) => {
-                      setHotel((prevHotel) => ({
-                        ...prevHotel,
-                        airportId: newValue ? newValue.value : "", // Обновляем поле `city`
+                    onChange={(e, newValue) => {
+                      console.log(newValue);
+
+                      setHotel((prev) => ({
+                        ...prev,
+                        airport: { id: newValue ? newValue.id : "" },
                       }));
                     }}
                   />

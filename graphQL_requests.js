@@ -1758,6 +1758,15 @@ export const UPDATE_HOTEL = gql`
   }
 `;
 
+export const CREATE_MANY_ROOMS = gql`
+mutation CreateManyRooms($input: ManyRoomsInput) {
+  createManyRooms(input: $input) {
+    id
+    name
+  }
+}
+`;
+
 // export const UPDATE_HOTEL_TARIF = gql`
 //   mutation UpdateHotel($updateHotelId: ID!, $input: UpdateHotelInput!) {
 //     updateHotel(id: $updateHotelId, input: $input) {

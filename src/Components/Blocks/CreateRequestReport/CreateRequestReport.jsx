@@ -179,7 +179,7 @@ function CreateRequestReport({
     }
 
     const selectedAirport = airports.find(
-      (airport) => airport.code === formData.airport
+      (airport) => `${airport.code} ${airport.name}, город: ${airport.city}` === formData.airport
     );
 
     const selectedPosition = positions.find(
@@ -193,7 +193,7 @@ function CreateRequestReport({
         airlineId: formData.airlineId,
         hotelId: formData.hotelId,
         airportId: selectedAirport?.id,
-        positionId: selectedPosition?.id,
+        positionId: selectedPosition?.id || "",
         personId: formData.personId,
       },
       format: "xlsx",
@@ -209,8 +209,10 @@ function CreateRequestReport({
         } создан успешно.`,
         "success"
       );
+      
     } catch (error) {
       console.error("Catch: ", error);
+      console.log(input);
     } finally {
       setIsLoading(false);
     }
@@ -311,8 +313,8 @@ function CreateRequestReport({
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
                       // isDisabled={!isEditing}
-                      label={"Выберите должность"}
-                      options={airports.map((airport) => airport.code)}
+                      label={"Выберите аэропорт"}
+                      options={airports.map((airport) => `${airport.code} ${airport.name}, город: ${airport.city}`)}
                       value={formData.airport}
                       onChange={(event, newValue) => {
                         setFormData((prevFormData) => ({

@@ -85,6 +85,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
   // console.log(dataSubscriptionUpd);
 
+  // console.log(airports?.length);
+  
+
   const [warningMessage, setWarningMessage] = useState(""); // Предупреждение при пересечении бронирования
   const [hotelBronsInfo, setHotelBronsInfo] = useState([]); // Информация о бронировании пользователя
   const [matchingRequest, setMatchingRequest] = useState(null);
@@ -755,7 +758,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                     dropdownWidth={"100%"}
                     label={"Введите аэропорт"}
                     options={airports.map(
-                      (airport) => `${airport.code} ${airport.name}`
+                      (airport) => `${airport.code} ${airport.name}, город: ${airport.city}`
                     )}
                     value={
                       airports.find(
@@ -769,13 +772,17 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                             airports.find(
                               (airport) => airport.id === formData.airportId
                             )?.name
+                          }, город: ${
+                            airports.find(
+                              (airport) => airport.id === formData.airportId
+                            )?.city
                           }`
                         : ""
                     }
                     onChange={(event, newValue) => {
                       const selectedAirport = airports.find(
                         (airport) =>
-                          `${airport.code} ${airport.name}` === newValue
+                          `${airport.code} ${airport.name}, город: ${airport.city}` === newValue
                       );
                       // console.log(selectedAirport);
 

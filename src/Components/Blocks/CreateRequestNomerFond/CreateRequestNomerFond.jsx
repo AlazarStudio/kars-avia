@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestNomerFond.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-
 import {
+  CREATE_MANY_ROOMS,
+  GET_HOTEL_ROOMS,
   GET_HOTEL_TARIFS,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   getCookie,
@@ -26,7 +27,8 @@ function CreateRequestNomerFond({
   addNotification,
 }) {
   const token = getCookie("token");
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [isEdited, setIsEdited] = useState(false);
+  const [isMultipleRooms, setIsMultipleRooms] = useState(false); // Флаг для выбора множества комнат
 
   const [formData, setFormData] = useState({
     nomerName: "",
@@ -37,12 +39,11 @@ function CreateRequestNomerFond({
     descriptionSecond: "",
     price: type === "apartment" ? null : "",
     roomImages: "",
+    roomsName: "",
+    roomsQuantity: 0, // количество комнат
   });
-  // Состояние для выбранного тарифа (roomKind)
   const [selectedRoomKind, setSelectedRoomKind] = useState(null);
   const [hotelTariff, setHotelTariff] = useState([]);
-
-  // console.log(selectedRoomKind);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
     variables: { hotelId: id },
@@ -66,6 +67,15 @@ function CreateRequestNomerFond({
     },
   });
 
+  const [createManyRooms] = useMutation(CREATE_MANY_ROOMS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
+
   const sidebarRef = useRef();
 
   const resetForm = useCallback(() => {
@@ -78,6 +88,8 @@ function CreateRequestNomerFond({
       descriptionSecond: "",
       price: type === "apartment" ? null : "",
       roomImages: "",
+      roomsName: "",
+      roomsQuantity: 0,
     });
     setIsEdited(false); // Сброс флага изменений
     setSelectedRoomKind(null);
@@ -97,8 +109,6 @@ function CreateRequestNomerFond({
       setHotelTariff(data.hotel?.roomKind);
     }
   }, [data, show]);
-
-  // console.log(hotelTariff);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
@@ -130,12 +140,11 @@ function CreateRequestNomerFond({
       return;
     }
 
-    // Преобразуем файлы в массив
     const fileArray = Array.from(files);
 
     setFormData((prevState) => ({
       ...prevState,
-      roomImages: fileArray, // Сохраняем массив файлов
+      roomImages: fileArray,
     }));
   };
 
@@ -161,9 +170,6 @@ function CreateRequestNomerFond({
           ? formData.nomerName
           : `${formData.nomerName} (резерв)`;
 
-      // Преобразование reserve в булево значение
-
-      // Формируем объект для обновления номера, включая roomKindId из выбранного тарифа
       const roomInput = {
         name: nomerName,
         roomKindId: selectedRoomKind ? selectedRoomKind.id : undefined,
@@ -175,76 +181,97 @@ function CreateRequestNomerFond({
         price: parseFloat(formData.price),
       };
 
-      let response_update_room;
+      const manyRoomsInput = {
+        hotelId: id,
+        roomKindId: selectedRoomKind ? selectedRoomKind.id : undefined,
+        numberOfRooms: parseFloat(formData.roomsQuantity),
+        roomsName: parseFloat(formData.nomerName),
+        beds: parseFloat(formData.beds),
+        reserve: formData.reserve,
+        type: "room",
+        active: true,
+      };
 
-      if (formData.roomImages.length > 0) {
-        response_update_room = await updateHotel({
+      // Если выбрано множество комнат
+      if (isMultipleRooms) {
+        // Используем только createManyRooms
+        await createManyRooms({
           variables: {
-            updateHotelId: id,
-            input: {
-              rooms: [roomInput],
-            },
-            roomImages: formData.roomImages,
+            input: manyRoomsInput,
           },
+          refetchQueries: [
+            { query: GET_HOTEL_ROOMS, variables: { hotelId: id } },
+          ],
         });
       } else {
-        response_update_room = await updateHotel({
-          variables: {
-            updateHotelId: id,
-            input: {
-              rooms: [roomInput],
+        // Если не выбрано множество комнат, используем только updateHotel
+        let response_update_room;
+
+        if (formData.roomImages.length > 0) {
+          response_update_room = await updateHotel({
+            variables: {
+              updateHotelId: id,
+              input: {
+                rooms: [roomInput],
+              },
+              roomImages: formData.roomImages,
             },
-          },
-        });
+          });
+        } else {
+          response_update_room = await updateHotel({
+            variables: {
+              updateHotelId: id,
+              input: {
+                rooms: [roomInput],
+              },
+            },
+          });
+        }
+
+        if (response_update_room) {
+          const sortedTarifs = Object.values(
+            response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
+              if (!acc[room.category]) {
+                acc[room.category] = {
+                  name:
+                    room.category === "onePlace"
+                      ? "Одноместный"
+                      : room.category === "twoPlace"
+                      ? "Двухместный"
+                      : room.category === "threePlace"
+                      ? "Трехместный"
+                      : room.category === "fourPlace"
+                      ? "Четырехместный"
+                      : room.category === "fivePlace"
+                      ? "Пятиместный"
+                      : room.category === "sixPlace"
+                      ? "Шестиместный"
+                      : room.category === "sevenPlace"
+                      ? "Семиместный"
+                      : room.category === "eightPlace"
+                      ? "Восьмиместный"
+                      : room.category === "apartment"
+                      ? "Апартаменты"
+                      : room.category === "studio"
+                      ? "Студия"
+                      : "",
+                  origName: room.category,
+                  rooms: [],
+                };
+              }
+              acc[room.category].rooms.push(room);
+              return acc;
+            }, {})
+          );
+
+          sortedTarifs.forEach((category) => {
+            category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+          });
+
+          setAddTarif(sortedTarifs);
+        }
       }
 
-      // console.log(response_update_room);
-      // console.log(formData);
-
-      if (response_update_room) {
-        const sortedTarifs = Object.values(
-          response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
-            if (!acc[room.category]) {
-              acc[room.category] = {
-                name:
-                  room.category === "onePlace"
-                    ? "Одноместный"
-                    : room.category === "twoPlace"
-                    ? "Двухместный"
-                    : room.category === "threePlace"
-                    ? "Трехместный"
-                    : room.category === "fourPlace"
-                    ? "Четырехместный"
-                    : room.category === "fivePlace"
-                    ? "Пятиместный"
-                    : room.category === "sixPlace"
-                    ? "Шестиместный"
-                    : room.category === "sevenPlace"
-                    ? "Семиместный"
-                    : room.category === "eightPlace"
-                    ? "Восьмиместный"
-                    : room.category === "apartment"
-                    ? "Апартаменты"
-                    : room.category === "studio"
-                    ? "Студия"
-                    : "",
-                origName: room.category,
-                rooms: [],
-              };
-            }
-            acc[room.category].rooms.push(room);
-            return acc;
-          }, {})
-        );
-
-        sortedTarifs.forEach((category) => {
-          category.rooms.sort((a, b) => a.name.localeCompare(b.name));
-        });
-
-        setAddTarif(sortedTarifs);
-        // resetForm();
-        // onClose();
-      }
       resetForm();
       onClose();
       setIsLoading(false);
@@ -252,10 +279,7 @@ function CreateRequestNomerFond({
     } catch (error) {
       console.error("Ошибка при обновлении номеров:", error);
     } finally {
-      // resetForm();
-      // onClose();
       setIsLoading(false);
-      // addNotification("Создание номера прошло успешно.", "success");
     }
   };
 
@@ -277,7 +301,6 @@ function CreateRequestNomerFond({
       document.removeEventListener("mousedown", handleClickOutside);
     }
 
-    // Очистка эффекта при демонтировании компонента
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton]);
 
@@ -363,6 +386,7 @@ function CreateRequestNomerFond({
   ];
 
   const useCategories = type === "apartment" ? apartmentCategories : categories;
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -378,6 +402,15 @@ function CreateRequestNomerFond({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              {/* Checkbox для выбора множества комнат */}
+              <label className={classes.checkBox}>
+                <input
+                  type="checkbox"
+                  checked={isMultipleRooms}
+                  onChange={(e) => setIsMultipleRooms(e.target.checked)}
+                />
+                Создать несколько комнат
+              </label>
               {type === "apartment" ? null : (
                 <>
                   <label>Квота или резерв</label>
@@ -419,22 +452,25 @@ function CreateRequestNomerFond({
 
               <label>Название номера</label>
               <input
-                type="text"
+                type={isMultipleRooms ? "number" : "text"}
                 name="nomerName"
                 value={formData.nomerName}
                 onChange={handleChange}
                 placeholder="Пример: № 151"
               />
 
-              <label>Дополнительная информация</label>
-              <input
-                type="text"
-                name="descriptionSecond"
-                value={formData.descriptionSecond}
-                onChange={handleChange}
-                placeholder="Пример: Снимает Сам Иванов"
-              />
-
+              {!isMultipleRooms && (
+                <>
+                  <label>Дополнительная информация</label>
+                  <input
+                    type="text"
+                    name="descriptionSecond"
+                    value={formData.descriptionSecond}
+                    onChange={handleChange}
+                    placeholder="Пример: Снимает Сам Иванов"
+                  />
+                </>
+              )}
               <label>Количество кроватей</label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
@@ -456,6 +492,7 @@ function CreateRequestNomerFond({
                   setIsEdited(true);
                 }}
               />
+
               {type === "apartment" ? (
                 <>
                   <label>Категория</label>
@@ -504,6 +541,20 @@ function CreateRequestNomerFond({
                   />
                 </>
               ) : null}
+
+              {/* Показать поле для ввода количества комнат, если выбран checkbox */}
+              {isMultipleRooms && (
+                <>
+                  <label>Количество комнат</label>
+                  <input
+                    type="number"
+                    name="roomsQuantity"
+                    value={formData.roomsQuantity}
+                    onChange={handleChange}
+                    min="1"
+                  />
+                </>
+              )}
             </div>
           </div>
 

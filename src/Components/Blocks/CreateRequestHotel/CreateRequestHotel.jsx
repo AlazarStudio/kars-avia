@@ -225,7 +225,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
     if (infoAirports.data) {
       const mappedAirports =
         infoAirports.data?.airports.map((item) => ({
-          label: `${item.name}, ${item.code}`,
+          label: `${item.code} ${item.name}, город: ${item.city}  `,
           value: item.id,
         })) || [];
       setAirports(mappedAirports);
