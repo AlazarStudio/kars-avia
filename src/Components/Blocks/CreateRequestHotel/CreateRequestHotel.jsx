@@ -12,6 +12,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 
 function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
   const token = getCookie("token");
@@ -217,7 +218,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
           label: `${item.city}, ${item.region}`,
           value: item.city,
         })) || [];
-      setCities(mappedCities);
+      setCities(infoCities.data?.citys);
     }
   }, [infoCities]);
 
@@ -228,7 +229,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
           label: `${item.code} ${item.name}, город: ${item.city}  `,
           value: item.id,
         })) || [];
-      setAirports(mappedAirports);
+      setAirports(infoAirports.data?.airports);
     }
   }, [infoAirports]);
 
@@ -257,7 +258,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
               />
 
               <label>Город</label>
-              <MUIAutocomplete
+              {/* <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите город"}
                 options={cities}
@@ -273,31 +274,48 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                     city: newValue ? newValue.value : "",
                   }));
                 }}
-              />
-
-              {/* <select name="city" value={formData.city} onChange={handleChange}>
-            <option value="" disabled>
-              Выберите город
-            </option>
-            {uniqueCities.map((city) => (
-              <option key={city} value={city}>
-                {city}
-              </option>
-            ))}
-          </select> */}
-              {/* <DropDownList
-                placeholder="Выберите город"
-                searchable={true}
-                options={cities}
-                initialValue={formData.city}
-                onSelect={(value) => {
-                  setIsEdited(true);
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    city: value,
-                  }));
-                }}
               /> */}
+
+              <MUIAutocompleteColor
+                dropdownWidth={"100%"}
+                label={"Выберите город"}
+                options={cities}
+                getOptionLabel={(option) =>
+                  option ? `${option.city} ${option.region}`.trim() : ""
+                }
+                renderOption={(optionProps, option) => {
+                  // Формируем строку для отображения
+                  const labelText = `${option.city} ${option.region}`.trim();
+                  // Разбиваем строку по пробелам
+                  const words = labelText.split(" ");
+                  return (
+                    <li {...optionProps} key={option.id}>
+                      {words.map((word, index) => (
+                        <span
+                          key={index}
+                          style={{
+                            color: index === 0 ? "black" : "gray",
+                            marginRight: "4px",
+                          }}
+                        >
+                          {word}
+                        </span>
+                      ))}
+                    </li>
+                  );
+                }}
+                value={
+                  cities.find((option) => option.city === formData.city) ||
+                  null
+                }
+                onChange={(e, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    city: newValue?.city || "",
+                  }));
+                  setIsEdited(true);
+                }}
+              />
 
               <label>Адрес</label>
               <input
@@ -336,20 +354,44 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
               />
 
               <label>Аэропорт</label>
-              <MUIAutocomplete
+              <MUIAutocompleteColor
                 dropdownWidth={"100%"}
                 label={"Выберите аэропорт"}
                 options={airports}
-                getOptionLabel={(option) => option.label}
-                value={
-                  airports.find((option) => option.value === formData.airportId) ||
-                  ""
+                getOptionLabel={(option) =>
+                  option ? `${option.code} ${option.name}`.trim() : ""
                 }
-                onChange={(event, newValue) => {
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    airportId: newValue ? newValue.value : "", // Обновляем поле `city`
+                renderOption={(optionProps, option) => {
+                  // Формируем строку для отображения
+                  const labelText = `${option.code} ${option.name}`.trim();
+                  // Разбиваем строку по пробелам
+                  const words = labelText.split(" ");
+                  return (
+                    <li {...optionProps} key={option.id}>
+                      {words.map((word, index) => (
+                        <span
+                          key={index}
+                          style={{
+                            color: index === 0 ? "black" : "gray",
+                            marginRight: "4px",
+                          }}
+                        >
+                          {word}
+                        </span>
+                      ))}
+                    </li>
+                  );
+                }}
+                value={
+                  airports.find((option) => option.id === formData.airportId) ||
+                  null
+                }
+                onChange={(e, newValue) => {
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    airportId: newValue?.id || "",
                   }));
+                  setIsEdited(true);
                 }}
               />
 

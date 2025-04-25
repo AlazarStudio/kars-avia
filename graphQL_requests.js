@@ -1695,6 +1695,7 @@ export const GET_HOTEL_ROOMS = gql`
         id
         roomKind {
           id
+          name
         }
         name
         type

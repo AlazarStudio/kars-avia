@@ -361,7 +361,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         addNotification={addNotification}
       />
 
-      <EditRequestTarif
+      {/* <EditRequestTarif
         id={id}
         existingPrices={data?.airline?.prices}
         setAddTarif={setAddTarif}
@@ -371,7 +371,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         onSubmit={handleEditTarif}
         isHotel={false}
         addNotification={addNotification}
-      />
+      /> */}
       <EditRequestMealTarif
         id={id}
         show={showEditMealPrices}

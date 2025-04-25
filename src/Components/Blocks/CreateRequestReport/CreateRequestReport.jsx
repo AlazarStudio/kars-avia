@@ -32,7 +32,7 @@ function CreateRequestReport({
     airlineId: user.airlineId ? user.airlineId : "",
     hotelId: user.hotelId ? user.hotelId : "",
     personId: "",
-    airport: "",
+    airportId: "",
     position: "",
   });
 
@@ -106,7 +106,7 @@ function CreateRequestReport({
       airlineId: user.airlineId ? user.airlineId : "",
       hotelId: user.hotelId ? user.hotelId : "",
       personId: "",
-      airport: "",
+      airportId: "",
       position: "",
     });
     setSelectedAirline(null);
@@ -178,9 +178,11 @@ function CreateRequestReport({
       return;
     }
 
-    const selectedAirport = airports.find(
-      (airport) => `${airport.code} ${airport.name}, город: ${airport.city}` === formData.airport
-    );
+    // const selectedAirport = airports.find(
+    //   (airport) =>
+    //     `${airport.code} ${airport.name}, город: ${airport.city}` ===
+    //     formData.airport
+    // );
 
     const selectedPosition = positions.find(
       (position) => position.name === formData.position
@@ -192,7 +194,7 @@ function CreateRequestReport({
         endDate: formData.endDate,
         airlineId: formData.airlineId,
         hotelId: formData.hotelId,
-        airportId: selectedAirport?.id,
+        airportId: formData.airportId,
         positionId: selectedPosition?.id || "",
         personId: formData.personId,
       },
@@ -209,10 +211,9 @@ function CreateRequestReport({
         } создан успешно.`,
         "success"
       );
-      
     } catch (error) {
       console.error("Catch: ", error);
-      console.log(input);
+      // console.log(input);
     } finally {
       setIsLoading(false);
     }
@@ -310,16 +311,61 @@ function CreateRequestReport({
                 (selectedAirline?.staff || user.airlineId) && (
                   <>
                     <label>Аэропорт</label>
-                    <MUIAutocomplete
+                    {/* <MUIAutocomplete
                       dropdownWidth={"100%"}
                       // isDisabled={!isEditing}
                       label={"Выберите аэропорт"}
-                      options={airports.map((airport) => `${airport.code} ${airport.name}, город: ${airport.city}`)}
+                      options={airports.map(
+                        (airport) =>
+                          `${airport.code} ${airport.name}, город: ${airport.city}`
+                      )}
                       value={formData.airport}
                       onChange={(event, newValue) => {
                         setFormData((prevFormData) => ({
                           ...prevFormData,
                           airport: newValue,
+                        }));
+                        setIsEdited(true);
+                      }}
+                    /> */}
+                    <MUIAutocompleteColor
+                      dropdownWidth={"100%"}
+                      label={"Выберите аэропорт"}
+                      options={airports}
+                      getOptionLabel={(option) =>
+                        option ? `${option.code} ${option.name}`.trim() : ""
+                      }
+                      renderOption={(optionProps, option) => {
+                        // Формируем строку для отображения
+                        const labelText =
+                          `${option.code} ${option.name}`.trim();
+                        // Разбиваем строку по пробелам
+                        const words = labelText.split(" ");
+                        return (
+                          <li {...optionProps} key={option.id}>
+                            {words.map((word, index) => (
+                              <span
+                                key={index}
+                                style={{
+                                  color: index === 0 ? "black" : "gray",
+                                  marginRight: "4px",
+                                }}
+                              >
+                                {word}
+                              </span>
+                            ))}
+                          </li>
+                        );
+                      }}
+                      value={
+                        airports.find(
+                          (option) => option.id === formData.airportId
+                        ) || null
+                      }
+                      onChange={(e, newValue) => {
+                        setFormData((prevFormData) => ({
+                          ...prevFormData,
+                          airportId: newValue?.id || "",
                         }));
                         setIsEdited(true);
                       }}

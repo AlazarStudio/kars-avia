@@ -159,7 +159,7 @@ function Message({
             if (chooseRequestID === "" && separator !== 'airline') {
                 setHotelChats?.(hotelChats);
                 const chatToSelect = hotelChatId
-                    ? hotelChats.find(chat => chat.hotelId === hotelChatId)
+                    ? hotelChats?.find(chat => chat.hotelId === hotelChatId)
                     : hotelChats[0];
                 setMessages(chatToSelect);
                 setTitle?.(chatToSelect?.hotel?.name);
@@ -200,7 +200,7 @@ function Message({
             }
             setIsInitialLoad(false);
         }
-    }, [isInitialLoad, messages.messages, separator, userID]);
+    }, [isInitialLoad, messages?.messages, separator, userID]);
 
     // Сбрасываем флаг isInitialLoad при смене separator, чтобы скролл произошёл вновь
     useEffect(() => {

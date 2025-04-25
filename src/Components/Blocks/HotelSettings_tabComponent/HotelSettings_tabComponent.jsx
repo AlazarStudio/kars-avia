@@ -23,6 +23,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 
 function HotelSettings_tabComponent({ id }) {
   const [userRole, setUserRole] = useState();
@@ -94,7 +95,7 @@ function HotelSettings_tabComponent({ id }) {
           label: `${item.city}, ${item.region}`,
           value: item.city,
         })) || [];
-      setCities(mappedCities);
+      setCities(infoCities.data?.citys);
     }
   }, [infoCities]);
 
@@ -105,7 +106,7 @@ function HotelSettings_tabComponent({ id }) {
           label: `${item.code} ${item.name}, город: ${item.city}`,
           id: item.id,
         })) || [];
-      setAirports(mappedAirports);
+      setAirports(infoAirports.data?.airports);
     }
   }, [infoAirports]);
 
@@ -565,19 +566,41 @@ function HotelSettings_tabComponent({ id }) {
                 </div>
                 <div className={classes.hotelAbout_info_item}>
                   <label>Аэропорт</label>
-                  <MUIAutocomplete
+                  <MUIAutocompleteColor
                     dropdownWidth="400px"
+                    listboxHeight={"300px"}
                     isDisabled={!isEditing}
                     options={airports}
-                    getOptionLabel={(option) => option.label}
+                    getOptionLabel={(option) =>
+                      option ? `${option.code} ${option.name}`.trim() : ""
+                    }
+                    renderOption={(optionProps, option) => {
+                      // Формируем строку для отображения
+                      const labelText = `${option.code} ${option.name}`.trim();
+                      // Разбиваем строку по пробелам
+                      const words = labelText.split(" ");
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: "4px",
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
                     value={
                       airports.find(
                         (option) => option.id === hotel.airport?.id
                       ) || null
                     }
                     onChange={(e, newValue) => {
-                      console.log(newValue);
-
                       setHotel((prev) => ({
                         ...prev,
                         airport: { id: newValue ? newValue.id : "" },
@@ -868,22 +891,47 @@ function HotelSettings_tabComponent({ id }) {
                   </div>
                   <div className={classes.hotelAbout_info_item}>
                     <label>Город</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"400px"}
+                    <MUIAutocompleteColor
+                      dropdownWidth="400px"
+                      listboxHeight={"300px"}
                       isDisabled={!isEditing}
                       options={cities}
-                      getOptionLabel={(option) => option.label}
+                      getOptionLabel={(option) =>
+                        option ? `${option.city} ${option.region}`.trim() : ""
+                      }
+                      renderOption={(optionProps, option) => {
+                        // Формируем строку для отображения
+                        const labelText =
+                          `${option.city} ${option.region}`.trim();
+                        // Разбиваем строку по пробелам
+                        const words = labelText.split(" ");
+                        return (
+                          <li {...optionProps} key={option.id}>
+                            {words.map((word, index) => (
+                              <span
+                                key={index}
+                                style={{
+                                  color: index === 0 ? "black" : "gray",
+                                  marginRight: "4px",
+                                }}
+                              >
+                                {word}
+                              </span>
+                            ))}
+                          </li>
+                        );
+                      }}
                       value={
                         cities.find(
-                          (option) => option.value === hotel.information?.city
-                        ) || ""
+                          (option) => option.city === hotel.information?.city
+                        ) || null
                       }
-                      onChange={(event, newValue) => {
+                      onChange={(e, newValue) => {
                         setHotel((prevHotel) => ({
                           ...prevHotel,
                           information: {
                             ...prevHotel.information,
-                            city: newValue ? newValue.value : "", // Обновляем поле `city`
+                            city: newValue ? newValue.city : "", // Обновляем поле `city`
                           },
                         }));
                       }}

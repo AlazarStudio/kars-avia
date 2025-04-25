@@ -95,6 +95,8 @@ function EditRequestAirlineTarifCategory({
     });
   };
 
+  const [isEditing, setIsEditing] = useState(false);
+
   const closeButton = () => {
     let success = confirm(
       "Вы уверены, все несохраненные данные будут удалены?"
@@ -133,45 +135,48 @@ function EditRequestAirlineTarifCategory({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+    if (isEditing) {
+      e.preventDefault();
+      setIsLoading(true);
 
-    try {
-      let response_update_tariff = await updateAirlineTariff({
-        variables: {
-          updateAirlineId: id,
-          input: {
-            prices: [
-              {
-                id: tarif?.id,
-                name: formData.name,
-                airportIds: formData.airportIds,
-                prices: {
-                  priceOneCategory: parseFloat(formData.priceOneCategory),
-                  priceTwoCategory: parseFloat(formData.priceTwoCategory),
-                  priceThreeCategory: parseFloat(formData.priceThreeCategory),
-                  priceFourCategory: parseFloat(formData.priceFourCategory),
-                  priceFiveCategory: parseFloat(formData.priceFiveCategory),
-                  priceSixCategory: parseFloat(formData.priceSixCategory),
-                  priceSevenCategory: parseFloat(formData.priceSevenCategory),
-                  priceEightCategory: parseFloat(formData.priceEightCategory),
-                  priceApartment: parseFloat(formData.priceApartment),
-                  priceStudio: parseFloat(formData.priceStudio),
+      try {
+        let response_update_tariff = await updateAirlineTariff({
+          variables: {
+            updateAirlineId: id,
+            input: {
+              prices: [
+                {
+                  id: tarif?.id,
+                  name: formData.name,
+                  airportIds: formData.airportIds,
+                  prices: {
+                    priceOneCategory: parseFloat(formData.priceOneCategory),
+                    priceTwoCategory: parseFloat(formData.priceTwoCategory),
+                    priceThreeCategory: parseFloat(formData.priceThreeCategory),
+                    priceFourCategory: parseFloat(formData.priceFourCategory),
+                    priceFiveCategory: parseFloat(formData.priceFiveCategory),
+                    priceSixCategory: parseFloat(formData.priceSixCategory),
+                    priceSevenCategory: parseFloat(formData.priceSevenCategory),
+                    priceEightCategory: parseFloat(formData.priceEightCategory),
+                    priceApartment: parseFloat(formData.priceApartment),
+                    priceStudio: parseFloat(formData.priceStudio),
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        },
-      });
-      resetForm();
-      onClose();
-      setIsLoading(false);
-      addNotification("Добавление договора прошло успешно.", "success");
-    } catch (error) {
-      setIsLoading(false);
-      alert("Произошло ошибка при добавлении тарифа.");
-      console.error("Произошла ошибка при выполнении запроса:", error);
+        });
+        resetForm();
+        onClose();
+        setIsLoading(false);
+        addNotification("Добавление договора прошло успешно.", "success");
+      } catch (error) {
+        setIsLoading(false);
+        alert("Произошло ошибка при добавлении тарифа.");
+        console.error("Произошла ошибка при выполнении запроса:", error);
+      }
     }
+    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
@@ -251,7 +256,6 @@ function EditRequestAirlineTarifCategory({
   // console.log("Фильтрация:", airportOptions.filter((option) =>
   //   formData.airportIds.includes(option.value)
   // ));
-  
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -268,28 +272,6 @@ function EditRequestAirlineTarifCategory({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              {/* <label>Выберите категорию</label>
-              <MUIAutocomplete
-                dropdownWidth={"100%"}
-                label={"Выберите категорию"}
-                options={useCategories.map((category) => category.label)}
-                value={
-                  useCategories.find(
-                    (category) => category.value === formData.category
-                  ) || ""
-                }
-                onChange={(event, newValue) => {
-                  const selectedCategory = useCategories.find(
-                    (category) => category.label === newValue
-                  );
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    category: selectedCategory.value,
-                  }));
-                  //   setIsEdited(true);
-                }}
-              /> */}
-
               <label>Название договора</label>
               <input
                 type="text"
@@ -297,10 +279,12 @@ function EditRequestAirlineTarifCategory({
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Например: Договор №1"
+                disabled={!isEditing}
               />
 
               <label>Аэропорты</label>
               <MultiSelectAutocomplete
+                isDisabled={!isEditing}
                 isMultiple={true}
                 dropdownWidth={"100%"}
                 label={"Выберите аэропорты"}
@@ -324,6 +308,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceOneCategory}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
 
               <label>Стоимость двухместного</label>
@@ -333,6 +318,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceTwoCategory}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
 
               <label>Стоимость трехместного</label>
@@ -342,6 +328,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceThreeCategory}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
               <label>Стоимость четырехместного</label>
               <input
@@ -350,6 +337,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceFourCategory}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
               <label>Стоимость пятиместного</label>
               <input
@@ -358,6 +346,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceFiveCategory}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
               <label>Стоимость шестиместного</label>
               <input
@@ -366,6 +355,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceSixCategory}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
               <label>Стоимость семиместного</label>
               <input
@@ -374,6 +364,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceSevenCategory}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
               <label>Стоимость восьмиместного</label>
               <input
@@ -382,6 +373,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceEightCategory}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
               <label>Стоимость апартаментов</label>
               <input
@@ -390,6 +382,7 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceApartment}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
               <label>Стоимость студии</label>
               <input
@@ -398,12 +391,26 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceStudio}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
             </div>
           </div>
           <div className={classes.requestButton}>
-            <Button type="submit" onClick={handleSubmit}>
-              Изменить договор
+            <Button
+              type="submit"
+              onClick={handleSubmit}
+              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+              color={!isEditing ? "#3B6C54" : "#fff"}
+            >
+              {isEditing ? (
+                <>
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </>
+              ) : (
+                <>
+                  Изменить <img src="/editDispetcher.png" alt="" />
+                </>
+              )}
             </Button>
           </div>
         </>

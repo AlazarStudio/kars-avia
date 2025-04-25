@@ -91,7 +91,8 @@ function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, re
                                 <div className={`${classes.InfoTable_BottomInfo__item}`}>
                                     {item.rooms.map((elem, index) => (
                                         <div className={`${classes.InfoTable_BottomInfo__item___elem}`} key={index}>
-                                            {elem.name} {!elem.active && '(не работает)'}
+                                            {elem.type !== 'apartment' ? "№" : ""} {elem.name} {!elem.active && '(не работает)'} {elem?.roomKind?.name}
+                                            {/* {console.log(elem)} */}
                                             <div className={classes.infoTable_buttons}>
                                                 <img src="/editPassenger.png" alt="" onClick={() => toggleRequestEditNumber(elem, item)} />
                                                 <img src="/deletePassenger.png" alt="" onClick={() => openDeleteNomerComponent(elem, item.name)} />

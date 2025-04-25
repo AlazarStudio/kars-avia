@@ -82,6 +82,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 id: room.name,
                 // type: room.category === "onePlace" ? "single" : room.category === "twoPlace" ? "double" : '',
                 type: room.places,
+                roomType: room.type,
                 category: room.category,
                 beds: room.beds,
                 active: room.active,
@@ -2087,6 +2088,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                     placement="top"
                                                     enterDelay={1000}
                                                 >
+                                                    {/* {console.log(room)} */}
                                                     <Typography
                                                         variant="body1"
                                                         sx={{
@@ -2124,7 +2126,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                                 fontSize: '12px',
                                                               }}
                                                             >
-                                                                {room.id}
+                                                                {room.roomType !== "apartment" ? "№" : ""} {room.id}
                                                             </p> 
                                                             <p
                                                             style={

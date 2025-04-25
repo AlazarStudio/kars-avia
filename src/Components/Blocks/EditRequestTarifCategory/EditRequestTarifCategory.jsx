@@ -26,7 +26,7 @@ function EditRequestTarifCategory({
     images: null,
   });
 
-    // console.log(tarif);
+  // console.log(tarif);
 
   const sidebarRef = useRef();
 
@@ -45,13 +45,15 @@ function EditRequestTarifCategory({
     }
   }, [show, tarif]);
 
-//   console.log(formData);
-  
+  const [isEditing, setIsEditing] = useState(false);
+
+  //   console.log(formData);
 
   const closeButton = () => {
     let success = confirm("Вы уверены, все несохраненные данные будут удалены");
     if (success) {
       onClose();
+      setIsEditing(false);
     }
   };
 
@@ -83,35 +85,38 @@ function EditRequestTarifCategory({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+    if (isEditing) {
+      e.preventDefault();
+      setIsLoading(true);
 
-    try {
-      let response_update_tarif = await updateHotelTarif({
-        variables: {
-          updateHotelId: id,
-          input: {
-            roomKind: [
-              {
-                id: formData.id,
-                category: formData.category,
-                name: formData.name,
-                price: parseFloat(formData.price),
-                description: formData.description,
-              },
-            ],
+      try {
+        let response_update_tarif = await updateHotelTarif({
+          variables: {
+            updateHotelId: id,
+            input: {
+              roomKind: [
+                {
+                  id: formData.id,
+                  category: formData.category,
+                  name: formData.name,
+                  price: parseFloat(formData.price),
+                  description: formData.description,
+                },
+              ],
+            },
+            roomKindImages: formData.images,
           },
-          roomKindImages: formData.images,
-        },
-      });
-      onClose();
-      setIsLoading(false);
-      addNotification("Редактирование тарифа прошло успешно.", "success");
-    } catch (error) {
-      setIsLoading(false);
-      console.error("Произошла ошибка при выполнении запроса:", error);
-      alert("Произошло ошибка при редактировании тарифа.");
+        });
+        onClose();
+        setIsLoading(false);
+        addNotification("Редактирование тарифа прошло успешно.", "success");
+      } catch (error) {
+        setIsLoading(false);
+        console.error("Произошла ошибка при выполнении запроса:", error);
+        alert("Произошло ошибка при редактировании тарифа.");
+      }
     }
+    setIsEditing(!isEditing);
   };
 
   const [tarifNames, setTarifNames] = useState([]);
@@ -201,6 +206,7 @@ function EditRequestTarifCategory({
             <div className={classes.requestData}>
               <label>Выберите категорию</label>
               <MUIAutocomplete
+                isDisabled={!isEditing}
                 dropdownWidth={"100%"}
                 label={"Выберите категорию"}
                 options={useCategories.map((category) => category.label)}
@@ -228,6 +234,7 @@ function EditRequestTarifCategory({
                 value={formData.name || ""}
                 onChange={handleChange}
                 placeholder="Например: Стандарт, Люкс"
+                disabled={!isEditing}
               />
 
               <label>Стоимость</label>
@@ -237,6 +244,7 @@ function EditRequestTarifCategory({
                 value={formData.price || 0}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
               />
 
               <label>Описание</label>
@@ -245,6 +253,7 @@ function EditRequestTarifCategory({
                 name="description"
                 value={formData.description || ""}
                 onChange={handleChange}
+                disabled={!isEditing}
               ></textarea>
 
               <label>Изображения</label>
@@ -252,14 +261,28 @@ function EditRequestTarifCategory({
                 type="file"
                 name="images"
                 onChange={handleFileChange}
+                disabled={!isEditing}
                 multiple
               />
             </div>
           </div>
 
           <div className={classes.requestButton}>
-            <Button type="submit" onClick={handleSubmit}>
-              Изменить
+            <Button
+              type="submit"
+              onClick={handleSubmit}
+              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+              color={!isEditing ? "#3B6C54" : "#fff"}
+            >
+              {isEditing ? (
+                <>
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </>
+              ) : (
+                <>
+                  Изменить <img src="/editDispetcher.png" alt="" />
+                </>
+              )}
             </Button>
           </div>
         </>

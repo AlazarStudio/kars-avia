@@ -8,10 +8,14 @@
 
 .requestButton {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     padding: 20px 20px 20px 30px;
     border-top: 1px solid #54587380;
+}
+
+.requestButton a {
+    flex-basis: 48%;
 }
 
 .requestTitle_name {
@@ -103,11 +107,6 @@ select {
     flex-direction: row;
     align-items: center;
     cursor: pointer;
-}
-
-.requestButton {
-    display: flex;
-    justify-content: flex-end;
 }
 
 .titleLabel {

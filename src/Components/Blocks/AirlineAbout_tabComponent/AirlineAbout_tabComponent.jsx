@@ -18,6 +18,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { InputMask } from "@react-input/mask";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 
 function AirlineAbout_tabComponent({ id, ...props }) {
   const token = getCookie("token");
@@ -88,7 +89,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
           label: `${item.city}, ${item.region}`,
           value: item.city,
         })) || [];
-      setCities(mappedCities);
+      setCities(infoCities.data?.citys);
     }
   }, [infoCities]);
 
@@ -327,7 +328,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             {displayInfo == "generalInfo" ? (
               <div
                 className={`${classes.column} ${
-                  menuOpen && windowWidth <= 1575 ? classes.w70 : classes.w50
+                  menuOpen && windowWidth <= 1600 ? classes.w70 : classes.w50
                 }`}
               >
                 {
@@ -445,35 +446,54 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                         </div>
                         <div className={classes.airlineAbout_info_item}>
                           <label>Город</label>
-                          <MUIAutocomplete
-                            dropdownWidth={"400px"}
+                          <MUIAutocompleteColor
+                            dropdownWidth="400px"
+                            listboxHeight={"300px"}
                             isDisabled={!isEditing}
                             options={cities}
-                            getOptionLabel={(option) => option.label}
+                            getOptionLabel={(option) =>
+                              option
+                                ? `${option.city} ${option.region}`.trim()
+                                : ""
+                            }
+                            renderOption={(optionProps, option) => {
+                              // Формируем строку для отображения
+                              const labelText =
+                                `${option.city} ${option.region}`.trim();
+                              // Разбиваем строку по пробелам
+                              const words = labelText.split(" ");
+                              return (
+                                <li {...optionProps} key={option.id}>
+                                  {words.map((word, index) => (
+                                    <span
+                                      key={index}
+                                      style={{
+                                        color: index === 0 ? "black" : "gray",
+                                        marginRight: "4px",
+                                      }}
+                                    >
+                                      {word}
+                                    </span>
+                                  ))}
+                                </li>
+                              );
+                            }}
                             value={
                               cities.find(
                                 (option) =>
-                                  option.value === airline.information?.city
-                              ) || ""
+                                  option.city === airline.information?.city
+                              ) || null
                             }
-                            onChange={(event, newValue) => {
-                              setAirline((prev) => ({
-                                ...prev,
+                            onChange={(e, newValue) => {
+                              setAirline((prevAirline) => ({
+                                ...prevAirline,
                                 information: {
-                                  ...prev.information,
-                                  city: newValue ? newValue.value : "", // Обновляем поле `city`
+                                  ...prevAirline.information,
+                                  city: newValue ? newValue.city : "", // Обновляем поле `city`
                                 },
                               }));
                             }}
                           />
-                          {/* <input
-                        type="text"
-                        name="city"
-                        value={airline.information?.city || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      /> */}
                         </div>
                         <div className={classes.airlineAbout_info_item}>
                           <label>Улица</label>
