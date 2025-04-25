@@ -63,6 +63,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         setCheckRoomsType(info);
     }
 
+    const [isLoading, setIsLoading] = useState(false);
 
     const [showEditNomer, setShowEditNomer] = useState(false);
     const [selectedNomer, setSelectedNomer] = useState(null);
@@ -1121,33 +1122,36 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         
             // 2.3. Выполняем мутацию на сервере только с новым place
             try {
-            await updateHotelBron({
-                variables: {
-                updateHotelId: hotelId,
-                input: {
-                    hotelChesses: [{
-                        status: 'done',
-                        requestId: draggedRequest.requestID,
-                        roomId: targetRoomId,
-                        place: targetPosition + 1,      // +1, т.к. сервер считает от 1
-                        clientId: draggedRequest.personID,
-                        id: draggedRequest.chessID,
-                    }],
-                },
-                },
-            });
-            //   await updateRequest({
-            //     variables: {
-            //         updateRequestId: draggedRequest.requestID,
-            //         input: {
-            //             status: 'done'
-            //         }
-            //     }
-            //   })
-            addNotification("Заявка перемещена в комнату " + (targetPosition + 1), "success");
+                setIsLoading(true)
+                await updateHotelBron({
+                    variables: {
+                    updateHotelId: hotelId,
+                    input: {
+                        hotelChesses: [{
+                            status: 'done',
+                            requestId: draggedRequest.requestID,
+                            roomId: targetRoomId,
+                            place: targetPosition + 1,      // +1, т.к. сервер считает от 1
+                            clientId: draggedRequest.personID,
+                            id: draggedRequest.chessID,
+                        }],
+                    },
+                    },
+                });
+                //   await updateRequest({
+                //     variables: {
+                //         updateRequestId: draggedRequest.requestID,
+                //         input: {
+                //             status: 'done'
+                //         }
+                //     }
+                //   })
+                setIsLoading(false)
+                addNotification("Заявка перемещена в комнату " + (targetPosition + 1), "success");
             } catch (err) {
-            addNotification("Ошибка при перемещении внутри номера", "error");
-            console.error(err);
+                setIsLoading(false)
+                addNotification("Ошибка при перемещении внутри номера", "error");
+                console.error(err);
             }
             return;
         }
@@ -1306,14 +1310,17 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     }
     
                     try {
+                        setIsLoading(true)
                         await updateHotelBron({
                             variables: {
                                 updateHotelId: hotelId,
                                 input: bookingInput,
                             },
                         });
+                        setIsLoading(false)
                         addNotification("Бронь успешно перемещена", "success");
                     } catch (err) {
+                        setIsLoading(false)
                         addNotification("Произошла ошибка при подтверждении бронирования", "error");
                         console.error("Произошла ошибка при подтверждении бронирования", err);
                     }
@@ -2000,8 +2007,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     return (
         <>
-        {(loading) ? <MUILoader fullHeight={'60vh'}/> : 
-        <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
                     <Box 
@@ -2454,10 +2459,25 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             />
 
             <ExistReserveMess hotelId={hotelInfo.id} show={showRequestSidebarMess} onClose={toggleRequestSidebarMess} chooseRequestID={openReserveId} user={user} />
-        </>    
-        }
 
+
+            {(loading || isLoading) && (
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        top: 'auto', left: 0, right: 0, bottom: 0,
+                        backgroundColor: '#F1F4FB', // цвет фона
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                    }}
+                >
+                    <MUILoader fullHeight={'72vh'} />
+                </Box>
+            )}
         </>
+        
     );
 };
 

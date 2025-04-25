@@ -170,28 +170,28 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, containe
                     />
                 ))}
 
-{Array.from({ length: room.type }).map((_, position) => {
-        const droppableId = `${room.roomId}-${position}`;
-        const { setNodeRef } = useDroppable({
-          id: droppableId,
-          data: { roomId: room.roomId, position },
-        });
+            {Array.from({ length: room.type }).map((_, position) => {
+                const droppableId = `${room.roomId}-${position}`;
+                const { setNodeRef } = useDroppable({
+                    id: droppableId,
+                    data: { roomId: room.roomId, position },
+                });
 
-        return (
-          <div
-            key={droppableId}
-            ref={setNodeRef}
-            style={{
-              position: 'absolute',
-              top: `${position * 50}px`,
-              left: 0,
-              width: '100%',
-              height: '50px',
-              zIndex: 1,
-            }}
-          />
-        );
-      })}
+                return (
+                    <div
+                        key={droppableId}
+                        ref={setNodeRef}
+                        style={{
+                        position: 'absolute',
+                        top: `${position * 50}px`,
+                        left: 0,
+                        width: '100%',
+                        height: '50px',
+                        zIndex: 1,
+                        }}
+                    />
+                );
+            })}
 
         </Box>
     );
