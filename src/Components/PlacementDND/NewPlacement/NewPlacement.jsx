@@ -2083,7 +2083,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                 }}
                                             >
                                                 <Tooltip
-                                                    title={`${room.id} ${room.descriptionSecond ? room.descriptionSecond : ""} ${!room.active ? '(не работает)' : ''}`}
+                                                    title={`${room.roomType !== "apartment" ? "№" : ""} ${room.id} ${room.descriptionSecond ? room.descriptionSecond : ""} ${!room.active ? '(не работает)' : ''}`}
                                                     arrow
                                                     placement="top"
                                                     enterDelay={1000}
