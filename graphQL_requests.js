@@ -1993,6 +1993,7 @@ export const GET_AIRLINE = gql`
       staff {
         id
         name
+        gender
         position {
           id
           name

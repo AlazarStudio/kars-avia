@@ -683,41 +683,6 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                             setIsEdited(true);
                           }}
                         />
-                        {/* <MUIAutocomplete
-                          // listboxHeight={"200px"}
-                          isDisabled={disableAutocomplete}
-                          dropdownWidth={"100%"}
-                          label={"Введите сотрудника"}
-                          options={selectedAirline.staff.map(
-                            (person) => `${person.name} ${person.position}`
-                          )}
-                          getOptionLabel={(option) =>
-                            `${option.name} ${option.position}`
-                          }
-                          value={(() => {
-                            const selectedPerson = selectedAirline.staff.find(
-                              (person) => person.id === formData.personId
-                            );
-                            return selectedPerson
-                              ? `${selectedPerson.name} ${selectedPerson.position}`
-                              : "";
-                          })()}
-                          onChange={(event, newValue) => {
-                            const selectedPerson = selectedAirline.staff.find(
-                              (person) =>
-                                `${person.name} ${person.position}` === newValue
-                            );
-                            // console.log(selectedPerson);
-                            setFormData((prevFormData) => ({
-                              ...prevFormData,
-                              personId: disableAutocomplete
-                                ? ""
-                                : selectedPerson?.id || "",
-                            }));
-                            setIsEdited(true);
-                          }}
-                          isColor={true}
-                        /> */}
                         <label className={classes.noPersonLabel}>
                           <input
                             type="checkbox"
@@ -752,47 +717,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                 /> */}
 
                   <label>Аэропорт</label>
-                  {/* <MUIAutocomplete
-                    dropdownWidth={"100%"}
-                    label={"Введите аэропорт"}
-                    options={airports.map(
-                      (airport) => `${airport.code} ${airport.name}, город: ${airport.city}`
-                    )}
-                    value={
-                      airports.find(
-                        (airport) => airport.id === formData.airportId
-                      )
-                        ? `${
-                            airports.find(
-                              (airport) => airport.id === formData.airportId
-                            )?.code
-                          } ${
-                            airports.find(
-                              (airport) => airport.id === formData.airportId
-                            )?.name
-                          }, город: ${
-                            airports.find(
-                              (airport) => airport.id === formData.airportId
-                            )?.city
-                          }`
-                        : ""
-                    }
-                    onChange={(event, newValue) => {
-                      const selectedAirport = airports.find(
-                        (airport) =>
-                          `${airport.code} ${airport.name}, город: ${airport.city}` === newValue
-                      );
-
-                      setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        airportId: selectedAirport?.id || "",
-                        city: selectedAirport?.city,
-                      }));
-                      setIsEdited(true);
-                    }}
-                  /> */}
                   <MUIAutocompleteColor
-                    dropdownWidth="400px"
+                    dropdownWidth="100%"
                     label={"Введите аэропорт"}
                     options={airports}
                     getOptionLabel={(option) =>
@@ -909,25 +835,6 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                     }}
                   />
 
-                  {/* <DropDownList
-                  placeholder="Питание"
-                  options={meal.map((name) => name.title)}
-                  initialValue={
-                    formData.mealPlan.included ? "Включено" : "Не включено"
-                  }
-                  onSelect={(value) => {
-                    const isIncluded = value === "Включено";
-                    setFormData((prevFormData) => ({
-                      ...prevFormData,
-                      mealPlan: {
-                        ...prevFormData.mealPlan,
-                        included: isIncluded,
-                      },
-                    }));
-                    setIsEdited(true);
-                  }}
-                /> */}
-
                   <div
                     className={classes.checks}
                     style={{
@@ -987,33 +894,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
             </div>
 
             <div className={classes.requestButton}>
-              {/* {isLoading ? (
-        //   <Box
-        //     sx={{
-        //       position: "fixed",
-        //       top: 0,
-        //       left: 0,
-        //       width: "100vw",
-        //       height: "100vh",
-        //       backgroundColor: "rgba(0, 0, 0, 0.5)", // Затемнённый фон
-        //       display: "flex",
-        //       alignItems: "center",
-        //       justifyContent: "center",
-        //       zIndex: 1300, // Выше других элементов
-        //     }}
-        //   >
-        //     <CircularProgress
-        //       sx={{
-        //         width: "80px !important",
-        //         height: "80px !important",
-        //         color: "#fff",
-        //       }}
-        //     />
-        //   </Box>
-        <MUILoader/>
-        ) : ( */}
               <Button onClick={handleSubmit}>Создать заявку</Button>
-              {/* )} */}
             </div>
           </>
         )}

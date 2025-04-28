@@ -209,13 +209,13 @@ function CreateRequestAirlineStaff({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Фамилия И. О.</label>
+              <label>Фамилия И.О.</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Пример: Иванов И. И."
+                placeholder="Пример: Иванов И.И."
                 autoComplete="new-password"
               />
 

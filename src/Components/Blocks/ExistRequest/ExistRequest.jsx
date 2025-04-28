@@ -8,6 +8,7 @@ import {
   convertToDate,
   EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
   GET_AIRLINE,
+  GET_AIRLINE_POSITIONS,
   GET_REQUEST,
   getCookie,
   REQUEST_UPDATED_SUBSCRIPTION,
@@ -22,6 +23,7 @@ import ReactPaginate from "react-paginate";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff";
 import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 
 function ExistRequest({
   show,
@@ -453,14 +455,28 @@ function ExistRequest({
     variables: { airlineId: formData?.airline?.id },
   });
 
+  const {
+    loading: airlinePositionsLoading,
+    error: airlinePositionsError,
+    data: airlinePositionsData,
+  } = useQuery(GET_AIRLINE_POSITIONS);
+
+  const [positions, setPositions] = useState([]);
+
   const [airlineStaff, setAirlineStaff] = useState();
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   useEffect(() => {
     if (airlineData) {
-      setAirlineStaff(airlineData?.airline);
+      setAirlineStaff(airlineData?.airline?.staff);
     }
   }, [airlineData]);
+
+  useEffect(() => {
+    if (airlinePositionsData) {
+      setPositions(airlinePositionsData?.getAirlinePositions);
+    }
+  }, [airlinePositionsData]);
 
   const [updateRequestRelay] = useMutation(UPDATE_REQUEST_RELAY, {
     context: {
@@ -692,33 +708,61 @@ function ExistRequest({
                             <img src="/plus.png" alt="" />
                           </div>
                         </div>
-                        {/* {console.log(selectedEmployee)} */}
-                        <MUIAutocomplete
-                          dropdownWidth={"100%"}
-                          label={"Введите сотрудника"}
-                          options={airlineStaff?.staff.map(
-                            (person) => `${person.name} ${person.position}`
-                          )}
+                        <MUIAutocompleteColor
+                          dropdownWidth="100%"
+                          label="Введите сотрудника"
+                          // Передаём исходный массив объектов сотрудников
+                          options={airlineStaff}
+                          // getOptionLabel правильно формирует строку, даже если option – объект
                           getOptionLabel={(option) =>
-                            `${option.name} ${option.position}`
-                          }
-                          value={
-                            selectedEmployee
-                              ? `${selectedEmployee?.name} ${selectedEmployee?.position}`
+                            option
+                              ? `${option.name || ""} ${
+                                  option.position?.name
+                                } ${option.gender}`.trim()
                               : ""
                           }
+                          // Если нужно кастомное раскрашивание, используйте renderOption (с isColor)
+                          renderOption={(optionProps, option) => {
+                            // Формируем строку для отображения
+                            const labelText = `${option.name || ""} ${
+                              option.position?.name
+                            } ${option.gender}`.trim();
+                            // Разбиваем строку по пробелам
+                            const words = labelText.split(". ");
+                            return (
+                              <li {...optionProps} key={option.id}>
+                                {words.map((word, index) => (
+                                  <span
+                                    key={index}
+                                    style={{
+                                      color:
+                                        index === 0
+                                          ? "black"
+                                          : index === 1
+                                          ? "gray"
+                                          : "gray",
+                                      marginRight: "4px",
+                                    }}
+                                  >
+                                    {word}
+                                  </span>
+                                ))}
+                              </li>
+                            );
+                          }}
+                          // Значение контролируется объектом; если person не найден, возвращаем null
+                          value={
+                            airlineStaff?.find(
+                              (person) => person.id === selectedEmployee?.id
+                            ) || null
+                          }
                           onChange={(event, newValue) => {
-                            const selectedPerson = airlineStaff?.staff?.find(
-                              (person) =>
-                                `${person.name} ${person.position}` === newValue
-                            );
-                            const newPerson = airlineStaff?.staff?.find(
-                              (person) => person.id === newStaffId
-                            );
-                            // console.log("newPerson: ", newPerson);
-                            // console.log("selectedPerson: ", selectedPerson);
-
-                            setSelectedEmployee(selectedPerson);
+                            setSelectedEmployee(newValue);
+                            // setFormData((prevFormData) => ({
+                            //   ...prevFormData,
+                            //   personId: newValue?.id || "",
+                            // }));
+                            // setIsEdited(true);
                           }}
                         />
                         <Button onClick={handleSaveChanges}>
@@ -1159,7 +1203,7 @@ function ExistRequest({
             show={showAddStaff}
             onClose={toggleAddStaff}
             isExist={true}
-            // airlineRefetch={refetch}
+            positions={positions}
             setNewStaffId={setNewStaffId}
             // setSelectedAirline={setSelectedAirline}
           />
