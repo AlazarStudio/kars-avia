@@ -134,6 +134,13 @@ function CreateRequestCompanyHotel({
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Введите корректный email.");
+      setIsLoading(false);
+      return;
+    }
+
     if (formData.password.length < 8) {
       alert("Пароль должен содержать минимум 8 символов.");
       setIsLoading(false);
@@ -261,7 +268,11 @@ function CreateRequestCompanyHotel({
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
                 options={rolesObject.hotel}
-                value={rolesObject.hotel.find((option) => option.value === formData.role) || null}
+                value={
+                  rolesObject.hotel.find(
+                    (option) => option.value === formData.role
+                  ) || null
+                }
                 onChange={(event, newValue) => {
                   setIsEdited(true);
                   setFormData((prevData) => ({

@@ -152,19 +152,19 @@ function ExistRequestCompanyHotel({
     if (isEditing) {
       setIsLoading(true); // Устанавливаем isLoading перед началом загрузки
       // Проверяем обязательные поля
-      const requiredFields = [
-        "name",
-        "email",
-        "role",
-        "position",
-        "login",
-      ];
+      const requiredFields = ["name", "email", "role", "position", "login"];
       const emptyFields = requiredFields.filter(
         (field) => !formData[field]?.trim()
       );
 
       if (emptyFields.length > 0) {
         alert("Пожалуйста, заполните все обязательные поля.");
+        setIsLoading(false);
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        alert("Введите корректный email.");
         setIsLoading(false);
         return;
       }
@@ -297,7 +297,7 @@ function ExistRequestCompanyHotel({
               <div className={classes.requestDataInfo}>
                 <div className={classes.requestDataInfo_title}>Почта</div>
                 <input
-                  type="text"
+                  type="email"
                   name="email"
                   placeholder="example@mail.ru"
                   value={formData.email}

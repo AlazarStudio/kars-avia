@@ -112,7 +112,6 @@ function CreateRequestCompany({
     e.preventDefault();
     setIsLoading(true);
 
-
     // Проверяем обязательные поля
     const requiredFields = [
       "name",
@@ -131,6 +130,14 @@ function CreateRequestCompany({
       setIsLoading(false);
       return;
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Введите корректный email.");
+      setIsLoading(false);
+      return;
+    }
+
     if (formData.password.length < 8) {
       alert("Пароль должен содержать минимум 8 символов.");
       setIsLoading(false);
@@ -234,7 +241,7 @@ function CreateRequestCompany({
 
   // const roles = [
   //   { label: "Администратор", value: "DISPATCHERADMIN" }
-  // ];  
+  // ];
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -276,7 +283,11 @@ function CreateRequestCompany({
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
                 options={rolesObject.dispatcher}
-                value={rolesObject.dispatcher.find((option) => option.value === formData.role) || null}
+                value={
+                  rolesObject.dispatcher.find(
+                    (option) => option.value === formData.role
+                  ) || null
+                }
                 onChange={(event, newValue) => {
                   setIsEdited(true);
                   // Если выбрана опция, сохраняем её value, иначе очищаем поле
@@ -314,7 +325,7 @@ function CreateRequestCompany({
 
               <label>Пароль</label>
               <input
-                type="text"
+                type="password"
                 name="password"
                 placeholder="Пароль"
                 value={formData.password}

@@ -22,7 +22,7 @@ function EditRequestAirlineCompany({
   addTarif,
   id,
   addNotification,
-  positions
+  positions,
 }) {
   const token = getCookie("token");
 
@@ -159,6 +159,12 @@ function EditRequestAirlineCompany({
     if (isEditing) {
       if (!isFormValid()) {
         alert("Пожалуйста, заполните все обязательные поля.");
+        setIsLoading(false);
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        alert("Введите корректный email.");
         setIsLoading(false);
         return;
       }
@@ -327,7 +333,7 @@ function EditRequestAirlineCompany({
               <div className={classes.requestDataInfo}>
                 <label>Почта</label>
                 <input
-                  type="text"
+                  type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
@@ -346,7 +352,11 @@ function EditRequestAirlineCompany({
                         isDisabled={!isEditing}
                         label={"Выберите роль"}
                         options={rolesObject.airline}
-                        value={rolesObject.airline.find((option) => option.value === formData.role) || null}
+                        value={
+                          rolesObject.airline.find(
+                            (option) => option.value === formData.role
+                          ) || null
+                        }
                         onChange={(event, newValue) => {
                           setFormData((prevFormData) => ({
                             ...prevFormData,

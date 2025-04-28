@@ -138,6 +138,13 @@ function CreateRequestAirlineCompany({
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Введите корректный email.");
+      setIsLoading(false);
+      return;
+    }
+
     if (formData.password.length < 8) {
       alert("Пароль должен содержать минимум 8 символов.");
       setIsLoading(false);
@@ -302,7 +309,7 @@ function CreateRequestAirlineCompany({
 
               <label>Почта</label>
               <input
-                type="text"
+                type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}

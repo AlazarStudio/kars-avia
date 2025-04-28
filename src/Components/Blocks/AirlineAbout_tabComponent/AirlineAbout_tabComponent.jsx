@@ -127,6 +127,12 @@ function AirlineAbout_tabComponent({ id, ...props }) {
   };
 
   const handleEditClick = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(airline.information?.email)) {
+      alert("Введите корректный email.");
+      setIsLoading(false);
+      return;
+    }
     if (isEditing) {
       setIsLoading(true);
       try {

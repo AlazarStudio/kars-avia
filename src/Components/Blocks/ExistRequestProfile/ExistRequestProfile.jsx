@@ -114,6 +114,12 @@ function ExistRequestProfile({
   const handleUpdate = async () => {
     if (isEditing) {
       setIsLoading(true);
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        alert("Введите корректный email.");
+        setIsLoading(false);
+        return;
+      }
       if (formData.password !== "" && formData.password.length < 8) {
         alert("Новый пароль должен содержать минимум 8 символов.");
         setIsLoading(false);
@@ -234,7 +240,7 @@ function ExistRequestProfile({
               <div className={classes.requestDataInfo}>
                 <div className={classes.requestDataInfo_title}>Почта</div>
                 <input
-                  type="text"
+                  type="email"
                   name="email"
                   placeholder="example@mail.ru"
                   value={formData.email}
