@@ -1120,14 +1120,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 addNotification("Эту заявку нельзя перемещать, так как она в архиве", "error");
                 return;
             }
-        
-            // 2.3. Выполняем мутацию на сервере только с новым place
-            try {
-                setIsLoading(true)
-                await updateHotelBron({
-                    variables: {
-                    updateHotelId: hotelId,
-                    input: {
+
+            let bookingInput
+
+            if (draggedRequest.isRequest && draggedRequest.status !== 'Архив') {
+                    bookingInput = {
                         hotelChesses: [{
                             status: 'done',
                             requestId: draggedRequest.requestID,
@@ -1135,8 +1132,28 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                             place: targetPosition + 1,      // +1, т.к. сервер считает от 1
                             clientId: draggedRequest.personID,
                             id: draggedRequest.chessID,
-                        }],
-                    },
+                    }],
+                }
+            } else if (!draggedRequest.isRequest && draggedRequest.status !== 'Архив') {
+                bookingInput = {
+                    hotelChesses: [{
+                        status: 'done',
+                        reserveId: draggedRequest.requestID,
+                        roomId: targetRoomId,
+                        place: targetPosition + 1,      // +1, т.к. сервер считает от 1
+                        clientId: draggedRequest.personID,
+                        id: draggedRequest.chessID,
+                }],
+            }
+            }
+        
+            // 2.3. Выполняем мутацию на сервере только с новым place
+            try {
+                setIsLoading(true)
+                await updateHotelBron({
+                    variables: {
+                    updateHotelId: hotelId,
+                    input: bookingInput,
                     },
                 });
                 //   await updateRequest({
@@ -1147,12 +1164,13 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 //         }
                 //     }
                 //   })
-                setIsLoading(false)
                 addNotification("Заявка перемещена в комнату " + (targetPosition + 1), "success");
             } catch (err) {
                 setIsLoading(false)
                 addNotification("Ошибка при перемещении внутри номера", "error");
                 console.error(err);
+            } finally {
+                setIsLoading(false);
             }
             return;
         }
