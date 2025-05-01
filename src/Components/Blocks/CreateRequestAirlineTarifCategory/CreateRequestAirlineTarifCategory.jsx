@@ -39,6 +39,9 @@ function CreateRequestAirlineTarifCategory({
     priceEightCategory: 0,
     priceApartment: 0,
     priceStudio: 0,
+    breakfast: 0,
+    dinner: 0,
+    lunch: 0,
   });
 
   const [airports, setAirports] = useState([]); // Список аэропортов
@@ -59,14 +62,13 @@ function CreateRequestAirlineTarifCategory({
   }, [infoAirports.data]);
 
   const airportOptions = airports.map((airport) => ({
-    label: `${airport.code} ${airport.name}, город: ${airport.city}`,
+    label: `${airport.code} ${airport.name} ${airport.city}`,
     id: airport.id,
     city: airport.city,
     // можно добавить и другие свойства, если понадобится
   }));
 
   // console.log(airportOptions);
-  
 
   const [tarifNames, setTarifNames] = useState([]);
   const sidebarRef = useRef();
@@ -85,6 +87,9 @@ function CreateRequestAirlineTarifCategory({
       priceEightCategory: 0,
       priceApartment: 0,
       priceStudio: 0,
+      breakfast: 0,
+      dinner: 0,
+      lunch: 0,
     });
   };
 
@@ -149,6 +154,11 @@ function CreateRequestAirlineTarifCategory({
                   priceEightCategory: parseFloat(formData.priceEightCategory),
                   priceApartment: parseFloat(formData.priceApartment),
                   priceStudio: parseFloat(formData.priceStudio),
+                },
+                mealPrice: {
+                  breakfast: parseFloat(formData.breakfast),
+                  dinner: parseFloat(formData.dinner),
+                  lunch: parseFloat(formData.lunch),
                 },
               },
             ],
@@ -386,6 +396,30 @@ function CreateRequestAirlineTarifCategory({
                 value={formData.priceStudio}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+              />
+              <label>Завтрак</label>
+              <input
+                type="number"
+                name="breakfast"
+                value={formData.breakfast}
+                onChange={handleChange}
+                placeholder="Завтрак"
+              />
+              <label>Обед</label>
+              <input
+                type="number"
+                name="lunch"
+                value={formData.lunch}
+                onChange={handleChange}
+                placeholder="Обед"
+              />
+              <label>Ужин</label>
+              <input
+                type="number"
+                name="dinner"
+                value={formData.dinner}
+                onChange={handleChange}
+                placeholder="Ужин"
               />
             </div>
           </div>

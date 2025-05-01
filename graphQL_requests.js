@@ -2049,22 +2049,27 @@ export const GET_AIRLINE_TARIFS = gql`
           priceSevenCategory
           priceEightCategory
         }
+        mealPrice {
+          breakfast
+          dinner
+          lunch
+        }
       }
     }
   }
 `;
 
-export const GET_AIRLINE_MEAL_PRICE = gql`
-  query Airline($airlineId: ID!) {
-    airline(id: $airlineId) {
-      mealPrice {
-        breakfast
-        dinner
-        lunch
-      }
-    }
-  }
-`;
+// export const GET_AIRLINE_MEAL_PRICE = gql`
+//   query Airline($airlineId: ID!) {
+//     airline(id: $airlineId) {
+//       mealPrice {
+//         breakfast
+//         dinner
+//         lunch
+//       }
+//     }
+//   }
+// `;
 
 export const UPDATE_AIRLINE = gql`
   mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!, $images: [Upload!]) {

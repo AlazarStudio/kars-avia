@@ -35,13 +35,13 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     variables: { airlineId: id },
   });
 
-  const {
-    loading: mealPriceLoading,
-    error: mealPriceError,
-    data: mealPriceData,
-  } = useQuery(GET_AIRLINE_MEAL_PRICE, {
-    variables: { airlineId: id },
-  });
+  // const {
+  //   loading: mealPriceLoading,
+  //   error: mealPriceError,
+  //   data: mealPriceData,
+  // } = useQuery(GET_AIRLINE_MEAL_PRICE, {
+  //   variables: { airlineId: id },
+  // });
 
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
@@ -53,11 +53,11 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   );
 
   const [addTarif, setAddTarif] = useState([]);
-  const [mealPrices, setMealPrices] = useState({
-    breakfast: 0,
-    lunch: 0,
-    dinner: 0,
-  });
+  // const [mealPrices, setMealPrices] = useState({
+  //   breakfast: 0,
+  //   lunch: 0,
+  //   dinner: 0,
+  // });
   const [showAddTarif, setShowAddTarif] = useState(false);
   const [showAddTarifCategory, setShowAddTarifCategory] = useState(false);
   const [showEditAddTarif, setEditShowAddTarif] = useState(false);
@@ -103,15 +103,15 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     }
   }, [data]);
 
-  useEffect(() => {
-    if (mealPriceData) {
-      setMealPrices({
-        breakfast: mealPriceData.airline.mealPrice?.breakfast,
-        lunch: mealPriceData.airline.mealPrice?.lunch,
-        dinner: mealPriceData.airline.mealPrice?.dinner,
-      });
-    }
-  }, [mealPriceData]);
+  // useEffect(() => {
+  //   if (mealPriceData) {
+  //     setMealPrices({
+  //       breakfast: mealPriceData.airline.mealPrice?.breakfast,
+  //       lunch: mealPriceData.airline.mealPrice?.lunch,
+  //       dinner: mealPriceData.airline.mealPrice?.dinner,
+  //     });
+  //   }
+  // }, [mealPriceData]);
 
   const handleSearchTarif = (e) => {
     setSearchTarif(e.target.value);
@@ -305,9 +305,9 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   });
 
   const filteredRequestsMealTarif = [
-    { name: "Завтрак", price: mealPrices.breakfast },
-    { name: "Обед", price: mealPrices.lunch },
-    { name: "Ужин", price: mealPrices.dinner },
+    { name: "Завтрак", price: 0 },
+    { name: "Обед", price: 0 },
+    { name: "Ужин", price: 0 },
   ];
 
   return (
@@ -372,7 +372,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         isHotel={false}
         addNotification={addNotification}
       /> */}
-      <EditRequestMealTarif
+      {/* <EditRequestMealTarif
         id={id}
         show={showEditMealPrices}
         mealPrices={mealPrices}
@@ -380,7 +380,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         onSubmit={handleEditMealPrices}
         isHotel={false}
         addNotification={addNotification}
-      />
+      /> */}
       <EditRequestAirlineTarifCategory
         user={user}
         id={id}

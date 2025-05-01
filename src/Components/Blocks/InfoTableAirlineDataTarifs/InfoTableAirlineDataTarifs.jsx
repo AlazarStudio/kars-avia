@@ -14,7 +14,6 @@ function InfoTableAirlineDataTarifs({
 }) {
   return (
     <div className={classes.tarifsWrapper}>
-      <InfoTable isScroll={true}>
         <div className={classes.contractsContainer}>
           {requests.map((item, index) => (
             <div className={classes.contractRow} key={index}>
@@ -29,15 +28,17 @@ function InfoTableAirlineDataTarifs({
                   />
                 </div>
               </div>
-
+              
+              {/* <p style={{ marginTop: "10px" }}>Категории - цены</p> */}
+              <div className={classes.airportListTitle}>Категории - цены</div>
               {/* Ряд с категориями цен */}
-              {user?.role !== roles.airlineAdmin && (
+              {user?.role !== roles.hotelAdmin && (
                 <div className={classes.pricesRow}>
                   {item.prices?.priceApartment !== undefined && (
-                    <div
-                      className={classes.priceItem}
-                    >
-                      <span className={classes.priceItemLabel}>Апартаменты</span>
+                    <div className={classes.priceItem}>
+                      <span className={classes.priceItemLabel}>
+                        Апартаменты
+                      </span>
                       <span className={classes.priceItemValue}>
                         {item.prices.priceApartment} ₽
                       </span>
@@ -134,6 +135,35 @@ function InfoTableAirlineDataTarifs({
                 </div>
               )}
 
+              {/* <p style={{ marginTop: "10px" }}>Питание - цены</p> */}
+              <div className={classes.airportListTitle}>Питание - цены</div>
+              <div className={classes.pricesRow}>
+                {item.mealPrice?.breakfast !== undefined && (
+                  <div className={classes.priceItem}>
+                    <span className={classes.priceItemLabel}>Завтрак</span>
+                    <span className={classes.priceItemValue}>
+                      {item.mealPrice?.breakfast} ₽
+                    </span>
+                  </div>
+                )}
+                {item.mealPrice?.lunch !== undefined && (
+                  <div className={classes.priceItem}>
+                    <span className={classes.priceItemLabel}>Обед</span>
+                    <span className={classes.priceItemValue}>
+                      {item.mealPrice?.lunch} ₽
+                    </span>
+                  </div>
+                )}
+                {item.mealPrice?.dinner !== undefined && (
+                  <div className={classes.priceItem}>
+                    <span className={classes.priceItemLabel}>Ужин</span>
+                    <span className={classes.priceItemValue}>
+                      {item.mealPrice?.dinner} ₽
+                    </span>
+                  </div>
+                )}
+              </div>
+
               {/* Блок аэропортов (если есть) */}
               {item.airports && item.airports.length > 0 && (
                 <div className={classes.airportList}>
@@ -150,11 +180,8 @@ function InfoTableAirlineDataTarifs({
             </div>
           ))}
         </div>
-      </InfoTable>
 
-      {/* Блок «Питание - цены» остаётся без изменений */}
-      <InfoTable isScroll={true}>
-        {/* Используем старые стили */}
+      {/* <InfoTable isScroll={true}>
         <div className={classes.bottom}>
           {mealPrices.map((item, index) => (
             <div className={classes.InfoTable_data} key={index}>
@@ -182,7 +209,7 @@ function InfoTableAirlineDataTarifs({
             </div>
           ))}
         </div>
-      </InfoTable>
+      </InfoTable> */}
     </div>
   );
 }

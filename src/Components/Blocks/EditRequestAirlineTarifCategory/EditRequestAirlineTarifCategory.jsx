@@ -47,6 +47,9 @@ function EditRequestAirlineTarifCategory({
     priceEightCategory: tarif?.prices?.priceEightCategory ?? 0,
     priceApartment: tarif?.prices?.priceApartment ?? 0,
     priceStudio: tarif?.prices?.priceStudio ?? 0,
+    breakfast: tarif?.mealPrice?.breakfast ?? 0,
+    dinner: tarif?.mealPrice?.dinner ?? 0,
+    lunch: tarif?.mealPrice?.lunch ?? 0,
   });
 
   const [airports, setAirports] = useState([]); // Список аэропортов
@@ -68,7 +71,7 @@ function EditRequestAirlineTarifCategory({
 
   const airportOptions = airports.map((airport) => ({
     value: String(airport.id), // используем value вместо id
-    label: `${airport.code} ${airport.name} город: ${airport.city}`,
+    label: `${airport.code} ${airport.name} ${airport.city}`,
     city: airport.city,
   }));
 
@@ -92,6 +95,9 @@ function EditRequestAirlineTarifCategory({
       priceEightCategory: tarif?.prices?.priceEightCategory ?? 0,
       priceApartment: tarif?.prices?.priceApartment ?? 0,
       priceStudio: tarif?.prices?.priceStudio ?? 0,
+      breakfast: tarif?.mealPrice?.breakfast ?? 0,
+      dinner: tarif?.mealPrice?.dinner ?? 0,
+      lunch: tarif?.mealPrice?.lunch ?? 0,
     });
   };
 
@@ -160,6 +166,11 @@ function EditRequestAirlineTarifCategory({
                     priceEightCategory: parseFloat(formData.priceEightCategory),
                     priceApartment: parseFloat(formData.priceApartment),
                     priceStudio: parseFloat(formData.priceStudio),
+                  },
+                  mealPrice: {
+                    breakfast: parseFloat(formData.breakfast),
+                    dinner: parseFloat(formData.dinner),
+                    lunch: parseFloat(formData.lunch),
                   },
                 },
               ],
@@ -391,6 +402,33 @@ function EditRequestAirlineTarifCategory({
                 value={formData.priceStudio}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+                disabled={!isEditing}
+              />
+              <label>Завтрак</label>
+              <input
+                type="number"
+                name="breakfast"
+                value={formData.breakfast}
+                onChange={handleChange}
+                placeholder="Завтрак"
+                disabled={!isEditing}
+              />
+              <label>Обед</label>
+              <input
+                type="number"
+                name="lunch"
+                value={formData.lunch}
+                onChange={handleChange}
+                placeholder="Обед"
+                disabled={!isEditing}
+              />
+              <label>Ужин</label>
+              <input
+                type="number"
+                name="dinner"
+                value={formData.dinner}
+                onChange={handleChange}
+                placeholder="Ужин"
                 disabled={!isEditing}
               />
             </div>
