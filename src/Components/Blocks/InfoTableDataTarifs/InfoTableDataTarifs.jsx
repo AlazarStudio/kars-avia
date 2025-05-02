@@ -5,6 +5,7 @@ import { roles } from "../../../roles";
 import Button from "../../Standart/Button/Button";
 
 const categoryMap = {
+  luxe: "Люкс",
   apartment: "Апартаменты",
   studio: "Студия",
   onePlace: "Одноместный",

@@ -144,6 +144,10 @@ function CreateRequestTarifCategory({
 
   const categories = [
     {
+      value: "luxe",
+      label: "Люкс",
+    },
+    {
       value: "onePlace",
       label: "Одноместный",
     },

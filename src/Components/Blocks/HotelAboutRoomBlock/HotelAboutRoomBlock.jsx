@@ -10,6 +10,7 @@ import { Autoplay, Pagination } from "swiper/modules";
 
 // Карты соответствия для категорий и количества кроватей
 const categoryMap = {
+  luxe: "Люкс 2 места",
   apartment: "Апартаменты",
   studio: "Студия",
   onePlace: "1 место",
