@@ -12,7 +12,7 @@ import { requestsTarifs } from "../../../requests.js";
 import {
   getCookie,
   GET_AIRLINE_TARIFS,
-  GET_AIRLINE_MEAL_PRICE,
+  // GET_AIRLINE_MEAL_PRICE,
   DELETE_AIRLINE_CATEGORY,
   DELETE_AIRLINE_TARIFF,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
