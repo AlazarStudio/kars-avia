@@ -1336,12 +1336,12 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 input: bookingInput,
                             },
                         });
-                        setIsLoading(false)
                         addNotification("Бронь успешно перемещена", "success");
                     } catch (err) {
-                        setIsLoading(false)
                         addNotification("Произошла ошибка при подтверждении бронирования", "error");
                         console.error("Произошла ошибка при подтверждении бронирования", err);
+                    } finally {
+                        setIsLoading(false)
                     }
                 }
             } else {
@@ -1360,10 +1360,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     // Функция проверки пересечения заявок с учетом приведения room к идентификатору
     const isOverlap = (updatedRequest) => {
         // Получаем идентификатор комнаты для updatedRequest
-        const updatedRoomId =
-        updatedRequest.room && typeof updatedRequest.room === "object"
-            ? updatedRequest.room.id
-            : updatedRequest.room;
+        // const updatedRoomId =
+        // updatedRequest.room && typeof updatedRequest.room === "object"
+        //     ? updatedRequest.room.id
+        //     : updatedRequest.room;
+        const updatedRoomId = updatedRequest.room.id
     
         // Фильтруем заявки в той же комнате, используя идентификатор
         const roomRequests = requests.filter((req) => {
@@ -1452,6 +1453,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     
         // Сохраняем изменения на сервере
         try {
+            setIsLoading(true)
             await updateRequest({
                 variables: {
                     updateRequestId: requestToSave.requestID,
@@ -1488,6 +1490,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             );
         } catch (err) {
             console.log("Произошла ошибка при подтверждении бронирования", err);
+        } finally {
+            setIsLoading(false)
         }
     };
     
@@ -1547,6 +1551,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         }
 
         try {
+            setIsLoading(true)
+            setSelectedRequest(null);
+            setIsConfirmModalOpen(false);
             await updateHotelBron({
                 variables: {
                     updateHotelId: hotelId,
@@ -1557,14 +1564,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             refetchHotelReserveOne()
         } catch (err) {
             console.error("Произошла ошибка при подтверждении бронирования", err);
-            // console.log(bookingInput);
-            
-            // console.log(request);
-            
+        } finally {
+            setIsLoading(false)
         }
-
-        setSelectedRequest(null);
-        setIsConfirmModalOpen(false);
     };
 
     // console.log(requests);
@@ -2228,7 +2230,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
 
                     {!checkRoomsType && 
-                        <Box sx={{ width: "330px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
+                        <Box sx={{ minWidth: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd', borderRadius: '10px' }}>
                             <Typography variant="h6" sx={{ padding: '10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по эскадрильи в городе {hotelInfo.information?.city}
                             </Typography>
@@ -2269,7 +2271,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     }
 
                     {checkRoomsType && !showReserveInfo && !showModalForAddHotelInReserve &&
-                        <Box sx={{ width: "330px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
+                        <Box sx={{ minWidth: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
                             <Typography variant="h6" sx={{ padding:'10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по пассажирам в городе {hotelInfo.information?.city}
                             </Typography>

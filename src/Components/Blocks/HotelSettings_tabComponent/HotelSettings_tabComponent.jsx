@@ -456,14 +456,14 @@ function HotelSettings_tabComponent({ id }) {
                 </button>
               )}
 
-              <button
+              {/* <button
                 className={displayInfo == "rooms" ? classes.activeButton : null}
                 onClick={() => {
                   setDisplayInfo("rooms");
                 }}
               >
                 <img src="/roomsIcon.png" alt="" /> Номера
-              </button>
+              </button> */}
 
               {user?.role === roles.airlineAdmin ? null : (
                 <>
@@ -842,25 +842,27 @@ function HotelSettings_tabComponent({ id }) {
                   />
                 </div>
               </div>
-            ) : displayInfo === "rooms" ? (
-              <div
-                className={
-                  user?.role === roles.airlineAdmin
-                    ? classes.hotelAbout_rooms_block__hotel
-                    : classes.hotelAbout_rooms_block
-                }
-              >
-                <div
-                  className={`${classes.rooms_wrapper} ${
-                    menuOpen && windowWidth <= 1578 ? classes.fb30 : ""
-                  }`}
-                >
-                  {rooms?.map((room) => (
-                    <HotelAboutRoomBlock key={room.id} {...room} />
-                  ))}
-                </div>
-              </div>
-            ) : (
+            ) 
+            // : displayInfo === "rooms" ? (
+            //   <div
+            //     className={
+            //       user?.role === roles.airlineAdmin
+            //         ? classes.hotelAbout_rooms_block__hotel
+            //         : classes.hotelAbout_rooms_block
+            //     }
+            //   >
+            //     <div
+            //       className={`${classes.rooms_wrapper} ${
+            //         menuOpen && windowWidth <= 1578 ? classes.fb30 : ""
+            //       }`}
+            //     >
+            //       {rooms?.map((room) => (
+            //         <HotelAboutRoomBlock key={room.id} {...room} />
+            //       ))}
+            //     </div>
+            //   </div>
+            // ) 
+            : (
               <div
                 className={
                   user?.airlineId

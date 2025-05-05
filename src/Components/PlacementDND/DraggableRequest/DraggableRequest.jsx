@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import classes from "./DraggableRequest.module.css";
 import ReactDOM from "react-dom";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
@@ -28,13 +29,14 @@ const DraggableRequest = ({
   toggleRequestSidebar,
 }) => {
   // Настройка dnd-kit
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: request.id.toString(),
-    data: {
-      position: request.position,
-      roomId: request.room?.id,
-    },
-  });
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: request.id.toString(),
+      data: {
+        position: request.position,
+        roomId: request.room?.id,
+      },
+    });
 
   const startDate = startOfMonth(currentMonth);
   const checkIn = new Date(`${request.checkInDate}T${request.checkInTime}`);
@@ -42,9 +44,11 @@ const DraggableRequest = ({
 
   // Рассчитываем смещения для позиционирования заявки
   const checkInOffset =
-    (differenceInMilliseconds(checkIn, startDate) / (24 * 60 * 60 * 1000)) * dayWidth;
+    (differenceInMilliseconds(checkIn, startDate) / (24 * 60 * 60 * 1000)) *
+    dayWidth;
   const duration =
-    (differenceInMilliseconds(checkOut, checkIn) / (24 * 60 * 60 * 1000)) * dayWidth;
+    (differenceInMilliseconds(checkOut, checkIn) / (24 * 60 * 60 * 1000)) *
+    dayWidth;
 
   // Функция выбора цвета в зависимости от статуса заявки
   const getStatusColors = (status) => {
@@ -64,7 +68,7 @@ const DraggableRequest = ({
       case "Готов к архиву":
         return { backgroundColor: "#638ea4", borderColor: "#78909c" };
       default:
-        return { backgroundColor: "#9e9e9e", borderColor: "#757575" };
+        return { backgroundColor: "#fff", borderColor: "#E4E4EF" };
     }
   };
 
@@ -138,7 +142,9 @@ const DraggableRequest = ({
 
     // Проверка пересечения заявок
     if (isOverlap(updatedRequest)) {
-      console.warn("Изменение размера заявки недопустимо: пересечение с другой заявкой!");
+      console.warn(
+        "Изменение размера заявки недопустимо: пересечение с другой заявкой!"
+      );
       return request;
     }
 
@@ -161,17 +167,19 @@ const DraggableRequest = ({
         `${otherRequest.checkOutDate}T${otherRequest.checkOutTime}`
       );
 
-      const isTimeOverlap =
-        !(
-          otherCheckOut <= new Date(
+      const isTimeOverlap = !(
+        otherCheckOut <=
+          new Date(
             `${updatedRequest.checkInDate}T${updatedRequest.checkInTime}`
           ) ||
-          otherCheckIn >= new Date(
+        otherCheckIn >=
+          new Date(
             `${updatedRequest.checkOutDate}T${updatedRequest.checkOutTime}`
           )
-        );
+      );
 
-      const isPositionConflict = otherRequest.position === updatedRequest.position;
+      const isPositionConflict =
+        otherRequest.position === updatedRequest.position;
 
       return isTimeOverlap && isPositionConflict;
     });
@@ -182,12 +190,12 @@ const DraggableRequest = ({
   const [mouseIsMoving, setMouseIsMoving] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
-  
+
   // Константы для позиционирования тултипа
   const TOOLTIP_WIDTH = 370; // как указано в minWidth стилей
   const TOOLTIP_HEIGHT = 200; // ориентировочная высота тултипа, подберите при необходимости
-  const OFFSET = 10; // отступ от курсора
-  const MARGIN = 5;  // отступ от краёв окна
+  const OFFSET = 30; // отступ от курсора
+  const MARGIN = 5; // отступ от краёв окна
 
   const handleMouseEnter = () => {
     setMouseIsMoving(false);
@@ -213,7 +221,7 @@ const DraggableRequest = ({
       let rawY;
       // Если снизу от курсора места меньше, чем TOOLTIP_HEIGHT + OFFSET, показываем тултип над курсором
       if (window.innerHeight - e.clientY < TOOLTIP_HEIGHT + OFFSET) {
-        rawY = e.clientY - TOOLTIP_HEIGHT - OFFSET;
+        rawY = e.clientY - TOOLTIP_HEIGHT - (OFFSET + 40);
       } else {
         rawY = e.clientY + OFFSET;
       }
@@ -255,7 +263,7 @@ const DraggableRequest = ({
     top: request.room && request.room.id ? `${position * 50 + 2}px` : "auto",
     left: request.room && request.room.id ? `${checkInOffset}px` : "auto",
     width: request.room && request.room.id ? `${duration}px` : "100%",
-    height: "45px",
+    height: request.status === "Ожидает" ? "65px" : "45px",
     backgroundColor: backgroundColor,
     animation:
       requestId &&
@@ -269,8 +277,11 @@ const DraggableRequest = ({
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    color: "white",
-    fontSize: "11px",
+    color:
+      request.status === "Ожидает" && requestId !== request.requestID
+        ? "#1A1A1A"
+        : "#fff",
+    fontSize: "12px",
     zIndex: isDragging ? 10 : 2,
     userSelect: "none",
     overflow: "hidden",
@@ -279,6 +290,8 @@ const DraggableRequest = ({
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : undefined,
   };
+
+  // console.log(request.status);
 
   return (
     <>
@@ -352,23 +365,53 @@ const DraggableRequest = ({
             sx={{
               flex: 1,
               width: "calc(100% - 20px)",
-              height: "35px",
+              height: "100%",
               display: "flex",
               alignItems: "center",
               textAlign: "left",
               justifyContent: "left",
-              cursor: "grab",
+              // cursor: "grab",
               zIndex: 1,
               overflow: "hidden",
               padding: "0 5px",
             }}
           >
+            {request.status === "Ожидает" && (
+              <div
+                style={{
+                  paddingRight: "5px",
+                  display: "flex",
+                  alignItems: "center",
+                  height: "100%",
+                  borderRight: "1px solid #EAEAF3",
+                }}
+              >
+                <img
+                  src="/drag-vertical.svg"
+                  alt=""
+                  style={{
+                    filter:
+                    request.status === "Ожидает" &&
+                    requestId !== request.requestID ? "brightness(0)" : null,
+                    pointerEvents: "none",
+                    // width: "100%",
+                    // height: "100%",
+                    height: "30px",
+                    padding: "4px 0",
+                    cursor: "ew-resize",
+                    opacity: "0.5",
+                  }}
+                />
+              </div>
+            )}
             <div
               style={{
+                padding: "0 12px 0 8px",
+                width: "100%",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "left",
-                gap: "5px",
+                gap: "10px",
               }}
             >
               {request.airline && duration > 35 ? (
@@ -378,8 +421,8 @@ const DraggableRequest = ({
                   }`}
                   alt=""
                   style={{
-                    height: "25px",
-                    width: "25px",
+                    height: request.status === "Ожидает" ? "30px" : "25px",
+                    width: request.status === "Ожидает" ? "30px" : "25px",
                     objectFit: "cover",
                     borderRadius: "50%",
                   }}
@@ -388,16 +431,66 @@ const DraggableRequest = ({
               <div
                 style={{
                   width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "4px",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
                   textOverflow: "ellipsis",
                 }}
               >
-                {request.guest
-                  ? `${String(request.guestPosition)
-                      .split("(")[0]
-                      .trim()} ${request.guest}`
-                  : "Предварительная бронь"}
+                {request.guest ? (
+                  <p
+                    className={
+                      request?.status === "Ожидает" ? classes.text : null
+                    }
+                  >
+                    {request.guest}{" "}
+                    <span>
+                      {String(request.guestPosition).split("(")[0].trim()}
+                    </span>
+                  </p>
+                ) : (
+                  "Предварительная бронь"
+                )}
+                {request.status === "Ожидает" && (
+                  <>
+                    <p
+                      className={classes.text}
+                      style={{
+                        color:
+                          request.status === "Ожидает" &&
+                          requestId !== request.requestID
+                            ? "var(--main-gray)"
+                            : "#fff",
+                        fontSize: "11px",
+                      }}
+                    >
+                      Прибытие{" "}
+                      <span className="blueText">
+                        {convertToDate(request.checkInDate)}{" "}
+                        {request.checkInTime}
+                      </span>
+                    </p>
+                    <p
+                      className={classes.text}
+                      style={{
+                        color:
+                          request.status === "Ожидает" &&
+                          requestId !== request.requestID
+                            ? "var(--main-gray)"
+                            : "#fff",
+                        fontSize: "11px",
+                      }}
+                    >
+                      Отъезд{" "}
+                      <span className="blueText">
+                        {convertToDate(request.checkOutDate)}{" "}
+                        {request.checkOutTime}
+                      </span>
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </Box>
@@ -419,7 +512,7 @@ const DraggableRequest = ({
               alignItems: "center",
               textAlign: "left",
               justifyContent: "left",
-              cursor: "grab",
+              // cursor: "grab",
               zIndex: 1,
               overflow: "hidden",
               padding: "0 5px",
@@ -469,7 +562,7 @@ const DraggableRequest = ({
               alignItems: "center",
               textAlign: "left",
               justifyContent: "left",
-              cursor: "grab",
+              // cursor: "grab",
               zIndex: 1,
               overflow: "hidden",
               padding: "0 5px",
@@ -567,12 +660,14 @@ const DraggableRequest = ({
           )}
       </Box>
 
-      {tooltipVisible && !isDraggingGlobal && mouseIsMoving &&
+      {tooltipVisible &&
+        !isDraggingGlobal &&
+        mouseIsMoving &&
         ReactDOM.createPortal(
           <Box
             sx={{
               position: "fixed",
-              top: `${tooltipPosition.y - 30}px`,
+              top: `${tooltipPosition.y}px`,
               left: `${tooltipPosition.x}px`,
               backgroundColor: "white",
               border: "1px solid #ccc",
@@ -611,7 +706,8 @@ const DraggableRequest = ({
             )}
             <Typography variant="body2">
               <div style={styleToolTip}>
-                Гость: <b>{request.guest ? request.guest : "Предварительная бронь"}</b>
+                Гость:{" "}
+                <b>{request.guest ? request.guest : "Предварительная бронь"}</b>
               </div>
             </Typography>
             {request.guestPosition && (
@@ -628,14 +724,16 @@ const DraggableRequest = ({
             </Typography>
             <Typography variant="body2">
               <div style={styleToolTip}>
-                Заселение: <b>
+                Заселение:{" "}
+                <b>
                   {convertToDate(request.checkInDate)} {request.checkInTime}
                 </b>
               </div>
             </Typography>
             <Typography variant="body2">
               <div style={styleToolTip}>
-                Выселение: <b>
+                Выселение:{" "}
+                <b>
                   {convertToDate(request.checkOutDate)} {request.checkOutTime}
                 </b>
               </div>
@@ -648,7 +746,6 @@ const DraggableRequest = ({
 };
 
 export default DraggableRequest;
-
 
 // import React, { useEffect, useMemo, useRef, useState } from "react";
 // import ReactDOM from 'react-dom'
@@ -668,7 +765,6 @@ export default DraggableRequest;
 //     });
 
 //     // console.log(request);
-    
 
 //     const startDate = startOfMonth(currentMonth);
 //     const checkIn = new Date(`${request.checkInDate}T${request.checkInTime}`);
@@ -684,7 +780,6 @@ export default DraggableRequest;
 //     //   }, [checkIn, checkOut, startDate, dayWidth]);
 
 //     // console.log(duration);
-    
 
 //     const getStatusColors = (status) => {
 //         switch (status) {
@@ -731,7 +826,6 @@ export default DraggableRequest;
 //     `;
 
 //     // console.log(request);
-    
 
 //     const style = {
 //         // position: request.room ? "absolute" : "relative", // Новые заявки позиционируются иначе
@@ -789,7 +883,6 @@ export default DraggableRequest;
 //         const updatedRequest = { ...request };
 
 //         // console.log(updatedRequest);
-        
 
 //         if (type === "start") {
 //             const newCheckIn = new Date(checkIn);
@@ -826,14 +919,11 @@ export default DraggableRequest;
 //     };
 
 //     // console.log(allRequests.map((item) => item.room));
-    
-
 
 //     const isOverlap = (updatedRequest) => {
 //         const roomRequests = allRequests.filter((req) => req.room?.id === updatedRequest.room?.id);
 
 //         // console.log(updatedRequest);
-        
 
 //         // Проверяем пересечения с каждой заявкой в той же комнате
 //         return roomRequests.some((otherRequest) => {
@@ -906,7 +996,6 @@ export default DraggableRequest;
 //             toggleRequestSidebar && toggleRequestSidebar(request.requestID);
 //         }
 //     };
-    
 
 //     let styleToolTip = {
 //         display: 'flex',
@@ -915,7 +1004,6 @@ export default DraggableRequest;
 //     }
 
 //     // console.log(request.guest === "Иванов Иван Иванович" ? request : null);
-    
 
 //     return (
 //         <>
@@ -994,26 +1082,26 @@ export default DraggableRequest;
 //                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
 //                             {request.airline && (duration > 35) ? (
 //                                 <img
-//                                     src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} 
-//                                     alt="" 
-//                                     style={{ 
+//                                     src={`${server}${request.airline ? request.airline.images[0] : 'null'}`}
+//                                     alt=""
+//                                     style={{
 //                                             height: '25px',
-//                                             width: '25px', 
-//                                             objectFit:'cover', 
-//                                             borderRadius: '50%' 
-//                                         }} 
+//                                             width: '25px',
+//                                             objectFit:'cover',
+//                                             borderRadius: '50%'
+//                                         }}
 //                                 />
 //                             ) : null}
 //                             <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
 //                                 {/* { request.guest ? `${request?.guestPosition ? request.guestPosition?.split('(')[0]?.trim() : ''} ${request.guest}` : "Предварительная бронь"} */}
-//                                 { 
-//   request.guest 
-//     ? `${String(request.guestPosition).split('(')[0]?.trim()} ${request.guest}` 
+//                                 {
+//   request.guest
+//     ? `${String(request.guestPosition).split('(')[0]?.trim()} ${request.guest}`
 //     : "Предварительная бронь"
 // }
 
-// {/* {request.guest 
-//     ? `${String(request.guestPosition ? request.guestPosition : " ").split('(')[0]?.trim()} ${request.guest}` 
+// {/* {request.guest
+//     ? `${String(request.guestPosition ? request.guestPosition : " ").split('(')[0]?.trim()} ${request.guest}`
 //     : "Предварительная бронь"
 // } */}
 
@@ -1047,16 +1135,16 @@ export default DraggableRequest;
 //                         >
 //                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
 //                             {request.airline && (duration > 25) ? (
-//                                 <img 
-//                                     src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} 
-//                                     alt="" 
-//                                     style={{ 
-//                                         height: '25px', 
-//                                         width: '25px', 
-//                                         objectFit:'cover', 
-//                                         borderRadius: '50%' 
-//                                     }} 
-//                                 /> 
+//                                 <img
+//                                     src={`${server}${request.airline ? request.airline.images[0] : 'null'}`}
+//                                     alt=""
+//                                     style={{
+//                                         height: '25px',
+//                                         width: '25px',
+//                                         objectFit:'cover',
+//                                         borderRadius: '50%'
+//                                     }}
+//                                 />
 //                             ): null}
 //                                 <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
 //                                     {request.guest}
@@ -1081,15 +1169,15 @@ export default DraggableRequest;
 //                         >
 //                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'left', gap: '5px' }}>
 //                                 {request.airline ? (
-//                                     <img 
-//                                         src={`${server}${request.airline ? request.airline.images[0] : 'null'}`} 
-//                                         alt="" 
-//                                         style={{ 
-//                                             height: '25px', 
-//                                             width: '25px', 
-//                                             objectFit:'cover', 
-//                                             borderRadius: '50%' 
-//                                         }} 
+//                                     <img
+//                                         src={`${server}${request.airline ? request.airline.images[0] : 'null'}`}
+//                                         alt=""
+//                                         style={{
+//                                             height: '25px',
+//                                             width: '25px',
+//                                             objectFit:'cover',
+//                                             borderRadius: '50%'
+//                                         }}
 //                                     />
 //                                 ) : null}
 //                                 <div style={{ width: '100%', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
@@ -1146,7 +1234,7 @@ export default DraggableRequest;
 //             </Box >
 
 //             {tooltipVisible && !isDraggingGlobal && mouseIsMoving && (
-//                 ReactDOM.createPortal( 
+//                 ReactDOM.createPortal(
 //                     <Box
 //                     sx={{
 //                         position: "fixed",
@@ -1211,4 +1299,3 @@ export default DraggableRequest;
 // };
 
 // export default DraggableRequest;
-

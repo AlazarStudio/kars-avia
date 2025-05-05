@@ -60,6 +60,50 @@ input[type="file"] {
     height: auto;
 }
 
+/* 1. Убираем нативный вид */
+input[type="checkbox"] {
+    padding: 0 !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    position: relative;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background-color .15s, border-color .15s;
+}
+
+/* 2. Состояние checked — фон и бордер */
+input[type="checkbox"]:checked {
+    background-color: #B0B0B0;
+    border-color: #B0B0B0;
+}
+
+/* 3. Галочка через ::after */
+input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+/* 4. Показываем галочку, когда checked */
+input[type="checkbox"]:checked::after {
+    opacity: 1;
+}
+
+
 textarea {
     resize: vertical;
     border: 1px solid var(--text-gray);

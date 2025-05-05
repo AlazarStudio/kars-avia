@@ -568,7 +568,7 @@ function HotelAbout_tabComponent({ id }) {
                             }}
                           >
                             <p className={classes.hotelText}>
-                              В галереи нет изображений
+                              В галерее нет изображений
                             </p>
                           </div>
                         </SwiperSlide>
