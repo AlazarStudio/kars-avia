@@ -86,7 +86,6 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   // console.log(dataSubscriptionUpd);
 
   // console.log(airports?.length);
-  
 
   const [warningMessage, setWarningMessage] = useState(""); // Предупреждение при пересечении бронирования
   const [hotelBronsInfo, setHotelBronsInfo] = useState([]); // Информация о бронировании пользователя
@@ -625,7 +624,13 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                         </div>
                       </div>
 
-                      <div style={{ display: "flex", flexDirection: "column" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                        }}
+                      >
                         <MUIAutocompleteColor
                           isDisabled={disableAutocomplete}
                           dropdownWidth="100%"
@@ -735,10 +740,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                             <span
                               key={index}
                               style={{
-                                color:
-                                  index === 0
-                                    ? "black"
-                                    : "gray",
+                                color: index === 0 ? "black" : "gray",
                                 marginRight: "4px",
                               }}
                             >
