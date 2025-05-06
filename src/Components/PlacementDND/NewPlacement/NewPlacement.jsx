@@ -2028,7 +2028,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     return (
         <>
-            <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd}>
+            <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd} autoScroll={{enabled: false}}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: '30px' }}>
                     <Box 
                         sx={{ overflow: 'hidden' }} 
