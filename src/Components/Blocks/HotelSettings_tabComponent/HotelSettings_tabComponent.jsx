@@ -500,7 +500,7 @@ function HotelSettings_tabComponent({ id }) {
                       setDisplayInfo("contacts");
                     }}
                   >
-                    <img src="/СontactsIcon.png" alt="" /> Контакты и адрес
+                    <img src="/contacts_icon.png" alt="" /> Контакты и адрес
                   </button>
                 </>
               )}

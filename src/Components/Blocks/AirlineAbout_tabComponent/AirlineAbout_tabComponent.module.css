@@ -55,8 +55,11 @@
     padding: 10px 20px;
     background-color: transparent;
     border: 1px solid #54587380;
-    outline: none;
     border-radius: 10px;
+    outline: none;
+    display: flex;
+    gap: 10px;
+    align-items: center;
     font-size: 14px;
     color: #545873;
     cursor: pointer;

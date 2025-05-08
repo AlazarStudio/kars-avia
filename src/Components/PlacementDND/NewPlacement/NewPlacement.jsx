@@ -2103,7 +2103,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                 }}
                                             >
                                                 <Tooltip
-                                                    title={`${room.roomType !== "apartment" ? "№" : ""} ${room.id} ${room.descriptionSecond ? room.descriptionSecond : ""} ${!room.active ? '(не работает)' : ''}`}
+                                                    title={`${room.roomType !== "apartment" ? "№" : ""} ${room.id} ${room.roomType !== "apartment" ? room?.roomKind?.name : ""} ${room.descriptionSecond ? room.descriptionSecond : ""} ${!room.active ? '(не работает)' : ''}`}
                                                     arrow
                                                     placement="top"
                                                     enterDelay={1000}
@@ -2146,7 +2146,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                                                 fontSize: '12px',
                                                               }}
                                                             >
-                                                                {room.roomType !== "apartment" ? "№" : ""} {room.id}
+                                                                {room.roomType !== "apartment" ? "№" : ""} {room.id} {room.roomType !== "apartment" ? room?.roomKind?.name : ""}
                                                             </p> 
                                                             <p
                                                             style={

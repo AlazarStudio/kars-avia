@@ -128,7 +128,10 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
   const handleEditClick = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(airline.information?.email)) {
+    if (
+      !emailRegex.test(airline.information?.email) &&
+      airline.information?.email
+    ) {
       alert("Введите корректный email.");
       setIsLoading(false);
       return;
@@ -287,10 +290,16 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   user?.role == roles.dispatcerAdmin) && (
                   <>
                     <div className={classes.airlineAbout_info__filters}>
-                      {/* <Button onClick={toggleLogsSidebar}>История</Button> */}
-                      <button onClick={toggleLogsSidebar}>История</button>
+                      <button onClick={toggleLogsSidebar}>
+                        <img src="/scheduleIcon.png" alt="" />
+                        История
+                      </button>
                     </div>
                     <Button onClick={handleEditClick}>
+                      <img
+                        src={isEditing ? "/save.png" : "/editIcon.png"}
+                        alt=""
+                      />
                       {isEditing ? "Сохранить" : "Редактировать"}
                     </Button>
                   </>
@@ -306,7 +315,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   setDisplayInfo("generalInfo");
                 }}
               >
-                Общая информация
+                <img src="/houseIcon.png" alt="" /> Общая информация
               </button>
               <button
                 className={
@@ -316,7 +325,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   setDisplayInfo("requisites");
                 }}
               >
-                Реквизиты
+                <img src="/requisitesIcon.svg" alt="" /> Реквизиты
               </button>
               <button
                 className={
@@ -326,7 +335,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   setDisplayInfo("contacts");
                 }}
               >
-                Контакты и адрес
+                <img src="/contacts_icon.png" alt="" /> Контакты и адрес
               </button>
             </div>
           </div>
