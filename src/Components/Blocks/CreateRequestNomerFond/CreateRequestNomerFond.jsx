@@ -150,11 +150,13 @@ function CreateRequestNomerFond({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // console.log(selectedRoomKind)
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!formData.nomerName.trim()) {
+    if (!formData.nomerName.trim() || !selectedRoomKind) {
       alert("Пожалуйста, заполните все поля формы перед отправкой.");
       setIsLoading(false);
       return;
@@ -409,7 +411,7 @@ function CreateRequestNomerFond({
                   checked={isMultipleRooms}
                   onChange={(e) => setIsMultipleRooms(e.target.checked)}
                 />
-                Создать несколько комнат
+                Создать несколько номеров
               </label>
               {type === "apartment" ? null : (
                 <>
@@ -545,7 +547,7 @@ function CreateRequestNomerFond({
               {/* Показать поле для ввода количества комнат, если выбран checkbox */}
               {isMultipleRooms && (
                 <>
-                  <label>Количество комнат</label>
+                  <label>Количество номеров</label>
                   <input
                     type="number"
                     name="roomsQuantity"
