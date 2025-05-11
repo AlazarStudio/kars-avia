@@ -52,6 +52,20 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
       closeModal();
     }
   };
+  const normalize_count_form = (number, words_arr) => {
+    number = Math.abs(number);
+    if (Number.isInteger(number)) {
+      let options = [2, 0, 1, 1, 1, 2];
+      return words_arr[
+        number % 100 > 4 && number % 100 < 20
+          ? 2
+          : options[number % 10 < 5 ? number % 10 : 5]
+      ];
+    }
+    return words_arr[1];
+  };
+
+  // console.log(props)
 
   return (
     <>
@@ -79,11 +93,16 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
           <p className="blueText">
             {categoryMap[props.category] || "Неизвестная категория"}
           </p>
-          {props.beds && (
+          {(props.roomsCount && props.roomsCount > 0) ? (
             <p className="blueText">
-              {bedsMap[props.beds] || "Количество кроватей не задано"}
+              {props.roomsCount}{" "}
+              {normalize_count_form(Number(props.roomsCount), [
+                "номер",
+                "номера",
+                "номеров",
+              ])}
             </p>
-          )}
+          ) : ""}
         </div>
 
         {/* Отображаем количество кроватей через карту соответствия */}

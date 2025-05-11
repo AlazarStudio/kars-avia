@@ -1604,6 +1604,7 @@ export const GET_HOTEL = gql`
         price
         description
         images
+        roomsCount
       }
       rooms {
         id
