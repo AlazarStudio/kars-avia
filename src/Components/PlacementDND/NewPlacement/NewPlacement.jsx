@@ -2495,7 +2495,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                         zIndex: 10,
                     }}
                 >
-                    <MUILoader fullHeight={'72vh'} />
+                    <MUILoader fullHeight={user?.role === roles.hotelAdmin ? '80vh' : '72vh'} />
                 </Box>
             )}
         </>
