@@ -156,7 +156,7 @@ function CreateRequestNomerFond({
     e.preventDefault();
     setIsLoading(true);
 
-    if (!formData.nomerName.trim() || !selectedRoomKind) {
+    if (!formData.nomerName.trim() || !selectedRoomKind && type !== "apartment") {
       alert("Пожалуйста, заполните все поля формы перед отправкой.");
       setIsLoading(false);
       return;

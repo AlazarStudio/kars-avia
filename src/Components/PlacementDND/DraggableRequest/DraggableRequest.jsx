@@ -263,7 +263,7 @@ const DraggableRequest = ({
     top: request.room && request.room.id ? `${position * 50 + 2}px` : "auto",
     left: request.room && request.room.id ? `${checkInOffset}px` : "auto",
     width: request.room && request.room.id ? `${duration}px` : "100%",
-    height: request.status === "Ожидает" ? "65px" : "45px",
+    minHeight: request.status === "Ожидает" ? "65px" : "45px",
     backgroundColor: backgroundColor,
     animation:
       requestId &&
