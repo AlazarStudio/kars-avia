@@ -414,7 +414,7 @@ const DraggableRequest = ({
                 gap: "10px",
               }}
             >
-              {request.airline && duration > 35 ? (
+              {request.airline && duration > 35 || request.status === "Ожидает" ? (
                 <img
                   src={`${server}${
                     request.airline ? request.airline.images[0] : "null"
