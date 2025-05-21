@@ -374,14 +374,13 @@ function CreateRequestReport({
                     <label>Должность</label>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
-                      // isDisabled={!isEditing}
                       label={"Выберите должность"}
-                      options={positions.map((position) => position.name)}
-                      value={formData.position}
+                      options={["По всем должностям", ...positions.map((position) => position.name)]}
+                      value={formData.position || "По всем должностям"}
                       onChange={(event, newValue) => {
                         setFormData((prevFormData) => ({
                           ...prevFormData,
-                          position: newValue,
+                          position: newValue === "По всем должностям" ? "" : newValue,
                         }));
                         setIsEdited(true);
                       }}
