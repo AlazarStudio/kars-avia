@@ -647,7 +647,7 @@ function HotelAbout_tabComponent({ id }) {
                           >
                             Адрес
                           </p>
-                          <div className={classes.hotelAbout_info_item}>
+                          <div className={classes.hotelAbout_info_item} style={{textAlign:'center'}}>
                             {hotel.information?.address},{" "}
                             {hotel.information?.city}
                           </div>
