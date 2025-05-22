@@ -2,7 +2,7 @@
     width: 100%;
     background-color: var(--white);
     border-radius: 10px;
-    max-height: calc(100vh - 200px);
+    /* max-height: calc(100vh - 200px); */
     overflow: hidden;
 }
 

@@ -147,7 +147,7 @@
 }
 
 .bottom {
-    max-height: calc(100vh - 296px);
+    /* max-height: calc(100vh - 296px); */
     /* height: fit-content; */
     overflow-x: hidden;
     overflow-y: auto;
