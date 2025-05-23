@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import classes from "./MUIAutocompleteColor.module.css";
 import { Autocomplete, TextField } from "@mui/material";
 
 function MUIAutocompleteColor({
   label,
+  labelOnFocus,
   options,
   value,
   onChange,
@@ -15,6 +16,8 @@ function MUIAutocompleteColor({
   children,
   ...props
 }) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <Autocomplete
       options={options ? options : []}
@@ -58,7 +61,13 @@ function MUIAutocompleteColor({
       renderInput={(params) => (
         <TextField
           {...params}
-          label={label}
+          label={labelOnFocus ? (focused || value ? labelOnFocus : label) : label}
+          onFocus={() => {
+            labelOnFocus ? setFocused(true) : null;
+          }}
+          onBlur={() => {
+            labelOnFocus ? setFocused(false) : null;
+          }}
           variant="outlined"
           sx={{
             "& label": {
@@ -123,7 +132,11 @@ function MUIAutocompleteColor({
                       key={index}
                       style={{
                         color:
-                          index === 0 ? "black" : index === 1 ? "gray" : "green",
+                          index === 0
+                            ? "black"
+                            : index === 1
+                            ? "gray"
+                            : "green",
                         marginRight: "4px",
                       }}
                     >

@@ -374,9 +374,11 @@ function CreateRequestReport({
                     <label>Должность</label>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
-                      label={"Выберите должность"}
-                      options={["По всем должностям", ...positions.map((position) => position.name)]}
-                      value={formData.position || "По всем должностям"}
+                      label={"По всем должностям"}
+                      labelOnFocus={"Выберите должность"}
+                      // options={["По всем должностям", ...positions.map((position) => position.name)]}
+                      options={positions.map((position) => position.name)}
+                      value={formData.position}
                       onChange={(event, newValue) => {
                         setFormData((prevFormData) => ({
                           ...prevFormData,
@@ -388,7 +390,9 @@ function CreateRequestReport({
                     <label>Сотрудник авиакомпании</label>
                     <MUIAutocompleteColor
                       dropdownWidth="100%"
-                      label="Введите сотрудника"
+                      listboxHeight={"300px"}
+                      label={"По всем сотрудникам"}
+                      labelOnFocus={"Введите сотрудника"}
                       // Фильтрация сотрудников по должности
                       options={(selectedAirline?.staff || []).filter((person) =>
                         formData.position
@@ -433,13 +437,7 @@ function CreateRequestReport({
                       value={
                         selectedAirline?.staff.find(
                           (person) => person.id === formData.personId
-                        ) || {
-                          name: "По всем сотрудникам",
-                          position: {
-                            name: "",
-                          },
-                          gender: "",
-                        }
+                        )
                       }
                       onChange={(event, newValue) => {
                         setFormData((prevFormData) => ({

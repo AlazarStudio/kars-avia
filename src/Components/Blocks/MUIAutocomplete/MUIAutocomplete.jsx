@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import classes from "./MUIAutocomplete.module.css";
 import { Autocomplete, TextField } from "@mui/material";
 
 function MUIAutocomplete({
   label,
+  labelOnFocus,
   options,
   value,
   onChange,
@@ -14,6 +15,7 @@ function MUIAutocomplete({
   children,
   ...props
 }) {
+  const [focused, setFocused] = useState(false);
   return (
     <>
       <Autocomplete
@@ -63,7 +65,13 @@ function MUIAutocomplete({
         renderInput={(params) => (
           <TextField
             {...params}
-            label={label}
+            label={labelOnFocus ? (focused || value ? labelOnFocus : label) : label}
+            onFocus={() => {
+              labelOnFocus ? setFocused(true) : null;
+            }}
+            onBlur={() => {
+              labelOnFocus ? setFocused(false) : null;
+            }}
             variant="outlined"
             // slotProps={{
             //   htmlInput: {
@@ -270,4 +278,3 @@ export default MUIAutocomplete;
 // }
 
 // export default MUIAutocomplete;
-
