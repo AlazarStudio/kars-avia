@@ -11,6 +11,9 @@ import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
 
+import 'react-date-range/dist/styles.css';       // основной стиль
+import 'react-date-range/dist/theme/default.css'; // тема по умолчанию
+
 import Main_Page from "./Components/Pages/Main_page/Main_Page";
 import Non_Found_Page from "./Components/Pages/Non_Found_Page";
 import Layout from "./Components/Standart/Layout/Layout";

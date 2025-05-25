@@ -37,6 +37,7 @@ function CreateRequestAirlineTarifCategory({
     priceSixCategory: 0,
     priceSevenCategory: 0,
     priceEightCategory: 0,
+    priceLuxe: 0,
     priceApartment: 0,
     priceStudio: 0,
     breakfast: 0,
@@ -152,6 +153,7 @@ function CreateRequestAirlineTarifCategory({
                   priceSixCategory: parseFloat(formData.priceSixCategory),
                   priceSevenCategory: parseFloat(formData.priceSevenCategory),
                   priceEightCategory: parseFloat(formData.priceEightCategory),
+                  priceLuxe: parseFloat(formData.priceLuxe),
                   priceApartment: parseFloat(formData.priceApartment),
                   priceStudio: parseFloat(formData.priceStudio),
                 },
@@ -378,6 +380,14 @@ function CreateRequestAirlineTarifCategory({
                 type="number"
                 name="priceEightCategory"
                 value={formData.priceEightCategory}
+                onChange={handleChange}
+                placeholder="Введите стоимость"
+              />
+              <label>Стоимость люкса</label>
+              <input
+                type="number"
+                name="priceEightCategory"
+                value={formData.priceLuxe}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
               />

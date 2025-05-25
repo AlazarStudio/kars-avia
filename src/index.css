@@ -130,6 +130,14 @@ textarea {
     background-color: #0063DE;
 }
 
+/* DateRangePicker внутри элемента с классом no-sidebar */
+.no-sidebar .rdrDefinedRangesWrapper {
+  display: none;
+}
+.no-sidebar .rdrCalendarWrapper {
+  grid-template-columns: 1fr auto;
+}
+
 
 
 

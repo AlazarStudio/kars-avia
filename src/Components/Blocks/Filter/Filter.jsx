@@ -10,6 +10,7 @@ import {
 } from "../../../../graphQL_requests";
 import { Autocomplete, TextField } from "@mui/material";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector";
 
 function Filter({
   toggleSidebar,
@@ -26,6 +27,8 @@ function Filter({
   needDate,
   filterLocalData,
   user,
+  initialRange,
+  onRangeChange,
   ...props
 }) {
   const [airlines, setAirlines] = useState([]);
@@ -302,6 +305,14 @@ function Filter({
             }}
           />
 
+          <DateRangeModalSelector
+            width={dropdownWidth}
+            initialRange={initialRange}
+            onChange={(start, end) =>
+              onRangeChange({ startDate: start, endDate: end })
+            }
+          />
+
           {/* <DropDownList
             width={dropdownWidth}
             placeholder="Выберите аэропорт"
@@ -337,8 +348,8 @@ function Filter({
             label={"Статус"}
             options={statusOptions?.map((option) => option.label)}
             value={
-              statusOptions?.find((option) => option.value === filter)?.label ===
-              "Все заявки"
+              statusOptions?.find((option) => option.value === filter)
+                ?.label === "Все заявки"
                 ? ""
                 : statusOptions?.find((option) => option.value === filter)
                     ?.label || ""

@@ -1561,6 +1561,10 @@ export const GET_HOTELS_UPDATE_SUBSCRIPTION = gql`
       images
       stars
       airportDistance
+      roomKind {
+        id
+        name
+      }
     }
   }
 `;
@@ -2041,6 +2045,7 @@ export const GET_AIRLINE_TARIFS = gql`
         prices {
           priceApartment
           priceStudio
+          priceLuxe
           priceOneCategory
           priceTwoCategory
           priceThreeCategory

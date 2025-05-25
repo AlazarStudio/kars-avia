@@ -90,9 +90,9 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
         </div>
         {/* Отображаем категорию через карту соответствия */}
         <div className={classes.roomInfoItem} style={{ fontWeight: "500" }}>
-          <p className="blueText">
+          {/* <p className="blueText">
             {categoryMap[props.category] || "Неизвестная категория"}
-          </p>
+          </p> */}
           {(props.roomsCount && props.roomsCount > 0) ? (
             <p className="blueText">
               {props.roomsCount}{" "}

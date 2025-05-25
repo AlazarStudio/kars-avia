@@ -116,6 +116,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                   ? "Апартаменты"
                   : room.category === "studio"
                   ? "Студия"
+                  : room.category === "luxe"
+                  ? "Люкс"
                   : "",
               origName: room.category,
               rooms: [],

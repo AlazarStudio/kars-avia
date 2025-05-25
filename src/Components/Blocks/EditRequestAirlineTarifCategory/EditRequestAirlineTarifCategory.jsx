@@ -45,6 +45,7 @@ function EditRequestAirlineTarifCategory({
     priceSixCategory: tarif?.prices?.priceSixCategory ?? 0,
     priceSevenCategory: tarif?.prices?.priceSevenCategory ?? 0,
     priceEightCategory: tarif?.prices?.priceEightCategory ?? 0,
+    priceLuxe: tarif?.prices?.priceLuxe ?? 0,
     priceApartment: tarif?.prices?.priceApartment ?? 0,
     priceStudio: tarif?.prices?.priceStudio ?? 0,
     breakfast: tarif?.mealPrice?.breakfast ?? 0,
@@ -93,6 +94,7 @@ function EditRequestAirlineTarifCategory({
       priceSixCategory: tarif?.prices?.priceSixCategory ?? 0,
       priceSevenCategory: tarif?.prices?.priceSevenCategory ?? 0,
       priceEightCategory: tarif?.prices?.priceEightCategory ?? 0,
+      priceLuxe: tarif?.prices?.priceLuxe ?? 0,
       priceApartment: tarif?.prices?.priceApartment ?? 0,
       priceStudio: tarif?.prices?.priceStudio ?? 0,
       breakfast: tarif?.mealPrice?.breakfast ?? 0,
@@ -164,6 +166,7 @@ function EditRequestAirlineTarifCategory({
                     priceSixCategory: parseFloat(formData.priceSixCategory),
                     priceSevenCategory: parseFloat(formData.priceSevenCategory),
                     priceEightCategory: parseFloat(formData.priceEightCategory),
+                    priceLuxe: parseFloat(formData.priceLuxe),
                     priceApartment: parseFloat(formData.priceApartment),
                     priceStudio: parseFloat(formData.priceStudio),
                   },
@@ -382,6 +385,15 @@ function EditRequestAirlineTarifCategory({
                 type="number"
                 name="priceEightCategory"
                 value={formData.priceEightCategory}
+                onChange={handleChange}
+                placeholder="Введите стоимость"
+                disabled={!isEditing}
+              />
+              <label>Стоимость люкса</label>
+              <input
+                type="number"
+                name="priceEightCategory"
+                value={formData.priceLuxe}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
                 disabled={!isEditing}

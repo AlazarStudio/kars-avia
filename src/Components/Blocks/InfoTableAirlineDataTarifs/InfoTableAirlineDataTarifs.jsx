@@ -48,7 +48,15 @@ function InfoTableAirlineDataTarifs({
                     <div className={classes.priceItem}>
                       <span className={classes.priceItemLabel}>Студия</span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceStudio} ₽
+                        {item.prices.priceStudio ?? 0} ₽
+                      </span>
+                    </div>
+                  )}
+                  {item.prices?.priceLuxe !== undefined && (
+                    <div className={classes.priceItem}>
+                      <span className={classes.priceItemLabel}>Люкс</span>
+                      <span className={classes.priceItemValue}>
+                        {item.prices.priceLuxe ?? 0} ₽
                       </span>
                     </div>
                   )}

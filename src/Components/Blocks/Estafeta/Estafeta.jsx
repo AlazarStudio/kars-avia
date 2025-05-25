@@ -24,6 +24,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import { fullNotifyTime, notifyTime, statusMapping } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import Notification from "../../Notification/Notification.jsx";
+import { useDebounce } from "../../../hooks/useDebounce.jsx";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 function Estafeta({ user }) {
@@ -31,8 +32,15 @@ function Estafeta({ user }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
   const [selectedAirline, setSelectedAirline] = useState(null);
   const [selectedAirport, setSelectedAirport] = useState(null);
+
+  const [dateRange, setDateRange] = useState({
+    startDate: null,
+    endDate: null,
+  });
 
   // Инициализация текущей страницы на основе параметров URL или по умолчанию
   const pageNumberRelay = new URLSearchParams(location.search).get("page");
@@ -64,6 +72,11 @@ function Estafeta({ user }) {
         skip: pageInfo.skip,
         take: pageInfo.take,
         status: statusFilter.split(" / "),
+        airlineId: selectedAirline?.id,
+        airportId: selectedAirport?.id,
+        arrival: dateRange.startDate?.toISOString(),
+        departure: dateRange.endDate?.toISOString(),
+        search: debouncedSearch,
       },
     },
   });
@@ -183,7 +196,6 @@ function Estafeta({ user }) {
     filterSelect: "",
     filterDate: "",
   });
-  const [searchQuery, setSearchQuery] = useState("");
 
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
@@ -201,50 +213,105 @@ function Estafeta({ user }) {
 
   const handleChange = (e) =>
     setFilterData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
 
-    if (query.trim() == "") {
-      // Если строка поиска пуста, возвращаемся к стандартному режиму
-      setIsSearching(false);
-      refetch({
-        pagination: { skip: currentPageRelay, take: 50 }, // Загрузить большое количество данных для поиска
-      }); // Запускаем повторный запрос с пагинацией
-      return;
-    }
+  // const handleSearch = async (e) => {
+  //   const query = e.target.value;
+  //   setSearchQuery(query);
 
-    setIsSearching(true); // Активируем режим поиска
+  //   if (query.trim() == "") {
+  //     // Если строка поиска пуста, возвращаемся к стандартному режиму
+  //     setIsSearching(false);
+  //     refetch({
+  //       pagination: { skip: currentPageRelay, take: 50 }, // Загрузить большое количество данных для поиска
+  //     }); // Запускаем повторный запрос с пагинацией
+  //     return;
+  //   }
 
-    try {
-      const { data } = await refetch({
-        pagination: {
-          skip: 0,
-          take: 10000000,
-          status: statusFilter.split(" / "),
-        }, // Загрузить большое количество данных для поиска
-        // filter: { searchQuery: query, status: statusFilter.split(" / ") } // Передаем статус и строку поиска
-      });
+  //   setIsSearching(true); // Активируем режим поиска
 
-      if (data && data.requests?.requests) {
-        setAllFilteredData(data.requests.requests); // Сохраняем все данные для локального поиска
-      }
-    } catch (err) {
-      console.error("Ошибка при поиске:", err);
-    }
+  //   try {
+  //     const { data } = await refetch({
+  //       pagination: {
+  //         skip: 0,
+  //         take: 10000000,
+  //         status: statusFilter.split(" / "),
+  //       }, // Загрузить большое количество данных для поиска
+  //       // filter: { searchQuery: query, status: statusFilter.split(" / ") } // Передаем статус и строку поиска
+  //     });
+
+  //     if (data && data.requests?.requests) {
+  //       setAllFilteredData(data.requests.requests); // Сохраняем все данные для локального поиска
+  //     }
+  //   } catch (err) {
+  //     console.error("Ошибка при поиске:", err);
+  //   }
+  // };
+  // --- Поиск: просто рефетчим с новым searchQuery ---
+
+  // const handleSearch = (e) => {
+  //   const q = e.target.value;
+  //   setSearchQuery(q);
+  //   refetch({
+  //     pagination: {
+  //       skip: 0,
+  //       take: pageInfo.take,
+  //       status: statusFilter.split(" / "),
+  //       airlineId: selectedAirline?.id,
+  //       airportId: selectedAirport?.id,
+  //       arrival: dateRange.startDate?.toISOString(),
+  //       departure: dateRange.endDate?.toISOString(),
+  //       search: q,                     // <-- сюда
+  //     },
+  //   }).catch((err) => console.error("Ошибка при поиске:", err));
+  //   navigate("?page=1");
+  //   setPageInfo((prev) => ({ ...prev, skip: 0 }));
+  // };
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    // никакого refetch — ждем debounce
   };
 
   useEffect(() => {
-    if (!isSearching) {
-      refetch({
-        pagination: {
-          skip: pageInfo.skip,
-          take: pageInfo.take,
-          status: statusFilter.split(" / "),
-        },
-      });
-    }
-  }, [isSearching, refetch, pageInfo, statusFilter]);
+    // сбрасываем на первую страницу
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1");
+
+    refetch({
+      pagination: {
+        skip: 0,
+        take: pageInfo.take,
+        status: statusFilter.split(" / "),
+        airlineId: selectedAirline?.id,
+        airportId: selectedAirport?.id,
+        arrival: dateRange.startDate?.toISOString(),
+        departure: dateRange.endDate?.toISOString(),
+        search: debouncedSearch,
+      },
+    }).catch(console.error);
+  }, [
+    debouncedSearch,
+    statusFilter,
+    selectedAirline,
+    selectedAirport,
+    dateRange,
+  ]);
+
+  // useEffect(() => {
+  //   if (!isSearching) {
+  //     refetch({
+  //       pagination: {
+  //         skip: pageInfo.skip,
+  //         take: pageInfo.take,
+  //         status: statusFilter.split(" / "),
+  //         airlineId: selectedAirline?.id,
+  //         airportId: selectedAirport?.id,
+  //         arrival: dateRange.startDate?.toISOString(),
+  //         departure: dateRange.endDate?.toISOString(),
+  //         search: searchQuery,
+  //       },
+  //     });
+  //   }
+  // }, [isSearching, refetch, pageInfo, statusFilter]);
 
   const handleOpenExistRequest = (matchData) => {
     setExistRequestData(matchData); // Сохраняем данные match
@@ -359,8 +426,8 @@ function Estafeta({ user }) {
       ];
 
       return (
-        matchesAirline &&
-        matchesAirport &&
+        // matchesAirline &&
+        // matchesAirport &&
         matchesSelect &&
         matchesDate &&
         searchFields?.some((field) =>
@@ -431,6 +498,8 @@ function Estafeta({ user }) {
           needDate={true}
           filterLocalData={localStorage.getItem("statusFilter")}
           handleStatusChange={handleStatusChange} // передаем обработчик изменения статуса
+          initialRange={dateRange}
+          onRangeChange={setDateRange}
         />
       </div>
       {loading && <MUILoader />}
