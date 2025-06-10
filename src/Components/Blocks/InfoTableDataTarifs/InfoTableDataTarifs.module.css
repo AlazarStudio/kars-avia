@@ -1,4 +1,5 @@
 .tarifsWrapper {
+    width: 100%;
     padding-right: 10px;
     display: flex;
     flex-direction: column;

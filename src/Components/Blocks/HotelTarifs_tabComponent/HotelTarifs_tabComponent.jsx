@@ -25,7 +25,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { fullNotifyTime, notifyTime } from "../../../roles.js";
 
-function HotelTarifs_tabComponent({ children, id, user, ...props }) {
+function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   const token = getCookie("token");
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
@@ -335,7 +335,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
         </div>
       </div> */}
 
-      {loading && <MUILoader fullHeight={"70vh"} />}
+      {loading && <MUILoader fullHeight={height ? "89vh" : "70vh"} />}
       {error && <p>Error: {error.message}</p>}
 
       {!loading && !error && data && (
@@ -350,6 +350,7 @@ function HotelTarifs_tabComponent({ children, id, user, ...props }) {
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
           user={user}
+          height={height}
         />
       )}
 

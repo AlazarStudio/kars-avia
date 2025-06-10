@@ -31,12 +31,16 @@ function InfoTableDataTarifs({
   openDeleteComponentCategory,
   toggleEditTarifsCategory,
   user,
+  height,
   ...props
 }) {
   // console.log(requests);
 
   return (
-    <div className={classes.tarifsWrapper}>
+    <div
+      className={classes.tarifsWrapper}
+      style={height ? { height: height } : {}}
+    >
       <div className={classes.tarifsHeader}>
         Тарифы - цены
         <Button onClick={toggleTarifsCategory}>Добавить тариф</Button>

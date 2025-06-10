@@ -94,7 +94,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
         {menuOpen ? "Шахматка" : ""}
         {!menuOpen && <span className={classes.tooltip}>Шахматка</span>}
       </Link>
-      {/* <Link
+      <Link
         to={"/hotelTarifs"}
         className={`${classes.menu_items__elem} ${
           id == "hotelTarifs" && classes.menu_items__activeElem
@@ -126,8 +126,9 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             strokeLinejoin="round"
           />
         </svg>
-        Цены
-      </Link> */}
+        {menuOpen ? "Тарифы" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Тарифы</span>}
+      </Link>
       <Link
         to={"/hotelRooms"}
         className={`${classes.menu_items__elem} ${

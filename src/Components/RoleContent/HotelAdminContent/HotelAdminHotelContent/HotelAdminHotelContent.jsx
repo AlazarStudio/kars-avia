@@ -20,12 +20,12 @@ const HotelAdminHotelContent = ({ id, user }) => {
           <HotelShahmatka_tabComponent id={id} />
         </div>
       )}
-      {/* {params.id == 'hotelTarifs' && (
+      {params.id == 'hotelTarifs' && (
 				<div className={classes.tabPanel}>
-					<HotelTarifs_tabComponent id={id} user={user} />
+					<HotelTarifs_tabComponent id={id} user={user} height={"calc(100vh - 130px)"} />
 				</div>
-			)} */}
-      {params.id == "hotelTarifs" && <Non_Found_Page />}
+			)}
+      {/* {params.id == "hotelTarifs" && <Non_Found_Page />} */}
       {params.id == "hotelRooms" && (
         <div className={classes.tabPanel}>
           <HotelNomerFond_tabComponent id={id} />

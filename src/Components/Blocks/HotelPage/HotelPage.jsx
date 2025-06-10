@@ -49,6 +49,8 @@ function HotelPage({ children, id, user, ...props }) {
         return "Пользователи";
       case "hotelAbout":
         return "О гостинице";
+      case "hotelTarifs":
+        return "Тарифы";
       case "hotelSettings":
         return "Настройки гостиницы";
       default:
@@ -65,6 +67,7 @@ function HotelPage({ children, id, user, ...props }) {
           <div className={classes.titleHeader}>
             {(user.role == roles.superAdmin ||
               user.role == roles.airlineAdmin ||
+              // user.role == roles.hotelAdmin ||
               user.role == roles.dispatcerAdmin) && (
               // <Link to={params.requestId ? `/relay` : `/hotels`} className={classes.backButton}>
               //   <img src="/arrow.png" alt="" />

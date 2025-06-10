@@ -7,6 +7,7 @@ function MUILoader({ children, fullHeight, loadSize, ...props }) {
     <>
       <Box
         sx={{
+          // width: "100%",
         //   position: "fixed",
         //   top: 0,
         //   left: 0,
