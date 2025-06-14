@@ -190,8 +190,8 @@ function CreateRequestReport({
 
     const input = {
       filter: {
-        startDate: formData.startDate,
-        endDate: formData.endDate,
+        startDate: `${formData.startDate}T00:10:00`,
+        endDate: `${formData.endDate}T23:50:00`,
         airlineId: formData.airlineId,
         hotelId: formData.hotelId,
         airportId: formData.airportId,
@@ -218,6 +218,9 @@ function CreateRequestReport({
       setIsLoading(false);
     }
   };
+
+  // console.log(`${formData.startDate}T00:10:00`);
+  // console.log(`${formData.endDate}T23:50:00`);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -382,7 +385,8 @@ function CreateRequestReport({
                       onChange={(event, newValue) => {
                         setFormData((prevFormData) => ({
                           ...prevFormData,
-                          position: newValue === "По всем должностям" ? "" : newValue,
+                          position:
+                            newValue === "По всем должностям" ? "" : newValue,
                         }));
                         setIsEdited(true);
                       }}
@@ -434,11 +438,9 @@ function CreateRequestReport({
                           </li>
                         );
                       }}
-                      value={
-                        selectedAirline?.staff.find(
-                          (person) => person.id === formData.personId
-                        )
-                      }
+                      value={selectedAirline?.staff.find(
+                        (person) => person.id === formData.personId
+                      )}
                       onChange={(event, newValue) => {
                         setFormData((prevFormData) => ({
                           ...prevFormData,

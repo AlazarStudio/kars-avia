@@ -95,11 +95,11 @@ function Reports({ children, ...props }) {
     },
     variables: {
       filter: {
-        startDate: "0000-00-00T12:00:00.000Z",
-        endDate: endDate1,
-        airlineId: null,
-        hotelId: null,
-        personId: null,
+        // startDate: "0000-00-00T12:00:00.000Z",
+        // endDate: endDate1,
+        // airlineId: null,
+        // hotelId: null,
+        // personId: null,
       },
     },
   });
