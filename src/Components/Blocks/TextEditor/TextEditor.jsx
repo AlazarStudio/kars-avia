@@ -23,7 +23,7 @@ function TextEditor({ hotel, anotherDescription, isEditing, onChange }) {
   }, [hotel, anotherDescription]);
 
   useEffect(() => {
-    if (isEditing && !description && !anotherDescription) {
+    if (isEditing && !description && !anotherDescription && hotel) {
       setDescription(TEMPLATE_CONTENT);
       onChange(TEMPLATE_CONTENT);
     }

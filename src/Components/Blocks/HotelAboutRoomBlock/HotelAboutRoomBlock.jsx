@@ -93,7 +93,7 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
           {/* <p className="blueText">
             {categoryMap[props.category] || "Неизвестная категория"}
           </p> */}
-          {(props.roomsCount && props.roomsCount > 0) ? (
+          {props.roomsCount && props.roomsCount > 0 ? (
             <p className="blueText">
               {props.roomsCount}{" "}
               {normalize_count_form(Number(props.roomsCount), [
@@ -102,13 +102,19 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
                 "номеров",
               ])}
             </p>
-          ) : ""}
+          ) : (
+            ""
+          )}
         </div>
 
         {/* Отображаем количество кроватей через карту соответствия */}
-        <div className={classes.roomInfoItem} style={{ fontWeight: "400" }}>
+        {/* <div className={classes.roomInfoItem} style={{ fontWeight: "400" }}>
           {props.description}
-        </div>
+        </div> */}
+        <div
+          style={{ padding: "0 15px 0 15px" }}
+          dangerouslySetInnerHTML={{ __html: props.description }}
+        ></div>
         {/* <div className={`${classes.roomInfoItem} ${classes.ri_textarea}`}>
         <p>{props.description ? props.description : "Описания нет"}</p>
       </div> */}
