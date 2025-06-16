@@ -1674,6 +1674,7 @@ export const GET_HOTEL_TARIFS = gql`
         description
         category
         price
+        square
         images
       }
     }
@@ -1798,6 +1799,7 @@ export const UPDATE_HOTEL_TARIF = gql`
         name
         description
         category
+        square
         price
         images
       }

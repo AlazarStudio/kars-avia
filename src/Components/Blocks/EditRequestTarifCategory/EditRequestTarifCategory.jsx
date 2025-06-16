@@ -7,6 +7,7 @@ import { getCookie, UPDATE_HOTEL_TARIF } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import TextEditor from "../TextEditor/TextEditor.jsx";
 
 function EditRequestTarifCategory({
   show,
@@ -101,6 +102,7 @@ function EditRequestTarifCategory({
                   name: formData.name,
                   price: parseFloat(formData.price),
                   description: formData.description,
+                  square: formData.square
                 },
               ],
             },
@@ -251,14 +253,35 @@ function EditRequestTarifCategory({
                 disabled={!isEditing}
               />
 
+              <label>Квадратура</label>
+              <input
+                type="text"
+                name="square"
+                value={formData.square || ""}
+                onChange={handleChange}
+                placeholder="м²"
+                disabled={!isEditing}
+              />
+
               <label>Описание</label>
-              <textarea
+              <TextEditor
+                hotel={null}
+                anotherDescription={formData.description || ""}
+                isEditing={isEditing}
+                onChange={(newDescription) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: newDescription,
+                  }))
+                }
+              />
+              {/* <textarea
                 id="description"
                 name="description"
                 value={formData.description || ""}
                 onChange={handleChange}
                 disabled={!isEditing}
-              ></textarea>
+              ></textarea> */}
 
               <label>Изображения</label>
               <input

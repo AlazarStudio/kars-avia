@@ -12,17 +12,18 @@ const TEMPLATE_CONTENT = `
   <p>Услуги прачечной/стирки: </p>
 `;
 
-function TextEditor({ hotel, isEditing, onChange }) {
+function TextEditor({ hotel, anotherDescription, isEditing, onChange }) {
   const [description, setDescription] = useState(
-    hotel.information?.description || ""
+    hotel ? hotel.information?.description : anotherDescription
   );
+  // console.log(hotel)
 
   useEffect(() => {
-    setDescription(hotel.information?.description || "");
-  }, [hotel]);
+    setDescription(hotel ? hotel.information?.description : anotherDescription);
+  }, [hotel, anotherDescription]);
 
   useEffect(() => {
-    if (isEditing && !description) {
+    if (isEditing && !description && !anotherDescription) {
       setDescription(TEMPLATE_CONTENT);
       onChange(TEMPLATE_CONTENT);
     }
