@@ -631,8 +631,11 @@ function HotelSettings_tabComponent({ id }) {
                     className={classes.hotelAbout_info_input}
                   />
                 </div>
-                <div className={classes.hotelAbout_info_item_info}>
-                  <label>Описание</label>
+                <div
+                  className={classes.hotelAbout_info_item_info}
+                  style={{ color: "black" }}
+                >
+                  <label style={{ color: "#545873" }}>Описание</label>
                   {/* <textarea
                     type="text"
                     name="description"
@@ -842,27 +845,26 @@ function HotelSettings_tabComponent({ id }) {
                   />
                 </div>
               </div>
-            ) 
-            // : displayInfo === "rooms" ? (
-            //   <div
-            //     className={
-            //       user?.role === roles.airlineAdmin
-            //         ? classes.hotelAbout_rooms_block__hotel
-            //         : classes.hotelAbout_rooms_block
-            //     }
-            //   >
-            //     <div
-            //       className={`${classes.rooms_wrapper} ${
-            //         menuOpen && windowWidth <= 1578 ? classes.fb30 : ""
-            //       }`}
-            //     >
-            //       {rooms?.map((room) => (
-            //         <HotelAboutRoomBlock key={room.id} {...room} />
-            //       ))}
-            //     </div>
-            //   </div>
-            // ) 
-            : (
+            ) : (
+              // : displayInfo === "rooms" ? (
+              //   <div
+              //     className={
+              //       user?.role === roles.airlineAdmin
+              //         ? classes.hotelAbout_rooms_block__hotel
+              //         : classes.hotelAbout_rooms_block
+              //     }
+              //   >
+              //     <div
+              //       className={`${classes.rooms_wrapper} ${
+              //         menuOpen && windowWidth <= 1578 ? classes.fb30 : ""
+              //       }`}
+              //     >
+              //       {rooms?.map((room) => (
+              //         <HotelAboutRoomBlock key={room.id} {...room} />
+              //       ))}
+              //     </div>
+              //   </div>
+              // )
               <div
                 className={
                   user?.airlineId

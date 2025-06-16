@@ -436,7 +436,7 @@
     flex-basis: 50%;
     padding: 20px;
     font-size: 16px;
-    color: #545873;
+    /* color: #545873; */
     border: 1px solid #E4E4E4;
     border-radius: 10px;
 }
