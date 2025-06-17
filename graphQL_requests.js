@@ -1609,6 +1609,7 @@ export const GET_HOTEL = gql`
         description
         images
         roomsCount
+        square
       }
       rooms {
         id

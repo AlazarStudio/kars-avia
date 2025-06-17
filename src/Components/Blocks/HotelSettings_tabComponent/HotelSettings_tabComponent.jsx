@@ -572,11 +572,11 @@ function HotelSettings_tabComponent({ id }) {
                     isDisabled={!isEditing}
                     options={airports}
                     getOptionLabel={(option) =>
-                      option ? `${option.code} ${option.name}`.trim() : ""
+                      option ? `${option.code} ${option.name}, город: ${option.city}`.trim() : ""
                     }
                     renderOption={(optionProps, option) => {
                       // Формируем строку для отображения
-                      const labelText = `${option.code} ${option.name}`.trim();
+                      const labelText = `${option.code} ${option.name}, город: ${option.city}`.trim();
                       // Разбиваем строку по пробелам
                       const words = labelText.split(" ");
                       return (

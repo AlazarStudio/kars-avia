@@ -2271,7 +2271,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     }
 
                     {checkRoomsType && !showReserveInfo && !showModalForAddHotelInReserve &&
-                        <Box sx={{ minWidth: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
+                        <Box sx={{ minWidth: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd', borderRadius: '10px' }}>
                             <Typography variant="h6" sx={{ padding:'10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по пассажирам в городе {hotelInfo.information?.city}
                             </Typography>

@@ -63,7 +63,7 @@ function CreateRequestAirlineTarifCategory({
   }, [infoAirports.data]);
 
   const airportOptions = airports.map((airport) => ({
-    label: `${airport.code} ${airport.name} ${airport.city}`,
+    label: `${airport.code} ${airport.name}, город: ${airport.city}`,
     id: airport.id,
     city: airport.city,
     // можно добавить и другие свойства, если понадобится

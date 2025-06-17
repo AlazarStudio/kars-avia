@@ -63,7 +63,7 @@ function InfoTableDataTarifs({
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >
                   <div className={classes.InfoTable_data_elem_title}>
-                    {item.price} ₽
+                    {item.price.toLocaleString()} ₽
                   </div>
                 </div>
               )}
@@ -108,7 +108,7 @@ function InfoTableDataTarifs({
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >
                   <div className={classes.InfoTable_data_elem_title}>
-                    {item.price} ₽
+                    {item.price.toLocaleString()} ₽
                   </div>
                 </div>
               )}

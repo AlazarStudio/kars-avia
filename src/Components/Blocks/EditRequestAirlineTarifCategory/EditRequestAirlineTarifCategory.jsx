@@ -72,7 +72,7 @@ function EditRequestAirlineTarifCategory({
 
   const airportOptions = airports.map((airport) => ({
     value: String(airport.id), // используем value вместо id
-    label: `${airport.code} ${airport.name} ${airport.city}`,
+    label: `${airport.code} ${airport.name}, город: ${airport.city}`,
     city: airport.city,
   }));
 

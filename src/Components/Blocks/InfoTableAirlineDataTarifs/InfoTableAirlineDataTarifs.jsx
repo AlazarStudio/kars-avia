@@ -40,7 +40,7 @@ function InfoTableAirlineDataTarifs({
                         Апартаменты
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceApartment} ₽
+                        {item.prices.priceApartment.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -48,7 +48,7 @@ function InfoTableAirlineDataTarifs({
                     <div className={classes.priceItem}>
                       <span className={classes.priceItemLabel}>Студия</span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceStudio ?? 0} ₽
+                        {item.prices.priceStudio.toLocaleString() ?? 0} ₽
                       </span>
                     </div>
                   )}
@@ -56,7 +56,7 @@ function InfoTableAirlineDataTarifs({
                     <div className={classes.priceItem}>
                       <span className={classes.priceItemLabel}>Люкс</span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceLuxe ?? 0} ₽
+                        {item.prices.priceLuxe.toLocaleString() ?? 0} ₽
                       </span>
                     </div>
                   )}
@@ -66,7 +66,7 @@ function InfoTableAirlineDataTarifs({
                         Одноместный
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceOneCategory} ₽
+                        {item.prices.priceOneCategory.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -76,7 +76,7 @@ function InfoTableAirlineDataTarifs({
                         Двухместный
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceTwoCategory} ₽
+                        {item.prices.priceTwoCategory.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -86,7 +86,7 @@ function InfoTableAirlineDataTarifs({
                         Трехместный
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceThreeCategory} ₽
+                        {item.prices.priceThreeCategory.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -96,7 +96,7 @@ function InfoTableAirlineDataTarifs({
                         Четырехместный
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceFourCategory} ₽
+                        {item.prices.priceFourCategory.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -106,7 +106,7 @@ function InfoTableAirlineDataTarifs({
                         Пятиместный
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceFiveCategory} ₽
+                        {item.prices.priceFiveCategory.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -116,7 +116,7 @@ function InfoTableAirlineDataTarifs({
                         Шестиместный
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceSixCategory} ₽
+                        {item.prices.priceSixCategory.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -126,7 +126,7 @@ function InfoTableAirlineDataTarifs({
                         Семиместный
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceSevenCategory} ₽
+                        {item.prices.priceSevenCategory.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -136,7 +136,7 @@ function InfoTableAirlineDataTarifs({
                         Восьмиместный
                       </span>
                       <span className={classes.priceItemValue}>
-                        {item.prices.priceEightCategory} ₽
+                        {item.prices.priceEightCategory.toLocaleString()} ₽
                       </span>
                     </div>
                   )}
@@ -150,7 +150,7 @@ function InfoTableAirlineDataTarifs({
                   <div className={classes.priceItem}>
                     <span className={classes.priceItemLabel}>Завтрак</span>
                     <span className={classes.priceItemValue}>
-                      {item.mealPrice?.breakfast} ₽
+                      {item.mealPrice?.breakfast.toLocaleString()} ₽
                     </span>
                   </div>
                 )}
@@ -158,7 +158,7 @@ function InfoTableAirlineDataTarifs({
                   <div className={classes.priceItem}>
                     <span className={classes.priceItemLabel}>Обед</span>
                     <span className={classes.priceItemValue}>
-                      {item.mealPrice?.lunch} ₽
+                      {item.mealPrice?.lunch.toLocaleString()} ₽
                     </span>
                   </div>
                 )}
@@ -166,7 +166,7 @@ function InfoTableAirlineDataTarifs({
                   <div className={classes.priceItem}>
                     <span className={classes.priceItemLabel}>Ужин</span>
                     <span className={classes.priceItemValue}>
-                      {item.mealPrice?.dinner} ₽
+                      {item.mealPrice?.dinner.toLocaleString()} ₽
                     </span>
                   </div>
                 )}
