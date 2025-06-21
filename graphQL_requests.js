@@ -63,6 +63,7 @@ export const SINGIN = gql`
   mutation SignIn($input: SignInInput!) {
     signIn(input: $input) {
       token
+      refreshToken
     }
   }
 `;
@@ -71,6 +72,23 @@ export const SINGUP = gql`
   mutation SignUp($input: SignUpInput!) {
     signUp(input: $input) {
       token
+    }
+  }
+`;
+
+export const REFRESH_TOKEN = gql`
+  mutation RefreshToken($refreshToken: String!, $fingerprint: String!) {
+    refreshToken(refreshToken: $refreshToken, fingerprint: $fingerprint) {
+      token
+      refreshToken
+    }
+  }
+`;
+
+export const LOGOUT = gql`
+  mutation Logout {
+    logout {
+      message
     }
   }
 `;
@@ -1574,6 +1592,7 @@ export const GET_HOTEL = gql`
     hotel(id: $hotelId) {
       id
       name
+      access
       capacity
       type
       stars
@@ -1762,6 +1781,20 @@ export const UPDATE_HOTEL = gql`
       }
       images
       gallery
+    }
+  }
+`;
+
+export const REORDER_ROOM_KIND_IMAGES = gql`
+  mutation ReorderRoomKindImages(
+    $reorderRoomKindImagesId: ID!
+    $imagesArray: [String!]
+  ) {
+    reorderRoomKindImages(
+      id: $reorderRoomKindImagesId
+      imagesArray: $imagesArray
+    ) {
+      images
     }
   }
 `;

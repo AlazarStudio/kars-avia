@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   TextField,
@@ -7,6 +7,7 @@ import {
   Container,
   Alert,
 } from "@mui/material";
+import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
 import { SINGIN, SINGUP } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
@@ -14,35 +15,47 @@ import { useNavigate } from "react-router-dom";
 
 function Login() {
   const [signIn] = useMutation(SINGIN);
-  const [signUp] = useMutation(SINGUP);
+  // const [signUp] = useMutation(SINGUP);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [fpHash, setFpHash] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
-  const handleSubmitSignUp = async (e) => {
-    e.preventDefault();
+  useEffect(() => {
+    const setFp = async () => {
+      const fp = await FingerprintJS.load();
+      const { visitorId } = await fp.get();
+      setFpHash(visitorId);
+      // console.log(visitorId);
+    };
 
-    try {
-      let response_signIn = await signUp({
-        variables: {
-          input: {
-            login: "admin",
-            password: "admin",
-            name: "admin",
-            email: "admin",
-          },
-        },
-      });
+    setFp();
+  }, []);
 
-      alert("Success");
-      navigate("/");
-      window.location.reload();
-    } catch (err) {
-      setError("Ошибка авторизации. Проверьте логин или пароль.");
-    }
-  };
+  // const handleSubmitSignUp = async (e) => {
+  //   e.preventDefault();
+
+  //   try {
+  //     let response_signIn = await signUp({
+  //       variables: {
+  //         input: {
+  //           login: "admin",
+  //           password: "admin",
+  //           name: "admin",
+  //           email: "admin",
+  //         },
+  //       },
+  //     });
+
+  //     alert("Success");
+  //     navigate("/");
+  //     window.location.reload();
+  //   } catch (err) {
+  //     setError("Ошибка авторизации. Проверьте логин или пароль.");
+  //   }
+  // };
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -55,14 +68,22 @@ function Login() {
           input: {
             login: username,
             password: password,
+            fingerprint: fpHash,
           },
         },
       });
 
+      // console.log(response_signIn);
+      
+
       let token = response_signIn && response_signIn.data.signIn.token;
+      let refreshToken = response_signIn && response_signIn.data.signIn.refreshToken;
+      // console.log(refreshToken);
+      
 
       // document.cookie = `token=${token}; HttpOnly; Secure; SameSite=Lax; Max-Age=3600`; // когда будет https и заливать куки из сервака
       document.cookie = `token=${token}; SameSite=Lax; Max-Age=86400`;
+      document.cookie = `refreshToken=${refreshToken}; SameSite=Lax; Max-Age=${30 * 24 * 3600}`;
 
       navigate("/");
       window.location.reload();

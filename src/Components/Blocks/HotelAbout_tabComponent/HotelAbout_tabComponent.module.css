@@ -383,10 +383,12 @@
 
 .hotelText {
     font-family: Nunito Sans;
+    width: 100%;
     font-size: 16px;
     font-weight: 400;
     line-height: 20px;
     color: #545873;
+    text-align: center;
 }
 
 .hotelText span {
@@ -548,7 +550,7 @@
 
 @media (max-width: 1499px) {}
 
-@media (min-width: 0px) and (max-width: 1399px) {
+@media (min-width: 0px) and (max-width: 1499px) {
     .hotelAbout_info_item {
         font-size: 14px;
     }

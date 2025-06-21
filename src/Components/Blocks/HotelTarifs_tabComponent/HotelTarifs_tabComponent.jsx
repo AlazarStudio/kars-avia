@@ -27,6 +27,8 @@ import { fullNotifyTime, notifyTime } from "../../../roles.js";
 
 function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   const token = getCookie("token");
+  // console.log(id);
+  
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
     variables: { hotelId: id },
@@ -102,9 +104,9 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   useEffect(() => {
     if (mealPriceData) {
       setMealPrices({
-        breakfast: mealPriceData.hotel.mealPrice?.breakfast,
-        lunch: mealPriceData.hotel.mealPrice?.lunch,
-        dinner: mealPriceData.hotel.mealPrice?.dinner,
+        breakfast: mealPriceData.hotel?.mealPrice?.breakfast,
+        lunch: mealPriceData.hotel?.mealPrice?.lunch,
+        dinner: mealPriceData.hotel?.mealPrice?.dinner,
       });
     }
   }, [mealPriceData]);
@@ -219,13 +221,16 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   };
 
   const deleteTarif = async (index, tarifID) => {
-    // console.log(index, tarifID);
+    console.log(index, tarifID);
     
     let response_update_tarif = await deleteHotelTarif({
       variables: {
         deleteRoomKindId: tarifID,
       },
     });
+
+    console.log(response_update_tarif);
+    
 
     if (response_update_tarif) {
       setAddTarif(addTarif.filter((_, i) => i !== index));
@@ -298,7 +303,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     setShowEditMealPrices(!showEditMealPrices);
   };
 
-  const filteredRequestsTarif = addTarif.filter((request) => {
+  const filteredRequestsTarif = addTarif?.filter((request) => {
     return (
       request.name?.toLowerCase().includes(searchTarif.toLowerCase()) ||
       String(request.price).toLowerCase().includes(searchTarif.toLowerCase())

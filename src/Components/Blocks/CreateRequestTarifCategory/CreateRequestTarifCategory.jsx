@@ -28,6 +28,7 @@ function CreateRequestTarifCategory({
     square: "",
     images: null,
   });
+  const [coverImage, setCoverImage] = useState(null);
 
   const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
     context: {
@@ -50,6 +51,7 @@ function CreateRequestTarifCategory({
       square: "",
       images: null,
     });
+    setCoverImage(null);
   };
 
   const closeButton = () => {
@@ -69,7 +71,26 @@ function CreateRequestTarifCategory({
       [name]: value,
     }));
   };
+  const handleCoverImageChange = (image) => {
+    setCoverImage(image);
+  };
 
+  // const handleFileChange = (e) => {
+  //   const files = e.target.files;
+  //   if (files.length > 8) {
+  //     alert("Вы можете загрузить не более 8 изображений.");
+  //     e.target.value = null;
+  //     return;
+  //   }
+
+  //   // Преобразуем файлы в массив
+  //   const fileArray = Array.from(files);
+
+  //   setFormData((prevState) => ({
+  //     ...prevState,
+  //     images: fileArray, // Сохраняем массив файлов
+  //   }));
+  // };
   const handleFileChange = (e) => {
     const files = e.target.files;
     if (files.length > 8) {
@@ -78,14 +99,19 @@ function CreateRequestTarifCategory({
       return;
     }
 
-    // Преобразуем файлы в массив
     const fileArray = Array.from(files);
+
+    // Если есть выбранное изображение, ставим его первым в массиве
+    const updatedImages = coverImage ? [coverImage, ...fileArray] : fileArray;
 
     setFormData((prevState) => ({
       ...prevState,
-      images: fileArray, // Сохраняем массив файлов
+      images: updatedImages,
     }));
   };
+  const imagesArray = coverImage
+    ? [coverImage, ...formData.images?.filter((img) => img !== coverImage)]
+    : formData.images;
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -108,7 +134,7 @@ function CreateRequestTarifCategory({
               },
             ],
           },
-          roomKindImages: formData.images,
+          roomKindImages: imagesArray,
         },
       });
       resetForm();
@@ -139,7 +165,7 @@ function CreateRequestTarifCategory({
   }, [show]);
 
   useEffect(() => {
-    const names = addTarif.map((tarif) => ({
+    const names = addTarif?.map((tarif) => ({
       id: tarif.id,
       name: tarif.name,
     }));
@@ -288,6 +314,22 @@ function CreateRequestTarifCategory({
                 onChange={handleFileChange}
                 multiple
               />
+              <div className={classes.imageList}>
+                {formData?.images?.map((image, index) => (
+                  <div
+                    key={`${image.name}-${index}`} // Используйте `image.name` для уникальности ключа
+                    className={`${classes.imageItem} ${
+                      coverImage === image ? classes.selected : ""
+                    }`}
+                    onClick={() => handleCoverImageChange(image)}
+                  >
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`Image ${index + 1}`}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
           <div className={classes.requestButton}>

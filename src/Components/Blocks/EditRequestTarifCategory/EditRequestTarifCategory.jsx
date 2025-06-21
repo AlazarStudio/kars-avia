@@ -3,7 +3,12 @@ import classes from "./EditRequestTarifCategory.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { getCookie, UPDATE_HOTEL_TARIF } from "../../../../graphQL_requests.js";
+import {
+  getCookie,
+  REORDER_ROOM_KIND_IMAGES,
+  server,
+  UPDATE_HOTEL_TARIF,
+} from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
@@ -27,6 +32,8 @@ function EditRequestTarifCategory({
     images: null,
   });
 
+  const [coverImage, setCoverImage] = useState(tarif && tarif?.images[0]);
+
   // console.log(tarif);
 
   const sidebarRef = useRef();
@@ -43,6 +50,7 @@ function EditRequestTarifCategory({
   useEffect(() => {
     if (show && tarif) {
       setFormData({ ...tarif, images: null });
+      setCoverImage(tarif?.images[0])
     }
   }, [show, tarif]);
 
@@ -54,6 +62,7 @@ function EditRequestTarifCategory({
     let success = confirm("Вы уверены, все несохраненные данные будут удалены");
     if (success) {
       onClose();
+      setCoverImage(tarif && tarif?.images[0]);
       setIsEditing(false);
     }
   };
@@ -83,6 +92,41 @@ function EditRequestTarifCategory({
     }));
   };
 
+  const handleCoverImageChange = (image) => {
+    if (isEditing) {
+      setCoverImage(image);
+    }
+    // setIsEditing(!isEditing);
+  };
+
+  const [reorderRoomKindImages] = useMutation(REORDER_ROOM_KIND_IMAGES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
+
+  const imagesArray = coverImage
+    ? [coverImage, ...tarif?.images.filter((img) => img !== coverImage)]
+    : tarif?.images;
+
+  const handleReorderImages = async () => {
+    try {
+      await reorderRoomKindImages({
+        variables: {
+          reorderRoomKindImagesId: formData.id,
+          imagesArray: imagesArray,
+        },
+      });
+      // addNotification("Обложка обновлена успешно.", "success");
+    } catch (error) {
+      console.error("Ошибка при обновлении обложки:", error);
+      // addNotification("Не удалось обновить обложку.", "error");
+    }
+  };
+
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -102,20 +146,23 @@ function EditRequestTarifCategory({
                   name: formData.name,
                   price: parseFloat(formData.price),
                   description: formData.description,
-                  square: formData.square
+                  square: formData.square,
                 },
               ],
             },
             roomKindImages: formData.images,
           },
         });
+        await handleReorderImages();
         onClose();
         setIsLoading(false);
+        setCoverImage(null);
         addNotification("Редактирование тарифа прошло успешно.", "success");
       } catch (error) {
         setIsLoading(false);
         console.error("Произошла ошибка при выполнении запроса:", error);
         alert("Произошло ошибка при редактировании тарифа.");
+        setCoverImage(null);
       }
     }
     setIsEditing(!isEditing);
@@ -124,7 +171,7 @@ function EditRequestTarifCategory({
   const [tarifNames, setTarifNames] = useState([]);
 
   useEffect(() => {
-    const names = addTarif.map((tarif) => tarif.name);
+    const names = addTarif?.map((tarif) => tarif.name);
     setTarifNames(names);
   }, [addTarif]);
 
@@ -291,6 +338,20 @@ function EditRequestTarifCategory({
                 disabled={!isEditing}
                 multiple
               />
+
+              <div className={classes.imageList}>
+                {tarif?.images?.map((image, index) => (
+                  <div
+                    key={`${image}-${index}`}
+                    className={`${classes.imageItem} ${
+                      coverImage === image ? classes.selected : ""
+                    } ${!isEditing && classes.disImage}`}
+                    onClick={() => handleCoverImageChange(image)}
+                  >
+                    <img src={`${server}${image}`} alt={`Image ${index + 1}`} />
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 

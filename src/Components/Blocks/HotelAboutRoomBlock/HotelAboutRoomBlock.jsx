@@ -7,6 +7,7 @@ import "swiper/css";
 import "swiper/css/pagination";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
+import TextEditorOutput from "../TextEditorOutput/TextEditorOutput";
 
 // … ваши карты categoryMap, bedsMap, normalize_count_form …
 // Карты соответствия для категорий и количества кроватей
@@ -170,10 +171,10 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
               <span className={classes.price}>
                 {props.price.toLocaleString()} ₽
               </span>
-              <div
-                style={{ overflowY: "auto" }}
+              {/* <div
                 dangerouslySetInnerHTML={{ __html: props.description }}
-              />
+              /> */}
+              <TextEditorOutput description={props.description}/>
             </div>
           </div>
         </Box>

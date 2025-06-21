@@ -7,6 +7,7 @@ import {
   GET_DISPATCHER,
   GET_DISPATCHERS_SUBSCRIPTION,
   getCookie,
+  LOGOUT,
   NOTIFICATIONS_SUBSCRIPTION,
   server,
 } from "../../../../graphQL_requests";
@@ -107,6 +108,8 @@ function Header({ children }) {
     skip: !userID,
   });
 
+  const [logoutMutation] = useMutation(LOGOUT);
+
   const { data: dataSubscription } = useSubscription(
     GET_DISPATCHERS_SUBSCRIPTION,
     {
@@ -122,10 +125,19 @@ function Header({ children }) {
     }
   }, [data]);
 
-  const logout = () => {
+  const logout = async () => {
     let result = confirm("Вы уверены что хотите выйти?");
-    if (result) {
+    const { data } = await logoutMutation({
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    });
+
+    if (result && data) {
       document.cookie = "token=; Max-Age=0; Path=/;";
+      document.cookie = "refreshToken=; Max-Age=0; Path=/;";
       localStorage.removeItem("isAirline");
       navigate("/");
       window.location.reload();
@@ -268,7 +280,9 @@ function Header({ children }) {
             onClick={toggleNotifications}
             ref={notificationsRef}
           >
-            {notifySubscriptionData ? <div className={classes.section_top_elems_notify_red}></div> : null}
+            {notifySubscriptionData ? (
+              <div className={classes.section_top_elems_notify_red}></div>
+            ) : null}
             <img src="/notify.png" alt="Уведомления" />
           </div>
 

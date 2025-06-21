@@ -16,6 +16,7 @@ import AirlineAdminHotelContent from "../../RoleContent/AirlineAdminContent/Airl
 
 function HotelPage({ children, id, user, ...props }) {
   const params = useParams();
+  
 
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -37,24 +38,25 @@ function HotelPage({ children, id, user, ...props }) {
 
   // Функция для определения заголовка
   const getTitle = () => {
-    if (data && user.role !== roles.hotelAdmin) {
-      return data.hotel.name;
-    }
-    switch (params.id) {
-      case "hotelChess":
-        return "Шахматка";
-      case "hotelRooms":
-        return "Номерной фонд";
-      case "hotelCompany":
-        return "Пользователи";
-      case "hotelAbout":
-        return "О гостинице";
-      case "hotelTarifs":
-        return "Тарифы";
-      case "hotelSettings":
-        return "Настройки гостиницы";
-      default:
-        return "";
+    if (user.role === roles.hotelAdmin) {
+      switch (params.id) {
+        case "hotelChess":
+          return "Шахматка";
+        case "hotelRooms":
+          return "Номерной фонд";
+        case "hotelCompany":
+          return "Пользователи";
+        case "hotelAbout":
+          return "О гостинице";
+        case "hotelTarifs":
+          return "Тарифы";
+        case "hotelSettings":
+          return "Настройки гостиницы";
+        default:
+          return "Шахматка";
+      }
+    } else {
+      return data?.hotel?.name;
     }
   };
 

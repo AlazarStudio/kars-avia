@@ -55,14 +55,14 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
   const [newReserves, setNewReserves] = useState([]);
   const [newRequests, setNewRequests] = useState([]);
 
-  const handleClick = () => {
-    let result = confirm("Вы уверены что хотите выйти?");
-    if (result) {
-      document.cookie = "token=; Max-Age=0; Path=/;";
-      navigate("/");
-      window.location.reload();
-    }
-  };
+  // const handleClick = () => {
+  //   let result = confirm("Вы уверены что хотите выйти?");
+  //   if (result) {
+  //     document.cookie = "token=; Max-Age=0; Path=/;";
+  //     navigate("/");
+  //     window.location.reload();
+  //   }
+  // };
 
   const [hotelCity, setHotelCity] = useState();
 

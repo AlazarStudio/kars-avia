@@ -47,7 +47,7 @@ function InfoTableDataTarifs({
       </div>
       <InfoTable isScroll={true}>
         <div className={classes.bottom}>
-          {requests.map((item, index) => (
+          {requests?.map((item, index) => (
             <div className={classes.InfoTable_data} key={index}>
               <div className={`${classes.InfoTable_data_elem} ${classes.w45}`}>
                 <div className={classes.InfoTable_data_elem_title}>
@@ -108,7 +108,7 @@ function InfoTableDataTarifs({
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >
                   <div className={classes.InfoTable_data_elem_title}>
-                    {item.price.toLocaleString()} ₽
+                    {item.price?.toLocaleString()} ₽
                   </div>
                 </div>
               )}

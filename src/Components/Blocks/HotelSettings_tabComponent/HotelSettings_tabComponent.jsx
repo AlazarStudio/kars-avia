@@ -24,6 +24,10 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
+import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
+import { FormControlLabel, Switch } from "@mui/material";
+import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 
 function HotelSettings_tabComponent({ id }) {
   const [userRole, setUserRole] = useState();
@@ -34,41 +38,9 @@ function HotelSettings_tabComponent({ id }) {
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(() => {
-    return JSON.parse(localStorage.getItem("menuOpen")) ?? true;
-  });
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  useEffect(() => {
-    const updateState = () => {
-      setMenuOpen(JSON.parse(localStorage.getItem("menuOpen")));
-    };
-
-    // Отслеживание изменений localStorage в других вкладках
-    window.addEventListener("storage", updateState);
-
-    // Перехват изменений в текущей вкладке
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function (key, value) {
-      originalSetItem.apply(this, arguments);
-      if (key === "menuOpen") {
-        updateState(); // Обновляем состояние
-      }
-    };
-
-    return () => {
-      window.removeEventListener("storage", updateState);
-      localStorage.setItem = originalSetItem; // Возвращаем исходный метод
-    };
-  }, []);
-  // console.log(menuOpen);
-
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  const [menuOpen] = useLocalStorage("menuOpen", true);
+  const { width } = useWindowSize();
 
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
@@ -164,6 +136,7 @@ function HotelSettings_tabComponent({ id }) {
             updateHotelId: hotel.id,
             input: {
               name: hotel.name,
+              access: hotel.access,
               capacity: parseInt(hotel.capacity),
               stars: hotel.stars,
               usStars: hotel.usStars,
@@ -354,7 +327,7 @@ function HotelSettings_tabComponent({ id }) {
   //   );
   // };
 
-  const rooms = hotel?.type !== "apartment" ? hotel?.roomKind : hotel?.rooms;
+  // const rooms = hotel?.type !== "apartment" ? hotel?.roomKind : hotel?.rooms;
 
   return (
     <>
@@ -572,11 +545,14 @@ function HotelSettings_tabComponent({ id }) {
                     isDisabled={!isEditing}
                     options={airports}
                     getOptionLabel={(option) =>
-                      option ? `${option.code} ${option.name}, город: ${option.city}`.trim() : ""
+                      option
+                        ? `${option.code} ${option.name}, город: ${option.city}`.trim()
+                        : ""
                     }
                     renderOption={(optionProps, option) => {
                       // Формируем строку для отображения
-                      const labelText = `${option.code} ${option.name}, город: ${option.city}`.trim();
+                      const labelText =
+                        `${option.code} ${option.name}, город: ${option.city}`.trim();
                       // Разбиваем строку по пробелам
                       const words = labelText.split(" ");
                       return (
@@ -612,9 +588,9 @@ function HotelSettings_tabComponent({ id }) {
                   <label
                     className={classes.airportDistance}
                     style={
-                      menuOpen && windowWidth <= 1707
+                      menuOpen && width <= 1707
                         ? { width: "18%" }
-                        : !menuOpen && windowWidth <= 1690
+                        : !menuOpen && width <= 1690
                         ? { width: "20%" }
                         : {}
                     }
@@ -686,15 +662,29 @@ function HotelSettings_tabComponent({ id }) {
 
                     {user.role === roles.superAdmin ||
                     user.role === roles.dispatcerAdmin ? (
-                      <div className={classes.hotelAbout_info_item}>
-                        <div
-                          className={classes.deleteHotel}
-                          onClick={openDeleteComponent}
-                        >
-                          Удалить гостиницу
-                          <img src="/delete.png" alt="" />
+                      <>
+                        {/* <MUISwitch
+                          label="Возможность размещать"
+                          checked={hotel.access}
+                          onChange={(e) => {
+                            setHotel((prevHotel) => ({
+                              ...prevHotel,
+                              access: e.target.checked,
+                            }));
+                          }}
+                          disabled={!isEditing}
+                        /> */}
+
+                        <div className={classes.hotelAbout_info_item}>
+                          <div
+                            className={classes.deleteHotel}
+                            onClick={openDeleteComponent}
+                          >
+                            Удалить гостиницу
+                            <img src="/delete.png" alt="" />
+                          </div>
                         </div>
-                      </div>
+                      </>
                     ) : null}
 
                     {showDelete && (
@@ -856,7 +846,7 @@ function HotelSettings_tabComponent({ id }) {
               //   >
               //     <div
               //       className={`${classes.rooms_wrapper} ${
-              //         menuOpen && windowWidth <= 1578 ? classes.fb30 : ""
+              //         menuOpen && width <= 1578 ? classes.fb30 : ""
               //       }`}
               //     >
               //       {rooms?.map((room) => (
@@ -872,9 +862,7 @@ function HotelSettings_tabComponent({ id }) {
                     : classes.hotelAbout_info__contacts
                 }
                 style={
-                  menuOpen && windowWidth <= 1650
-                    ? { flexDirection: "column" }
-                    : {}
+                  menuOpen && width <= 1650 ? { flexDirection: "column" } : {}
                 }
               >
                 <div
@@ -1088,7 +1076,7 @@ export default HotelSettings_tabComponent;
 //   const [menuOpen, setMenuOpen] = useState(() => {
 //     return JSON.parse(localStorage.getItem("menuOpen")) ?? true;
 //   });
-//   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+//   const [width, setWindowWidth] = useState(window.innerWidth);
 
 //   useEffect(() => {
 //     const updateState = () => {
@@ -1600,9 +1588,9 @@ export default HotelSettings_tabComponent;
 //                       <label
 //                         className={classes.airportDistance}
 //                         style={
-//                           menuOpen && windowWidth <= 1707
+//                           menuOpen && width <= 1707
 //                             ? { width: "18%" }
-//                             : !menuOpen && windowWidth <= 1690
+//                             : !menuOpen && width <= 1690
 //                             ? { width: "20%" }
 //                             : {}
 //                         }
@@ -1837,7 +1825,7 @@ export default HotelSettings_tabComponent;
 //               >
 //                 <div
 //                   className={`${classes.rooms_wrapper} ${
-//                     menuOpen && windowWidth <= 1578 ? classes.fb30 : ""
+//                     menuOpen && width <= 1578 ? classes.fb30 : ""
 //                   }`}
 //                 >
 //                   {hotel.rooms?.map((room) => (
@@ -1853,7 +1841,7 @@ export default HotelSettings_tabComponent;
 //                     : classes.hotelAbout_info__contacts
 //                 }
 //                 style={
-//                   menuOpen && windowWidth <= 1650
+//                   menuOpen && width <= 1650
 //                     ? { flexDirection: "column" }
 //                     : {}
 //                 }

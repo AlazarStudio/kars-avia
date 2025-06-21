@@ -78,7 +78,8 @@
 
 .modalContainer {
   width: 1100px;
-  max-height: 400px;
+  max-height: 500px;
+  min-height: 500px;
   border-radius: 8px;
   display: flex;
   overflow: hidden;
@@ -111,16 +112,16 @@
 
 .modalImage {
   width: 100%;
-  min-height: 400px;
-  max-height: 400px;
+  min-height: 500px;
+  max-height: 500px;
   object-fit: contain;
   position: relative;
 }
 
 .modalImageAbs {
   width: 100%;
-  min-height: 400px;
-  max-height: 400px;
+  min-height: 500px;
+  max-height: 500px;
   object-fit: cover;
   position: absolute;
   top: 0;

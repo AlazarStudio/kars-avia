@@ -22,6 +22,7 @@ import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import ExistRequest from "../../Blocks/ExistRequest/ExistRequest";
 import { VariableSizeList } from "react-window";
 import EditRequestNomerFond from "../../Blocks/EditRequestNomerFond/EditRequestNomerFond";
+import { useWindowSize } from "../../../hooks/useWindowSize";
 
 const DAY_WIDTH = 40;
 const LEFT_WIDTH = 220;
@@ -2026,6 +2027,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     //   }
     // }, [heightContainerRef, filteredRequests, window.innerWidth]);
 
+      const { height } = useWindowSize();
+
+    //   console.log(height);
+      
+
     return (
         <>
             <DndContext onDragStart={(e) => handleDragStart(e)} onDragEnd={handleDragEnd} autoScroll={{enabled: false}}>
@@ -2042,9 +2048,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 maxHeight: user.role == 'HOTELADMIN' ? '76vh' : '67vh', 
                                 overflow: 'hidden', 
                                 width: '100%', 
-                                // borderBottom: '1px solid #ddd', 
+                                // borderBottom: '1px solid #ddd',
                                 // borderTop: '1px solid #ddd',
-                                // borderRight: '1px solid #ddd' 
+                                // borderRight: '1px solid #ddd'
                             }}
                         >
                             <Timeline
@@ -2067,13 +2073,17 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 itemKey={itemKey}
                                 width="100%"
                                 // height={listHeight}
-                                height={(user.role === 'HOTELADMIN' && window.innerHeight > 880) 
+                                height={(user.role === 'HOTELADMIN' && height > 880) 
                                     ? 600 : 
-                                    (user.role === 'HOTELADMIN' && window.innerHeight < 880) 
+                                    (user.role === 'HOTELADMIN' && height < 830)
+                                    ? 410 :
+                                    (user.role === 'HOTELADMIN' && height < 880) 
                                     ? 520 : 
-                                    (user.role !== 'HOTELADMIN' && window.innerHeight > 880)
-                                    ? 520
-                                    : 450} // или другое подходящее значение
+                                    (user.role !== 'HOTELADMIN' && height < 830)
+                                    ? 380 :
+                                    (user.role !== 'HOTELADMIN' && height < 900)
+                                    ? 450
+                                    : 520} // или другое подходящее значение
                                 overscanCount={5}
                                 style={{ overflowY: 'scroll', overflowX:'hidden' }}
                             >
@@ -2495,7 +2505,14 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                         zIndex: 10,
                     }}
                 >
-                    <MUILoader fullHeight={user?.role === roles.hotelAdmin ? '80vh' : '72vh'} />
+                    <MUILoader 
+                    fullHeight={user?.role === roles.hotelAdmin && height > 800 
+                    ? '80vh' 
+                    : user?.role === roles.hotelAdmin && height < 800 
+                    ? '75vh' 
+                    : user?.role !== roles.hotelAdmin && height > 870 
+                    ? '71vh' 
+                    : '67vh'} />
                 </Box>
             )}
         </>

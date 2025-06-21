@@ -27,6 +27,7 @@ import { useAuth } from "./AuthContext";
 import Login from "./Components/Pages/Login/Login";
 import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
+import { TokenRefresher } from "./TokenRefresher";
 
 function App() {
   const { user } = useAuth();
@@ -75,6 +76,7 @@ function App() {
 
   return (
     <ApolloProvider client={client}>
+      <TokenRefresher />
       <Routes>
         {user ? (
           <Route path="/" element={<Layout />}>
