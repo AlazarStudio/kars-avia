@@ -31,10 +31,11 @@ export function TokenRefresher() {
 
     // =========================
 
-    console.log("TokenRefresher запланирует refresh через (ms):", delay);
+
+    // console.log("TokenRefresher запланирует refresh через (ms):", delay);
 
     timerRef.current = setTimeout(async () => {
-      console.log("⏰ Выполняем REFRESH_TOKEN");
+      // console.log("⏰ Выполняем REFRESH_TOKEN");
       try {
         // Берём свежий fingerprint
         const fpObj = await FingerprintJS.load();

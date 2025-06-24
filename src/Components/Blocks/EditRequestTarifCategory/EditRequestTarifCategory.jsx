@@ -33,6 +33,7 @@ function EditRequestTarifCategory({
   });
 
   const [coverImage, setCoverImage] = useState(tarif && tarif?.images[0]);
+  const [coverImage2, setCoverImage2] = useState(null);
 
   // console.log(tarif);
 
@@ -50,7 +51,7 @@ function EditRequestTarifCategory({
   useEffect(() => {
     if (show && tarif) {
       setFormData({ ...tarif, images: null });
-      setCoverImage(tarif?.images[0])
+      setCoverImage(tarif?.images[0]);
     }
   }, [show, tarif]);
 
@@ -83,18 +84,27 @@ function EditRequestTarifCategory({
       return;
     }
 
-    // Преобразуем файлы в массив
     const fileArray = Array.from(files);
+
+    // Если есть выбранное изображение, ставим его первым в массиве
+    const updatedImages = coverImage2 ? [coverImage2, ...fileArray] : fileArray;
 
     setFormData((prevState) => ({
       ...prevState,
-      images: fileArray, // Сохраняем массив файлов
+      images: updatedImages,
     }));
   };
 
   const handleCoverImageChange = (image) => {
     if (isEditing) {
       setCoverImage(image);
+    }
+    // setIsEditing(!isEditing);
+  };
+
+  const handleCoverImageChange2 = (image) => {
+    if (isEditing) {
+      setCoverImage2(image);
     }
     // setIsEditing(!isEditing);
   };
@@ -129,6 +139,12 @@ function EditRequestTarifCategory({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const imagesArray2 = coverImage2
+    ? [coverImage2, ...formData?.images?.filter((img) => img !== coverImage2)]
+    : formData.images;
+
+  // console.log(imagesArray2);
+
   const handleSubmit = async (e) => {
     if (isEditing) {
       e.preventDefault();
@@ -150,19 +166,21 @@ function EditRequestTarifCategory({
                 },
               ],
             },
-            roomKindImages: formData.images,
+            roomKindImages: imagesArray2,
           },
         });
-        await handleReorderImages();
+        !imagesArray2 ? await handleReorderImages() : null;
         onClose();
         setIsLoading(false);
         setCoverImage(null);
+        setCoverImage2(null);
         addNotification("Редактирование тарифа прошло успешно.", "success");
       } catch (error) {
         setIsLoading(false);
         console.error("Произошла ошибка при выполнении запроса:", error);
         alert("Произошло ошибка при редактировании тарифа.");
         setCoverImage(null);
+        setCoverImage2(null);
       }
     }
     setIsEditing(!isEditing);
@@ -338,6 +356,22 @@ function EditRequestTarifCategory({
                 disabled={!isEditing}
                 multiple
               />
+              <div className={classes.imageList}>
+                {formData?.images?.map((image, index) => (
+                  <div
+                    key={`${image.name}-${index}`} // Используйте `image.name` для уникальности ключа
+                    className={`${classes.imageItem} ${
+                      coverImage2 === image ? classes.selected : ""
+                    }`}
+                    onClick={() => handleCoverImageChange2(image)}
+                  >
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`Image ${index + 1}`}
+                    />
+                  </div>
+                ))}
+              </div>
 
               <div className={classes.imageList}>
                 {tarif?.images?.map((image, index) => (

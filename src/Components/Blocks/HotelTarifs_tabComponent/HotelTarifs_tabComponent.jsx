@@ -221,7 +221,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   };
 
   const deleteTarif = async (index, tarifID) => {
-    console.log(index, tarifID);
+    // console.log(index, tarifID);
     
     let response_update_tarif = await deleteHotelTarif({
       variables: {
@@ -229,13 +229,14 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       },
     });
 
-    console.log(response_update_tarif);
+    // console.log(response_update_tarif);
     
 
     if (response_update_tarif) {
-      setAddTarif(addTarif.filter((_, i) => i !== index));
+      // setAddTarif(addTarif.filter((_, i) => i !== index));
       setShowDelete(false);
       setEditShowAddTarif(false);
+      refetch();
     }
   };
 

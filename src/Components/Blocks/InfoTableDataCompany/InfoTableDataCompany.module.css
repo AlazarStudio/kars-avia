@@ -80,6 +80,10 @@
     width: 30%;
 }
 
+.w35 {
+    width: 35%;
+}
+
 .w12:last-child {
     border-right: none;
 }
@@ -135,13 +139,14 @@
     padding: 0 20px;
 }
 
-.InfoTable_data_elem_title {
+/* .InfoTable_data_elem_title {
     text-align: center;
     padding: 0 10px;
-}
+    width: 100%;
+} */
 
 .InfoTable_data_elem_avatar {
-    width: 40px;
+    min-width: 40px;
     height: 40px;
     border-radius: 50px;
     overflow: hidden;

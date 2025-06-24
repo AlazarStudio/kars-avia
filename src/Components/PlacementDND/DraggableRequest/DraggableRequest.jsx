@@ -18,6 +18,7 @@ const DraggableRequest = ({
   isClick,
   setIsClick,
   request,
+  hotelAccess,
   dayWidth,
   currentMonth,
   onUpdateRequest,
@@ -25,7 +26,7 @@ const DraggableRequest = ({
   allRequests,
   onOpenModal,
   isDraggingGlobal,
-  userRole,
+  user,
   toggleRequestSidebar,
 }) => {
   // Настройка dnd-kit
@@ -86,6 +87,8 @@ const DraggableRequest = ({
       showBlockReserve = 1;
     }
   }
+
+  // console.log(hotelAccess)
 
   // Анимация мерцания для заявки со статусом "Ожидает"
   const blinkAnimation = `
@@ -300,7 +303,7 @@ const DraggableRequest = ({
         {request.status !== "Ожидает" &&
           request.status !== "Архив" &&
           request.isRequest &&
-          showBlockRequest === 1 && (
+          showBlockRequest === 1 && (user?.hotelId && hotelAccess || !user?.hotelId) && (
             <Box
               onMouseDown={(e) => {
                 const startX = e.clientX;
@@ -608,7 +611,7 @@ const DraggableRequest = ({
         {request.status !== "Ожидает" &&
           request.status !== "Архив" &&
           request.isRequest &&
-          showBlockRequest === 1 && (
+          showBlockRequest === 1 && (user?.hotelId && hotelAccess || !user?.hotelId) && (
             <Box
               onMouseDown={(e) => {
                 const startX = e.clientX;
@@ -755,7 +758,7 @@ export default DraggableRequest;
 // import { differenceInMilliseconds, startOfMonth } from "date-fns";
 // import { ConstructionOutlined } from "@mui/icons-material";
 
-// const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+// const DraggableRequest = ({ requestId, checkRoomsType, isClick, setIsClick, request, dayWidth, currentMonth, onUpdateRequest, position, allRequests, onOpenModal, isDraggingGlobal, user, toggleRequestSidebar }) => {
 //     const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
 //         id: request.id.toString(),
 //         data: {
@@ -1009,7 +1012,7 @@ export default DraggableRequest;
 //         <>
 //             <Box sx={style}>
 //                 {/* Левая ручка для изменения начала */}
-//                 {/* {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.status != 'Архив' && request.isRequest && showBlockRequest == 1 && */}
+//                 {/* {user != 'HOTELADMIN' && request.status != 'Ожидает' && request.status != 'Архив' && request.isRequest && showBlockRequest == 1 && */}
 //                 {request.status != 'Ожидает' && request.status != 'Архив' && request.isRequest && showBlockRequest == 1 &&
 //                     <Box
 //                         onMouseDown={(e) => {
@@ -1188,7 +1191,7 @@ export default DraggableRequest;
 //                 }
 
 //                 {/* Правая ручка для изменения конца */}
-//                 {/* {userRole != 'HOTELADMIN' && request.status != 'Ожидает' && request.status != 'Архив' && request.isRequest && showBlockRequest == 1 && */}
+//                 {/* {user != 'HOTELADMIN' && request.status != 'Ожидает' && request.status != 'Архив' && request.isRequest && showBlockRequest == 1 && */}
 //                 { request.status != 'Ожидает' && request.status != 'Архив' && request.isRequest && showBlockRequest == 1 &&
 //                     <Box
 //                         onMouseDown={(e) => {

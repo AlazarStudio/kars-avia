@@ -4,7 +4,7 @@ import { eachDayOfInterval, startOfMonth, endOfMonth, isWeekend, isToday, format
 import { useDroppable } from "@dnd-kit/core";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
-const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, containerRef, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+const RoomRow = memo(({ requestId, checkRoomsType, hotelAccess, isClick, setIsClick, containerRef, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, user, toggleRequestSidebar }) => {
     // const { setNodeRef } = useDroppable({
     //     id: room.roomId,  // Влияет на значение over в handleDragEnd
     //     data: {
@@ -152,9 +152,10 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, containe
                 .sort((a, b) => a.position - b.position)
                 .map((request) => (
                     <DraggableRequest
+                        hotelAccess={hotelAccess}
                         requestId={requestId}
                         checkRoomsType={checkRoomsType}
-                        userRole={userRole}
+                        user={user}
                         key={request.id}
                         request={request}
                         dayWidth={dayWidthLength}
@@ -207,7 +208,7 @@ export default RoomRow;
 // import { useDroppable } from "@dnd-kit/core";
 // import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
-// const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
+// const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, user, toggleRequestSidebar }) => {
 //     const { setNodeRef } = useDroppable({
 //         id: room.roomId,  // Влияет на значение over в handleDragEnd
 //     });
@@ -347,7 +348,7 @@ export default RoomRow;
 //                     <DraggableRequest
 //                         requestId={requestId}
 //                         checkRoomsType={checkRoomsType}
-//                         userRole={userRole}
+//                         user={user}
 //                         key={request.id}
 //                         request={request}
 //                         dayWidth={dayWidthLength}

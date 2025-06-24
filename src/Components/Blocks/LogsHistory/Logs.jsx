@@ -10,6 +10,7 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import ReactPaginate from "react-paginate";
+import MUILoader from "../MUILoader/MUILoader";
 
 function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const token = getCookie("token");
@@ -26,7 +27,12 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
     take: 50,
   });
 
-  const { data: dataLogs, error, refetch } = useQuery(query, {
+  const {
+    data: dataLogs,
+    error,
+    loading,
+    refetch,
+  } = useQuery(query, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -118,6 +124,8 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
             <img src="/close.png" alt="" />
           </div>
         </div>
+
+        {loading && <MUILoader fullHeight={"92vh"} />}
 
         {logsData && (
           <div

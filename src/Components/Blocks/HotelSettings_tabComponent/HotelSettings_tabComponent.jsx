@@ -663,8 +663,8 @@ function HotelSettings_tabComponent({ id }) {
                     {user.role === roles.superAdmin ||
                     user.role === roles.dispatcerAdmin ? (
                       <>
-                        {/* <MUISwitch
-                          label="Возможность размещать"
+                        <MUISwitch
+                          label="Самостоятельное размещение"
                           checked={hotel.access}
                           onChange={(e) => {
                             setHotel((prevHotel) => ({
@@ -673,7 +673,7 @@ function HotelSettings_tabComponent({ id }) {
                             }));
                           }}
                           disabled={!isEditing}
-                        /> */}
+                        />
 
                         <div className={classes.hotelAbout_info_item}>
                           <div

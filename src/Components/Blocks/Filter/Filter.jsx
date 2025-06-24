@@ -104,9 +104,9 @@ function Filter({
   const calculateWidth = () => {
     const screenWidth = window.innerWidth;
     if (screenWidth <= 480) {
-      return "130px"; // Для маленьких экранов
-    } else if (screenWidth <= 1550) {
-      return "130px"; // Для планшетов
+      return "120px"; // Для маленьких экранов
+    } else if (screenWidth <= 1630) {
+      return "120px"; // Для планшетов
     } else {
       return "150px"; // Для больших экранов
     }

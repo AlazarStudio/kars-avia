@@ -16,7 +16,7 @@ function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, 
         <InfoTable>
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>ФИО</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w35}`}>ФИО</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Должность</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Уровень доступа</div>
             </div>
@@ -29,7 +29,7 @@ function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, 
                         key={index}
                     >
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
                                     <img src={`${item.images[0] ? `${server}${item.images[0]}` : '/no-avatar.png'}`} alt="" />

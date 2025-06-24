@@ -62,6 +62,7 @@ function ExistRequest({
         take: pageInfo.take,
       },
     },
+    skip: !chooseRequestID
   });
 
   // console.log(data);
@@ -1173,7 +1174,7 @@ function ExistRequest({
                       {/* <img src="/user-check.png" alt="" /> */}
                     </button>
                     {user.role === roles.superAdmin ||
-                      (user.role === roles.dispatcerAdmin && (
+                      (user.role === roles.dispatcerAdmin && !formData.hotelId && (
                         <Button
                           onClick={() => {
                             onClose();

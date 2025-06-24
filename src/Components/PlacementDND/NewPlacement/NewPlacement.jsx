@@ -121,7 +121,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION, {
         onData: () => {
             bronRefetch(); // Обновляем данные после новых событий
-            refetchBrons();
+            refetchBrons(); 
         },
     });
 
@@ -276,6 +276,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 isRequest: true,
                 airline: request.airline,
                 personID: request?.person?.id,
+                hotelId: request?.hotelId,
             }));
 
             setNewRequests(transformedRequests);
@@ -1351,6 +1352,9 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
             }
         }
     };
+
+    // console.log(newRequests);
+    
     
     const handleOpenModal = (request, originalRequest) => {
         setOriginalRequest(originalRequest)
@@ -2206,10 +2210,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                             <Box sx={{ width: `calc(100% - ${LEFT_WIDTH}px)` }}>
                                                 <RoomRow
                                                     requestId={requestId}
+                                                    hotelAccess={hotelInfo?.access}
                                                     setHoveredRoom={setHoveredRoom}
                                                     setHoveredDayInMonth={setHoveredDayInMonth}
                                                     borderBottomDraw={index + 1 === filteredRooms.length}
-                                                    userRole={user.role}
+                                                    user={user}
                                                     key={room.roomId}
                                                     containerRef={containerRef}
                                                     dayWidth={dayWidthLength}
@@ -2245,7 +2250,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 Заявки по эскадрильи в городе {hotelInfo.information?.city}
                             </Typography>
 
-                            {newRequests?.length > 0 && !user?.hotelId ?
+                            {newRequests?.length > 0 && (user?.hotelId && hotelInfo?.access || !user?.hotelId) ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
                                     {newRequests
                                         .slice() // Создаём копию массива, чтобы не мутировать исходный
@@ -2253,9 +2258,17 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                             if (a.requestID === requestId) return -1; // Если `a` — нужный request, он идёт первым
                                             if (b.requestID === requestId) return 1; // Если `b` — нужный request, он идёт позже
                                             return 0; // Остальные остаются на своих местах
+                                        }).filter(request => {
+                                            // если условие ложно — не фильтруем, возвращаем всё
+                                            const shouldFilter = (user?.hotelId && hotelInfo?.access)
+                                            
+                                            return shouldFilter
+                                            ? request.hotelId === hotelId  // при shouldFilter=true оставляем только совпадающие
+                                            : true;                         // при shouldFilter=false — пропускаем все
                                         })
                                         .map((request) => (
                                             <DraggableRequest
+                                                hotelAccess={hotelInfo?.access || false}
                                                 requestId={requestId}
                                                 userRole={user.role}
                                                 key={request.id}
@@ -2286,7 +2299,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 Заявки по пассажирам в городе {hotelInfo.information?.city}
                             </Typography>
 
-                            {filteredRequestsReserves?.length > 0 ?
+                            {filteredRequestsReserves?.length > 0 && (user?.hotelId && hotelInfo?.access || !user?.hotelId) ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '518px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
                                     {filteredRequestsReserves.map((request) => (
                                         <Box sx={{
@@ -2363,6 +2376,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
                                     {newReservePassangers.map((request) => (
                                         <DraggableRequest
+                                            hotelAccess={hotelInfo?.access || false}
                                             requestId={requestId}
                                             userRole={user.role}
                                             key={request.id}
@@ -2392,6 +2406,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 <DragOverlay style={{ pointerEvents: 'none' }}>
                     {activeDragItem ? (
                         <DraggableRequest
+                            hotelAccess={hotelInfo?.access || false}
                             requestId={requestId}
                             userRole={user.role}
                             request={activeDragItem}

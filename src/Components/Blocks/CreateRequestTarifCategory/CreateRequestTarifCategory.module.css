@@ -130,8 +130,8 @@ select {
 
 .imageItem {
     padding: 5px;
-    flex-basis: 49%;
-    height: 200px;
+    flex-basis: 33%;
+    height: 130px;
     /* width: 90%; */
     cursor: pointer;
     transition: all ease-in-out 0.3s;

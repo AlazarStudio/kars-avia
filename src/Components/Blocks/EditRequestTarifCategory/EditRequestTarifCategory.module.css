@@ -122,16 +122,16 @@ select {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    row-gap: 5px;
+    /* justify-content: space-between; */
+    /* row-gap: 5px; */
     /* flex-direction: column; */
-    /* gap: 10px; */
+    gap: 2px;
 }
 
 .imageItem {
     padding: 5px;
-    flex-basis: 49%;
-    height: 200px;
+    flex-basis: 33%;
+    height: 130px;
     /* width: 90%; */
     cursor: pointer;
     transition: all ease-in-out 0.3s;

@@ -111,9 +111,9 @@ select {
     gap: 10px;
 }
 
-.requestButton a {
+/* .requestButton a {
     width: 50%;
-}
+} */
 
 .requestDataTitle {
     font-family: Nunito Sans;

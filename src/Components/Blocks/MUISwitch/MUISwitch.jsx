@@ -8,7 +8,6 @@ import { FormControlLabel, Switch } from "@mui/material";
 // import Stack from '@mui/material/Stack';
 // import Typography from '@mui/material/Typography';
 
-
 // const IOSSwitch = styled((props) => (
 //   <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
 // ))(({ theme }) => ({
@@ -73,6 +72,7 @@ import { FormControlLabel, Switch } from "@mui/material";
 function MUISwitch({ label, checked, onChange, disabled, sx, ...props }) {
   return (
     <FormControlLabel
+      style={{ width: "fit-content", marginLeft: "0", color: "#545873" }}
       control={
         <Switch
           checked={checked}
@@ -91,12 +91,13 @@ function MUISwitch({ label, checked, onChange, disabled, sx, ...props }) {
             },
             "& .MuiSwitch-switchBase.Mui-checked:hover": {
               backgroundColor: "transparent", // Убирает фоновый цвет при наведении
-            }
+            },
           }}
           {...props}
         />
       }
       label={label}
+      labelPlacement="start"
     />
   );
 }
