@@ -122,10 +122,10 @@ select {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
-    row-gap: 5px;
+    /* justify-content: space-between; */
+    /* row-gap: 5px; */
     /* flex-direction: column; */
-    /* gap: 10px; */
+    gap: 2px;
 }
 
 .imageItem {
