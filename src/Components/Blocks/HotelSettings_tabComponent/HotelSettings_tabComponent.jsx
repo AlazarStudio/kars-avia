@@ -49,14 +49,38 @@ function HotelSettings_tabComponent({ id }) {
   }, [token]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
   });
   const { data: dataSubscriptionUpd } = useSubscription(
-    GET_HOTELS_UPDATE_SUBSCRIPTION
+    GET_HOTELS_UPDATE_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
   );
 
-  let infoCities = useQuery(GET_CITIES);
-  let infoAirports = useQuery(GET_AIRPORTS_RELAY);
+  let infoCities = useQuery(GET_CITIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+  let infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const [cities, setCities] = useState([]);
   const [airports, setAirports] = useState([]);
 

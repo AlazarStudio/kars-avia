@@ -26,6 +26,11 @@ function SupportPage({ children, user, ...props }) {
     error: userError,
     data: userData,
   } = useQuery(GET_DISPATCHER, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { userId: user.userId },
     skip: !user.userId,
   });
@@ -41,9 +46,25 @@ function SupportPage({ children, user, ...props }) {
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
-  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
+  const { data: dataSubscription } = useSubscription(
+    GET_AIRLINES_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  );
   const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION
+    GET_AIRLINES_UPDATE_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
   );
 
   const location = useLocation();

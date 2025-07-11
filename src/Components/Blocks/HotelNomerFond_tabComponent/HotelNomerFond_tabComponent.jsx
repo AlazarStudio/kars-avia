@@ -29,11 +29,21 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const user = decodeJWT(token);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_ROOMS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
   });
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_HOTELS_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },
@@ -276,7 +286,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const [filter, setFilter] = useState("quote");
 
   // console.log(filteredRequestsTarif);
-  
 
   return (
     <>

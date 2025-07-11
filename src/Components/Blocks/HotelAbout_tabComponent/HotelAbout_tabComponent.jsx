@@ -40,6 +40,11 @@ function HotelAbout_tabComponent({ id }) {
   // }, [token]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
     // fetchPolicy: "cache-and-network",
   });
@@ -248,7 +253,9 @@ function HotelAbout_tabComponent({ id }) {
                     //   __html: hotel.information?.description,
                     // }}
                   >
-                  <TextEditorOutput description={hotel.information?.description}/>
+                    <TextEditorOutput
+                      description={hotel.information?.description}
+                    />
                   </div>
                   <div className={classes.hotelAboutMoreInfo}>
                     <div className={classes.scheduleWrapper}>

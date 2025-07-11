@@ -133,7 +133,13 @@ function AddNewPassenger({ show, onClose, request, placement, setPlacement, user
         };
     }, [show]);
 
-    const { data } = useQuery(GET_HOTELS_RELAY);
+    const { data } = useQuery(GET_HOTELS_RELAY, {
+                context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
+    });
     const hotels = data?.hotels.hotels || [];
     
     // Уникальные города с мемоизацией

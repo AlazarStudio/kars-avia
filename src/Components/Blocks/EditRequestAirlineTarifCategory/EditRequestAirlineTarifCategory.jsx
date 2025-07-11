@@ -27,7 +27,13 @@ function EditRequestAirlineTarifCategory({
   addNotification,
 }) {
   const token = getCookie("token");
-  const infoAirports = useQuery(GET_AIRPORTS_RELAY);
+  const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   // console.log(tarif);
 

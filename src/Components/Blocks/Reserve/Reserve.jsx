@@ -25,7 +25,7 @@ import Notification from "../../Notification/Notification";
 function Reserve({ children, user, idHotel, ...props }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const token = getCookie("token")
+  const token = getCookie("token");
 
   // Получение текущей страницы из URL или localStorage
   let pageNumberReserve = new URLSearchParams(location.search).get("page");
@@ -42,7 +42,6 @@ function Reserve({ children, user, idHotel, ...props }) {
   });
 
   // console.log(user);
-  
 
   // Состояние для управления параметрами пагинации
   const [pageInfo, setPageInfo] = useState({
@@ -53,8 +52,8 @@ function Reserve({ children, user, idHotel, ...props }) {
   // Запрос на получение списка заявок с учетом пагинации
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
     context: {
-      headers : {
-          Authorization: `Bearer ${token}`,
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
     },
     variables: {
@@ -74,17 +73,29 @@ function Reserve({ children, user, idHotel, ...props }) {
 
   // Подписки на создание и обновление заявок
   const { data: subscriptionData } = useSubscription(
-    REQUEST_RESERVE_CREATED_SUBSCRIPTION, {
+    REQUEST_RESERVE_CREATED_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
-        refetch()
-      }
+        refetch();
+      },
     }
   );
   const { data: subscriptionUpdateData } = useSubscription(
-    REQUEST_RESERVE_UPDATED_SUBSCRIPTION, {
+    REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onComplete: () => {
-        refetch()
-      }
+        refetch();
+      },
     }
   );
 
@@ -238,6 +249,11 @@ function Reserve({ children, user, idHotel, ...props }) {
 
   const [hotelCity, setHotelCity] = useState();
   const { data: hotelData } = useQuery(GET_HOTEL_CITY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: idHotel },
   });
   useEffect(() => {
@@ -246,6 +262,11 @@ function Reserve({ children, user, idHotel, ...props }) {
 
   const [airlineName, setAirlineName] = useState();
   const { data: airlineData } = useQuery(GET_AIRLINE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineId: user.airlineId },
   });
   useEffect(() => {

@@ -65,10 +65,21 @@ function AirlineAbout_tabComponent({ id, ...props }) {
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
   const { loading, error, data } = useQuery(GET_AIRLINE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineId: id },
   });
 
-  let infoCities = useQuery(GET_CITIES);
+  let infoCities = useQuery(GET_CITIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const [cities, setCities] = useState([]);
 
   // useEffect(() => {

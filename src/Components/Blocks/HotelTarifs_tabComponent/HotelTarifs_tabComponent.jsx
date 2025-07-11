@@ -28,9 +28,13 @@ import { fullNotifyTime, notifyTime } from "../../../roles.js";
 function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   const token = getCookie("token");
   // console.log(id);
-  
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
   });
 
@@ -48,6 +52,11 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     error: mealPriceError,
     data: mealPriceData,
   } = useQuery(GET_HOTEL_MEAL_PRICE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
   });
 
@@ -222,7 +231,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
 
   const deleteTarif = async (index, tarifID) => {
     // console.log(index, tarifID);
-    
+
     let response_update_tarif = await deleteHotelTarif({
       variables: {
         deleteRoomKindId: tarifID,
@@ -230,7 +239,6 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     });
 
     // console.log(response_update_tarif);
-    
 
     if (response_update_tarif) {
       // setAddTarif(addTarif.filter((_, i) => i !== index));
@@ -370,7 +378,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         setAddTarif={setAddTarif}
         addNotification={addNotification}
       />
-{/* 
+      {/* 
       <EditRequestTarif
         id={id}
         existingPrices={data?.hotel?.prices}
@@ -406,14 +414,15 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       {showDelete && (
         <DeleteComponent
           ref={deleteComponentRef}
-          remove={() =>
-            // deleteIndex.type == "deleteTarif"
-            //   ? 
+          remove={
+            () =>
+              // deleteIndex.type == "deleteTarif"
+              //   ?
               deleteTarif(deleteIndex.data.index, deleteIndex.data.tarifID)
-              // : deleteTarifCategory(
-              //     deleteIndex.data.category,
-              //     deleteIndex.data.tarif
-              //   )
+            // : deleteTarifCategory(
+            //     deleteIndex.data.category,
+            //     deleteIndex.data.tarif
+            //   )
           }
           close={closeDeleteComponent}
           title={`Вы действительно хотите удалить ${

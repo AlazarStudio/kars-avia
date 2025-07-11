@@ -38,8 +38,16 @@ function ChooseHotel({
   const sidebarRef = useRef();
   const token = getCookie("token");
   // Получаем данные о гостиницах
-  const { data: hotelsData, loading: hotelsLoading } =
-    useQuery(GET_HOTELS_RELAY);
+  const { data: hotelsData, loading: hotelsLoading } = useQuery(
+    GET_HOTELS_RELAY,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  );
 
   // const { data: citiesData, loading: citiesLoading } = useQuery(GET_CITIES);
 
@@ -55,6 +63,11 @@ function ChooseHotel({
     loading: loadingChosenHotel,
     error: errorChosenHotel,
   } = useQuery(GET_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: formData.hotel },
     skip: !formData.hotel, // don’t run until we have an ID
     fetchPolicy: "network-only",
@@ -296,7 +309,6 @@ function ChooseHotel({
 }
 
 export default ChooseHotel;
-
 
 // import React, {
 //   useState,

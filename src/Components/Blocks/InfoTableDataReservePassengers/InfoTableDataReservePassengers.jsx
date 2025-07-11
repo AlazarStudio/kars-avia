@@ -67,12 +67,22 @@ function InfoTableDataReservePassengers({
   const { data: hotelRoomsData, refetch: hotelRoomsRefetch } = useQuery(
     GET_HOTEL_ROOMS,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       variables: { hotelId: currentHotelID },
     }
   );
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_HOTELS_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         hotelRoomsRefetch();
       },
@@ -418,7 +428,13 @@ function InfoTableDataReservePassengers({
   };
 
   const [selectedAirline, setSelectedAirline] = useState(null);
-  const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
+  const { loading, error, data } = useQuery(GET_AIRLINES_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   useEffect(() => {
     if (data && airline) {

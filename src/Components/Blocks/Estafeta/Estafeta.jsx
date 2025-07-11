@@ -362,6 +362,11 @@ function Estafeta({ user }) {
   // Запрос для получения имени авиакомпании пользователя
   const [airlineName, setAirlineName] = useState();
   const { data: airlineData } = useQuery(GET_AIRLINE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineId: user.airlineId },
   });
 

@@ -146,10 +146,28 @@ function CreateRequestReserve({ show, onClose, user, addNotification }) {
     };
   }, [show, onClose]);
 
-  let infoAirports = useQuery(GET_AIRPORTS_RELAY);
-  let infoCities = useQuery(GET_CITIES);
+  let infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+  let infoCities = useQuery(GET_CITIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
-  const { loading, error, data } = useQuery(GET_AIRLINES_RELAY);
+  const { loading, error, data } = useQuery(GET_AIRLINES_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const [airlines, setAirlines] = useState([]);
 
   const [airports, setAirports] = useState([]);
@@ -376,11 +394,14 @@ function CreateRequestReserve({ show, onClose, user, addNotification }) {
                       (airport) => airport.city.trim() === formData.city.trim()
                     )}
                     getOptionLabel={(option) =>
-                      option ? `${option.code} ${option.name}, город: ${option.city}`.trim() : ""
+                      option
+                        ? `${option.code} ${option.name}, город: ${option.city}`.trim()
+                        : ""
                     }
                     renderOption={(optionProps, option) => {
                       // Формируем строку для отображения
-                      const labelText = `${option.code} ${option.name}, город: ${option.city}`.trim();
+                      const labelText =
+                        `${option.code} ${option.name}, город: ${option.city}`.trim();
                       // Разбиваем строку по пробелам
                       const words = labelText.split(" ");
                       return (

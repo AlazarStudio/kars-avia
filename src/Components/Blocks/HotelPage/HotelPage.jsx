@@ -2,7 +2,7 @@ import { useQuery } from "@apollo/client";
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
-import { GET_HOTEL_NAME } from "../../../../graphQL_requests.js";
+import { GET_HOTEL_NAME, getCookie } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
 import HotelAdminHotelContent from "../../RoleContent/HotelAdminContent/HotelAdminHotelContent/HotelAdminHotelContent.jsx";
 import SDAdminHotelContent from "../../RoleContent/SuperAdminContent/SuperAdminHotelContent/SuperAdminHotelContent.jsx";
@@ -16,11 +16,16 @@ import AirlineAdminHotelContent from "../../RoleContent/AirlineAdminContent/Airl
 
 function HotelPage({ children, id, user, ...props }) {
   const params = useParams();
-  
+  const token = getCookie(token);
 
   const [selectedTab, setSelectedTab] = useState(0);
 
   const { loading, error, data } = useQuery(GET_HOTEL_NAME, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
   });
 

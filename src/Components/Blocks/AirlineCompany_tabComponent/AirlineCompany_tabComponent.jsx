@@ -36,6 +36,11 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
   }, [token]);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineId: id },
   });
 
@@ -43,17 +48,34 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
     loading: positionsLoading,
     error: positionsError,
     data: positionsData,
-  } = useQuery(GET_AIRLINE_USERS_POSITIONS);
+  } = useQuery(GET_AIRLINE_USERS_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const {
     loading: airlinePositionsLoading,
     error: airlinePositionsError,
     data: airlinePositionsData,
-  } = useQuery(GET_AIRLINE_POSITIONS);
+  } = useQuery(GET_AIRLINE_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },

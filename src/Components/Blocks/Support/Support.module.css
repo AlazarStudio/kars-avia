@@ -97,9 +97,9 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100vh - 100px);
+    height: calc(100vh - 90px);
     overflow: hidden;
-    overflow-y: scroll;
+    /* overflow-y: scroll; */
 }
 
 .reis_info {

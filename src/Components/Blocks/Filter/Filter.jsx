@@ -7,6 +7,7 @@ import { useQuery } from "@apollo/client";
 import {
   GET_AIRLINES_RELAY,
   GET_AIRPORTS_RELAY,
+  getCookie,
 } from "../../../../graphQL_requests";
 import { Autocomplete, TextField } from "@mui/material";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
@@ -33,18 +34,31 @@ function Filter({
 }) {
   const [airlines, setAirlines] = useState([]);
   const [airports, setAirports] = useState([]);
+  const token = getCookie("token");
 
   // Запросы для получения авиакомпаний и аэропортов
   const {
     data: airlinesData,
     loading: airlinesLoading,
     error: airlinesError,
-  } = useQuery(GET_AIRLINES_RELAY);
+  } = useQuery(GET_AIRLINES_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const {
     data: airportsData,
     loading: airportsLoading,
     error: airportsError,
-  } = useQuery(GET_AIRPORTS_RELAY);
+  } = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   // console.log(airlinesData);
   // console.log(airportsData);
 

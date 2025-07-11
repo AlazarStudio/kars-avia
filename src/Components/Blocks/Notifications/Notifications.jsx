@@ -121,6 +121,11 @@ function Notifications({
   const { data: notifySubscriptionData } = useSubscription(
     NOTIFICATIONS_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },

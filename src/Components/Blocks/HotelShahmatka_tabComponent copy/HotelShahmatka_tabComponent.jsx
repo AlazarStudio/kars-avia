@@ -10,6 +10,11 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 function HotelShahmatka_tabComponent({ children, id, ...props }) {
 
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { hotelId: id },
     });
 

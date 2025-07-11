@@ -71,6 +71,11 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     error: hotelError,
     data: hotelData,
   } = useQuery(GET_HOTEL_CITY, {
+            context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
     variables: { hotelId: user.hotelId },
   });
 
@@ -87,6 +92,11 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     error: airlineError,
     data: airlineData,
   } = useQuery(GET_AIRLINE, {
+            context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
     variables: { airlineId: user.airlineId },
   });
 

@@ -32,6 +32,11 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const token = getCookie("token");
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_TARIFS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineId: id },
   });
 

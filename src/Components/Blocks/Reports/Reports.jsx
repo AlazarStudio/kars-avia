@@ -108,11 +108,29 @@ function Reports({ children, ...props }) {
     loading: positionsLoading,
     error: positionsError,
     data: positionsData,
-  } = useQuery(GET_AIRLINE_POSITIONS);
+  } = useQuery(GET_AIRLINE_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
-  const infoAirports = useQuery(GET_AIRPORTS_RELAY);
+  const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
-  const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIPTION);
+  const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const [deleteReport] = useMutation(DELETE_REPORT, {
     context: {

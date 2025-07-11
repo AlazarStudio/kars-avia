@@ -9,6 +9,7 @@ import {
   GET_HOTELS,
   GET_HOTELS_SUBSCRIPTION,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
+  getCookie,
 } from "../../../../graphQL_requests";
 import { fullNotifyTime, notifyTime, roles } from "../../../roles";
 import ReactPaginate from "react-paginate";
@@ -18,6 +19,7 @@ import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
 
 function HotelsList({ children, user, ...props }) {
+  const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
@@ -46,6 +48,11 @@ function HotelsList({ children, user, ...props }) {
   const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
 
   const { loading, error, data, refetch } = useQuery(GET_HOTELS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
   });
 

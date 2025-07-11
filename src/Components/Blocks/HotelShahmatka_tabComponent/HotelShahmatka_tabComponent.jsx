@@ -2,14 +2,20 @@ import React, { useEffect, useState } from "react";
 import classes from './HotelShahmatka_tabComponent.module.css';
 // import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent";
 
-import { GET_BRONS_HOTEL, GET_HOTEL_ROOMS } from '../../../../graphQL_requests.js';
+import { GET_BRONS_HOTEL, GET_HOTEL_ROOMS, getCookie } from '../../../../graphQL_requests.js';
 import { useQuery } from "@apollo/client";
 import NewPlacement from "../../PlacementDND/NewPlacement/NewPlacement.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 
 function HotelShahmatka_tabComponent({ id }) {
+    const token = getCookie("token")
     const { loading, error, data } = useQuery(GET_HOTEL_ROOMS, {
+                context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { hotelId: id },
     });
 
@@ -44,6 +50,11 @@ function HotelShahmatka_tabComponent({ id }) {
     const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
 
     const { loading: bronLoading, error: bronError, data: bronData } = useQuery(GET_BRONS_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { hotelId: id },
     });
 

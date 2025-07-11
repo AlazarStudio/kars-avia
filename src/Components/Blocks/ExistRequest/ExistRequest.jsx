@@ -62,7 +62,7 @@ function ExistRequest({
         take: pageInfo.take,
       },
     },
-    skip: !chooseRequestID
+    skip: !chooseRequestID,
   });
 
   // console.log(data);
@@ -453,6 +453,11 @@ function ExistRequest({
   };
 
   const { data: airlineData, refetch: airlineRefetch } = useQuery(GET_AIRLINE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineId: formData?.airline?.id },
   });
 
@@ -460,7 +465,13 @@ function ExistRequest({
     loading: airlinePositionsLoading,
     error: airlinePositionsError,
     data: airlinePositionsData,
-  } = useQuery(GET_AIRLINE_POSITIONS);
+  } = useQuery(GET_AIRLINE_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const [positions, setPositions] = useState([]);
 
@@ -1174,27 +1185,28 @@ function ExistRequest({
                       {/* <img src="/user-check.png" alt="" /> */}
                     </button>
                     {user.role === roles.superAdmin ||
-                      (user.role === roles.dispatcerAdmin && !formData.hotelId && (
-                        <Button
-                          onClick={() => {
-                            onClose();
-                            setShowChooseHotel(true);
-                            setChooseCityRequest(formData?.airport?.city);
-                            localStorage.setItem("selectedTab", 0);
-                          }}
-                        >
-                          {/* {console.log(formData)} */}
-                          Разместить
-                          <img
-                            style={{
-                              width: "fit-content",
-                              height: "fit-content",
+                      (user.role === roles.dispatcerAdmin &&
+                        !formData.hotelId && (
+                          <Button
+                            onClick={() => {
+                              onClose();
+                              setShowChooseHotel(true);
+                              setChooseCityRequest(formData?.airport?.city);
+                              localStorage.setItem("selectedTab", 0);
                             }}
-                            src="/user-check.png"
-                            alt=""
-                          />
-                        </Button>
-                      ))}
+                          >
+                            {/* {console.log(formData)} */}
+                            Разместить
+                            <img
+                              style={{
+                                width: "fit-content",
+                                height: "fit-content",
+                              }}
+                              src="/user-check.png"
+                              alt=""
+                            />
+                          </Button>
+                        ))}
                   </div>
                 )}
             </>

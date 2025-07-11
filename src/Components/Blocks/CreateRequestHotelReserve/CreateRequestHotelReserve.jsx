@@ -136,7 +136,13 @@ function CreateRequestHotelReserve({ show, onClose }) {
     };
   }, [show, onClose]);
 
-  let infoAirports = useQuery(GET_AIRPORTS_RELAY);
+  let infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const [airports, setAirports] = useState([]);
 
   useEffect(() => {
@@ -149,7 +155,7 @@ function CreateRequestHotelReserve({ show, onClose }) {
     ...new Set(airports.map((airport) => airport.city.trim())),
   ].sort((a, b) => a.localeCompare(b));
 
-//   console.log(uniqueCities);
+  //   console.log(uniqueCities);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

@@ -27,6 +27,11 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
   const user = decodeJWT(token);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_USERS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
   });
 
@@ -34,11 +39,22 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
     loading: positionsLoading,
     error: positionsError,
     data: positionsData,
-  } = useQuery(GET_HOTEL_POSITIONS);
+  } = useQuery(GET_HOTEL_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_HOTELS_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },
@@ -48,6 +64,11 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
   const { data: dataSubscription } = useSubscription(
     GET_DISPATCHERS_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },

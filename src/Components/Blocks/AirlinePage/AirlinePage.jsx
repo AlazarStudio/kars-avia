@@ -16,6 +16,11 @@ function AirlinePage({ children, id, user, ...props }) {
   const [selectedTab, setSelectedTab] = useState(0);
 
   const { loading, error, data } = useQuery(GET_AIRLINE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineId: id },
   });
 

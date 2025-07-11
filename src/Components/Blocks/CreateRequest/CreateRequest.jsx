@@ -38,8 +38,20 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   const sidebarRef = useRef();
 
   // Запрос данных авиакомпаний и аэропортов
-  const { data, refetch } = useQuery(GET_AIRLINES_RELAY);
-  const infoAirports = useQuery(GET_AIRPORTS_RELAY);
+  const { data, refetch } = useQuery(GET_AIRLINES_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+  const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const [airports, setAirports] = useState([]); // Список аэропортов
   // console.log(selectedAirline);
 
@@ -79,7 +91,13 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     loading: airlinePositionsLoading,
     error: airlinePositionsError,
     data: airlinePositionsData,
-  } = useQuery(GET_AIRLINE_POSITIONS);
+  } = useQuery(GET_AIRLINE_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const [positions, setPositions] = useState([]);
 
@@ -93,6 +111,11 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
   // Запрос данных о бронированиях пользователя
   const { data: bronData } = useQuery(GET_USER_BRONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineStaffId: formData.personId },
     skip: !formData.personId,
   });
@@ -727,11 +750,14 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                     label={"Введите аэропорт"}
                     options={airports}
                     getOptionLabel={(option) =>
-                      option ? `${option.code} ${option.name}, город: ${option.city}`.trim() : ""
+                      option
+                        ? `${option.code} ${option.name}, город: ${option.city}`.trim()
+                        : ""
                     }
                     renderOption={(optionProps, option) => {
                       // Формируем строку для отображения
-                      const labelText = `${option.code} ${option.name}, город: ${option.city}`.trim();
+                      const labelText =
+                        `${option.code} ${option.name}, город: ${option.city}`.trim();
                       // Разбиваем строку по пробелам
                       const words = labelText.split(" ");
                       return (

@@ -36,6 +36,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const user = decodeJWT(token);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_USERS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineId: id },
   });
 
@@ -43,7 +48,13 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     loading: positionsLoading,
     error: positionsError,
     data: positionsData,
-  } = useQuery(GET_AIRLINE_POSITIONS);
+  } = useQuery(GET_AIRLINE_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const [staff, setStaff] = useState([]);
 
@@ -64,6 +75,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     data: bronData,
     refetch: bronRefetch,
   } = useQuery(GET_STAFF_HOTELS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { airlineStaffsId: id },
   });
 
@@ -210,7 +226,9 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     .filter((request) => {
       const matchesSearch =
         searchQuery === "" ||
-        request.position?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.position?.name
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
         request.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesPosition =
         selectedPosition === "" || request.position?.name === selectedPosition;
@@ -300,7 +318,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           setSelectedStaff={setSelectedStaff}
           user={user}
           positions={positions}
-          />
+        />
       )}
 
       {hotelBronsInfo.length !== 0 && (
@@ -321,7 +339,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           setSelectedStaff={setSelectedStaff}
           user={user}
           positions={positions}
-          />
+        />
       )}
 
       <CreateRequestAirlineStaff

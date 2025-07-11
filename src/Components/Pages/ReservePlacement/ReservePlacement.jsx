@@ -47,6 +47,11 @@ function ReservePlacement({ children, user, ...props }) {
   const { data: subscriptionData } = useSubscription(
     GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
         refetchHotel();
@@ -56,6 +61,11 @@ function ReservePlacement({ children, user, ...props }) {
   const { data: subscriptionDataPerson } = useSubscription(
     GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
         refetchHotel();
@@ -66,6 +76,11 @@ function ReservePlacement({ children, user, ...props }) {
   const { data: subscriptionDataUpdate } = useSubscription(
     REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onComplete: () => {
         refetch();
       },
@@ -90,6 +105,11 @@ function ReservePlacement({ children, user, ...props }) {
     data: dataHotel,
     refetch: refetchHotel,
   } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { reservationHotelsId: idRequest },
   });
 
@@ -613,7 +633,11 @@ function ReservePlacement({ children, user, ...props }) {
             {/* {console.log(request)} */}
             {user?.airlineId ? null : (
               <div className={classes.btnsReserve}>
-                {user.role != 'HOTELADMIN' && <Button onClick={toggleCreateSidebarHotel}>Создать гостиницу</Button>} 
+                {user.role != "HOTELADMIN" && (
+                  <Button onClick={toggleCreateSidebarHotel}>
+                    Создать гостиницу
+                  </Button>
+                )}
                 {/* {console.log(!exists && request.passengerCount === showChooseHotels)} */}
                 {/* {!exists && request.passengerCount === showChooseHotels ? null : (
                 <Button onClick={toggleCreateSidebar}>

@@ -5,6 +5,7 @@ import {
   GET_AIRLINES,
   GET_AIRLINES_SUBSCRIPTION,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  getCookie,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import Header from "../Header/Header";
@@ -18,6 +19,7 @@ import Notification from "../../Notification/Notification";
 import { fullNotifyTime, notifyTime } from "../../../roles";
 
 function AirlinesList({ children, ...props }) {
+  const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
@@ -41,6 +43,11 @@ function AirlinesList({ children, ...props }) {
   const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
   });
 

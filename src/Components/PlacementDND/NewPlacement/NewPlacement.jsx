@@ -41,6 +41,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     const [hotelInfo, setHotelInfo] = useState('');
 
     const { loading: loadingHotel, error: errorHotel, data: dataHotel } = useQuery(GET_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
     });
@@ -54,6 +59,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     // Получение комнат отеля
     const { loading, error, data, refetch: roomsRefetch } = useQuery(GET_HOTEL_ROOMS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
     });
@@ -111,6 +121,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     const [requests, setRequests] = useState([]);
 
     const { loading: bronLoading, error: bronError, data: bronData, refetch: bronRefetch } = useQuery(GET_BRONS_HOTEL, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
     });
@@ -119,6 +134,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
     // Подписки для отслеживания создания и обновления заявок
     const { data: subscriptionData } = useSubscription(REQUEST_CREATED_SUBSCRIPTION, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         onData: () => {
             bronRefetch(); // Обновляем данные после новых событий
             refetchBrons(); 
@@ -126,6 +146,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     });
 
     const { data: subscriptionUpdateData } = useSubscription(REQUEST_UPDATED_SUBSCRIPTION, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         onData: () => {
             bronRefetch(); // Обновляем данные после новых событий
         },
@@ -1743,11 +1768,21 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     // const { data: subscriptionUpdateDataReserves } = useSubscription(REQUEST_RESERVE_UPDATED_SUBSCRIPTION);
 
     const { data: subscriptionDataPerson } = useSubscription(GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         onData: () => {
             bronRefetch();
         }
     });
     const { data: subscriptionDataReserve } = useSubscription(REQUEST_RESERVE_UPDATED_SUBSCRIPTION, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         onData: () => {
             bronRefetch();
         }
@@ -1756,6 +1791,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     // console.log(subscriptionDataPerson)
 
     const { loading: loadingReserves, error: errorReserves, data: dataReserves, refetch: refetchReserves } = useQuery(GET_RESERVE_REQUESTS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { pagination: { skip: 0, take: 999999999 } },
     });
 
@@ -1773,6 +1813,11 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     });
 
     const { loading: loadingHotelReserveOne, error: errorHotelReserveOne, data: dataHotelReserveOne, refetch: refetchHotelReserveOne } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { reservationHotelsId: openReserveId },
     });
 

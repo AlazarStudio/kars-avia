@@ -56,7 +56,14 @@ function CreateRequestReport({
 
   // Готовим запрос в зависимости от того, что нужно: авиакомпании или гостиницы
   const { data } = useQuery(
-    airOrHotel === "airline" ? GET_AIRLINES_RELAY : GET_HOTELS_RELAY
+    airOrHotel === "airline" ? GET_AIRLINES_RELAY : GET_HOTELS_RELAY,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
   );
 
   // Массив авиакомпаний или гостиниц
@@ -336,7 +343,9 @@ function CreateRequestReport({
                       label={"Выберите аэропорт"}
                       options={airports}
                       getOptionLabel={(option) =>
-                        option ? `${option.code} ${option.name}, город: ${option.city}`.trim() : ""
+                        option
+                          ? `${option.code} ${option.name}, город: ${option.city}`.trim()
+                          : ""
                       }
                       renderOption={(optionProps, option) => {
                         // Формируем строку для отображения

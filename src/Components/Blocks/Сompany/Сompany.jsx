@@ -23,16 +23,35 @@ import { fullNotifyTime, notifyTime } from "../../../roles";
 function Company({ children, user, ...props }) {
   const token = getCookie("token");
 
-  const { loading, error, data, refetch } = useQuery(GET_DISPATCHERS);
+  const { loading, error, data, refetch } = useQuery(GET_DISPATCHERS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const { data: dataSubscription } = useSubscription(
-    GET_DISPATCHERS_SUBSCRIPTION
+    GET_DISPATCHERS_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
   );
 
   const {
     loading: positionsLoading,
     error: positionsError,
     data: positionsData,
-  } = useQuery(GET_DISPATCHER_POSITIONS);
+  } = useQuery(GET_DISPATCHER_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);

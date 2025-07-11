@@ -40,6 +40,11 @@ function EditRequestNomerFond({
   const [hotelTariff, setHotelTariff] = useState([]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
   });
 
@@ -55,7 +60,7 @@ function EditRequestNomerFond({
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     nomerName: (nomer && nomer.name) || "",
-    category: type === "apartment"  ? category?.origName : null,
+    category: type === "apartment" ? category?.origName : null,
     beds: nomer?.beds || "",
     reserve: nomer?.reserve || "",
     active: nomer?.active || "",
@@ -78,7 +83,7 @@ function EditRequestNomerFond({
     if (show) {
       setFormData({
         nomerName: nomer?.name || nomer?.id || "",
-        category: type === "apartment"  ? category?.origName : null,
+        category: type === "apartment" ? category?.origName : null,
         beds: nomer?.beds || "",
         reserve: typeof nomer?.reserve === "boolean" ? nomer?.reserve : false, // Установить false, если undefined
         active: typeof nomer?.active === "boolean" ? nomer?.active : false, // Установить false, если undefined

@@ -126,7 +126,13 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
         };
     }, [show]);
 
-    const { data } = useQuery(GET_HOTELS_RELAY);
+    const { data } = useQuery(GET_HOTELS_RELAY, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
+    });
     const hotels = data?.hotels.hotels || [];
     const uniqueCities = useMemo(() => {
         return [...new Set(hotels.map(hotel => hotel.information?.city?.trim()))].sort();

@@ -205,8 +205,20 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
     };
   }, [show, closeButton]);
 
-  let infoCities = useQuery(GET_CITIES);
-  let infoAirports = useQuery(GET_AIRPORTS_RELAY);
+  let infoCities = useQuery(GET_CITIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+  let infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const [cities, setCities] = useState([]);
   const [airports, setAirports] = useState([]);
 
@@ -305,8 +317,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                   );
                 }}
                 value={
-                  cities.find((option) => option.city === formData.city) ||
-                  null
+                  cities.find((option) => option.city === formData.city) || null
                 }
                 onChange={(e, newValue) => {
                   setFormData((prevFormData) => ({
@@ -359,11 +370,14 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
                 label={"Выберите аэропорт"}
                 options={airports}
                 getOptionLabel={(option) =>
-                  option ? `${option.code} ${option.name}, город: ${option.city}`.trim() : ""
+                  option
+                    ? `${option.code} ${option.name}, город: ${option.city}`.trim()
+                    : ""
                 }
                 renderOption={(optionProps, option) => {
                   // Формируем строку для отображения
-                  const labelText = `${option.code} ${option.name}, город: ${option.city}`.trim();
+                  const labelText =
+                    `${option.code} ${option.name}, город: ${option.city}`.trim();
                   // Разбиваем строку по пробелам
                   const words = labelText.split(" ");
                   return (

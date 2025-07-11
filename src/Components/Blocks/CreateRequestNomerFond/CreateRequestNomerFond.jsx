@@ -46,6 +46,11 @@ function CreateRequestNomerFond({
   const [hotelTariff, setHotelTariff] = useState([]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
     variables: { hotelId: id },
   });
 
@@ -156,7 +161,10 @@ function CreateRequestNomerFond({
     e.preventDefault();
     setIsLoading(true);
 
-    if (!formData.nomerName.trim() || !selectedRoomKind && type !== "apartment") {
+    if (
+      !formData.nomerName.trim() ||
+      (!selectedRoomKind && type !== "apartment")
+    ) {
       alert("Пожалуйста, заполните все поля формы перед отправкой.");
       setIsLoading(false);
       return;
