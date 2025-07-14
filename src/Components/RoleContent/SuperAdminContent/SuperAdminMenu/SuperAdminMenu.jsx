@@ -272,7 +272,7 @@ const SuperAdminMenu = ({
         {menuOpen ? "Отчеты" : ""}
         {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
       </Link>
-      {/* <Link
+      <Link
         to={"/support"}
         className={`${classes.menu_items__elem} ${
           !menuOpen ? classes.jcc : ""
@@ -281,7 +281,17 @@ const SuperAdminMenu = ({
         <img src="/support.png" alt="" />
         {menuOpen ? "Поддержка" : ""}
         {!menuOpen && <span className={classes.tooltip}>Поддержка</span>}
-      </Link> */}
+      </Link>
+      <Link
+        to={"/patchNotes"}
+        className={`${classes.menu_items__elem} ${
+          !menuOpen ? classes.jcc : ""
+        } ${id == "patchNotes" && classes.menu_items__activeElem}`}
+      >
+        <img src="/patchNotes.png" alt="" style={{width:'fit-content', height:'fit-content'}} />
+        {menuOpen ? "Patch Notes" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Patch Notes</span>}
+      </Link>
     </>
   );
 };

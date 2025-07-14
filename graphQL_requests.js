@@ -2633,3 +2633,53 @@ export const GET_USER_SUPPORT_CHAT = gql`
 `;
 
 // Поддержка
+
+
+
+// Patch Notes
+
+export const CREATE_PATCH_NOTE = gql`
+  mutation CreatePatchNote($data: PatchNoteInput!) {
+    createPatchNote(data: $data) {
+      id
+      date
+      name
+      description
+      files
+    }
+  }
+`;
+
+export const GET_ALL_PATCH_NOTES = gql`
+  query GetAllPatchNotes {
+    getAllPatchNotes {
+      date
+      description
+      files
+      id
+      name
+    }
+  }
+`;
+
+export const GET_PATCH_NOTE = gql`
+  query GetPatchNote($getPatchNoteId: ID!) {
+    getPatchNote(id: $getPatchNoteId) {
+      id
+      date
+      name
+      description
+      files
+    }
+  }
+`;
+
+export const UPDATE_PATCH_NOTE = gql`
+  mutation UpdatePatchNote($updatePatchNoteId: ID!, $data: PatchNoteUpdateInput!) {
+    updatePatchNote(id: $updatePatchNoteId, data: $data) {
+      id
+    }
+  }
+`;
+
+// Patch Notes

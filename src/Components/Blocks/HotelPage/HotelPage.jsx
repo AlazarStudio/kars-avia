@@ -16,7 +16,7 @@ import AirlineAdminHotelContent from "../../RoleContent/AirlineAdminContent/Airl
 
 function HotelPage({ children, id, user, ...props }) {
   const params = useParams();
-  const token = getCookie(token);
+  const token = getCookie("token");
 
   const [selectedTab, setSelectedTab] = useState(0);
 
