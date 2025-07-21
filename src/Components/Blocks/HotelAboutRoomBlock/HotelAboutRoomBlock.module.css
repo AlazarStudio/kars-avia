@@ -90,9 +90,9 @@
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 32px;
-  height: 32px;
-  background: url('/closeSwiper.webp') no-repeat center;
+  width: 14px;
+  height: 14px;
+  background: url('/closeIcon.png') no-repeat center;
   background-size: contain;
   border: none;
   cursor: pointer;

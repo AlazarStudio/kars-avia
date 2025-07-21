@@ -38,7 +38,13 @@ const bedsMap = {
   8: "8 кроватей",
 };
 
-function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
+function HotelAboutRoomBlock({
+  isEditing,
+  handleChange,
+  index,
+  user,
+  ...props
+}) {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [swiper, setSwiper] = useState();
   const [activeIndex, setActiveIndex] = useState(0);
@@ -97,9 +103,11 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
             )}
             {props.square ? <span>{props.square} м²</span> : null}
           </div>
-          <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
-            {props.price.toLocaleString()} ₽
-          </div>
+          {user?.airlineId ? null : (
+            <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
+              {props.price.toLocaleString()} ₽
+            </div>
+          )}
         </div>
       </article>
 
@@ -168,13 +176,15 @@ function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
                 ""
               )}
               {props.square ? <span>{props.square} м²</span> : null}
-              <span className={classes.price}>
-                {props.price.toLocaleString()} ₽
-              </span>
+              {user?.airlineId ? null : (
+                <span className={classes.price}>
+                  {props.price.toLocaleString()} ₽
+                </span>
+              )}
               {/* <div
                 dangerouslySetInnerHTML={{ __html: props.description }}
               /> */}
-              <TextEditorOutput description={props.description}/>
+              <TextEditorOutput description={props.description} />
             </div>
           </div>
         </Box>

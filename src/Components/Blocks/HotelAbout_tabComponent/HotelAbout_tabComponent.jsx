@@ -345,7 +345,7 @@ function HotelAbout_tabComponent({ id }) {
                   }`}
                 >
                   {rooms.map((room) => (
-                    <HotelAboutRoomBlock key={room.id} {...room} />
+                    <HotelAboutRoomBlock key={room.id} user={user} {...room} />
                   ))}
                   {/* {console.log(hotel)} */}
                 </div>
