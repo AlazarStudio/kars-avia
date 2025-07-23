@@ -4,7 +4,7 @@ import Header from "../Header/Header";
 import { Link, useParams } from "react-router-dom";
 
 import { roles } from "../../../roles";
-import { GET_AIRLINE } from "../../../../graphQL_requests";
+import { GET_AIRLINE, getCookie } from "../../../../graphQL_requests";
 import { useQuery } from "@apollo/client";
 import SuperAdminAirlineContent from "../../RoleContent/SuperAdminContent/SuperAdminAirlineContent/SuperAdminAirlineContent";
 import DisAdminAirlineContent from "../../RoleContent/DispatcherAdminContent/DisAdminAirlineContent/DisAdminAirlineContent";
@@ -12,6 +12,7 @@ import AirlineAdminAirlineContent from "../../RoleContent/AirlineAdminContent/Ai
 
 function AirlinePage({ children, id, user, ...props }) {
   let params = useParams();
+  const token = getCookie("token");
 
   const [selectedTab, setSelectedTab] = useState(0);
 

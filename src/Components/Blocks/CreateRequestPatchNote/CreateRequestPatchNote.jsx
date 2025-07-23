@@ -197,7 +197,7 @@ function CreateRequestPatchNote({
                 type="text"
                 name="name"
                 value={formData.name}
-                placeholder="Гостиница Славянка"
+                placeholder=""
                 onChange={handleChange}
               />
               <label>Описание</label>

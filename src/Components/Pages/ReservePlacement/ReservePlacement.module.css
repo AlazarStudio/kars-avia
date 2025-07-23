@@ -1,9 +1,10 @@
 .main {
     display: flex;
+    font-weight: 500;
 }
 
 .mainSearch {
-    width: 400px;
+    width: 350px;
 }
 
 .section {
@@ -75,7 +76,7 @@
     gap: 15px;
 }
 
-.downloadsButton {
+/* .downloadsButton {
     height: 40px;
     padding: 0 10px;
     display: flex;
@@ -86,12 +87,32 @@
     border-radius: 10px;
     color: #545873;
     cursor: pointer;
+} */
+
+.downloadsButton {
+    width: 160px;
+    text-transform: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #545873;
+    /* border: 1px solid rgba(84, 88, 115, 0.62); */
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
 }
 
-
-@media (min-width: 0px) and (max-width: 1499px) {
+@media (min-width: 0px) and (max-width: 1599px) {
     .downloadsButton {
         font-size: 14px;
+    }
+
+    .mainSearch {
+        width: 300px;
     }
 }
 

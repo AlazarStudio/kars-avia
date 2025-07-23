@@ -641,8 +641,9 @@ function ExistRequest({
                         <Link
                           to={`/hotels/${formData.hotelId}/${formData.id}`}
                           onClick={() => localStorage.setItem("selectedTab", 0)}
+                          title="Шахматка"
                         >
-                          <img src="/placement_icon.png" alt="" />
+                          <img src="/table.png" alt="" />
                         </Link>
                       </div>
                     )

@@ -34,6 +34,7 @@ import { fullNotifyTime, notifyTime } from "../../../roles";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import ManifestModal from "../../Blocks/ManifestModal/ManifestModal";
 import InfoTableDataReservePassengers from "../../Blocks/InfoTableDataReservePassengers/InfoTableDataReservePassengers";
+import ManifestDropdown from "../../Blocks/ManifestDropdown/ManifestDropdown";
 
 function ReservePlacement({ children, user, ...props }) {
   const token = getCookie("token");
@@ -559,12 +560,19 @@ function ReservePlacement({ children, user, ...props }) {
           <div className={classes.downloadsButtonsWrapper}>
             {request?.files && request?.files.length !== 0 ? (
               <>
-                <Button
+                <ManifestDropdown
+                  request={request}
+                  server={server}
+                  handleFileChange={handleFileChange}
+                  file={file}
+                  user={user}
+                />
+                {/* <Button
                   onClick={() => setOpenManifestModal(true)}
                   className={classes.downloadsButton}
                 >
                   Манифест
-                </Button>
+                </Button> */}
                 {/* <input
                   type="file"
                   id="fileUpload"
@@ -602,11 +610,16 @@ function ReservePlacement({ children, user, ...props }) {
                     <label
                       htmlFor="fileUpload"
                       className={classes.downloadsButton}
+                      style={{ width: "130px" }}
                     >
                       <img
                         src="/plus.png"
                         alt=""
-                        style={{ width: "15px", filter: "invert(100%)" }}
+                        style={{
+                          width: "15px",
+                          objectFit: "contain",
+                          filter: "invert(100%)",
+                        }}
                       />{" "}
                       {/* {file ? file?.name : "Манифест"} */}
                       Манифест
@@ -627,7 +640,7 @@ function ReservePlacement({ children, user, ...props }) {
                 className={classes.downloadsButton}
               >
                 Расселение
-                <img src="/download.png" alt="" />{" "}
+                <img src="/downloadManifest.png" alt="" />{" "}
               </a>
             ) : null}
             {/* {console.log(request)} */}

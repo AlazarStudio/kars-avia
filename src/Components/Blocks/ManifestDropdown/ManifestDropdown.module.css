@@ -1,0 +1,30 @@
+.downloadsButton {
+  width: 160px;
+  text-transform: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #545873;
+  /* border: 1px solid rgba(84, 88, 115, 0.62); */
+  background-color: var(--white);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.open {
+  border-radius: 10px 10px 0px 0px;
+}
+
+.MuiMenuItem-root {
+  padding: 8px 16px;
+  font-size: 16px;
+  color: #545873;
+}
+
+.MuiListItemIcon-root {
+  min-width: 32px;
+  color: #545873;
+}

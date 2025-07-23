@@ -231,6 +231,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
+    font-weight: 600;
 }
 
 .blockInfoShow a {
@@ -268,6 +269,9 @@
     outline: none;
     border-radius: 10px;
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
     color: #545873;
     cursor: pointer;
     transition: all ease-in-out 0.3s;
@@ -277,6 +281,12 @@
     background-color: #e4e4efbd;
     border: 1px solid transparent;
     transition: all ease-in-out 0.3s;
+}
+
+.hotelAbout_info__filters button img {
+    width: 15px;
+    height: 15px;
+    object-fit: contain;
 }
 
 .chatWrapper {
@@ -323,6 +333,7 @@
     outline: none;
     border-radius: 10px;
     font-size: 14px;
+    font-weight: 600;
     color: #545873;
     cursor: pointer;
     display: flex;

@@ -662,7 +662,7 @@ function InfoTableDataReserve_passengers({
                           className={`${classes.chatButton} ${classes.active}`}
                         >
                           {"Шахматка"}
-                          <img src="/placement_icon.png" alt="" />
+                          <img src="/table.png" alt="" />
                         </Link>
                       )}
                       {user.role !== roles.hotelAdmin &&

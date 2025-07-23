@@ -541,7 +541,7 @@ function InfoTableDataReservePassengers({
                     className={`${classes.InfoTable_data_elem} ${classes.w100}`}
                   >
                     <div className={classes.blockInfoShow}>
-                      <b>{item.hotel.name}</b>
+                      <span>{item.hotel.name}</span>
                       {getAllGuests(item.hotel).length} гостей из{" "}
                       {item.hotel.passengersCount}
                     </div>
@@ -553,7 +553,7 @@ function InfoTableDataReservePassengers({
                           onClick={() => localStorage.setItem("selectedTab", 0)}
                           className={`${classes.chatButton}`}
                         >
-                          <img src="/placement_icon.png" alt="" />
+                          <img src="/table.png" alt="" />
                           {"Шахматка"}
                         </Link>
                       )}
@@ -727,7 +727,9 @@ function InfoTableDataReservePassengers({
         {user.role !== roles.hotelAdmin && (
           <div className={classes.counting}>
             <div className={classes.hotelAbout_info__filters}>
-              <button onClick={toggleLogsSidebar}>История</button>
+              <button onClick={toggleLogsSidebar}>
+                <img src="/historyLog.png" alt="" /> История
+              </button>
               <Button onClick={handleOpenEditDateModal}>
                 {!user?.airlineId
                   ? "Редактировать даты"
