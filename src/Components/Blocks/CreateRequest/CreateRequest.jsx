@@ -36,6 +36,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
   const [newStaffId, setNewStaffId] = useState(null);
   const sidebarRef = useRef();
+  const [disableAutocomplete, setDisableAutocomplete] = useState(false);
 
   // Запрос данных авиакомпаний и аэропортов
   const { data, refetch } = useQuery(GET_AIRLINES_RELAY, {
@@ -534,7 +535,6 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   // Состояние и функция для показа/скрытия окна добавления сотрудника
   const [showAddStaff, setShowAddStaff] = useState(false);
   const toggleAddStaff = () => setShowAddStaff((prev) => !prev);
-  const [disableAutocomplete, setDisableAutocomplete] = useState(false);
 
   useEffect(() => {
     if (newStaffId && !disableAutocomplete) {
