@@ -247,6 +247,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     });
     setIsEdited(false); // Сбрасываем флаг, что форма не изменена
     setWarningMessage("");
+    setDisableAutocomplete(false)
   }, [userID]);
 
   // Закрытие формы с проверкой на несохраненные изменения

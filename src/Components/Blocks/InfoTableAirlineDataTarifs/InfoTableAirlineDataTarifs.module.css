@@ -307,10 +307,12 @@
 
 /* Каждый блок категории цены */
 .priceItem {
+    height: 69px;
     flex-basis: 18%;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     /* border: 1px solid var(--hover-gray); */
     background-color: var(--hover-gray);
     padding: 8px 12px;
@@ -419,7 +421,7 @@
 
 .airportItem {
     height: 69px;
-    flex-basis: 23%;
+    flex-basis: 18%;
     display: flex;
     flex-direction: column;
     align-items: center;
