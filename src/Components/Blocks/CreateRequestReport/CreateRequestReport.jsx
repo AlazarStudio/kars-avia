@@ -36,6 +36,8 @@ function CreateRequestReport({
     position: "",
   });
 
+  const [category, setCategory] = useState(null);
+
   // Определяем, для чего создаётся отчёт: для авиакомпании или для гостиницы
   const [airOrHotel, setAirOrHotel] = useState(
     user?.airlineId ? "airline" : user?.hotelId ? "hotel" : ""
@@ -92,6 +94,13 @@ function CreateRequestReport({
       }
     }
   }, [airOrHotel, user.airlineId, airlines]);
+
+  const specialPositions =
+    category === "Эскадрилья"
+      ? positions.filter((position) => position.category === "squadron")
+      : category === "Инженеры"
+      ? positions.filter((position) => position.category === "engineers")
+      : [];
 
   // Мутация для создания отчёта
   const [createReport] = useMutation(
@@ -164,6 +173,7 @@ function CreateRequestReport({
     return (
       formData.startDate &&
       formData.endDate &&
+      category &&
       (formData.airlineId || formData.hotelId)
     );
   };
@@ -383,81 +393,102 @@ function CreateRequestReport({
                       }}
                     />
 
-                    <label>Должность</label>
+                    <label>Категория</label>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
-                      label={"По всем должностям"}
-                      labelOnFocus={"Выберите должность"}
+                      label={"Выберите категорию"}
+                      // labelOnFocus={"Выберите должность"}
                       // options={["По всем должностям", ...positions.map((position) => position.name)]}
-                      options={positions.map((position) => position.name)}
-                      value={formData.position}
+                      options={["Эскадрилья", "Инженеры"]}
+                      value={category}
                       onChange={(event, newValue) => {
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          position:
-                            newValue === "По всем должностям" ? "" : newValue,
-                        }));
+                        setCategory(newValue);
                         setIsEdited(true);
                       }}
                     />
-                    <label>Сотрудник авиакомпании</label>
-                    <MUIAutocompleteColor
-                      dropdownWidth="100%"
-                      listboxHeight={"300px"}
-                      label={"По всем сотрудникам"}
-                      labelOnFocus={"Введите сотрудника"}
-                      // Фильтрация сотрудников по должности
-                      options={(selectedAirline?.staff || []).filter((person) =>
-                        formData.position
-                          ? person?.position?.name === formData.position
-                          : true
-                      )}
-                      getOptionLabel={(option) =>
-                        option
-                          ? `${option.name || ""} ${option?.position?.name} ${
-                              option.gender
-                            }`.trim()
-                          : ""
-                      }
-                      renderOption={(optionProps, option) => {
-                        // Формируем строку для отображения
-                        const labelText = `${option.name || ""} ${
-                          option?.position?.name
-                        } ${option.gender}`.trim();
-                        // Разбиваем строку по пробелам
-                        const words = labelText.split(". ");
-                        return (
-                          <li {...optionProps} key={option.id}>
-                            {words.map((word, index) => (
-                              <span
-                                key={index}
-                                style={{
-                                  color:
-                                    index === 0
-                                      ? "black"
-                                      : index === 1
-                                      ? "gray"
-                                      : "gray",
-                                  marginRight: "4px",
-                                }}
-                              >
-                                {word}
-                              </span>
-                            ))}
-                          </li>
-                        );
-                      }}
-                      value={selectedAirline?.staff.find(
-                        (person) => person.id === formData.personId
-                      )}
-                      onChange={(event, newValue) => {
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          personId: newValue?.id || "",
-                        }));
-                        setIsEdited(true);
-                      }}
-                    />
+                    {/* {console.log(category)} */}
+                    {category && (
+                      <>
+                        <label>Должность</label>
+                        <MUIAutocomplete
+                          dropdownWidth={"100%"}
+                          label={"По всем должностям"}
+                          labelOnFocus={"Выберите должность"}
+                          // options={["По всем должностям", ...positions.map((position) => position.name)]}
+                          options={specialPositions?.map((position) => position.name)}
+                          value={formData.position}
+                          onChange={(event, newValue) => {
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              position:
+                                newValue === "По всем должностям"
+                                  ? ""
+                                  : newValue,
+                            }));
+                            setIsEdited(true);
+                          }}
+                        />
+                        <label>Сотрудник авиакомпании</label>
+                        <MUIAutocompleteColor
+                          dropdownWidth="100%"
+                          listboxHeight={"300px"}
+                          label={"По всем сотрудникам"}
+                          labelOnFocus={"Введите сотрудника"}
+                          // Фильтрация сотрудников по должности
+                          options={(selectedAirline?.staff || []).filter(
+                            (person) =>
+                              formData.position
+                                ? person?.position?.name === formData.position
+                                : true
+                          )}
+                          getOptionLabel={(option) =>
+                            option
+                              ? `${option.name || ""} ${
+                                  option?.position?.name
+                                } ${option.gender}`.trim()
+                              : ""
+                          }
+                          renderOption={(optionProps, option) => {
+                            // Формируем строку для отображения
+                            const labelText = `${option.name || ""} ${
+                              option?.position?.name
+                            } ${option.gender}`.trim();
+                            // Разбиваем строку по пробелам
+                            const words = labelText.split(". ");
+                            return (
+                              <li {...optionProps} key={option.id}>
+                                {words.map((word, index) => (
+                                  <span
+                                    key={index}
+                                    style={{
+                                      color:
+                                        index === 0
+                                          ? "black"
+                                          : index === 1
+                                          ? "gray"
+                                          : "gray",
+                                      marginRight: "4px",
+                                    }}
+                                  >
+                                    {word}
+                                  </span>
+                                ))}
+                              </li>
+                            );
+                          }}
+                          value={selectedAirline?.staff.find(
+                            (person) => person.id === formData.personId
+                          )}
+                          onChange={(event, newValue) => {
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              personId: newValue?.id || "",
+                            }));
+                            setIsEdited(true);
+                          }}
+                        />
+                      </>
+                    )}
                   </>
                 )}
 

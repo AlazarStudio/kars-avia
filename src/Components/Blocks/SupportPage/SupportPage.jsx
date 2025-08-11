@@ -17,6 +17,7 @@ import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import Support from "../Support/Support";
 import InfoTableDataSupport from "../InfoTableDataSupport/InfoTableDataSupport";
+import MUILoader from "../MUILoader/MUILoader";
 
 function SupportPage({ children, user, ...props }) {
   const token = getCookie("token");
@@ -145,6 +146,10 @@ function SupportPage({ children, user, ...props }) {
   //     }
   //   };
 
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
   // Фильтрация запросов по имени авиакомпании
   // const filteredRequests = useMemo(() => {
   //     const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
@@ -182,13 +187,13 @@ function SupportPage({ children, user, ...props }) {
         <Header>Поддержка</Header>
 
         <div className={classes.section_searchAndFilter}>
-          {/* <input
+          <input
             type="text"
             placeholder="Поиск"
             style={{ width: "500px" }}
             value={searchQuery}
             onChange={handleSearch}
-          /> */}
+          />
           {/* <Filter
                         toggleSidebar={toggleCreateSidebar}
                         handleChange={handleChange}
@@ -198,7 +203,7 @@ function SupportPage({ children, user, ...props }) {
                     /> */}
         </div>
 
-        {loading && <p>Loading...</p>}
+        {loading && <MUILoader fullHeight={"100vh"} />}
         {error && <p>Error: {error.message}</p>}
 
         {!loading && !error && (

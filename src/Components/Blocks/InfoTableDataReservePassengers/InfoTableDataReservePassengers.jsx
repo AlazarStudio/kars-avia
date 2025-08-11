@@ -434,6 +434,7 @@ function InfoTableDataReservePassengers({
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !request,
   });
 
   useEffect(() => {

@@ -139,6 +139,7 @@ export const GET_AIRLINE_POSITIONS = gql`
       id
       name
       separator
+      category
     }
   }
 `;
@@ -750,10 +751,10 @@ export const UPDATE_REQUEST_RELAY = gql`
 `;
 
 export const GET_BRONS_HOTEL = gql`
-  query Hotel($hotelId: ID!) {
+  query Hotel($hotelId: ID!, $hcPagination: HotelChessPaginationInput) {
     hotel(id: $hotelId) {
       name
-      hotelChesses {
+      hotelChesses(hcPagination: $hcPagination) {
         id
         status
         public
@@ -1641,6 +1642,38 @@ export const GET_HOTEL = gql`
         reserve
         description
         images
+      }
+      breakfast {
+        start
+        end
+      }
+      lunch {
+        start
+        end
+      }
+      dinner {
+        start
+        end
+      }
+    }
+  }
+`;
+
+export const GET_HOTEL_MIN = gql`
+  query Hotel($hotelId: ID!) {
+    hotel(id: $hotelId) {
+      id
+      name
+      access
+      capacity
+      type
+      airport {
+        id
+        name
+        code
+      }
+      information {
+        city
       }
       breakfast {
         start
@@ -2683,3 +2716,51 @@ export const UPDATE_PATCH_NOTE = gql`
 `;
 
 // Patch Notes
+
+
+// Документация
+
+export const CREATE_DOCUMENTATION = gql`
+  mutation CreateDocumentation($data: DocumentationInput!) {
+    createDocumentation(data: $data) {
+      id
+      chapter
+      category
+      name
+      description
+      files
+    }
+  }
+`;
+
+export const GET_ALL_DOCUMENTATION = gql`
+  query GetAllDocumentations {
+    getAllDocumentations {
+      id
+      name
+      description
+      files
+    }
+  }
+`;
+
+export const GET_DOCUMENTATION = gql`
+  query GetDocumentation($getDocumentationId: ID!) {
+    getDocumentation(id: $getDocumentationId) {
+      id
+      name
+      description
+      files
+    }
+  }
+`;
+
+export const UPDATE_DOCUMENTATION = gql`
+  mutation UpdateDocumentation($updateDocumentationId: ID!, $data: DocumentationUpdateInput!) {
+    updateDocumentation(id: $updateDocumentationId, data: $data) {
+      id
+    }
+  }
+`;
+
+// Документация

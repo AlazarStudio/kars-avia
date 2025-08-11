@@ -21,11 +21,14 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import { fullNotifyTime, notifyTime, statusMapping } from "../../../roles";
 import Notification from "../../Notification/Notification";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 function Reserve({ children, user, idHotel, ...props }) {
   const location = useLocation();
   const navigate = useNavigate();
   const token = getCookie("token");
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   // Получение текущей страницы из URL или localStorage
   let pageNumberReserve = new URLSearchParams(location.search).get("page");
@@ -61,6 +64,7 @@ function Reserve({ children, user, idHotel, ...props }) {
         skip: pageInfo.skip,
         take: pageInfo.take,
         status: statusFilter.split(" / "),
+        search: debouncedSearch,
       },
     },
   });
@@ -191,7 +195,6 @@ function Reserve({ children, user, idHotel, ...props }) {
     filterSelect: "",
     filterDate: "",
   });
-  const [searchQuery, setSearchQuery] = useState("");
 
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
@@ -207,45 +210,45 @@ function Reserve({ children, user, idHotel, ...props }) {
     const query = e.target.value;
     setSearchQuery(query);
 
-    if (query.trim() == "") {
-      // Если строка поиска пуста, возвращаемся к стандартному режиму
-      setIsSearching(false);
-      refetch({
-        pagination: { skip: currentPageReserve, take: 50 }, // Загрузить большое количество данных для поиска
-      }); // Запускаем повторный запрос с пагинацией
-      return;
-    }
+    // if (query.trim() == "") {
+    //   // Если строка поиска пуста, возвращаемся к стандартному режиму
+    //   setIsSearching(false);
+    //   refetch({
+    //     pagination: { skip: currentPageReserve, take: 50 }, // Загрузить большое количество данных для поиска
+    //   }); // Запускаем повторный запрос с пагинацией
+    //   return;
+    // }
 
-    setIsSearching(true); // Активируем режим поиска
+    // setIsSearching(true); // Активируем режим поиска
 
-    try {
-      const { data } = await refetch({
-        pagination: {
-          skip: 0,
-          take: 10000000,
-          status: statusFilter.split(" / "),
-        }, // Загрузить большое количество данных для поиска
-      });
+    // try {
+    //   const { data } = await refetch({
+    //     pagination: {
+    //       skip: 0,
+    //       take: 10000000,
+    //       status: statusFilter.split(" / "),
+    //     }, // Загрузить большое количество данных для поиска
+    //   });
 
-      if (data && data.reserves?.reserves) {
-        setAllFilteredData(data.reserves.reserves); // Сохраняем все данные для локального поиска
-      }
-    } catch (err) {
-      console.error("Ошибка при поиске:", err);
-    }
+    //   if (data && data.reserves?.reserves) {
+    //     setAllFilteredData(data.reserves.reserves); // Сохраняем все данные для локального поиска
+    //   }
+    // } catch (err) {
+    //   console.error("Ошибка при поиске:", err);
+    // }
   };
 
-  useEffect(() => {
-    if (!isSearching) {
-      refetch({
-        pagination: {
-          skip: pageInfo.skip,
-          take: pageInfo.take,
-          status: statusFilter.split(" / "),
-        },
-      });
-    }
-  }, [isSearching, refetch, pageInfo, statusFilter]);
+  // useEffect(() => {
+  //   if (!isSearching) {
+  //     refetch({
+  //       pagination: {
+  //         skip: pageInfo.skip,
+  //         take: pageInfo.take,
+  //         status: statusFilter.split(" / "),
+  //       },
+  //     });
+  //   }
+  // }, [isSearching, refetch, pageInfo, statusFilter]);
 
   const [hotelCity, setHotelCity] = useState();
   const { data: hotelData } = useQuery(GET_HOTEL_CITY, {
@@ -285,15 +288,15 @@ function Reserve({ children, user, idHotel, ...props }) {
       // Получаем читаемое название статуса
       const statusDisplay = statusMapping[request.status] || request.status;
       const matchesSearchQuery = [
-        request.id.toLowerCase(),
-        request.reserveNumber.toLowerCase(),
-        request.airport?.city.toLowerCase(),
-        request.airline?.name.toLowerCase(),
-        request.airport?.name.toLowerCase(),
-        request.airport?.code.toLowerCase(),
-        request.arrival.toLowerCase(),
-        request.departure.toLowerCase(),
-        request.status?.toLowerCase(),
+        // request.id.toLowerCase(),
+        // request.reserveNumber.toLowerCase(),
+        // request.airport?.city.toLowerCase(),
+        // request.airline?.name.toLowerCase(),
+        // request.airport?.name.toLowerCase(),
+        // request.airport?.code.toLowerCase(),
+        // request.arrival.toLowerCase(),
+        // request.departure.toLowerCase(),
+        // request.status?.toLowerCase(),
         statusDisplay?.toLowerCase() || "",
       ].some((field) => field.includes(searchQuery.toLowerCase()));
 

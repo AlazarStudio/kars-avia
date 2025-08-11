@@ -1,6 +1,5 @@
 .tabList {
   display: flex;
-  justify-content: space-between;
   padding: 0;
   list-style-type: none;
   margin-bottom: 40px;
@@ -29,7 +28,7 @@
 .tabPanel {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 30px;
 }
 
 @media (min-width: 0px) and (max-width: 1399px) {

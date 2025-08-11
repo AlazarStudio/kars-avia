@@ -1,228 +1,486 @@
 import React from "react";
 import classes from "./InfoTableAirlineDataTarifs.module.css";
-import InfoTable from "../InfoTable/InfoTable";
 import { roles } from "../../../roles";
+import AttachIcon from "../../../shared/icons/AttachIcon";
+import BackArrowIcon from "../../../shared/icons/BackArrowIcon";
 
 function InfoTableAirlineDataTarifs({
+  // было
   toggleRequestSidebar,
   toggleEditTarifsCategory,
   toggleEditMealPrices,
   requests,
   mealPrices,
   user,
+  // новое
+  selectedContract,
+  onOpenContract,
+  onBack,
+  openDeleteComponent,
+  openDeleteComponentCategory,
   ...props
 }) {
-  return (
-    <div className={classes.tarifsWrapper}>
-        <div className={classes.contractsContainer}>
-          {requests.map((item, index) => (
-            <div className={classes.contractRow} key={index}>
-              {/* Заголовок договора и иконки действий */}
-              <div className={classes.contractRowHeader}>
-                <span>{item.name}</span>
-                <div className={classes.contractRowActions}>
-                  <img
-                    src="/editPassenger.png"
-                    alt="Редактировать договор"
-                    onClick={() => toggleEditTarifsCategory(item)}
-                  />
-                </div>
-              </div>
-              
-              {/* <p style={{ marginTop: "10px" }}>Категории - цены</p> */}
-              <div className={classes.airportListTitle}>Категории - цены</div>
-              {/* Ряд с категориями цен */}
-              {user?.role !== roles.hotelAdmin && (
-                <div className={classes.pricesRow}>
-                  {item.prices?.priceApartment !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Апартаменты
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceApartment?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceStudio !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>Студия</span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceStudio?.toLocaleString() ?? 0} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceLuxe !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>Люкс</span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceLuxe?.toLocaleString() ?? 0} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceOneCategory !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Одноместный
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceOneCategory?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceTwoCategory !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Двухместный
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceTwoCategory?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceThreeCategory !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Трехместный
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceThreeCategory?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceFourCategory !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Четырехместный
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceFourCategory?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceFiveCategory !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Пятиместный
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceFiveCategory?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceSixCategory !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Шестиместный
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceSixCategory?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceSevenCategory !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Семиместный
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceSevenCategory?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.prices?.priceEightCategory !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>
-                        Восьмиместный
-                      </span>
-                      <span className={classes.priceItemValue}>
-                        {item.prices.priceEightCategory?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
+  // Детальная карточка
+  if (selectedContract) {
+    const item = selectedContract;
+    return (
+      <div className={classes.detailsWrapper}>
+        <div className={classes.detailsHeaderCard}>
+          <div className={classes.detailsTitle}>
+            {/* <img
+              onClick={onBack}
+              src="/public/arrow-left-back.png"
+              alt=""
+              style={{ width: "15px", cursor: "pointer" }}
+            /> */}
+            <BackArrowIcon
+              onClick={onBack}
+              width={20}
+              height={14}
+              cursorPointer={true}
+            />
+
+            {item.name}
+          </div>
+          <div className={classes.detailsActions}>
+            <button
+              className={classes.primaryBtn}
+              onClick={() => window.open(item.downloadUrl, "_blank")}
+            >
+              <img src="/downloadManifest.png" alt="" /> Скачать договор
+            </button>
+
+            <AttachIcon width={19} height={19} cursorPointer={true} />
+
+            <img
+              src="/editPassenger.png"
+              alt="Редактировать договор"
+              title="Редактировать"
+              onClick={() => toggleEditTarifsCategory(item)}
+            />
+
+            <img
+              src="/deletePassenger.png"
+              alt="Удалить договор"
+              title="Редактировать"
+              onClick={() => toggleEditTarifsCategory(item)}
+            />
+          </div>
+        </div>
+
+        {user?.role !== roles.hotelAdmin && (
+          <>
+            <div className={classes.blockTitle}>Категории — цены</div>
+            <div className={classes.pricesRow}>
+              {item.prices?.priceApartment !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Апартаменты</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceApartment?.toLocaleString()} ₽
+                  </span>
                 </div>
               )}
-
-              {/* <p style={{ marginTop: "10px" }}>Питание - цены</p> */}
-              <div className={classes.airportListTitle}>Питание - цены</div>
-              <div className={classes.pricesRow}>
-                {item.mealPrice?.breakfast !== undefined && (
-                  <div className={classes.priceItem}>
-                    <span className={classes.priceItemLabel}>Завтрак</span>
-                    <span className={classes.priceItemValue}>
-                      {item.mealPrice?.breakfast?.toLocaleString()} ₽
-                    </span>
-                  </div>
-                )}
-                {item.mealPrice?.lunch !== undefined && (
-                  <div className={classes.priceItem}>
-                    <span className={classes.priceItemLabel}>Обед</span>
-                    <span className={classes.priceItemValue}>
-                      {item.mealPrice?.lunch?.toLocaleString()} ₽
-                    </span>
-                  </div>
-                )}
-                {item.mealPrice?.dinner !== undefined && (
-                  <div className={classes.priceItem}>
-                    <span className={classes.priceItemLabel}>Ужин</span>
-                    <span className={classes.priceItemValue}>
-                      {item.mealPrice?.dinner?.toLocaleString()} ₽
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Блок аэропортов (если есть) */}
-              {item.airports && item.airports.length > 0 && (
-                <div className={classes.airportList}>
-                  <div className={classes.airportListTitle}>Аэропорты:</div>
-                  {item.airports.map((airportItem) => (
-                    <div key={airportItem.id} className={classes.airportItem}>
-                      {airportItem.airport.city} — {airportItem.airport.name}{" "}
-                      {airportItem.airport.code &&
-                        `(${airportItem.airport.code})`}
-                    </div>
-                  ))}
+              {item.prices?.priceStudio !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Студия</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceStudio?.toLocaleString() ?? 0} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceLuxe !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Люкс</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceLuxe?.toLocaleString() ?? 0} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceOneCategory !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Одноместный</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceOneCategory?.toLocaleString()} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceTwoCategory !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Двухместный</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceTwoCategory?.toLocaleString()} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceThreeCategory !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Трехместный</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceThreeCategory?.toLocaleString()} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceFourCategory !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Четырехместный</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceFourCategory?.toLocaleString()} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceFiveCategory !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Пятиместный</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceFiveCategory?.toLocaleString()} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceSixCategory !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Шестиместный</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceSixCategory?.toLocaleString()} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceSevenCategory !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Семиместный</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceSevenCategory?.toLocaleString()} ₽
+                  </span>
+                </div>
+              )}
+              {item.prices?.priceEightCategory !== undefined && (
+                <div className={classes.priceItem}>
+                  <span className={classes.priceItemLabel}>Восьмиместный</span>
+                  <span className={classes.priceItemValue}>
+                    {item.prices.priceEightCategory?.toLocaleString()} ₽
+                  </span>
                 </div>
               )}
             </div>
-          ))}
+          </>
+        )}
+
+        <div className={classes.blockTitle}>Питание — цены</div>
+        <div className={classes.pricesRow}>
+          {item.mealPrice?.breakfast !== undefined && (
+            <div className={classes.priceItem}>
+              <span className={classes.priceItemLabel}>Завтрак</span>
+              <span className={classes.priceItemValue}>
+                {item.mealPrice?.breakfast?.toLocaleString()} ₽
+              </span>
+            </div>
+          )}
+          {item.mealPrice?.lunch !== undefined && (
+            <div className={classes.priceItem}>
+              <span className={classes.priceItemLabel}>Обед</span>
+              <span className={classes.priceItemValue}>
+                {item.mealPrice?.lunch?.toLocaleString()} ₽
+              </span>
+            </div>
+          )}
+          {item.mealPrice?.dinner !== undefined && (
+            <div className={classes.priceItem}>
+              <span className={classes.priceItemLabel}>Ужин</span>
+              <span className={classes.priceItemValue}>
+                {item.mealPrice?.dinner?.toLocaleString()} ₽
+              </span>
+            </div>
+          )}
         </div>
 
-      {/* <InfoTable isScroll={true}>
-        <div className={classes.bottom}>
-          {mealPrices.map((item, index) => (
-            <div className={classes.InfoTable_data} key={index}>
-              <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
-                <div className={classes.InfoTable_data_elem_title}>
-                  {item.name}
+        {item.airports && item.airports.length > 0 && (
+          <>
+            <div className={classes.airportListTitle}>Аэропорты:</div>
+            <div className={classes.airportList}>
+              {item.airports.map((a) => (
+                // <div key={a.id} className={classes.airportItem}>
+                //   {a.airport.city} — {a.airport.name}
+                //   {a.airport.code && ` (${a.airport.code})`}
+                // </div>
+                <div className={classes.airportItem}>
+                  <span className={classes.priceItemLabel}>
+                    {a.airport.code && a.airport.code}
+                  </span>
+                  <span className={classes.priceItemValue}>
+                    {a.airport.city} — {a.airport.name}
+                  </span>
                 </div>
-              </div>
-              {user?.role !== roles.airlineAdmin && (
-                <div
-                  className={`${classes.InfoTable_data_elem} ${classes.w20}`}
-                >
-                  <div className={classes.InfoTable_data_elem_title}>
-                    {item.price} ₽
-                  </div>
-                </div>
-              )}
-              <div className={classes.infoTable_buttons}>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // Список договоров
+  return (
+    <div className={classes.contracts}>
+      {/* <div className={classes.contractsContainer}> */}
+        {requests.map((item, index) => (
+          <div
+            className={classes.contractRow}
+            key={item.id ?? index}
+            onClick={() => onOpenContract(item)}
+          >
+            <div className={classes.contractRowHeader}>
+              <span className={classes.contractRowTitle}>{item.name}</span>
+              <div
+                className={classes.contractRowActions}
+                onClick={(e) => e.stopPropagation()}
+              >
                 <img
                   src="/editPassenger.png"
-                  alt="Редактировать питание"
-                  onClick={() => toggleEditMealPrices(item)}
+                  alt="Редактировать договор"
+                  title="Редактировать"
+                  onClick={() => toggleEditTarifsCategory(item)}
+                />
+                <img
+                  src="/deletePassenger.png"
+                  alt="Удалить договор"
+                  title="Редактировать"
+                  onClick={() => toggleEditTarifsCategory(item)}
                 />
               </div>
             </div>
-          ))}
-        </div>
-      </InfoTable> */}
+          </div>
+        ))}
+      {/* </div> */}
     </div>
   );
 }
 
 export default InfoTableAirlineDataTarifs;
+
+// import React from "react";
+// import classes from "./InfoTableAirlineDataTarifs.module.css";
+// import InfoTable from "../InfoTable/InfoTable";
+// import { roles } from "../../../roles";
+
+// function InfoTableAirlineDataTarifs({
+//   toggleRequestSidebar,
+//   toggleEditTarifsCategory,
+//   toggleEditMealPrices,
+//   requests,
+//   mealPrices,
+//   user,
+//   ...props
+// }) {
+//   return (
+//     <div className={classes.tarifsWrapper}>
+//         <div className={classes.contractsContainer}>
+//           {requests.map((item, index) => (
+//             <div className={classes.contractRow} key={index}>
+//               {/* Заголовок договора и иконки действий */}
+//               <div className={classes.contractRowHeader}>
+//                 <span>{item.name}</span>
+//                 <div className={classes.contractRowActions}>
+//                   <img
+//                     src="/editPassenger.png"
+//                     alt="Редактировать договор"
+//                     onClick={() => toggleEditTarifsCategory(item)}
+//                   />
+//                 </div>
+//               </div>
+
+//               {/* <p style={{ marginTop: "10px" }}>Категории - цены</p> */}
+//               <div className={classes.airportListTitle}>Категории - цены</div>
+//               {/* Ряд с категориями цен */}
+//               {user?.role !== roles.hotelAdmin && (
+//                 <div className={classes.pricesRow}>
+//                   {item.prices?.priceApartment !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Апартаменты
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceApartment?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceStudio !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>Студия</span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceStudio?.toLocaleString() ?? 0} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceLuxe !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>Люкс</span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceLuxe?.toLocaleString() ?? 0} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceOneCategory !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Одноместный
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceOneCategory?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceTwoCategory !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Двухместный
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceTwoCategory?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceThreeCategory !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Трехместный
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceThreeCategory?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceFourCategory !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Четырехместный
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceFourCategory?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceFiveCategory !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Пятиместный
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceFiveCategory?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceSixCategory !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Шестиместный
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceSixCategory?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceSevenCategory !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Семиместный
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceSevenCategory?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                   {item.prices?.priceEightCategory !== undefined && (
+//                     <div className={classes.priceItem}>
+//                       <span className={classes.priceItemLabel}>
+//                         Восьмиместный
+//                       </span>
+//                       <span className={classes.priceItemValue}>
+//                         {item.prices.priceEightCategory?.toLocaleString()} ₽
+//                       </span>
+//                     </div>
+//                   )}
+//                 </div>
+//               )}
+
+//               {/* <p style={{ marginTop: "10px" }}>Питание - цены</p> */}
+//               <div className={classes.airportListTitle}>Питание - цены</div>
+//               <div className={classes.pricesRow}>
+//                 {item.mealPrice?.breakfast !== undefined && (
+//                   <div className={classes.priceItem}>
+//                     <span className={classes.priceItemLabel}>Завтрак</span>
+//                     <span className={classes.priceItemValue}>
+//                       {item.mealPrice?.breakfast?.toLocaleString()} ₽
+//                     </span>
+//                   </div>
+//                 )}
+//                 {item.mealPrice?.lunch !== undefined && (
+//                   <div className={classes.priceItem}>
+//                     <span className={classes.priceItemLabel}>Обед</span>
+//                     <span className={classes.priceItemValue}>
+//                       {item.mealPrice?.lunch?.toLocaleString()} ₽
+//                     </span>
+//                   </div>
+//                 )}
+//                 {item.mealPrice?.dinner !== undefined && (
+//                   <div className={classes.priceItem}>
+//                     <span className={classes.priceItemLabel}>Ужин</span>
+//                     <span className={classes.priceItemValue}>
+//                       {item.mealPrice?.dinner?.toLocaleString()} ₽
+//                     </span>
+//                   </div>
+//                 )}
+//               </div>
+
+//               {/* Блок аэропортов (если есть) */}
+//               {item.airports && item.airports.length > 0 && (
+//                 <div className={classes.airportList}>
+//                   <div className={classes.airportListTitle}>Аэропорты:</div>
+//                   {item.airports.map((airportItem) => (
+//                     <div key={airportItem.id} className={classes.airportItem}>
+//                       {airportItem.airport.city} — {airportItem.airport.name}{" "}
+//                       {airportItem.airport.code &&
+//                         `(${airportItem.airport.code})`}
+//                     </div>
+//                   ))}
+//                 </div>
+//               )}
+//             </div>
+//           ))}
+//         </div>
+
+//       {/* <InfoTable isScroll={true}>
+//         <div className={classes.bottom}>
+//           {mealPrices.map((item, index) => (
+//             <div className={classes.InfoTable_data} key={index}>
+//               <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+//                 <div className={classes.InfoTable_data_elem_title}>
+//                   {item.name}
+//                 </div>
+//               </div>
+//               {user?.role !== roles.airlineAdmin && (
+//                 <div
+//                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+//                 >
+//                   <div className={classes.InfoTable_data_elem_title}>
+//                     {item.price} ₽
+//                   </div>
+//                 </div>
+//               )}
+//               <div className={classes.infoTable_buttons}>
+//                 <img
+//                   src="/editPassenger.png"
+//                   alt="Редактировать питание"
+//                   onClick={() => toggleEditMealPrices(item)}
+//                 />
+//               </div>
+//             </div>
+//           ))}
+//         </div>
+//       </InfoTable> */}
+//     </div>
+//   );
+// }
+
+// export default InfoTableAirlineDataTarifs;
 
 {
   /* <div className={classes.InfoTable_BottomInfo}>

@@ -136,7 +136,7 @@ function EditRequestPatchNote({
                 name="name"
                 value={formData?.name || ""}
                 onChange={handleChange}
-                placeholder="Например: Стандарт, Люкс"
+                placeholder=""
                 disabled={!isEditing}
               />
 

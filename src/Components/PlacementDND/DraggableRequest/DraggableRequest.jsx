@@ -89,6 +89,19 @@ const DraggableRequest = ({
   }
 
   // console.log(hotelAccess)
+  
+  const [isBlinking, setIsBlinking] = useState(false);
+  useEffect(() => {
+    // Если это целевая заявка — включаем мерцание
+    if (requestId && request.requestID === requestId) {
+      setIsBlinking(true);
+      const timer = setTimeout(() => {
+        setIsBlinking(false);
+      }, 4000); // секунды
+
+      return () => clearTimeout(timer);
+    }
+  }, [requestId, request.requestID]);
 
   // Анимация мерцания для заявки со статусом "Ожидает"
   const blinkAnimation = `
@@ -269,9 +282,10 @@ const DraggableRequest = ({
     minHeight: request.status === "Ожидает" ? "65px" : "45px",
     backgroundColor: backgroundColor,
     animation:
-      requestId &&
-      request.requestID === requestId &&
-      request.status === "Ожидает"
+      // requestId &&
+      // request.requestID === requestId
+      // request.status === "Ожидает"
+      isBlinking
         ? "blinkBackground 1s infinite"
         : "none",
     opacity: request.isRequest ? showBlockRequest : showBlockReserve,

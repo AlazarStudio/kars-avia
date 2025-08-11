@@ -44,6 +44,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !show
   });
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
     context: {
@@ -51,7 +52,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !show
   });
+  
   const [airports, setAirports] = useState([]); // Список аэропортов
   // console.log(selectedAirline);
 
@@ -78,13 +81,19 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     reserve: false,
   });
 
-  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
+  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION, {
+    onData: () => {
+      refetch()
+    },
+    skip: !show
+  });
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
       onData: () => {
         refetch();
       },
+      skip: !show
     }
   );
   const {
@@ -97,6 +106,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !show
   });
 
   const [positions, setPositions] = useState([]);
@@ -149,7 +159,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       );
       setSelectedAirline(selectedAirline);
     }
-    refetch();
+    if (show) {
+      refetch();
+    }
   }, [show, dataSubscription, dataSubscriptionUpd, refetch]);
 
   // console.log(dataSubscriptionUpd);

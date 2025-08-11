@@ -8,7 +8,7 @@
 .section_searchAndFilter {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
 }
 
 .section_searchAndFilter_filter {
@@ -16,6 +16,10 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
+}
+
+.mainSearch {
+    width: 500px;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

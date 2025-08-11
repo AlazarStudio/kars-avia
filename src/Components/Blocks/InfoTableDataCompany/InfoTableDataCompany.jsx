@@ -32,7 +32,7 @@ function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, 
                         <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={`${item.images[0] ? `${server}${item.images[0]}` : '/no-avatar.png'}`} alt="" />
+                                    <img src={`${item.images[0] ? `${server}${item.images[0]}` : '/no-avatar.png'}`} alt="" style={{ userSelect: "none" }} />
                                 </div>
                                 <div className={classes.InfoTable_data_elem_title}>
                                     {item.name}

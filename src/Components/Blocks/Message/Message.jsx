@@ -95,7 +95,9 @@ function Message({
             reserveId: chooseReserveID
         },
         fetchPolicy: "network-only",
+        skip: (chooseRequestID == "" && chooseReserveID == "") ? true: false
     });
+
 
     // Состояние для выбранного чата
     const [messages, setMessages] = useState({ messages: [] });
@@ -205,13 +207,17 @@ function Message({
     // Сбрасываем флаг isInitialLoad при смене separator, чтобы скролл произошёл вновь
     useEffect(() => {
         setIsInitialLoad(true);
-        refetch();
-    }, [separator, show]);
+        if (chooseRequestID !== "" || chooseReserveID !== "") {
+            refetch();
+        }
+    }, [separator, show, chooseRequestID, chooseReserveID]);
     
 
     useEffect(() => {
         setIsInitialLoad(true);
-        refetch();
+        if (chooseRequestID !== "" || chooseReserveID !== "") {
+            refetch();
+        }
       
         return () => {
           // Очищаем все IntersectionObserver, чтобы при новом монтировании всё пересоздать
@@ -221,7 +227,7 @@ function Message({
           observers.current = {};
           messageRefs.current = {};
         };
-    }, [separator]);
+    }, [separator, chooseRequestID, chooseReserveID]);
 
     // console.log(messages.messages.length);
 

@@ -73,14 +73,14 @@ function ExistRequest({
     }
   }, [chooseRequestID]); // Срабатывает только при изменении chooseRequestID
 
-  const { data: subscriptionData } = useSubscription(
-    EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
-    {
-      onData: () => {
-        refetch();
-      },
-    }
-  );
+  // const { data: subscriptionData } = useSubscription(
+  //   EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
+  //   {
+  //     onData: () => {
+  //       refetch();
+  //     },
+  //   }
+  // );
 
   // Функция для разделения даты и времени
   const parseDateTime = (dateTime) => {
@@ -203,6 +203,14 @@ function ExistRequest({
     setFormDataExtend((prevState) => ({ ...prevState, [name]: value }));
   }, []);
 
+  const [updateRequestRelay] = useMutation(UPDATE_REQUEST_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
   const [handleExtend] = useMutation(SAVE_HANDLE_EXTEND_MUTATION, {
     context: {
       headers: {
@@ -253,12 +261,13 @@ function ExistRequest({
   const handleExtendChangeRequest = async () => {
     setIsLoading(true);
     try {
-      const response = await handleExtend({
+      const response = await updateRequestRelay({
         variables: {
+          updateRequestId: chooseRequestID,
           input: {
-            requestId: chooseRequestID,
-            newStart: `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`,
-            newEnd: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
+            // requestId: chooseRequestID,
+            arrival: `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`,
+            departure: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
             status:
               formData.status === "opened" || formData.status === "created"
                 ? formData.status
@@ -489,14 +498,6 @@ function ExistRequest({
       setPositions(airlinePositionsData?.getAirlinePositions);
     }
   }, [airlinePositionsData]);
-
-  const [updateRequestRelay] = useMutation(UPDATE_REQUEST_RELAY, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
 
   const handleSaveChanges = () => {
     setIsLoading(true);

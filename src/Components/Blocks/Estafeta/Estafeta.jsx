@@ -25,6 +25,7 @@ import { fullNotifyTime, notifyTime, statusMapping } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { useDebounce } from "../../../hooks/useDebounce.jsx";
+import Button from "../../Standart/Button/Button.jsx";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 function Estafeta({ user }) {
@@ -108,32 +109,32 @@ function Estafeta({ user }) {
   const [totalPages, setTotalPages] = useState(1);
 
   // Обработка данных подписки на создание заявок с проверкой статуса
-  useEffect(() => {
-    if (subscriptionData) {
-      const newRequest = subscriptionData.requestCreated;
-      const statusMatchesFilter = statusFilter
-        .split(" / ")
-        .includes(newRequest.status);
+  // useEffect(() => {
+  //   if (subscriptionData) {
+  //     const newRequest = subscriptionData.requestCreated;
+  //     const statusMatchesFilter = statusFilter
+  //       .split(" / ")
+  //       .includes(newRequest.status);
 
-      if (statusMatchesFilter) {
-        setRequests((prevRequests) => {
-          const exists = prevRequests.some(
-            (request) => request.id === newRequest.id
-          );
-          if (!exists && currentPageRelay === 0) {
-            return [newRequest, ...prevRequests];
-          } else if (!exists) {
-            setNewRequests((prevNewRequests) => [
-              newRequest,
-              ...prevNewRequests,
-            ]);
-          }
-          return prevRequests;
-        });
-      }
-    }
-    refetch();
-  }, [subscriptionData, currentPageRelay, refetch, statusFilter]);
+  //     if (statusMatchesFilter) {
+  //       setRequests((prevRequests) => {
+  //         const exists = prevRequests.some(
+  //           (request) => request.id === newRequest.id
+  //         );
+  //         if (!exists && currentPageRelay === 0) {
+  //           return [newRequest, ...prevRequests];
+  //         } else if (!exists) {
+  //           setNewRequests((prevNewRequests) => [
+  //             newRequest,
+  //             ...prevNewRequests,
+  //           ]);
+  //         }
+  //         return prevRequests;
+  //       });
+  //     }
+  //   }
+  //   refetch();
+  // }, [subscriptionData, currentPageRelay, refetch, statusFilter]);
 
   // Обновление списка заявок на основе данных запроса и новых заявок
   useEffect(() => {
@@ -157,7 +158,7 @@ function Estafeta({ user }) {
       setRequests(sortedRequests);
       setTotalPages(data.requestArchive.totalPages);
     }
-    refetch();
+    // refetch();
   }, [data, currentPageRelay, newRequests, refetch]);
 
   // Обновление данных при получении новой информации по подписке на обновление заявок
@@ -481,15 +482,10 @@ function Estafeta({ user }) {
               value={searchQuery}
               onChange={handleSearch}
             /> */}
-        <MUITextField
-          className={classes.mainSearch}
-          label={"Поиск"}
-          value={searchQuery}
-          onChange={handleSearch}
-        />
 
         <Filter
           user={user}
+          isEstafeta={true}
           isVisibleAirFiler={true}
           toggleSidebar={toggleCreateSidebar}
           handleChange={handleChange}
@@ -506,6 +502,20 @@ function Estafeta({ user }) {
           initialRange={dateRange}
           onRangeChange={setDateRange}
         />
+        <MUITextField
+          className={classes.mainSearch}
+          label={"Поиск"}
+          value={searchQuery}
+          onChange={handleSearch}
+        />
+        <Button onClick={toggleCreateSidebar}>
+          <img
+            src="/plus.png"
+            style={{ width: "10px", objectFit: "contain" }}
+            alt=""
+          />
+          Создать заявку
+        </Button>
       </div>
       {loading && <MUILoader />}
       {error && <p>Error: {error.message}</p>}

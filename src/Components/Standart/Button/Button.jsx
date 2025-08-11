@@ -6,6 +6,7 @@ function Button({ children, timeLeft, dataObject, ...props }) {
     const buttonStyles = {
         padding: props.padding,
         minWidth: props.minwidth,
+        maxWidth: props.maxWidth,
         width: props.width,
         height: props.height,
         cursor: props.cursor,

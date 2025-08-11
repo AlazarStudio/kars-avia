@@ -1,14 +1,16 @@
 .section_searchAndFilter {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 20px;
+    /* justify-content: space-between; */
 }
 
 .section_searchAndFilter_filter {
+    flex: 1;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 20px;
+    justify-content: flex-end;
+    gap: 10px;
 }
 
 .searchInput {
@@ -44,6 +46,39 @@
 
 .legendInfoText {
     font-size: 12px;
+}
+
+.downloadsButton {
+  /* width: 165px; */
+  height: 40px;
+  text-transform: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #545873;
+  /* border: 1px solid rgba(84, 88, 115, 0.62); */
+  background-color: var(--white);
+  border-radius: 10px;
+  /* padding: 10px 20px; */
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.open {
+  border-radius: 10px 10px 0px 0px;
+}
+
+.menu {
+    width: 165px;
+    border-radius: 10px;
+}
+
+.menuItem {
+    display: flex;
+    gap: 10px;
+    pointer-events: none;
+    padding: 8px 15px;
 }
 
 @media (min-width: 0px) and (max-width: 1499px) {

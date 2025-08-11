@@ -28,6 +28,7 @@ function Filter({
   needDate,
   filterLocalData,
   user,
+  isEstafeta,
   initialRange,
   onRangeChange,
   ...props
@@ -47,6 +48,7 @@ function Filter({
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !isVisibleAirFiler,
   });
   const {
     data: airportsData,
@@ -58,6 +60,7 @@ function Filter({
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !isVisibleAirFiler,
   });
   // console.log(airlinesData);
   // console.log(airportsData);
@@ -419,8 +422,9 @@ function Filter({
                     /> */}
         </>
       )}
-      {user?.role == roles.hotelAdmin ? null : (
+      {user?.role == roles.hotelAdmin || isEstafeta ? null : (
         <Button onClick={toggleSidebar} minwidth={dropdownWidth}>
+          {/* { isEstafeta  && <img src="/plus.png" style={{width:'10px', objectFit:'contain'}} alt="" /> } */}
           {buttonTitle}
         </Button>
       )}

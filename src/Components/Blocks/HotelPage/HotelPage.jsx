@@ -27,6 +27,7 @@ function HotelPage({ children, id, user, ...props }) {
       },
     },
     variables: { hotelId: id },
+    skip: !id
   });
 
   useEffect(() => {

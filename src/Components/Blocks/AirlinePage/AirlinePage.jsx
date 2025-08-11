@@ -23,6 +23,7 @@ function AirlinePage({ children, id, user, ...props }) {
       },
     },
     variables: { airlineId: id },
+    skip: !id
   });
 
   useEffect(() => {

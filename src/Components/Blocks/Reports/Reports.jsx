@@ -25,6 +25,7 @@ import {
 import { fullNotifyTime, notifyTime, roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import Notification from "../../Notification/Notification";
+import MUITextField from "../MUITextField/MUITextField";
 
 function Reports({ children, ...props }) {
   const token = getCookie("token");
@@ -259,13 +260,37 @@ function Reports({ children, ...props }) {
         <Header>Отчеты</Header>
 
         <div className={classes.section_searchAndFilter}>
-          <input
+          {/* <input
             type="text"
             placeholder="Поиск"
             style={{ width: "500px" }}
             value={searchQuery}
             onChange={handleSearch}
+          /> */}
+
+          <MUITextField
+            label={"Поиск по отчетам"}
+            className={classes.mainSearch}
+            value={searchQuery}
+            onChange={handleSearch}
           />
+          {user.role === roles.superAdmin ||
+          user.role === roles.dispatcerAdmin ? (
+            <div className={classes.filter_wrapper}>
+              <button
+                onClick={() => setIsAirline(true)}
+                className={isAirline === true ? classes.activeButton : null}
+              >
+                Авиакомпании
+              </button>
+              <button
+                onClick={() => setIsAirline(false)}
+                className={isAirline === false ? classes.activeButton : null}
+              >
+                Гостиницы
+              </button>
+            </div>
+          ) : null}
           <Filter
             toggleSidebar={toggleCreateSidebar}
             handleChange={handleChange}

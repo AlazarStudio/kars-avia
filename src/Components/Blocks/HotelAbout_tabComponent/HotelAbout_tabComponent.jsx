@@ -20,6 +20,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
 import TextEditorOutput from "../TextEditorOutput/TextEditorOutput.jsx";
+import HotelAboutTariffs from "../HotelAboutTariffs/HotelAboutTariffs.jsx";
 
 function HotelAbout_tabComponent({ id }) {
   // const [userRole, setUserRole] = useState();
@@ -118,6 +119,17 @@ function HotelAbout_tabComponent({ id }) {
                 }}
               >
                 <img src="/roomsIcon.png" alt="" /> Номера
+              </button>
+
+              <button
+                className={
+                  displayInfo == "tariffs" ? classes.activeButton : null
+                }
+                onClick={() => {
+                  setDisplayInfo("tariffs");
+                }}
+              >
+                <img src="/tariffsIcon.png" alt="" /> Тарифы
               </button>
             </div>
           </div>
@@ -331,7 +343,7 @@ function HotelAbout_tabComponent({ id }) {
                   </div>
                 </div>
               </div>
-            ) : (
+            ) : displayInfo === "rooms" ? (
               <div
                 className={
                   user?.role === roles.airlineAdmin
@@ -350,6 +362,8 @@ function HotelAbout_tabComponent({ id }) {
                   {/* {console.log(hotel)} */}
                 </div>
               </div>
+            ) : (
+                <HotelAboutTariffs tariffs={hotel?.tariffs || {}}/>
             )}
           </div>
         </div>

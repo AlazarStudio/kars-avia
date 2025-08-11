@@ -242,23 +242,39 @@
 }
 
 /* Новый контейнер для списка договоров */
+.contracts {
+    border-radius: 10px;
+    height: calc(100vh - 279px);
+    background-color: #ffffff;
+    overflow: hidden;
+    overflow-y: auto;
+}
+
 .contractsContainer {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding-right: 10px;
+    /* scrollbar-width: none; */
+    border-radius: 10px;
+    height: 100%;
+    /* padding-right: 10px; */
 }
 
 /* Карточка договора */
 .contractRow {
     background-color: #fff;
-    /* border: 1px solid #e4e4ef; */
-    border-radius: 10px;
+    border-bottom: 1px solid #e4e4ef;
+    /* border-radius: 10px; */
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.contractRow:hover {
+    background-color: var(--hover-gray);
 }
 
 /* Заголовок договора и иконки */
@@ -275,12 +291,13 @@
 /* Иконки действий (редактирование и т.п.) */
 .contractRowActions {
     display: flex;
-    gap: 10px;
+    gap: 20px;
     cursor: pointer;
 }
 
 /* Ряд с категориями тарифов */
 .pricesRow {
+    padding-inline: 20px;
     display: flex;
     /* Перенос при нехватке места */
     flex-wrap: wrap;
@@ -312,28 +329,109 @@
 }
 
 .priceItemValue {
-    font-size: 14px;
+    font-size: 12px;
     color: #666666;
     margin-top: 4px;
+    text-align: center;
 }
 
 /* Стили для списка аэропортов */
 .airportList {
-    margin-top: 8px;
-    font-size: 14px;
-    color: #444;
+    padding-inline: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
 .airportListTitle {
+    padding-inline: 20px;
     font-weight: 600;
     margin-bottom: 4px;
     font-size: 14px;
     color: #444;
 }
 
-.airportItem {
+/* .airportItem {
     margin-left: 16px;
+} */
+
+/* Детальная карточка */
+.detailsWrapper {
+    padding-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    height: calc(100vh - 292px);
+    overflow: hidden;
+    overflow-y: auto;
+    background-color: #ffffff;
+    border-radius: 10px;
 }
+
+.detailsHeaderCard {
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #E4E4EF;
+}
+
+.detailsTitle {
+    font-size: 18px;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.detailsActions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.detailsActions img {
+    cursor: pointer;
+}
+
+.primaryBtn {
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: none;
+    background: var(--hover-gray);
+    cursor: pointer;
+    margin-right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.blockTitle {
+    padding-inline: 20px;
+    font: 600 14px/20px Inter, sans-serif;
+    color: #444;
+}
+
+.contractRowTitle {
+    font: 400 16px/20px Inter, sans-serif;
+    color: #161616;
+}
+
+.airportItem {
+    height: 69px;
+    flex-basis: 23%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    /* border: 1px solid var(--hover-gray); */
+    background-color: var(--hover-gray);
+    padding: 8px 12px;
+    border-radius: 10px;
+    /* min-width: 100px; */
+    transition: all ease-in-out 0.3s;
+}
+
 
 
 @media (min-width: 0px) and (max-width: 1399px) {

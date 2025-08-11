@@ -54,6 +54,7 @@ function HotelsList({ children, user, ...props }) {
       },
     },
     variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
+    skip: isSearching
   });
 
   // в этой версии проблема с дублированием

@@ -41,6 +41,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !id,
     variables: { airlineId: id },
   });
 
@@ -54,6 +55,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !id
   });
 
   const {
@@ -66,6 +68,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !id
   });
 
   const { data: dataSubscriptionUpd } = useSubscription(
@@ -125,7 +128,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
   const [selectedNomer, setSelectedNomer] = useState({});
 
   useEffect(() => {
-    if (data) {
+    if (data && id) {
       const sortedTarifs = data.airline.department
         .map((tarif) => ({
           ...tarif,
@@ -137,7 +140,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
       // setPositions(data.airline?.department?.position);
       refetch();
     }
-  }, [data, refetch]);
+  }, [data, id, refetch]);
 
   useEffect(() => {
     if (positionsData && airlinePositionsData) {

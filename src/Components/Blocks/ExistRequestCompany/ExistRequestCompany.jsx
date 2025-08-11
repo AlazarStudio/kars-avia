@@ -278,6 +278,7 @@ function ExistRequestCompany({
                         : "/no-avatar.png"
                     }
                     alt=""
+                    style={{ userSelect: "none" }}
                   />
                 </div>
               </div>

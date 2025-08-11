@@ -296,7 +296,11 @@ function Header({ children }) {
             {notifySubscriptionData ? (
               <div className={classes.section_top_elems_notify_red}></div>
             ) : null}
-            <img src="/notify.png" alt="Уведомления" />
+            <img
+              src="/notify.png"
+              alt="Уведомления"
+              style={{ userSelect: "none" }}
+            />
           </div>
 
           {isNotificationsFullyVisible && (
@@ -331,6 +335,7 @@ function Header({ children }) {
                   : "/no-avatar.png"
               }
               alt="Профиль пользователя"
+              style={{ userSelect: "none" }}
             />
 
             {isFullyVisible && (
@@ -348,6 +353,7 @@ function Header({ children }) {
                         : "/no-avatar.png"
                     }
                     alt=""
+                    style={{ userSelect: "none" }}
                   />
                   <div className={classes.text_info}>
                     <p>{userData?.name}</p>
@@ -360,7 +366,11 @@ function Header({ children }) {
                     onClick={toggleRequestSidebar}
                   >
                     <div className={classes.settings_item__img}>
-                      <img src="/settings.png" alt="" />
+                      <img
+                        src="/settings.png"
+                        alt=""
+                        style={{ userSelect: "none" }}
+                      />
                     </div>
                     <p>Настройки</p>
                   </div>
@@ -368,7 +378,11 @@ function Header({ children }) {
                     <div
                       className={`${classes.settings_item__img} ${classes.img_padding}`}
                     >
-                      <img src="/exit.png" alt="" />
+                      <img
+                        src="/exit.png"
+                        alt=""
+                        style={{ userSelect: "none" }}
+                      />
                     </div>
                     <p>Выход</p>
                   </a>
@@ -408,11 +422,11 @@ function Header({ children }) {
               id={"relay"}
             />
 
-            <Support
+            {/* <Support
               show={showSupportSidebar}
               onClose={toggleSupportSidebar}
               user={data?.user}
-            />
+            /> */}
 
             {notifications.map((n, index) => (
               <Notification

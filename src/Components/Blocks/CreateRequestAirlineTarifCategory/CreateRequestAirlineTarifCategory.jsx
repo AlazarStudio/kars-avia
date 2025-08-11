@@ -30,7 +30,11 @@ function CreateRequestAirlineTarifCategory({
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: !show
   });
+
+  // console.log(show);
+  
 
   const [formData, setFormData] = useState({
     name: "",

@@ -8,23 +8,23 @@ import Message from "../Message/Message";
 function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
   const token = getCookie("token");
 
-  const { data } = useQuery(GET_RESERVE_REQUEST, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Apollo-Require-Preflight": "true",
-      },
-    },
-    variables: { reserveId: chooseRequestID },
-  });
+  // const { data } = useQuery(GET_RESERVE_REQUEST, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   },
+  //   variables: { reserveId: chooseRequestID },
+  //   skip: chooseRequestID === "" ? true : false
+  // });
 
   const [activeTab, setActiveTab] = useState("Комментарии");
   const [formData, setFormData] = useState(null);
   const sidebarRef = useRef();
 
-  useEffect(() => {
-    if (data && data.reserve) setFormData(data.reserve);
-  }, [data]);
+  // useEffect(() => {
+  //   if (data && data.reserve) setFormData(data.reserve);
+  // }, [data]);
 
   const closeButton = useCallback(() => {
     onClose();

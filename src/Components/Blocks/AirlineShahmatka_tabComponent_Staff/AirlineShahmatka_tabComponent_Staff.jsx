@@ -8,8 +8,6 @@ import {
   GET_AIRLINE_POSITIONS,
   GET_AIRLINE_USERS,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
-  GET_ALL_POSITIONS,
-  GET_BRONS_HOTEL,
   GET_STAFF_HOTELS,
   getCookie,
   REQUEST_CREATED_SUBSCRIPTION,
@@ -61,9 +59,9 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   useEffect(() => {
     if (data) {
       setStaff(data.airline.staff);
-      refetch();
+      // refetch();
     }
-  }, [data, refetch]);
+  }, [data]);
 
   // console.log(staff);
 
@@ -86,9 +84,9 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   useEffect(() => {
     if (bronData && bronData.airlineStaffs) {
       setHotelBronsInfo(bronData.airlineStaffs);
+      // bronRefetch();
     }
-    bronRefetch();
-  }, [bronData, bronRefetch]);
+  }, [bronData]);
   // console.log(hotelBronsInfo);
 
   // Подписки для отслеживания создания и обновления заявок

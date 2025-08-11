@@ -12,7 +12,7 @@ import DraggableRequest from "../DraggableRequest/DraggableRequest";
 import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ExistRequestInHotel from "../../Blocks/ExistRequestInHotel/ExistRequestInHotel";
-import { convertToDate, decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_ROOMS, GET_REQUESTS, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT, GET_RESERVE_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, server, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
+import { convertToDate, decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_MIN, GET_HOTEL_ROOMS, GET_REQUESTS, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT, GET_RESERVE_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, server, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
 import { } from "date-fns";
 import Notification from "../../Notification/Notification";
 import AddNewPassengerPlacement from "../../Blocks/AddNewPassengerPlacement/AddNewPassengerPlacement";
@@ -40,7 +40,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     // Получение информации об отеле
     const [hotelInfo, setHotelInfo] = useState('');
 
-    const { loading: loadingHotel, error: errorHotel, data: dataHotel } = useQuery(GET_HOTEL, {
+    const { loading: loadingHotel, error: errorHotel, data: dataHotel } = useQuery(GET_HOTEL_MIN, {
         context: {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -48,9 +48,10 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         },
         variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
+        skip: !hotelId
     });
-
-
+    // console.log(hotelId);
+    
     useEffect(() => {
         if (dataHotel && dataHotel.hotel) {
             setHotelInfo(dataHotel.hotel);
@@ -66,6 +67,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         },
         variables: { hotelId: hotelId },
         fetchPolicy: 'network-only',
+        skip: !hotelId
     });
 
     const [checkRoomsType, setCheckRoomsType] = useState(false);
@@ -119,6 +121,12 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     // При бронировании в шахматку не приходит hotelChess
 
     const [requests, setRequests] = useState([]);
+    const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+    
+      const firstDay = startOfMonth(currentMonth).toISOString();
+      const lastDay = endOfMonth(currentMonth).toISOString()
+    //   console.log(firstDay);
+    //   console.log(lastDay);
 
     const { loading: bronLoading, error: bronError, data: bronData, refetch: bronRefetch } = useQuery(GET_BRONS_HOTEL, {
         context: {
@@ -126,8 +134,15 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 Authorization: `Bearer ${token}`
             },
         },
-        variables: { hotelId: hotelId },
+        variables: { 
+            hotelId: hotelId, 
+            hcPagination: {
+                start: firstDay, 
+                end: lastDay
+            } 
+        },
         fetchPolicy: 'network-only',
+        skip: !hotelId
     });
 
     // console.log(bronData)
@@ -237,8 +252,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     // console.log(requests);
     
 
-    
-
     // Получение новых заявок для размещения
     const [newRequests, setNewRequests] = useState([])
 
@@ -248,7 +261,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                 Authorization: `Bearer ${token}`
             },
         },
-        variables: { pagination: { skip: 0, take: 99999999, status: "all" } },
+        variables: { pagination: { skip: 0, take: 99999999, status: ["created", "opened"] } },
         fetchPolicy: 'network-only',
     });
 
@@ -283,7 +296,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         ) {
             const filteredRequests = dataBrons.requests.requests.filter(
                 (request) =>
-                    (request.status === "created" || request.status === "opened") &&
+                    // (request.status === "created" || request.status === "opened") &&
                     request.airport.city === hotelInfo.information?.city
             );
 
@@ -324,7 +337,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState(null);
 
-    const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
     const [activeDragItem, setActiveDragItem] = useState(null);
     const [activeDragItemOld, setActiveDragItemOld] = useState(null);
 
@@ -1711,30 +1723,54 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     //     );
     // }, [rooms, filteredRequests, searchQuery]);
 
-    const filteredRooms = useMemo(() => {
-        // Если нет поискового запроса, просто берём все комнаты,
-        // иначе фильтруем по существующей логике
-        const baseFiltered = !searchQuery
-          ? rooms
-          : rooms.filter((room) =>
-              filteredRequests.some((request) => request.room?.id === room.roomId) ||
-              room.id.toLowerCase().includes(searchQuery.toLowerCase())
-            );
+    // const filteredRooms = useMemo(() => {
+    //     // Если нет поискового запроса, просто берём все комнаты,
+    //     // иначе фильтруем по существующей логике
+    //     const baseFiltered = !searchQuery
+    //       ? rooms
+    //       : rooms.filter((room) =>
+    //           filteredRequests.some((request) => request.room?.id === room.roomId) ||
+    //           room.id.toLowerCase().includes(searchQuery.toLowerCase())
+    //         );
       
-        // Сортируем:
-        // 1) Сначала по полю `reserve` так, чтобы false шёл раньше true
-        // 2) Если `reserve` одинаковое, то сравниваем по `type` по возрастанию
-        return [...baseFiltered].sort((a, b) => {
-          if (a.reserve === b.reserve) {
-            // Если type числовой:
+    //     // Сортируем:
+    //     // 1) Сначала по полю `reserve` так, чтобы false шёл раньше true
+    //     // 2) Если `reserve` одинаковое, то сравниваем по `type` по возрастанию
+    //     return [...baseFiltered].sort((a, b) => {
+    //       if (a.reserve === b.reserve) {
+    //         // Если type числовой:
+    //         return a.type - b.type;
+    //         // Если type — строка, то используйте:
+    //         // return a.type.localeCompare(b.type);
+    //       }
+    //       // false должно идти раньше true
+    //       return a.reserve ? 1 : -1;
+    //     });
+    //   }, [rooms, filteredRequests, searchQuery]);
+
+    const filteredRooms = useMemo(() => {
+        // 1) Отбираем baseFiltered по вашему поиску
+        const baseFiltered = !searchQuery
+            ? rooms
+            : rooms.filter(room =>
+                filteredRequests.some(request => request.room?.id === room.roomId) ||
+                room.id.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+        // 2) К каждому объекту «приклеиваем» массив заявок для этой комнаты
+        const withRequests = baseFiltered.map(room => ({
+            ...room,
+            requests: filteredRequests.filter(req => req.room?.id === room.roomId)
+        }));
+
+        // 3) Сортируем по reserve и по type
+        return withRequests.sort((a, b) => {
+            if (a.reserve === b.reserve) {
             return a.type - b.type;
-            // Если type — строка, то используйте:
-            // return a.type.localeCompare(b.type);
-          }
-          // false должно идти раньше true
-          return a.reserve ? 1 : -1;
+            }
+            return a.reserve ? 1 : -1;
         });
-      }, [rooms, filteredRequests, searchQuery]);
+        }, [rooms, filteredRequests, searchQuery]);
 
     //   console.log(filteredRooms);
       
@@ -2078,8 +2114,31 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
       const { height } = useWindowSize();
 
-    //   console.log(height);
       
+// в начале компонента
+const hasScrolledRef = useRef(false);
+    // Получаем индекс комнаты, где есть нужная requestId:
+    const roomIndex = useMemo(() => {
+    if (!requestId) return -1;
+    return filteredRooms.findIndex(room =>
+        room.requests?.some(req => req.requestID === requestId)
+    );
+    }, [filteredRooms, requestId]);
+
+    // По изменению roomIndex или requestId — скроллим:
+    // useEffect(() => {
+    // if (roomIndex >= 0 && listRef.current) {
+    //     listRef.current.scrollToItem(roomIndex, "center");
+    // }
+    // }, [roomIndex]);
+    useEffect(() => {
+    if (roomIndex >= 0 && listRef.current && !hasScrolledRef.current) {
+        listRef.current.scrollToItem(roomIndex, "center");
+        hasScrolledRef.current = true;  // помечаем, что прокрутка уже была
+    }
+    }, [roomIndex]);
+
+
 
     return (
         <>
@@ -2123,16 +2182,16 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 width="100%"
                                 // height={listHeight}
                                 height={(user.role === 'HOTELADMIN' && height > 880) 
-                                    ? 600 : 
+                                    ? 610 : 
                                     (user.role === 'HOTELADMIN' && height < 830)
-                                    ? 410 :
+                                    ? 420 :
                                     (user.role === 'HOTELADMIN' && height < 880) 
-                                    ? 520 : 
+                                    ? 530 : 
                                     (user.role !== 'HOTELADMIN' && height < 830)
-                                    ? 380 :
+                                    ? 390 :
                                     (user.role !== 'HOTELADMIN' && height < 900)
-                                    ? 450
-                                    : 520} // или другое подходящее значение
+                                    ? 460
+                                    : 530} // или другое подходящее значение
                                 overscanCount={5}
                                 style={{ overflowY: 'scroll', overflowX:'hidden' }}
                             >
@@ -2290,11 +2349,10 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
 
 
                     {!checkRoomsType && 
-                        <Box sx={{ minWidth: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd', borderRadius: '10px' }}>
-                            <Typography variant="h6" sx={{ padding: '10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Box sx={{ minWidth: "330px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd', borderRadius: '10px' }}>
+                            <Typography variant="h6" sx={{ padding: '15px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по эскадрильи в городе {hotelInfo.information?.city}
                             </Typography>
-
                             {newRequests?.length > 0 && (user?.hotelId && hotelInfo?.access || !user?.hotelId) ?
                                 <Box sx={{ display: 'flex', gap: '5px', flexDirection: 'column', height: 'fit-content', maxHeight: '485px', padding: "5px", overflow: 'hidden', overflowY: 'scroll' }}>
                                     {newRequests
@@ -2303,17 +2361,19 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                             if (a.requestID === requestId) return -1; // Если `a` — нужный request, он идёт первым
                                             if (b.requestID === requestId) return 1; // Если `b` — нужный request, он идёт позже
                                             return 0; // Остальные остаются на своих местах
-                                        }).filter(request => {
+                                        })
+                                        .filter(request => {
                                             // если условие ложно — не фильтруем, возвращаем всё
                                             const shouldFilter = (user?.hotelId && hotelInfo?.access)
                                             
                                             return shouldFilter
                                             ? request.hotelId === hotelId  // при shouldFilter=true оставляем только совпадающие
+                                            
                                             : true;                         // при shouldFilter=false — пропускаем все
                                         })
                                         .map((request) => (
                                             <DraggableRequest
-                                                hotelAccess={hotelInfo?.access || false}
+                                                hotelAccess={hotelInfo?.access || true}
                                                 requestId={requestId}
                                                 userRole={user.role}
                                                 key={request.id}
@@ -2339,7 +2399,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     }
 
                     {checkRoomsType && !showReserveInfo && !showModalForAddHotelInReserve &&
-                        <Box sx={{ minWidth: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd', borderRadius: '10px' }}>
+                        <Box sx={{ minWidth: "330px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd', borderRadius: '10px' }}>
                             <Typography variant="h6" sx={{ padding:'10px', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                 Заявки по пассажирам в городе {hotelInfo.information?.city}
                             </Typography>
@@ -2571,8 +2631,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     : user?.role === roles.hotelAdmin && height < 800 
                     ? '75vh' 
                     : user?.role !== roles.hotelAdmin && height > 870 
-                    ? '71vh' 
-                    : '67vh'} />
+                    ? '75vh' 
+                    : '68vh'} />
                 </Box>
             )}
         </>

@@ -22,6 +22,7 @@ import Notification from "../../Notification/Notification";
 import InfoTableDataPatchNotes from "../InfoTableDataPatchNotes/InfoTableDataPatchNotes";
 import CreateRequestPatchNote from "../CreateRequestPatchNote/CreateRequestPatchNote";
 import EditRequestPatchNote from "../EditRequestPatchNote/EditRequestPatchNote";
+import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector";
 
 function PatchNotesList({ children, user, ...props }) {
   const token = getCookie("token");
@@ -31,6 +32,11 @@ function PatchNotesList({ children, user, ...props }) {
   const [filterData, setFilterData] = useState({ filterSelect: "" });
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
+
+  const [dateRange, setDateRange] = useState({
+    startDate: null,
+    endDate: null,
+  });
 
   const { loading, error, data, refetch } = useQuery(GET_ALL_PATCH_NOTES, {
     context: {
@@ -95,13 +101,24 @@ function PatchNotesList({ children, user, ...props }) {
 
   const filteredRequests = useMemo(() => {
     return companyData.filter((request) => {
-      return (
+      const { startDate, endDate } = dateRange;
+      const reqDate = new Date(request.date);
+
+      const matchesSearch =
         request.description.includes(searchQuery.toLowerCase()) ||
         request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        convertToDate(request.date, false).includes(searchQuery.toLowerCase())
-      );
+        convertToDate(request.date, false).includes(searchQuery.toLowerCase());
+
+      const matchesDate =
+        startDate && endDate
+          ? reqDate >= startDate && reqDate <= endDate
+          : true;
+
+      return matchesSearch && matchesDate;
     });
-  }, [isSearching, companyData, filterData, searchQuery]);
+  }, [isSearching, companyData, filterData, searchQuery, dateRange]);
+
+  // console.log(dateRange);
 
   const [patchNoteId, setPatchNoteId] = useState();
   const [showEditPatchNote, setShowEditPatchNote] = useState(false);
@@ -112,7 +129,7 @@ function PatchNotesList({ children, user, ...props }) {
   return (
     <>
       <div className={classes.section}>
-        <Header>Patch Notes</Header>
+        <Header>Обновления</Header>
 
         <div className={classes.section_searchAndFilter}>
           <MUITextField
@@ -121,15 +138,24 @@ function PatchNotesList({ children, user, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
+          <DateRangeModalSelector
+            width={"150px"}
+            initialRange={dateRange}
+            onChange={(start, end) =>
+              setDateRange({ startDate: start, endDate: end })
+            }
+          />
           {(user.role === roles.superAdmin ||
             user.role === roles.dispatcerAdmin) && (
-            <Filter
-              toggleSidebar={toggleCreateSidebar}
-              handleChange={handleChange}
-              filterData={filterData}
-              buttonTitle={"Добавить патч"}
-              needDate={false}
-            />
+            <div className={classes.filter}>
+              <Filter
+                toggleSidebar={toggleCreateSidebar}
+                handleChange={handleChange}
+                filterData={filterData}
+                buttonTitle={"Добавить патч"}
+                needDate={false}
+              />
+            </div>
           )}
         </div>
         {loading && <MUILoader />}

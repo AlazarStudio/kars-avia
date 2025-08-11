@@ -27,6 +27,7 @@ import { fullNotifyTime, notifyTime } from "../../../roles.js";
 import InfoTableAirlineDataTarifs from "../InfoTableAirlineDataTarifs/InfoTableAirlineDataTarifs.jsx";
 import CreateRequestAirlineTarifCategory from "../CreateRequestAirlineTarifCategory/CreateRequestAirlineTarifCategory.jsx";
 import EditRequestAirlineTarifCategory from "../EditRequestAirlineTarifCategory/EditRequestAirlineTarifCategory.jsx";
+import MUITextField from "../MUITextField/MUITextField.jsx";
 
 function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const token = getCookie("token");
@@ -73,6 +74,8 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const [showDelete, setShowDelete] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
   const [searchTarif, setSearchTarif] = useState("");
+
+  const [selectedContract, setSelectedContract] = useState(null);
 
   const [notifications, setNotifications] = useState([]);
 
@@ -303,9 +306,60 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   };
 
   const filteredRequestsTarif = addTarif.filter((request) => {
+
     return (
       request.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
-      String(request.price).toLowerCase().includes(searchTarif.toLowerCase())
+      String(request?.mealPrice?.breakfast)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request?.mealPrice?.dinner)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request?.mealPrice?.lunch)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      request.airports.some((i) =>
+        i.airport.name.toLowerCase().includes(searchTarif.toLowerCase())
+      ) ||
+      request.airports.some((i) =>
+        i.airport.code.toLowerCase().includes(searchTarif.toLowerCase())
+      ) ||
+      request.airports.some((i) =>
+        i.airport.city.toLowerCase().includes(searchTarif.toLowerCase())
+      ) ||
+      String(request.prices.priceApartment)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceStudio)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceLuxe)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceOneCategory)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceTwoCategory)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceThreeCategory)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceFourCategory)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceFiveCategory)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceSixCategory)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceSevenCategory)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase()) ||
+      String(request.prices.priceEightCategory)
+        .toLowerCase()
+        .includes(searchTarif.toLowerCase())
     );
   });
 
@@ -315,16 +369,20 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     { name: "Ужин", price: 0 },
   ];
 
+    const onOpenContract = (contract) => setSelectedContract(contract);
+  const onBackFromDetails = () => setSelectedContract(null);
+
+
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
-        {/* <input
-                    type="text"
-                    placeholder="Поиск по тарифам"
-                    style={{ 'width': '500px' }}
-                    value={searchTarif}
-                    onChange={handleSearchTarif}
-                /> */}
+        <MUITextField
+        className={classes.mainSearch}
+          label={"Поиск по договорам"}
+          value={searchTarif}
+          onChange={handleSearchTarif}
+        />
+
         <div className={classes.section_searchAndFilter_filter}>
           {/* <Filter
                         toggleSidebar={toggleTarifs}
@@ -352,6 +410,9 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
           user={user}
+          selectedContract={selectedContract}
+          onOpenContract={onOpenContract}
+          onBack={onBackFromDetails}
         />
       )}
 

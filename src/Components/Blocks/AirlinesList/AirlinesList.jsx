@@ -49,6 +49,7 @@ function AirlinesList({ children, ...props }) {
       },
     },
     variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
+    skip: isSearching
   });
 
   useEffect(() => {

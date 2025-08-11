@@ -146,6 +146,7 @@
 } */
 
 .InfoTable_data_elem_avatar {
+    min-width: 40px;
     max-width: 40px;
     height: 40px;
     border-radius: 50px;
