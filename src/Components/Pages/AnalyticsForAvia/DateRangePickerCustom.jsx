@@ -11,7 +11,7 @@ function DateRangePickerCustom({ onChange, onClose, value }) {
       startDate: addDays(new Date(), -7),
       endDate: new Date(),
       key: "selection",
-    }, ,
+    },
   ]);
 
   const overlayStyles = {
