@@ -9,9 +9,9 @@ import Header from "../../../Blocks/Header/Header";
 
 const tabs = [
   { key: "airlines", label: "Авиакомпании" },
-  // { key: "dispatchers", label: "Диспетчеры" },
-  // { key: "hotels", label: "Гостиницы" },
-  // { key: "support", label: "Техподдержка" }
+  { key: "dispatchers", label: "Диспетчеры" },
+  { key: "hotels", label: "Гостиницы" },
+  { key: "support", label: "Техподдержка" }
 ];
 
 function Analytics() {

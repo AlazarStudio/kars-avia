@@ -9,6 +9,7 @@
   display: flex;
   gap: 12px;
   margin-bottom: 24px;
+  margin-top: 20px;
 }
 
 .tabButton {

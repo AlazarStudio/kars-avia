@@ -3,7 +3,7 @@ export const airlineAnalyticsMock = {
     name: "Азимут",
     createdRequests: [
       { date: "2025-08-01T00:00:00Z", count: 11 },
-      { date: "2025-08-02T00:00:00Z", count: 5 },
+      { date: "2025-08-02T00:00:00Z", count: 0 },
       { date: "2025-08-03T00:00:00Z", count: 6 },
       { date: "2025-08-04T00:00:00Z", count: 8 },
       { date: "2025-08-05T00:00:00Z", count: 9 },

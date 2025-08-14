@@ -143,7 +143,7 @@ function AnalyticsChart({
                             backgroundColor: entry.color
                           }} />
                           <span style={{ fontSize: 16, color: "#333" }}>
-                            {entry.value} — {percent}%
+                            {entry.value} — {percent || 0}%
                           </span>
                         </li>
                       );

@@ -1,11 +1,12 @@
 .container {
   display: flex;
   gap: 24px;
-  height: calc(100vh - 110px);
+  height: calc(100vh - 170px);
+  overflow: hidden;
 }
 
 .sidebar {
-  width: 360px;
+  width: 300px;
   height: 100%;
   background: #fff;
   border-radius: 10px;
@@ -28,6 +29,7 @@
   align-items: center;
   gap: 8px;
 }
+
 
 .viewAllBtn {
   width: 100%;
@@ -75,6 +77,10 @@
   gap: 8px;
 }
 
+.listItem p{
+  width: calc(100% - 35px);
+}
+
 .listItem:hover {
   background: #9CA4D91A;
 }
@@ -88,19 +94,29 @@
   background: #fff;
   border-radius: 8px;
   padding: 24px;
+  height: 100%;
+}
+
+.contentWrapper{
+  overflow: hidden;
+  overflow-y: scroll;
+  height: 667px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .graphs {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 
 .row {
   display: flex;
-  gap: 24px;
+  gap: 20px;
+  padding-right: 10px;
 }
-
 
 .wrapper {
   background: #f8f9fd;
