@@ -1,0 +1,36 @@
+.analyticsContainer {
+  padding: 24px;
+  background-color: #f1f4fb;
+  height: 100vh;
+  width: 100%;
+}
+
+.tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.tabButton {
+  padding: 10px 20px;
+  font-size: 16px;
+  background: #e4e4ef;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #545873;
+  transition: opacity 0.3s;
+  opacity: 0.5;
+}
+
+.tabButton:hover {
+  opacity: 1;
+}
+
+.active {
+  background: #e4e4ef;
+  opacity: 1;
+}
+
+/* .tabContent {} */

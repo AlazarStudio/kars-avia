@@ -13,6 +13,7 @@ import PatchNotesList from "../../Blocks/PatchNotesList/PatchNotesList";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import RegisterOfContracts from "../../Blocks/RegisterOfContracts/RegisterOfContracts";
 import MyCompany from "../../Blocks/MyCompany/MyCompany";
+import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
 
 const DispatcherAdminContent = ({ user }) => {
   const { id, hotelID, airlineID } = useParams();
@@ -28,6 +29,7 @@ const DispatcherAdminContent = ({ user }) => {
       {id === "airlines" && <AirlinesList user={user} />}
       {id === "registerOfContracts" && <RegisterOfContracts user={user} />}
       {id === "reports" && <Reports user={user} />}
+      {id === "analytics" && <Analytics/>}
       {id === "documentation" && <DocumentationList user={user} />}
       {id === "updates" && <UpdatesList user={user} />}
       {id === "myCompany" && <MyCompany user={user} />}
