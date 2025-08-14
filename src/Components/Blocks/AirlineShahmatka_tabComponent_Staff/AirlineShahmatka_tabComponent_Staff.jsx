@@ -33,14 +33,39 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+
+  // Преобразование в ISO формат
+  const startOfMonthISO = new Date(currentYear, currentMonth, 1).toISOString();
+  const endOfMonthISO = new Date(currentYear, currentMonth + 1, 0).toISOString();
+
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_USERS, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { airlineId: id },
+    variables: { airlineId: id, hcPagination:{
+      start: startOfMonthISO,
+      end: endOfMonthISO
+    } },
   });
+
+    // Функции для переключения месяцев
+  const previousMonth = () => {
+    setCurrentMonth((prevMonth) => (prevMonth === 0 ? 11 : prevMonth - 1));
+    if (currentMonth === 0) {
+      setCurrentYear((prevYear) => prevYear - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    setCurrentMonth((prevMonth) => (prevMonth === 11 ? 0 : prevMonth + 1));
+    if (currentMonth === 11) {
+      setCurrentYear((prevYear) => prevYear + 1);
+    }
+  };
 
   const {
     loading: positionsLoading,
@@ -65,28 +90,28 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
   // console.log(staff);
 
-  const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
+  // const [hotelBronsInfo, setHotelBronsInfo] = useState([]);
 
-  const {
-    loading: bronLoading,
-    error: bronError,
-    data: bronData,
-    refetch: bronRefetch,
-  } = useQuery(GET_STAFF_HOTELS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: { airlineStaffsId: id },
-  });
+  // const {
+  //   loading: bronLoading,
+  //   error: bronError,
+  //   data: bronData,
+  //   refetch: bronRefetch,
+  // } = useQuery(GET_STAFF_HOTELS, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   },
+  //   variables: { airlineStaffsId: id },
+  // });
 
-  useEffect(() => {
-    if (bronData && bronData.airlineStaffs) {
-      setHotelBronsInfo(bronData.airlineStaffs);
-      // bronRefetch();
-    }
-  }, [bronData]);
+  // useEffect(() => {
+  //   if (bronData && bronData.airlineStaffs) {
+  //     setHotelBronsInfo(bronData.airlineStaffs);
+  //     // bronRefetch();
+  //   }
+  // }, [bronData]);
   // console.log(hotelBronsInfo);
 
   // Подписки для отслеживания создания и обновления заявок
@@ -148,22 +173,6 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const toggleCategoryUpdate = () => {
     setshowUpdateCategory(!showUpdateCategory);
   };
-
-  const dataInfo =
-    hotelBronsInfo &&
-    hotelBronsInfo.flatMap((person) =>
-      person.hotelChess.map((hotel) => ({
-        start: hotel.start,
-        requestNumber: hotel?.request?.requestNumber,
-        startTime: hotel.startTime,
-        end: hotel.end,
-        endTime: hotel.endTime,
-        clientID: hotel.clientId,
-        requestId: hotel.requestId,
-        reserveId: hotel.reserveId,
-        hotelName: hotel.hotel.name,
-      }))
-    );
 
   // console.log(dataInfo.map((item) => item.requestId));
   // console.log(dataInfo);
@@ -234,6 +243,22 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
+  const dataInfo =
+    staff &&
+    staff.flatMap((person) =>
+      person.hotelChess.map((hotel) => ({
+        start: hotel.start,
+        requestNumber: hotel?.request?.requestNumber,
+        startTime: hotel.startTime,
+        end: hotel.end,
+        endTime: hotel.endTime,
+        clientID: hotel.clientId,
+        requestId: hotel.requestId,
+        reserveId: hotel.reserveId,
+        hotelName: hotel.hotel.name,
+      }))
+    );
+
   const deleteComponentRef = useRef();
 
   const closeDeleteComponent = () => {
@@ -267,8 +292,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     }
   };
 
-  if (loading || bronLoading) return <MUILoader fullHeight={"70vh"} />;
-  if (error || bronError)
+  // if (loading || bronLoading) return <MUILoader fullHeight={"70vh"} />;
+    // if (error || bronError)
+    // return <p>Error: {error ? error.message : bronError.message}</p>;
+  if (loading) return <MUILoader fullHeight={"70vh"} />;
+  if (error)
     return <p>Error: {error ? error.message : bronError.message}</p>;
 
   return (
@@ -298,8 +326,12 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         </div>
       </div>
 
-      {hotelBronsInfo.length === 0 && (
+      {/* {hotelBronsInfo.length === 0 && (
         <AirlineTablePageComponent
+          currentMonth={currentMonth}
+          currentYear={currentYear}
+          previousMonth={previousMonth}
+          nextMonth={nextMonth}
           toggleCategoryUpdate={toggleCategoryUpdate}
           maxHeight={
             user.role === roles.dispatcerAdmin || user.role === roles.superAdmin
@@ -317,10 +349,14 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           user={user}
           positions={positions}
         />
-      )}
+      )} */}
 
-      {hotelBronsInfo.length !== 0 && (
+      {/* {hotelBronsInfo.length !== 0 && ( */}
         <AirlineTablePageComponent
+          currentMonth={currentMonth}
+          currentYear={currentYear}
+          previousMonth={previousMonth}
+          nextMonth={nextMonth}
           toggleCategoryUpdate={toggleCategoryUpdate}
           maxHeight={
             user.role === roles.dispatcerAdmin || user.role === roles.superAdmin
@@ -338,7 +374,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           user={user}
           positions={positions}
         />
-      )}
+      {/* )} */}
 
       <CreateRequestAirlineStaff
         id={id}

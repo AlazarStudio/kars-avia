@@ -309,7 +309,7 @@ const DisAdminMenu = ({
           {menuOpen ? "Отчеты" : ""}
           {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
         </Link>
-        <Link
+        {/* <Link
           to={"/updates"}
           className={`${classes.menu_items__elem} ${
             !menuOpen ? classes.jcc : ""
@@ -338,7 +338,7 @@ const DisAdminMenu = ({
           </svg>
           {menuOpen ? "Обновления" : ""}
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
-        </Link>
+        </Link> */}
         <Link
           to={"/analytics"}
           className={`${classes.menu_items__elem} ${
@@ -416,7 +416,7 @@ const DisAdminMenu = ({
         className={classes.bottomMenu}
         style={menuOpen ? {} : { display: "flex", flexDirection: "column" }}
       >
-        <Link
+        {/* <Link
           to={"/documentation"}
           className={`${classes.menu_items__elem___bottom} ${
             !menuOpen ? classes.jcc : ""
@@ -430,7 +430,7 @@ const DisAdminMenu = ({
           {!menuOpen && (
             <span className={classes.tooltipBottom}>Инструкции</span>
           )}
-        </Link>
+        </Link> */}
         <Link
           to={"/patchNotes"}
           className={`${classes.menu_items__elem___bottom} ${
