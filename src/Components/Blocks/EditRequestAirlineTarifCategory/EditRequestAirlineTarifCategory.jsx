@@ -8,6 +8,7 @@ import {
   getCookie,
   UPDATE_AIRLINE_TARIF,
   UPDATE_HOTEL_TARIF,
+  UPDATE_PRICE_TARIFFS,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
@@ -20,6 +21,7 @@ function EditRequestAirlineTarifCategory({
   tarif,
   onSubmit,
   addTarif,
+  refetchAllCategories,
   id,
   setAddTarif,
   user,
@@ -70,6 +72,15 @@ function EditRequestAirlineTarifCategory({
     },
   });
 
+  // const [updateTariffCategory] = useMutation(UPDATE_PRICE_TARIFFS, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //       // "Apollo-Require-Preflight": "true",
+  //     },
+  //   },
+  // });
+
   useEffect(() => {
     if (infoAirports.data) {
       setAirports(infoAirports.data.airports || []);
@@ -82,7 +93,7 @@ function EditRequestAirlineTarifCategory({
     city: airport.city,
   }));
 
-  const [tarifNames, setTarifNames] = useState([]);
+  // const [tarifNames, setTarifNames] = useState([]);
   const sidebarRef = useRef();
 
   const resetForm = () => {
@@ -186,13 +197,15 @@ function EditRequestAirlineTarifCategory({
             },
           },
         });
+        // onSubmit();
         resetForm();
         onClose();
         setIsLoading(false);
-        addNotification("Добавление договора прошло успешно.", "success");
+        addNotification("Изменение соглашения прошло успешно.", "success");
+        refetchAllCategories();
       } catch (error) {
         setIsLoading(false);
-        alert("Произошло ошибка при добавлении тарифа.");
+        alert("Произошло ошибка при изменении соглашения.");
         console.error("Произошла ошибка при выполнении запроса:", error);
       }
     }
@@ -215,61 +228,61 @@ function EditRequestAirlineTarifCategory({
     }
   }, [show]);
 
-  useEffect(() => {
-    const names = addTarif.map((tarif) => ({
-      id: tarif.id,
-      name: tarif.name,
-    }));
-    setTarifNames(names);
-  }, [addTarif]);
+  // useEffect(() => {
+  //   const names = addTarif.map((tarif) => ({
+  //     id: tarif.id,
+  //     name: tarif.name,
+  //   }));
+  //   setTarifNames(names);
+  // }, [addTarif]);
 
-  const categories = [
-    {
-      value: "onePlace",
-      label: "Одноместный",
-    },
-    {
-      value: "twoPlace",
-      label: "Двухместный",
-    },
-    {
-      value: "threePlace",
-      label: "Трехместный",
-    },
-    {
-      value: "fourPlace",
-      label: "Четырехместный",
-    },
-    {
-      value: "fivePlace",
-      label: "Пятиместный",
-    },
-    {
-      value: "sixPlace",
-      label: "Шестиместный",
-    },
-    {
-      value: "sevenPlace",
-      label: "Семиместный",
-    },
-    {
-      value: "eightPlace",
-      label: "Восьмиместный",
-    },
-  ];
+  // const categories = [
+  //   {
+  //     value: "onePlace",
+  //     label: "Одноместный",
+  //   },
+  //   {
+  //     value: "twoPlace",
+  //     label: "Двухместный",
+  //   },
+  //   {
+  //     value: "threePlace",
+  //     label: "Трехместный",
+  //   },
+  //   {
+  //     value: "fourPlace",
+  //     label: "Четырехместный",
+  //   },
+  //   {
+  //     value: "fivePlace",
+  //     label: "Пятиместный",
+  //   },
+  //   {
+  //     value: "sixPlace",
+  //     label: "Шестиместный",
+  //   },
+  //   {
+  //     value: "sevenPlace",
+  //     label: "Семиместный",
+  //   },
+  //   {
+  //     value: "eightPlace",
+  //     label: "Восьмиместный",
+  //   },
+  // ];
 
-  const apartmentCategories = [
-    {
-      value: "apartment",
-      label: "Апартаменты",
-    },
-    {
-      value: "studio",
-      label: "Студия",
-    },
-  ];
+  // const apartmentCategories = [
+  //   {
+  //     value: "apartment",
+  //     label: "Апартаменты",
+  //   },
+  //   {
+  //     value: "studio",
+  //     label: "Студия",
+  //   },
+  // ];
 
-  const useCategories = type === "apartment" ? apartmentCategories : categories;
+  // const useCategories = type === "apartment" ? apartmentCategories : categories;
 
   // console.log("formData.airportIds:", formData.airportIds);
   // console.log("airportOptions:", airportOptions);
@@ -280,7 +293,7 @@ function EditRequestAirlineTarifCategory({
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Изменить договор</div>
+        <div className={classes.requestTitle_name}>Изменить соглашение</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
           <img src="/close.png" alt="" />
         </div>
@@ -398,7 +411,7 @@ function EditRequestAirlineTarifCategory({
               <label>Стоимость люкса</label>
               <input
                 type="number"
-                name="priceEightCategory"
+                name="priceLuxe"
                 value={formData.priceLuxe}
                 onChange={handleChange}
                 placeholder="Введите стоимость"

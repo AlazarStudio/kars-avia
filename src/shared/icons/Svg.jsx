@@ -14,12 +14,12 @@ export default function Svg({
       height={height}
       // viewBox="0 0 24 24"
       fill="none"
-      strokeWidth="1.8"
+      strokeWidth="1"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden={title ? undefined : true}
       role={title ? "img" : undefined}
-      cursor={rest.cursorPointer && "pointer"}
+      // cursor={rest.cursorPointer && "pointer"}
       {...rest}
     >
       {title ? <title>{title}</title> : null}

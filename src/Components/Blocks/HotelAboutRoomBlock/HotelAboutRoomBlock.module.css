@@ -47,7 +47,7 @@
 }
 
 .price {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   color: var(--main-gray);
 }
@@ -77,9 +77,9 @@
 }
 
 .modalContainer {
-  width: 1100px;
-  max-height: 500px;
-  min-height: 500px;
+  width: 1300px;
+  max-height: 600px;
+  min-height: 600px;
   border-radius: 8px;
   display: flex;
   overflow: hidden;
@@ -112,16 +112,16 @@
 
 .modalImage {
   width: 100%;
-  min-height: 500px;
-  max-height: 500px;
+  min-height: 600px;
+  max-height: 600px;
   object-fit: contain;
   position: relative;
 }
 
 .modalImageAbs {
   width: 100%;
-  min-height: 500px;
-  max-height: 500px;
+  min-height: 600px;
+  max-height: 600px;
   object-fit: cover;
   position: absolute;
   top: 0;

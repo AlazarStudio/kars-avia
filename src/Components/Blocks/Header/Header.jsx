@@ -20,6 +20,9 @@ import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Notification from "../../Notification/Notification";
 import MUILoader from "../MUILoader/MUILoader";
+import MyCompanyIcon from "../../../shared/icons/MyCompanyIcon";
+import SettingsIcon from "../../../shared/icons/SettingsIcon";
+import ExitIcon from "../../../shared/icons/ExitIcon";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -363,29 +366,30 @@ function Header({ children }) {
                 <div>
                   <div
                     className={classes.settings_item}
+                    onClick={() => {navigate('/myCompany')}}
+                  >
+                    <div className={classes.settings_item__img}>
+                      <MyCompanyIcon width={20} height={19} />
+                    </div>
+                    <p>Моя компания</p>
+                  </div>
+                  <div
+                    className={classes.settings_item}
                     onClick={toggleRequestSidebar}
                   >
                     <div className={classes.settings_item__img}>
-                      <img
-                        src="/settings.png"
-                        alt=""
-                        style={{ userSelect: "none" }}
-                      />
+                      <SettingsIcon width={21} height={22} />
                     </div>
                     <p>Настройки</p>
                   </div>
-                  <a className={classes.settings_item} onClick={logout}>
+                  <div className={classes.settings_item} onClick={logout}>
                     <div
                       className={`${classes.settings_item__img} ${classes.img_padding}`}
                     >
-                      <img
-                        src="/exit.png"
-                        alt=""
-                        style={{ userSelect: "none" }}
-                      />
+                      <ExitIcon width={21} height={22}/>
                     </div>
                     <p>Выход</p>
-                  </a>
+                  </div>
                 </div>
               </div>
             )}

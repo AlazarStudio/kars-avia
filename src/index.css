@@ -140,6 +140,15 @@ textarea {
   grid-template-columns: 1fr auto;
 }
 
+.ql-snow {
+    padding-top: 15px;
+}
+
+.ql-editor p {
+  line-height: 150% !important;
+  padding-bottom: 12px !important;
+}
+
 
 
 

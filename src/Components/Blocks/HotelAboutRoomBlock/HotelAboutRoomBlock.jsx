@@ -163,19 +163,21 @@ function HotelAboutRoomBlock({
             </div>
             <div className={classes.modalRight}>
               <p className={classes.modalTitle}>{props.name}</p>
-              {props.roomsCount && props.roomsCount > 0 ? (
-                <p className="blueText">
-                  {props.roomsCount}{" "}
-                  {normalize_count_form(Number(props.roomsCount), [
-                    "номер",
-                    "номера",
-                    "номеров",
-                  ])}
-                </p>
-              ) : (
-                ""
-              )}
-              {props.square ? <span>{props.square} м²</span> : null}
+              <div style={{display:'flex', gap:'20px'}}>
+                {props.roomsCount && props.roomsCount > 0 ? (
+                  <p className="blueText">
+                    {props.roomsCount}{" "}
+                    {normalize_count_form(Number(props.roomsCount), [
+                      "номер",
+                      "номера",
+                      "номеров",
+                    ])}
+                  </p>
+                ) : (
+                  ""
+                )}
+                {props.square ? <span className="blueText">{props.square} м²</span> : null}
+              </div>
               {user?.airlineId ? null : (
                 <span className={classes.price}>
                   {props.price.toLocaleString()} ₽

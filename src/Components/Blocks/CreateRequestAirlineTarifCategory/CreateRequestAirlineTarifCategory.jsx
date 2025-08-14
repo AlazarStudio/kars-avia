@@ -5,9 +5,11 @@ import Sidebar from "../Sidebar/Sidebar.jsx";
 
 import {
   GET_AIRPORTS_RELAY,
+  GET_ALL_TARIFFS,
   getCookie,
   UPDATE_AIRLINE_TARIF,
   UPDATE_HOTEL_TARIF,
+  UPDATE_PRICE_TARIFFS,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
@@ -18,6 +20,8 @@ function CreateRequestAirlineTarifCategory({
   id,
   onClose,
   addTarif,
+  selectedContract,
+  refetchAllCategories,
   setAddTarif,
   user,
   type,
@@ -30,11 +34,10 @@ function CreateRequestAirlineTarifCategory({
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !show
+    skip: !show,
   });
 
   // console.log(show);
-  
 
   const [formData, setFormData] = useState({
     name: "",
@@ -58,6 +61,15 @@ function CreateRequestAirlineTarifCategory({
   const [airports, setAirports] = useState([]); // Список аэропортов
 
   const [updateAirlineTariff] = useMutation(UPDATE_AIRLINE_TARIF, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
+
+  const [updateTariffCategory] = useMutation(UPDATE_PRICE_TARIFFS, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -141,6 +153,9 @@ function CreateRequestAirlineTarifCategory({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // console.log(selectedContract?.id);
+  // console.log(id);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -177,6 +192,28 @@ function CreateRequestAirlineTarifCategory({
           },
         },
       });
+
+      // console.log(
+      //   response_update_tariff.data.updateAirline.prices[
+      //     response_update_tariff.data.updateAirline.prices.length - 1
+      //   ].id
+      // );
+      // console.log(selectedContract.id);
+      // console.log(id);
+      await updateTariffCategory({
+        variables: {
+          input: {
+            id: selectedContract.id,
+            airlinePrices: [
+              response_update_tariff.data.updateAirline.prices[
+                response_update_tariff.data.updateAirline.prices.length - 1
+              ].id,
+            ],
+            airlineId: id,
+          },
+        },
+      });
+      refetchAllCategories();
       resetForm();
       onClose();
       setIsLoading(false);
@@ -265,7 +302,7 @@ function CreateRequestAirlineTarifCategory({
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Добавить тариф</div>
+        <div className={classes.requestTitle_name}>Добавить соглашение</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
           <img src="/close.png" alt="" />
         </div>
@@ -299,13 +336,13 @@ function CreateRequestAirlineTarifCategory({
                 }}
               /> */}
 
-              <label>Название договора</label>
+              <label>Название соглашения</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Например: Договор №1"
+                placeholder="Например: Дополнительное соглашение №1"
               />
 
               <label>Аэропорты</label>

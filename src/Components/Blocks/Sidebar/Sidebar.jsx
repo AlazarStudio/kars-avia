@@ -14,6 +14,7 @@ function Sidebar({ show, sidebarRef, children }) {
 
     return (
         <div
+            key={show ? "show" : "hide"}
             ref={sidebarRef}
             className={`${classes.createRequest} ${isMounted ? classes.show : ""}`}
         >

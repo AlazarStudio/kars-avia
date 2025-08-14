@@ -1,3 +1,18 @@
+.menuContainer {
+  height: 79vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.menuMain {
+  flex: 1;
+}
+
+.bottomMenu {
+  display: flex;
+  gap: 5px;
+}
+
 .menu_items__elem {
   color: var(--menu-gray);
   display: flex;
@@ -8,6 +23,23 @@
   font-weight: 600;
   line-height: 21.79px;
   padding: 15px 20px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.1s ease-in-out;
+  position: relative;
+  overflow: visible;
+}
+
+.menu_items__elem___bottom {
+  color: var(--menu-gray);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  /* line-height: 21.79px; */
+  padding: 5px 10px;
   cursor: pointer;
   border-radius: 10px;
   transition: all 0.1s ease-in-out;
@@ -33,8 +65,49 @@
   z-index: 999;
 }
 
+.tooltipBottom {
+  position: absolute;
+  top: -20px;
+  right: -44px;
+  background-color: #4e4e4e;
+  color: #fff;
+  border-radius: 10px;
+  padding: 7px;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity ease-in-out 0.3s;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 999;
+}
+
+.tooltipBottom2 {
+  position: absolute;
+  top: 40px;
+  right: -44px;
+  background-color: #4e4e4e;
+  color: #fff;
+  border-radius: 10px;
+  padding: 5px;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity ease-in-out 0.3s;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 999;
+
+}
+
 /* Показывать подсказку при hover на элементе */
 .menu_items__elem:hover .tooltip {
+  opacity: 0.9;
+  visibility: visible;
+}
+
+.menu_items__elem___bottom:hover .tooltipBottom,
+.menu_items__elem___bottom:hover .tooltipBottom2 {
   opacity: 0.9;
   visibility: visible;
 }
@@ -61,6 +134,19 @@
   opacity: 1;
 }
 
+.menu_items__elem img {
+  width: 22px;
+  height: 22px;
+  transition: all 0.1s ease-in-out;
+  filter: invert(1);
+  opacity: 0.5;
+}
+
+.menu_items__elem:hover img {
+  stroke: var(--white);
+  opacity: 1;
+}
+
 .menu_items__activeElem {
   background: var(--menu-item-bg);
   color: var(--white);
@@ -68,6 +154,16 @@
 
 .menu_items__activeElem svg path {
   stroke: var(--white);
+}
+
+.menu_items__activeElem img {
+  stroke: var(--white);
+  opacity: 1;
+}
+
+.menu_items__activeElem___bottom {
+  /* background: var(--menu-item-bg); */
+  color: var(--white);
 }
 
 .menu_items__elem .countRequests {
@@ -92,4 +188,10 @@
 
 .menu_items__activeElem .countRequests {
   opacity: 1;
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+  .menu_items__elem {
+    font-size: 14px;
+  }
 }

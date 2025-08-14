@@ -2175,6 +2175,9 @@ export const UPDATE_AIRLINE_TARIF = gql`
   mutation UpdateAirline($updateAirlineId: ID!, $input: UpdateAirlineInput!) {
     updateAirline(id: $updateAirlineId, input: $input) {
       id
+      prices {
+        id
+      }
     }
   }
 `;
@@ -2764,3 +2767,131 @@ export const UPDATE_DOCUMENTATION = gql`
 `;
 
 // Документация
+
+
+// Компания и договоры
+
+export const GET_ALL_COMPANIES = gql`
+  query GetAllCompany {
+    getAllCompany {
+      id
+      name
+      information {
+        inn
+        ogrn
+      }
+    }
+  }
+`;
+
+export const GET_COMPANY = gql`
+  query GetCompany($getCompanyId: ID) {
+    getCompany(id: $getCompanyId) {
+      id
+      name
+      information {
+        country
+        city
+        address
+        index
+        email
+        number
+        inn
+        ogrn
+        rs
+        bank
+        bik
+        link
+        description
+      }
+    }
+  }  
+`;
+
+export const CREATE_COMPANY = gql`
+  mutation CreateCompany($input: CompanyInput) {
+    createCompany(input: $input) {
+      id
+      name
+      information {
+        inn
+        ogrn
+      }
+    }
+  }
+`;
+
+export const UPDATE_COMPANY = gql`
+  mutation UpdateCompany($input: CompanyInput) {
+    updateCompany(input: $input) {
+      id
+    }
+  }
+`;
+
+export const CREATE_PRICE_TARIFFS = gql`
+  mutation CreatePriceCategory($input: PriceCategoryInput) {
+    createPriceCategory(input: $input) {
+      id
+      name
+    }
+  }
+`;
+
+export const UPDATE_PRICE_TARIFFS = gql`
+  mutation UpdatePriceCategory($input: PriceCategoryInput) {
+    updatePriceCategory(input: $input) {
+      id
+    }
+  }
+`;
+
+export const GET_ALL_TARIFFS = gql`
+  query GetAllPriceCategory($filter: PriceCategoryFilterInput) {
+    getAllPriceCategory(filter: $filter) {
+      id
+      name
+      airlinePrices {
+        id
+        prices {
+          priceApartment
+          priceStudio
+          priceLuxe
+          priceOneCategory
+          priceTwoCategory
+          priceThreeCategory
+          priceFourCategory
+          priceFiveCategory
+          priceSixCategory
+          priceSevenCategory
+          priceEightCategory
+        }
+        mealPrice {
+          breakfast
+          lunch
+          dinner
+        }
+        name
+        airports {
+          id
+          airport {
+            id
+            name
+            code
+            city
+          }
+        }
+      }
+      airline {
+        id
+        name
+      }
+      company {
+        id
+        name
+      }
+    }
+  }
+`;
+
+// Компания и договоры

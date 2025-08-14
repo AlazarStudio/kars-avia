@@ -1,162 +1,147 @@
-import React from "react";
+import React, { useState } from "react";
 import classes from "./InfoTableAirlineDataTarifs.module.css";
 import { roles } from "../../../roles";
 import AttachIcon from "../../../shared/icons/AttachIcon";
 import BackArrowIcon from "../../../shared/icons/BackArrowIcon";
 
 function InfoTableAirlineDataTarifs({
-  // было
   toggleRequestSidebar,
   toggleEditTarifsCategory,
   toggleEditMealPrices,
   requests,
   mealPrices,
+  toggleTarifs,
   user,
-  // новое
   selectedContract,
   onOpenContract,
-  onBack,
+  onBack, // назад к списку договоров
   openDeleteComponent,
   openDeleteComponentCategory,
   ...props
 }) {
-  // Детальная карточка
-  if (selectedContract) {
-    const item = selectedContract;
+  // локальный выбор доп. соглашения (airlinePrices[])
+  const [selectedAgreement, setSelectedAgreement] = useState(null);
+
+  // ====== Уровень 2: Детали выбранного доп. соглашения ======
+  if (selectedContract && selectedAgreement) {
+    const a = selectedAgreement;
+
     return (
       <div className={classes.detailsWrapper}>
         <div className={classes.detailsHeaderCard}>
           <div className={classes.detailsTitle}>
-            {/* <img
-              onClick={onBack}
-              src="/public/arrow-left-back.png"
-              alt=""
-              style={{ width: "15px", cursor: "pointer" }}
-            /> */}
             <BackArrowIcon
-              onClick={onBack}
+              onClick={() => setSelectedAgreement(null)}
               width={20}
               height={14}
-              cursorPointer={true}
             />
-
-            {item.name}
+            {a.name}
           </div>
           <div className={classes.detailsActions}>
-            <button
-              className={classes.primaryBtn}
-              onClick={() => window.open(item.downloadUrl, "_blank")}
-            >
-              <img src="/downloadManifest.png" alt="" /> Скачать договор
-            </button>
-
-            <AttachIcon width={19} height={19} cursorPointer={true} />
-
+            {/* при необходимости подставьте ссылку на скачивание именно соглашения */}
+            {/* <button className={classes.primaryBtn} onClick={() => window.open(a.downloadUrl, "_blank")}>
+              <img src="/downloadManifest.png" alt="" /> Скачать
+            </button> */}
+            {/* <AttachIcon width={19} height={19} /> */}
             <img
               src="/editPassenger.png"
               alt="Редактировать договор"
               title="Редактировать"
-              onClick={() => toggleEditTarifsCategory(item)}
-            />
-
-            <img
-              src="/deletePassenger.png"
-              alt="Удалить договор"
-              title="Редактировать"
-              onClick={() => toggleEditTarifsCategory(item)}
+              onClick={() => toggleRequestSidebar(a)}
             />
           </div>
         </div>
 
+        {/* Категории — цены */}
         {user?.role !== roles.hotelAdmin && (
           <>
             <div className={classes.blockTitle}>Категории — цены</div>
             <div className={classes.pricesRow}>
-              {item.prices?.priceApartment !== undefined && (
+              {a.prices?.priceApartment !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Апартаменты</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceApartment?.toLocaleString()} ₽
+                    {a.prices.priceApartment?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceStudio !== undefined && (
+              {a.prices?.priceStudio !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Студия</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceStudio?.toLocaleString() ?? 0} ₽
+                    {a.prices.priceStudio?.toLocaleString() ?? 0} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceLuxe !== undefined && (
+              {a.prices?.priceLuxe !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Люкс</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceLuxe?.toLocaleString() ?? 0} ₽
+                    {a.prices.priceLuxe?.toLocaleString() ?? 0} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceOneCategory !== undefined && (
+              {a.prices?.priceOneCategory !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Одноместный</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceOneCategory?.toLocaleString()} ₽
+                    {a.prices.priceOneCategory?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceTwoCategory !== undefined && (
+              {a.prices?.priceTwoCategory !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Двухместный</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceTwoCategory?.toLocaleString()} ₽
+                    {a.prices.priceTwoCategory?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceThreeCategory !== undefined && (
+              {a.prices?.priceThreeCategory !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Трехместный</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceThreeCategory?.toLocaleString()} ₽
+                    {a.prices.priceThreeCategory?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceFourCategory !== undefined && (
+              {a.prices?.priceFourCategory !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Четырехместный</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceFourCategory?.toLocaleString()} ₽
+                    {a.prices.priceFourCategory?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceFiveCategory !== undefined && (
+              {a.prices?.priceFiveCategory !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Пятиместный</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceFiveCategory?.toLocaleString()} ₽
+                    {a.prices.priceFiveCategory?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceSixCategory !== undefined && (
+              {a.prices?.priceSixCategory !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Шестиместный</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceSixCategory?.toLocaleString()} ₽
+                    {a.prices.priceSixCategory?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceSevenCategory !== undefined && (
+              {a.prices?.priceSevenCategory !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Семиместный</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceSevenCategory?.toLocaleString()} ₽
+                    {a.prices.priceSevenCategory?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
-              {item.prices?.priceEightCategory !== undefined && (
+              {a.prices?.priceEightCategory !== undefined && (
                 <div className={classes.priceItem}>
                   <span className={classes.priceItemLabel}>Восьмиместный</span>
                   <span className={classes.priceItemValue}>
-                    {item.prices.priceEightCategory?.toLocaleString()} ₽
+                    {a.prices.priceEightCategory?.toLocaleString()} ₽
                   </span>
                 </div>
               )}
@@ -164,49 +149,47 @@ function InfoTableAirlineDataTarifs({
           </>
         )}
 
+        {/* Питание — цены */}
         <div className={classes.blockTitle}>Питание — цены</div>
         <div className={classes.pricesRow}>
-          {item.mealPrice?.breakfast !== undefined && (
+          {a.mealPrice?.breakfast !== undefined && (
             <div className={classes.priceItem}>
               <span className={classes.priceItemLabel}>Завтрак</span>
               <span className={classes.priceItemValue}>
-                {item.mealPrice?.breakfast?.toLocaleString()} ₽
+                {a.mealPrice?.breakfast?.toLocaleString()} ₽
               </span>
             </div>
           )}
-          {item.mealPrice?.lunch !== undefined && (
+          {a.mealPrice?.lunch !== undefined && (
             <div className={classes.priceItem}>
               <span className={classes.priceItemLabel}>Обед</span>
               <span className={classes.priceItemValue}>
-                {item.mealPrice?.lunch?.toLocaleString()} ₽
+                {a.mealPrice?.lunch?.toLocaleString()} ₽
               </span>
             </div>
           )}
-          {item.mealPrice?.dinner !== undefined && (
+          {a.mealPrice?.dinner !== undefined && (
             <div className={classes.priceItem}>
               <span className={classes.priceItemLabel}>Ужин</span>
               <span className={classes.priceItemValue}>
-                {item.mealPrice?.dinner?.toLocaleString()} ₽
+                {a.mealPrice?.dinner?.toLocaleString()} ₽
               </span>
             </div>
           )}
         </div>
 
-        {item.airports && item.airports.length > 0 && (
+        {/* Аэропорты */}
+        {a.airports && a.airports.length > 0 && (
           <>
             <div className={classes.airportListTitle}>Аэропорты:</div>
-            <div className={classes.airportList}>
-              {item.airports.map((a) => (
-                // <div key={a.id} className={classes.airportItem}>
-                //   {a.airport.city} — {a.airport.name}
-                //   {a.airport.code && ` (${a.airport.code})`}
-                // </div>
-                <div className={classes.airportItem}>
+            <div className={classes.pricesRow}>
+              {a.airports.map((ap) => (
+                <div className={classes.priceItem} key={ap.id}>
                   <span className={classes.priceItemLabel}>
-                    {a.airport.code && a.airport.code}
+                    {ap.airport.code || ""}
                   </span>
                   <span className={classes.priceItemValue}>
-                    {a.airport.city} — {a.airport.name}
+                    {ap.airport.city} — {ap.airport.name}
                   </span>
                 </div>
               ))}
@@ -217,39 +200,123 @@ function InfoTableAirlineDataTarifs({
     );
   }
 
-  // Список договоров
+  // ====== Уровень 1: Карточка договора с плитками доп. соглашений ======
+  if (selectedContract) {
+    const contract = selectedContract;
+
+    return (
+      <div className={classes.detailsWrapper}>
+        <div className={classes.detailsHeaderCard}>
+          <div className={classes.detailsTitle}>
+            <BackArrowIcon onClick={onBack} width={20} height={14} />
+            {contract.name}
+          </div>
+          <div className={classes.detailsActions}>
+            <button
+              className={classes.primaryBtn}
+              onClick={() => window.open(contract.downloadUrl, "_blank")}
+            >
+              <img src="/downloadManifest.png" alt="" /> Скачать договор
+            </button>
+            {/* <AttachIcon width={19} height={19} /> */}
+            <img
+              src="/editPassenger.png"
+              alt="Редактировать договор"
+              title="Редактировать"
+              onClick={() => toggleEditTarifsCategory(contract)}
+            />
+            {/* <img
+              src="/deletePassenger.png"
+              alt="Удалить договор"
+              title="Удалить"
+              onClick={() => toggleEditTarifsCategory(contract)}
+            /> */}
+          </div>
+        </div>
+
+        <div className={classes.blockTitle}>
+          Дополнительные соглашения{" "}
+          <div className={classes.addStaff} onClick={toggleTarifs}>
+            <img src="/plus.png" alt="" />
+          </div>
+        </div>
+        <div className={classes.agreementsRow}>
+          {/* <div className={classes.priceItem}>
+              <span className={classes.priceItemLabel}>Завтрак</span>
+              <span className={classes.priceItemValue}>
+                {a.mealPrice?.breakfast?.toLocaleString()} ₽
+              </span>
+            </div> */}
+          {contract.airlinePrices?.map((ag) => (
+            <div
+              key={ag.id}
+              className={classes.airportItem}
+              onClick={() => setSelectedAgreement(ag)}
+            >
+              <div
+                className={classes.priceItemLabel}
+                style={{ textAlign: "center" }}
+              >
+                {ag.name}
+              </div>
+              {/* лёгкий саммари — можно убрать/заменить */}
+              {/* <div className={classes.agreementMeta}>
+                {(ag.prices?.priceOneCategory ??
+                  ag.prices?.priceTwoCategory ??
+                  ag.prices?.priceApartment ??
+                  0) > 0 && (
+                  <span>
+                    от{" "}
+                    {(ag.prices.priceOneCategory ??
+                      ag.prices.priceTwoCategory ??
+                      ag.prices.priceApartment
+                    )?.toLocaleString()}{" "}
+                    ₽
+                  </span>
+                )}
+                {ag.mealPrice &&
+                  (ag.mealPrice.breakfast ||
+                    ag.mealPrice.lunch ||
+                    ag.mealPrice.dinner) && <span>• питание</span>}
+              </div> */}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ====== Список договоров ======
   return (
     <div className={classes.contracts}>
-      {/* <div className={classes.contractsContainer}> */}
-        {requests.map((item, index) => (
-          <div
-            className={classes.contractRow}
-            key={item.id ?? index}
-            onClick={() => onOpenContract(item)}
-          >
-            <div className={classes.contractRowHeader}>
-              <span className={classes.contractRowTitle}>{item.name}</span>
-              <div
-                className={classes.contractRowActions}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <img
-                  src="/editPassenger.png"
-                  alt="Редактировать договор"
-                  title="Редактировать"
-                  onClick={() => toggleEditTarifsCategory(item)}
-                />
-                <img
-                  src="/deletePassenger.png"
-                  alt="Удалить договор"
-                  title="Редактировать"
-                  onClick={() => toggleEditTarifsCategory(item)}
-                />
-              </div>
+      {requests?.map((item, index) => (
+        <div
+          className={classes.contractRow}
+          key={item.id ?? index}
+          onClick={() => onOpenContract(item)}
+        >
+          <div className={classes.contractRowHeader}>
+            <span className={classes.contractRowTitle}>{item.name}</span>
+            <div
+              className={classes.contractRowActions}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src="/editPassenger.png"
+                alt="Редактировать договор"
+                title="Редактировать"
+                onClick={() => toggleEditTarifsCategory(item)}
+              />
+              {/* <img
+                src="/deletePassenger.png"
+                alt="Удалить договор"
+                title="Удалить"
+                onClick={() => toggleEditTarifsCategory(item)}
+              /> */}
             </div>
           </div>
-        ))}
-      {/* </div> */}
+        </div>
+      ))}
     </div>
   );
 }

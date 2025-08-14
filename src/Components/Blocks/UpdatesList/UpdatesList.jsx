@@ -1,30 +1,23 @@
 import React, { useState, useEffect, useMemo } from "react";
-import classes from "./PatchNotesList.module.css";
+import classes from "./UpdatesList.module.css";
 import Filter from "../Filter/Filter";
-import CreateRequestHotel from "../CreateRequestHotel/CreateRequestHotel";
 import Header from "../Header/Header";
-import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
-import { useQuery, useSubscription } from "@apollo/client";
-import {
-  convertToDate,
-  GET_ALL_PATCH_NOTES,
-  GET_HOTELS,
-  GET_HOTELS_SUBSCRIPTION,
-  GET_HOTELS_UPDATE_SUBSCRIPTION,
-  getCookie,
-} from "../../../../graphQL_requests";
+import { useQuery } from "@apollo/client";
+import { GET_ALL_DOCUMENTATION, getCookie } from "../../../../graphQL_requests";
 import { fullNotifyTime, notifyTime, roles } from "../../../roles";
-import ReactPaginate from "react-paginate";
-import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
-import InfoTableDataPatchNotes from "../InfoTableDataPatchNotes/InfoTableDataPatchNotes";
 import CreateRequestPatchNote from "../CreateRequestPatchNote/CreateRequestPatchNote";
 import EditRequestPatchNote from "../EditRequestPatchNote/EditRequestPatchNote";
-import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector";
+import InfoTableDataDocumentation from "../InfoTableDataDocumentation/InfoTableDataDocumentation";
+import CreateRequestDocumentation from "../CreateRequestDocumentation/CreateRequestDocumentation";
+import EditRequestDocumentation from "../EditRequestDocumentation/EditRequestDocumentation";
+import CreateRequestUpdates from "../CreateRequestUpdates/CreateRequestUpdates";
+import EditRequestUpdates from "../EditRequestUpdates/EditRequestUpdates";
+import InfoTableDataUpdates from "../InfoTableDataUpdates/InfoTableDataUpdates";
 
-function PatchNotesList({ children, user, ...props }) {
+function UpdatesList({ children, user, ...props }) {
   const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -33,12 +26,7 @@ function PatchNotesList({ children, user, ...props }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
 
-  const [dateRange, setDateRange] = useState({
-    startDate: null,
-    endDate: null,
-  });
-
-  const { loading, error, data, refetch } = useQuery(GET_ALL_PATCH_NOTES, {
+  const { loading, error, data, refetch } = useQuery(GET_ALL_DOCUMENTATION, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -48,11 +36,11 @@ function PatchNotesList({ children, user, ...props }) {
 
   // в этой версии проблема с дублированием
   useEffect(() => {
-    if (data && data.getAllPatchNotes) {
+    if (data && data.getAllDocumentations) {
       // const sortedHotels = [...data.getAllPatchNotes].sort((a, b) =>
       //   a.information?.city?.localeCompare(b.information?.city)
       // );
-      setCompanyData(data.getAllPatchNotes);
+      setCompanyData(data.getAllDocumentations);
     }
 
     // if (dataSubscription && dataSubscription.hotelCreated) {
@@ -101,35 +89,26 @@ function PatchNotesList({ children, user, ...props }) {
 
   const filteredRequests = useMemo(() => {
     return companyData.filter((request) => {
-      const { startDate, endDate } = dateRange;
-      const reqDate = new Date(request.date);
-
-      const matchesSearch =
+      return (
         request.description.includes(searchQuery.toLowerCase()) ||
         request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        convertToDate(request.date, false).includes(searchQuery.toLowerCase());
-
-      const matchesDate =
-        startDate && endDate
-          ? reqDate >= startDate && reqDate <= endDate
-          : true;
-
-      return matchesSearch && matchesDate;
+        request.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.chapter.toLowerCase().includes(searchQuery.toLowerCase())
+        // convertToDate(request.date, false).includes(searchQuery.toLowerCase())
+      );
     });
-  }, [isSearching, companyData, filterData, searchQuery, dateRange]);
+  }, [isSearching, companyData, filterData, searchQuery]);
 
-  // console.log(dateRange);
-
-  const [patchNoteId, setPatchNoteId] = useState();
-  const [showEditPatchNote, setShowEditPatchNote] = useState(false);
-  const toggleEditPatchNote = (patchNote) => {
-    setPatchNoteId(patchNote?.id);
-    setShowEditPatchNote(true);
+  const [DocumentationId, setPatchDocumentationId] = useState();
+  const [showEditDocumentation, setShowEditDocumentation] = useState(false);
+  const toggleEditDocumentation = (documentation) => {
+    setPatchDocumentationId(documentation?.id);
+    setShowEditDocumentation(true);
   };
   return (
     <>
       <div className={classes.section}>
-        <Header>Patch Notes</Header>
+        <Header>Обновления</Header>
 
         <div className={classes.section_searchAndFilter}>
           <MUITextField
@@ -138,49 +117,40 @@ function PatchNotesList({ children, user, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          <DateRangeModalSelector
-            width={"150px"}
-            initialRange={dateRange}
-            onChange={(start, end) =>
-              setDateRange({ startDate: start, endDate: end })
-            }
-          />
-          {(user.role === roles.superAdmin ||
-            user.role === roles.dispatcerAdmin) && (
-            <div className={classes.filter}>
-              <Filter
-                toggleSidebar={toggleCreateSidebar}
-                handleChange={handleChange}
-                filterData={filterData}
-                buttonTitle={"Добавить патч"}
-                needDate={false}
-              />
-            </div>
+          {user.role === roles.superAdmin && (
+            <Filter
+              toggleSidebar={toggleCreateSidebar}
+              handleChange={handleChange}
+              filterData={filterData}
+              buttonTitle={"Добавить обновление"}
+              needDate={false}
+            />
           )}
         </div>
         {loading && <MUILoader />}
         {error && <p>Error: {error.message}</p>}
 
         {!loading && !error && (
-          <InfoTableDataPatchNotes
-            toggleRequestSidebar={toggleEditPatchNote}
+          <InfoTableDataUpdates
+            user={user}
+            toggleRequestSidebar={toggleEditDocumentation}
             requests={filteredRequests}
           />
         )}
-        <CreateRequestPatchNote
+        <CreateRequestUpdates
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
           addNotification={addNotification}
-          refetchPatchNotes={refetch}
+          refetchDocumentation={refetch}
         />
 
-        <EditRequestPatchNote
+        <EditRequestUpdates
           user={user}
-          show={showEditPatchNote}
-          onClose={() => setShowEditPatchNote(false)}
-          patchNoteId={patchNoteId}
+          show={showEditDocumentation}
+          onClose={() => setShowEditDocumentation(false)}
+          DocumentationId={DocumentationId}
           addNotification={addNotification}
-          refetchPatchNotes={refetch}
+          refetchDocumentation={refetch}
         />
         {notifications.map((n, index) => (
           <Notification
@@ -201,4 +171,4 @@ function PatchNotesList({ children, user, ...props }) {
   );
 }
 
-export default PatchNotesList;
+export default UpdatesList;

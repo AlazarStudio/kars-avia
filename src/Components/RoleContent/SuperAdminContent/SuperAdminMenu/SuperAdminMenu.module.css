@@ -8,6 +8,11 @@
   flex: 1;
 }
 
+.bottomMenu {
+  display: flex;
+  gap: 5px;
+}
+
 .menu_items__elem {
   color: var(--menu-gray);
   display: flex;
@@ -60,8 +65,49 @@
   z-index: 999;
 }
 
+.tooltipBottom {
+  position: absolute;
+  top: -20px;
+  right: -44px;
+  background-color: #4e4e4e;
+  color: #fff;
+  border-radius: 10px;
+  padding: 7px;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity ease-in-out 0.3s;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 999;
+}
+
+.tooltipBottom2 {
+  position: absolute;
+  top: 40px;
+  right: -44px;
+  background-color: #4e4e4e;
+  color: #fff;
+  border-radius: 10px;
+  padding: 5px;
+  font-size: 12px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity ease-in-out 0.3s;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 999;
+
+}
+
 /* Показывать подсказку при hover на элементе */
 .menu_items__elem:hover .tooltip {
+  opacity: 0.9;
+  visibility: visible;
+}
+
+.menu_items__elem___bottom:hover .tooltipBottom,
+.menu_items__elem___bottom:hover .tooltipBottom2 {
   opacity: 0.9;
   visibility: visible;
 }

@@ -9,6 +9,10 @@ import Reports from "../../Blocks/Reports/Reports";
 import Reserve from "../../Blocks/Reserve/Reserve";
 import Company from "../../Blocks/Сompany/Сompany";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
+import PatchNotesList from "../../Blocks/PatchNotesList/PatchNotesList";
+import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
+import RegisterOfContracts from "../../Blocks/RegisterOfContracts/RegisterOfContracts";
+import MyCompany from "../../Blocks/MyCompany/MyCompany";
 
 const DispatcherAdminContent = ({ user }) => {
   const { id, hotelID, airlineID } = useParams();
@@ -22,8 +26,12 @@ const DispatcherAdminContent = ({ user }) => {
       {id === "company" && <Company user={user} />}
       {id === "hotels" && <HotelsList user={user} />}
       {id === "airlines" && <AirlinesList user={user} />}
+      {id === "registerOfContracts" && <RegisterOfContracts user={user} />}
       {id === "reports" && <Reports user={user} />}
       {id === "documentation" && <DocumentationList user={user} />}
+      {id === "updates" && <UpdatesList user={user} />}
+      {id === "myCompany" && <MyCompany user={user} />}
+      {id === "patchNotes" && <PatchNotesList user={user} />}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
     </>
