@@ -2330,16 +2330,24 @@ export const DELETE_AIRLINE_MANAGER = gql`
 `;
 
 export const GET_AIRLINE_USERS = gql`
-  query AirlineUsers($airlineId: ID!) {
+  query AirlineUsers($airlineId: ID!, $hcPagination: HotelChessPaginationInput) {
     airline(id: $airlineId) {
       staff {
         id
         name
         gender
         number
-        hotelChess {
+        hotelChess(hcPagination: $hcPagination) {
           request {
             requestNumber
+          }
+          start
+          end
+          clientId
+          requestId
+          reserveId
+          hotel {
+            name
           }
         }
         position {
@@ -2895,3 +2903,22 @@ export const GET_ALL_TARIFFS = gql`
 `;
 
 // Компания и договоры
+
+
+// Аналитика
+
+export const GET_ANALYTICS_AIRLINE_REQUESTS = gql`
+  query AnaliticsAirlineRequests($input: AnalyticsInput) {
+    analyticsEntityRequests(input: $input) {
+      createdByPeriod {
+        date
+        count_created
+        count_canceled
+      }
+      totalCreatedRequests
+      totalCancelledRequests
+    }
+  }
+`;
+
+// Аналитика

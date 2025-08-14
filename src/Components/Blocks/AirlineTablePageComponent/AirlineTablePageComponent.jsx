@@ -22,11 +22,11 @@ const reducer = (state, action) => {
     }
 };
 
-const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight, toggleCategoryUpdate, setSelectedStaff, user }) => {
+const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight, toggleCategoryUpdate, setSelectedStaff, user, currentMonth, currentYear, previousMonth, nextMonth, }) => {
     const token = getCookie('token');
     const [state, dispatch] = useReducer(reducer, initialState(dataObject, dataInfo));
-    const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    // const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+    // const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [highlightedDay, setHighlightedDay] = useState(null);
     const [highlightedStaffId, setHighlightedStaffId] = useState(null);
     const today = new Date();
@@ -277,19 +277,19 @@ const AirlineTablePageComponent = ({ dataObject, dataInfo, maxHeight, userHeight
             }
         };
 
-    const previousMonth = () => {
-        setCurrentMonth((prevMonth) => (prevMonth === 0 ? 11 : prevMonth - 1));
-        if (currentMonth === 0) {
-            setCurrentYear((prevYear) => prevYear - 1);
-        }
-    };
+    // const previousMonth = () => {
+    //     setCurrentMonth((prevMonth) => (prevMonth === 0 ? 11 : prevMonth - 1));
+    //     if (currentMonth === 0) {
+    //         setCurrentYear((prevYear) => prevYear - 1);
+    //     }
+    // };
 
-    const nextMonth = () => {
-        setCurrentMonth((prevMonth) => (prevMonth === 11 ? 0 : prevMonth + 1));
-        if (currentMonth === 11) {
-            setCurrentYear((prevYear) => prevYear + 1);
-        }
-    };
+    // const nextMonth = () => {
+    //     setCurrentMonth((prevMonth) => (prevMonth === 11 ? 0 : prevMonth + 1));
+    //     if (currentMonth === 11) {
+    //         setCurrentYear((prevYear) => prevYear + 1);
+    //     }
+    // };
 
     const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 
