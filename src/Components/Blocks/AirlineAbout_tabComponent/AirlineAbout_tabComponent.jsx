@@ -382,17 +382,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                           className={classes.airlineAbout_info_input}
                         />
                       </div>
-                      <div className={classes.airlineAbout_info_item}>
-                        <label>Наименование</label>
-                        <input
-                          type="text"
-                          name="nameFull"
-                          value={airline.nameFull || ""}
-                          onChange={handleChange}
-                          disabled={!isEditing}
-                          className={classes.airlineAbout_info_input}
-                        />
-                      </div>
+
                       <div className={classes.airlineAbout_info_item}>
                         <label>Изображение</label>
                         <input
@@ -606,6 +596,17 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                         : classes.w50
                     }`}
                   >
+                    <div className={classes.airlineAbout_info_item}>
+                      <label>Наименование</label>
+                      <input
+                        type="text"
+                        name="nameFull"
+                        value={airline.nameFull || ""}
+                        onChange={handleChange}
+                        disabled={!isEditing}
+                        className={classes.airlineAbout_info_input}
+                      />
+                    </div>
                     <div className={classes.airlineAbout_info_item}>
                       <label>ИНН</label>
                       <input

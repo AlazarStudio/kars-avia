@@ -36,7 +36,7 @@ function CreateRequestReport({
     position: "",
   });
 
-  const [category, setCategory] = useState(null);
+  const [category, setCategory] = useState("Эскадрилья");
 
   // Определяем, для чего создаётся отчёт: для авиакомпании или для гостиницы
   const [airOrHotel, setAirOrHotel] = useState(
@@ -349,6 +349,55 @@ function CreateRequestReport({
                       }}
                     /> */}
                     <MUIAutocompleteColor
+                      dropdownWidth="100%"
+                      label={"Выберите аэропорт"}
+                      options={airports}
+                      getOptionLabel={(option) => {
+                        if (!option) return "";
+                        const cityPart =
+                          option.city && option.city !== option.name
+                            ? `, город: ${option.city}`
+                            : "";
+                        return `${option.code} ${option.name}${cityPart}`.trim();
+                      }}
+                      renderOption={(optionProps, option) => {
+                        const cityPart =
+                          option.city && option.city !== option.name
+                            ? `, город: ${option.city}`
+                            : "";
+                        const labelText =
+                          `${option.code} ${option.name}${cityPart}`.trim();
+                        const words = labelText.split(" ");
+
+                        return (
+                          <li {...optionProps} key={option.id}>
+                            {words.map((word, index) => (
+                              <span
+                                key={index}
+                                style={{
+                                  color: index === 0 ? "black" : "gray",
+                                  marginRight: 4,
+                                }}
+                              >
+                                {word}
+                              </span>
+                            ))}
+                          </li>
+                        );
+                      }}
+                      value={
+                        airports.find((o) => o.id === formData.airportId) ||
+                        null
+                      }
+                      onChange={(e, newValue) => {
+                        setFormData((prevFormData) => ({
+                          ...prevFormData,
+                          airportId: newValue?.id || "",
+                        }));
+                        setIsEdited(true);
+                      }}
+                    />
+                    {/* <MUIAutocompleteColor
                       dropdownWidth={"100%"}
                       label={"Выберите аэропорт"}
                       options={airports}
@@ -391,7 +440,7 @@ function CreateRequestReport({
                         }));
                         setIsEdited(true);
                       }}
-                    />
+                    /> */}
 
                     <label>Категория</label>
                     <MUIAutocomplete
@@ -415,7 +464,9 @@ function CreateRequestReport({
                           label={"По всем должностям"}
                           labelOnFocus={"Выберите должность"}
                           // options={["По всем должностям", ...positions.map((position) => position.name)]}
-                          options={specialPositions?.map((position) => position.name)}
+                          options={specialPositions?.map(
+                            (position) => position.name
+                          )}
                           value={formData.position}
                           onChange={(event, newValue) => {
                             setFormData((prevFormData) => ({

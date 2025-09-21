@@ -129,6 +129,7 @@ function CreateRequestTarifCategory({
                 category: formData.category,
                 name: formData.name,
                 price: parseFloat(formData.price),
+                priceForAirline: parseFloat(formData.priceForAirline),
                 description: formData.description,
                 square: formData.square,
               },
@@ -277,6 +278,15 @@ function CreateRequestTarifCategory({
                 value={formData.price}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
+              />
+
+              <label>Стоимость для авиакомпании</label>
+              <input
+                type="number"
+                name="priceForAirline"
+                value={formData.priceForAirline}
+                onChange={handleChange}
+                placeholder="Введите стоимость для авиакомпании"
               />
 
               <label>Квадратура</label>

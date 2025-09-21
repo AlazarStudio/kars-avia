@@ -161,6 +161,7 @@ function EditRequestTarifCategory({
                   category: formData.category,
                   name: formData.name,
                   price: parseFloat(formData.price),
+                  // priceForAirline: parseFloat(formData.priceForAirline),
                   description: formData.description,
                   square: formData.square,
                 },
@@ -317,6 +318,16 @@ function EditRequestTarifCategory({
                 placeholder="Введите стоимость"
                 disabled={!isEditing}
               />
+              
+              {/* <label>Стоимость для авиакомпании</label>
+              <input
+                type="number"
+                name="priceForAirline"
+                value={formData.priceForAirline || 0}
+                onChange={handleChange}
+                placeholder="Введите стоимость"
+                disabled={!isEditing}
+              /> */}
 
               <label>Квадратура</label>
               <input

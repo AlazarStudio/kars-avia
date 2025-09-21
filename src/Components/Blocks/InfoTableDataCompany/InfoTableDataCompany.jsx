@@ -28,7 +28,7 @@ function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, 
                         onClick={() => handleObject(item, index)}
                         key={index}
                     >
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.order || index + 1}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>

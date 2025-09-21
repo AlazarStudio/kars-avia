@@ -226,15 +226,17 @@ function ChooseHotel({
             initialValue={formData.city}
             onSelect={handleCitySelect}
           /> */}
-          <MUIAutocomplete
-            dropdownWidth={"100%"}
-            label={"Введите город"}
-            options={uniqueCities}
-            value={formData.city}
-            onChange={(event, newValue) => {
-              handleCitySelect(newValue);
-            }}
-          />
+          {show && (
+            <MUIAutocomplete
+              dropdownWidth={"100%"}
+              label={"Введите город"}
+              options={uniqueCities}
+              value={formData.city}
+              onChange={(event, newValue) => {
+                handleCitySelect(newValue);
+              }}
+            />
+          )}
 
           <label>Гостиница</label>
           {/* <DropDownList

@@ -59,7 +59,10 @@ function InfoTableDataPatchNotes({
               </div>
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w40}`}>
-              <span className={`${classes.lineClamp}`}>{item.description}</span>
+              <span
+                className={`${classes.lineClamp}`}
+                dangerouslySetInnerHTML={{ __html: item.description }}
+              />
             </div>
             <div
               className={`${classes.InfoTable_data_elem} ${classes.InfoTable_data__date} ${classes.w40} ${classes.InfoTable_data__fw600}`}

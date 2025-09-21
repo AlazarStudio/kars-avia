@@ -19,9 +19,22 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
 import { fullNotifyTime, notifyTime } from "../../../roles";
+import { useLocation, useNavigate } from "react-router-dom";
+import ReactPaginate from "react-paginate";
 
 function Company({ children, user, ...props }) {
   const token = getCookie("token");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Инициализация текущей страницы на основе параметров URL или по умолчанию
+  const pageNumberRelay = new URLSearchParams(location.search).get("page");
+  const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
+
+  const [pageInfo, setPageInfo] = useState({
+    skip: currentPageRelay,
+    take: 20,
+  });
 
   const { loading, error, data, refetch } = useQuery(GET_DISPATCHERS, {
     context: {
@@ -29,7 +42,14 @@ function Company({ children, user, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    variables: {
+      pagination: {
+        skip: pageInfo.skip,
+        take: pageInfo.take,
+      },
+    },
   });
+
   const { data: dataSubscription } = useSubscription(
     GET_DISPATCHERS_SUBSCRIPTION,
     {
@@ -59,6 +79,8 @@ function Company({ children, user, ...props }) {
   const [showDelete, setShowDelete] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
 
+  const [totalPages, setTotalPages] = useState(1);
+
   const deleteComponentRef = useRef();
 
   const [companyData, setCompanyData] = useState([]);
@@ -67,10 +89,11 @@ function Company({ children, user, ...props }) {
 
   useEffect(() => {
     if (data) {
-      const sortedDispatchers = [...data.dispatcherUsers].sort((a, b) =>
+      const sortedDispatchers = [...data.dispatcherUsers.users].sort((a, b) =>
         a.name.localeCompare(b.name)
       );
       setCompanyData(sortedDispatchers);
+      setTotalPages(data.dispatcherUsers.totalPages);
     }
     refetch();
   }, [data, dataSubscription, refetch]);
@@ -161,6 +184,12 @@ function Company({ children, user, ...props }) {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     }, fullNotifyTime);
   };
+  // Обработчик для изменения текущей страницы при клике на элементы пагинации
+  const handlePageClick = (event) => {
+    const selectedPage = event.selected;
+    setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
+    navigate(`?page=${selectedPage + 1}`);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -185,6 +214,7 @@ function Company({ children, user, ...props }) {
   });
 
   let filterList = ["Модератор", "Администратор"];
+  const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
 
   return (
     <>
@@ -218,11 +248,33 @@ function Company({ children, user, ...props }) {
         {error && <p>Error: {error.message}</p>}
 
         {!loading && !error && (
-          <InfoTableDataCompany
-            toggleRequestSidebar={toggleRequestSidebar}
-            requests={filteredRequests}
-            setChooseObject={setChooseObject}
-          />
+          <>
+            <InfoTableDataCompany
+              toggleRequestSidebar={toggleRequestSidebar}
+              requests={filteredRequests.map((request, index) => ({
+                ...request,
+                order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
+              }))}
+              setChooseObject={setChooseObject}
+            />
+            {totalPages > 0 && (
+              <div className={classes.pagination}>
+                <ReactPaginate
+                  previousLabel={"←"}
+                  nextLabel={"→"}
+                  breakLabel={"..."}
+                  pageCount={totalPages}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={5}
+                  onPageChange={handlePageClick}
+                  forcePage={validCurrentPage}
+                  containerClassName={classes.pagination}
+                  activeClassName={classes.activePaginationNumber}
+                  pageLinkClassName={classes.paginationNumber}
+                />
+              </div>
+            )}
+          </>
         )}
 
         <CreateRequestCompany

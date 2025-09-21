@@ -150,7 +150,9 @@ textarea {
 }
 
 
-
+*:focus {
+  outline: none;
+}
 
 .opened {
     min-width: 10px;

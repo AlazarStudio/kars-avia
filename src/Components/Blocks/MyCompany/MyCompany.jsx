@@ -5,6 +5,7 @@ import Header from "../Header/Header";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
+  COMPANY_CHANGE_SUBSCRIPTION,
   DELETE_DISPATCHER_USER,
   GET_ALL_COMPANIES,
   getCookie,
@@ -45,8 +46,8 @@ function MyCompany({ children, user, ...props }) {
       );
       setCompanyData(sortedDispatchers);
     }
-    refetch();
-  }, [data, refetch]);
+    // refetch();
+  }, [data]);
 
   const addDispatcher = (newDispatcher) => {
     // setCompanyData(
@@ -54,14 +55,14 @@ function MyCompany({ children, user, ...props }) {
     //     a.name.localeCompare(b.name)
     //   )
     // );
-    refetch();
+    // refetch();
   };
 
   const updateDispatcher = (updatedDispatcher, index) => {
     // const newData = [...companyData];
     // newData[index] = updatedDispatcher;
     // setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
-    refetch();
+    // refetch();
   };
 
   const [deleteDispatcherUser] = useMutation(DELETE_DISPATCHER_USER, {
@@ -94,6 +95,15 @@ function MyCompany({ children, user, ...props }) {
       alert("Ошибка при удалении пользователя");
     }
   };
+
+  const { data: dataSubscriptionUpd } = useSubscription(
+    COMPANY_CHANGE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
 
   const toggleCreateSidebar = () => {
     setShowCreateSidebar(!showCreateSidebar);
@@ -157,7 +167,7 @@ function MyCompany({ children, user, ...props }) {
   return (
     <>
       <div className={classes.section}>
-        <Header>Моя компания</Header>
+        <Header>ГК Карс</Header>
 
         <div className={classes.section_searchAndFilter}>
           {/* <input

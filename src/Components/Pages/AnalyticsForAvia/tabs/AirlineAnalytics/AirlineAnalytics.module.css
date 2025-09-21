@@ -5,26 +5,49 @@
   overflow: hidden;
 }
 
-.sidebar {
+.sidebarContainer {
   width: 300px;
-  height: 100%;
-  background: #fff;
+  padding: 6px 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
   border-radius: 10px;
-  padding: 16px;
+}
+
+.sidebar {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* position: relative; */
 }
 
-.sidebar input {
+.searchContainer {
+  min-height: 60px;
+  /* padding: 16px 0; */
+  width: 100%;
+  /* position: sticky; */
+  /* top: -26px; */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* z-index: 999; */
+}
+
+
+.mainSearch {
   border: 1px solid #AAB0DD5C;
   width: 100%;
-  height: 43px;
+  min-height: 40px;
   padding: 8px 13px;
   border-radius: 10px;
+
 }
 
-.title{
+.title {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -44,7 +67,7 @@
   font-size: 16px;
 }
 
-.circle{
+.circle {
   width: 30px;
   height: 30px;
   border-radius: 50%;
@@ -60,6 +83,7 @@
 }
 
 .list {
+  margin-top: 30px;
   list-style: none;
   padding: 0;
   margin: 0;
@@ -77,7 +101,7 @@
   gap: 8px;
 }
 
-.listItem p{
+.listItem p {
   width: calc(100% - 35px);
 }
 
@@ -97,7 +121,7 @@
   height: 100%;
 }
 
-.contentWrapper{
+.contentWrapper {
   overflow: hidden;
   overflow-y: scroll;
   height: 667px;
@@ -135,13 +159,13 @@
   outline: none;
 }
 
-.header{
+.header {
   display: flex;
   width: 100%;
   justify-content: space-between;
 }
 
-.header>button {
+.periodButton {
   background: #9CA4D91A;
   color: #545873;
   border: none;
@@ -152,7 +176,18 @@
   font-size: 12px;
 }
 
-.header>button:hover {
+.periodButton:hover {
   background: #9CA4D91A;
   color: #0057C3;
+}
+
+
+
+
+@media (min-width: 0px) and (max-width: 1699px) {
+  .row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 }

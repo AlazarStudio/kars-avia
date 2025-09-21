@@ -156,6 +156,50 @@
   stroke: var(--white);
 }
 
+/* fill svg */
+
+
+.menu_items__elem___fill {
+  color: var(--menu-gray);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 21.79px;
+  padding: 15px 20px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.1s ease-in-out;
+  position: relative;
+  overflow: visible;
+}
+
+.menu_items__activeElem___fill {
+  background: var(--menu-item-bg);
+  color: var(--white);
+}
+
+.menu_items__activeElem___fill svg path {
+  fill: var(--white);
+}
+
+.menu_items__elem___fill svg path {
+  transition: all 0.1s ease-in-out;
+}
+
+.menu_items__elem___fill:hover svg path {
+  fill: var(--white);
+}
+
+.menu_items__elem___fill:hover {
+  background: var(--menu-item-bg);
+  color: var(--white);
+}
+
+/* fill svg */
+
 .menu_items__activeElem img {
   stroke: var(--white);
   opacity: 1;

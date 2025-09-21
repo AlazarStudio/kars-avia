@@ -276,180 +276,185 @@ function Header({ children }) {
   );
 
   return (
-    <div className={classes.section_top}>
-      <div className={classes.section_top_title}>{children}</div>
-      {loading && <MUILoader loadSize={"30px"} />}
-      {error && <p>Ошибка: {error.message}</p>}
+    <>
+      <div className={classes.section_top}>
+        <div className={classes.section_top_title}>{children}</div>
+        {loading && <MUILoader loadSize={"30px"} />}
+        {error && <p>Ошибка: {error.message}</p>}
 
-      {!loading && !error && (
-        <div className={classes.section_top_elems}>
-          {/* {userData?.role !== roles.superAdmin ? (
-            <div
-              className={classes.section_top_elems_support}
-              onClick={toggleSupportSidebar}
-            >
-              <img src="/support.png" alt="Поддержка" />
-            </div>
-          ) : null} */}
-          <div
-            className={classes.section_top_elems_notify}
-            onClick={toggleNotifications}
-            ref={notificationsRef}
-          >
-            {notifySubscriptionData ? (
-              <div className={classes.section_top_elems_notify_red}></div>
+        {!loading && !error && (
+          <div className={classes.section_top_elems}>
+            {userData?.role !== roles.superAdmin ? (
+              <div
+                className={classes.section_top_elems_support}
+                onClick={toggleSupportSidebar}
+              >
+                <img src="/support.png" alt="Поддержка" />
+              </div>
             ) : null}
-            <img
-              src="/notify.png"
-              alt="Уведомления"
-              style={{ userSelect: "none" }}
-            />
-          </div>
-
-          {isNotificationsFullyVisible && (
             <div
-              className={`${classes.notify_dropdown} ${
-                isNotificationsOpen ? classes.open : classes.closed
-              }`}
-              onClick={(e) => e.stopPropagation()}
+              className={classes.section_top_elems_notify}
+              onClick={toggleNotifications}
+              ref={notificationsRef}
             >
-              <Notifications
-                onRequestClick={handleNotificationClick}
-                user={data?.user}
-                token={token}
-                isNotificationsFullyVisible={isNotificationsFullyVisible}
+              {notifySubscriptionData ? (
+                <div className={classes.section_top_elems_notify_red}></div>
+              ) : null}
+              <img
+                src="/notify.png"
+                alt="Уведомления"
+                style={{ userSelect: "none" }}
               />
             </div>
-          )}
 
-          <div className={classes.section_top_elems_date}>
-            <div>{formattedDate}</div>
-          </div>
-
-          <div
-            className={classes.section_top_elems_profile}
-            onClick={handleProfileClick}
-            ref={dropdownRef}
-          >
-            <img
-              src={
-                userData?.images?.[0]
-                  ? `${server}${userData?.images[0]}`
-                  : "/no-avatar.png"
-              }
-              alt="Профиль пользователя"
-              style={{ userSelect: "none" }}
-            />
-
-            {isFullyVisible && (
+            {isNotificationsFullyVisible && (
               <div
-                className={`${classes.profile_dropdown} ${
-                  isDropdownOpen ? classes.open : classes.closed
+                className={`${classes.notify_dropdown} ${
+                  isNotificationsOpen ? classes.open : classes.closed
                 }`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className={classes.dropdown_info}>
-                  <img
-                    src={
-                      userData?.images?.[0]
-                        ? `${server}${userData?.images[0]}`
-                        : "/no-avatar.png"
-                    }
-                    alt=""
-                    style={{ userSelect: "none" }}
-                  />
-                  <div className={classes.text_info}>
-                    <p>{userData?.name}</p>
-                    <p>{data?.user?.position?.name}</p>
-                  </div>
-                </div>
-                <div>
-                  <div
-                    className={classes.settings_item}
-                    onClick={() => {navigate('/myCompany')}}
-                  >
-                    <div className={classes.settings_item__img}>
-                      <MyCompanyIcon width={20} height={19} />
-                    </div>
-                    <p>Моя компания</p>
-                  </div>
-                  <div
-                    className={classes.settings_item}
-                    onClick={toggleRequestSidebar}
-                  >
-                    <div className={classes.settings_item__img}>
-                      <SettingsIcon width={21} height={22} />
-                    </div>
-                    <p>Настройки</p>
-                  </div>
-                  <div className={classes.settings_item} onClick={logout}>
-                    <div
-                      className={`${classes.settings_item__img} ${classes.img_padding}`}
-                    >
-                      <ExitIcon width={21} height={22}/>
-                    </div>
-                    <p>Выход</p>
-                  </div>
-                </div>
+                <Notifications
+                  onRequestClick={handleNotificationClick}
+                  user={data?.user}
+                  token={token}
+                  isNotificationsFullyVisible={isNotificationsFullyVisible}
+                />
               </div>
             )}
 
-            <ExistRequestProfile
-              show={showRequestSidebar}
-              onClose={toggleRequestSidebar}
-              user={userData}
-              updateUser={handleUpdateUser}
-              openDeleteComponent={null}
-              deleteComponentRef={null}
-              addNotification={addNotification}
-            />
+            <div className={classes.section_top_elems_date}>
+              <div>{formattedDate}</div>
+            </div>
 
-            <ExistRequest
-              show={showERequestSidebar}
-              onClose={() => {
-                setShowERequestSidebar(false);
-              }}
-              setShowChooseHotel={setShowChooseHotel}
-              chooseRequestID={existRequestData}
-              setChooseRequestID={setExistRequestData}
-              setChooseCityRequest={setChooseCityRequest}
-              handleCancelRequest={handleCancelRequest}
-              user={data?.user}
-            />
-
-            <ChooseHotel
-              chooseCityRequest={chooseCityRequest}
-              show={showChooseHotel}
-              onClose={toggleChooseHotel}
-              chooseObject={chooseObject}
-              chooseRequestID={existRequestData}
-              id={"relay"}
-            />
-
-            {/* <Support
-              show={showSupportSidebar}
-              onClose={toggleSupportSidebar}
-              user={data?.user}
-            /> */}
-
-            {notifications.map((n, index) => (
-              <Notification
-                key={n.id}
-                text={n.text}
-                status={n.status}
-                index={index}
-                time={notifyTime}
-                onClose={() => {
-                  setNotifications((prev) =>
-                    prev.filter((notif) => notif.id !== n.id)
-                  );
-                }}
+            <div
+              className={classes.section_top_elems_profile}
+              onClick={handleProfileClick}
+              ref={dropdownRef}
+            >
+              <img
+                src={
+                  userData?.images?.[0]
+                    ? `${server}${userData?.images[0]}`
+                    : "/no-avatar.png"
+                }
+                alt="Профиль пользователя"
+                style={{ userSelect: "none" }}
               />
-            ))}
+
+              {isFullyVisible && (
+                <div
+                  className={`${classes.profile_dropdown} ${
+                    isDropdownOpen ? classes.open : classes.closed
+                  }`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className={classes.dropdown_info}>
+                    <img
+                      src={
+                        userData?.images?.[0]
+                          ? `${server}${userData?.images[0]}`
+                          : "/no-avatar.png"
+                      }
+                      alt=""
+                      style={{ userSelect: "none" }}
+                    />
+                    <div className={classes.text_info}>
+                      <p>{userData?.name}</p>
+                      <p>{data?.user?.position?.name}</p>
+                    </div>
+                  </div>
+                  <div>
+                    {/* {userData.role === roles.superAdmin && (
+                    <div
+                      className={classes.settings_item}
+                      onClick={() => {
+                        navigate("/myCompany");
+                      }}
+                    >
+                      <div className={classes.settings_item__img}>
+                        <MyCompanyIcon width={20} height={19} />
+                      </div>
+                      <p>Мои компании</p>
+                    </div>
+                  )} */}
+                    <div
+                      className={classes.settings_item}
+                      onClick={toggleRequestSidebar}
+                    >
+                      <div className={classes.settings_item__img}>
+                        <SettingsIcon width={21} height={22} />
+                      </div>
+                      <p>Настройки</p>
+                    </div>
+                    <div className={classes.settings_item} onClick={logout}>
+                      <div
+                        className={`${classes.settings_item__img} ${classes.img_padding}`}
+                      >
+                        <ExitIcon width={21} height={22} />
+                      </div>
+                      <p>Выход</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {notifications.map((n, index) => (
+                <Notification
+                  key={n.id}
+                  text={n.text}
+                  status={n.status}
+                  index={index}
+                  time={notifyTime}
+                  onClose={() => {
+                    setNotifications((prev) =>
+                      prev.filter((notif) => notif.id !== n.id)
+                    );
+                  }}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+      <ExistRequestProfile
+        show={showRequestSidebar}
+        onClose={toggleRequestSidebar}
+        user={userData}
+        updateUser={handleUpdateUser}
+        openDeleteComponent={null}
+        deleteComponentRef={null}
+        addNotification={addNotification}
+      />
+
+      <Support
+        show={showSupportSidebar}
+        onClose={toggleSupportSidebar}
+        user={data?.user}
+      />
+
+      <ExistRequest
+        show={showERequestSidebar}
+        onClose={() => {
+          setShowERequestSidebar(false);
+        }}
+        setShowChooseHotel={setShowChooseHotel}
+        chooseRequestID={existRequestData}
+        setChooseRequestID={setExistRequestData}
+        setChooseCityRequest={setChooseCityRequest}
+        handleCancelRequest={handleCancelRequest}
+        user={data?.user}
+      />
+
+      <ChooseHotel
+        chooseCityRequest={chooseCityRequest}
+        show={showChooseHotel}
+        onClose={toggleChooseHotel}
+        chooseObject={chooseObject}
+        chooseRequestID={existRequestData}
+        id={"relay"}
+      />
+    </>
   );
 }
 

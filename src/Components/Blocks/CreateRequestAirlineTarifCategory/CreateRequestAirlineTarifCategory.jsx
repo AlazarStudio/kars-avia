@@ -213,7 +213,7 @@ function CreateRequestAirlineTarifCategory({
           },
         },
       });
-      refetchAllCategories();
+      // refetchAllCategories();
       resetForm();
       onClose();
       setIsLoading(false);
@@ -241,13 +241,13 @@ function CreateRequestAirlineTarifCategory({
     }
   }, [show]);
 
-  useEffect(() => {
-    const names = addTarif.map((tarif) => ({
-      id: tarif.id,
-      name: tarif.name,
-    }));
-    setTarifNames(names);
-  }, [addTarif]);
+  // useEffect(() => {
+  //   const names = addTarif.map((tarif) => ({
+  //     id: tarif.id,
+  //     name: tarif.name,
+  //   }));
+  //   setTarifNames(names);
+  // }, [addTarif]);
 
   const categories = [
     {
@@ -302,7 +302,7 @@ function CreateRequestAirlineTarifCategory({
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Добавить соглашение</div>
+        <div className={classes.requestTitle_name}>Добавить договор</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
           <img src="/close.png" alt="" />
         </div>
@@ -336,13 +336,13 @@ function CreateRequestAirlineTarifCategory({
                 }}
               /> */}
 
-              <label>Название соглашения</label>
+              <label>Название договора</label>
               <input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Например: Дополнительное соглашение №1"
+                placeholder="Например: Договор №1"
               />
 
               <label>Аэропорты</label>

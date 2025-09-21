@@ -174,7 +174,7 @@ function CreateRequestAllTarifCategory({
         },
         // refetchQueries: [{ query: GET_ALL_TARIFFS }],
       });
-      refetchAllCategories();
+      // refetchAllCategories();
       resetForm();
       onClose();
       setIsLoading(false);

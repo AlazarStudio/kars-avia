@@ -45,7 +45,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !show
+    skip: !show,
   });
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
     context: {
@@ -53,9 +53,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !show
+    skip: !show,
   });
-  
+
   const [airports, setAirports] = useState([]); // Список аэропортов
   // console.log(selectedAirline);
 
@@ -82,19 +82,22 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     reserve: false,
   });
 
-  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION, {
-    onData: () => {
-      refetch()
-    },
-    skip: !show
-  });
+  const { data: dataSubscription } = useSubscription(
+    GET_AIRLINES_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+      skip: !show,
+    }
+  );
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
       onData: () => {
         refetch();
       },
-      skip: !show
+      skip: !show,
     }
   );
   const {
@@ -107,7 +110,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !show
+    skip: !show,
   });
 
   const [positions, setPositions] = useState([]);
@@ -219,7 +222,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   });
 
   const airlineForAirlineAdmin = data?.airlines?.airlines.find(
-    (airline) => airline.id === user.airlineId
+    (airline) => airline.id === user?.airlineId
   );
 
   // Сброс формы к начальному состоянию
@@ -248,7 +251,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     });
     setIsEdited(false); // Сбрасываем флаг, что форма не изменена
     setWarningMessage("");
-    setDisableAutocomplete(false)
+    setDisableAutocomplete(false);
   }, [userID]);
 
   // Закрытие формы с проверкой на несохраненные изменения
@@ -268,7 +271,15 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       setNewStaffId(null);
     }
   }, [isEdited, resetForm, setMatchingRequest, onClose]);
+  const today = new Date().toISOString().split("T")[0];
 
+  // Рассчитываем минимальную дату прибытия как дату, начиная с месяца назад
+  const minArrivalDate = useMemo(() => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 1);
+    return date.toISOString().split("T")[0];
+  }, []);
+  
   // Обработчик изменений в полях формы
   const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
@@ -310,6 +321,104 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     }
   }, []);
 
+  // ВАЖНО: есть зависимости от текущих значений формы
+  // const handleChange = useCallback((e) => {
+  //   const { name, value, type, checked, validity, valueAsDate } = e.target;
+  //   setIsEdited(true);
+
+  //   // хелпер для показа ошибки (нативный bubble + очистка)
+  //   const showError = (el, msg, resetPatch) => {
+  //     try {
+  //       el.setCustomValidity(msg);     // MDN: setCustomValidity
+  //       el.reportValidity();           // MDN: reportValidity
+  //     } catch {
+  //       alert(msg);
+  //     } finally {
+  //       setFormData(prev => ({ ...prev, ...resetPatch }));
+  //       // очистим кастомное сообщение, чтобы поле можно было заполнять дальше
+  //       if (el.setCustomValidity) el.setCustomValidity("");
+  //     }
+  //   };
+
+  //   // DATE поля
+  //   if (type === "date") {
+  //     if (name === "arrivalDate") {
+  //           // ждём полного/валидного значения
+  //     if (!validity.valid || !valueAsDate) return;
+  //       // нельзя ранее чем месяц назад
+  //       if (value < minArrivalDate) {
+  //         return alert("HUI");
+  //       }
+  //       // если уже выбран отъезд и он стал раньше прибытия — очищаем отъезд
+  //       if (formData.departureDate && formData.departureDate < value) {
+  //         setFormData(prev => ({ ...prev, arrivalDate: value, departureDate: "" }));
+  //         return;
+  //       }
+  //       // обычное обновление
+  //       setFormData(prev => ({ ...prev, arrivalDate: value }));
+  //       return;
+  //     }
+
+  //     if (name === "departureDate") {
+  //       if (formData.arrivalDate && value < formData.arrivalDate) {
+  //         return showError(e.target, "Дата отъезда не может быть раньше даты прибытия.", { departureDate: "" });
+  //       }
+  //       // если даты одинаковые и уже выбрано время — проверим время
+  //       if (
+  //         formData.arrivalDate &&
+  //         value === formData.arrivalDate &&
+  //         formData.departureTime &&
+  //         formData.arrivalTime &&
+  //         formData.departureTime <= formData.arrivalTime
+  //       ) {
+  //         return showError(e.target, "Время отъезда должно быть позже времени прибытия.", { departureTime: "" });
+  //       }
+  //       setFormData(prev => ({ ...prev, departureDate: value }));
+  //       return;
+  //     }
+  //   }
+
+  //   // TIME поля
+  //   if (type === "time") {
+  //     if (name === "departureTime") {
+  //       if (
+  //         formData.arrivalDate &&
+  //         formData.departureDate &&
+  //         formData.arrivalDate === formData.departureDate &&
+  //         formData.arrivalTime &&
+  //         value <= formData.arrivalTime
+  //       ) {
+  //         return showError(e.target, "Время отъезда должно быть позже времени прибытия.", { departureTime: "" });
+  //       }
+  //     }
+  //     setFormData(prev => ({ ...prev, [name]: value }));
+  //     return;
+  //   }
+
+  //   // CHECKBOXы (mealPlan)
+  //   if (type === "checkbox") {
+  //     setFormData(prev => {
+  //       const updatedMeal = { ...prev.mealPlan, [name]: checked };
+  //       const any = updatedMeal.breakfastEnabled || updatedMeal.lunchEnabled || updatedMeal.dinnerEnabled;
+  //       return { ...prev, mealPlan: { ...updatedMeal, included: any } };
+  //     });
+  //     return;
+  //   }
+
+  //   // остальное
+  //   setFormData(prev => ({
+  //     ...prev,
+  //     [name]: value,
+  //     mealPlan: name === "included" ? { ...prev.mealPlan, included: value === "true" } : prev.mealPlan,
+  //   }));
+  // }, [
+  //   minArrivalDate,
+  //   formData.arrivalDate,
+  //   formData.arrivalTime,
+  //   formData.departureDate,
+  //   formData.departureTime,
+  // ]);
+
   // Обработчик переключения вкладок
   const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
@@ -326,15 +435,6 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       formData.departureTime
     );
   };
-
-  const today = new Date().toISOString().split("T")[0];
-
-  // Рассчитываем минимальную дату прибытия как дату, начиная с месяца назад
-  const minArrivalDate = useMemo(() => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - 1);
-    return date.toISOString().split("T")[0];
-  }, []);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -544,6 +644,10 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       }));
     }
   }, [newStaffId, disableAutocomplete]);
+
+  useEffect(() => {
+    setMatchingRequest(null);
+  }, [formData]);
 
   // console.log(formData);
 
@@ -762,17 +866,23 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                     dropdownWidth="100%"
                     label={"Введите аэропорт"}
                     options={airports}
-                    getOptionLabel={(option) =>
-                      option
-                        ? `${option.code} ${option.name}, город: ${option.city}`.trim()
-                        : ""
-                    }
+                    getOptionLabel={(option) => {
+                      if (!option) return "";
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      return `${option.code} ${option.name}${cityPart}`.trim();
+                    }}
                     renderOption={(optionProps, option) => {
-                      // Формируем строку для отображения
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
                       const labelText =
-                        `${option.code} ${option.name}, город: ${option.city}`.trim();
-                      // Разбиваем строку по пробелам
+                        `${option.code} ${option.name}${cityPart}`.trim();
                       const words = labelText.split(" ");
+
                       return (
                         <li {...optionProps} key={option.id}>
                           {words.map((word, index) => (
@@ -780,7 +890,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                               key={index}
                               style={{
                                 color: index === 0 ? "black" : "gray",
-                                marginRight: "4px",
+                                marginRight: 4,
                               }}
                             >
                               {word}
@@ -790,19 +900,18 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                       );
                     }}
                     value={
-                      airports.find(
-                        (option) => option.id === formData.airportId
-                      ) || null
+                      airports.find((o) => o.id === formData.airportId) || null
                     }
                     onChange={(e, newValue) => {
-                      setFormData((prevFormData) => ({
-                        ...prevFormData,
+                      setFormData((prev) => ({
+                        ...prev,
                         airportId: newValue?.id || "",
                         city: newValue?.city,
                       }));
                       setIsEdited(true);
                     }}
                   />
+
                   {/* </>
                 )} */}
 

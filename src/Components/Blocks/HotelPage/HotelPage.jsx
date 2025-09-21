@@ -66,7 +66,9 @@ function HotelPage({ children, id, user, ...props }) {
     }
   };
 
-  // console.log(params);
+ const backProps = params.requestId
+   ? { to: "/relay", state: { requestId: params.requestId } } // передаём state
+   : { to: -1 };
 
   return (
     <>
@@ -80,7 +82,7 @@ function HotelPage({ children, id, user, ...props }) {
               // <Link to={params.requestId ? `/relay` : `/hotels`} className={classes.backButton}>
               //   <img src="/arrow.png" alt="" />
               // </Link>
-              <Link to={-1} className={classes.backButton}>
+              <Link {...backProps} className={classes.backButton}>
                 <img src="/arrow.png" alt="" />
               </Link>
             )}

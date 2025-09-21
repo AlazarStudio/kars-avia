@@ -33,6 +33,11 @@ function Estafeta({ user }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const { search, pathname, state } = useLocation();
+  
+  const requestIdFromState = state?.requestId || null;
+  
+  
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
   const [selectedAirline, setSelectedAirline] = useState(null);
@@ -42,6 +47,13 @@ function Estafeta({ user }) {
     startDate: null,
     endDate: null,
   });
+
+ useEffect(() => {
+  if (requestIdFromState) {
+    setChooseRequestID(requestIdFromState);
+    setShowRequestSidebar(true);
+  }
+}, [requestIdFromState]);
 
   // Инициализация текущей страницы на основе параметров URL или по умолчанию
   const pageNumberRelay = new URLSearchParams(location.search).get("page");
@@ -453,6 +465,28 @@ function Estafeta({ user }) {
 
   const filterList = ["Азимут", "S7 airlines", "Северный ветер"];
 
+  // Текущая страница из URL (0-based)
+  const urlPage = useMemo(() => {
+    const p = Number(new URLSearchParams(search).get("page") || "1");
+    return Math.max(0, p - 1);
+  }, [search]);
+
+  // Синхронизируем внутренний стейт пагинации со значением из URL
+  useEffect(() => {
+    setPageInfo((prev) =>
+      prev.skip === urlPage ? prev : { ...prev, skip: urlPage }
+    );
+  }, [urlPage]);
+
+  // Если открыли /relay без ?page — проставим ?page=1
+  useEffect(() => {
+    if (pathname === "/relay" && !new URLSearchParams(search).has("page")) {
+      navigate("?page=1", { replace: true });
+    }
+  }, [pathname, search, navigate]);
+
+
+
   // Обработчик для изменения текущей страницы при клике на элементы пагинации
   const handlePageClick = (event) => {
     const selectedPage = event.selected;
@@ -467,7 +501,8 @@ function Estafeta({ user }) {
   }
 
   // Корректировка текущей страницы
-  const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
+  const validCurrentPage = urlPage < totalPages ? urlPage : 0;
+  // const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
 
   return (
     <div className={classes.section}>
@@ -531,6 +566,7 @@ function Estafeta({ user }) {
             setChooseObject={setChooseObject}
             setChooseRequestID={setChooseRequestID}
             pageInfo={pageInfo.skip}
+            scrollToId={requestIdFromState}
           />
 
           {totalPages > 0 && (

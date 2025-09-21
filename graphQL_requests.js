@@ -55,6 +55,8 @@ export function generateTimestampId(min = 1, max = 1000000) {
   return Date.now() + Math.floor(Math.random() * (max - min + 1)) + min; // Возвращает количество миллисекунд с 1 января 1970 года
 }
 
+export const normalize = (s) => (s || "").trim().toLowerCase();
+
 // ----------------------------------------------------------------
 
 // Запросы получения пользователя
@@ -562,6 +564,7 @@ query Airlines {
     airlines { 
       id 
       name 
+      images
       staff { 
         id 
         name 
@@ -604,6 +607,7 @@ export const GET_HOTELS_RELAY = gql`
       hotels {
         id
         name
+        images
         information {
           city
         }
@@ -1593,7 +1597,10 @@ export const GET_HOTEL = gql`
     hotel(id: $hotelId) {
       id
       name
+      nameFull
       access
+      show
+      meal
       capacity
       type
       stars
@@ -1630,6 +1637,7 @@ export const GET_HOTEL = gql`
         images
         roomsCount
         square
+        priceForAirline
       }
       rooms {
         id
@@ -1642,6 +1650,7 @@ export const GET_HOTEL = gql`
         reserve
         description
         images
+        priceForAirline
       }
       breakfast {
         start
@@ -1721,12 +1730,14 @@ export const GET_HOTEL_CITY = gql`
 export const GET_HOTEL_TARIFS = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
+      meal
       roomKind {
         id
         name
         description
         category
         price
+        priceForAirline
         square
         images
       }
@@ -1929,7 +1940,8 @@ export const DELETE_HOTEL = gql`
 
 export const GET_HOTEL_USERS = gql`
   query HotelUsers($hotelId: ID!) {
-    hotelUsers(hotelId: $hotelId) {
+    hotelUsers(hotelId: $hotelId, pagination: {all: true}) {
+    users {
       id
       name
       email
@@ -1940,6 +1952,7 @@ export const GET_HOTEL_USERS = gql`
       }
       login
       images
+    }
     }
   }
 `;
@@ -2028,6 +2041,39 @@ export const GET_AIRLINES_UPDATE_SUBSCRIPTION = gql`
       id
       images
       name
+      prices {
+        id
+        airports {
+          id
+          airport {
+            id
+            name
+            city
+            code
+          }
+        }
+        mealPrice {
+          breakfast
+          lunch
+          dinner
+        }
+        prices {
+          priceApartment
+          priceStudio
+          priceLuxe
+          priceOneCategory
+          priceTwoCategory
+          priceThreeCategory
+          priceFourCategory
+          priceFiveCategory
+          priceSixCategory
+          priceSevenCategory
+          priceEightCategory
+          priceNineCategory
+          priceTenCategory
+        }
+        name
+      }
     }
   }
 `;
@@ -2134,17 +2180,17 @@ export const GET_AIRLINE_TARIFS = gql`
   }
 `;
 
-// export const GET_AIRLINE_MEAL_PRICE = gql`
-//   query Airline($airlineId: ID!) {
-//     airline(id: $airlineId) {
-//       mealPrice {
-//         breakfast
-//         dinner
-//         lunch
-//       }
-//     }
-//   }
-// `;
+export const GET_AIRLINE_MEAL_PRICE = gql`
+  query Airline($airlineId: ID!) {
+    airline(id: $airlineId) {
+      mealPrice {
+        breakfast
+        dinner
+        lunch
+      }
+    }
+  }
+`;
 
 export const UPDATE_AIRLINE = gql`
   mutation Mutation($updateAirlineId: ID!, $input: UpdateAirlineInput!, $images: [Upload!]) {
@@ -2417,18 +2463,43 @@ export const GET_STAFF_HOTELS = gql`
 // Запросы в компанию
 
 export const GET_DISPATCHERS = gql`
-  query Query {
-    dispatcherUsers {
-      id
-      name
-      images
-      role
-      position {
+  query Query($pagination: UserPaginationInput) {
+    dispatcherUsers(pagination: $pagination) {
+      totalCount
+      totalPages
+      users {
         id
         name
+        images
+        role
+        position {
+          id
+          name
+        }
+        email
+        login
       }
-      email
-      login
+    }
+  }
+`;
+
+export const GET_ALL_DISPATCHERS = gql`
+  query Query {
+    dispatcherUsers(pagination: {all:true}) {
+      totalCount
+      totalPages
+      users {
+        id
+        name
+        images
+        role
+        position {
+          id
+          name
+        }
+        email
+        login
+      }
     }
   }
 `;
@@ -2732,25 +2803,21 @@ export const UPDATE_PATCH_NOTE = gql`
 // Документация
 
 export const CREATE_DOCUMENTATION = gql`
-  mutation CreateDocumentation($data: DocumentationInput!) {
-    createDocumentation(data: $data) {
+  mutation CreateDocumentation($data: DocumentationInput!, $imageGroupsByKey: [DocUploadByKeyInput!]) {
+    createDocumentation(data: $data, imageGroupsByKey: $imageGroupsByKey) {
       id
-      chapter
-      category
       name
-      description
-      files
+      type
     }
   }
 `;
 
 export const GET_ALL_DOCUMENTATION = gql`
-  query GetAllDocumentations {
-    getAllDocumentations {
+  query GetAllDocumentations($type: DocumentationType, $filter: DocumentationFilter) {
+    getAllDocumentations(type: $type, filter: $filter) {
       id
       name
-      description
-      files
+      parentId
     }
   }
 `;
@@ -2766,9 +2833,15 @@ export const GET_DOCUMENTATION = gql`
   }
 `;
 
+export const GET_DOCUMENTATION_TREE = gql`
+  query DocumentationTree($documentationTreeId: ID!) {
+    documentationTree(id: $documentationTreeId)
+  }
+`;
+
 export const UPDATE_DOCUMENTATION = gql`
-  mutation UpdateDocumentation($updateDocumentationId: ID!, $data: DocumentationUpdateInput!) {
-    updateDocumentation(id: $updateDocumentationId, data: $data) {
+  mutation UpdateDocumentation($updateDocumentationId: ID!, $data: DocumentationUpdateInput!, $imageGroupsByKey: [DocUploadByKeyInput!], $pruneMissingChildren: Boolean) {
+    updateDocumentation(id: $updateDocumentationId, data: $data, imageGroupsByKey: $imageGroupsByKey, pruneMissingChildren: $pruneMissingChildren) {
       id
     }
   }
@@ -2832,6 +2905,241 @@ export const CREATE_COMPANY = gql`
 export const UPDATE_COMPANY = gql`
   mutation UpdateCompany($input: CompanyInput) {
     updateCompany(input: $input) {
+      id
+    }
+  }
+`;
+
+export const CREATE_AIRLINE_CONTRACT = gql`
+  mutation CreateAirlineContract($input: AirlineContractCreateInput!, $files: [Upload!]) {
+    createAirlineContract(input: $input, files: $files) {
+      id
+    }
+  }
+`;
+
+export const CREATE_AIRLINE_AA = gql`
+  mutation CreateAdditionalAgreement($input: AdditionalAgreementInput!, $files: [Upload!]) {
+    createAdditionalAgreement(input: $input, files: $files) {
+      id
+    }
+  }
+`;
+
+export const GET_AIRLINE_CONTRACTS = gql`
+  query AirlineContracts($orderBy: AirlineContractOrderByInput, $filter: AirlineContractFilter, $pagination: ContractPaginationInput) {
+    airlineContracts(orderBy: $orderBy, filter: $filter, pagination: $pagination) {
+      totalPages  
+      totalCount
+      items {
+        id
+        companyId
+        company {
+          name
+        }
+        airlineId
+        airline {
+          name
+          images
+        }
+        date
+        contractNumber
+        region
+        applicationType
+        notes
+        files
+        additionalAgreements {
+          id
+          notes
+          contractNumber
+        }
+      }
+    }
+  }
+`;
+
+export const GET_AIRLINE_CONTRACT = gql`
+  query AirlineContract($airlineContractId: ID!) {
+    airlineContract(id: $airlineContractId) {
+      id
+      companyId
+      company {
+        name
+      }
+      airlineId
+      airline {
+        name
+      }
+      date
+      contractNumber
+      region
+      applicationType
+      notes
+      files
+      additionalAgreements {
+        id
+        contractNumber
+        date
+        itemAgreement
+        notes
+        files
+      }
+    }
+  }
+`;
+
+export const GET_AIRLINE_CONTRACT_AA = gql`
+  query AdditionalAgreements($airlineContractId: ID) {
+    additionalAgreements(airlineContractId: $airlineContractId) {
+      id
+      itemAgreement
+      notes
+      files
+      date
+      contractNumber
+    }
+  }
+`;
+
+export const UPDATE_AIRLINE_CONTRACT = gql`
+  mutation UpdateAirlineContract($updateAirlineContractId: ID!, $input: AirlineContractUpdateInput!, $files: [Upload!]) {
+    updateAirlineContract(id: $updateAirlineContractId, input: $input, files: $files) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_AIRLINE_CONTRACT_AA = gql`
+  mutation UpdateAdditionalAgreement($updateAdditionalAgreementId: ID!, $input: AdditionalAgreementInput!, $files: [Upload!]) {
+    updateAdditionalAgreement(id: $updateAdditionalAgreementId, input: $input, files: $files) {
+      id
+    }
+  }
+`;
+
+export const DELETE_AIRLINE_CONTRACT_AA = gql`
+  mutation DeleteAdditionalAgreement($deleteAdditionalAgreementId: ID!) {
+    deleteAdditionalAgreement(id: $deleteAdditionalAgreementId)
+  }
+`;
+
+export const DELETE_AIRLINE_CONTRACT = gql`
+  mutation DeleteAirlineContract($deleteAirlineContractId: ID!) {
+    deleteAirlineContract(id: $deleteAirlineContractId)
+  }
+`;
+
+export const DELETE_HOTEL_CONTRACT = gql`
+  mutation DeleteHotelContract($deleteHotelContractId: ID!) {
+    deleteHotelContract(id: $deleteHotelContractId)
+  }
+`;
+
+export const CREATE_HOTEL_CONTRACT = gql`
+  mutation CreateHotelContract($input: HotelContractCreateInput!, $files: [Upload!]) {
+    createHotelContract(input: $input, files: $files) {
+      id
+    }
+  }
+`;
+
+
+export const GET_HOTEL_CONTRACTS = gql`
+  query HotelContracts( $filter: HotelContractFilter, $orderBy: HotelContractOrderByInput, $pagination: ContractPaginationInput) {
+    hotelContracts( filter: $filter, orderBy: $orderBy, pagination: $pagination) {
+      totalPages  
+      totalCount
+      items {
+        id
+        companyId
+        company {
+          name
+        }
+        hotelId
+        hotel {
+          name
+          images
+        }
+        cityId
+        region {
+          id
+          region
+          city
+        }
+        date
+        contractNumber
+        notes
+        legalEntity
+        signatureMark
+        completionMark
+        normativeAct
+        applicationType
+        executor
+        files
+      }
+    }
+  }
+`;
+
+export const GET_HOTEL_CONTRACT = gql`
+  query HotelContract($hotelContractId: ID!) {
+    hotelContract(id: $hotelContractId) {
+      id
+      companyId
+      company {
+        name
+      }
+      hotelId
+      hotel {
+        name
+      }
+      cityId
+      region {
+        id
+        city
+        region
+      }
+      date
+      contractNumber
+      notes
+      legalEntity
+      signatureMark
+      completionMark
+      normativeAct
+      applicationType
+      executor
+      files
+      additionalAgreements {
+        id
+        contractNumber
+        date
+        itemAgreement
+        notes
+        files
+      }
+    }
+  }
+`;
+
+export const UPDATE_HOTEL_CONTRACT = gql`
+  mutation UpdateHotelContract($updateHotelContractId: ID!, $input: HotelContractUpdateInput!, $files: [Upload!]) {
+    updateHotelContract(id: $updateHotelContractId, input: $input, files: $files) {
+      id
+    }
+  }
+`;
+
+export const SUBSCRIPTION_AIRLINE_CONTRACTS = gql`
+  subscription ContractAirline {
+    contractAirline {
+      id
+    }
+  }
+`;
+
+export const SUBSCRIPTION_HOTEL_CONTRACTS = gql`
+  subscription ContractHotel {
+    contractHotel {
       id
     }
   }
@@ -2902,6 +3210,65 @@ export const GET_ALL_TARIFFS = gql`
   }
 `;
 
+export const PRICE_CATEGORY_CHANGE_SUBSCRIPTION = gql`
+  subscription PriceCategoryChanged {
+    priceCategoryChanged {
+      id
+      airlinePrices {
+        id
+        airports {
+          id
+          airport {
+            id
+            name
+            code
+            city
+          }
+        }
+        name
+        prices {
+          priceApartment
+          priceStudio
+          priceLuxe
+          priceOneCategory
+          priceTwoCategory
+          priceThreeCategory
+          priceFourCategory
+          priceFiveCategory
+          priceSixCategory
+          priceSevenCategory
+          priceEightCategory
+          priceNineCategory
+          priceTenCategory
+        }
+        mealPrice {
+          breakfast
+          lunch
+          dinner
+        }
+      }
+      airline {
+        name
+        id
+      }
+      name
+      company {
+        name
+        id
+      }
+    }
+}
+`;
+
+export const COMPANY_CHANGE_SUBSCRIPTION = gql`
+  subscription CompanyChanged {
+    companyChanged {
+      id
+    }
+  }
+`;
+
+
 // Компания и договоры
 
 
@@ -2917,6 +3284,18 @@ export const GET_ANALYTICS_AIRLINE_REQUESTS = gql`
       }
       totalCreatedRequests
       totalCancelledRequests
+      statusCounts
+    }
+  }
+`;
+
+
+export const GET_ANALYTICS_USERS = gql`
+  query AnalyticsEntityUsers($input: AnalyticsUserInput) {
+    analyticsEntityUsers(input: $input) {
+      createdRequests
+      processedRequests
+      cancelledRequests
     }
   }
 `;

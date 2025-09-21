@@ -145,8 +145,8 @@ function PatchNotesList({ children, user, ...props }) {
               setDateRange({ startDate: start, endDate: end })
             }
           />
-          {(user.role === roles.superAdmin ||
-            user.role === roles.dispatcerAdmin) && (
+          {(user.role === roles.superAdmin 
+          ) && (
             <div className={classes.filter}>
               <Filter
                 toggleSidebar={toggleCreateSidebar}

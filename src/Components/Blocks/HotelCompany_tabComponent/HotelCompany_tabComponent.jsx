@@ -91,7 +91,7 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
 
   useEffect(() => {
     if (data) {
-      setCompanyData(data.hotelUsers);
+      setCompanyData(data.hotelUsers.users);
       refetch();
     }
   }, [data, refetch]);

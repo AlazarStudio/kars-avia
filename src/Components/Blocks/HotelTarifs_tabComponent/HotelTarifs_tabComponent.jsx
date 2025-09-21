@@ -60,6 +60,8 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     variables: { hotelId: id },
   });
 
+  const [meal, setMeal] = useState();
+
   const [addTarif, setAddTarif] = useState([]);
   const [mealPrices, setMealPrices] = useState({
     breakfast: 0,
@@ -107,6 +109,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   useEffect(() => {
     if (data) {
       setAddTarif(data.hotel?.roomKind);
+      setMeal(data.hotel?.meal)
     }
   }, [data]);
 
@@ -364,6 +367,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
           user={user}
+          meal={meal}
           height={height}
         />
       )}

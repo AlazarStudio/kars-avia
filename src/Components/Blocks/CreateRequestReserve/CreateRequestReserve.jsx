@@ -387,7 +387,7 @@ function CreateRequestReserve({ show, onClose, user, addNotification }) {
               {formData.city && (
                 <>
                   <label>Аэропорт</label>
-                  <MUIAutocompleteColor
+                  {/* <MUIAutocompleteColor
                     dropdownWidth={"100%"}
                     label={"Выберите аэропорт"}
                     options={airports.filter(
@@ -424,6 +424,56 @@ function CreateRequestReserve({ show, onClose, user, addNotification }) {
                       airports.find(
                         (option) => option.id === formData.airportId
                       ) || null
+                    }
+                    onChange={(e, newValue) => {
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        airportId: newValue?.id || "",
+                      }));
+                      // setIsEdited(true);
+                    }}
+                  /> */}
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label={"Выберите аэропорт"}
+                    options={airports.filter(
+                      (airport) => airport.city.trim() === formData.city.trim()
+                    )}
+                    getOptionLabel={(option) => {
+                      if (!option) return "";
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      return `${option.code} ${option.name}${cityPart}`.trim();
+                    }}
+                    renderOption={(optionProps, option) => {
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      const labelText =
+                        `${option.code} ${option.name}${cityPart}`.trim();
+                      const words = labelText.split(" ");
+
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: 4,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={
+                      airports.find((o) => o.id === formData.airportId) || null
                     }
                     onChange={(e, newValue) => {
                       setFormData((prevFormData) => ({

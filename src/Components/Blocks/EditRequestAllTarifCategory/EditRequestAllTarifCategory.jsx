@@ -160,7 +160,7 @@ function EditRequestAllTarifCategory({
         onClose();
         setIsLoading(false);
         addNotification("Изменение договора прошло успешно.", "success");
-        refetchAllCategories();
+        // refetchAllCategories();
       } catch (error) {
         setIsLoading(false);
         alert("Произошло ошибка при изменении договора.");

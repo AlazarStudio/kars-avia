@@ -211,13 +211,13 @@ function ExistRequest({
     },
   });
 
-  const [handleExtend] = useMutation(SAVE_HANDLE_EXTEND_MUTATION, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
+  // const [handleExtend] = useMutation(SAVE_HANDLE_EXTEND_MUTATION, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   },
+  // });
 
   const formatDateTime = (date, time) => {
     if (!date || !time) {
@@ -964,90 +964,128 @@ function ExistRequest({
                   formData.status !== "created" &&
                   formData.status !== "opened" && (
                     <div className={classes.requestData}>
-                      <div className={classes.requestDataTitle}>
-                        Питание сотрудника
-                      </div>
+  <div className={classes.requestDataTitle}>Питание сотрудника</div>
 
-                      {mealData.map((dailyMeal, index) => (
-                        <div key={index} className={classes.mealInfo}>
-                          <div className={classes.mealInfoDate}>
-                            {convertToDate(dailyMeal.date)}
-                          </div>
-                          <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>
-                              Завтрак
-                            </div>
-                            <input
-                              type="number"
-                              min={0}
-                              name="breakfastCount"
-                              placeholder="Количество"
-                              value={dailyMeal.breakfast}
-                              disabled={
-                                (formData.status === "archived" ||
-                                  formData.status === "canceled") &&
-                                true
-                              }
-                              onChange={(e) =>
-                                handleMealChange(
-                                  index,
-                                  "breakfast",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </div>
-                          <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>
-                              Обед
-                            </div>
-                            <input
-                              type="number"
-                              min={0}
-                              name="lunchCount"
-                              placeholder="Количество"
-                              value={dailyMeal.lunch}
-                              disabled={
-                                (formData.status === "archived" ||
-                                  formData.status === "canceled") &&
-                                true
-                              }
-                              onChange={(e) =>
-                                handleMealChange(index, "lunch", e.target.value)
-                              }
-                            />
-                          </div>
-                          <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>
-                              Ужин
-                            </div>
-                            <input
-                              type="number"
-                              min={0}
-                              name="dinnerCount"
-                              placeholder="Количество"
-                              value={dailyMeal.dinner}
-                              disabled={
-                                (formData.status === "archived" ||
-                                  formData.status === "canceled") &&
-                                true
-                              }
-                              onChange={(e) =>
-                                handleMealChange(
-                                  index,
-                                  "dinner",
-                                  e.target.value
-                                )
-                              }
-                            />
-                          </div>
-                        </div>
-                      ))}
-                      {formData.status !== "archived" &&
-                        formData.status !== "canceled" && (
-                          <Button onClick={handleSaveMeals}>Сохранить</Button>
-                        )}
-                    </div>
+  {/* Шапка */}
+  <div className={classes.mealRow + ' ' + classes.mealHeader}>
+    <div />            {/* под дату */}
+    <div>З</div>
+    <div>О</div>
+    <div>У</div>
+  </div>
+
+  {/* Строки с данными */}
+  {mealData.map((dailyMeal, index) => (
+    <div key={index} className={classes.mealRow}>
+      <div className={classes.mealInfoDate}>{convertToDate(dailyMeal.date)}</div>
+
+      <input
+        type="number" min={0} value={dailyMeal.breakfast}
+        disabled={formData.status === 'archived' || formData.status === 'canceled'}
+        onChange={(e)=>handleMealChange(index,'breakfast',e.target.value)}
+      />
+      <input
+        type="number" min={0} value={dailyMeal.lunch}
+        disabled={formData.status === 'archived' || formData.status === 'canceled'}
+        onChange={(e)=>handleMealChange(index,'lunch',e.target.value)}
+      />
+      <input
+        type="number" min={0} value={dailyMeal.dinner}
+        disabled={formData.status === 'archived' || formData.status === 'canceled'}
+        onChange={(e)=>handleMealChange(index,'dinner',e.target.value)}
+      />
+    </div>
+  ))}
+
+  {formData.status !== 'archived' && formData.status !== 'canceled' && (
+    <Button onClick={handleSaveMeals}>Сохранить</Button>
+  )}
+</div>
+                    // <div className={classes.requestData}>
+                    //   <div className={classes.requestDataTitle}>
+                    //     Питание сотрудника
+                    //   </div>
+
+                    //   {mealData.map((dailyMeal, index) => (
+                    //     <div key={index} className={classes.mealInfo}>
+                    //       <div className={classes.mealInfoDate}>
+                    //         {convertToDate(dailyMeal.date)}
+                    //       </div>
+                    //       <div className={classes.requestDataInfo}>
+                    //         <div className={classes.requestDataInfo_title}>
+                    //           Завтрак
+                    //         </div>
+                    //         <input
+                    //           type="number"
+                    //           min={0}
+                    //           name="breakfastCount"
+                    //           placeholder="Количество"
+                    //           value={dailyMeal.breakfast}
+                    //           disabled={
+                    //             (formData.status === "archived" ||
+                    //               formData.status === "canceled") &&
+                    //             true
+                    //           }
+                    //           onChange={(e) =>
+                    //             handleMealChange(
+                    //               index,
+                    //               "breakfast",
+                    //               e.target.value
+                    //             )
+                    //           }
+                    //         />
+                    //       </div>
+                    //       <div className={classes.requestDataInfo}>
+                    //         <div className={classes.requestDataInfo_title}>
+                    //           Обед
+                    //         </div>
+                    //         <input
+                    //           type="number"
+                    //           min={0}
+                    //           name="lunchCount"
+                    //           placeholder="Количество"
+                    //           value={dailyMeal.lunch}
+                    //           disabled={
+                    //             (formData.status === "archived" ||
+                    //               formData.status === "canceled") &&
+                    //             true
+                    //           }
+                    //           onChange={(e) =>
+                    //             handleMealChange(index, "lunch", e.target.value)
+                    //           }
+                    //         />
+                    //       </div>
+                    //       <div className={classes.requestDataInfo}>
+                    //         <div className={classes.requestDataInfo_title}>
+                    //           Ужин
+                    //         </div>
+                    //         <input
+                    //           type="number"
+                    //           min={0}
+                    //           name="dinnerCount"
+                    //           placeholder="Количество"
+                    //           value={dailyMeal.dinner}
+                    //           disabled={
+                    //             (formData.status === "archived" ||
+                    //               formData.status === "canceled") &&
+                    //             true
+                    //           }
+                    //           onChange={(e) =>
+                    //             handleMealChange(
+                    //               index,
+                    //               "dinner",
+                    //               e.target.value
+                    //             )
+                    //           }
+                    //         />
+                    //       </div>
+                    //     </div>
+                    //   ))}
+                    //   {formData.status !== "archived" &&
+                    //     formData.status !== "canceled" && (
+                    //       <Button onClick={handleSaveMeals}>Сохранить</Button>
+                    //     )}
+                    // </div>
                   )}
                 {/* Вкладка "Комментарии" */}
                 {activeTab === "Комментарии" && (

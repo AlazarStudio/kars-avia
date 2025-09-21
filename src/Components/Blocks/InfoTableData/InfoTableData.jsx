@@ -4,7 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, server } from "../../../../graphQL_requests";
 
 // Основная таблица с данными о заявках
-function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
+function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
     // Функция для установки выбранного объекта и переключения боковой панели
     const handleObject = useCallback((id, arrival, departure, person, requestNumber) => {
         setChooseObject([{
@@ -52,6 +52,12 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
       }
     }, [pageInfo]);
 
+    // useEffect(() => {
+    //     if (!scrollToId || !listContainerRef.current) return;
+    //     const el = listContainerRef.current.querySelector(`[data-id="${scrollToId}"]`);
+    //     if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+    // }, [scrollToId, requests]);
+
     // console.log(requests);
     
 
@@ -77,6 +83,7 @@ function InfoTableData({ user, toggleRequestSidebar, requests, setChooseObject, 
                         style={{ opacity: (item.status !== 'archiving' && item.status !== 'canceled' ) ? 1 : 0.5 }}
                         onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
                         key={index}
+                        // data-id={item.id}
                     >
                         {/* {item.status === 'created' && <div className={classes.newRequest}></div>} */}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.requestNumber}</div>

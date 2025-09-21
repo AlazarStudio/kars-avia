@@ -1,4 +1,5 @@
 import React from "react";
+import classes from "./AnalyticsChart.module.css"
 import {
   ResponsiveContainer,
   BarChart, Bar,
@@ -15,7 +16,8 @@ function AnalyticsChart({
   yKey = "y",
   dataKey = "value",
   title,
-  colors = ["#0057C3", "#F44336", "#4CAF50", "#9575CD", "#9E9E9E", "#FF9800", "#638EA4", "#3B653D"],
+  // colors = ["#0057C3", "#F44336", "#4CAF50", "#9575CD", "#9E9E9E", "#FF9800", "#638EA4", "#3B653D"],
+  colors = ["#0057C3", "#2196f3", "#4CAF50", "#9575CD", "#ff9800", "#f44336", "#638EA4", "#3B653D"],
   height = 250
 }) {
   const renderChart = () => {
@@ -26,7 +28,7 @@ function AnalyticsChart({
         return (
           <ResponsiveContainer width="100%" height={height} outline={false}>
             <BarChart data={data}
-              margin={{ top: 0, right: 0, left: -30, bottom: 0 }}
+              margin={{ top: 0, right: 0, left: -19, bottom: 0 }}
             >
               <XAxis dataKey={xKey} tickFormatter={(tick) => {
                 const date = new Date(tick);
@@ -106,7 +108,7 @@ function AnalyticsChart({
                 nameKey={xKey}
                 outerRadius={90}
                 innerRadius={70}
-                paddingAngle={2}
+                paddingAngle={0}
               >
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
@@ -161,16 +163,7 @@ function AnalyticsChart({
   };
 
   return (
-    <div style={{
-      background: "#fff",
-      padding: '26px 30px',
-      borderRadius: '10px',
-      border: "1px solid #AAB0DD5C",
-      display: 'flex',
-      flexDirection: 'column',
-      width: '50%',
-      gap: '30px',
-    }}>
+    <div className={classes.container}>
       {title && <h4>{title}</h4>}
       {renderChart()}
     </div>

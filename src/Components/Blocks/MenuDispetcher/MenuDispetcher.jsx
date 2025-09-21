@@ -47,7 +47,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
     setMenuOpen((prevState) => !prevState);
   };
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const [reserves, setReserves] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -64,175 +64,175 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
   //   }
   // };
 
-  // const [hotelCity, setHotelCity] = useState();
+  const [hotelCity, setHotelCity] = useState();
 
-  // const {
-  //   loading: hotelLoading,
-  //   error: hotelError,
-  //   data: hotelData,
-  // } = useQuery(GET_HOTEL_CITY, {
-  //   context: {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   },
-  //   variables: { hotelId: user.hotelId },
-  // });
+  const {
+    loading: hotelLoading,
+    error: hotelError,
+    data: hotelData,
+  } = useQuery(GET_HOTEL_CITY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: { hotelId: user.hotelId },
+  });
 
-  // useEffect(() => {
-  //   if (hotelData) {
-  //     setHotelCity(hotelData.hotel.city);
-  //   }
-  // }, [hotelData]);
+  useEffect(() => {
+    if (hotelData) {
+      setHotelCity(hotelData.hotel.city);
+    }
+  }, [hotelData]);
 
-  // const [airlineName, setAirlineName] = useState();
+  const [airlineName, setAirlineName] = useState();
 
-  // const {
-  //   loading: airlineLoading,
-  //   error: airlineError,
-  //   data: airlineData,
-  // } = useQuery(GET_AIRLINE, {
-  //   context: {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   },
-  //   variables: { airlineId: user.airlineId },
-  // });
+  const {
+    loading: airlineLoading,
+    error: airlineError,
+    data: airlineData,
+  } = useQuery(GET_AIRLINE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: { airlineId: user.airlineId },
+  });
 
-  // useEffect(() => {
-  //   if (airlineData) {
-  //     setAirlineName(airlineData.airline.name);
-  //   }
-  // }, [airlineData]);
+  useEffect(() => {
+    if (airlineData) {
+      setAirlineName(airlineData.airline.name);
+    }
+  }, [airlineData]);
 
   const [allCreatedReserves, setAllCreatedReserves] = useState(0);
   const [allCreatedRequests, setAllCreatedRequests] = useState(0);
 
-  // const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
-  //   context: {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   },
-  //   variables: {
-  //     pagination: { skip: 0, take: 999999999, status: "created" },
-  //   },
-  // });
+  const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      pagination: { skip: 0, take: 999999999, status: "created" },
+    },
+  });
 
-  // const {
-  //   loading: loadingRequest,
-  //   error: errorRequest,
-  //   data: dataRequest,
-  //   refetch: refetchRequest,
-  // } = useQuery(GET_REQUESTS, {
-  //   context: {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   },
-  //   variables: {
-  //     pagination: { skip: 0, take: 999999999, status: "created" },
-  //   },
-  // });
+  const {
+    loading: loadingRequest,
+    error: errorRequest,
+    data: dataRequest,
+    refetch: refetchRequest,
+  } = useQuery(GET_REQUESTS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      pagination: { skip: 0, take: 999999999, status: "created" },
+    },
+  });
 
-  // const { data: subscriptionData } = useSubscription(
-  //   REQUEST_RESERVE_CREATED_SUBSCRIPTION
-  // );
-  // const { data: subscriptionDataRequest } = useSubscription(
-  //   REQUEST_CREATED_SUBSCRIPTION
-  // );
+  const { data: subscriptionData } = useSubscription(
+    REQUEST_RESERVE_CREATED_SUBSCRIPTION
+  );
+  const { data: subscriptionDataRequest } = useSubscription(
+    REQUEST_CREATED_SUBSCRIPTION
+  );
 
-  // useEffect(() => {
-  //   if (subscriptionData) {
-  //     const newReserve = subscriptionData.reserveCreated;
+  useEffect(() => {
+    if (subscriptionData) {
+      // const newReserve = subscriptionData.reserveCreated;
 
-  //     setReserves((prevRequests) => {
-  //       const exists = prevRequests.some(
-  //         (request) => request.id === newReserve.id
-  //       );
-  //       if (!exists) {
-  //         setNewReserves((prevNewRequests) => [newReserve, ...prevNewRequests]);
-  //       }
-  //       return prevRequests;
-  //     });
+      // setReserves((prevRequests) => {
+      //   const exists = prevRequests.some(
+      //     (request) => request.id === newReserve.id
+      //   );
+      //   if (!exists) {
+      //     setNewReserves((prevNewRequests) => [newReserve, ...prevNewRequests]);
+      //   }
+      //   return prevRequests;
+      // });
 
-  //     refetch();
-  //   }
+      refetch();
+    }
 
-  //   if (subscriptionDataRequest) {
-  //     const newRequest = subscriptionDataRequest.requestCreated;
+    if (subscriptionDataRequest) {
+      // const newRequest = subscriptionDataRequest.requestCreated;
 
-  //     setRequests((prevRequests) => {
-  //       const exists = prevRequests.some(
-  //         (request) => request.id === newRequest.id
-  //       );
-  //       if (!exists) {
-  //         setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
-  //       }
-  //       return prevRequests;
-  //     });
+      // setRequests((prevRequests) => {
+      //   const exists = prevRequests.some(
+      //     (request) => request.id === newRequest.id
+      //   );
+      //   if (!exists) {
+      //     setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
+      //   }
+      //   return prevRequests;
+      // });
 
-  //     refetchRequest();
-  //   }
-  // }, [
-  //   subscriptionData,
-  //   subscriptionDataRequest,
-  //   hotelCity,
-  //   airlineName,
-  //   data,
-  //   dataRequest,
-  // ]);
+      refetchRequest();
+    }
+  }, [
+    subscriptionData,
+    subscriptionDataRequest,
+    hotelCity,
+    airlineName,
+    data,
+    dataRequest,
+  ]);
 
-  // useEffect(() => {
-  //   if (data && data.reserves.reserves) {
-  //     let sortedRequests = [...data.reserves.reserves];
+  useEffect(() => {
+    if (data && data.reserves.reserves) {
+      let sortedRequests = [...data.reserves.reserves];
 
-  //     if (newReserves.length > 0) {
-  //       sortedRequests = [...newReserves, ...sortedRequests];
-  //       setNewReserves([]);
-  //     }
+      if (newReserves.length > 0) {
+        sortedRequests = [...newReserves, ...sortedRequests];
+        setNewReserves([]);
+      }
 
-  //     setReserves(sortedRequests);
+      setReserves(sortedRequests);
 
-  //     setAllCreatedReserves(
-  //       sortedRequests.filter(
-  //         (request) =>
-  //           request.status === "created" &&
-  //           (user.hotelId ? request.airport?.city === hotelCity : true) &&
-  //           (user.airlineId ? request.airline?.name === airlineName : true)
-  //       ).length
-  //     );
+      setAllCreatedReserves(
+        sortedRequests.filter(
+          (request) =>
+            request.status === "created" &&
+            (user.hotelId ? request.airport?.city === hotelCity : true) &&
+            (user.airlineId ? request.airline?.name === airlineName : true)
+        ).length
+      );
 
-  //     refetch();
-  //   }
+      refetch();
+    }
 
-  //   if (dataRequest && dataRequest.requests.requests) {
-  //     let sortedRequests = [...dataRequest.requests.requests];
+    if (dataRequest && dataRequest.requests.requests) {
+      let sortedRequests = [...dataRequest.requests.requests];
 
-  //     if (newRequests.length > 0) {
-  //       sortedRequests = [...newRequests, ...sortedRequests];
-  //       setNewRequests([]);
-  //     }
+      if (newRequests.length > 0) {
+        sortedRequests = [...newRequests, ...sortedRequests];
+        setNewRequests([]);
+      }
 
-  //     // Удаляем дубли
-  //     const uniqueRequests = sortedRequests.filter(
-  //       (request, index, self) =>
-  //         index === self.findIndex((r) => r.id === request.id)
-  //     );
+      // Удаляем дубли
+      const uniqueRequests = sortedRequests.filter(
+        (request, index, self) =>
+          index === self.findIndex((r) => r.id === request.id)
+      );
 
-  //     setRequests(uniqueRequests);
+      setRequests(uniqueRequests);
 
-  //     setAllCreatedRequests(
-  //       uniqueRequests.filter(
-  //         (request) =>
-  //           request.status === "created" &&
-  //           (user.hotelId ? request.airport?.city === hotelCity : true) &&
-  //           (user.airlineId ? request.airline?.name === airlineName : true)
-  //       ).length
-  //     );
-  //   }
-  // }, [data, dataRequest, hotelCity, airlineName, newReserves, newRequests]);
+      setAllCreatedRequests(
+        uniqueRequests.filter(
+          (request) =>
+            // request.status === "created" &&
+            (user.hotelId ? request.airport?.city === hotelCity : true) &&
+            (user.airlineId ? request.airline?.name === airlineName : true)
+        ).length
+      );
+    }
+  }, [data, dataRequest, hotelCity, airlineName, newReserves, newRequests]);
 
   // Пока значение menuOpen не загружено из localStorage, ничего не рендерим
   if (menuOpen === null) {

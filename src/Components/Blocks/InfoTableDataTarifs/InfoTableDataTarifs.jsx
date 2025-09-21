@@ -22,6 +22,7 @@ const categoryMap = {
 
 function InfoTableDataTarifs({
   children,
+  meal,
   toggleRequestSidebar,
   toggleTarifsCategory,
   toggleEditMealPrices,
@@ -92,40 +93,46 @@ function InfoTableDataTarifs({
           ))}
         </div>
       </InfoTable>
-      Питание - цены
-      <InfoTable isScroll={true}>
-        <div className={classes.bottom}>
-          {mealPrices.map((item, index) => (
-            <div className={classes.InfoTable_data} key={index}>
-              <div className={`${classes.InfoTable_data_elem} ${classes.w45}`}>
-                <div className={classes.InfoTable_data_elem_title}>
-                  {item.name}
-                </div>
-              </div>
+      {meal && (
+        <>
+          Питание - цены
+          <InfoTable isScroll={true}>
+            <div className={classes.bottom}>
+              {mealPrices.map((item, index) => (
+                <div className={classes.InfoTable_data} key={index}>
+                  <div
+                    className={`${classes.InfoTable_data_elem} ${classes.w45}`}
+                  >
+                    <div className={classes.InfoTable_data_elem_title}>
+                      {item.name}
+                    </div>
+                  </div>
 
-              {user?.role != roles.airlineAdmin && (
-                <div
-                  className={`${classes.InfoTable_data_elem} ${classes.w20}`}
-                >
-                  <div className={classes.InfoTable_data_elem_title}>
-                    {item.price?.toLocaleString()} ₽
+                  {user?.role != roles.airlineAdmin && (
+                    <div
+                      className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                    >
+                      <div className={classes.InfoTable_data_elem_title}>
+                        {item.price?.toLocaleString()} ₽
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={classes.infoTable_buttons}>
+                    <img
+                      src="/editPassenger.png"
+                      alt=""
+                      onClick={() => {
+                        toggleEditMealPrices(item);
+                      }}
+                    />
                   </div>
                 </div>
-              )}
-
-              <div className={classes.infoTable_buttons}>
-                <img
-                  src="/editPassenger.png"
-                  alt=""
-                  onClick={() => {
-                    toggleEditMealPrices(item);
-                  }}
-                />
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </InfoTable>
+          </InfoTable>
+        </>
+      )}
     </div>
   );
 }

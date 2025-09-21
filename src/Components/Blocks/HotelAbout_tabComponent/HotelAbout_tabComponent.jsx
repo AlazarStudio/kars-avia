@@ -120,7 +120,7 @@ function HotelAbout_tabComponent({ id }) {
               >
                 <img src="/roomsIcon.png" alt="" /> Номера
               </button>
-
+              {/* 
               <button
                 className={
                   displayInfo == "tariffs" ? classes.activeButton : null
@@ -130,7 +130,7 @@ function HotelAbout_tabComponent({ id }) {
                 }}
               >
                 <img src="/tariffsIcon.png" alt="" /> Тарифы
-              </button>
+              </button> */}
             </div>
           </div>
 
@@ -270,31 +270,33 @@ function HotelAbout_tabComponent({ id }) {
                     />
                   </div>
                   <div className={classes.hotelAboutMoreInfo}>
-                    <div className={classes.scheduleWrapper}>
-                      <p
-                        className={classes.hotelText}
-                        style={{ fontWeight: "700" }}
-                      >
-                        Расписание
-                      </p>
-                      <div className={classes.schedule}>
-                        <p className={classes.hotelText}>
-                          Завтрак с <span>{hotel.breakfast?.start}</span> до{" "}
-                          <span>{hotel.breakfast?.end}</span>
+                    {hotel.meal && (
+                      <div className={classes.scheduleWrapper}>
+                        <p
+                          className={classes.hotelText}
+                          style={{ fontWeight: "700" }}
+                        >
+                          Расписание
                         </p>
-                        <p className={classes.hotelText}>
-                          Обед с <span>{hotel.lunch?.start}</span> до{" "}
-                          <span>{hotel.lunch?.end}</span>
-                        </p>
-                        <p className={classes.hotelText}>
-                          Ужин с <span>{hotel.dinner?.start}</span> до{" "}
-                          <span>{hotel.dinner?.end}</span>
-                        </p>
+                        <div className={classes.schedule}>
+                          <p className={classes.hotelText}>
+                            Завтрак с <span>{hotel.breakfast?.start}</span> до{" "}
+                            <span>{hotel.breakfast?.end}</span>
+                          </p>
+                          <p className={classes.hotelText}>
+                            Обед с <span>{hotel.lunch?.start}</span> до{" "}
+                            <span>{hotel.lunch?.end}</span>
+                          </p>
+                          <p className={classes.hotelText}>
+                            Ужин с <span>{hotel.dinner?.start}</span> до{" "}
+                            <span>{hotel.dinner?.end}</span>
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div
                       className={classes.contactsWrapper}
-                      style={{ width: "fit-content" }}
+                      style={{ width: "fit-content", flexBasis: !hotel.meal && "100%" }}
                     >
                       <div className={classes.scheduleWrapper}>
                         <div className={classes.contactItem}>
@@ -362,9 +364,8 @@ function HotelAbout_tabComponent({ id }) {
                   {/* {console.log(hotel)} */}
                 </div>
               </div>
-            ) : (
-                <HotelAboutTariffs tariffs={hotel?.tariffs || {}}/>
-            )}
+            ) : // <HotelAboutTariffs tariffs={hotel?.tariffs || {}}/>
+            null}
           </div>
         </div>
       )}

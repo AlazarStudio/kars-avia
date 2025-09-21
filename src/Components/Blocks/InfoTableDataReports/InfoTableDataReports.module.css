@@ -119,10 +119,11 @@
 }
 
 .bottom {
-    height: fit-content;
-    max-height: calc(100vh - 330px);
+    /* height: fit-content; */
+    height: calc(100vh - 259px);
     overflow: hidden;
     overflow-y: scroll;
+    background-color: #fff;
 }
 
 .InfoTable_data_elem_userInfo {

@@ -40,6 +40,7 @@ function MUIAutocompleteColor({
             fontSize: "14px", // Уменьшаем размер шрифта списка
             padding: "0",
             borderRadius: "10px !important",
+            whiteSpace: 'nowrap',
             ...(listboxHeight && { maxHeight: listboxHeight }),
           },
         },
@@ -78,7 +79,7 @@ function MUIAutocompleteColor({
               fontSize: "14px",
             },
             "& .MuiInputBase-root": {
-              height: "40px",
+              maxHeight: "40px",
               display: "flex",
               alignItems: "center",
               borderRadius: "10px !important",

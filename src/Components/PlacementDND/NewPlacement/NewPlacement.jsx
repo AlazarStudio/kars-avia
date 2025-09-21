@@ -2115,8 +2115,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
       const { height } = useWindowSize();
 
       
-// в начале компонента
-const hasScrolledRef = useRef(false);
+    // в начале компонента
+    const hasScrolledRef = useRef(false);
     // Получаем индекс комнаты, где есть нужная requestId:
     const roomIndex = useMemo(() => {
     if (!requestId) return -1;
@@ -2613,7 +2613,7 @@ const hasScrolledRef = useRef(false);
             <ExistReserveMess hotelId={hotelInfo.id} show={showRequestSidebarMess} onClose={toggleRequestSidebarMess} chooseRequestID={openReserveId} user={user} />
 
 
-            {(loading || isLoading) && (
+            {(loading || isLoading || bronLoading) && (
                 <Box
                     sx={{
                         position: 'absolute',
@@ -2627,7 +2627,7 @@ const hasScrolledRef = useRef(false);
                 >
                     <MUILoader 
                     fullHeight={user?.role === roles.hotelAdmin && height > 800 
-                    ? '80vh' 
+                    ? '82vh' 
                     : user?.role === roles.hotelAdmin && height < 800 
                     ? '75vh' 
                     : user?.role !== roles.hotelAdmin && height > 870 

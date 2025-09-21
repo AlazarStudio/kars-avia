@@ -89,6 +89,7 @@ function MUIAutocomplete({
               "& .MuiInputBase-root": {
                 // minHeight: "40px",
                 height: "40px",
+                maxHeight:"40px",
                 display: "flex",
                 alignItems: "center",
                 borderRadius: "10px !important",

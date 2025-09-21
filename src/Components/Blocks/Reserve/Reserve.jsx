@@ -325,7 +325,7 @@ function Reserve({ children, user, idHotel, ...props }) {
   return (
     <>
       <div className={classes.section}>
-        <Header>Пассажиры</Header>
+        <Header>Пассажиры (в разработке)</Header>
         <div className={classes.section_searchAndFilter}>
           {/* <input
                         type="text"

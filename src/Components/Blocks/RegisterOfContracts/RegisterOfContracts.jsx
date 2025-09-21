@@ -1,46 +1,136 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./RegisterOfContracts.module.css";
 import Filter from "../Filter/Filter.jsx";
 
 import {
   getCookie,
-  GET_AIRLINE_TARIFS,
-  DELETE_AIRLINE_CATEGORY,
-  DELETE_AIRLINE_TARIFF,
-  GET_AIRLINES_UPDATE_SUBSCRIPTION,
-  GET_ALL_TARIFFS,
+  GET_AIRLINE_CONTRACTS,
+  GET_HOTEL_CONTRACTS,
+  SUBSCRIPTION_HOTEL_CONTRACTS,
+  SUBSCRIPTION_AIRLINE_CONTRACTS,
+  DELETE_AIRLINE_CONTRACT,
+  DELETE_HOTEL_CONTRACT,
+  GET_AIRLINES_RELAY,
+  GET_ALL_COMPANIES,
+  GET_HOTELS_RELAY,
+  GET_CITIES,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import Notification from "../../Notification/Notification.jsx";
-import { fullNotifyTime, notifyTime } from "../../../roles.js";
-import InfoTableAirlineDataTarifs from "../InfoTableAirlineDataTarifs/InfoTableAirlineDataTarifs.jsx";
-import CreateRequestAirlineTarifCategory from "../CreateRequestAirlineTarifCategory/CreateRequestAirlineTarifCategory.jsx";
-import EditRequestAirlineTarifCategory from "../EditRequestAirlineTarifCategory/EditRequestAirlineTarifCategory.jsx";
+import { action, fullNotifyTime, notifyTime } from "../../../roles.js";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Header from "../Header/Header.jsx";
 import InfoTableAllDataTarifs from "../InfoTableAllDataTarifs/InfoTableAllDataTarifs.jsx";
+import CreateRequestContract from "../CreateRequestContract/CreateRequestContract.jsx";
+import CreateRequestHotelContract from "../CreateRequestHotelContract/CreateRequestHotelContract.jsx";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useDebounce } from "../../../hooks/useDebounce.jsx";
+import ReactPaginate from "react-paginate";
+import EditRequestAirlineContract from "../EditRequestAirlineContract/EditRequestAirlineContract.jsx";
+import EditRequestHotelContract from "../EditRequestHotelContract/EditRequestHotelContract.jsx";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector.jsx";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 
 function RegisterOfContracts({ children, id, user, ...props }) {
   const token = getCookie("token");
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const { loading, error, data, refetch } = useQuery(GET_ALL_TARIFFS, {
+  const pageNumberRelay = new URLSearchParams(location.search).get("page");
+  const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
+  const [searchTarif, setSearchTarif] = useState("");
+  const debouncedSearch = useDebounce(searchTarif, 500);
+  const [activeTab, setActiveTab] = useState("airlines"); // "contracts" | "registers"
+
+  const [pageInfo, setPageInfo] = useState({
+    skip: currentPageRelay,
+    take: 50,
+  });
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [dateRange, setDateRange] = useState({
+    startDate: null,
+    endDate: null,
+  });
+  const [airlines, setAirlines] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [hotels, setHotels] = useState([]);
+  const [cities, setCities] = useState([]);
+  const [selectedAirline, setSelectedAirline] = useState(null);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [selectedType, setSelectedType] = useState(null);
+
+  const query =
+    activeTab === "airlines" ? GET_AIRLINE_CONTRACTS : GET_HOTEL_CONTRACTS;
+
+  const { loading, error, data, refetch } = useQuery(query, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    // variables: { airlineId: "67af473ff18c7be5412e57fb" },
+    variables: {
+      pagination: {
+        skip: pageInfo.skip,
+        take: pageInfo.take,
+      },
+      filter: {
+        companyId: selectedCompany?.id,
+        dateFrom: dateRange.startDate?.toISOString(),
+        dateTo: dateRange.endDate?.toISOString(),
+        ...(activeTab === "airlines" && {
+          applicationType: selectedType,
+          airlineId: selectedAirline?.id,
+        }),
+        ...(activeTab === "hotels" && {
+          hotelId: selectedHotel?.id,
+          cityId: selectedCity?.id,
+        }),
+        search: debouncedSearch,
+      },
+    },
+  });
+  // console.log(debouncedSearch);
+
+  const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const { data: hotelsData } = useQuery(GET_HOTELS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const { data: companiesData } = useQuery(GET_ALL_COMPANIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const { data: citiesData } = useQuery(GET_CITIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
   });
 
   const [addTarif, setAddTarif] = useState([]);
-  // const [mealPrices, setMealPrices] = useState({
-  //   breakfast: 0,
-  //   lunch: 0,
-  //   dinner: 0,
-  // });
   const [showAddTarif, setShowAddTarif] = useState(false);
   const [showAddTarifCategory, setShowAddTarifCategory] = useState(false);
   const [showEditAddTarif, setEditShowAddTarif] = useState(false);
@@ -50,9 +140,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
   const [selectedTarif, setSelectedTarif] = useState(null);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
-  const [searchTarif, setSearchTarif] = useState("");
-  const [activeTab, setActiveTab] = useState("contracts"); // "contracts" | "registers"
-  const [typeFilter, setTypeFilter] = useState("Моя компания");
+  const [typeFilter, setTypeFilter] = useState("ГК Карс");
 
   const [selectedContract, setSelectedContract] = useState(null);
 
@@ -67,31 +155,65 @@ function RegisterOfContracts({ children, id, user, ...props }) {
     }, fullNotifyTime);
   };
 
-  const [deleteHotelCategory] = useMutation(DELETE_AIRLINE_CATEGORY, {
+  const [deleteAirlineContract] = useMutation(DELETE_AIRLINE_CONTRACT, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
       },
     },
   });
-  const [deleteHotelTarif] = useMutation(DELETE_AIRLINE_TARIFF, {
+  const [deleteHotelContract] = useMutation(DELETE_HOTEL_CONTRACT, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
       },
     },
   });
 
   useEffect(() => {
-    if (data) {
-      setAddTarif(data.getAllPriceCategory);
+    if (data && data.airlineContracts) {
+      setAddTarif(data.airlineContracts.items);
+      setTotalPages(data.airlineContracts.totalPages);
+    }
+    if (data && data.hotelContracts) {
+      setAddTarif(data.hotelContracts.items);
+      setTotalPages(data.hotelContracts.totalPages);
     }
   }, [data]);
 
+  useEffect(() => {
+    if (airlinesData) {
+      setAirlines(airlinesData.airlines.airlines || []);
+    }
+    if (hotelsData) {
+      setHotels(hotelsData.hotels.hotels);
+    }
+    if (companiesData) {
+      setCompanies(companiesData.getAllCompany);
+    }
+    if (citiesData) {
+      setCities(citiesData.citys);
+    }
+  }, [airlinesData, companiesData, hotelsData, citiesData]);
+
+  const { data: subscriptionData } = useSubscription(
+    SUBSCRIPTION_AIRLINE_CONTRACTS,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+  const { data: subscriptionUpdateData } = useSubscription(
+    SUBSCRIPTION_HOTEL_CONTRACTS,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
   // console.log(data);
-  
 
   const handleSearchTarif = (e) => {
     setSearchTarif(e.target.value);
@@ -123,95 +245,39 @@ function RegisterOfContracts({ children, id, user, ...props }) {
     setEditShowAddTarifCategory(true);
   };
 
-  const handleEditTarif = (updatedTarif) => {
-    setAddTarif(updatedTarif);
-    setEditShowAddTarif(false);
-    setSelectedTarif(null);
-  };
+  useEffect(() => {
+    // сбрасываем на первую страницу
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1");
 
-  const handleEditTarifCategory = (updatedCategory) => {
-    const { tarif: currentTarif, category: currentCategory } =
-      selectedTarif.data;
-    const newTarifName = updatedCategory.tarifName;
-
-    let updatedTarifs = addTarif.map((tarif) => {
-      if (tarif.tarifName === currentTarif && currentTarif === newTarifName) {
-        const updatedCategories = tarif.categories.map((category) => {
-          if (
-            category.type === currentCategory.type &&
-            category.price === currentCategory.price &&
-            category.price_airline === currentCategory.price_airline
-          ) {
-            return { ...updatedCategory.categories };
-          }
-          return { ...category };
-        });
-        return {
-          ...tarif,
-          categories: [...updatedCategories],
-        };
-      }
-
-      if (tarif.tarifName === currentTarif) {
-        const updatedCategories = tarif.categories.filter(
-          (category) =>
-            !(
-              category.type === currentCategory.type &&
-              category.price === currentCategory.price &&
-              category.price_airline === currentCategory.price_airline
-            )
-        );
-        return {
-          ...tarif,
-          categories: [...updatedCategories],
-        };
-      }
-      return { ...tarif };
-    });
-
-    if (currentTarif !== newTarifName) {
-      let newTarifFound = false;
-      updatedTarifs = updatedTarifs.map((tarif) => {
-        if (tarif.tarifName === newTarifName) {
-          newTarifFound = true;
-          return {
-            ...tarif,
-            categories: [
-              ...tarif.categories,
-              { ...updatedCategory.categories },
-            ],
-          };
-        }
-        return { ...tarif };
-      });
-
-      if (!newTarifFound) {
-        const newTarif = {
-          tarifName: newTarifName,
-          categories: [{ ...updatedCategory.categories }],
-        };
-        updatedTarifs = [...updatedTarifs, newTarif];
-      }
-    }
-
-    setAddTarif(updatedTarifs);
-    setEditShowAddTarifCategory(false);
-    setSelectedTarif(null);
-  };
-
-  const deleteTarif = async (index, tarifID) => {
-    let response_update_tarif = await deleteHotelTarif({
-      variables: {
-        deleteTariffId: tarifID,
+    refetch({
+      pagination: {
+        skip: 0,
+        take: pageInfo.take,
       },
-    });
-
-    if (response_update_tarif) {
-      setAddTarif(addTarif.filter((_, i) => i !== index));
-      setShowDelete(false);
-      setEditShowAddTarif(false);
-    }
-  };
+      filter: {
+        companyId: selectedCompany?.id,
+        dateFrom: dateRange.startDate?.toISOString(),
+        dateTo: dateRange.endDate?.toISOString(),
+        ...(activeTab === "airlines" && {
+          applicationType: selectedType,
+          airlineId: selectedAirline?.id,
+        }),
+        ...(activeTab === "hotels" && {
+          hotelId: selectedHotel?.id,
+          cityId: selectedCity?.id,
+        }),
+        search: debouncedSearch,
+      },
+    }).catch(console.error);
+  }, [
+    debouncedSearch,
+    dateRange,
+    selectedAirline,
+    selectedHotel,
+    selectedCompany,
+    selectedCity,
+  ]);
 
   const openDeleteComponent = (index, tarifID) => {
     setShowDelete(true);
@@ -223,6 +289,39 @@ function RegisterOfContracts({ children, id, user, ...props }) {
       },
     });
     setEditShowAddTarif(false);
+  };
+
+  // NEW: открыть модал удаления договора
+  const openDeleteContract = (contract) => {
+    setShowDelete(true);
+    setDeleteIndex({
+      type: "deleteContract",
+      data: { contract },
+    });
+    setEditShowAddTarif(false);
+  };
+
+  // NEW: удалить договор (авиа/гостиница)
+  const deleteContract = async (contract) => {
+    try {
+      if (activeTab === "airlines") {
+        await deleteAirlineContract({
+          variables: { deleteAirlineContractId: contract.id },
+        });
+      } else {
+        await deleteHotelContract({
+          variables: { deleteHotelContractId: contract.id },
+        });
+      }
+      // оптимистично выкидываем из списка + подстраховочно refetch
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      setShowDelete(false);
+      addNotification?.("Договор удалён.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось удалить договор.", "error");
+    }
   };
 
   const closeDeleteComponent = () => {
@@ -241,214 +340,383 @@ function RegisterOfContracts({ children, id, user, ...props }) {
     });
   };
 
-  const deleteTarifCategory = async (category, tarif) => {
-    let response_update_category = await deleteHotelCategory({
-      variables: {
-        deleteCategoryId: category.id,
-      },
-    });
+  // Текущая страница из URL (0-based)
+  const urlPage = useMemo(() => {
+    const p = Number(new URLSearchParams(location.search).get("page") || "1");
+    return Math.max(0, p - 1);
+  }, [location.search]);
 
-    if (response_update_category) {
-      const updatedTarifs = addTarif.map((t) => {
-        if (t.id == tarif.id) {
-          const updatedCategories = t.category.filter(
-            (cat) => cat.id !== category.id
-          );
-          return {
-            name: tarif.name,
-            category: updatedCategories,
-          };
-        }
-        return t;
-      });
+  // Синхронизируем внутренний стейт пагинации со значением из URL
+  // useEffect(() => {
+  //   setPageInfo((prev) =>
+  //     prev.skip === urlPage ? prev : { ...prev, skip: urlPage }
+  //   );
+  // }, [urlPage]);
 
-      setAddTarif(updatedTarifs);
-      setShowDelete(false);
-      setEditShowAddTarif(false);
-    }
+  const handlePageClick = (event) => {
+    const selectedPage = event.selected;
+    setPageInfo((prev) => ({ ...prev, skip: selectedPage * 50 }));
+    navigate(`?page=${selectedPage + 1}`);
   };
 
-  const handleEditMealPrices = (updatedPrices) => {
-    setMealPrices(updatedPrices);
-    setShowEditMealPrices(false);
-  };
-
-  const toggleEditMealPrices = () => {
-    setShowEditMealPrices(!showEditMealPrices);
-  };
-
-  const filteredRequestsTarif = addTarif?.filter((request) => {
-    return (
-      request.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
-      String(request?.mealPrice?.breakfast)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request?.mealPrice?.dinner)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request?.mealPrice?.lunch)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      request.airports.some((i) =>
-        i.airport.name.toLowerCase().includes(searchTarif.toLowerCase())
-      ) ||
-      request.airports.some((i) =>
-        i.airport.code.toLowerCase().includes(searchTarif.toLowerCase())
-      ) ||
-      request.airports.some((i) =>
-        i.airport.city.toLowerCase().includes(searchTarif.toLowerCase())
-      ) ||
-      String(request.prices.priceApartment)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceStudio)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceLuxe)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceOneCategory)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceTwoCategory)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceThreeCategory)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceFourCategory)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceFiveCategory)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceSixCategory)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceSevenCategory)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase()) ||
-      String(request.prices.priceEightCategory)
-        .toLowerCase()
-        .includes(searchTarif.toLowerCase())
-    );
-  });
-
-  const filteredRequestsMealTarif = [
-    { name: "Завтрак", price: 0 },
-    { name: "Обед", price: 0 },
-    { name: "Ужин", price: 0 },
-  ];
-
-  const onOpenContract = (contract) => setSelectedContract(contract);
-  const onBackFromDetails = () => setSelectedContract(null);
+  const validCurrentPage = urlPage < totalPages ? urlPage : 0;
 
   return (
     <div className={classes.tariffsWrapper}>
-      <Header>Реестр договоров</Header>
+      <Header>Договоры</Header>
+      <div
+        className={classes.segmented}
+        role="tablist"
+        aria-label="Просмотр разделов"
+      >
+        {[
+          { key: "airlines", label: "Авиакомпании" },
+          { key: "hotels", label: "Гостиницы" },
+          // { key: "registers", label: "Реестры" },
+        ].map((t, i) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            id={`tab-${t.key}`}
+            aria-selected={activeTab === t.key}
+            aria-controls={`panel-${t.key}`}
+            tabIndex={activeTab === t.key ? 0 : -1}
+            className={`${classes.segment} ${
+              activeTab === t.key ? classes.segmentActive : ""
+            }`}
+            onClick={() => setActiveTab(t.key)}
+            onKeyDown={(e) => {
+              const order = ["airlines", "hotels", "registers"];
+              const idx = order.indexOf(activeTab);
+              if (e.key === "ArrowRight")
+                setActiveTab(order[(idx + 1) % order.length]);
+              if (e.key === "ArrowLeft")
+                setActiveTab(order[(idx + order.length - 1) % order.length]);
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
       <div className={classes.section_searchAndFilter}>
-        <div className={classes.segmented} role="tablist" aria-label="Просмотр">
-          <button
-            type="button"
-            className={`${classes.segment} ${
-              activeTab === "contracts" ? classes.segmentActive : ""
-            }`}
-            role="tab"
-            aria-selected={activeTab === "contracts"}
-            onClick={() => setActiveTab("contracts")}
-          >
-            Договоры
-          </button>
-          <button
-            type="button"
-            className={`${classes.segment} ${
-              activeTab === "registers" ? classes.segmentActive : ""
-            }`}
-            role="tab"
-            aria-selected={activeTab === "registers"}
-            onClick={() => setActiveTab("registers")}
-          >
-            Реестры
-          </button>
-        </div>
         <MUITextField
           className={classes.mainSearch}
           label={"Поиск по договорам"}
           value={searchTarif}
           onChange={handleSearchTarif}
         />
-        <MUIAutocomplete
-          dropdownWidth={"170px"}
-          // label={"Выберите пол"}
-          options={["Все", "Авиакомпании", "Гостиницы", "Моя компания"]}
-          value={typeFilter}
-          onChange={(event, newValue) => setTypeFilter(newValue)}
+
+        <DateRangeModalSelector
+          width={"170px"}
+          initialRange={dateRange}
+          onChange={(start, end) =>
+            setDateRange({ startDate: start, endDate: end })
+          }
         />
 
-        <div className={classes.section_searchAndFilter_filter}>
-          {/* <Filter
-                        toggleSidebar={toggleTarifs}
-                        handleChange={''}
-                        buttonTitle={'Добавить тариф'}
-                    /> */}
-          <Filter
-            toggleSidebar={toggleTarifsCategory}
-            handleChange={""}
-            buttonTitle={"Создать реестр"}
-          />
-        </div>
+        {activeTab === "airlines" && (
+          <>
+            <MUIAutocomplete
+              dropdownWidth={"170px"}
+              label={"Авиакомпания"}
+              options={[
+                "Все авиакомпании",
+                ...airlines.map((airline) => airline.name),
+              ]}
+              value={selectedAirline ? selectedAirline.name : ""}
+              onChange={(event, newValue) => {
+                if (newValue === "Все авиакомпании" || !newValue) {
+                  setSelectedAirline(null);
+                } else {
+                  const selectedOption = airlines.find(
+                    (airline) => airline.name === newValue
+                  );
+                  setSelectedAirline(selectedOption);
+                }
+              }}
+            />
+            <MUIAutocomplete
+              dropdownWidth={"170px"}
+              label={"Вид приложения"}
+              options={["Все", ...action]}
+              value={selectedType ? selectedType : ""}
+              onChange={(event, newValue) => {
+                const selectedOption = action.find(
+                  (airline) => airline === newValue
+                );
+                setSelectedType(selectedOption);
+              }}
+            />
+          </>
+        )}
+
+        {activeTab === "hotels" && (
+          <>
+            <MUIAutocompleteColor
+              dropdownWidth={"170px"}
+              label={"Гостиница"}
+              options={[
+                {
+                  id: null,
+                  name: "Все гостиницы",
+                  images: "",
+                  information: "",
+                },
+                ...hotels,
+              ]}
+              // getOptionLabel={(option) =>
+              //   option
+              //     ? `${option.name}, город: ${option?.information?.city}`.trim()
+              //     : ""
+              // }
+              getOptionLabel={(option) => option?.name ?? ""}
+              renderOption={(optionProps, option) => {
+                const isAll = option.id === null;
+
+                if (isAll) {
+                  return (
+                    <li {...optionProps} key={"all-hotels"}>
+                      <span style={{ color: "black" }}>{option.name}</span>
+                    </li>
+                  );
+                }
+                const cityPart = `, город: ${option?.information?.city}`;
+                const labelText = `${option.name}${cityPart}`.trim();
+                const words = labelText.split(" ");
+
+                return (
+                  <li {...optionProps} key={option.id}>
+                    {words.map((word, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          color: index === 0 ? "black" : "gray",
+                          marginRight: "4px",
+                        }}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </li>
+                );
+              }}
+              value={selectedHotel ? selectedHotel : ""}
+              onChange={(event, newValue) => {
+                if (newValue === "Все гостиницы" || !newValue) {
+                  setSelectedHotel(null);
+                } else {
+                  const nextHotel = hotels.find((item) => item === newValue);
+                  setSelectedHotel(nextHotel || null);
+                }
+              }}
+            />
+
+            <MUIAutocompleteColor
+              dropdownWidth={"170px"}
+              label={"Город"}
+              options={[
+                {
+                  id: null,
+                  city: "Все города",
+                  region: null,
+                },
+                ...cities,
+              ]}
+              // getOptionLabel={(option) => {
+              //   if (!option) return "";
+              //   const cityPart =
+              //     option.city && option.city !== option.region
+              //       ? `, регион: ${option.region}`
+              //       : "";
+              //   return `${option.city}${cityPart}`.trim();
+              // }}
+              getOptionLabel={(option) => option?.city ?? ""}
+              renderOption={(optionProps, option) => {
+                const isAll = option.id === null;
+
+                if (isAll) {
+                  return (
+                    <li {...optionProps} key={option.id ?? "all-hotels"}>
+                      <span style={{ color: "black" }}>{option.city}</span>
+                    </li>
+                  );
+                }
+
+                const cityPart =
+                  option.city && option.city !== option.name
+                    ? `, регион: ${option.region}`
+                    : "";
+                const labelText = `${option.city}${cityPart}`.trim();
+                const words = labelText.split(" ");
+
+                return (
+                  <li {...optionProps} key={option.id}>
+                    {words.map((word, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          color: index === 0 ? "black" : "gray",
+                          marginRight: 4,
+                        }}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </li>
+                );
+              }}
+              value={selectedCity ? selectedCity : ""}
+              onChange={(e, newValue) => {
+                if (newValue === "Все города" || !newValue) {
+                  setSelectedCity(null);
+                } else {
+                  const nextHotel = cities.find((item) => item === newValue);
+                  setSelectedCity(nextHotel);
+                }
+              }}
+            />
+          </>
+        )}
+
+        <MUIAutocomplete
+          dropdownWidth={"170px"}
+          label={"ГК Карс"}
+          options={["Все компании", ...companies?.map((item) => item.name)]}
+          value={selectedCompany ? selectedCompany?.name : ""}
+          onChange={(event, newValue) => {
+            if (newValue === "Все компании" || !newValue) {
+              setSelectedCompany(null);
+            } else {
+              const selectedCompany = companies.find(
+                (item) => item.name === newValue
+              );
+              setSelectedCompany(selectedCompany);
+            }
+          }}
+        />
+
+        {/* <MUIAutocomplete
+          dropdownWidth={"170px"}
+          options={["Все", "Авиакомпании", "Гостиницы", "ГК Карс"]}
+          value={typeFilter}
+          onChange={(event, newValue) => setTypeFilter(newValue)}
+        /> */}
+
+        <Filter
+          toggleSidebar={toggleTarifsCategory}
+          handleChange={""}
+          buttonTitle={"Создать договор"}
+        />
       </div>
 
       {loading && <MUILoader fullHeight={"70vh"} />}
       {error && <p>Error: {error.message}</p>}
 
       {!loading && !error && data && (
-        <InfoTableAllDataTarifs
-          toggleRequestSidebar={toggleEditTarifs}
-          toggleEditTarifsCategory={toggleEditTarifsCategory}
-          toggleEditMealPrices={toggleEditMealPrices}
-          requests={filteredRequestsTarif}
-          mealPrices={filteredRequestsMealTarif}
-          openDeleteComponent={openDeleteComponent}
-          openDeleteComponentCategory={openDeleteComponentCategory}
-          user={user}
-          selectedContract={selectedContract}
-          onOpenContract={onOpenContract}
-          onBack={onBackFromDetails}
-        />
+        <>
+          <InfoTableAllDataTarifs
+            pageInfo={pageInfo}
+            activeTab={activeTab}
+            toggleRequestSidebar={toggleEditTarifs}
+            toggleEditTarifsCategory={toggleEditTarifsCategory}
+            requests={addTarif}
+            openDeleteComponent={openDeleteComponent}
+            openDeleteComponentCategory={openDeleteComponentCategory}
+            openDeleteContract={openDeleteContract}
+          />
+
+          {totalPages > 0 && (
+            <div className={classes.pagination}>
+              <ReactPaginate
+                previousLabel={"←"}
+                nextLabel={"→"}
+                breakLabel={"..."}
+                pageCount={totalPages}
+                marginPagesDisplayed={2}
+                pageRangeDisplayed={5}
+                onPageChange={handlePageClick}
+                forcePage={validCurrentPage}
+                containerClassName={classes.pagination}
+                activeClassName={classes.activePaginationNumber}
+                pageLinkClassName={classes.paginationNumber}
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* <CreateRequestTarif id={id} show={showAddTarif} onClose={toggleTarifs} addTarif={addTarif} setAddTarif={setAddTarif} /> */}
-      <CreateRequestAirlineTarifCategory
-        user={user}
-        id={id}
-        show={showAddTarifCategory}
-        onClose={toggleTarifsCategory}
-        addTarif={addTarif}
-        setAddTarif={setAddTarif}
-        addNotification={addNotification}
-      />
+      {activeTab === "airlines" ? (
+        <>
+          <CreateRequestContract
+            user={user}
+            id={id}
+            airlinesData={airlinesData}
+            companiesData={companiesData}
+            show={showAddTarifCategory}
+            onClose={toggleTarifsCategory}
+            addTarif={addTarif}
+            setAddTarif={setAddTarif}
+            addNotification={addNotification}
+          />
+          <EditRequestAirlineContract
+            user={user}
+            id={id}
+            setAddTarif={setAddTarif}
+            show={showEditAddTarif}
+            onClose={() => setEditShowAddTarif(false)}
+            addTarif={addTarif}
+            tarif={selectedTarif}
+            addNotification={addNotification}
+          />
+        </>
+      ) : null}
 
-      <EditRequestAirlineTarifCategory
-        user={user}
-        id={id}
-        setAddTarif={setAddTarif}
-        show={showEditAddTarifCategory}
-        onClose={() => setEditShowAddTarifCategory(false)}
-        addTarif={addTarif}
-        tarif={selectedTarif}
-        onSubmit={handleEditTarifCategory}
-        addNotification={addNotification}
-      />
+      {activeTab === "hotels" ? (
+        <>
+          <CreateRequestHotelContract
+            user={user}
+            id={id}
+            companiesData={companiesData}
+            hotelsData={hotelsData}
+            citiesData={citiesData}
+            show={showAddTarifCategory}
+            onClose={toggleTarifsCategory}
+            addTarif={addTarif}
+            setAddTarif={setAddTarif}
+            addNotification={addNotification}
+          />
 
-      {/* {showDelete && (
-                <DeleteComponent
-                    ref={deleteComponentRef}
-                    remove={() => deleteIndex.type == "deleteTarif" ? deleteTarif(deleteIndex.data.index, deleteIndex.data.tarifID) : deleteTarifCategory(deleteIndex.data.category, deleteIndex.data.tarif)}
-                    close={closeDeleteComponent}
-                    title={`Вы действительно хотите удалить ${deleteIndex.type == "deleteTarif" ? 'тариф' : 'категорию'}?`}
-                />
-            )} */}
+          <EditRequestHotelContract
+            user={user}
+            id={id}
+            setAddTarif={setAddTarif}
+            show={showEditAddTarif}
+            onClose={() => setEditShowAddTarif(false)}
+            addTarif={addTarif}
+            tarif={selectedTarif}
+            addNotification={addNotification}
+          />
+        </>
+      ) : null}
+
+      {showDelete && (
+        <DeleteComponent
+          ref={deleteComponentRef}
+          remove={() => {
+            return deleteContract(deleteIndex.data.contract);
+          }}
+          close={closeDeleteComponent}
+          title={`Вы действительно хотите удалить ${
+            deleteIndex.type === "deleteTarif"
+              ? "тариф"
+              : deleteIndex.type === "deleteCategory"
+              ? "категорию"
+              : "договор"
+          }?`}
+        />
+      )}
       {notifications.map((n, index) => (
         <Notification
           key={n.id}

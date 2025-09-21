@@ -57,7 +57,7 @@
 .requestData {
     display: flex;
     flex-direction: column;
-    padding: 0px 0px 20px 30px;
+    padding: 0px 20px 20px 30px;
     gap: 10px;
     position: relative;
 }
@@ -69,7 +69,7 @@
 
 .requestData input,
 select {
-    height: 38px;
+    height: 40px;
     outline: none;
     padding: 0 10px;
 }

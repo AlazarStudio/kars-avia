@@ -12,6 +12,9 @@ import SupportPage from '../../Blocks/SupportPage/SupportPage'
 import PatchNotesList from '../../Blocks/PatchNotesList/PatchNotesList'
 import DocumentationList from '../../Blocks/DocumentationList/DocumentationList'
 import UpdatesList from '../../Blocks/UpdatesList/UpdatesList'
+import MyCompany from '../../Blocks/MyCompany/MyCompany'
+import Analytics from '../../Pages/AnalyticsForAvia/Analytics/Analytics'
+import RegisterOfContracts from '../../Blocks/RegisterOfContracts/RegisterOfContracts'
 
 const SuperAdminContent = ({ user }) => {
 	const { id, hotelID, airlineID } = useParams()
@@ -26,10 +29,13 @@ const SuperAdminContent = ({ user }) => {
 			{id === 'hotels' && <HotelsList user={user} />}
 			{id === 'airlines' && <AirlinesList user={user} />}
 			{id === 'reports' && <Reports user={user} />}
+      {id === "analytics" && <Analytics/>}
 			{id === 'support' && <SupportPage user={user} />}
-			{id === 'patchNotes' && <PatchNotesList user={user} />}
-      {id === "updates" && <UpdatesList user={user} />}
 			{id === 'documentation' && <DocumentationList user={user} />}
+      {id === "updates" && <UpdatesList user={user} />}
+      {id === "registerOfContracts" && <RegisterOfContracts user={user} />}
+      {id === "myCompany" && <MyCompany user={user} />}
+			{id === 'patchNotes' && <PatchNotesList user={user} />}
 			{!id && hotelID && <HotelPage id={hotelID} user={user} />}
 			{!id && airlineID && <AirlinePage id={airlineID} user={user} />}
 		</>

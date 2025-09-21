@@ -7,6 +7,7 @@ import format from "date-fns/format";
 
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import { addDays, endOfMonth, endOfQuarter, endOfYear, isSameDay, startOfMonth, startOfQuarter, startOfYear, subMonths, subQuarters, subYears } from "date-fns";
 
 export default function DateRangeModalSelector({
   initialRange,
@@ -50,6 +51,69 @@ export default function DateRangeModalSelector({
     setOpen(false);
     onChange?.(null, null);
   };
+  const LAST_N_DAYS = 7;
+
+  const makeStatic = (label, getter) => ({
+    label,
+    range: () => {
+      const { startDate, endDate } = getter();
+      return { startDate, endDate };
+    },
+    isSelected: (r) => {
+      const { startDate, endDate } = getter();
+      return (
+        r && isSameDay(r.startDate, startDate) && isSameDay(r.endDate, endDate)
+      );
+    },
+  });
+
+  // хелпер: последние N дней ТЕКУЩЕГО МЕСЯЦА (конец = конец месяца, старт ограничен началом месяца)
+  const lastNDaysUpToToday = (n) => {
+    const end = new Date(); // сегодня
+    const start = addDays(end, -(n - 1)); // N-1 дней назад
+    return { startDate: start, endDate: end };
+  };
+
+  const staticRanges = [
+    makeStatic("Задать свой", () => lastNDaysUpToToday(LAST_N_DAYS)),
+
+    // makeStatic("Задать свой", () => ({
+    //   startDate: defaultSelection.startDate,
+    //   endDate: defaultSelection.endDate,
+    // })),
+    makeStatic("Последние 7 дней", () => ({
+      startDate: addDays(new Date(), -7),
+      endDate: new Date(),
+    })),
+    makeStatic("Последние 30 дней", () => ({
+      startDate: addDays(new Date(), -30),
+      endDate: new Date(),
+    })),
+    makeStatic("Текущий месяц", () => ({
+      startDate: startOfMonth(new Date()),
+      endDate: endOfMonth(new Date()),
+    })),
+    makeStatic("Прошлый месяц", () => {
+      const d = subMonths(new Date(), 1);
+      return { startDate: startOfMonth(d), endDate: endOfMonth(d) };
+    }),
+    makeStatic("Текущий квартал", () => ({
+      startDate: startOfQuarter(new Date()),
+      endDate: endOfQuarter(new Date()),
+    })),
+    makeStatic("Прошлый квартал", () => {
+      const d = subQuarters(new Date(), 1);
+      return { startDate: startOfQuarter(d), endDate: endOfQuarter(d) };
+    }),
+    makeStatic("Текущий год", () => ({
+      startDate: startOfYear(new Date()),
+      endDate: endOfYear(new Date()),
+    })),
+    makeStatic("Прошлый год", () => {
+      const d = subYears(new Date(), 1);
+      return { startDate: startOfYear(d), endDate: endOfYear(d) };
+    }),
+  ];
 
   // Формат для TextField: либо пустая строка, либо "DD.MM.YYYY — DD.MM.YYYY"
   const formatted =
@@ -63,7 +127,7 @@ export default function DateRangeModalSelector({
   const ButtonStyles = {
     padding: "5px 20px",
     fontSize: "14px",
-    borderRadius: "10px"
+    borderRadius: "10px",
   };
 
   return (
@@ -120,24 +184,17 @@ export default function DateRangeModalSelector({
         <DialogContent>
           {/* Кнопки сверху */}
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-            <Button
-              onClick={handleReset}
-              sx={ButtonStyles}
-            >
+            <Button onClick={handleReset} sx={ButtonStyles}>
               Сбросить
             </Button>
-            <Button
-              variant="contained"
-              onClick={handleApply}
-              sx={ButtonStyles}
-            >
+            <Button variant="contained" onClick={handleApply} sx={ButtonStyles}>
               Применить
             </Button>
           </Box>
 
           {/* Сам календарь */}
           <DateRangePicker
-            className="no-sidebar"
+            // className="no-sidebar"
             startDatePlaceholder="Начало"
             endDatePlaceholder="Конец"
             locale={ru}
@@ -147,7 +204,7 @@ export default function DateRangeModalSelector({
             moveRangeOnFirstSelection={false}
             months={1}
             direction="horizontal"
-            staticRanges={[]} // если не нужны пресеты
+            staticRanges={staticRanges} // если не нужны пресеты
             inputRanges={[]} // если не нужны инпуты вида "days up to today"
           />
         </DialogContent>

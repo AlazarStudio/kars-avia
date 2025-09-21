@@ -12,6 +12,8 @@ import {
 import { Autocomplete, TextField } from "@mui/material";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
+import { useWindowSize } from "../../../hooks/useWindowSize";
 
 function Filter({
   toggleSidebar,
@@ -116,13 +118,13 @@ function Filter({
   let filter = filterLocalData || "all";
 
   const [dropdownWidth, setDropdownWidth] = useState("200px"); // Начальное значение ширины
-
+  const { width } = useWindowSize();
   // Функция для расчета ширины в зависимости от ширины экрана
   const calculateWidth = () => {
-    const screenWidth = window.innerWidth;
-    if (screenWidth <= 480) {
+    // const screenWidth = window.innerWidth;
+    if (width <= 480) {
       return "170px"; // Для маленьких экранов
-    } else if (screenWidth <= 1630) {
+    } else if (width <= 1630) {
       return "170px"; // Для планшетов
     } else {
       return "170px"; // Для больших экранов
@@ -298,7 +300,7 @@ function Filter({
             // />
           )}
 
-          <MUIAutocomplete
+          {/* <MUIAutocomplete
             dropdownWidth={dropdownWidth}
             label={"Аэропорт"}
             options={[
@@ -315,6 +317,66 @@ function Filter({
                   (airport) => airport.name === newValue
                 );
                 setSelectedAirport(selectedOption);
+                handleChange({
+                  target: { name: "airport", value: selectedOption?.id || "" },
+                });
+              }
+            }}
+          /> */}
+
+          <MUIAutocompleteColor
+            dropdownWidth={dropdownWidth}
+            label={"Аэропорт"}
+            options={[
+              { id: null, name: "Все аэропорты", code: "" },
+              ...airports,
+            ]}
+            getOptionLabel={(option) =>
+              option ? `${option.code} ${option.name}`.trim() : ""
+            }
+            renderOption={(optionProps, option) => {
+              const isAll =
+                option.name === "Все аэропорты" || option.code === "";
+
+              if (isAll) {
+                return (
+                  <li {...optionProps} key={option.id ?? "all-airports"}>
+                    <span style={{ color: "black" }}>{option.name}</span>
+                  </li>
+                );
+              }
+
+              // Формируем строку для отображения
+              const labelText = `${option.code} ${option.name}`.trim();
+              // Разбиваем строку по пробелам
+              const words = labelText.split(" ");
+
+              return (
+                <li {...optionProps} key={option.id}>
+                  {words.map((word, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        color: index === 0 ? "black" : "gray",
+                        marginRight: "4px",
+                      }}
+                    >
+                      {word}
+                    </span>
+                  ))}
+                </li>
+              );
+            }}
+            value={selectedAirport ? selectedAirport : ""}
+            onChange={(event, newValue) => {
+              if (newValue === "Все аэропорты" || !newValue) {
+                setSelectedAirport(null);
+                handleChange({ target: { name: "airport", value: "" } });
+              } else {
+                const selectedOption = airports.find(
+                  (airport) => airport === newValue
+                );
+                setSelectedAirport(selectedOption || null);
                 handleChange({
                   target: { name: "airport", value: selectedOption?.id || "" },
                 });

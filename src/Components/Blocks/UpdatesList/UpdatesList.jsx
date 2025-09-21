@@ -4,25 +4,26 @@ import Filter from "../Filter/Filter";
 import Header from "../Header/Header";
 import { useQuery } from "@apollo/client";
 import { GET_ALL_DOCUMENTATION, getCookie } from "../../../../graphQL_requests";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles";
+import {
+  FILTER_OPTIONS,
+  fullNotifyTime,
+  notifyTime,
+  roles,
+} from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
-import CreateRequestPatchNote from "../CreateRequestPatchNote/CreateRequestPatchNote";
-import EditRequestPatchNote from "../EditRequestPatchNote/EditRequestPatchNote";
-import InfoTableDataDocumentation from "../InfoTableDataDocumentation/InfoTableDataDocumentation";
-import CreateRequestDocumentation from "../CreateRequestDocumentation/CreateRequestDocumentation";
-import EditRequestDocumentation from "../EditRequestDocumentation/EditRequestDocumentation";
 import CreateRequestUpdates from "../CreateRequestUpdates/CreateRequestUpdates";
 import EditRequestUpdates from "../EditRequestUpdates/EditRequestUpdates";
 import InfoTableDataUpdates from "../InfoTableDataUpdates/InfoTableDataUpdates";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
 function UpdatesList({ children, user, ...props }) {
   const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
-  const [filterData, setFilterData] = useState({ filterSelect: "" });
+  const [filterValue, setFilterValue] = useState("dispatcher");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
 
@@ -32,7 +33,18 @@ function UpdatesList({ children, user, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    variables: {
+      type: "update",
+      filter:
+        user?.role === roles.hotelAdmin
+          ? "hotel"
+          : user?.role === roles.airlineAdmin
+          ? "airline"
+          : filterValue,
+    },
   });
+
+  // console.log(user);
 
   // в этой версии проблема с дублированием
   useEffect(() => {
@@ -88,16 +100,14 @@ function UpdatesList({ children, user, ...props }) {
   };
 
   const filteredRequests = useMemo(() => {
-    return companyData.filter((request) => {
-      return (
-        request.description.includes(searchQuery.toLowerCase()) ||
-        request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.chapter.toLowerCase().includes(searchQuery.toLowerCase())
-        // convertToDate(request.date, false).includes(searchQuery.toLowerCase())
-      );
+    return companyData?.filter((request) => {
+      return request?.name.toLowerCase().includes(searchQuery.toLowerCase());
+
+      // &&
+      // request?.parentId === null
+      // convertToDate(request.date, false).includes(searchQuery.toLowerCase())
     });
-  }, [isSearching, companyData, filterData, searchQuery]);
+  }, [isSearching, companyData, filterValue, searchQuery]);
 
   const [DocumentationId, setPatchDocumentationId] = useState();
   const [showEditDocumentation, setShowEditDocumentation] = useState(false);
@@ -105,23 +115,45 @@ function UpdatesList({ children, user, ...props }) {
     setPatchDocumentationId(documentation?.id);
     setShowEditDocumentation(true);
   };
+
+  const currentFilterLabel =
+    FILTER_OPTIONS.find((o) => o.value === filterValue)?.label ||
+    FILTER_OPTIONS[0].label;
+
   return (
     <>
       <div className={classes.section}>
         <Header>Обновления</Header>
 
         <div className={classes.section_searchAndFilter}>
-          <MUITextField
-            label={"Поиск"}
-            className={classes.mainSearch}
-            value={searchQuery}
-            onChange={handleSearch}
-          />
+          <div className={classes.section_searchAndFilter}>
+            <MUITextField
+              label={"Поиск"}
+              className={classes.mainSearch}
+              value={searchQuery}
+              onChange={handleSearch}
+            />
+            {(user?.role === roles.dispatcerAdmin ||
+              user?.role === roles.superAdmin) && (
+              <MUIAutocomplete
+                dropdownWidth={"200px"}
+                label={"Категория"}
+                options={FILTER_OPTIONS.map((o) => o.label)}
+                value={currentFilterLabel}
+                onChange={(event, newLabel) => {
+                  const found =
+                    FILTER_OPTIONS.find((o) => o.label === newLabel) ||
+                    FILTER_OPTIONS[0];
+                  setFilterValue(found.value); // <-- кладём value-строку
+                }}
+              />
+            )}
+          </div>
           {user.role === roles.superAdmin && (
             <Filter
               toggleSidebar={toggleCreateSidebar}
               handleChange={handleChange}
-              filterData={filterData}
+              // filterData={filterData}
               buttonTitle={"Добавить обновление"}
               needDate={false}
             />
@@ -133,8 +165,10 @@ function UpdatesList({ children, user, ...props }) {
         {!loading && !error && (
           <InfoTableDataUpdates
             user={user}
+            token={token}
             toggleRequestSidebar={toggleEditDocumentation}
             requests={filteredRequests}
+            filterValue={filterValue}
           />
         )}
         <CreateRequestUpdates

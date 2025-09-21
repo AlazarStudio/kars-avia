@@ -120,7 +120,7 @@ function InfoTableDataHotels({
                 {item.information?.city}
               </div>
               {item.information?.address ? (
-                <div className={classes.InfoTable_data_elem_title}>
+                <div className={classes.InfoTable_data_elem_title} style={{paddingRight:'20px'}}>
                   {item.information?.address}
                 </div>
               ) : null}

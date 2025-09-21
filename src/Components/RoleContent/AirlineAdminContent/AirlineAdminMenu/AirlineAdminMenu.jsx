@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import classes from "./AirlineAdminMenu.module.css";
+import { useState } from "react";
 
 const AirlineAdminMenu = ({
   id,
@@ -8,6 +9,13 @@ const AirlineAdminMenu = ({
   allCreatedReserves,
   menuOpen,
 }) => {
+  const [hovered, setHovered] = useState(false);
+
+  const strokeVal = hovered || id == "updates" ? "unset" : "unset";
+  const fillVal =
+    hovered || id == "updates"
+      ? "var(--white)" /* цвет hover */
+      : "var(--menu-gray)";
   return (
     <>
       <Link
@@ -313,6 +321,47 @@ const AirlineAdminMenu = ({
         </svg>
         {menuOpen ? "Отчеты" : ""}
         {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
+      </Link>
+      <Link
+        to={"/updates"}
+        className={`${classes.menu_items__elem} ${
+          !menuOpen ? classes.jcc : ""
+        } ${id == "updates" && classes.menu_items__activeElem}`}
+        onMouseEnter={() => {
+          setHovered(true);
+        }}
+        onMouseLeave={() => {
+          setHovered(false);
+        }}
+      >
+        <svg
+          width="18"
+          height="21"
+          viewBox="0 0 18 21"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M2.60844 6.9669V13.8959C2.51159 14.2027 -0.280858 14.7722 0.0231179 17.7693C0.432636 21.8073 6.39338 21.8813 6.92277 17.8484C7.05595 16.834 6.76003 15.9923 6.25502 15.3194C5.5854 14.427 5.37551 14.5443 4.34683 13.9949L4.34781 11.2786C4.89583 11.5342 5.22875 12.2174 6.79992 12.7347C7.93596 13.1088 9.17809 13.0401 10.4274 13.0401C10.6891 13.1302 11.3732 15.9316 14.2987 15.624C18.3311 15.2002 18.3828 9.23037 14.3852 8.72603C13.332 8.59313 12.5274 8.89275 11.8296 9.38843C10.9533 10.011 11.0753 10.3736 10.5014 11.3012C8.72987 11.3012 7.2534 11.3547 6.05232 10.4227C5.3173 9.85228 4.13465 8.3116 4.38501 6.83453C8.71473 5.15769 7.02366 0.0244779 3.49853 9.97669e-05C-0.117432 -0.0249138 -1.17424 4.66046 1.55787 6.3604C1.83062 6.53012 2.39329 6.65504 2.60844 6.9669ZM3.12079 15.7062C0.768355 16.3064 1.69874 19.651 3.97399 19.0613C4.77795 18.853 5.40292 17.9133 5.15639 16.9254C4.96261 16.1488 4.10189 15.4559 3.12079 15.7062ZM13.4925 10.4996C11.2571 11.1323 12.0912 14.3769 14.3592 13.8512C15.178 13.6614 15.8495 12.7268 15.5899 11.6907C15.397 10.9207 14.4552 10.2271 13.4925 10.4996ZM2.96389 1.82364C0.80836 2.52812 1.75431 5.79811 4.00837 5.13129C6.16436 4.49345 5.15217 1.10844 2.96389 1.82364Z"
+            fill={fillVal}
+            strokeWidth={0}
+          />
+        </svg>
+        {menuOpen ? "Обновления" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
+      </Link>
+      <Link
+        to={"/documentation"}
+        className={`${classes.menu_items__elem} ${
+          !menuOpen ? classes.jcc : ""
+        } ${id == "documentation" && classes.menu_items__activeElem}`}
+      >
+        <img src="/instruction.png" alt="" />
+
+        {menuOpen ? "Инструкции" : ""}
+        {!menuOpen && <span className={classes.tooltip}>Инструкции</span>}
       </Link>
     </>
   );

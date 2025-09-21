@@ -9,9 +9,9 @@ import Header from "../../../Blocks/Header/Header";
 
 const tabs = [
   { key: "airlines", label: "Авиакомпании" },
-  { key: "dispatchers", label: "Диспетчеры" },
   { key: "hotels", label: "Гостиницы" },
-  { key: "support", label: "Техподдержка" }
+  { key: "dispatchers", label: "Диспетчеры" },
+  // { key: "support", label: "Техподдержка" }
 ];
 
 function Analytics() {
@@ -25,8 +25,8 @@ function Analytics() {
         return <DispatcherAnalytics />;
       case "hotels":
         return <HotelAnalytics />;
-      case "support":
-        return <SupportAnalytics />;
+      // case "support":
+      //   return <SupportAnalytics />;
       default:
         return null;
     }
@@ -34,7 +34,7 @@ function Analytics() {
   ``;
   return (
     <div className={classes.analyticsContainer}>
-      <Header>Аналитика</Header>
+      <Header>Аналитика (в разработке)</Header>
       <div className={classes.tabs}>
         {tabs.map((tab) => (
           <button

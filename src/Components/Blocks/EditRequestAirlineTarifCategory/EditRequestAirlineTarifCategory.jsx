@@ -23,6 +23,7 @@ function EditRequestAirlineTarifCategory({
   addTarif,
   refetchAllCategories,
   id,
+  selectedContract,
   setAddTarif,
   user,
   type,
@@ -67,19 +68,17 @@ function EditRequestAirlineTarifCategory({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // "Apollo-Require-Preflight": "true",
       },
     },
   });
 
-  // const [updateTariffCategory] = useMutation(UPDATE_PRICE_TARIFFS, {
-  //   context: {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //       // "Apollo-Require-Preflight": "true",
-  //     },
-  //   },
-  // });
+  const [updateTariffCategory] = useMutation(UPDATE_PRICE_TARIFFS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   useEffect(() => {
     if (infoAirports.data) {
@@ -158,6 +157,7 @@ function EditRequestAirlineTarifCategory({
   };
 
   const [isLoading, setIsLoading] = useState(false);
+// console.log(selectedContract?.id);
 
   const handleSubmit = async (e) => {
     if (isEditing) {
@@ -197,12 +197,20 @@ function EditRequestAirlineTarifCategory({
             },
           },
         });
+
+        await updateTariffCategory({
+          variables: {
+            input: {
+              id: selectedContract.id,
+            },
+          },
+        });
         // onSubmit();
         resetForm();
         onClose();
         setIsLoading(false);
         addNotification("Изменение соглашения прошло успешно.", "success");
-        refetchAllCategories();
+        // refetchAllCategories();
       } catch (error) {
         setIsLoading(false);
         alert("Произошло ошибка при изменении соглашения.");
@@ -293,7 +301,7 @@ function EditRequestAirlineTarifCategory({
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Изменить соглашение</div>
+        <div className={classes.requestTitle_name}>Изменить договор</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
           <img src="/close.png" alt="" />
         </div>

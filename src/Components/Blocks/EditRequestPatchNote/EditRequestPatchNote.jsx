@@ -10,6 +10,7 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import TextEditor from "../TextEditor/TextEditor.jsx";
 
 function EditRequestPatchNote({
   show,
@@ -130,7 +131,7 @@ function EditRequestPatchNote({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название тарифа</label>
+              <label>Название</label>
               <input
                 type="text"
                 name="name"
@@ -140,15 +141,6 @@ function EditRequestPatchNote({
                 disabled={!isEditing}
               />
 
-              <label>Описание</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData?.description || ""}
-                onChange={handleChange}
-                disabled={!isEditing}
-              ></textarea>
-
               <label>Дата</label>
               <input
                 type="date"
@@ -157,6 +149,25 @@ function EditRequestPatchNote({
                 onChange={handleChange}
                 disabled={!isEditing}
                 placeholder="Дата"
+              />
+
+              <label>Описание</label>
+              {/* <textarea
+                id="description"
+                name="description"
+                value={formData?.description || ""}
+                onChange={handleChange}
+                disabled={!isEditing}
+              ></textarea> */}
+              <TextEditor
+                anotherDescription={formData?.description || ""}
+                isEditing={isEditing}
+                onChange={(newDescription) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: newDescription,
+                  }));
+                }}
               />
             </div>
           </div>

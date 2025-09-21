@@ -1,29 +1,78 @@
 import React, { useEffect, useState } from "react";
 import classes from "./InfoTableDataDocumentation.module.css";
 import { useQuery } from "@apollo/client";
-import { GET_DOCUMENTATION } from "../../../../graphQL_requests";
+import {
+  GET_DOCUMENTATION,
+  GET_DOCUMENTATION_TREE,
+  server,
+} from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import { roles } from "../../../roles";
 
-function InfoTableDataDocumentation({ user, requests, toggleRequestSidebar }) {
+function DocNode({ node }) {
+  return (
+    <div className={classes.node}>
+      <h4 className={classes.nodeTitle}>{node.name}</h4>
+
+      {/* HTML-описание узла */}
+      <div dangerouslySetInnerHTML={{ __html: node.description }} />
+
+      {/* Файлы, если есть */}
+      {!!node.images?.length && (
+        <div className={classes.files}>
+          {node.images.map((i, index) => (
+            <img key={index} src={`${server}${i}`} alt="" loading="lazy" />
+          ))}
+        </div>
+      )}
+
+      {/* Дети */}
+      {!!node.children?.length && (
+        <div className={classes.children}>
+          {node.children.map((child) => (
+            <DocNode key={child.id} node={child} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InfoTableDataDocumentation({
+  user,
+  token,
+  requests,
+  filterValue,
+  toggleRequestSidebar,
+}) {
   // State for selected documentation item ID
   const [selectedId, setSelectedId] = useState(
     requests.length > 0 ? requests[0].id : null
   );
 
+  // console.log(filterValue);
+  // console.log(requests);
+
   // Fetch details for the selected documentation
-  const { loading, error, data } = useQuery(GET_DOCUMENTATION, {
-    variables: { getDocumentationId: selectedId },
+  const { loading, error, data } = useQuery(GET_DOCUMENTATION_TREE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: { documentationTreeId: selectedId },
     skip: !selectedId,
   });
 
   // If requests update (e.g. refetch), ensure a valid selectedId
+  // useEffect(() => {
+  //   if (!selectedId && requests.length > 0) {
+  //     setSelectedId(requests[0]?.id);
+  //   }
+  // }, [requests, selectedId, filterValue]);
   useEffect(() => {
-    if (!selectedId && requests.length > 0) {
-      setSelectedId(requests[0].id);
-    }
-  }, [requests, selectedId]);
-
+    setSelectedId(requests.length ? requests[0].id : null);
+  }, [requests]); // этого достаточно; filterValue сюда не нужен
   return (
     <div className={classes.container}>
       {/* Left panel: list of documentation names */}
@@ -75,13 +124,21 @@ function InfoTableDataDocumentation({ user, requests, toggleRequestSidebar }) {
                 >
                   <path
                     d="M7.73267 3.42255C6.48981 3.47969 5.27267 3.61397 4.08552 3.75112C3.4164 3.83003 2.79351 4.13251 2.31774 4.60958C1.84197 5.08665 1.54119 5.71036 1.4641 6.37969C1.29267 7.91969 1.12695 9.51255 1.12695 11.1411C1.12695 12.7711 1.29267 14.364 1.4641 15.9054C1.61838 17.2768 2.7141 18.3725 4.08552 18.5311C5.6341 18.7097 7.2341 18.8883 8.87124 18.8883C10.5098 18.8883 12.1098 18.7097 13.6584 18.5311C14.3268 18.452 14.949 18.1498 15.4245 17.6734C15.8999 17.1969 16.2008 16.574 16.2784 15.9054C16.4141 14.7754 16.5151 13.6416 16.5812 12.5054"
-                    stroke={item.id === selectedId ? "var(--dark-blue)" : "var(--main-gray)"}
+                    stroke={
+                      item.id === selectedId
+                        ? "var(--dark-blue)"
+                        : "var(--main-gray)"
+                    }
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                   <path
                     d="M14.4724 1.84112L9.20812 7.81255L8.48812 11.2054C8.37097 11.7511 8.94097 12.2683 9.47383 12.0997L12.8481 11.0397L18.2853 5.31826C19.1895 4.36826 19.031 2.77826 17.9381 1.81112C16.871 0.868263 15.3195 0.88112 14.4724 1.84112Z"
-                    stroke={item.id === selectedId ? "var(--dark-blue)" : "var(--main-gray)"}
+                    stroke={
+                      item.id === selectedId
+                        ? "var(--dark-blue)"
+                        : "var(--main-gray)"
+                    }
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
@@ -139,17 +196,52 @@ function InfoTableDataDocumentation({ user, requests, toggleRequestSidebar }) {
       {/* Right panel: detail view for selected documentation */}
       <section className={classes.detailPane}>
         {loading && <MUILoader />}
-        {error && <p>Error: {error}</p>}
-        {data && data.getDocumentation && (
+        {error && (
+          <div className={classes.error}>
+            <strong>Ошибка:</strong> {error.message}
+            {!!error.graphQLErrors?.length && (
+              <ul>
+                {error.graphQLErrors.map((e, i) => (
+                  <li key={i}>{e.message}</li>
+                ))}
+              </ul>
+            )}
+            {error.networkError && <div>Сетевой сбой</div>}
+          </div>
+        )}
+        {data && data.documentationTree && (
           <article className={classes.content}>
-            <p className={classes.title}>{data.getDocumentation.name}</p>
-            <p className={classes.meta}>
-              <strong>Категория:</strong> {data.getDocumentation?.category} |{" "}
-              <strong>Подкатегория:</strong> {data.getDocumentation?.chapter}
-            </p>
-            <div className={classes.description}>
-              {data.getDocumentation.description}
-            </div>
+            <p className={classes.title}>{data.documentationTree.name}</p>
+            {/* <p className={classes.meta}>
+              <strong>Категория:</strong> {data.documentationTree?.category} |
+              <strong>Подкатегория:</strong> {data.documentationTree?.chapter}
+            </p> */}
+            <div
+              className={classes.description}
+              dangerouslySetInnerHTML={{
+                __html: data.documentationTree.description,
+              }}
+            />
+            {!!data.documentationTree.images?.length && (
+              <div className={classes.files}>
+                {data.documentationTree.images.map((i, index) => (
+                  <img
+                    key={index}
+                    src={`${server}${i}`}
+                    alt=""
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            )}
+            {/* Всё дерево целиком */}
+            {!!data.documentationTree.children?.length && (
+              <div className={classes.tree}>
+                {data.documentationTree.children.map((n) => (
+                  <DocNode key={n.id} node={n} />
+                ))}
+              </div>
+            )}
             {/* {data.getDocumentation.files && data.getDocumentation.files.length > 0 && (
               <div className={classes.files}>
                 <h3>Attachments:</h3>

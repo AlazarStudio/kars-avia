@@ -160,7 +160,10 @@ function HotelSettings_tabComponent({ id }) {
             updateHotelId: hotel.id,
             input: {
               name: hotel.name,
+              nameFull: hotel.nameFull,
               access: hotel.access,
+              show: hotel.show,
+              meal: hotel.meal,
               capacity: parseInt(hotel.capacity),
               stars: hotel.stars,
               usStars: hotel.usStars,
@@ -465,16 +468,18 @@ function HotelSettings_tabComponent({ id }) {
               {user?.role === roles.airlineAdmin ? null : (
                 <>
                   {" "}
-                  <button
-                    className={
-                      displayInfo == "schedule" ? classes.activeButton : null
-                    }
-                    onClick={() => {
-                      setDisplayInfo("schedule");
-                    }}
-                  >
-                    <img src="/scheduleIcon.png" alt="" /> Расписание
-                  </button>
+                  {hotel.meal && (
+                    <button
+                      className={
+                        displayInfo == "schedule" ? classes.activeButton : null
+                      }
+                      onClick={() => {
+                        setDisplayInfo("schedule");
+                      }}
+                    >
+                      <img src="/scheduleIcon.png" alt="" /> Расписание
+                    </button>
+                  )}
                   {user?.airlineId ? null : (
                     <button
                       className={
@@ -563,7 +568,7 @@ function HotelSettings_tabComponent({ id }) {
                 </div>
                 <div className={classes.hotelAbout_info_item}>
                   <label>Аэропорт</label>
-                  <MUIAutocompleteColor
+                  {/* <MUIAutocompleteColor
                     dropdownWidth="400px"
                     listboxHeight={"300px"}
                     isDisabled={!isEditing}
@@ -587,6 +592,56 @@ function HotelSettings_tabComponent({ id }) {
                               style={{
                                 color: index === 0 ? "black" : "gray",
                                 marginRight: "4px",
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={
+                      airports.find(
+                        (option) => option.id === hotel.airport?.id
+                      ) || null
+                    }
+                    onChange={(e, newValue) => {
+                      setHotel((prev) => ({
+                        ...prev,
+                        airport: { id: newValue ? newValue.id : "" },
+                      }));
+                    }}
+                  /> */}
+                  <MUIAutocompleteColor
+                    dropdownWidth="400px"
+                    listboxHeight={"300px"}
+                    isDisabled={!isEditing}
+                    options={airports}
+                    getOptionLabel={(option) => {
+                      if (!option) return "";
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      return `${option.code} ${option.name}${cityPart}`.trim();
+                    }}
+                    renderOption={(optionProps, option) => {
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      const labelText =
+                        `${option.code} ${option.name}${cityPart}`.trim();
+                      const words = labelText.split(" ");
+
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: 4,
                               }}
                             >
                               {word}
@@ -687,6 +742,28 @@ function HotelSettings_tabComponent({ id }) {
                     {user.role === roles.superAdmin ||
                     user.role === roles.dispatcerAdmin ? (
                       <>
+                        <MUISwitch
+                          label="Видимость гостиницы"
+                          checked={hotel.show}
+                          onChange={(e) => {
+                            setHotel((prevHotel) => ({
+                              ...prevHotel,
+                              show: e.target.checked,
+                            }));
+                          }}
+                          disabled={!isEditing}
+                        />
+                        <MUISwitch
+                          label="Наличие питания"
+                          checked={hotel.meal}
+                          onChange={(e) => {
+                            setHotel((prevHotel) => ({
+                              ...prevHotel,
+                              meal: e.target.checked,
+                            }));
+                          }}
+                          disabled={!isEditing}
+                        />
                         <MUISwitch
                           label="Самостоятельное размещение"
                           checked={hotel.access}
@@ -803,6 +880,17 @@ function HotelSettings_tabComponent({ id }) {
             ) : displayInfo == "requisites" && !user?.airlineId ? (
               <div className={classes.hotelAbout_info_block}>
                 {/* <div className={classes.hotelAbout_info_label}>Реквизиты</div> */}
+                <div className={classes.hotelAbout_info_item}>
+                  <label>Наименование</label>
+                  <input
+                    type="tel"
+                    name="nameFull"
+                    value={hotel.nameFull || ""}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className={classes.hotelAbout_info_input}
+                  />
+                </div>
                 <div className={classes.hotelAbout_info_item}>
                   <label>ИНН</label>
                   <input

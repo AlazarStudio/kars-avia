@@ -9,6 +9,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
+import TextEditor from "../TextEditor/TextEditor";
 
 function CreateRequestPatchNote({
   show,
@@ -200,14 +201,6 @@ function CreateRequestPatchNote({
                 placeholder=""
                 onChange={handleChange}
               />
-              <label>Описание</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-              ></textarea>
-
               <label>Дата</label>
               <input
                 type="date"
@@ -215,6 +208,18 @@ function CreateRequestPatchNote({
                 value={formData.date}
                 onChange={handleChange}
                 placeholder="Дата"
+              />
+              <label>Описание</label>
+              <TextEditor
+                anotherDescription={formData.description}
+                isEditing={true}
+                onChange={(newDescription) => {
+                  setIsEdited(true);
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: newDescription,
+                  }));
+                }}
               />
             </div>
           </div>

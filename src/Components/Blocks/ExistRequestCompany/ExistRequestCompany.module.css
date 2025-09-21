@@ -68,7 +68,7 @@
 .requestData input,
 .requestData select {
     width: 60%;
-    height: 38px;
+    height: 40px;
     outline: none;
     padding: 0 10px;
 }
@@ -79,7 +79,7 @@
 
 .requestDataInfo .dropdown {
     width: 60%;
-    height: 38px;
+    height: 40px;
     outline: none;
     cursor: pointer;
 }

@@ -30,8 +30,8 @@ const DispatcherAdminContent = ({ user }) => {
       {id === "registerOfContracts" && <RegisterOfContracts user={user} />}
       {id === "reports" && <Reports user={user} />}
       {id === "analytics" && <Analytics/>}
-      {/* {id === "documentation" && <DocumentationList user={user} />} */}
-      {/* {id === "updates" && <UpdatesList user={user} />} */}
+      {id === "documentation" && <DocumentationList user={user} />}
+      {id === "updates" && <UpdatesList user={user} />}
       {id === "myCompany" && <MyCompany user={user} />}
       {id === "patchNotes" && <PatchNotesList user={user} />}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
