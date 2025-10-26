@@ -2355,6 +2355,7 @@ export const GET_AIRLINE_COMPANY = gql`
           userUpdate
           airlineMenu
           airlineUpdate
+          contracts
         }
       }
     }
@@ -2507,6 +2508,7 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         userUpdate
         airlineMenu
         airlineUpdate
+        contracts
       }
     }
   }

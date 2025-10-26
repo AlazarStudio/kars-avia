@@ -267,7 +267,7 @@ const AirlineAdminMenu = ({
           )}
         </Link>
       )}
-      {accessMenu?.airlineContracts && (
+      {accessMenu?.contracts && (
         <Link
           to={"/airlineRegisterOfContracts"}
           className={`${classes.menu_items__elem} ${

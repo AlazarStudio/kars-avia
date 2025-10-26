@@ -111,6 +111,8 @@ export default function AccessSettings() {
     personalCreate: !!s?.employees?.add,
     personalUpdate: !!s?.employees?.edit,
 
+    contracts: !!s?.contracts?.access,
+
     analyticsMenu: !!s?.analytics?.access,
     analyticsUpload: !!s?.analytics?.export,
 
@@ -267,6 +269,9 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
         add: b(accessMenu.personalCreate),
         edit: b(accessMenu.personalUpdate),
       },
+      contracts: {
+        access: b(accessMenu.contracts)
+      },
       analytics: {
         access: b(accessMenu.analyticsMenu),
         export: b(accessMenu.analyticsUpload),
@@ -409,6 +414,15 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
           />
         </SectionCard>
 
+        <SectionCard title="Договоры">
+          <RowSwitch
+            label="Доступ к разделу"
+            checked={state.contracts.access}
+            onChange={(v) => set("contracts", "access", v)}
+            disabled={!isEditing}
+          />
+        </SectionCard>
+
         {/* Аналитика */}
         <SectionCard title="Аналитика">
           <RowSwitch
@@ -417,12 +431,12 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
             onChange={(v) => set("analytics", "access", v)}
             disabled={!isEditing}
           />
-          <RowSwitch
+          {/* <RowSwitch
             label="Выгрузка аналитики"
             checked={state.analytics.export}
             onChange={(v) => set("analytics", "export", v)}
             disabled={!isEditing || !state.analytics.access}
-          />
+          /> */}
         </SectionCard>
 
         {/* Об авиакомпании */}
