@@ -4,7 +4,7 @@
   flex-direction: column;
   /* position: relative; */
   gap: 10px;
-  overflow-y: scroll;
+  overflow-y: auto;
   scrollbar-width: none;
 }
 

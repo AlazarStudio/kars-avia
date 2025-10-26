@@ -33,6 +33,13 @@
   z-index: 999;
 }
 
+.svgWrapper {
+  width: 30px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 /* Показывать подсказку при hover на элементе */
 .menu_items__elem:hover .tooltip {
   opacity: 0.9;
@@ -71,11 +78,13 @@
 }
 
 .menu_items__elem .countRequests {
+  width: 30px;
+  height: 30px;
   position: absolute;
   right: 10px;
   background-color: red;
   color: var(--white);
-  padding: 0px 8px;
+  /* padding: 0px 8px; */
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -93,3 +102,52 @@
 .menu_items__activeElem .countRequests {
   opacity: 1;
 }
+
+/* fill svg */
+
+
+.menu_items__elem___fill {
+  color: var(--menu-gray);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-family: "Open Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 21.79px;
+  padding: 15px 20px;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: all 0.1s ease-in-out;
+  position: relative;
+  overflow: visible;
+}
+
+.menu_items__activeElem___fill {
+  background: var(--menu-item-bg);
+  color: var(--white);
+}
+
+.menu_items__activeElem___fill:hover .tooltip {
+  opacity: 0.9;
+  visibility: visible;
+}
+
+.menu_items__activeElem___fill svg path {
+  fill: var(--white);
+}
+
+.menu_items__elem___fill svg path {
+  transition: all 0.1s ease-in-out;
+}
+
+.menu_items__elem___fill:hover svg path {
+  fill: var(--white);
+}
+
+.menu_items__elem___fill:hover {
+  background: var(--menu-item-bg);
+  color: var(--white);
+}
+
+/* fill svg */

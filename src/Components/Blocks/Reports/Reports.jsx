@@ -22,12 +22,12 @@ import {
   GET_REPORTS_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles";
+import { fullNotifyTime, menuAccess, notifyTime, roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import Notification from "../../Notification/Notification";
 import MUITextField from "../MUITextField/MUITextField";
 
-function Reports({ children, ...props }) {
+function Reports({ children, accessMenu, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
@@ -258,7 +258,23 @@ function Reports({ children, ...props }) {
     <>
       <div className={classes.section}>
         <Header>Отчеты</Header>
-
+        {user.role === roles.superAdmin ||
+        user.role === roles.dispatcerAdmin ? (
+          <div className={classes.filter_wrapper}>
+            <button
+              onClick={() => setIsAirline(true)}
+              className={isAirline === true ? classes.activeButton : null}
+            >
+              Авиакомпании
+            </button>
+            <button
+              onClick={() => setIsAirline(false)}
+              className={isAirline === false ? classes.activeButton : null}
+            >
+              Гостиницы
+            </button>
+          </div>
+        ) : null}
         <div className={classes.section_searchAndFilter}>
           {/* <input
             type="text"
@@ -274,31 +290,16 @@ function Reports({ children, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          {user.role === roles.superAdmin ||
-          user.role === roles.dispatcerAdmin ? (
-            <div className={classes.filter_wrapper}>
-              <button
-                onClick={() => setIsAirline(true)}
-                className={isAirline === true ? classes.activeButton : null}
-              >
-                Авиакомпании
-              </button>
-              <button
-                onClick={() => setIsAirline(false)}
-                className={isAirline === false ? classes.activeButton : null}
-              >
-                Гостиницы
-              </button>
-            </div>
-          ) : null}
-          <Filter
-            toggleSidebar={toggleCreateSidebar}
-            handleChange={handleChange}
-            filterData={filterData}
-            buttonTitle={"Создать отчет"}
-            filterList={filterList}
-            needDate={false}
-          />
+          {(!user?.airlineId || accessMenu?.reportCreate) && (
+            <Filter
+              toggleSidebar={toggleCreateSidebar}
+              handleChange={handleChange}
+              filterData={filterData}
+              buttonTitle={"Создать отчет"}
+              filterList={filterList}
+              needDate={false}
+            />
+          )}
         </div>
         {loading ? (
           <MUILoader fullHeight={"70vh"} />
@@ -314,15 +315,17 @@ function Reports({ children, ...props }) {
           />
         )}
 
-        <CreateRequestReport
-          show={showCreateSidebar}
-          onClose={toggleCreateSidebar}
-          isAirline={isAirline}
-          //   addDispatcher={addDispatcher}
-          positions={positions}
-          airports={airports}
-          addNotification={addNotification}
-        />
+        {(!user?.airlineId || accessMenu?.reportCreate) && (
+          <CreateRequestReport
+            show={showCreateSidebar}
+            onClose={toggleCreateSidebar}
+            isAirline={isAirline}
+            //   addDispatcher={addDispatcher}
+            positions={positions}
+            airports={airports}
+            addNotification={addNotification}
+          />
+        )}
         {/* 
                 <ExistRequestReport 
                     show={showRequestSidebar} 

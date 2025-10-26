@@ -69,6 +69,7 @@ function HotelAboutRoomBlock({
     }
     return words_arr[1];
   };
+  // console.log(props);
 
   return (
     <>
@@ -103,9 +104,21 @@ function HotelAboutRoomBlock({
             )}
             {props.square ? <span>{props.square} м²</span> : null}
           </div>
-          {user?.airlineId ? null : (
+          {user?.airlineId ? (
             <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
-              {props.price.toLocaleString()} ₽
+              {props.priceForAirReq
+                ? "Цена по запросу"
+                : `${
+                    props.priceForAirline
+                      ? props?.priceForAirline?.toLocaleString()
+                      : ""
+                  } ₽`}
+            </div>
+          ) : (
+            <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
+              {props.priceForAirReq
+                ? "Цена по запросу"
+                : `${props.price.toLocaleString()} ₽`}
             </div>
           )}
         </div>
@@ -121,6 +134,10 @@ function HotelAboutRoomBlock({
                 spaceBetween={20}
                 slidesPerView={1}
                 pagination={{ clickable: true }}
+                autoplay={{
+                  delay: 4000,
+                  disableOnInteraction: false,
+                }}
                 onSwiper={setSwiper}
                 onSlideChange={(s) => setActiveIndex(s.realIndex)}
                 modules={[Autoplay, Pagination]}
@@ -163,7 +180,7 @@ function HotelAboutRoomBlock({
             </div>
             <div className={classes.modalRight}>
               <p className={classes.modalTitle}>{props.name}</p>
-              <div style={{display:'flex', gap:'20px'}}>
+              <div style={{ display: "flex", gap: "20px" }}>
                 {props.roomsCount && props.roomsCount > 0 ? (
                   <p className="blueText">
                     {props.roomsCount}{" "}
@@ -176,11 +193,25 @@ function HotelAboutRoomBlock({
                 ) : (
                   ""
                 )}
-                {props.square ? <span className="blueText">{props.square} м²</span> : null}
+                {props.square ? (
+                  <span className="blueText">{props.square} м²</span>
+                ) : null}
               </div>
-              {user?.airlineId ? null : (
+              {user?.airlineId ? (
                 <span className={classes.price}>
-                  {props.price.toLocaleString()} ₽
+                  {props.priceForAirReq
+                    ? "Цена по запросу"
+                    : `${
+                        props.priceForAirline
+                          ? props?.priceForAirline?.toLocaleString()
+                          : ""
+                      } ₽`}
+                </span>
+              ) : (
+                <span className={classes.price}>
+                  {props.priceForAirReq
+                    ? "Цена по запросу"
+                    : `${props.price.toLocaleString()} ₽`}
                 </span>
               )}
               {/* <div

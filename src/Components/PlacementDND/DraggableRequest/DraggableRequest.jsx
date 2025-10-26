@@ -295,7 +295,7 @@ const DraggableRequest = ({
     alignItems: "center",
     justifyContent: "space-between",
     color:
-      request.status === "Ожидает" && requestId !== request.requestID
+      !isBlinking && request?.status === "Ожидает"
         ? "#1A1A1A"
         : "#fff",
     fontSize: "12px",
@@ -407,9 +407,11 @@ const DraggableRequest = ({
                   src="/drag-vertical.svg"
                   alt=""
                   style={{
+                    // filter:
+                    // request.status === "Ожидает" &&
+                    // requestId !== request.requestID ? "brightness(0)" : null,
                     filter:
-                    request.status === "Ожидает" &&
-                    requestId !== request.requestID ? "brightness(0)" : null,
+                      !isBlinking ? "brightness(0)" : null,
                     pointerEvents: "none",
                     // width: "100%",
                     // height: "100%",
@@ -476,8 +478,7 @@ const DraggableRequest = ({
                       className={classes.text}
                       style={{
                         color:
-                          request.status === "Ожидает" &&
-                          requestId !== request.requestID
+                          !isBlinking
                             ? "var(--main-gray)"
                             : "#fff",
                         fontSize: "11px",
@@ -493,8 +494,9 @@ const DraggableRequest = ({
                       className={classes.text}
                       style={{
                         color:
-                          request.status === "Ожидает" &&
-                          requestId !== request.requestID
+                          // request.status === "Ожидает" &&
+                          // requestId !== request.requestID
+                          !isBlinking
                             ? "var(--main-gray)"
                             : "#fff",
                         fontSize: "11px",

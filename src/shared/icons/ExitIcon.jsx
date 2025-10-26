@@ -3,7 +3,6 @@ import Svg from "./Svg.jsx";
 
 export default function ExitIcon(props) {
   return (
-    <Svg {...props}>
       <svg
         width="21"
         height="22"
@@ -30,6 +29,5 @@ export default function ExitIcon(props) {
           strokeLinejoin="round"
         />
       </svg>
-    </Svg>
   );
 }

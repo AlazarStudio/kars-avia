@@ -1,0 +1,191 @@
+.notifyWrapper {
+    /* padding: 0 15px 40px 15px; */
+    display: flex;
+    flex-direction: column;
+    /* position: relative; */
+    gap: 10px;
+    overflow: hidden;
+    /* scrollbar-width: none; */
+    /* max-height: 100vh; */
+}
+
+.notify {
+    padding: 0 15px 15px 15px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    scrollbar-width: none;
+    overflow-y: auto;
+    max-height: calc(100vh - 85px);
+}
+
+.notifyMessageWrapper {
+    /* padding: 10px 15px; */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    /* border: 1px solid #E5E5E5; */
+    /* border-radius: 10px; */
+    /* transition: all ease-in-out 0.3s; */
+}
+
+.notifyTextWrapper {
+    width: 100%;
+    padding: 10px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid #E5E5E5;
+    border-radius: 10px;
+    transition: all ease-in-out 0.3s;
+}
+
+.notifyMessageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.notifyDate {
+    /* box-shadow: 0px 4px 16px 0px #00000026; */
+    border-radius: 10px;
+    width: 190px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    background-color: #f3f3f3;
+    color: #545873;
+}
+
+.notifyMessageTime {
+    display: flex;
+    gap: 10px;
+}
+
+.notifyMessageTime p {
+    padding: 7px 10px;
+    font-size: 13px;
+    color: #545873;
+    background-color: #F1F4FB;
+    border-radius: 5px;
+    transition: all ease-in-out 0.3s;
+}
+
+.toRequest {
+    padding: 7px 10px;
+    width: fit-content;
+    /* border-bottom: 1px solid #3232e7; */
+    border-radius: 5px;
+    background-color: #8286A6;
+    font-size: 13px;
+    color: #fff;
+    cursor: pointer;
+}
+
+.notifyTextWrapper:hover {
+    background-color: #EDEDF2;
+    border: 1px solid transparent;
+
+    .notifyMessageTime p {
+        background-color: #fff;
+    }
+}
+
+.notifyDescription {
+    font-size: 15px;
+    line-height: 21px;
+}
+
+.separatorWrapper {
+    padding: 15px 15px 10px 15px;
+    width: 100%;
+    min-height: 38px;
+    /* position: sticky; */
+    /* top: 0; */
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    background-color: #fff;
+    overflow: hidden;
+    /* border-bottom: 1px solid #E4E4EF; */
+    /* -webkit-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15);
+  -moz-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15);
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15); */
+}
+
+.separatorWrapper button {
+    padding: 10px 0;
+    flex-basis: 33%;
+    border: none;
+    border: 1px solid transparent;
+    color: #545873;
+    background-color: #F1F4FB;
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+    opacity: 0.5;
+    border-radius: 10px;
+}
+
+.separatorWrapper button.active {
+    color: #000;
+    opacity: 1;
+    background-color: #DAE5FF;
+    outline: none;
+}
+
+.endOfListNote {
+    display: flex;
+    justify-content: center;
+}
+
+/* Пагинация */
+/* .pagination {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 440px;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+}
+
+.paginationNumber {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  border: 1px solid var(--menu-bg);
+  border-radius: 5px;
+  color: var(--menu-bg);
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-decoration: none;
+}
+
+.paginationNumber:hover {
+  background-color: #e0e0e0;
+  color: var(--menu-bg);
+}
+
+.pagination .activePaginationNumber,
+.pagination .activePaginationNumber a {
+  background-color: var(--menu-bg) !important;
+  color: #fff !important;
+  border-radius: 5px;
+  font-size: 12px;
+} */
+
+@media (min-width: 0px) and (max-width: 1299px) {}

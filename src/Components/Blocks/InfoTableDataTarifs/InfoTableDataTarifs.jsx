@@ -25,8 +25,11 @@ function InfoTableDataTarifs({
   meal,
   toggleRequestSidebar,
   toggleTarifsCategory,
+  toggleAS,
+  toggleAdditionalServices,
   toggleEditMealPrices,
   requests,
+  additionalServices,
   mealPrices,
   openDeleteComponent,
   openDeleteComponentCategory,
@@ -43,14 +46,31 @@ function InfoTableDataTarifs({
       style={height ? { height: height } : {}}
     >
       <div className={classes.tarifsHeader}>
-        Тарифы - цены
-        <Button onClick={toggleTarifsCategory}>Добавить тариф</Button>
+        <div className={classes.w40}>Тарифы</div>
+        {user?.hotelId ? null : (
+          <>
+            <div className={classes.w20}>Цена по договору</div>
+            <div className={classes.w20}>Цена для АК</div>
+          </>
+        )}
+        <div
+          // className={classes.w20}
+          style={{ display: "flex", justifyContent: "flex-end", flex: 1 }}
+        >
+          <Button
+            onClick={toggleTarifsCategory}
+            // maxWidth={"300px"}
+            minwidth={"220px"}
+          >
+            Добавить тариф
+          </Button>
+        </div>
       </div>
       <InfoTable isScroll={true}>
         <div className={classes.bottom}>
           {requests?.map((item, index) => (
             <div className={classes.InfoTable_data} key={index}>
-              <div className={`${classes.InfoTable_data_elem} ${classes.w45}`}>
+              <div className={`${classes.InfoTable_data_elem} ${classes.w40}`}>
                 <div className={classes.InfoTable_data_elem_title}>
                   Тариф "{item.name}"
                 </div>
@@ -65,6 +85,16 @@ function InfoTableDataTarifs({
                 >
                   <div className={classes.InfoTable_data_elem_title}>
                     {item.price.toLocaleString()} ₽
+                  </div>
+                </div>
+              )}
+
+              {user?.role != roles.hotelAdmin && (
+                <div
+                  className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                >
+                  <div className={classes.InfoTable_data_elem_title}>
+                    {item?.priceForAirline?.toLocaleString()} ₽
                   </div>
                 </div>
               )}
@@ -95,13 +125,21 @@ function InfoTableDataTarifs({
       </InfoTable>
       {meal && (
         <>
-          Питание - цены
+          <div className={classes.tarifsHeader}>
+            <div className={classes.w40}>Питание</div>
+            {user?.hotelId ? null : (
+              <>
+                <div className={classes.w20}>Цена по договору</div>
+                <div className={classes.w20}>Цена для АК</div>
+              </>
+            )}
+          </div>
           <InfoTable isScroll={true}>
             <div className={classes.bottom}>
               {mealPrices.map((item, index) => (
                 <div className={classes.InfoTable_data} key={index}>
                   <div
-                    className={`${classes.InfoTable_data_elem} ${classes.w45}`}
+                    className={`${classes.InfoTable_data_elem} ${classes.w40}`}
                   >
                     <div className={classes.InfoTable_data_elem_title}>
                       {item.name}
@@ -114,6 +152,16 @@ function InfoTableDataTarifs({
                     >
                       <div className={classes.InfoTable_data_elem_title}>
                         {item.price?.toLocaleString()} ₽
+                      </div>
+                    </div>
+                  )}
+
+                  {user?.role != roles.hotelAdmin && (
+                    <div
+                      className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                    >
+                      <div className={classes.InfoTable_data_elem_title}>
+                        {item.priceForAir?.toLocaleString()} ₽
                       </div>
                     </div>
                   )}
@@ -133,6 +181,66 @@ function InfoTableDataTarifs({
           </InfoTable>
         </>
       )}
+      <div className={classes.tarifsHeader}>
+        <div className={classes.w40}>Дополнительные услуги</div>
+        {user?.hotelId ? null : (
+          <>
+            <div className={classes.w20}>Цена по договору</div>
+            <div className={classes.w20}>Цена для АК</div>
+          </>
+        )}
+        <div
+          // className={classes.w20}
+          style={{ display: "flex", justifyContent: "flex-end", flex: 1 }}
+        >
+          <Button onClick={toggleAS} minwidth={"220px"}>
+            Добавить доп услугу
+          </Button>
+        </div>
+      </div>
+      <InfoTable isScroll={true}>
+        <div className={classes.bottom}>
+          {additionalServices.map((item, index) => (
+            <div className={classes.InfoTable_data} key={index}>
+              <div className={`${classes.InfoTable_data_elem} ${classes.w40}`}>
+                <div className={classes.InfoTable_data_elem_title}>
+                  {item.name}
+                </div>
+              </div>
+
+              {user?.role != roles.airlineAdmin && (
+                <div
+                  className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                >
+                  <div className={classes.InfoTable_data_elem_title}>
+                    {item.price?.toLocaleString()} ₽
+                  </div>
+                </div>
+              )}
+
+              {user?.role != roles.hotelAdmin && (
+                <div
+                  className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                >
+                  <div className={classes.InfoTable_data_elem_title}>
+                    {item.priceForAirline?.toLocaleString()} ₽
+                  </div>
+                </div>
+              )}
+
+              <div className={classes.infoTable_buttons}>
+                <img
+                  src="/editPassenger.png"
+                  alt=""
+                  onClick={() => {
+                    toggleAdditionalServices(item);
+                  }}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </InfoTable>
     </div>
   );
 }

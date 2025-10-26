@@ -20,6 +20,9 @@ const HotelShahmatkaTab = lazy(() =>
 const HotelTarifsTab = lazy(() =>
   import("../../../Blocks/HotelTarifs_tabComponent/HotelTarifs_tabComponent")
 );
+const HotelRegisterOfContracts = lazy(() =>
+  import("../../../Blocks/HotelRegisterOfContracts/HotelRegisterOfContracts")
+);
 const HotelSettingsTab = lazy(() =>
   import(
     "../../../Blocks/HotelSettings_tabComponent/HotelSettings_tabComponent"
@@ -50,10 +53,12 @@ const DisAdminHotelContent = ({
             <Tab className={classes.tab}>Тарифы</Tab>
           )}
 
+          <Tab className={classes.tab}>Договоры</Tab>
           <Tab className={classes.tab}>Номерной фонд</Tab>
           <Tab className={classes.tab}>Пользователи</Tab>
           <Tab className={classes.tab}>О гостинице</Tab>
-          <Tab className={classes.tab}>Настройки</Tab>
+          <Tab className={classes.tab}>Редактирование</Tab>
+          {/* <Tab className={classes.tab}>Настройки</Tab> */}
         </TabList>
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
@@ -69,6 +74,12 @@ const DisAdminHotelContent = ({
             </Suspense>
           </TabPanel>
         )}
+
+        <TabPanel className={classes.tabPanel} forceRender={false}>
+          <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+            <HotelRegisterOfContracts id={id} />
+          </Suspense>
+        </TabPanel>
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100%"} />}>

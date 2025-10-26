@@ -40,7 +40,7 @@ function CreateRequestReport({
 
   // Определяем, для чего создаётся отчёт: для авиакомпании или для гостиницы
   const [airOrHotel, setAirOrHotel] = useState(
-    user?.airlineId ? "airline" : user?.hotelId ? "hotel" : ""
+    user?.airlineId ? "airline" : user?.hotelId ? "hotel" : "airline"
   );
 
   // Состояние для списка авиакомпаний / гостиниц
@@ -305,7 +305,7 @@ function CreateRequestReport({
               {airOrHotel === "hotel" && !user.hotelId && (
                 <>
                   <label>Гостиница</label>
-                  <MUIAutocomplete
+                  {/* <MUIAutocomplete
                     dropdownWidth={"100%"}
                     label={"Выберите гостиницу"}
                     options={airlines?.map((hotel) => hotel.name)}
@@ -313,6 +313,49 @@ function CreateRequestReport({
                     onChange={(event, newValue) => {
                       const matched = airlines.find(
                         (hotel) => hotel.name === newValue
+                      );
+                      setSelectedAirline(matched || null);
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        hotelId: matched?.id || "",
+                      }));
+                      setIsEdited(true);
+                    }}
+                  /> */}
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label={"Выберите гостиницу"}
+                    options={airlines}
+                    getOptionLabel={(option) =>
+                      option
+                        ? `${option.name}, город: ${option?.information?.city}`.trim()
+                        : ""
+                    }
+                    renderOption={(optionProps, option) => {
+                      const cityPart = `,, город: ${option?.information?.city}`;
+                      const labelText = `${option.name}${cityPart}`.trim();
+                      const words = labelText.split(", ");
+
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: 4,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={selectedAirline ? selectedAirline : ""}
+                    onChange={(event, newValue) => {
+                      const matched = airlines.find(
+                        (hotel) => hotel === newValue
                       );
                       setSelectedAirline(matched || null);
                       setFormData((prevFormData) => ({

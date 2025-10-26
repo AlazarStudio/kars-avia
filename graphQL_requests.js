@@ -877,6 +877,22 @@ export const GET_MESSAGES_HOTEL = gql`
   }
 `;
 
+export const NEW_UNREAD_MESSAGE_SUBSCRIPTION = gql`
+  subscription NewUnreadMessage($userId: ID!) {
+    newUnreadMessage(userId: $userId) {
+      id
+    }
+  }
+`;
+
+export const MESSAGE_SENT_SUBSCRIPTION = gql`
+  subscription MessageSent {
+    messageSent {
+      id
+    }
+  }
+`;
+
 export const MARK_MESSAGE_AS_READ = gql`
   mutation markMessageAsRead($messageId: ID!, $userId: ID!) {
     markMessageAsRead(messageId: $messageId, userId: $userId) {
@@ -1600,6 +1616,7 @@ export const GET_HOTEL = gql`
       nameFull
       access
       show
+      discount
       meal
       capacity
       type
@@ -1638,6 +1655,7 @@ export const GET_HOTEL = gql`
         roomsCount
         square
         priceForAirline
+        priceForAirReq
       }
       rooms {
         id
@@ -1663,6 +1681,12 @@ export const GET_HOTEL = gql`
       dinner {
         start
         end
+      }
+      additionalServices {
+        id
+        name
+        price
+        priceForAirline
       }
     }
   }
@@ -1738,8 +1762,15 @@ export const GET_HOTEL_TARIFS = gql`
         category
         price
         priceForAirline
+        priceForAirReq
         square
         images
+      }
+      additionalServices {
+        id
+        name
+        price
+        priceForAirline
       }
     }
   }
@@ -1749,6 +1780,11 @@ export const GET_HOTEL_MEAL_PRICE = gql`
   query Hotel($hotelId: ID!) {
     hotel(id: $hotelId) {
       mealPrice {
+        breakfast
+        lunch
+        dinner
+      }
+      mealPriceForAir {
         breakfast
         lunch
         dinner
@@ -1833,12 +1869,31 @@ export const REORDER_ROOM_KIND_IMAGES = gql`
   mutation ReorderRoomKindImages(
     $reorderRoomKindImagesId: ID!
     $imagesArray: [String!]
+    $imagesToDeleteArray: [String!]
   ) {
     reorderRoomKindImages(
       id: $reorderRoomKindImagesId
       imagesArray: $imagesArray
+      imagesToDeleteArray: $imagesToDeleteArray
     ) {
       images
+    }
+  }
+`;
+
+
+export const REORDER_GALLERY = gql`
+  mutation ReorderHotelGalleryImages(
+    $reorderHotelGalleryImagesId: ID!
+    $imagesToDeleteArray: [String!]
+    $imagesArray: [String!]
+  ) {
+    reorderHotelGalleryImages(
+      id: $reorderHotelGalleryImagesId
+      imagesToDeleteArray: $imagesToDeleteArray
+      imagesArray: $imagesArray
+    ) {
+      id
     }
   }
 `;
@@ -2280,6 +2335,27 @@ export const GET_AIRLINE_COMPANY = gql`
           id
           name
         }
+        accessMenu {
+          requestMenu
+          requestCreate
+          requestUpdate
+          requestChat
+          personalMenu
+          personalCreate
+          personalUpdate
+          reserveMenu
+          reserveCreate
+          reserveUpdate
+          analyticsMenu
+          analyticsUpload
+          reportMenu
+          reportCreate
+          userMenu
+          userCreate
+          userUpdate
+          airlineMenu
+          airlineUpdate
+        }
       }
     }
   }
@@ -2386,6 +2462,7 @@ export const GET_AIRLINE_USERS = gql`
         hotelChess(hcPagination: $hcPagination) {
           request {
             requestNumber
+            status
           }
           start
           end
@@ -2400,6 +2477,36 @@ export const GET_AIRLINE_USERS = gql`
           id
           name
         }
+      }
+    }
+  }
+`;
+
+export const GET_AIRLINE_DEPARTMENT = gql`
+  query AirlineDepartment($airlineDepartmentId: ID!) {
+    airlineDepartment(id: $airlineDepartmentId) {
+      id
+      name
+      accessMenu {
+        requestMenu
+        requestCreate
+        requestUpdate
+        requestChat
+        personalMenu
+        personalCreate
+        personalUpdate
+        reserveMenu
+        reserveCreate
+        reserveUpdate
+        analyticsMenu
+        analyticsUpload
+        reportMenu
+        reportCreate
+        userMenu
+        userCreate
+        userUpdate
+        airlineMenu
+        airlineUpdate
       }
     }
   }
@@ -2719,7 +2826,14 @@ export const GET_USER_SUPPORT_CHATS = gql`
         text
         isRead
       }
+      unreadMessagesCount
     }
+  }
+`;
+
+export const UNREAD_MESSAGES_COUNT = gql`
+  query Query($chatId: ID!, $userId: ID!) {
+    unreadMessagesCount(chatId: $chatId, userId: $userId)
   }
 `;
 
@@ -2742,7 +2856,14 @@ export const GET_USER_SUPPORT_CHAT = gql`
           role
         }
         isRead
+        readBy {
+          user {
+            id
+            name
+          }
+        }
       }
+      unreadMessagesCount
     }
   }
 `;

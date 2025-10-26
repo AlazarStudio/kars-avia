@@ -25,8 +25,8 @@ function Message({
     setMessageCount,
     separator,
     hotelChatId,
-    chooseRequestID,
-    chooseReserveID,
+    chooseRequestID = "",
+    chooseReserveID = "",
     formData,
     token,
     user,
@@ -47,7 +47,7 @@ function Message({
     const [newMessagesCount, setNewMessagesCount] = useState(0);
     const [isUserMessage, setIsUserMessage] = useState(false);
 
-    const userID = user.userId ? user.userId : user.id;
+    const userID = user?.userId ? user?.userId : user?.id;
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -139,7 +139,7 @@ function Message({
                 selectedChats = data?.chats.filter(chat => chat.separator === 'airline');
             } else if (user?.hotelId) {
                 selectedChats = data?.chats.filter(chat => chat.separator === 'hotel');
-            } else if (user.role === roles.superAdmin || user.role === roles.dispatcerAdmin) {
+            } else if (user?.role === roles.superAdmin || user?.role === roles.dispatcerAdmin) {
                 selectedChats = data?.chats.filter(chat => chat.separator === separator);
             }
 
@@ -172,7 +172,7 @@ function Message({
         data,
         separator,
         hotelChatId,
-        user.role,
+        user?.role,
         filteredPlacement,
         chooseRequestID,
         setIsHaveTwoChats,
@@ -180,6 +180,7 @@ function Message({
         setTitle,
     ]);
 
+// console.log(messages);
 
     // Если объект "messages" изменился, устанавливаем счётчик непрочитанных из него (на случай refetch)
     useEffect(() => {
@@ -306,8 +307,10 @@ function Message({
                 messageRefs.current[msg.id] = React.createRef();
             }
             const alreadyRead = msg.readBy?.some(rb => rb.user.id === userID);
-            const isOwn = msg.sender.id === userID;
-            if (!isOwn && !alreadyRead) {
+            // const isOwn = msg.sender.id === userID;
+            if (
+                // !isOwn &&
+                 !alreadyRead) {
                 if (!observers.current[msg.id]) {
                     const obs = new IntersectionObserver(([entry]) => {
                         if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {

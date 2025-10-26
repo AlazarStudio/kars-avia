@@ -31,7 +31,7 @@ function Email() {
 
       // let token = response_signIn && response_signIn.data.signIn.token;
       alert("Инструкции отправлены на указанный email.");
-      console.log(response);
+      // console.log(response);
 
       navigate("/login");
     } catch (err) {

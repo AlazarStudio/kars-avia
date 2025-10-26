@@ -2,22 +2,21 @@ import React, { useState, useEffect, useMemo } from "react";
 import classes from "./SupportPage.module.css";
 import Filter from "../Filter/Filter";
 import {
-  GET_AIRLINES,
-  GET_AIRLINES_SUBSCRIPTION,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
   GET_DISPATCHER,
   GET_USER_SUPPORT_CHATS,
   getCookie,
+  MESSAGE_SENT_SUBSCRIPTION,
+  NEW_UNREAD_MESSAGE_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import Header from "../Header/Header";
-import InfoTableDataAirlines from "../InfoTableDataAirlines/InfoTableDataAirlines";
-import CreateRequestAirline from "../CreateRequestAirline/CreateRequestAirline";
 import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import Support from "../Support/Support";
 import InfoTableDataSupport from "../InfoTableDataSupport/InfoTableDataSupport";
 import MUILoader from "../MUILoader/MUILoader";
+import MUITextField from "../MUITextField/MUITextField";
 
 function SupportPage({ children, user, ...props }) {
   const token = getCookie("token");
@@ -36,47 +35,6 @@ function SupportPage({ children, user, ...props }) {
     skip: !user.userId,
   });
 
-  //   console.log(userData?.user);
-
-  const [showCreateSidebar, setShowCreateSidebar] = useState(false);
-  const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
-  const [companyData, setCompanyData] = useState([]);
-  const [filterData, setFilterData] = useState({ filterSelect: "" });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
-  const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
-
-  const { data: dataSubscription } = useSubscription(
-    GET_AIRLINES_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    }
-  );
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    }
-  );
-
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Получение текущей страницы из URL
-  const pageNumber = new URLSearchParams(location.search).get("page");
-  const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
-
-  const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
-
   const { loading, error, data, refetch } = useQuery(GET_USER_SUPPORT_CHATS, {
     context: {
       headers: {
@@ -85,21 +43,49 @@ function SupportPage({ children, user, ...props }) {
     },
   });
 
-  // useEffect(() => {
-  //     if (data && data.airlines) {
-  //         const sortedAirlines = [...data.airlines.airlines].sort((a, b) => a.name.localeCompare(b.name));
-  //         setCompanyData(sortedAirlines);
-  //     }
+  //   console.log(userData?.user);
 
-  //     if (dataSubscription && dataSubscription.hotelCreated) {
-  //         setCompanyData((prevCompanyData) => {
-  //             const updatedData = [...prevCompanyData, dataSubscription.airlineCreated];
-  //             return updatedData.sort((a, b) => a.name.localeCompare(b.name));
-  //         });
-  //     }
+  // const [showCreateSidebar, setShowCreateSidebar] = useState(false);
+  const [showRequestSidebar, setShowRequestSidebar] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  // const [companyData, setCompanyData] = useState([]);
+  // const [filterData, setFilterData] = useState({ filterSelect: "" });
+  const [searchQuery, setSearchQuery] = useState("");
+  // const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
+  // const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
-  //     refetch();
-  // }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
+  // const { data: dataSubscription } = useSubscription(
+  //   GET_AIRLINES_SUBSCRIPTION,
+  //   {
+  //     context: {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     },
+  //   }
+  // );
+  const { data: dataSubscriptionUpd } = useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    onData: () => {
+      refetch();
+    },
+  });
+
+  // console.log(dataSubscriptionUpd);
+  
+
+  const location = useLocation();
+  // const navigate = useNavigate();
+
+  // Получение текущей страницы из URL
+  const pageNumber = new URLSearchParams(location.search).get("page");
+  const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
+
+  const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
 
   const handleSelectId = (id) => {
     setSelectedId(id);
@@ -108,14 +94,6 @@ function SupportPage({ children, user, ...props }) {
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilterData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
   };
 
   //   const handleSearch = async (e) => {
@@ -150,15 +128,14 @@ function SupportPage({ children, user, ...props }) {
     setSearchQuery(e.target.value);
   };
 
-  // Фильтрация запросов по имени авиакомпании
-  // const filteredRequests = useMemo(() => {
-  //     const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
-  //     return dataSource.filter(request => request.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  // }, [isSearching, allFilteredData, companyData, searchQuery]);
-
-  const filteredRequests = data?.supportChats;
-
-  //   console.log(filteredRequests?.map((item)=> item.participants[0].images[0]));
+  const filteredRequests = useMemo(() => {
+    const dataSource = data?.supportChats || []; // Если data?.supportChats - undefined, используем пустой массив
+    return dataSource.filter((request) =>
+      request.participants[0].name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  }, [data, searchQuery]); // Не забудьте добавить `data` в зависимости
 
   // Пагинация: общее количество страниц
   //   const totalPages = data?.airlines?.totalPages;
@@ -179,7 +156,7 @@ function SupportPage({ children, user, ...props }) {
   //     navigate(`?page=${selectedPage + 1}`);
   //   };
 
-  let filterList = ["Москва", "Санкт-Петербург"];
+  // let filterList = ["Москва", "Санкт-Петербург"];
 
   return (
     <>
@@ -187,20 +164,12 @@ function SupportPage({ children, user, ...props }) {
         <Header>Поддержка</Header>
 
         <div className={classes.section_searchAndFilter}>
-          <input
-            type="text"
-            placeholder="Поиск"
-            style={{ width: "500px" }}
+          <MUITextField
+            label={"Поиск"}
+            className={classes.mainSearch}
             value={searchQuery}
             onChange={handleSearch}
           />
-          {/* <Filter
-                        toggleSidebar={toggleCreateSidebar}
-                        handleChange={handleChange}
-                        filterData={filterData}
-                        buttonTitle={'Добавить авиакомпанию'}
-                        needDate={false}
-                    /> */}
         </div>
 
         {loading && <MUILoader fullHeight={"100vh"} />}
@@ -244,6 +213,7 @@ function SupportPage({ children, user, ...props }) {
           onClose={toggleRequestSidebar}
           user={userData?.user}
           selectedId={selectedId}
+          supportRefetch={refetch}
         />
       </div>
     </>

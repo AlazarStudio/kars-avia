@@ -39,7 +39,7 @@ function InfoTableDataReports({
           </div>
         </div>
 
-        <div className={classes.bottom}>
+        <div className={classes.bottom} style={(user?.airlineId || user?.hotelId) && {height:"calc(100vh - 270px)"}}>
           {requests?.map((item, index) => {
             const image = isAirline
               ? item?.airline?.images[0]

@@ -20,6 +20,7 @@ import UpdateRequestAirlineStaff from "../UpdateRequestAirlineStaff/UpdateReques
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import {
   fullNotifyTime,
+  menuAccess,
   notifyTime,
   // positions,
   roles,
@@ -28,8 +29,9 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import StatusLegend from "../StatusLegend/StatusLegend.jsx";
 
-function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
+function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
@@ -38,7 +40,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
 
   // Преобразование в ISO формат
   const startOfMonthISO = new Date(currentYear, currentMonth, 1).toISOString();
-  const endOfMonthISO = new Date(currentYear, currentMonth + 1, 0).toISOString();
+  const endOfMonthISO = new Date(
+    currentYear,
+    currentMonth + 1,
+    0
+  ).toISOString();
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_USERS, {
     context: {
@@ -46,13 +52,17 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { airlineId: id, hcPagination:{
-      start: startOfMonthISO,
-      end: endOfMonthISO
-    } },
+    variables: {
+      airlineId: id,
+      hcPagination: {
+        start: startOfMonthISO,
+        end: endOfMonthISO,
+        city: ""
+      },
+    },
   });
 
-    // Функции для переключения месяцев
+  // Функции для переключения месяцев
   const previousMonth = () => {
     setCurrentMonth((prevMonth) => (prevMonth === 0 ? 11 : prevMonth - 1));
     if (currentMonth === 0) {
@@ -119,7 +129,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     REQUEST_CREATED_SUBSCRIPTION,
     {
       onData: () => {
-        bronRefetch(); // Обновляем данные после новых событий
+        // bronRefetch(); // Обновляем данные после новых событий
         refetch();
       },
     }
@@ -129,7 +139,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     REQUEST_UPDATED_SUBSCRIPTION,
     {
       onData: () => {
-        bronRefetch(); // Обновляем данные после новых событий
+        // bronRefetch(); // Обновляем данные после новых событий
         refetch();
       },
     }
@@ -139,7 +149,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
       onData: () => {
-        bronRefetch();
+        // bronRefetch();
         refetch();
       },
     }
@@ -246,8 +256,9 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   const dataInfo =
     staff &&
     staff.flatMap((person) =>
-      person.hotelChess.map((hotel) => ({
+      person?.hotelChess?.map((hotel) => ({
         start: hotel.start,
+        status: hotel?.request?.status,
         requestNumber: hotel?.request?.requestNumber,
         startTime: hotel.startTime,
         end: hotel.end,
@@ -258,6 +269,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
         hotelName: hotel.hotel.name,
       }))
     );
+
+  // console.log(staff);
 
   const deleteComponentRef = useRef();
 
@@ -293,11 +306,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
   };
 
   // if (loading || bronLoading) return <MUILoader fullHeight={"70vh"} />;
-    // if (error || bronError)
-    // return <p>Error: {error ? error.message : bronError.message}</p>;
-  if (loading) return <MUILoader fullHeight={"70vh"} />;
-  if (error)
-    return <p>Error: {error ? error.message : bronError.message}</p>;
+  // if (error || bronError)
+  // return <p>Error: {error ? error.message : bronError.message}</p>;
+  if (loading)
+    return <MUILoader fullHeight={user?.airlineId ? "85vh" : "70vh"} />;
+  if (error) return <p>Error: {error ? error.message : bronError.message}</p>;
 
   return (
     <>
@@ -310,7 +323,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
             onChange={handleSearch}
           />
           <MUIAutocomplete
-            dropdownWidth={"140px"}
+            dropdownWidth={"160px"}
             label={"Должность"}
             options={positions.map((position) => position.name)}
             value={selectedPosition}
@@ -318,11 +331,14 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
           />
         </div>
         <div className={classes.section_searchAndFilter_filter}>
-          <Filter
-            toggleSidebar={toggleCategory}
-            handleChange={handleChange}
-            buttonTitle={"Добавить сотрудника"}
-          />
+          <StatusLegend />
+          {(!user?.airlineId || accessMenu?.personalCreate) && (
+            <Filter
+              toggleSidebar={toggleCategory}
+              handleChange={handleChange}
+              buttonTitle={"Добавить сотрудника"}
+            />
+          )}
         </div>
       </div>
 
@@ -352,41 +368,46 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, ...props }) {
       )} */}
 
       {/* {hotelBronsInfo.length !== 0 && ( */}
-        <AirlineTablePageComponent
-          currentMonth={currentMonth}
-          currentYear={currentYear}
-          previousMonth={previousMonth}
-          nextMonth={nextMonth}
-          toggleCategoryUpdate={toggleCategoryUpdate}
-          maxHeight={
-            user.role === roles.dispatcerAdmin || user.role === roles.superAdmin
-              ? "635px"
-              : "745px"
-          }
-          userHeight={
-            user.role !== roles.dispatcerAdmin && user.role !== roles.superAdmin
-              ? "calc(100vh - 210px)"
-              : ""
-          }
-          dataObject={filteredRequests}
-          dataInfo={dataInfo}
-          setSelectedStaff={setSelectedStaff}
-          user={user}
-          positions={positions}
-        />
-      {/* )} */}
-
-      <CreateRequestAirlineStaff
-        id={id}
-        show={showAddCategory}
-        onClose={toggleCategory}
-        addTarif={staff}
-        setAddTarif={setStaff}
-        addNotification={addNotification}
+      <AirlineTablePageComponent
+        currentMonth={currentMonth}
+        currentYear={currentYear}
+        previousMonth={previousMonth}
+        nextMonth={nextMonth}
+        toggleCategoryUpdate={toggleCategoryUpdate}
+        maxHeight={
+          user.role === roles.dispatcerAdmin || user.role === roles.superAdmin
+            ? "635px"
+            : "745px"
+        }
+        userHeight={
+          user.role !== roles.dispatcerAdmin && user.role !== roles.superAdmin
+            ? "calc(100vh - 210px)"
+            : ""
+        }
+        dataObject={filteredRequests}
+        dataInfo={dataInfo}
+        setSelectedStaff={setSelectedStaff}
+        user={user}
+        accessMenu={accessMenu}
         positions={positions}
       />
+      {/* )} */}
+
+      {(!user?.airlineId || accessMenu?.personalCreate) && (
+        <CreateRequestAirlineStaff
+          id={id}
+          show={showAddCategory}
+          onClose={toggleCategory}
+          addTarif={staff}
+          setAddTarif={setStaff}
+          addNotification={addNotification}
+          positions={positions}
+        />
+      )}
       <UpdateRequestAirlineStaff
         id={id}
+        user={user}
+        accessMenu={accessMenu}
         setDeleteIndex={setDeleteIndex}
         show={showUpdateCategory}
         setShowDelete={setShowDelete}

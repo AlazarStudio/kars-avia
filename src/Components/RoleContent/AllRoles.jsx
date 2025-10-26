@@ -5,10 +5,10 @@ import HotelAdminContent from './HotelAdminContent/HotelAdminContent'
 import DispatcherAdminContent from './DispatcherAdminContent/DispatcherAdminContent.jsx'
 import SuperAdminContent from './SuperAdminContent/SuperAdminContent'
 
-const AllRoles = ({ user }) => {
+const AllRoles = ({ user, accessMenu }) => {
 	const roleComponents = {
 		[roles.hotelAdmin]: <HotelAdminContent user={user} />,
-		[roles.airlineAdmin]: <AirlineAdminContent user={user} />,
+		[roles.airlineAdmin]: <AirlineAdminContent user={user} accessMenu={accessMenu} />,
 		[roles.superAdmin]: <SuperAdminContent user={user} />,
 		[roles.dispatcerAdmin]: <DispatcherAdminContent user={user} />
 	}

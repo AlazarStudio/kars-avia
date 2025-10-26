@@ -88,7 +88,7 @@ select {
 .requestMiddle {
     height: calc(100% - 90px - 71px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .requestMiddle img {

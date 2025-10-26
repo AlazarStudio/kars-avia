@@ -15,6 +15,7 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
+    padding-bottom: 20px;
 }
 
 .hotelAbout {
@@ -127,7 +128,7 @@
     justify-content: space-between;
     /* flex-wrap: wrap; */
     gap: 80px;
-    padding-top: 20px;
+    /* padding-top: 20px; */
     height: 530px;
     overflow: scroll;
     padding-right: 20px;
@@ -312,7 +313,7 @@
     align-items: center;
     height: auto;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 10px 0;
 }
 
@@ -547,7 +548,91 @@
     filter: invert(1);
 }
 
-@media (max-width: 1499px) {}
+/* сетка галереи */
+.galleryList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.galleryItem {
+  position: relative;
+  width: 190px;         /* подстрой по макету */
+  height: 140px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform .15s ease;
+}
+
+.galleryItem:hover {
+  transform: translateY(-1px);
+}
+
+.galleryItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* минималистичный крест */
+.deleteImageBtn {
+  position: absolute;
+  top: 10px;
+  top: 10px;
+  right: 10px;
+  background-color: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  border-radius: 50%; /* Если хотите, можно добавить немного округления */
+}
+
+.deleteImageBtn::before {
+  content: '✕'; /* Символ крестика */
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-block;
+  user-select: none;
+  pointer-events: none;
+}
+
+.galleryItem:hover .deleteImageBtn {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.deleteImageBtn:active {
+  transform: scale(0.95);
+}
+
+/* помечено к удалению */
+.toDelete {
+  outline: 2px dashed #e02d2d;
+  outline-offset: -2px;
+  filter: grayscale(0.2);
+  opacity: .75;
+}
+
+/* нижняя панель подтверждения */
+.galleryDeleteBar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  /* margin-top: 10px; */
+}
+
 
 @media (min-width: 0px) and (max-width: 1399px) {
     .hotelAbout_info_item {
@@ -956,7 +1041,7 @@
     align-items: center;
     height: auto;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 10px 0;
 }
 

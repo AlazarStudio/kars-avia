@@ -198,13 +198,13 @@ function EditRequestAirlineTarifCategory({
           },
         });
 
-        await updateTariffCategory({
-          variables: {
-            input: {
-              id: selectedContract.id,
-            },
-          },
-        });
+        // await updateTariffCategory({
+        //   variables: {
+        //     input: {
+        //       id: selectedContract.id,
+        //     },
+        //   },
+        // });
         // onSubmit();
         resetForm();
         onClose();

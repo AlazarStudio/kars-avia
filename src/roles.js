@@ -74,3 +74,31 @@ export const action = [
   "Представительские услуги",
   "Экипаж/командированные",
 ];
+
+export const menuAccess = {
+  requestMenu: true,
+  requestCreate: true,
+  requestUpdate: true,
+  requestChat: true,
+
+  reserveMenu: true,
+  reserveCreate: true,
+  reserveUpdate: true,
+
+  userMenu: true,
+  userCreate: true,
+  userUpdate: true,
+
+  personalMenu: true,
+  personalCreate: true,
+  personalUpdate: true,
+
+  analyticsMenu: true,
+
+  airlineMenu: true,
+  airlineUpdate: true,
+  airlineContracts: true,
+
+  reportMenu: true,
+  reportCreate: true,
+};

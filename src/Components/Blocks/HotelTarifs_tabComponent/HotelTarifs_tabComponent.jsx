@@ -24,6 +24,8 @@ import EditRequestMealTarif from "../EditRequestMealTarif/EditRequestMealTarif.j
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { fullNotifyTime, notifyTime } from "../../../roles.js";
+import CreateRequestAdditionalServices from "../CreateRequestAdditionalServices/CreateRequestAdditionalServices.jsx";
+import EditRequestTarifAdditionalServices from "../EditRequestTarifAdditionalServices/EditRequestTarifAdditionalServices.jsx";
 
 function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   const token = getCookie("token");
@@ -38,19 +40,11 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     variables: { hotelId: id },
   });
 
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_HOTELS_UPDATE_SUBSCRIPTION,
-    {
-      onData: () => {
-        refetch();
-      },
-    }
-  );
-
   const {
     loading: mealPriceLoading,
     error: mealPriceError,
     data: mealPriceData,
+    refetch: mealRefetch,
   } = useQuery(GET_HOTEL_MEAL_PRICE, {
     context: {
       headers: {
@@ -60,21 +54,42 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     variables: { hotelId: id },
   });
 
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_HOTELS_UPDATE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+        mealRefetch();
+      },
+    }
+  );
+
   const [meal, setMeal] = useState();
 
   const [addTarif, setAddTarif] = useState([]);
+  const [additionalServices, setAdditionalServices] = useState([]);
+
   const [mealPrices, setMealPrices] = useState({
     breakfast: 0,
     lunch: 0,
     dinner: 0,
   });
+  const [mealPricesAirline, setMealPricesAirline] = useState({
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+  });
+
   const [showAddTarif, setShowAddTarif] = useState(false);
   const [showAddTarifCategory, setShowAddTarifCategory] = useState(false);
+  const [showAddAS, setShowAddAS] = useState(false);
   const [showEditAddTarif, setEditShowAddTarif] = useState(false);
   const [showEditAddTarifCategory, setEditShowAddTarifCategory] =
     useState(false);
+  const [showAdditionalServices, setShowAdditionalServices] = useState(false);
   const [showEditMealPrices, setShowEditMealPrices] = useState(false);
   const [selectedTarif, setSelectedTarif] = useState(null);
+  const [selectedAS, setSelectedAS] = useState(null);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
   const [searchTarif, setSearchTarif] = useState("");
@@ -109,7 +124,8 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   useEffect(() => {
     if (data) {
       setAddTarif(data.hotel?.roomKind);
-      setMeal(data.hotel?.meal)
+      setMeal(data.hotel?.meal);
+      setAdditionalServices(data?.hotel?.additionalServices);
     }
   }, [data]);
 
@@ -119,6 +135,11 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         breakfast: mealPriceData.hotel?.mealPrice?.breakfast,
         lunch: mealPriceData.hotel?.mealPrice?.lunch,
         dinner: mealPriceData.hotel?.mealPrice?.dinner,
+      });
+      setMealPricesAirline({
+        breakfast: mealPriceData.hotel?.mealPriceForAir?.breakfast,
+        lunch: mealPriceData.hotel?.mealPriceForAir?.lunch,
+        dinner: mealPriceData.hotel?.mealPriceForAir?.dinner,
       });
     }
   }, [mealPriceData]);
@@ -135,6 +156,15 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
 
   const toggleTarifsCategory = () => {
     setShowAddTarifCategory(!showAddTarifCategory);
+  };
+
+  const toggleAdditionalServices = (tarif) => {
+    setShowAdditionalServices(!showAdditionalServices);
+    setSelectedAS(tarif)
+  };
+
+  const toggleAS = () => {
+    setShowAddAS(!showAddAS);
   };
 
   const toggleEditTarifs = (tarif) => {
@@ -235,7 +265,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   const deleteTarif = async (index, tarifID) => {
     // console.log(index, tarifID);
 
-    let response_update_tarif = await deleteHotelTarif({
+    const response_update_tarif = await deleteHotelTarif({
       variables: {
         deleteRoomKindId: tarifID,
       },
@@ -279,32 +309,32 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     });
   };
 
-  const deleteTarifCategory = async (category, tarif) => {
-    let response_update_category = await deleteHotelCategory({
-      variables: {
-        deleteCategoryId: category.id,
-      },
-    });
+  // const deleteTarifCategory = async (category, tarif) => {
+  //   let response_update_category = await deleteHotelCategory({
+  //     variables: {
+  //       deleteCategoryId: category.id,
+  //     },
+  //   });
 
-    if (response_update_category) {
-      const updatedTarifs = addTarif.map((t) => {
-        if (t.id == tarif.id) {
-          const updatedCategories = t.category.filter(
-            (cat) => cat.id !== category.id
-          );
-          return {
-            name: tarif.name,
-            category: updatedCategories,
-          };
-        }
-        return t;
-      });
+  //   if (response_update_category) {
+  //     const updatedTarifs = addTarif.map((t) => {
+  //       if (t.id == tarif.id) {
+  //         const updatedCategories = t.category.filter(
+  //           (cat) => cat.id !== category.id
+  //         );
+  //         return {
+  //           name: tarif.name,
+  //           category: updatedCategories,
+  //         };
+  //       }
+  //       return t;
+  //     });
 
-      setAddTarif(updatedTarifs);
-      setShowDelete(false);
-      setEditShowAddTarif(false);
-    }
-  };
+  //     setAddTarif(updatedTarifs);
+  //     setShowDelete(false);
+  //     setEditShowAddTarif(false);
+  //   }
+  // };
 
   const handleEditMealPrices = (updatedPrices) => {
     setMealPrices(updatedPrices);
@@ -322,10 +352,24 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     );
   });
 
+  // console.log(filteredRequestsTarif)
+
   const filteredRequestsMealTarif = [
-    { name: "Завтрак", price: mealPrices.breakfast },
-    { name: "Обед", price: mealPrices.lunch },
-    { name: "Ужин", price: mealPrices.dinner },
+    {
+      name: "Завтрак",
+      price: mealPrices.breakfast,
+      priceForAir: mealPricesAirline.breakfast,
+    },
+    {
+      name: "Обед",
+      price: mealPrices.lunch,
+      priceForAir: mealPricesAirline.lunch,
+    },
+    {
+      name: "Ужин",
+      price: mealPrices.dinner,
+      priceForAir: mealPricesAirline.dinner,
+    },
   ];
 
   return (
@@ -359,10 +403,13 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         <InfoTableDataTarifs
           // toggleRequestSidebar={toggleEditTarifs}
           toggleTarifsCategory={toggleTarifsCategory}
+          toggleAS={toggleAS}
+          toggleAdditionalServices={toggleAdditionalServices}
           toggleRequestSidebar={toggleEditTarifsCategory}
           toggleEditTarifsCategory={toggleEditTarifsCategory}
           toggleEditMealPrices={toggleEditMealPrices}
           requests={filteredRequestsTarif}
+          additionalServices={additionalServices}
           mealPrices={filteredRequestsMealTarif}
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
@@ -382,6 +429,14 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         setAddTarif={setAddTarif}
         addNotification={addNotification}
       />
+      <CreateRequestAdditionalServices
+        user={user}
+        id={id}
+        show={showAddAS}
+        onClose={toggleAS}
+        addNotification={addNotification}
+      />
+
       {/* 
       <EditRequestTarif
         id={id}
@@ -396,8 +451,10 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       /> */}
       <EditRequestMealTarif
         id={id}
+        user={user}
         show={showEditMealPrices}
         mealPrices={mealPrices}
+        mealPricesAirline={mealPricesAirline}
         onClose={toggleEditMealPrices}
         onSubmit={handleEditMealPrices}
         isHotel={true}
@@ -406,12 +463,23 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       <EditRequestTarifCategory
         user={user}
         id={id}
+        refetch={refetch}
         setAddTarif={setAddTarif}
         show={showEditAddTarifCategory}
         onClose={() => setEditShowAddTarifCategory(false)}
         addTarif={addTarif}
         tarif={selectedTarif}
         onSubmit={handleEditTarifCategory}
+        addNotification={addNotification}
+      />
+
+      <EditRequestTarifAdditionalServices
+        user={user}
+        id={id}
+        refetch={refetch}
+        show={showAdditionalServices}
+        onClose={() => setShowAdditionalServices(false)}
+        tarif={selectedAS}
         addNotification={addNotification}
       />
 

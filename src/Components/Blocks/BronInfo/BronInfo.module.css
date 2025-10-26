@@ -80,7 +80,7 @@
     /* height: calc(100% - 90px - 71px); */
     height: calc(100% - 90px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {

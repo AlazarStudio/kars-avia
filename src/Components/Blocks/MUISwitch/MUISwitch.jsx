@@ -69,10 +69,10 @@ import { FormControlLabel, Switch } from "@mui/material";
 //   },
 // }));
 
-function MUISwitch({ label, checked, onChange, disabled, sx, ...props }) {
+function MUISwitch({ label, checked, onChange, disabled, sx, width, ...props }) {
   return (
     <FormControlLabel
-      style={{ width: "fit-content", marginLeft: "0", color: "#545873" }}
+      style={{ width: width ? width :"fit-content", marginLeft: "0", color: "#545873", display: "flex", justifyContent: "space-between" }}
       control={
         <Switch
           checked={checked}

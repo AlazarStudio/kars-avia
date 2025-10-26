@@ -17,6 +17,8 @@ function EditRequestAirlineCompany({
   show,
   onClose,
   user,
+  selectedUser,
+  accessMenu,
   department,
   onSubmit,
   addTarif,
@@ -41,11 +43,11 @@ function EditRequestAirlineCompany({
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     images: null,
-    name: user?.name || "",
-    email: user?.email || "",
-    role: user?.role || "",
-    position: user?.position?.name || "",
-    login: user?.login || "",
+    name: selectedUser?.name || "",
+    email: selectedUser?.email || "",
+    role: selectedUser?.role || "",
+    position: selectedUser?.position?.name || "",
+    login: selectedUser?.login || "",
     oldPassword: "",
     password: "",
     department: department || "",
@@ -56,30 +58,30 @@ function EditRequestAirlineCompany({
   const [showIMG, setShowIMG] = useState();
 
   useEffect(() => {
-    if (show && user && department) {
+    if (show && selectedUser && department) {
       setFormData({
         images: null,
-        name: user?.name || "",
-        email: user?.email || "",
-        role: user?.role || "",
-        position: user?.position?.name || "",
-        login: user?.login || "",
+        name: selectedUser?.name || "",
+        email: selectedUser?.email || "",
+        role: selectedUser?.role || "",
+        position: selectedUser?.position?.name || "",
+        login: selectedUser?.login || "",
         oldPassword: "",
         password: "",
         department: department || "",
       });
-      setShowIMG(user.images);
+      setShowIMG(selectedUser.images);
     }
-  }, [show, department, user]);
+  }, [show, department, selectedUser]);
 
   const resetForm = useCallback(() => {
     setFormData({
       images: null,
-      name: user?.name || "",
-      email: user?.email || "",
-      role: user?.role || "",
-      position: user?.position?.name || "",
-      login: user?.login || "",
+      name: selectedUser?.name || "",
+      email: selectedUser?.email || "",
+      role: selectedUser?.role || "",
+      position: selectedUser?.position?.name || "",
+      login: selectedUser?.login || "",
       oldPassword: "",
       password: "",
       department: department || "",
@@ -186,7 +188,7 @@ function EditRequestAirlineCompany({
         let response_update_user = await uploadFile({
           variables: {
             input: {
-              id: user.id,
+              id: selectedUser.id,
               name: formData.name,
               email: formData.email,
               role: formData.role,
@@ -208,12 +210,12 @@ function EditRequestAirlineCompany({
 
           // const updatedTarif = addTarif.map((department) => {
           //   // Если пользователь находится в этом отделе
-          //   if (department.users.some((u) => u.id === user.id)) {
+          //   if (department.users.some((u) => u.id === selectedUser.id)) {
           //     // Если это старый отдел и отдел изменился, удаляем пользователя
           //     if (department.name !== formData.department) {
           //       return {
           //         ...department,
-          //         users: department.users.filter((u) => u.id !== user.id),
+          //         users: department.users.filter((u) => u.id !== selectedUser.id),
           //       };
           //     } else {
           //       // Если отдел не изменился, просто обновляем данные пользователя
@@ -230,7 +232,7 @@ function EditRequestAirlineCompany({
           //   if (department.name === formData.department) {
           //     return {
           //       ...department,
-          //       users: [...department.users, { ...user, ...updatedUser }].sort(
+          //       users: [...department.users, { ...selectedUser, ...updatedUser }].sort(
           //         (a, b) => a.name.localeCompare(b.name)
           //       ),
           //     };
@@ -486,24 +488,26 @@ function EditRequestAirlineCompany({
             </div>
           </div>
 
-          <div className={classes.requestButton}>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {(!user?.airlineId || accessMenu.userUpdate) && (
+            <div className={classes.requestButton}>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+                color={!isEditing ? "#3B6C54" : "#fff"}
+              >
+                {isEditing ? (
+                  <>
+                    Сохранить <img src="/saveDispatcher.png" alt="" />
+                  </>
+                ) : (
+                  <>
+                    Изменить <img src="/editDispetcher.png" alt="" />
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

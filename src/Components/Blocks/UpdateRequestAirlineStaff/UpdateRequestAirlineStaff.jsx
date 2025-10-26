@@ -12,25 +12,28 @@ import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import { InputMask } from "@react-input/mask";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
-import { positions } from "../../../roles";
+import { menuAccess, positions } from "../../../roles";
 
 function UpdateRequestAirlineStaff({
   show,
   onClose,
   id,
+  user,
+  accessMenu,
   selectedStaff,
   setAddTarif,
   setShowDelete,
   setDeleteIndex,
   addNotification,
-  positions
+  positions,
 }) {
-  const [userRole, setUserRole] = useState();
+  // const [userRole, setUserRole] = useState();
   const token = getCookie("token");
+  const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    setUserRole(decodeJWT(token).role);
-  }, [token]);
+  // useEffect(() => {
+  //   setUserRole(decodeJWT(token).role);
+  // }, [token]);
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
@@ -64,6 +67,7 @@ function UpdateRequestAirlineStaff({
       gender: selectedStaff?.gender || "",
     });
     setIsEdited(false); // Сброс флага изменений
+    setIsEditing(false);
   }, []);
 
   const closeButton = useCallback(() => {
@@ -100,45 +104,48 @@ function UpdateRequestAirlineStaff({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    try {
-      const selectedPosition = positions.find(
-        (position) => position.name === formData.position
-      );
-      let request = await updateAirlineStaff({
-        variables: {
-          updateAirlineId: id,
-          input: {
-            staff: [
-              {
-                id: formData.id,
-                name: formData.name,
-                number: formData.number,
-                positionId: selectedPosition?.id,
-                gender: formData.gender,
-              },
-            ],
-          },
-        },
-      });
-
-      if (request) {
-        setAddTarif(
-          request.data.updateAirline.staff.sort((a, b) =>
-            a.name.localeCompare(b.name)
-          )
+    if (isEditing) {
+      e.preventDefault();
+      setIsLoading(true);
+      try {
+        const selectedPosition = positions.find(
+          (position) => position.name === formData.position
         );
+        let request = await updateAirlineStaff({
+          variables: {
+            updateAirlineId: id,
+            input: {
+              staff: [
+                {
+                  id: formData.id,
+                  name: formData.name,
+                  number: formData.number,
+                  positionId: selectedPosition?.id,
+                  gender: formData.gender,
+                },
+              ],
+            },
+          },
+        });
 
-        resetForm();
-        onClose();
+        if (request) {
+          // setAddTarif(
+          //   request.data.updateAirline.staff.sort((a, b) =>
+          //     a.name.localeCompare(b.name)
+          //   )
+          // );
+
+          resetForm();
+          onClose();
+          setIsLoading(false);
+          addNotification("Редактирование прошло успешно.", "success");
+        }
+      } catch (err) {
         setIsLoading(false);
-        addNotification("Редактирование прошло успешно.", "success");
+        alert("Произошла ошибка при сохранении данных");
       }
-    } catch (err) {
-      setIsLoading(false);
-      alert("Произошла ошибка при сохранении данных");
     }
+    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
@@ -209,6 +216,7 @@ function UpdateRequestAirlineStaff({
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Пример: Иванов Иван Иванович"
+                disabled={!isEditing}
               />
 
               <label>Номер телефона</label>
@@ -221,6 +229,7 @@ function UpdateRequestAirlineStaff({
                 onChange={handleChange}
                 placeholder="+7 (___) ___-__-__"
                 autoComplete="new-password"
+                disabled={!isEditing}
               />
               {/* <input
                 type="text"
@@ -243,6 +252,7 @@ function UpdateRequestAirlineStaff({
                   }));
                   setIsEdited(true);
                 }}
+                isDisabled={!isEditing}
               />
 
               <label>Пол</label>
@@ -259,7 +269,7 @@ function UpdateRequestAirlineStaff({
                   setIsEdited(true);
                 }}
               /> */}
-              
+
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите пол"}
@@ -272,26 +282,51 @@ function UpdateRequestAirlineStaff({
                   }));
                   setIsEdited(true);
                 }}
+                isDisabled={!isEditing}
               />
             </div>
           </div>
-
-          <div className={classes.requestButton}>
-            <Button
-              type="submit"
-              style={{ backgroundColor: "#ff5151" }}
-              onClick={() => {
-                setDeleteIndex(selectedStaff);
-                setShowDelete(true);
-                onClose();
-              }}
-            >
-              Удалить
-            </Button>
-            <Button type="submit" onClick={handleSubmit}>
-              Изменить
-            </Button>
-          </div>
+          {(!user?.airlineId || accessMenu?.personalUpdate) && (
+            <div className={classes.requestButton}>
+              {/* <Button
+                type="submit"
+                backgroundcolor={"#ff5151"}
+                onClick={() => {
+                  setDeleteIndex(selectedStaff);
+                  setShowDelete(true);
+                  onClose();
+                }}
+              >
+                Удалить
+              </Button> */}
+              <Button
+                onClick={() => {
+                  setDeleteIndex(selectedStaff);
+                  setShowDelete(true);
+                  onClose();
+                }}
+                backgroundcolor={"#FF9C9C"}
+              >
+                Удалить <img src="/delete.png" alt="" />
+              </Button>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+                color={!isEditing ? "#3B6C54" : "#fff"}
+              >
+                {isEditing ? (
+                  <>
+                    Сохранить <img src="/saveDispatcher.png" alt="" />
+                  </>
+                ) : (
+                  <>
+                    Изменить <img src="/editDispetcher.png" alt="" />
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

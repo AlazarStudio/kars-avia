@@ -15,6 +15,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 
 function EditAdditionalAgreement({
   show,
+  id,
   onClose,
   agreement,
   onSave,
@@ -185,7 +186,10 @@ function EditAdditionalAgreement({
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div
+            className={classes.requestMiddle}
+            style={id && { height: "calc(100% - 80px)" }}
+          >
             <div className={classes.requestData}>
               <label>№ ДС</label>
               <input
@@ -240,7 +244,7 @@ function EditAdditionalAgreement({
                 <div className={classes.notesWrapper}>
                   <div className={classes.notesHeader}>
                     <p>Комментарий</p>
-                    <FixIcon width={21} height={21} />
+                    <FixIcon />
                   </div>
                   <div className={classes.notes}>{local.notes}</div>
                 </div>
@@ -264,53 +268,57 @@ function EditAdditionalAgreement({
                 </a>
               ))}
               {/* <input type="file" onChange={handleFiles} multiple /> */}
-              <div
-                ref={dropRef}
-                className={classes.fileDrop}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                onDrop={onDrop}
-              >
-                <input
-                  id="files"
-                  type="file"
-                  className={classes.fileInputHidden}
-                  onChange={onFilesPicked}
-                  multiple
-                  disabled={!agreement?.id ? false : !isEditing}
-                />
+              {!id && (
+                <div
+                  ref={dropRef}
+                  className={classes.fileDrop}
+                  onDragOver={onDragOver}
+                  onDragLeave={onDragLeave}
+                  onDrop={onDrop}
+                >
+                  <input
+                    id="files"
+                    type="file"
+                    className={classes.fileInputHidden}
+                    onChange={onFilesPicked}
+                    multiple
+                    disabled={!agreement?.id ? false : !isEditing}
+                  />
 
-                <label htmlFor="files" className={classes.fileInner}>
-                  <AttachIcon width={19} height={19} />
+                  <label htmlFor="files" className={classes.fileInner}>
+                    <AttachIcon width={19} height={19} />
 
-                  <span className={classes.fileText}>
-                    {fileName.length
-                      ? `Выбрано файлов: ${fileName.length}` // список названий через запятую
-                      : "Прикрепить файлы"}
-                  </span>
-                </label>
-              </div>
+                    <span className={classes.fileText}>
+                      {fileName.length
+                        ? `Выбрано файлов: ${fileName.length}` // список названий через запятую
+                        : "Прикрепить файлы"}
+                    </span>
+                  </label>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className={classes.requestButton}>
-            <Button
-              type="button"
-              onClick={save}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {!id && (
+            <div className={classes.requestButton}>
+              <Button
+                type="button"
+                onClick={save}
+                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+                color={!isEditing ? "#3B6C54" : "#fff"}
+              >
+                {isEditing ? (
+                  <>
+                    Сохранить <img src="/saveDispatcher.png" alt="" />
+                  </>
+                ) : (
+                  <>
+                    Изменить <img src="/editDispetcher.png" alt="" />
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

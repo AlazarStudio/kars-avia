@@ -119,15 +119,19 @@ function EditRequestNomerFond({
     }
   }, [show, nomer, hotelTariff]);
 
+  const [isEditing, setIsEditing] = useState(false);
+
   const closeButton = useCallback(() => {
     if (!isEdited) {
       resetForm();
+      setIsEditing(false);
       onClose();
       return;
     }
 
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
+      setIsEditing(false);
       onClose();
     }
   }, [isEdited, resetForm, onClose]);
@@ -270,109 +274,112 @@ function EditRequestNomerFond({
   // };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+    if (isEditing) {
+      e.preventDefault();
+      setIsLoading(true);
 
-    try {
-      // Определяем имя номера в зависимости от режима (резерв/квота)
-      let nomerName;
-      if (formData.reserve) {
-        // Если включен режим "резерв" – добавляем суффикс, если его там ещё нет
-        if (!formData.nomerName.includes("(резерв)")) {
-          nomerName = `${formData.nomerName} (резерв)`;
+      try {
+        // Определяем имя номера в зависимости от режима (резерв/квота)
+        let nomerName;
+        if (formData.reserve) {
+          // Если включен режим "резерв" – добавляем суффикс, если его там ещё нет
+          if (!formData.nomerName.includes("(резерв)")) {
+            nomerName = `${formData.nomerName} (резерв)`;
+          } else {
+            nomerName = formData.nomerName;
+          }
         } else {
-          nomerName = formData.nomerName;
+          // Если режим "квота" – удаляем суффикс "(резерв)", если он присутствует
+          nomerName = formData.nomerName
+            .replace(/\s*\(?\s*резерв\s*\)?/i, "")
+            .trim();
         }
-      } else {
-        // Если режим "квота" – удаляем суффикс "(резерв)", если он присутствует
-        nomerName = formData.nomerName
-          .replace(/\s*\(?\s*резерв\s*\)?/i, "")
-          .trim();
-      }
 
-      const roomInput = {
-        id: roomId ? roomId : nomer.id,
-        name: nomerName,
-        roomKindId: selectedRoomKind ? selectedRoomKind.id : undefined,
-        category: formData.category,
-        beds: parseFloat(formData.beds),
-        reserve: formData.reserve,
-        description: formData.description,
-        descriptionSecond: formData.descriptionSecond,
-        price: parseFloat(formData.price),
-      };
+        const roomInput = {
+          id: roomId ? roomId : nomer.id,
+          name: nomerName,
+          roomKindId: selectedRoomKind ? selectedRoomKind.id : undefined,
+          category: formData.category,
+          beds: parseFloat(formData.beds),
+          reserve: formData.reserve,
+          description: formData.description,
+          descriptionSecond: formData.descriptionSecond,
+          price: parseFloat(formData.price),
+        };
 
-      let response_update_room = await updateHotel({
-        variables: {
-          updateHotelId: id,
-          input: {
-            rooms: [roomInput],
+        let response_update_room = await updateHotel({
+          variables: {
+            updateHotelId: id,
+            input: {
+              rooms: [roomInput],
+            },
+            roomImages: formData.roomImages,
           },
-          roomImages: formData.roomImages,
-        },
-      });
-
-      if (response_update_room) {
-        const sortedTarifs = Object.values(
-          response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
-            if (!acc[room.category]) {
-              acc[room.category] = {
-                name:
-                  room.category === "onePlace"
-                    ? "Одноместный"
-                    : room.category === "twoPlace"
-                    ? "Двухместный"
-                    : room.category === "threePlace"
-                    ? "Трехместный"
-                    : room.category === "fourPlace"
-                    ? "Четырехместный"
-                    : room.category === "fivePlace"
-                    ? "Пятиместный"
-                    : room.category === "sixPlace"
-                    ? "Шестиместный"
-                    : room.category === "sevenPlace"
-                    ? "Семиместный"
-                    : room.category === "eightPlace"
-                    ? "Восьмиместный"
-                    : room.category === "apartment"
-                    ? "Апартаменты"
-                    : room.category === "studio"
-                    ? "Студия"
-                    : "",
-                origName: room.category,
-                rooms: [],
-              };
-            }
-            acc[room.category].rooms.push(room);
-            return acc;
-          }, {})
-        );
-
-        sortedTarifs.forEach((category) => {
-          category.rooms.sort((a, b) => a.name.localeCompare(b.name));
         });
 
-        if (setAddTarif) {
-          setAddTarif(sortedTarifs);
+        if (response_update_room) {
+          const sortedTarifs = Object.values(
+            response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
+              if (!acc[room.category]) {
+                acc[room.category] = {
+                  name:
+                    room.category === "onePlace"
+                      ? "Одноместный"
+                      : room.category === "twoPlace"
+                      ? "Двухместный"
+                      : room.category === "threePlace"
+                      ? "Трехместный"
+                      : room.category === "fourPlace"
+                      ? "Четырехместный"
+                      : room.category === "fivePlace"
+                      ? "Пятиместный"
+                      : room.category === "sixPlace"
+                      ? "Шестиместный"
+                      : room.category === "sevenPlace"
+                      ? "Семиместный"
+                      : room.category === "eightPlace"
+                      ? "Восьмиместный"
+                      : room.category === "apartment"
+                      ? "Апартаменты"
+                      : room.category === "studio"
+                      ? "Студия"
+                      : "",
+                  origName: room.category,
+                  rooms: [],
+                };
+              }
+              acc[room.category].rooms.push(room);
+              return acc;
+            }, {})
+          );
+
+          sortedTarifs.forEach((category) => {
+            category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+          });
+
+          if (setAddTarif) {
+            setAddTarif(sortedTarifs);
+          }
+          if (onSubmit) {
+            onSubmit(nomerName, nomer, formData.category);
+          }
+          if (roomsRefetch) {
+            roomsRefetch();
+          }
         }
-        if (onSubmit) {
-          onSubmit(nomerName, nomer, formData.category);
+        resetForm();
+        onClose();
+        setIsLoading(false);
+        if (addNotification) {
+          addNotification("Редактирование номера прошло успешно.", "success");
         }
-        if (roomsRefetch) {
-          roomsRefetch();
-        }
+      } catch (error) {
+        console.error("Ошибка при обновлении номера", error);
+      } finally {
+        setIsLoading(false);
       }
-      resetForm();
-      onClose();
-      setIsLoading(false);
-      if (addNotification) {
-        addNotification("Редактирование номера прошло успешно.", "success");
-      }
-    } catch (error) {
-      console.error("Ошибка при обновлении номера", error);
-    } finally {
-      setIsLoading(false);
     }
+    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
@@ -509,6 +516,7 @@ function EditRequestNomerFond({
                       }));
                       setIsEdited(true);
                     }}
+                    isDisabled={!isEditing}
                   />
 
                   <label>Тариф</label>
@@ -529,6 +537,7 @@ function EditRequestNomerFond({
                       );
                       setSelectedRoomKind(tariff);
                     }}
+                    isDisabled={!isEditing}
                   />
                 </>
               )}
@@ -543,6 +552,7 @@ function EditRequestNomerFond({
                 }
                 onChange={handleChange}
                 placeholder="Пример: № 151"
+                disabled={!isEditing}
               />
 
               <label>Дополнительная информация</label>
@@ -552,6 +562,7 @@ function EditRequestNomerFond({
                 value={formData.descriptionSecond}
                 onChange={handleChange}
                 placeholder="Пример: Снимает Сам Иванов"
+                disabled={!isEditing}
               />
 
               <label>Количество кроватей</label>
@@ -574,6 +585,7 @@ function EditRequestNomerFond({
                   }));
                   setIsEdited(true);
                 }}
+                isDisabled={!isEditing}
               />
 
               {type === "apartment" ? (
@@ -598,6 +610,7 @@ function EditRequestNomerFond({
                       }));
                       setIsEdited(true);
                     }}
+                    isDisabled={!isEditing}
                   />
 
                   <label>Цена</label>
@@ -606,6 +619,7 @@ function EditRequestNomerFond({
                     name="price"
                     value={formData.price || 0}
                     onChange={handleChange}
+                    disabled={!isEditing}
                   />
                   <label>Описание</label>
                   <textarea
@@ -613,6 +627,7 @@ function EditRequestNomerFond({
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
+                    disabled={!isEditing}
                   ></textarea>
 
                   <label>Изображение</label>
@@ -621,6 +636,7 @@ function EditRequestNomerFond({
                     name="roomImages"
                     onChange={handleFileChange}
                     multiple
+                    disabled={!isEditing}
                   />
                 </>
               ) : null}
@@ -643,6 +659,7 @@ function EditRequestNomerFond({
                     active: value,
                   }));
                 }}
+                disabled={!isEditing}
               >
                 <option value="" disabled>
                   Выберите состояние
@@ -654,8 +671,21 @@ function EditRequestNomerFond({
           </div>
 
           <div className={classes.requestButton}>
-            <Button type="submit" onClick={handleSubmit}>
-              Сохранить изменения
+            <Button
+              type="submit"
+              onClick={handleSubmit}
+              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+              color={!isEditing ? "#3B6C54" : "#fff"}
+            >
+              {isEditing ? (
+                <>
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </>
+              ) : (
+                <>
+                  Изменить <img src="/editDispetcher.png" alt="" />
+                </>
+              )}
             </Button>
           </div>
         </>

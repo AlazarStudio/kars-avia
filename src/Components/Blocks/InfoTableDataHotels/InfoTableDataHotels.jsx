@@ -30,17 +30,19 @@ function InfoTableDataHotels({
 
   return (
     <InfoTable>
-      {/* <div className={classes.InfoTable_title}>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
+      <div className={classes.InfoTable_title}>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w5}`} style={{alignItems:"center"}}>ID</div>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}></div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w25}`}>Название</div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Город</div>
+        {/* <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Город</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Оценка</div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Звёздность</div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Адрес</div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Удалённость</div>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Звёздность</div> */}
+        <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Адрес</div>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Номерной фонд</div>
+        {/* <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Удалённость</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>Квота</div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>Резерв</div>
-      </div> */}
+        <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>Резерв</div> */}
+      </div>
 
       <div className={classes.bottom} ref={listContainerRef}>
         {requests.map((item, index) => (
@@ -140,7 +142,7 @@ function InfoTableDataHotels({
 
             </div> */}
             <div
-              className={`${classes.InfoTable_data_elem} ${classes.w10}`}
+              className={`${classes.InfoTable_data_elem} ${classes.w15}`}
               style={{ justifyContent: "flex-start" }}
             >
               <div className={classes.InfoTable_data_elem_title}>

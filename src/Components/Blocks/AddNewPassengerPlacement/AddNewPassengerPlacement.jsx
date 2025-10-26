@@ -4,13 +4,14 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../graphQL_requests";
+import { roles } from "../../../roles";
 
 function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacement, user, hotelInfo, showChooseHotels, setshowModalForAddHotelInReserve, setShowReserveInfo }) {
     const [city, setCity] = useState("");
     const [hotel, setHotel] = useState('');
 
     useEffect(() => {
-        setHotel(user.hotelId ? user.hotelId : hotelInfo?.id)
+        setHotel(user?.hotelId ? user?.hotelId : hotelInfo?.id)
     }, [user, hotelInfo]);
 
     const token = getCookie('token');
@@ -163,7 +164,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>{user.role == 'HOTELADMIN' ? 'Выбрать количество' : 'Добавить гостиницу'}</div>
+                <div className={classes.requestTitle_name}>{user?.role == roles.hotelAdmin ? 'Выбрать количество' : 'Добавить гостиницу'}</div>
                 <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
             </div>
 
@@ -216,7 +217,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
             </div>
 
             <div className={classes.requestButton}>
-                <Button onClick={handleSubmit}>{user.role == 'HOTELADMIN' ? 'Добавить' : 'Добавить гостиницу'}</Button>
+                <Button onClick={handleSubmit}>{user?.role == roles.hotelAdmin ? 'Добавить' : 'Добавить гостиницу'}</Button>
             </div>
         </Sidebar>
     );

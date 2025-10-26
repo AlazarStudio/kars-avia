@@ -13,7 +13,8 @@
 
 .column {
     display: flex;
-    flex-direction: column;
+    /* flex-direction: column; */
+    justify-content: space-between;
     gap: 20px;
 }
 
@@ -312,7 +313,7 @@
     align-items: center;
     height: auto;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 10px 0;
 }
 
@@ -547,6 +548,43 @@
     transform: rotate(180deg);
 }
 
+.deleteImageBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  border-radius: 50%; /* Если хотите, можно добавить немного округления */
+}
+
+/* При наведении на изображение показываем кнопку удаления */
+.swiperSlide:hover .deleteImageBtn {
+  opacity: 1;
+  transform: scale(1.1);
+  /* border: 1px solid #ffffff; */
+}
+
+/* Кнопка с крестиком */
+.deleteImageBtn::before {
+  content: '✕'; /* Символ крестика */
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  display: inline-block;
+  user-select: none;
+  pointer-events: none;
+}
 
 @media (max-width: 1499px) {}
 
@@ -970,7 +1008,7 @@
     align-items: center;
     height: auto;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 10px 0;
 }
 

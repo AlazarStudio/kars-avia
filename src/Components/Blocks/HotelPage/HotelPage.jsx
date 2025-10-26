@@ -27,7 +27,7 @@ function HotelPage({ children, id, user, ...props }) {
       },
     },
     variables: { hotelId: id },
-    skip: !id
+    skip: !id,
   });
 
   useEffect(() => {
@@ -56,6 +56,8 @@ function HotelPage({ children, id, user, ...props }) {
           return "О гостинице";
         case "hotelTarifs":
           return "Тарифы";
+        case "hotelRegisterOfContracts":
+          return "Договоры";
         case "hotelSettings":
           return "Настройки гостиницы";
         default:
@@ -66,9 +68,9 @@ function HotelPage({ children, id, user, ...props }) {
     }
   };
 
- const backProps = params.requestId
-   ? { to: "/relay", state: { requestId: params.requestId } } // передаём state
-   : { to: -1 };
+  const backProps = params.requestId
+    ? { to: "/relay", state: { requestId: params.requestId } } // передаём state
+    : { to: -1 };
 
   return (
     <>

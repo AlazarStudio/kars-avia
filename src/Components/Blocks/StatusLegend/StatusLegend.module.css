@@ -1,0 +1,77 @@
+.legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.legendLine {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.legendInfo {
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #fff;
+  border-radius: 6px;
+}
+
+.legendInfoColor {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+.legendInfoText {
+  font-size: 12px;
+}
+
+.downloadsButton {
+  width: 160px;
+  height: 40px;
+  text-transform: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #545873;
+  /* border: 1px solid rgba(84, 88, 115, 0.62); */
+  background-color: var(--white);
+  padding: 0px 15px;
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  justify-content: space-between;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.open {
+  border-radius: 10px 10px 0px 0px;
+}
+
+.menu {
+  width: 165px;
+  border-radius: 10px;
+}
+
+.menuItem {
+  display: flex;
+  gap: 10px;
+  pointer-events: none;
+  padding: 8px 15px;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {
+  .legendInfoText {
+    font-size: 11px;
+  }
+
+  .legendInfoColor {
+    width: 15px;
+    height: 15px;
+  }
+
+}

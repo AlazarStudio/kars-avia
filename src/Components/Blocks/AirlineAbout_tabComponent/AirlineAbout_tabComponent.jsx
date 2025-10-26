@@ -6,65 +6,72 @@ import {
   decodeJWT,
   GET_AIRLINE,
   GET_AIRLINE_LOGS,
+  GET_AIRLINES_UPDATE_SUBSCRIPTION,
   GET_CITIES,
   getCookie,
   server,
   UPDATE_AIRLINE,
 } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { fullNotifyTime, menuAccess, notifyTime, roles } from "../../../roles.js";
 import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { InputMask } from "@react-input/mask";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import RequisitesIcon from "../../../shared/icons/RequisitesIcon.jsx";
+import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
+import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
+import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
 
-function AirlineAbout_tabComponent({ id, ...props }) {
+function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(() => {
-    return JSON.parse(localStorage.getItem("menuOpen")) ?? true;
-  });
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  // const [menuOpen, setMenuOpen] = useState(() => {
+  //   return JSON.parse(localStorage.getItem("menuOpen")) ?? true;
+  // });
+  const [menuOpen] = useLocalStorage("menuOpen", true);
+  const { width } = useWindowSize();
+  // const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
-  useEffect(() => {
-    const updateState = () => {
-      setMenuOpen(JSON.parse(localStorage.getItem("menuOpen")));
-    };
+  // useEffect(() => {
+  //   const updateState = () => {
+  //     setMenuOpen(JSON.parse(localStorage.getItem("menuOpen")));
+  //   };
 
-    // Отслеживание изменений localStorage в других вкладках
-    window.addEventListener("storage", updateState);
+  //   // Отслеживание изменений localStorage в других вкладках
+  //   window.addEventListener("storage", updateState);
 
-    // Перехват изменений в текущей вкладке
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function (key, value) {
-      originalSetItem.apply(this, arguments);
-      if (key === "menuOpen") {
-        updateState(); // Обновляем состояние
-      }
-    };
+  //   // Перехват изменений в текущей вкладке
+  //   const originalSetItem = localStorage.setItem;
+  //   localStorage.setItem = function (key, value) {
+  //     originalSetItem.apply(this, arguments);
+  //     if (key === "menuOpen") {
+  //       updateState(); // Обновляем состояние
+  //     }
+  //   };
 
-    return () => {
-      window.removeEventListener("storage", updateState);
-      localStorage.setItem = originalSetItem; // Возвращаем исходный метод
-    };
-  }, []);
+  //   return () => {
+  //     window.removeEventListener("storage", updateState);
+  //     localStorage.setItem = originalSetItem; // Возвращаем исходный метод
+  //   };
+  // }, []);
   // console.log(menuOpen);
 
-  useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener("resize", handleResize);
+  // useEffect(() => {
+  //   const handleResize = () => setWindowWidth(window.innerWidth);
+  //   window.addEventListener("resize", handleResize);
 
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  //   return () => window.removeEventListener("resize", handleResize);
+  // }, []);
 
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
-  const { loading, error, data } = useQuery(GET_AIRLINE, {
+  const { loading, error, data, refetch } = useQuery(GET_AIRLINE, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -72,6 +79,20 @@ function AirlineAbout_tabComponent({ id, ...props }) {
     },
     variables: { airlineId: id },
   });
+
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_AIRLINES_UPDATE_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      // onData: () => {
+      //   refetch();
+      // },
+    }
+  );
 
   let infoCities = useQuery(GET_CITIES, {
     context: {
@@ -121,7 +142,8 @@ function AirlineAbout_tabComponent({ id, ...props }) {
     if (data) {
       setAirline(data.airline);
     }
-  }, [data]);
+    if (dataSubscriptionUpd) refetch();
+  }, [data, dataSubscriptionUpd, refetch]);
 
   // console.log(data);
 
@@ -225,10 +247,14 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // console.log(name);
+    
 
     setAirline((prev) => {
+      // console.log(Object.keys(prev.information || {}));
+      
       // Проверяем, обновляется ли поле в `information`
-      if (Object.keys(prev.information || {}).includes(name)) {
+      if (Object.keys(prev.information || {})) {
         return {
           ...prev,
           information: {
@@ -306,6 +332,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                         История
                       </button>
                     </div>
+                    {(!user?.airlineId || accessMenu?.airlineUpdate) &&
                     <Button onClick={handleEditClick}>
                       <img
                         src={isEditing ? "/save.png" : "/editIcon.png"}
@@ -313,6 +340,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       />
                       {isEditing ? "Сохранить" : "Редактировать"}
                     </Button>
+                    }
                   </>
                 )}
               </div>
@@ -326,7 +354,9 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   setDisplayInfo("generalInfo");
                 }}
               >
-                <img src="/houseIcon.png" alt="" /> Общая информация
+                {/* <img src="/houseIcon.png" alt="" />  */}
+                <HomeIcon />
+                Общая информация
               </button>
               <button
                 className={
@@ -336,7 +366,9 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                   setDisplayInfo("requisites");
                 }}
               >
-                <img src="/requisitesIcon.svg" alt="" /> Реквизиты
+                {/* <img src="/requisitesIcon.svg" alt="" />  */}
+                <RequisitesIcon />
+                Реквизиты
               </button>
               <button
                 className={
@@ -354,7 +386,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
             {displayInfo == "generalInfo" ? (
               <div
                 className={`${classes.column} ${
-                  menuOpen && windowWidth <= 1600 ? classes.w70 : classes.w50
+                  menuOpen && width <= 1600 ? classes.w70 : classes.w50
                 }`}
               >
                 {
@@ -407,20 +439,20 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                       : classes.airlineAbout_info_block__airline
                   }
                   style={
-                    menuOpen && windowWidth <= 1580
+                    menuOpen && width <= 1580
                       ? {
                           flexDirection: "column",
                           height: "100%",
                           overflow: "scroll",
                         }
-                      : !menuOpen && windowWidth < 1305
+                      : !menuOpen && width < 1305
                       ? { flexDirection: "column" }
                       : {}
                   }
                 >
                   <div
                     className={`${classes.column} ${
-                      menuOpen && windowWidth <= 1600
+                      menuOpen && width <= 1600
                         ? classes.w60
                         : classes.w50
                     }`}
@@ -539,7 +571,7 @@ function AirlineAbout_tabComponent({ id, ...props }) {
 
                   <div
                     className={`${classes.column} ${
-                      menuOpen && windowWidth <= 1600
+                      menuOpen && width <= 1600
                         ? classes.w60
                         : classes.w50
                     }`}
@@ -589,9 +621,9 @@ function AirlineAbout_tabComponent({ id, ...props }) {
                 <div className={classes.airlineAbout_info_block}>
                   <div
                     className={`${classes.column} ${
-                      menuOpen && windowWidth <= 1575
+                      menuOpen && width <= 1575
                         ? classes.w70
-                        : !menuOpen && windowWidth <= 1280
+                        : !menuOpen && width <= 1280
                         ? classes.w60
                         : classes.w50
                     }`}

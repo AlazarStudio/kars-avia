@@ -1,57 +1,156 @@
+// HotelAboutTariffs.jsx
 import React from "react";
 import classes from "./HotelAboutTariffs.module.css";
 
-const categories = [
-  { key: "accommodation", label: "Проживание" },
-  { key: "meal",          label: "Питание" },
-];
+const categoryNames = {
+  luxe: "Люкс",
+  apartment: "Апартаменты",
+  studio: "Студия",
+  onePlace: "Одноместный",
+  twoPlace: "Двухместный",
+  threePlace: "Трехместный",
+  fourPlace: "Четырехместный",
+  fivePlace: "Пятиместный",
+  sixPlace: "Шестиместный",
+  sevenPlace: "Семиместный",
+  eightPlace: "Восьмиместный",
+  ninePlace: "Девятиместный",
+  tenPlace: "Десятиместный",
+};
 
-const roomTypes = [
-  { key: "single",  label: "Одноместный" },
-  { key: "double",  label: "Двухместный" },
-  { key: "triple",  label: "Трехместный" },
-];
+const mealLabels = {
+  breakfast: "Завтрак",
+  lunch: "Обед",
+  dinner: "Ужин",
+};
 
-export default function HotelAboutTariffs({ tariffs }) {
-  // tariffs should be an object like:
-  // {
-  //   accommodation: { single: { quota: 10, reserve: 2 }, … },
-  //   meal:          { single: { quota: 10, reserve: 2 }, … },
-  // }
+const fmt = (n) =>
+  typeof n === "number"
+    ? new Intl.NumberFormat("ru-RU", {
+        style: "currency",
+        currency: "RUB",
+        maximumFractionDigits: 0,
+      }).format(n)
+    : "—";
+
+export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null, additionalServices }) {
+  const hasMeals =
+    mealPrices &&
+    ["breakfast", "lunch", "dinner"].some(
+      (k) => typeof mealPrices[k] === "number"
+    );
+    // console.log(mealPrices);
+    
+
   return (
     <div className={classes.tariffs}>
       <table className={classes.table}>
-        <thead>
+        {/* <thead>
           <tr>
-            <th>Категория</th>
-            <th>Квота</th>
-            <th>Резерв</th>
+            <th>Тарифы</th>
+            <th className={classes.priceCol}>Цены</th>
           </tr>
-        </thead>
+        </thead> */}
         <tbody>
-          {categories.map(({ key, label }) => (
-            <React.Fragment key={key}>
-              <tr className={classes.categoryRow}>
-                <td colSpan="3">{label}</td>
+          {/* {tariffs.map((t) => {
+            const price = t.priceForAirline ?? t.price ?? null;
+            return (
+              <tr key={t.id}>
+                <td>
+                  <div className={classes.name}>{t.name}</div>
+                  <div className={classes.category}>
+                    {categoryNames[t.category] ?? t.category}
+                  </div>
+                </td>
+                <td className={classes.price}>{fmt(price)}</td>
               </tr>
-              {roomTypes.map(({ key: rtKey, label: rtLabel }) => {
-                const { quota = "-", reserve = "-" } =
-                  tariffs[key]?.[rtKey] || {};
-                return (
-                  <tr key={`${key}-${rtKey}`}>
-                    <td className={classes.roomType}>{rtLabel}</td>
-                    <td>{quota}</td>
-                    <td>{reserve}</td>
-                  </tr>
-                );
-              })}
-            </React.Fragment>
-          ))}
+            );
+          })} */}
+
+          {hasMeals && (
+            <>
+              <tr className={classes.sectionRow}>
+                <td>Питание</td>
+                <td>Цены</td>
+              </tr>
+              {["breakfast", "lunch", "dinner"].map((k) => (
+                <tr key={`meal-${k}`}>
+                  <td className={classes.mealName}>{mealLabels[k]}</td>
+                  <td className={classes.price}>{fmt(mealPrices[k])}</td>
+                </tr>
+              ))}
+            </>
+          )}
+          {additionalServices && (
+            <>
+              <tr className={classes.sectionRow}>
+                <td>Дополнительные услуги</td>
+                <td>Цены</td>
+              </tr>
+              {additionalServices.map((k) => (
+                <tr key={k.id}>
+                  <td className={classes.mealName}>{k.name}</td>
+                  <td className={classes.price}>{fmt(user?.airlineId ? k?.priceForAirline: k?.price)}</td>
+                </tr>
+              ))}
+            </>
+          )}
         </tbody>
       </table>
     </div>
   );
 }
+
+// import React from "react";
+// import classes from "./HotelAboutTariffs.module.css";
+
+// const categories = [
+//   { key: "accommodation", label: "Проживание" },
+//   { key: "meal",          label: "Питание" },
+// ];
+
+// const roomTypes = [
+//   { key: "single",  label: "Одноместный" },
+//   { key: "double",  label: "Двухместный" },
+//   { key: "triple",  label: "Трехместный" },
+// ];
+
+// export default function HotelAboutTariffs({ tariffs }) {
+
+//   return (
+//     <div className={classes.tariffs}>
+//       <table className={classes.table}>
+//         <thead>
+//           <tr>
+//             <th>Категория</th>
+//             <th>Квота</th>
+//             <th>Резерв</th>
+//           </tr>
+//         </thead>
+//         <tbody>
+//           {categories.map(({ key, label }) => (
+//             <React.Fragment key={key}>
+//               <tr className={classes.categoryRow}>
+//                 <td colSpan="3">{label}</td>
+//               </tr>
+//               {roomTypes.map(({ key: rtKey, label: rtLabel }) => {
+//                 const { quota = "-", reserve = "-" } =
+//                   tariffs[key]?.[rtKey] || {};
+//                 return (
+//                   <tr key={`${key}-${rtKey}`}>
+//                     <td className={classes.roomType}>{rtLabel}</td>
+//                     <td>{quota}</td>
+//                     <td>{reserve}</td>
+//                   </tr>
+//                 );
+//               })}
+//             </React.Fragment>
+//           ))}
+//         </tbody>
+//       </table>
+//     </div>
+//   );
+// }
 
 // import React from "react";
 // import classes from "./HotelAboutTariffs.module.css";
@@ -105,4 +204,3 @@ export default function HotelAboutTariffs({ tariffs }) {
 //     </div>
 //   );
 // }
-

@@ -4,7 +4,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { getCookie } from "../../../../graphQL_requests";
 import SupportMessage from "../SupportMessage/SupportMessage";
 
-function Support({ show, onClose, user, selectedId }) {
+function Support({ show, onClose, user, supportRefetch, selectedId }) {
   const token = getCookie("token");
   // console.log(user.id);
 
@@ -60,9 +60,11 @@ function Support({ show, onClose, user, selectedId }) {
           >
             <SupportMessage
               formData={formData}
+              show={show}
               token={token}
               user={user}
               selectedId={selectedId}
+              supportRefetch={supportRefetch}
             />
           </div>
         </Sidebar>

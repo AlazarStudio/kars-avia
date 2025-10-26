@@ -6,7 +6,7 @@
     font-weight: 400;
     line-height: 19.36px;
     text-align: center;
-    /* margin-left: 8px; */
+    /* padding-left: 8px; */
     transition: all 0.2s ease-in-out;
     cursor: pointer;
     /* box-shadow: 0px -1px 0px 0px #E4E4EF inset; */
@@ -27,7 +27,8 @@
 .InfoTable_title {
     color: var(--text-gray);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
-    margin-right: 8px;
+    padding-right: 8px;
+    height: 70px;
 }
 
 .InfoTable_title_elem,
@@ -114,6 +115,14 @@
     width: 35%;
 }
 
+.w40 {
+    width: 40%;
+}
+
+.w45 {
+    width: 45%;
+}
+
 .w12:last-child {
     border-right: none;
 }
@@ -157,10 +166,10 @@
 }
 
 .bottom {
-    /* height: calc(100vh - 329px); */
-    height: calc(100vh - 270px);
+    height: calc(100vh - 340px);
+    /* height: calc(100vh - 270px); */
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .InfoTable_data_elem_userInfo {
@@ -202,13 +211,6 @@
     object-fit: contain;
 }
 
-@media (max-width: 1580px) {
-    .bottom {
-        /* height: calc(100vh - 350px); */
-        height: calc(100vh - 270px);
-    }
-}
-
 @media (min-width: 0px) and (max-width: 1499px) {
     .InfoTable_title_elem {
         font-size: 14px;
@@ -221,7 +223,7 @@
 
 @media (min-width: 0px) and (max-width: 1399px) {
     .bottom {
-        height: calc(100vh - 270px);
+        height: calc(100vh - 340px);
     }
 
     .star {
@@ -229,6 +231,12 @@
         height: 13px;
     }
 }
+
+/* @media (min-width: 0px) and (max-width: 1581px) {
+    .bottom {
+        height: calc(100vh - 270px);
+    }
+} */
 
 /* .InfoTable_title,
 .InfoTable_data {
@@ -238,7 +246,7 @@
     font-weight: 400;
     line-height: 19.36px;
     text-align: center;
-    margin-left: 8px;
+    padding-left: 8px;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
@@ -251,7 +259,7 @@
 .InfoTable_title {
     color: var(--text-gray);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
-    margin-right: 8px;
+    padding-right: 8px;
 }
 
 .InfoTable_title_elem,
@@ -377,7 +385,7 @@
 .bottom {
     height: calc(100vh - 329px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .InfoTable_data_elem_userInfo {

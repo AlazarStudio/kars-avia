@@ -81,7 +81,7 @@ select {
 .requestMiddle {
     height: calc(100% - 90px - 71px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -156,7 +156,7 @@ select {
 .requestData_messages {
     height: calc(100vh - 250px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -356,7 +356,7 @@ select {
     align-items: center;
     height: 600px;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 10px 0;
 }
 

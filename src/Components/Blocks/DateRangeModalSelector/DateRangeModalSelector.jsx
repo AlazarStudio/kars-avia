@@ -1,27 +1,51 @@
 // DateRangeModalSelector.jsx
 import React, { useState, useEffect } from "react";
-import { Button, Dialog, DialogContent, TextField, Box } from "@mui/material";
+import { Dialog, DialogContent, TextField, Box } from "@mui/material";
 import { DateRangePicker } from "react-date-range";
 import { ru } from "date-fns/locale";
 import format from "date-fns/format";
 
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import { addDays, endOfMonth, endOfQuarter, endOfYear, isSameDay, startOfMonth, startOfQuarter, startOfYear, subMonths, subQuarters, subYears } from "date-fns";
+import {
+  addDays,
+  endOfMonth,
+  endOfQuarter,
+  endOfYear,
+  isSameDay,
+  startOfMonth,
+  startOfQuarter,
+  startOfYear,
+  subMonths,
+  subQuarters,
+  subYears,
+} from "date-fns";
+import Button from "../../Standart/Button/Button";
 
 export default function DateRangeModalSelector({
   initialRange,
   onChange,
   width,
 }) {
+  const defaultSelection = {
+    startDate: initialRange?.startDate || null,
+    endDate: initialRange?.endDate || null,
+    key: "selection",
+  } || {
+    startDate: addDays(new Date(), -7),
+    endDate: new Date(),
+    key: "selection",
+  };
+
   // Локальное состояние диапазона
-  const [range, setRange] = useState([
-    {
-      startDate: initialRange?.startDate || null,
-      endDate: initialRange?.endDate || null,
-      key: "selection",
-    },
-  ]);
+  // const [range, setRange] = useState([
+  //   {
+  //     startDate: initialRange?.startDate || null,
+  //     endDate: initialRange?.endDate || null,
+  //     key: "selection",
+  //   },
+  // ]);
+  const [range, setRange] = useState([defaultSelection]);
   const [open, setOpen] = useState(false);
 
   // Если initialRange из родителя поменялся (например, сбросили),
@@ -124,10 +148,22 @@ export default function DateRangeModalSelector({
         )}`
       : "";
 
+  const buttonStyles = {
+    padding: "0 30px",
+    border: "none",
+    borderRadius: "10px",
+    fontSize: "14px",
+    cursor: "pointer",
+  };
   const ButtonStyles = {
     padding: "5px 20px",
     fontSize: "14px",
     borderRadius: "10px",
+  };
+  const cancelButtonStyles = {
+    ...buttonStyles,
+    backgroundColor: "#e5e7eb",
+    color: "#111827",
   };
 
   return (
@@ -180,18 +216,20 @@ export default function DateRangeModalSelector({
         }}
       />
 
-      <Dialog open={open} onClose={() => setOpen(false)}>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        fullWidth
+        maxWidth={false} // отключаем дефолтный кап
+        PaperProps={{
+          sx: {
+            width: "100%",
+            maxWidth: 926,
+            borderRadius: "12px",
+          },
+        }}
+      >
         <DialogContent>
-          {/* Кнопки сверху */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-            <Button onClick={handleReset} sx={ButtonStyles}>
-              Сбросить
-            </Button>
-            <Button variant="contained" onClick={handleApply} sx={ButtonStyles}>
-              Применить
-            </Button>
-          </Box>
-
           {/* Сам календарь */}
           <DateRangePicker
             // className="no-sidebar"
@@ -202,11 +240,27 @@ export default function DateRangeModalSelector({
             onChange={handleSelect}
             showSelectionPreview={true}
             moveRangeOnFirstSelection={false}
-            months={1}
+            showDateDisplay={false}
+            months={2}
             direction="horizontal"
             staticRanges={staticRanges} // если не нужны пресеты
             inputRanges={[]} // если не нужны инпуты вида "days up to today"
           />
+
+          {/* Кнопки сверху */}
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: "10px",
+            }}
+          >
+            <button style={cancelButtonStyles} onClick={handleReset}>
+              Отменить
+            </button>
+
+            <Button onClick={handleApply}>Применить</Button>
+          </Box>
         </DialogContent>
       </Dialog>
     </>

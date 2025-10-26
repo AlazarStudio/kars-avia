@@ -25,15 +25,10 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
+import { fullNotifyTime, menuAccess, notifyTime } from "../../../roles";
 
-function AirlineCompany_tabComponent({ children, id, ...props }) {
-  const [userRole, setUserRole] = useState();
+function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props }) {
   const token = getCookie("token");
-
-  useEffect(() => {
-    setUserRole(decodeJWT(token).role);
-  }, [token]);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
     context: {
@@ -55,7 +50,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !id
+    skip: !id,
   });
 
   const {
@@ -68,7 +63,7 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !id
+    skip: !id,
   });
 
   const { data: dataSubscriptionUpd } = useSubscription(
@@ -328,24 +323,29 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
           value={searchTarif}
           onChange={handleSearchTarif}
         />
-        <div className={classes.section_searchAndFilter_filter}>
-          <Filter
-            toggleSidebar={toggleCategory}
-            handleChange={""}
-            buttonTitle={"Добавить отдел"}
-          />
-          <Filter
-            toggleSidebar={toggleTarifs}
-            handleChange={""}
-            buttonTitle={"Добавить аккаунт менеджера"}
-          />
-        </div>
+        {(!user?.airlineId || accessMenu.userCreate) && (
+          <div className={classes.section_searchAndFilter_filter}>
+            <Filter
+              toggleSidebar={toggleCategory}
+              handleChange={""}
+              buttonTitle={"Добавить отдел"}
+            />
+            <Filter
+              toggleSidebar={toggleTarifs}
+              handleChange={""}
+              buttonTitle={"Добавить пользователя"}
+            />
+          </div>
+        )}
       </div>
       {loading && <MUILoader fullHeight={"60vh"} />}
       {error && <p>Error: {error.message}</p>}
 
       {!loading && !error && (
         <InfoTableDataAirlineCompany
+          user={user}
+          accessMenu={accessMenu}
+          airlineId={id}
           toggleRequestSidebar={toggleEditCategory}
           toggleRequestEditNumber={toggleEditNomer}
           requests={filteredRequestsEmployees}
@@ -354,30 +354,35 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         />
       )}
 
-      <CreateRequestAirlineCompany
-        id={id}
-        show={showAddTarif}
-        onClose={toggleTarifs}
-        addTarif={addTarif}
-        setAddTarif={setAddTarif}
-        positions={positions}
-        addNotification={addNotification}
-      />
-      <CreateRequestAirlineOtdel
-        id={id}
-        show={showAddCategory}
-        onClose={toggleCategory}
-        addTarif={addTarif}
-        setAddTarif={setAddTarif}
-        positions={airlinePositions}
-        addNotification={addNotification}
-      />
-
+      {(!user?.airlineId || accessMenu.userCreate) && (
+        <>
+          <CreateRequestAirlineCompany
+            id={id}
+            show={showAddTarif}
+            onClose={toggleTarifs}
+            addTarif={addTarif}
+            setAddTarif={setAddTarif}
+            positions={positions}
+            addNotification={addNotification}
+          />
+          <CreateRequestAirlineOtdel
+            id={id}
+            show={showAddCategory}
+            onClose={toggleCategory}
+            addTarif={addTarif}
+            setAddTarif={setAddTarif}
+            positions={airlinePositions}
+            addNotification={addNotification}
+          />
+        </>
+      )}
       <EditRequestAirlineCompany
         id={id}
         show={showEditNomer}
+        accessMenu={accessMenu}
         onClose={() => setShowEditNomer(false)}
-        user={selectedNomer.user}
+        user={user}
+        selectedUser={selectedNomer.user}
         department={selectedNomer.department}
         onSubmit={handleEditNomer}
         addTarif={addTarif}
@@ -385,15 +390,19 @@ function AirlineCompany_tabComponent({ children, id, ...props }) {
         // uniqueCategories={uniqueCategories}
         addNotification={addNotification}
       />
-      <EditRequestAirlineOtdel
-        id={id}
-        positions={airlinePositions}
-        show={showEditCategory}
-        onClose={() => setShowEditCategory(false)}
-        category={selectedCategory}
-        onSubmit={handleEditCategory}
-        addNotification={addNotification}
-      />
+      {(!user?.airlineId || accessMenu.userUpdate) && (
+        <>
+          <EditRequestAirlineOtdel
+            id={id}
+            positions={airlinePositions}
+            show={showEditCategory}
+            onClose={() => setShowEditCategory(false)}
+            category={selectedCategory}
+            onSubmit={handleEditCategory}
+            addNotification={addNotification}
+          />
+        </>
+      )}
 
       {showDelete && (
         <DeleteComponent

@@ -43,7 +43,8 @@
 .w_closed:hover .menuToggle {
     opacity: 1;
     visibility: visible;
-    transition: opacity 0.3s ease-in-out, visibility 0s 0s; /* убираем задержку для visibility */
+    transition: opacity 0.3s ease-in-out, visibility 0s 0s;
+    /* убираем задержку для visibility */
 }
 
 .menuHeader {
@@ -62,8 +63,10 @@
     color: var(--white);
     font-size: 25px;
     cursor: pointer;
-    opacity: 0; /* по умолчанию скрыто */
-    visibility: hidden; /* по умолчанию скрыто */
+    opacity: 0;
+    /* по умолчанию скрыто */
+    visibility: hidden;
+    /* по умолчанию скрыто */
     transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
 }
 
@@ -143,11 +146,12 @@
 }
 
 .menu_items__elem .countRequests {
+    width: 30px;
+    height: 30px;
     position: absolute;
     right: 20px;
     background-color: red;
     color: var(--white);
-    padding: 0px 8px;
     border-radius: 50%;
     display: flex;
     justify-content: center;

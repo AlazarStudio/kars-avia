@@ -1,8 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import classes from "./Main_Page.module.css";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import { useParams } from "react-router-dom";
 import AllRoles from "../../RoleContent/AllRoles.jsx";
+import { GET_AIRLINE_DEPARTMENT, GET_AIRLINES_UPDATE_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests.js";
+import { useQuery, useSubscription } from "@apollo/client";
 
 function Main_Page({ user }) {
   // Получаем параметры из URL
@@ -14,12 +16,49 @@ function Main_Page({ user }) {
     [hotelID, airlineID]
   );
 
+  const [accessMenu, setAccessMenu] = useState({})
+  const token = getCookie("token");
+  // console.log(user);
+  const { loading, error, data, refetch } = useQuery(GET_AIRLINE_DEPARTMENT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      airlineDepartmentId: user?.departmentId
+    },
+    skip: !user?.departmentId
+	});
+
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_AIRLINES_UPDATE_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
+  useEffect(() => {
+    if (data && data.airlineDepartment.accessMenu) {
+      setAccessMenu(data?.airlineDepartment?.accessMenu)
+    }
+  }, [data, dataSubscriptionUpd])
+
+
+
   return (
     <div className={classes.main}>
       {/* Меню диспетчера, которое отображается на всех страницах */}
-      <MenuDispetcher id={id || pageClicked} user={user} />
+      <MenuDispetcher id={id || pageClicked} user={user} accessMenu={accessMenu} />
 
-      <AllRoles user={user} />
+      <AllRoles user={user} accessMenu={accessMenu} />
     </div>
   );
 }

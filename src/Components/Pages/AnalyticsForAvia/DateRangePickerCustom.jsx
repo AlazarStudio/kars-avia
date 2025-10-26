@@ -167,6 +167,7 @@ import {
 import ru from "date-fns/locale/ru";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import Button from "../../Standart/Button/Button";
 
 function DateRangePickerCustom({ onChange, onClose, value }) {
     // меняй 7 на 6, если нужно
@@ -263,9 +264,9 @@ function DateRangePickerCustom({ onChange, onClose, value }) {
     gap: "10px",
   };
   const buttonStyles = {
-    padding: "8px 16px",
+    padding: "0 30px",
     border: "none",
-    borderRadius: "6px",
+    borderRadius: "10px",
     fontSize: "14px",
     cursor: "pointer",
   };
@@ -288,7 +289,7 @@ function DateRangePickerCustom({ onChange, onClose, value }) {
         />
         <div style={footerStyles}>
           <button style={cancelButtonStyles} onClick={onClose}>Отменить</button>
-          <button style={applyButtonStyles} onClick={() => onChange(range[0])}>Применить</button>
+          <Button onClick={() => onChange(range[0])}>Применить</Button>
         </div>
       </div>
     </div>

@@ -25,8 +25,9 @@ function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, pageI
     return (
         <InfoTable>
             <div className={classes.InfoTable_title}>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Название</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w5}`} style={{justifyContent:'center'}}>ID</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`} style={{paddingLeft:"90px"}}>Название</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Наименование</div>
             </div>
 
             <div className={classes.bottom} ref={listContainerRef}>
@@ -36,8 +37,8 @@ function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, pageI
                         onClick={() => handleObject(item, index)}
                         key={index}
                     >
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.order}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w5}`} style={{justifyContent:'center'}}>{item.order}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
                                     <img src={`${server}${item.images[0]}`} alt="" />
@@ -45,6 +46,7 @@ function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, pageI
                                 <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
                         </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>{item?.nameFull}</div>
                     </Link>
                 ))}
             </div>

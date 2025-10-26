@@ -20,7 +20,7 @@ import SuperAdminMenu from "../../RoleContent/SuperAdminContent/SuperAdminMenu/S
 
 import classes from "./MenuDispetcher.module.css";
 
-function MenuDispetcher({ children, id, hotelID, ...props }) {
+function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   const token = getCookie("token");
 
   const [user, setUser] = useState("");
@@ -204,7 +204,7 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
         ).length
       );
 
-      refetch();
+      // refetch();
     }
 
     if (dataRequest && dataRequest.requests.requests) {
@@ -282,6 +282,8 @@ function MenuDispetcher({ children, id, hotelID, ...props }) {
               allCreatedRequests={allCreatedRequests}
               allCreatedReserves={allCreatedReserves}
               menuOpen={menuOpen}
+              user={user}
+              accessMenu={accessMenu}
             />
           )}
 

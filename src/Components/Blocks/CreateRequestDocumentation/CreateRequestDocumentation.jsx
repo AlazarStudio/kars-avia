@@ -132,6 +132,7 @@ function BlockItem({ node, filter, onChange, onAddChild, onRemove }) {
             <BlockItem
               key={child.id}
               node={child}
+              filter={child.filter}
               onChange={(updatedChild) => {
                 const newChildren = node.children.map((c) =>
                   c.id === updatedChild.id ? updatedChild : c
@@ -143,7 +144,7 @@ function BlockItem({ node, filter, onChange, onAddChild, onRemove }) {
                   ...node,
                   children: [
                     ...node.children,
-                    makeEmptyBlock(node.filter || filter),
+                    makeEmptyBlock(child.filter || filter),
                   ],
                 })
               }
@@ -249,7 +250,7 @@ function CreateRequestDocumentation({
     setBlocks((prev) =>
       updateTree(prev, id, (n) => ({
         ...n,
-        children: [...(n.children || []), makeEmptyBlock()],
+        children: [...(n.children || []), makeEmptyBlock(n.filter)],
       }))
     );
   };
@@ -268,6 +269,7 @@ function CreateRequestDocumentation({
     if (show) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton]);
+// console.log(blocks);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

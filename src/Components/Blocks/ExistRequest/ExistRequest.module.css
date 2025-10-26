@@ -97,9 +97,10 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100vh - 79px - 67px - 81px);
+    /* height: calc(100vh - 79px - 67px - 81px); */
+    height: calc(100vh - 65px - 81px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -131,8 +132,8 @@ select {
     background-color: #fff;
     width: 100%;
     gap: 5px;
-    display: flex;
-    justify-content: space-between;
+    /* display: flex;
+    justify-content: flex-end; */
 }
 
 .canceledButton {
@@ -162,7 +163,7 @@ select {
     border-radius: 10px;
     color: #FFFFFF;
     font-family: Nunito Sans;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 400;
     padding: 0 30px;
     transition: all 0.3s ease-in-out;
@@ -211,6 +212,7 @@ select {
     width: 60%;
     padding: 10px 15px;
     border-radius: 10px;
+    min-height: 37px;
 }
 
 .requestDataInfo input {
@@ -220,7 +222,7 @@ select {
 .requestData_messages {
     height: 590px;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 30px;
@@ -384,7 +386,7 @@ select {
     align-items: center;
     height: auto;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     /* padding: 10px 0; */
 }
 

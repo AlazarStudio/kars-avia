@@ -82,7 +82,6 @@ function CreateRequestAirlineOtdel({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // "Apollo-Require-Preflight": "true",
       },
     },
   });
@@ -108,7 +107,7 @@ function CreateRequestAirlineOtdel({
             department: [
               {
                 name: formData.category,
-                positionIds: selectedPositions,
+                // positionIds: selectedPositions,
               },
             ],
           },
@@ -182,7 +181,7 @@ function CreateRequestAirlineOtdel({
                 onChange={handleChange}
                 placeholder="Пример: Отдел продаж"
               />
-              <div className={classes.positionsContainer}>
+              {/* <div className={classes.positionsContainer}>
                 <label>Должности:</label>
                 {positions &&
                   positions?.map((position) => (
@@ -199,7 +198,7 @@ function CreateRequestAirlineOtdel({
                       />
                     </div>
                   ))}
-              </div>
+              </div> */}
             </div>
           </div>
 

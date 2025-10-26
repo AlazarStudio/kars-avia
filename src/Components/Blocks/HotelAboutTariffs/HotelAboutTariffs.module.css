@@ -1,10 +1,7 @@
 .tariffs {
   width: 100%;
-  /* padding: 20px; */
-  /* border: 1px solid #E4E4E4; */
   border-radius: 10px;
   background: #FFF;
-  /* overflow:hidden; */
 }
 
 .table {
@@ -49,6 +46,21 @@
   }
 }
 
+/* .tariffs { width: 100%; } */
+/* .table { width: 100%; border-collapse: collapse; } */
+/* .table th, .table td { padding: 12px 16px; border-bottom: 1px solid #eee; } */
+.name { font-weight: 600; }
+.category { font-size: 12px; color: #6b7280; margin-top: 4px; }
+/* .priceCol, .price { text-align: right; white-space: nowrap; } */
+
+.sectionRow td {
+  background: #F5F5F5;
+  /* background: #f8fafc; */
+  font-weight: 600;
+  color: #6b7280;
+}
+.mealName { font-weight: 500; }
+.priceCol, .price { text-align: right; white-space: nowrap; }
 
 /* .container {
   width: 100%;

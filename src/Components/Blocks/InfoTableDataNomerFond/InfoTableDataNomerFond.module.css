@@ -6,7 +6,7 @@
     font-weight: 400;
     line-height: 19.36px;
     text-align: center;
-    margin-left: 8px;
+    padding-left: 8px;
     transition: all 0.2s ease-in-out;
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
 }
@@ -47,7 +47,7 @@
 .InfoTable_title {
     color: var(--text-gray);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
-    margin-right: 8px;
+    padding-right: 8px;
 }
 
 .InfoTable_title_elem,
@@ -56,7 +56,7 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    border-right: 1px solid #E4E4EF;
+    /* border-right: 1px solid #E4E4EF; */
 }
 
 .InfoTable_data_elem_img {
@@ -148,7 +148,7 @@
 .bottom {
     height: calc(100vh - 370px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .InfoTable_data_elem_userInfo {

@@ -1,0 +1,277 @@
+.section {
+    /* width: calc(100% - var(--menu-width)); */
+    width: 100%;
+    min-width: 1000px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 30px;
+    overflow: hidden;
+    position: relative;
+}
+
+.titleHeader {
+    display: flex;
+    gap: 10px;
+    font-family: Inter;
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 38.73px;
+}
+
+.backButton {
+    width: 35px;
+    height: 35px;
+    border: 1px dotted #545873;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px;
+    cursor: pointer;
+}
+
+.backButton img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.section_top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section_searchAndFilter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mainSearch {
+    width: 500px;
+}
+
+/* segmented control (Договоры/Реестры) */
+.segmented {
+    display: inline-flex;
+    gap: 10px;
+    /* background: #fff; */
+    /* border: 1px solid #E4E4EF; */
+    border-radius: 10px;
+    padding: 4px;
+}
+
+/* .segment {
+   height: 40px;
+   width: 140px;
+   padding: 0 15px;
+   border: 0;
+   border-radius: 10px;
+   background: #fff;
+   color: var(--main-gray);
+   font: 500 14px/36px Inter, sans-serif;
+   cursor: pointer;
+   transition: all ease-in-out 0.3s;
+ */
+.segment {
+    font-size: 16px;
+    padding: 10px 20px;
+    margin-right: 5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 0.5;
+    transition: all 0.3s ease-in-out;
+    outline: none;
+}
+
+.segmentActive {
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 1;
+}
+
+.segment:hover {
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 1;
+}
+
+/* save bar */
+.saveBar {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.saveBtn {
+    background: #2B66F6;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.saveBtn:disabled {
+    opacity: .7;
+    cursor: default;
+}
+
+/* === Access - панель прав === */
+.accessPanel {
+    overflow: auto;
+    scrollbar-width: none;
+}
+
+.accessGrid {
+    width: 85%;
+    display: grid;
+    grid-template-columns: repeat(1, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    /* background: #fff; */
+    /* border: 1px solid #E4E4EF; */
+    border-radius: 16px;
+    /* padding: 18px 16px; */
+}
+
+.cardTitle {
+    font-family: Inter, sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--main-gray, #2B2B34);
+    margin-bottom: 25px;
+    display: flex;
+}
+
+.title {
+    flex: 5.8;
+}
+
+.mail {
+    flex: 1;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.browser {
+    flex: 2;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.row {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    /* justify-content: space-between; */
+    /* gap: 50px; */
+    min-height: 38px;
+    /* padding: 6px 4px; */
+    padding: 10px 28px;
+    border-radius: 10px;
+    /* cursor: pointer; */
+}
+
+.rowDisabled {
+    opacity: 0.55;
+}
+
+.rowLabel {
+    font-family: Nunito Sans, sans-serif;
+    font-size: 16px;
+    color: var(--main-gray, #2B2B34);
+    flex: 4;
+}
+
+.rowControl {
+    flex: 7;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 30px;
+}
+
+/* подгруппа чекбоксов (должности) */
+.subGroup {
+    background: #fff;
+    display: grid;
+    /* place-self: center; */
+    justify-items: center;
+    grid-template-columns: repeat(2, minmax(120px, 1fr));
+    gap: 15px 12px;
+    padding: 20px 28px;
+    /* margin: 6px 0 2px; */
+    border-radius: 10px;
+}
+
+.checkItem {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--main-gray, #2B2B34);
+}
+
+.checkItem input {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+/* chips для "Личный/Отдел/Общий" */
+.rowChips {
+    /* padding-top: 2px; */
+}
+
+.chips {
+    display: inline-flex;
+    gap: 8px;
+}
+
+.chip {
+    border: 1px solid #E4E4EF;
+    background: #F6F7FB;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.chipActive {
+    background: #2B66F6;
+    color: #fff;
+    border-color: #2B66F6;
+}
+
+/* адаптив */
+@media (max-width: 1550px) {
+    .accessGrid {
+        width: 90%;
+    }
+    .rowControl {
+        gap: 60px;
+    }
+}
+
+@media (max-width: 1370px) {
+    .accessGrid {
+        width: 100%;
+    }
+}

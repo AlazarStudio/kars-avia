@@ -11,6 +11,9 @@ import { lazy, Suspense } from "react";
 const HotelAboutTab = lazy(() =>
   import("../../../Blocks/HotelAbout_tabComponent/HotelAbout_tabComponent")
 );
+const HotelRegisterOfContracts = lazy(() =>
+  import("../../../Blocks/HotelRegisterOfContracts/HotelRegisterOfContracts")
+);
 const HotelCompanyTab = lazy(() =>
   import("../../../Blocks/HotelCompany_tabComponent/HotelCompany_tabComponent")
 );
@@ -44,7 +47,7 @@ const HotelAdminHotelContent = ({ id, user }) => {
       {(params.id == "hotelChess" || params.id == undefined) && (
         <div className={classes.tabPanel}>
           <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-            <HotelShahmatkaTab id={id} />
+            <HotelShahmatkaTab id={id} user={user} />
           </Suspense>
         </div>
       )}
@@ -85,6 +88,13 @@ const HotelAdminHotelContent = ({ id, user }) => {
         <div className={classes.tabPanel}>
           <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
             <HotelSettingsTab id={id} />
+          </Suspense>
+        </div>
+      )}
+      {params.id == "hotelRegisterOfContracts" && (
+        <div className={classes.tabPanel}>
+          <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+            <HotelRegisterOfContracts id={id} user={user} />
           </Suspense>
         </div>
       )}

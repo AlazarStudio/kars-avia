@@ -35,7 +35,7 @@ function fillMissingDates(data, startDate, endDate) {
   });
 }
 
-function AirlineAnalytics() {
+function AirlineAnalytics({ user, height }) {
   const token = getCookie("token");
 
   const [dateRange, setDateRange] = useState({
@@ -46,7 +46,7 @@ function AirlineAnalytics() {
 
   const [showPicker, setShowPicker] = useState(false);
   const [airlines, setAirlines] = useState([]);
-  const [selectedAirline, setSelectedAirline] = useState([]);
+  const [selectedAirline, setSelectedAirline] = useState();
   const [searchQuery, setSearchQuery] = useState();
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -85,7 +85,10 @@ function AirlineAnalytics() {
       setTotal(count);
       setHasMore(page.length < count); // если пришло меньше total — показываем кнопку
     }
-  }, [airlinesData]);
+    if (user?.airlineId) {
+      setSelectedAirline(page.find((i) => i.id === user?.airlineId));
+    }
+  }, [airlinesData, user]);
 
   // 4) догрузка следующих 15
   const handleLoadMore = async () => {
@@ -107,7 +110,7 @@ function AirlineAnalytics() {
     setHasMore(newList.length < newTotal); // если всё забрали — кнопка исчезает
   };
 
-  const airlineId = selectedAirline.id || airlines[0]?.id;
+  const airlineId = selectedAirline ? selectedAirline.id : airlines[0]?.id;
 
   const { data, refetch } = useQuery(GET_ANALYTICS_AIRLINE_REQUESTS, {
     context: {
@@ -118,7 +121,7 @@ function AirlineAnalytics() {
     variables: {
       input: {
         filters: {
-          airlineId,
+          airlineId: user?.airlineId ? user?.airlineId : airlineId,
         },
         startDate:
           formatISO(dateRange.startDate, { representation: "date" }) +
@@ -134,13 +137,13 @@ function AirlineAnalytics() {
     refetch({
       input: {
         filters: {
-          airlineId,
+          airlineId: user?.airlineId ? user?.airlineId : airlineId,
         },
         startDate: formatISO(dateRange.startDate, { representation: "date" }),
         endDate: formatISO(dateRange.endDate, { representation: "date" }),
       },
     });
-  }, [dateRange]);
+  }, [dateRange, user]);
 
   const rawCreatedRequests =
     data?.analyticsEntityRequests?.createdByPeriod?.map((item) => ({
@@ -166,55 +169,71 @@ function AirlineAnalytics() {
   }, [airlines, searchQuery]);
 
   return (
-    <div className={classes.container}>
-      <div className={classes.sidebarContainer}>
-        <div className={classes.searchContainer}>
-          {/* <input type="text" placeholder="Поиск" name="search" id="search" value={searchQuery} onChange={handleSearch}/> */}
-          <MUITextField
-            label={"Поиск"}
-            value={searchQuery}
-            onChange={handleSearch}
-            className={classes.mainSearch}
-          />
+    <div className={classes.container} style={height && { height }}>
+      {user?.airlineId ? null : (
+        <div className={classes.sidebarContainer}>
+          <div className={classes.searchContainer}>
+            {/* <input type="text" placeholder="Поиск" name="search" id="search" value={searchQuery} onChange={handleSearch}/> */}
+            <MUITextField
+              label={"Поиск"}
+              value={searchQuery}
+              onChange={handleSearch}
+              className={classes.mainSearch}
+            />
+          </div>
+          <div className={classes.sidebar}>
+            <ul className={classes.list}>
+              {filteredAirlines.map((airline) => (
+                <li
+                  key={airline.id}
+                  className={`${classes.listItem} ${
+                    selectedAirline && selectedAirline.id === airline.id
+                      ? classes.active
+                      : !selectedAirline && airline.id === airlines[0]?.id
+                      ? classes.active
+                      : ""
+                  }`}
+                  onClick={() =>
+                    setSelectedAirline({
+                      id: airline.id,
+                      name: airline.name,
+                      images: airline.images,
+                    })
+                  }
+                >
+                  <div className={classes.circle}>
+                    <img src={`${server}${airline.images[0]}`} alt="" />
+                  </div>
+                  <p>{airline.name}</p>
+                </li>
+              ))}
+            </ul>
+            {hasMore && (
+              <button className={classes.periodButton} onClick={handleLoadMore}>
+                {loadingMore ? <MUILoader loadSize={"16px"} /> : "Показать ещё"}
+              </button>
+            )}
+          </div>
         </div>
-        <div className={classes.sidebar}>
-          <ul className={classes.list}>
-            {filteredAirlines.map((airline) => (
-              <li
-                key={airline.id}
-                className={`${classes.listItem} ${
-                  selectedAirline && selectedAirline.id === airline.id
-                    ? classes.active
-                    : selectedAirline.length === 0 &&
-                      airline.id === airlines[0]?.id
-                    ? classes.active
-                    : ""
-                }`}
-                onClick={() =>
-                  setSelectedAirline({ id: airline.id, name: airline.name })
-                }
-              >
-                <div className={classes.circle}>
-                  <img src={`${server}${airline.images[0]}`} alt="" />
-                </div>
-                <p>{airline.name}</p>
-              </li>
-            ))}
-          </ul>
-          {hasMore && (
-            <button className={classes.periodButton} onClick={handleLoadMore}>
-              {loadingMore ? <MUILoader loadSize={"16px"} /> : "Показать ещё"}
-            </button>
-          )}
-        </div>
-      </div>
+      )}
 
       <div className={classes.content}>
         <div className={classes.graphs}>
           <div className={classes.header}>
             <h2 className={classes.title}>
-              <div className={classes.circle}></div>
-              <p>{selectedAirline.name || airlines[0]?.name}</p>
+              <div className={classes.circle}>
+                <img
+                  src={`${server}${
+                    selectedAirline
+                      ? selectedAirline?.images?.[0] || ""
+                      : airlines[0]?.images?.[0] || ""
+                  }`}
+                  alt=""
+                />
+              </div>
+              <p>
+                {selectedAirline ? selectedAirline?.name : airlines[0]?.name}
+              </p>
             </h2>
 
             <button
@@ -236,7 +255,7 @@ function AirlineAnalytics() {
           </div>
 
           <div className={classes.contentWrapper}>
-            <div className={classes.row}>
+            <div className={user?.airlineId ? classes.rowNoAdaptive : classes.row}>
               <AnalyticsChart
                 type="bar"
                 title="Количество созданных заявок"

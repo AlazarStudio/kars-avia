@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Box, Tooltip, Typography } from "@mui/material";
 import RoomRow from "../RoomRow/RoomRow";
 import Timeline from "../Timeline/Timeline";
@@ -29,13 +29,14 @@ const LEFT_WIDTH = 220;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
-const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
+const NewPlacement = ({ idHotelInfo, searchQuery, params, user }) => {
     let { idHotel, requestId } = useParams();
+    const navigate = useNavigate();
 
     let hotelId = idHotelInfo ? idHotelInfo : idHotel
 
     const token = getCookie('token');
-    const user = decodeJWT(token);
+    // const user = decodeJWT(token);
 
     // Получение информации об отеле
     const [hotelInfo, setHotelInfo] = useState('');
@@ -415,613 +416,6 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
         return maxPositions.find((pos) => !occupiedPositions.includes(pos));
     };
 
-//     const handleDragEnd = async (event) => {
-//         setIsDraggingGlobal(false);
-//         setActiveDragItem(null);
-//         setHighlightedDatesOld([]);
-    
-//         const { active, over } = event;
-        
-    
-//         if (!over) {
-//             // addNotification("Дроп произошел вне шахматки", "error");
-//             return; // Если дроп происходит вне шахматки, ничего не делаем
-//         }
-    
-//         const draggedRequest =
-//             newReservePassangers.find((req) => req.id === parseInt(active.id)) ||
-//             newRequests.find((req) => req.id === parseInt(active.id)) ||
-//             requests.find((req) => req.id === parseInt(active.id));
-        
-//         // if (draggedRequest?.status === 'Архив' && user.role !== roles.superAdmin) {
-//         //     addNotification("Эту заявку нельзя перемещать, так как она в архиве", "error");
-//         //     return;
-//         // } else if (draggedRequest?.status === 'Архив' && user.role === roles.superAdmin) {
-//         //     addNotification("SUPERADMIN", "info");
-//         //     return;
-//         // }
-    
-//         // if (!draggedRequest) {
-//         //     addNotification("Не удалось определить заявку для перемещения", "error");
-//         //     return;
-//         // }
-
-    
-// // Разбираем over.id вида "ROOM123-2" → roomId="ROOM123", targetPosition=2
-// const [targetRoomId, targetPositionStr] = over.id.split('-');
-// const targetPosition = parseInt(targetPositionStr, 10);
-
-
-//         // console.log(over);
-//         // console.log(targetRoomId);
-//         // console.log(draggedRequest);
-        
-    
-//         if (!targetRoomId) {
-//             addNotification("Целевая комната не определена!", "error");
-//             return;
-//         }
-    
-//         // const targetRoom = rooms.find((room) => room.id === targetRoomId);
-//         // const currentRoom = rooms.find((room) => room.id === draggedRequest.room?.name);
-//         const targetRoom = rooms.find((room) => room.roomId === targetRoomId);
-//         const currentRoom = rooms.find((room) => room.roomId === draggedRequest?.room?.id);
-//         // console.log(draggedRequest);
-//         // console.log(targetRoomId);
-        
-        
-//         // console.log(targetRoom)
-//         // console.log(currentRoom);
-        
-
-//         if (!targetRoom) {
-//             addNotification("Текущая или целевая комната не найдена", "error");
-//             return;
-//         }
-//         // Проверяем случай, если у новой заявки нет currentRoom
-//         if (!currentRoom) {
-//             // console.log("Новая заявка: определяем комнату для размещения");
-            
-//             // Проверяем доступные позиции в целевой комнате
-//             const overlappingRequests = requests.filter((req) => {
-//                 const reqCheckIn = new Date(`${req.checkInDate}T${req.checkInTime}:00`);
-//                 const reqCheckOut = new Date(`${req.checkOutDate}T${req.checkOutTime}:00`);
-//                 const draggedCheckIn = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}:00`);
-//                 const draggedCheckOut = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}:00`);
-
-//                 return (
-//                     // req.room?.name === targetRoomId &&
-//                     req.room?.id === targetRoomId &&
-//                     !(
-//                         reqCheckOut <= draggedCheckIn || // Если выезд заявки до заезда перетаскиваемой заявки
-//                         reqCheckIn >= draggedCheckOut    // Если заезд заявки после выезда перетаскиваемой заявки
-//                     )
-//                 );
-//             });
-            
-//             // console.log(requests)
-            
-
-//             const occupiedPositions = overlappingRequests.map((req) => req.position);
-//             const availablePosition = getAvailablePosition(targetRoom.type, occupiedPositions);
-
-//             if (availablePosition === undefined) {
-//                 addNotification("Все позиции заняты в этой комнате!", "error");
-//                 return;
-//             }
-
-//             const newRequest = {
-//                 ...draggedRequest,
-//                 room: targetRoomId,
-//                 roomId: targetRoom.roomId,
-//                 position: availablePosition,
-//                 status: "Ожидает",
-//             };
-
-//             setRequests((prevRequests) => {
-//                 const exists = prevRequests.some((req) => req.id === newRequest.id);
-//                 if (exists) {
-//                     addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-//                     // console.log('This is here');
-//                     return prevRequests;
-//                 }
-//                 return [...prevRequests, newRequest];
-//             });
-
-//             // Открываем модальное окно для подтверждения
-//             setSelectedRequest(newRequest);
-//             setIsConfirmModalOpen(true);
-//             return;
-//         }
-
-    
-//         // // Проверяем принадлежность к одному номеру
-//         // if (currentRoom.id === targetRoom.id) {
-//         //     // addNotification("Нельзя перемещать заявку внутри одного номера", "error");
-//         //     return;
-//         // }
-//     // Проверяем, если это перемещение внутри одного номера
-//     if (currentRoom.roomId === targetRoomId) {
-//         // 2.1. Если целевая «ячейка» уже занята — ошибка
-//         // 1) Сначала парсим даты перетаскиваемой заявки
-//         const newCheckIn  = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}:00`);
-//         const newCheckOut = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}:00`);
-
-//         // 2) Теперь ищем, есть ли в целевом слоте заявка, даты которой пересекаются с нашей
-//         const occupied = requests.some(req => {
-//             // 2.1) Только заявки в той же комнате и на ту же позицию
-//             if (req.room?.id !== targetRoomId || req.position !== targetPosition) {
-//                 return false;
-//             }
-
-//             // 2.2) Парсим даты уже забронированной заявки
-//             const existingStart = new Date(`${req.checkInDate}T${req.checkInTime}:00`);
-//             const existingEnd   = new Date(`${req.checkOutDate}T${req.checkOutTime}:00`);
-
-//             // 2.3) Проверяем пересечение интервалов:
-//             //     пересечение есть, если НЕ (existingEnd <= newCheckIn || existingStart >= newCheckOut)
-//             return !(existingEnd <= newCheckIn || existingStart >= newCheckOut);
-//         });
-
-//         if (occupied) {
-//             addNotification("Место занято в комнате!", "error");
-//             return;
-//         }
-
-      
-//         // 2.2. Если позиция не изменилась — выходим
-//         if (draggedRequest.position === targetPosition) {
-//           return;
-//         }
-      
-//         // 2.3. Выполняем мутацию на сервере только с новым place
-//         try {
-//           await updateHotelBron({
-//             variables: {
-//               updateHotelId: hotelId,
-//               input: {
-//                 hotelChesses: [{
-//                   requestId: draggedRequest.requestID,
-//                   roomId: targetRoomId,
-//                   place: targetPosition + 1,      // +1, т.к. сервер считает от 1
-//                   clientId: draggedRequest.personID,
-//                   id: draggedRequest.chessID,
-//                 }],
-//               },
-//             },
-//           });
-//         //   await updateRequest({
-//         //     variables: {
-//         //         updateRequestId: draggedRequest.requestID,
-//         //         input: {
-//         //             status: 'done'
-//         //         }
-//         //     }
-//         //   })
-//           addNotification("Заявка перемещена в комнату " + (targetPosition + 1), "success");
-//         } catch (err) {
-//           addNotification("Ошибка при перемещении внутри номера", "error");
-//           console.error(err);
-//         }
-//         return;
-//       }
-      
-
-//         // Если перемещение в ту же комнату (обновляем только позицию)
-//         // if (currentRoom.id === targetRoom.id) {
-//         //     // console.log("Перемещение внутри одного номера");
-
-//         //     const targetPosition = parseInt(over.data.current?.position || 0);
-//         //     // console.log(over);
-            
-
-//         //     // Проверяем, занято ли место
-//         //     const overlappingRequests = requests.filter(
-//         //         (req) =>
-//         //             req.room === targetRoomId &&
-//         //             req.position === targetPosition &&
-//         //             req.id !== draggedRequest.id // Исключаем текущую заявку
-//         //     );
-
-//         //     // console.log(overlappingRequests);
-//         //     // console.log(targetRoomId);
-//         //     // console.log(targetPosition);
-            
-//         //     if (overlappingRequests.length > 0) {
-//         //         // addNotification("Позиция уже занята!", "error");
-//         //         return;
-//         //     }
-
-//         //     // Обновляем позицию заявки в локальном состоянии
-//         //     setRequests((prevRequests) =>
-//         //         prevRequests.map((req) =>
-//         //             req.id === draggedRequest.id
-//         //                 ? { ...req, position: targetPosition }
-//         //                 : req
-//         //         )
-//         //     );
-
-//         //     console.log("Заявка перемещена на новую позицию:", draggedRequest);
-//         //     return; // Завершаем, так как перемещение внутри одного номера обработано
-//         // }
-
-//         // Вариант с попыткой изменить бд
-//         // if (currentRoom.id === targetRoom.id) {
-//         //     // console.log("Перемещение внутри одного номера");
-        
-//         //     const targetPosition = parseInt(draggedRequest.place || 0);
-        
-//         //     // Проверяем, занято ли место
-//         //     const overlappingRequests = requests.filter(
-//         //         (req) =>
-//         //             req.room === targetRoomId &&
-//         //             req.position === targetPosition &&
-//         //             req.id !== draggedRequest.id // Исключаем текущую заявку
-//         //     );
-
-        
-//         //     if (overlappingRequests.length > 0) {
-//         //         addNotification("Позиция уже занята!", "error");
-//         //         return;
-//         //     }
-        
-//         //     // Формируем данные для запроса
-//         //     const bookingInput = {
-//         //         hotelChesses: [
-//         //             {
-//         //                 clientId: draggedRequest.personID, // ID клиента
-//         //                 start: `${draggedRequest.checkInDate}T${draggedRequest.checkInTime}:00.000Z`, // Дата заезда
-//         //                 end: `${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}:00.000Z`, // Дата выезда
-//         //                 hotelId: hotelId, // ID отеля
-//         //                 requestId: draggedRequest.requestID, // ID заявки
-//         //                 room: `${targetRoomId}`, // Номер комнаты
-//         //                 place: Number(targetPosition) + 1, // Позиция в комнате
-//         //                 id: draggedRequest.chessID, // ID шахматки
-//         //                 status: draggedRequest.status, // Статус перемещения
-//         //             },
-//         //         ],
-//         //     };
-        
-//         //     try {
-//         //         // Отправляем запрос на сервер
-//         //         await updateHotelBron({
-//         //             variables: {
-//         //                 updateHotelId: hotelId,
-//         //                 input: bookingInput,
-//         //             },
-//         //         });
-        
-//         //         addNotification("Заявка успешно перемещена внутри номера", "success");
-        
-//         //         // Обновляем позицию заявки в локальном состоянии
-//         //         setRequests((prevRequests) =>
-//         //             prevRequests.map((req) =>
-//         //                 req.id === draggedRequest.id
-//         //                     ? { ...req, position: targetPosition }
-//         //                     : req
-//         //             )
-//         //         );
-//         //     } catch (err) {
-//         //         console.error("Ошибка при перемещении заявки:", err);
-//         //         addNotification("Произошла ошибка при перемещении заявки", "error");
-//         //     }
-        
-//         //     console.log("Заявка перемещена на новую позицию:", draggedRequest);
-//         //     return; // Завершаем, так как перемещение внутри одного номера обработано
-//         // }
-    
-//         const isDouble = targetRoom?.type === 2;
-    
-//         // overlappingRequests old version
-//         // const overlappingRequests = requests.filter(
-//         //     (req) =>
-//         //         req.room?.name === targetRoomId &&
-//         //         !(
-//         //             new Date(req.checkOutDate) <= new Date(draggedRequest.checkInDate) ||
-//         //             new Date(req.checkInDate) >= new Date(draggedRequest.checkOutDate)
-//         //         )
-//         // );
-
-//         const overlappingRequests = requests.filter((req) => {
-//             // Собираем дату + время для каждой заявки и для draggedRequest
-//             const reqStart = new Date(`${req.checkInDate}T${req.checkInTime}:00`);
-//             const reqEnd   = new Date(`${req.checkOutDate}T${req.checkOutTime}:00`);
-//             const dragStart = new Date(`${draggedRequest.checkInDate}T${draggedRequest.checkInTime}:00`);
-//             const dragEnd   = new Date(`${draggedRequest.checkOutDate}T${draggedRequest.checkOutTime}:00`);
-        
-//             // Проверяем, что заявка в той же комнате
-//             // и интервалы [reqStart, reqEnd] и [dragStart, dragEnd] пересекаются
-//             return (
-//                 // req.room?.name === targetRoomId &&
-//                 req.room?.id === targetRoomId &&
-//                 !(reqEnd <= dragStart || reqStart >= dragEnd)
-//             );
-//         });
-
-//         const occupiedPositions = overlappingRequests.map((req) => req.position);
-
-//         if (newRequests.includes(draggedRequest)) {
-//             // Если это новая заявка
-//             if (targetRoom.active) {
-//                 // if (isDouble) {
-//                 // Проверяем доступные позиции для двухместной комнаты
-//                 const availablePosition = getAvailablePosition(targetRoom.type, occupiedPositions);
-
-//                 if (availablePosition === undefined) {
-//                     addNotification("Все позиции заняты в этой комнате!", "error");
-//                     return;
-//                 }
-
-//                 const newRequest = {
-//                     ...draggedRequest,
-//                     room: targetRoomId,
-//                     roomId: targetRoom.roomId,
-//                     position: availablePosition,
-//                     status: "Ожидает",
-//                 };
-
-//                 setRequests((prevRequests) => {
-//                     const exists = prevRequests.some((req) => req.id === newRequest.id);
-//                     if (exists) {
-//                         addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-//                         // console.log('This is here');
-//                         return prevRequests;
-//                     }
-//                     return [...prevRequests, newRequest];
-//                 });
-    
-//                 // Открываем модальное окно для подтверждения
-//                 setSelectedRequest(newRequest);
-//                 setIsConfirmModalOpen(true);
-//                 // } else {
-//                 //     // Для одноместной комнаты
-//                 //     if (occupiedPositions.length > 0) {
-//                 //         addNotification("Место занято в комнате!", "error");
-//                 //         return;
-//                 //     }
-    
-//                 //     const newRequest = {
-//                 //         ...draggedRequest,
-//                 //         room: targetRoomId,
-//                 //         position: 0,
-//                 //         status: "Ожидает",
-//                 //     };
-    
-//                 //     setRequests((prevRequests) => {
-//                 //         const exists = prevRequests.some((req) => req.id === newRequest.id);
-//                 //         if (exists) {
-//                 //             addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-//                 //             return prevRequests;
-//                 //         }
-//                 //         return [...prevRequests, newRequest];
-//                 //     });
-    
-//                 //     // Открываем модальное окно для подтверждения
-//                 //     setSelectedRequest(newRequest);
-//                 //     setIsConfirmModalOpen(true);
-//                 // }
-//             } else {
-//                 addNotification("Комната не активна!", "error");
-//                 return;
-//             }
-//         } else if (newReservePassangers.includes(draggedRequest)) {
-//             // Если это новая заявка
-//             if (targetRoom.active) {
-//                 // if (isDouble) {
-//                 // Проверяем доступные позиции для двухместной комнаты
-//                 const availablePosition = getAvailablePosition(targetRoom.type, occupiedPositions);
-    
-//                 if (availablePosition === undefined) {
-//                     addNotification("Все позиции заняты в этой комнате!", "error");
-//                     return;
-//                 }
-    
-//                 const newRequest = {
-//                     ...draggedRequest,
-//                     room: targetRoomId,
-//                     roomId: targetRoom.roomId,
-//                     position: availablePosition,
-//                     status: "Ожидает",
-//                 };
-    
-//                 setRequests((prevRequests) => {
-//                     const exists = prevRequests.some((req) => req.id === newRequest.id);
-//                     if (exists) {
-//                         addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-//                         return prevRequests;
-//                     }
-//                     return [...prevRequests, newRequest];
-//                 });
-    
-//                 // Открываем модальное окно для подтверждения
-//                 setSelectedRequest(newRequest);
-//                 setIsConfirmModalOpen(true);
-//                 // } else {
-//                 //     // Для одноместной комнаты
-//                 //     if (occupiedPositions.length > 0) {
-//                 //         addNotification("Место занято в комнате!", "error");
-//                 //         return;
-//                 //     }
-    
-//                 //     const newRequest = {
-//                 //         ...draggedRequest,
-//                 //         room: targetRoomId,
-//                 //         position: 0,
-//                 //         status: "Ожидает",
-//                 //     };
-    
-//                 //     setRequests((prevRequests) => {
-//                 //         const exists = prevRequests.some((req) => req.id === newRequest.id);
-//                 //         if (exists) {
-//                 //             addNotification(`Заявка с id ${newRequest.id} уже существует!`, "error");
-//                 //             return prevRequests;
-//                 //         }
-//                 //         return [...prevRequests, newRequest];
-//                 //     });
-    
-//                 //     // Открываем модальное окно для подтверждения
-//                 //     setSelectedRequest(newRequest);
-//                 //     setIsConfirmModalOpen(true);
-//                 // }
-//             } else {
-//                 addNotification("Комната не активна!", "error");
-//                 return;
-//             }
-//         } else {
-//             // Перемещение существующих заявок
-//             if (targetRoom.active) {
-//                 // console.log(draggedRequest.room?.id)
-//                 // console.log(targetRoomId)
-//                 // if (draggedRequest.room?.name === targetRoomId) {
-//                 if (draggedRequest.room?.id === targetRoomId) {
-//                     // Перемещение внутри одной комнаты
-//                     const targetPosition = parseInt(over.data.current?.position || 0);
-    
-//                     if (draggedRequest.position !== targetPosition) {
-//                         setRequests((prevRequests) =>
-//                             prevRequests.map((request) => {
-//                                 // if (request.room?.name === targetRoomId) {
-//                                 if (request.room?.id === targetRoomId) {
-//                                     if (request.id === draggedRequest.id) {
-//                                         return { ...request, position: targetPosition };
-//                                     } else if (request.position === targetPosition) {
-//                                         return { ...request, position: draggedRequest.position };
-//                                     }
-//                                 }
-//                                 return request;
-//                             })
-//                         );
-//                     }
-//                 } else {
-//                     // Перемещение между комнатами
-//                     // if (isDouble) {
-//                     const availablePosition = getAvailablePosition(targetRoom.type, occupiedPositions);
-    
-//                     if (availablePosition === undefined) {
-//                         addNotification("Место занято в комнате!", "error");
-//                         return;
-//                     }
-    
-//                     let bookingInput;
-    
-//                     if (draggedRequest.isRequest && draggedRequest.status !== 'Архив') {
-//                         bookingInput = {
-//                             hotelChesses: [
-//                                 {
-//                                     requestId: draggedRequest.requestID, // ID заявки
-//                                     roomId: targetRoom.roomId,
-//                                     place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
-//                                     clientId: draggedRequest.personID, // ID клиента
-//                                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
-//                                     // status: "transferred",
-//                                     // hotelId: hotelId, // ID отеля
-//                                     // room: `${targetRoomId}`, // Номер комнаты
-//                                 },
-//                             ],
-//                         };
-//                         // console.log(bookingInput);
-                        
-//                     } else if (!draggedRequest.isRequest && draggedRequest.status !== 'Архив') {
-//                         bookingInput = {
-//                             hotelChesses: [
-//                                 {
-//                                     clientId: draggedRequest.personID, // ID клиента
-//                                     // status: "transferred",
-//                                     hotelId: hotelId, // ID отеля
-//                                     reserveId: draggedRequest.requestID, // ID заявки
-//                                     // room: `${targetRoomId}`, // Номер комнаты
-//                                     roomId: targetRoom.roomId,
-//                                     place: Number(availablePosition) + 1, // Позиция в комнате (если двухместная)
-//                                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
-//                                 },
-//                             ],
-//                         };
-//                     } else {
-//                         addNotification("Эту заявку нельзя перемещать, так как она в архиве", "error");
-//                         return;
-//                     }
-    
-//                     // console.log(bookingInput)
-    
-//                     try {
-//                         await updateHotelBron({
-//                             variables: {
-//                                 updateHotelId: hotelId,
-//                                 input: bookingInput,
-//                             },
-//                         });
-
-//                         // console.log(bookingInput);
-                        
-    
-//                         addNotification("Бронь успешно перемещена", "success");
-//                     } catch (err) {
-//                         addNotification("Произошла ошибка при подтверждении бронирования", "error");
-//                         console.error("Произошла ошибка при подтверждении бронирования", err);
-//                         // console.log(bookingInput);
-                        
-//                     }
-    
-//                     // } else {
-//                     //     if (occupiedPositions.length > 0) {
-//                     //         addNotification("Место занято в комнате!", "error");
-//                     //         return;
-//                     //     }
-    
-//                     //     let bookingInput;
-    
-//                     //     if (draggedRequest.isRequest) {
-//                     //         bookingInput = {
-//                     //             hotelChesses: [
-//                     //                 {
-//                     //                     clientId: draggedRequest.personID, // ID клиента
-//                     //                     status: 'transferred',
-//                     //                     hotelId: hotelId, // ID отеля
-//                     //                     requestId: draggedRequest.requestID, // ID заявки
-//                     //                     room: `${targetRoomId}`, // Номер комнаты
-//                     //                     place: 1, // Позиция в комнате (если двухместная)
-//                     //                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
-//                     //                 },
-//                     //             ],
-//                     //         }
-//                     //     } else if (!draggedRequest.isRequest) {
-//                     //         bookingInput = {
-//                     //             hotelChesses: [
-//                     //                 {
-//                     //                     clientId: draggedRequest.personID, // ID клиента
-//                     //                     status: 'transferred',
-//                     //                     hotelId: hotelId, // ID отеля
-//                     //                     reserveId: draggedRequest.requestID, // ID заявки
-//                     //                     room: `${targetRoomId}`, // Номер комнаты
-//                     //                     place: 1, // Позиция в комнате (если двухместная)
-//                     //                     id: draggedRequest.chessID, // Позиция в комнате (если двухместная)
-//                     //                 },
-//                     //             ],
-//                     //         }
-//                     //     }
-    
-//                     //     try {
-//                     //         await updateHotelBron({
-//                     //             variables: {
-//                     //                 updateHotelId: hotelId,
-//                     //                 input: bookingInput,
-//                     //             },
-//                     //         });
-    
-//                     //         addNotification("Бронь успешно перемещена", "success");
-//                     //     } catch (err) {
-//                     //         addNotification("Произошла ошибка при подтверждении бронирования", "error");
-//                     //         console.log("Произошла ошибка при подтверждении бронирования", err);
-//                     //     }
-//                     // }
-//                 }
-//             } else {
-//                 addNotification("Комната не активна!", "error");
-//                 return;
-//             }
-//         }
-//     };
-    
     const handleDragEnd = async (event) => {
         setIsDraggingGlobal(false);
         setActiveDragItem(null);
@@ -2132,12 +1526,16 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
     // }
     // }, [roomIndex]);
     useEffect(() => {
-    if (roomIndex >= 0 && listRef.current && !hasScrolledRef.current) {
+    if (roomIndex >= 0 && listRef.current 
+        // && !hasScrolledRef.current
+    ) {
         listRef.current.scrollToItem(roomIndex, "center");
         hasScrolledRef.current = true;  // помечаем, что прокрутка уже была
+        
+        // navigate(`/hotels/${hotelId}`)
     }
-    }, [roomIndex]);
-
+    }, [roomIndex, requestId]);
+// console.log(requestId);
 
 
     return (
@@ -2152,8 +1550,8 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                             
                             sx={{ 
                                 position: "relative", 
-                                height: user.role == 'HOTELADMIN' ? '76vh' : '67vh', 
-                                maxHeight: user.role == 'HOTELADMIN' ? '76vh' : '67vh', 
+                                height: user?.role == roles.hotelAdmin ? '76vh' : '67vh', 
+                                maxHeight: user?.role == roles.hotelAdmin ? '76vh' : '67vh', 
                                 overflow: 'hidden', 
                                 width: '100%', 
                                 // borderBottom: '1px solid #ddd',
@@ -2181,15 +1579,15 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                 itemKey={itemKey}
                                 width="100%"
                                 // height={listHeight}
-                                height={(user.role === 'HOTELADMIN' && height > 880) 
+                                height={(user?.role === roles.hotelAdmin && height > 880) 
                                     ? 610 : 
-                                    (user.role === 'HOTELADMIN' && height < 830)
+                                    (user?.role === roles.hotelAdmin && height < 830)
                                     ? 420 :
-                                    (user.role === 'HOTELADMIN' && height < 880) 
+                                    (user?.role === roles.hotelAdmin && height < 880) 
                                     ? 530 : 
-                                    (user.role !== 'HOTELADMIN' && height < 830)
+                                    (user?.role !== roles.hotelAdmin && height < 830)
                                     ? 390 :
-                                    (user.role !== 'HOTELADMIN' && height < 900)
+                                    (user?.role !== roles.hotelAdmin && height < 900)
                                     ? 460
                                     : 530} // или другое подходящее значение
                                 overscanCount={5}
@@ -2375,7 +1773,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                                             <DraggableRequest
                                                 hotelAccess={hotelInfo?.access || true}
                                                 requestId={requestId}
-                                                userRole={user.role}
+                                                userRole={user?.role}
                                                 key={request.id}
                                                 request={request}
                                                 dayWidth={DAY_WIDTH}
@@ -2631,7 +2029,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params }) => {
                     : user?.role === roles.hotelAdmin && height < 800 
                     ? '75vh' 
                     : user?.role !== roles.hotelAdmin && height > 870 
-                    ? '75vh' 
+                    ? '83vh' 
                     : '68vh'} />
                 </Box>
             )}

@@ -19,30 +19,33 @@ function EditRequestAirlineOtdel({
   onSubmit,
   addNotification,
 }) {
-  const [userRole, setUserRole] = useState();
+  // const [userRole, setUserRole] = useState();
   const token = getCookie("token");
 
-  useEffect(() => {
-    setUserRole(decodeJWT(token).role);
-  }, [token]);
+  // useEffect(() => {
+  //   setUserRole(decodeJWT(token).role);
+  // }, [token]);
 
   const [isEdited, setIsEdited] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
   const [formData, setFormData] = useState({
     type: category?.name || "",
   });
+
   // Инициализируем выбранные должности из category?.position (если они есть)
-  const [selectedPositions, setSelectedPositions] = useState(
-    category && category.position ? category.position.map((pos) => pos.id) : []
-  );
+  // const [selectedPositions, setSelectedPositions] = useState(
+  //   category && category.position ? category.position.map((pos) => pos.id) : []
+  // );
 
   const sidebarRef = useRef();
 
   useEffect(() => {
     if (show && category) {
       setFormData({ type: category.name });
-      setSelectedPositions(
-        category.position ? category.position.map((pos) => pos.id) : []
-      );
+      // setSelectedPositions(
+      //   category.position ? category.position.map((pos) => pos.id) : []
+      // );
     }
   }, [show, category]);
 
@@ -50,9 +53,9 @@ function EditRequestAirlineOtdel({
     setFormData({
       type: category?.name || "",
     });
-    setSelectedPositions(
-      category && category.position ? category.position.map((pos) => pos.id) : []
-    );
+    // setSelectedPositions(
+    //   category && category.position ? category.position.map((pos) => pos.id) : []
+    // );
     setIsEdited(false);
   }, [category]);
 
@@ -78,16 +81,16 @@ function EditRequestAirlineOtdel({
   }, []);
 
   // Обработка переключения чекбоксов для должностей
-  const handlePositionToggle = (id) => {
-    setIsEdited(true);
-    setSelectedPositions((prevSelected) => {
-      if (prevSelected.includes(id)) {
-        return prevSelected.filter((posId) => posId !== id);
-      } else {
-        return [...prevSelected, id];
-      }
-    });
-  };
+  // const handlePositionToggle = (id) => {
+  //   setIsEdited(true);
+  //   setSelectedPositions((prevSelected) => {
+  //     if (prevSelected.includes(id)) {
+  //       return prevSelected.filter((posId) => posId !== id);
+  //     } else {
+  //       return [...prevSelected, id];
+  //     }
+  //   });
+  // };
 
   const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
     context: {
@@ -102,9 +105,12 @@ function EditRequestAirlineOtdel({
   // console.log(category?.id);
   // console.log(formData.type);
   // console.log(selectedPositions);
-  
 
   const handleSubmit = async (e) => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
     e.preventDefault();
     setIsLoading(true);
 
@@ -117,7 +123,7 @@ function EditRequestAirlineOtdel({
               {
                 id: category.id,
                 name: formData.type,
-                positionIds: selectedPositions, // Передаём выбранные id должностей
+                // positionIds: selectedPositions, // Передаём выбранные id должностей
               },
             ],
           },
@@ -125,7 +131,6 @@ function EditRequestAirlineOtdel({
       });
 
       // console.log(request);
-      
 
       if (request) {
         const sortedDepartments = request.data.updateAirline.department
@@ -139,14 +144,14 @@ function EditRequestAirlineOtdel({
 
         onSubmit(sortedDepartments);
         resetForm();
-        setIsLoading(false);
         addNotification("Редактирование отдела прошло успешно.", "success");
       }
     } catch (err) {
-      setIsLoading(false);
       alert("Произошла ошибка при сохранении данных");
       console.error(err);
-      
+    } finally {
+      setIsEditing(false);
+      setIsLoading(false);
     }
   };
 
@@ -190,8 +195,9 @@ function EditRequestAirlineOtdel({
                 value={formData.type}
                 onChange={handleChange}
                 placeholder="Пример: Отдел продаж"
+                disabled={!isEditing}
               />
-              <div className={classes.positionsContainer}>
+              {/* <div className={classes.positionsContainer}>
                 <label>Должности:</label>
                 {positions &&
                   positions?.map((position) => (
@@ -208,12 +214,24 @@ function EditRequestAirlineOtdel({
                       </label>
                     </div>
                   ))}
-              </div>
+              </div> */}
             </div>
           </div>
           <div className={classes.requestButton}>
-            <Button type="submit" onClick={handleSubmit}>
-              Изменить
+            <Button
+              onClick={handleSubmit}
+              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+              color={!isEditing ? "#3B6C54" : "#fff"}
+            >
+              {isEditing ? (
+                <>
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </>
+              ) : (
+                <>
+                  Изменить <img src="/editDispetcher.png" alt="" />
+                </>
+              )}
             </Button>
           </div>
         </>

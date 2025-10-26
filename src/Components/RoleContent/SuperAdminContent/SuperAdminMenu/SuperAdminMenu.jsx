@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import classes from "./SuperAdminMenu.module.css";
 import { useState } from "react";
+import DelayedText from "../../../Blocks/DelayedText/DelayedText";
 
 const SuperAdminMenu = ({
   id,
@@ -42,7 +43,8 @@ const SuperAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Эскадрилья" : ""}
+          {/* {menuOpen ? "Эскадрилья" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Эскадрилья</DelayedText>
           {allCreatedRequests > 0 && (
             <div
               className={`${classes.countRequests} ${
@@ -80,7 +82,8 @@ const SuperAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Пассажиры" : ""}
+          {/* {menuOpen ? "Пассажиры" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Пассажиры</DelayedText>
           {allCreatedReserves > 0 && (
             <div
               className={`${classes.countRequests} ${
@@ -174,7 +177,8 @@ const SuperAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Пользователи" : ""}
+          {/* {menuOpen ? "Пользователи" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Пользователи</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Пользователи</span>}
         </Link>
         <Link
@@ -203,7 +207,8 @@ const SuperAdminMenu = ({
               stroke="var(--menu-gray)"
             />
           </svg>
-          {menuOpen ? "Гостиницы" : ""}
+          {/* {menuOpen ? "Гостиницы" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Гостиницы</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Гостиницы</span>}
         </Link>
         <Link
@@ -225,7 +230,8 @@ const SuperAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Авиакомпании" : ""}
+          {/* {menuOpen ? "Авиакомпании" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Авиакомпании</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Авиакомпании</span>}
         </Link>
         <Link
@@ -261,7 +267,8 @@ const SuperAdminMenu = ({
             />
           </svg>
 
-          {menuOpen ? "ГК Карс" : ""}
+          {/* {menuOpen ? "ГК Карс" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >ГК Карс</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>ГК Карс</span>}
         </Link>
         <Link
@@ -285,7 +292,8 @@ const SuperAdminMenu = ({
             />
           </svg>
 
-          {menuOpen ? "Договоры" : ""}
+          {/* {menuOpen ? "Договоры" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Договоры</DelayedText>
           {!menuOpen && (
             <span className={classes.tooltip}>Договоры</span>
           )}
@@ -340,7 +348,8 @@ const SuperAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Отчеты" : ""}
+          {/* {menuOpen ? "Отчеты" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Отчеты</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
         </Link>
         <Link
@@ -361,7 +370,8 @@ const SuperAdminMenu = ({
               stroke="var(--menu-gray)"
             />
           </svg>
-          {menuOpen ? "Поддержка" : ""}
+          {/* {menuOpen ? "Поддержка" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Поддержка</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Поддержка</span>}
         </Link>
         <Link
@@ -391,7 +401,8 @@ const SuperAdminMenu = ({
               strokeWidth={0}
             />
           </svg>
-          {menuOpen ? "Обновления" : ""}
+          {/* {menuOpen ? "Обновления" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Обновления</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
         </Link>
         <Link
@@ -439,7 +450,8 @@ const SuperAdminMenu = ({
             />
           </svg>
 
-          {menuOpen ? "Аналитика" : ""}
+          {/* {menuOpen ? "Аналитика" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Аналитика</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Аналитика</span>}
         </Link>
       </div>
@@ -473,7 +485,8 @@ const SuperAdminMenu = ({
           </svg> */}
           <img src="/instruction.png" alt="" />
 
-          {menuOpen ? "Инструкции" : ""}
+          {/* {menuOpen ? "Инструкции" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Инструкции</DelayedText>
           {!menuOpen && (
             <span className={classes.tooltipBottom}>Инструкции</span>
           )}
@@ -505,7 +518,8 @@ const SuperAdminMenu = ({
               strokeWidth={0}
             />
           </svg> */}
-          {menuOpen ? "Kars Avia CRM" : "CRM"}
+          {/* {menuOpen ? "Kars Avia CRM" : "CRM"} */}
+          {menuOpen ? "3.1.0" : "3.1.0"}
           {!menuOpen && (
             <span className={classes.tooltipBottom2}>Kars Avia CRM</span>
           )}

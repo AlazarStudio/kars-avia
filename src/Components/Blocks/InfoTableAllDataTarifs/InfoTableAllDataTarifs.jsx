@@ -7,6 +7,8 @@ import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, server } from "../../../../graphQL_requests";
 
 function InfoTableAllDataTarifs({
+  id,
+  user,
   activeTab,
   pageInfo,
   toggleRequestSidebar,
@@ -42,7 +44,7 @@ function InfoTableAllDataTarifs({
     //     if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
     // }, [scrollToId, requests]);
 
-    console.log(requests);
+    // console.log(requests);
     
 
     return (
@@ -51,14 +53,14 @@ function InfoTableAllDataTarifs({
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w10}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>№ Договора</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w15}`} >Дата заключения</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 30px'}}>{activeTab !== "hotels" ? "Авиакомпания" : "Гостиница"}</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w15}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{activeTab !== "hotels" ? "Вид приложения" : "Вид услуги"}</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w15}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>ГК КАРС</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w15}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>{activeTab !== "hotels" ? "Регион" : "Город"}</div>
+                {id ? null : (<div className={`${classes.InfoTable_title_elem} ${classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 30px'}}>{activeTab !== "hotels" && !id ? "Авиакомпания" : "Гостиница"}</div>)}
+                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{activeTab !== "hotels" ? "Вид приложения" : "Вид услуги"}</div>
+                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>ГК КАРС</div>
+                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>{activeTab !== "hotels" ? "Регион" : "Город"}</div>
             </div>
 
             {/* Данные о заявках */}
-            <div className={classes.bottom} ref={listContainerRef}>
+            <div className={classes.bottom} style={(user?.airlineId || user?.hotelId) && {height:"calc(100vh - 335px)"}} ref={listContainerRef}>
                 {requests.map((item, index) => (
                     <div
                         className={`${classes.InfoTable_data}`}
@@ -74,41 +76,45 @@ function InfoTableAllDataTarifs({
                             </div>
                             {activeTab !== "hotels" ? item?.airline?.name : item?.hotel?.name}
                         </div> */}
-                        <div
-                            className={`${classes.InfoTable_data_elem} ${classes.w20}`}
-                            style={{ justifyContent:'flex-start', textAlign:'left', padding:'0 10px 0 30px' }}
-                        >
-                            {(() => {
-                                const isHotel = activeTab === "hotels";
-                                const name = isHotel ? item?.hotel?.name : item?.airline?.name;
-                                const img  = isHotel ? item?.hotel?.images?.[0] : item?.airline?.images?.[0];
+                        {id ? null : (
+                            <div
+                                className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                                style={{ justifyContent:'flex-start', textAlign:'left', padding:'0 10px 0 30px' }}
+                            >
+                                {(() => {
+                                    const isHotel = activeTab === "hotels";
+                                    const name = isHotel ? item?.hotel?.name : item?.airline?.name;
+                                    const img  = isHotel ? item?.hotel?.images?.[0] : item?.airline?.images?.[0];
 
-                                if (!name) {
-                                return <></>;
-                                }
+                                    if (!name) {
+                                    return <></>;
+                                    }
 
-                                return (
-                                <>
-                                    {img && (
-                                    <div className={classes.InfoTable_data_elem_img}>
-                                        <img src={`${server}${img}`} alt={name} />
-                                    </div>
-                                    )}
-                                    {name}
-                                </>
-                                );
-                            })()}
-                        </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`} style={{justifyContent:'flex-start',textAlign:'left'}}>
+                                    return (
+                                    <>
+                                        {img && (
+                                        <div className={classes.InfoTable_data_elem_img}>
+                                            <img src={`${server}${img}`} alt={name} />
+                                        </div>
+                                        )}
+                                        {name}
+                                    </>
+                                    );
+                                })()}
+                            </div>
+                        )}
+                        <div className={`${classes.InfoTable_data_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start',textAlign:'left'}}>
                             {item.applicationType}
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`} style={{justifyContent:'flex-start',textAlign:'left', padding:'0 10px 0 20px'}}>{item?.company?.name}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start',textAlign:'left', padding:'0 10px 0 20px'}}>{item?.company?.name}</div>
                         <div 
-                            className={`${classes.InfoTable_data_elem} ${classes.w15}`} 
+                            className={`${classes.InfoTable_data_elem} ${!id ? classes.w15 : classes.w20}`} 
                             style={{justifyContent:'flex-start',textAlign:'left', padding:'0 10px 0 20px'}}
                         >
                             {item?.region?.city ? item.region.city : item.region}
                         </div>
+                        {!id && (
+
                           <div className={`${classes.buttonsWrapper} ${classes.w10}`} onClick={(e) => e.stopPropagation()}>
                             <img 
                                 src="/edit.svg.png" 
@@ -121,6 +127,7 @@ function InfoTableAllDataTarifs({
                                 onClick={() => {openDeleteContract(item)}}
                             />
                         </div>
+                        )}
                     </div>
                 ))}
             </div>

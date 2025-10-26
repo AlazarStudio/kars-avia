@@ -14,13 +14,14 @@ const tabs = [
   // { key: "support", label: "Техподдержка" }
 ];
 
-function Analytics() {
+function Analytics({user}) {
   const [activeTab, setActiveTab] = useState("airlines");
-
+  // console.log(user);
+  
   const renderTabContent = () => {
     switch (activeTab) {
       case "airlines":
-        return <AirlineAnalytics />;
+        return <AirlineAnalytics user={user} height={user.airlineId ? "calc(100vh - 125px)" : null}/>;
       case "dispatchers":
         return <DispatcherAnalytics />;
       case "hotels":
@@ -35,21 +36,23 @@ function Analytics() {
   return (
     <div className={classes.analyticsContainer}>
       <Header>Аналитика (в разработке)</Header>
-      <div className={classes.tabs}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            className={`${classes.tabButton} ${
-              activeTab === tab.key ? classes.active : ""
-            }`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {user?.airlineId ? null : (
+        <div className={classes.tabs}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              className={`${classes.tabButton} ${
+                activeTab === tab.key ? classes.active : ""
+              }`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div className={classes.tabContent}>{renderTabContent()}</div>
+      <div className={user?.airlineId ? classes.tabContent : null}>{renderTabContent()}</div>
     </div>
   );
 }

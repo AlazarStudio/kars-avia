@@ -84,7 +84,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
   });
 
   const isFormValid = () => {
-    return formData.name && formData.images && formData.nameFull;
+    return formData.name && formData.images;
   };
 
   const [isLoading, setIsLoading] = useState(false);
@@ -120,7 +120,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
         variables: {
           input: {
             name: formData.name,
-            nameFull: formData.nameFull,
+            // nameFull: formData.nameFull,
           },
           images: formData.images,
         },
@@ -188,14 +188,14 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
                 onChange={handleChange}
               />
 
-              <label>Наименование</label>
+              {/* <label>Наименование</label>
               <input
                 type="text"
                 name="nameFull"
                 placeholder="Азимут"
                 value={formData.nameFull}
                 onChange={handleChange}
-              />
+              /> */}
 
               <label>Картинка</label>
               <input

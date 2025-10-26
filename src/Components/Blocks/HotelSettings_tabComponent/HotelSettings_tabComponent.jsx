@@ -14,6 +14,7 @@ import {
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   GET_CITIES,
   GET_AIRPORTS_RELAY,
+  REORDER_GALLERY,
 } from "../../../../graphQL_requests.js";
 import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
@@ -28,9 +29,13 @@ import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
 import { FormControlLabel, Switch } from "@mui/material";
 import MUISwitch from "../MUISwitch/MUISwitch.jsx";
+import RequisitesIcon from "../../../shared/icons/RequisitesIcon.jsx";
+import SettingsIcon from "../../../shared/icons/SettingsIcon.jsx";
+import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
+import ScheduleIcon from "../../../shared/icons/ScheduleIcon.jsx";
 
 function HotelSettings_tabComponent({ id }) {
-  const [userRole, setUserRole] = useState();
+  // const [userRole, setUserRole] = useState();
   const token = getCookie("token");
   const user = decodeJWT(token);
 
@@ -44,9 +49,9 @@ function HotelSettings_tabComponent({ id }) {
 
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
-  useEffect(() => {
-    setUserRole(decodeJWT(token).role);
-  }, [token]);
+  // useEffect(() => {
+  //   setUserRole(decodeJWT(token).role);
+  // }, [token]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL, {
     context: {
@@ -113,6 +118,18 @@ function HotelSettings_tabComponent({ id }) {
   const [newImage, setNewImage] = useState(null);
   const [gallery, setGallery] = useState(hotel?.gallery || []);
 
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+  const [showDeleteGallery, setShowDeleteGallery] = useState(false);
+
+  const [reorderGallery] = useMutation(REORDER_GALLERY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
+
   const [updateHotel] = useMutation(UPDATE_HOTEL, {
     context: {
       headers: {
@@ -163,6 +180,7 @@ function HotelSettings_tabComponent({ id }) {
               nameFull: hotel.nameFull,
               access: hotel.access,
               show: hotel.show,
+              discount: hotel.discount,
               meal: hotel.meal,
               capacity: parseInt(hotel.capacity),
               stars: hotel.stars,
@@ -203,6 +221,7 @@ function HotelSettings_tabComponent({ id }) {
         });
 
         addNotification("Редактирование гостиницы прошло успешно.", "success");
+        refetch()
         // console.log(response);
 
         // alert('Данные успешно сохранены');
@@ -251,6 +270,36 @@ function HotelSettings_tabComponent({ id }) {
 
     const fileArray = Array.from(files).map((file) => file);
     setGallery(fileArray);
+  };
+  const toggleDeleteGalleryImage = (path) => {
+    setImagesToDelete((prev) =>
+      prev.includes(path) ? prev.filter((p) => p !== path) : [...prev, path]
+    );
+  };
+
+  // подтверждённое удаление: шлём массив на удаление
+  const confirmDeleteGalleryImages = async () => {
+    if (!imagesToDelete.length) return;
+    const keepArray = (hotel?.gallery || []).filter(
+      (p) => !imagesToDelete.includes(p)
+    );
+    try {
+      await reorderGallery({
+        variables: {
+          reorderHotelGalleryImagesId: id,
+          imagesArray: keepArray, // что остаётся
+          imagesToDeleteArray: imagesToDelete, // что удалить
+        },
+      });
+      // локально обновим стейт, чтобы не ждать refetch
+      setHotel((prev) => ({ ...prev, gallery: keepArray }));
+      setImagesToDelete([]);
+      setShowDeleteGallery(false);
+      addNotification("Изображения удалены.", "success");
+    } catch (err) {
+      console.error("Ошибка при удалении изображений галереи", err);
+      addNotification("Не удалось удалить изображения.", "error");
+    }
   };
 
   const handleChange = (e) => {
@@ -443,18 +492,30 @@ function HotelSettings_tabComponent({ id }) {
               </div>
             )}
             <div className={classes.hotelAbout_info__filters}>
-              {user?.role === roles.airlineAdmin ? null : (
-                <button
-                  className={
-                    displayInfo == "generalInfo" ? classes.activeButton : null
-                  }
-                  onClick={() => {
-                    setDisplayInfo("generalInfo");
-                  }}
-                >
-                  <img src="/houseIcon.png" alt="" /> Общая информация
-                </button>
-              )}
+              <button
+                className={
+                  displayInfo == "generalInfo" ? classes.activeButton : null
+                }
+                onClick={() => {
+                  setDisplayInfo("generalInfo");
+                }}
+              >
+                {/* <img src="/houseIcon.png" alt="" /> */}
+                <HomeIcon />
+                Общая информация
+              </button>
+
+              <button
+                className={
+                  displayInfo == "settings" ? classes.activeButton : null
+                }
+                onClick={() => {
+                  setDisplayInfo("settings");
+                }}
+              >
+                <SettingsIcon width={18} height={18} />
+                Настройки
+              </button>
 
               {/* <button
                 className={displayInfo == "rooms" ? classes.activeButton : null}
@@ -465,47 +526,43 @@ function HotelSettings_tabComponent({ id }) {
                 <img src="/roomsIcon.png" alt="" /> Номера
               </button> */}
 
-              {user?.role === roles.airlineAdmin ? null : (
-                <>
-                  {" "}
-                  {hotel.meal && (
-                    <button
-                      className={
-                        displayInfo == "schedule" ? classes.activeButton : null
-                      }
-                      onClick={() => {
-                        setDisplayInfo("schedule");
-                      }}
-                    >
-                      <img src="/scheduleIcon.png" alt="" /> Расписание
-                    </button>
-                  )}
-                  {user?.airlineId ? null : (
-                    <button
-                      className={
-                        displayInfo == "requisites"
-                          ? classes.activeButton
-                          : null
-                      }
-                      onClick={() => {
-                        setDisplayInfo("requisites");
-                      }}
-                    >
-                      <img src="/requisitesIcon.svg" alt="" /> Реквизиты
-                    </button>
-                  )}
-                  <button
-                    className={
-                      displayInfo == "contacts" ? classes.activeButton : null
-                    }
-                    onClick={() => {
-                      setDisplayInfo("contacts");
-                    }}
-                  >
-                    <img src="/contacts_icon.png" alt="" /> Контакты и адрес
-                  </button>
-                </>
+              {hotel.meal && (
+                <button
+                  className={
+                    displayInfo == "schedule" ? classes.activeButton : null
+                  }
+                  onClick={() => {
+                    setDisplayInfo("schedule");
+                  }}
+                >
+                  {/* <img src="/scheduleIcon.png" alt="" /> */}
+                  <ScheduleIcon />
+                  Расписание
+                </button>
               )}
+              <button
+                className={
+                  displayInfo == "requisites" ? classes.activeButton : null
+                }
+                onClick={() => {
+                  setDisplayInfo("requisites");
+                }}
+              >
+                {/* <img src="/requisitesIcon.svg" alt="" /> */}
+                <RequisitesIcon />
+                Реквизиты
+              </button>
+              <button
+                className={
+                  displayInfo == "contacts" ? classes.activeButton : null
+                }
+                onClick={() => {
+                  setDisplayInfo("contacts");
+                }}
+              >
+                <img src="/contacts_icon.png" alt="" />
+                Контакты и адрес
+              </button>
             </div>
           </div>
 
@@ -561,6 +618,17 @@ function HotelSettings_tabComponent({ id }) {
                     type="text"
                     name="usStars"
                     value={hotel.usStars || ""}
+                    onChange={handleChange}
+                    disabled={user?.hotelId ? true : !isEditing}
+                    className={classes.hotelAbout_info_input}
+                  />
+                </div>
+                <div className={classes.hotelAbout_info_item}>
+                  <label>Скидка</label>
+                  <input
+                    type="text"
+                    name="discount"
+                    value={hotel.discount || ""}
                     onChange={handleChange}
                     disabled={user?.hotelId ? true : !isEditing}
                     className={classes.hotelAbout_info_input}
@@ -691,15 +759,6 @@ function HotelSettings_tabComponent({ id }) {
                   style={{ color: "black" }}
                 >
                   <label style={{ color: "#545873" }}>Описание</label>
-                  {/* <textarea
-                    type="text"
-                    name="description"
-                    value={hotel.information?.description || ""}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                    style={!isEditing ? { resize: "none" } : null}
-                    className={classes.hotelAbout_info_input}
-                  /> */}
                   <TextEditor
                     hotel={hotel}
                     isEditing={isEditing}
@@ -714,89 +773,102 @@ function HotelSettings_tabComponent({ id }) {
                     }
                   />
                 </div>
-                {user?.airlineId ? null : (
+                <div className={classes.hotelAbout_info_item}>
+                  <label>Аватарка</label>
+                  <input
+                    type="file"
+                    name="images"
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
+                    disabled={!isEditing}
+                    className={classes.hotelAbout_info_input}
+                  />
+                </div>
+                <div className={classes.hotelAbout_info_item}>
+                  <label>Галерея</label>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleGalleryFileChange}
+                    ref={fileInputRefGallery}
+                    disabled={!isEditing}
+                    className={classes.hotelAbout_info_input}
+                  />
+                </div>
+
+                {(hotel?.gallery?.length > 0 && isEditing) && (
+                  <div className={classes.galleryList}>
+                    {hotel.gallery.map((img, idx) => {
+                      const marked = imagesToDelete.includes(img);
+                      return (
+                        <div
+                          key={`${img}-${idx}`}
+                          className={`${classes.galleryItem} ${
+                            marked ? classes.toDelete : ""
+                          }`}
+                          onClick={() =>
+                            isEditing ? toggleDeleteGalleryImage(img) : null
+                          }
+                          title={
+                            marked
+                              ? "Снять пометку удаления"
+                              : "Пометить к удалению"
+                          }
+                        >
+                          <img
+                            src={`${server}${img}`}
+                            alt={`Фото ${idx + 1}`}
+                          />
+                          {isEditing && (
+                            <button
+                              type="button"
+                              className={classes.deleteImageBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDeleteGalleryImage(img);
+                              }}
+                              aria-label={
+                                marked ? "Отменить удаление" : "Удалить"
+                              }
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {/* панель подтверждения удаления */}
+                {isEditing && imagesToDelete.length > 0 && (
+                  <div className={classes.galleryDeleteBar}>
+                    <span>К удалению: {imagesToDelete.length}</span>
+                    <Button onClick={() => setShowDeleteGallery(true)}>
+                      <img src="/delete.png" alt="" />
+                      Удалить выбранные
+                    </Button>
+                    <Button
+                      onClick={() => setImagesToDelete([])}
+                      backgroundcolor="#f2f3f7"
+                      color="#545873"
+                    >
+                      Отмена
+                    </Button>
+                  </div>
+                )}
+
+                {user.role === roles.superAdmin ||
+                user.role === roles.dispatcerAdmin ? (
                   <>
                     <div className={classes.hotelAbout_info_item}>
-                      <label>Аватарка</label>
-                      <input
-                        type="file"
-                        name="images"
-                        onChange={handleFileChange}
-                        ref={fileInputRef}
-                        disabled={!isEditing}
-                        className={classes.hotelAbout_info_input}
-                      />
+                      <div
+                        className={classes.deleteHotel}
+                        onClick={isEditing ? openDeleteComponent : null}
+                      >
+                        Удалить гостиницу
+                        <img src="/delete.png" alt="" />
+                      </div>
                     </div>
-                    <div className={classes.hotelAbout_info_item}>
-                      <label>Галерея</label>
-                      <input
-                        type="file"
-                        multiple
-                        onChange={handleGalleryFileChange}
-                        ref={fileInputRefGallery}
-                        disabled={!isEditing}
-                        className={classes.hotelAbout_info_input}
-                      />
-                    </div>
-
-                    {user.role === roles.superAdmin ||
-                    user.role === roles.dispatcerAdmin ? (
-                      <>
-                        <MUISwitch
-                          label="Видимость гостиницы"
-                          checked={hotel.show}
-                          onChange={(e) => {
-                            setHotel((prevHotel) => ({
-                              ...prevHotel,
-                              show: e.target.checked,
-                            }));
-                          }}
-                          disabled={!isEditing}
-                        />
-                        <MUISwitch
-                          label="Наличие питания"
-                          checked={hotel.meal}
-                          onChange={(e) => {
-                            setHotel((prevHotel) => ({
-                              ...prevHotel,
-                              meal: e.target.checked,
-                            }));
-                          }}
-                          disabled={!isEditing}
-                        />
-                        <MUISwitch
-                          label="Самостоятельное размещение"
-                          checked={hotel.access}
-                          onChange={(e) => {
-                            setHotel((prevHotel) => ({
-                              ...prevHotel,
-                              access: e.target.checked,
-                            }));
-                          }}
-                          disabled={!isEditing}
-                        />
-
-                        <div className={classes.hotelAbout_info_item}>
-                          <div
-                            className={classes.deleteHotel}
-                            onClick={openDeleteComponent}
-                          >
-                            Удалить гостиницу
-                            <img src="/delete.png" alt="" />
-                          </div>
-                        </div>
-                      </>
-                    ) : null}
-
-                    {showDelete && (
-                      <DeleteComponent
-                        remove={handleDeleteHotel}
-                        close={closeDeleteComponent}
-                        title={`Вы действительно хотите удалить гостиницу "${hotel?.name}"?`}
-                      />
-                    )}
                   </>
-                )}
+                ) : null}
               </div>
             ) : displayInfo == "schedule" ? (
               <div className={classes.hotelAbout_info_block_meal}>
@@ -876,6 +948,49 @@ function HotelSettings_tabComponent({ id }) {
                     />
                   </div>
                 </div>
+              </div>
+            ) : displayInfo == "settings" ? (
+              <div className={classes.hotelAbout_info_block_meal}>
+                {/* <div className={classes.hotelAbout_info_label}>
+                  Настройки
+                </div> */}
+
+                <MUISwitch
+                  label="Видимость гостиницы"
+                  checked={hotel.show}
+                  onChange={(e) => {
+                    setHotel((prevHotel) => ({
+                      ...prevHotel,
+                      show: e.target.checked,
+                    }));
+                  }}
+                  width={"350px"}
+                  disabled={!isEditing}
+                />
+                <MUISwitch
+                  label="Наличие питания"
+                  checked={hotel.meal}
+                  onChange={(e) => {
+                    setHotel((prevHotel) => ({
+                      ...prevHotel,
+                      meal: e.target.checked,
+                    }));
+                  }}
+                  width={"350px"}
+                  disabled={!isEditing}
+                />
+                <MUISwitch
+                  label="Самостоятельное размещение"
+                  checked={hotel.access}
+                  onChange={(e) => {
+                    setHotel((prevHotel) => ({
+                      ...prevHotel,
+                      access: e.target.checked,
+                    }));
+                  }}
+                  width={"350px"}
+                  disabled={!isEditing}
+                />
               </div>
             ) : displayInfo == "requisites" && !user?.airlineId ? (
               <div className={classes.hotelAbout_info_block}>
@@ -1144,6 +1259,27 @@ function HotelSettings_tabComponent({ id }) {
               }}
             />
           ))}
+          {showDelete && (
+            <DeleteComponent
+              remove={handleDeleteHotel}
+              close={closeDeleteComponent}
+              title={`Вы действительно хотите удалить гостиницу "${hotel?.name}"?`}
+            />
+          )}
+
+          {showDeleteGallery && (
+            <DeleteComponent
+              remove={confirmDeleteGalleryImages}
+              close={() => setShowDeleteGallery(false)}
+              title={`Удалить ${imagesToDelete.length} изображен${
+                imagesToDelete.length === 1
+                  ? "ие"
+                  : imagesToDelete.length < 5
+                  ? "ия"
+                  : "ий"
+              } из галереи?`}
+            />
+          )}
         </div>
       )}
     </>

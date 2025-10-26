@@ -29,7 +29,7 @@ const SuperAdminContent = ({ user }) => {
 			{id === 'hotels' && <HotelsList user={user} />}
 			{id === 'airlines' && <AirlinesList user={user} />}
 			{id === 'reports' && <Reports user={user} />}
-      {id === "analytics" && <Analytics/>}
+      {id === "analytics" && <Analytics user={user}/>}
 			{id === 'support' && <SupportPage user={user} />}
 			{id === 'documentation' && <DocumentationList user={user} />}
       {id === "updates" && <UpdatesList user={user} />}

@@ -10,7 +10,7 @@ import SuperAdminAirlineContent from "../../RoleContent/SuperAdminContent/SuperA
 import DisAdminAirlineContent from "../../RoleContent/DispatcherAdminContent/DisAdminAirlineContent/DisAdminAirlineContent";
 import AirlineAdminAirlineContent from "../../RoleContent/AirlineAdminContent/AirlineAdminAirlineContent/AirlineAdminAirlineContent";
 
-function AirlinePage({ children, id, user, ...props }) {
+function AirlinePage({ children, id, user, accessMenu, ...props }) {
   let params = useParams();
   const token = getCookie("token");
 
@@ -23,7 +23,7 @@ function AirlinePage({ children, id, user, ...props }) {
       },
     },
     variables: { airlineId: id },
-    skip: !id
+    skip: !id,
   });
 
   useEffect(() => {
@@ -37,6 +37,26 @@ function AirlinePage({ children, id, user, ...props }) {
     setSelectedTab(index);
     localStorage.setItem("selectedAirlineTab", index);
   };
+
+  const getTitle = () => {
+    if (user.role === roles.airlineAdmin) {
+      switch (params.id) {
+        case "airlineStaff":
+          return "Сотрудники";
+        case "airlineCompany":
+          return "Пользователи";
+        case "airlineAbout":
+          return "Об авиакомпании";
+        case "airlineRegisterOfContracts":
+          return "Договоры";
+        default:
+          return "Пользователи";
+      }
+    } else {
+      return data?.airline?.name;
+    }
+  };
+
   return (
     <>
       <div className={classes.section}>
@@ -44,11 +64,12 @@ function AirlinePage({ children, id, user, ...props }) {
           <div className={classes.titleHeader}>
             {(user.role === roles.superAdmin ||
               user.role === roles.dispatcerAdmin) && (
-              <Link to={-1} className={classes.backButton}>
+              <Link to={"/airlines"} className={classes.backButton}>
                 <img src="/arrow.png" alt="" />
               </Link>
             )}
-            {data && data.airline.name}
+            {getTitle()}
+            {/* {data && data.airline.name} */}
           </div>
         </Header>
 
@@ -72,7 +93,7 @@ function AirlinePage({ children, id, user, ...props }) {
           </>
         )}
         {user.role == roles.airlineAdmin && (
-          <AirlineAdminAirlineContent id={id} />
+          <AirlineAdminAirlineContent id={id} user={user} accessMenu={accessMenu} />
         )}
       </div>
     </>

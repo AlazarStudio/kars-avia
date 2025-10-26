@@ -492,9 +492,9 @@ function CreateRequestHotelContract({
                       : ""
                   }
                   renderOption={(optionProps, option) => {
-                    const cityPart = `, город: ${option?.information?.city}`;
+                    const cityPart = `,, город: ${option?.information?.city}`;
                     const labelText = `${option.name}${cityPart}`.trim();
-                    const words = labelText.split(" ");
+                    const words = labelText.split(", ");
 
                     return (
                       <li {...optionProps} key={option.id}>

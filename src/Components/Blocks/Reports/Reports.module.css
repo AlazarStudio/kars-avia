@@ -25,37 +25,40 @@
  }
 
  .mainSearch {
-    width: 500px;
+     width: 500px;
  }
 
  .filter_wrapper {
-     flex: 1;
-     display: flex;
+     display: inline-flex;
      gap: 10px;
+     border-radius: 10px;
+     padding: 4px;
  }
 
  .filter_wrapper button {
+     font-size: 16px;
      padding: 10px 20px;
-     background-color: transparent;
-     border: 1px solid #54587380;
-     outline: none;
-     border-radius: 10px;
-     font-size: 14px;
-     color: #545873;
+     margin-right: 5px;
      cursor: pointer;
-     transition: all ease-in-out 0.3s;
+     border: 1px solid transparent;
+     border-radius: 10px;
+     background-color: #E4E4EF;
+     color: #545873;
+     opacity: 0.5;
+     transition: all 0.3s ease-in-out;
+     outline: none;
  }
 
  .filter_wrapper button:hover {
-     background-color: #e4e4efbd;
-     border: 1px solid transparent;
-     transition: all ease-in-out 0.3s;
+     background-color: #E4E4EF;
+     color: #545873;
+     opacity: 1;
  }
 
  .activeButton {
      background-color: #E4E4EF !important;
-     border: 1px solid transparent !important;
-     transition: all ease-in-out 0.3s;
+     color: #545873 !important;
+     opacity: 1 !important;
  }
 
  @media (min-width: 0px) and (max-width: 1299px) {}

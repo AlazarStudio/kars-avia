@@ -24,6 +24,8 @@ function CreateRequestTarifCategory({
     name: "",
     category: "",
     price: "",
+    priceForAirline: "",
+    priceForAirReq: false,
     description: "",
     square: "",
     images: null,
@@ -47,6 +49,8 @@ function CreateRequestTarifCategory({
       name: "",
       category: "",
       price: "",
+      priceForAirline: "",
+      priceForAirReq: false,
       description: "",
       square: "",
       images: null,
@@ -130,6 +134,7 @@ function CreateRequestTarifCategory({
                 name: formData.name,
                 price: parseFloat(formData.price),
                 priceForAirline: parseFloat(formData.priceForAirline),
+                priceForAirReq: formData.priceForAirReq,
                 description: formData.description,
                 square: formData.square,
               },
@@ -279,15 +284,31 @@ function CreateRequestTarifCategory({
                 onChange={handleChange}
                 placeholder="Введите стоимость"
               />
-
-              <label>Стоимость для авиакомпании</label>
-              <input
-                type="number"
-                name="priceForAirline"
-                value={formData.priceForAirline}
-                onChange={handleChange}
-                placeholder="Введите стоимость для авиакомпании"
-              />
+              {!user?.hotelId && (
+                <>
+                  <label>Стоимость для авиакомпании</label>
+                  <input
+                    type="number"
+                    name="priceForAirline"
+                    value={formData.priceForAirline}
+                    onChange={handleChange}
+                    placeholder="Введите стоимость для авиакомпании"
+                  />
+                  <label className={classes.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.priceForAirReq)}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          priceForAirReq: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span style={{ marginLeft: 8 }}>Стоимость по запросу</span>
+                  </label>
+                </>
+              )}
 
               <label>Квадратура</label>
               <input

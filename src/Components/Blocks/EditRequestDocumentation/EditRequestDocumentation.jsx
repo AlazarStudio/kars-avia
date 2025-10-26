@@ -120,7 +120,7 @@ function BlockItem({ node, disabled, onChange, onAddChild, onRemove }) {
       {/* Новые изображения для узла */}
       {!disabled && (
         <div className={classes.blockItemRow}>
-          <label>Добавить изображения (key: {node.id})</label>
+          {/* <label>Добавить изображения (key: {node.id})</label> */}
           <input type="file" multiple accept="image/*" onChange={onFiles} />
           {!!node.images?.length && (
             <div className={classes.filesCount}>
@@ -270,8 +270,8 @@ function EditRequestDocumentation({
       const imageGroupsByKey = [];
       collectImageGroups(root, imageGroupsByKey);
 
-      console.log(imageGroupsByKey);
-      console.log(dataPayload);
+      // console.log(imageGroupsByKey);
+      // console.log(dataPayload);
       
 
       // 3) Вызов мутации
@@ -355,7 +355,7 @@ function EditRequestDocumentation({
               {/* Новые файлы для корня */}
               {isEditing && (
                 <>
-                  <label>Добавить изображения (root key: {root.id})</label>
+                  {/* <label>Добавить изображения (root key: {root.id})</label> */}
                   <input
                     type="file"
                     multiple
@@ -450,7 +450,7 @@ function EditRequestDocumentation({
                 </div>
               )}
 
-              {isEditing && (
+              {/* {isEditing && (
                 <label className={classes.inlineToggle}>
                   <input
                     type="checkbox"
@@ -459,7 +459,7 @@ function EditRequestDocumentation({
                   />{" "}
                   Удалять отсутствующие узлы (pruneMissingChildren)
                 </label>
-              )}
+              )} */}
             </div>
           </div>
 

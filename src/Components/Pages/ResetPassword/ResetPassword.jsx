@@ -116,7 +116,7 @@ function ResetPassword() {
             alignItems: "center",
           }}
         >
-          <div style={{ position: "relative", width: "450px" }}>
+          <div style={{ position: "relative", width: "396px" }}>
             <TextField
               variant="outlined"
               margin="normal"

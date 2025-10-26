@@ -11,10 +11,12 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
+import { roles } from "../../../roles.js";
 
 function EditRequestPatchNote({
   show,
   onClose,
+  user,
   patchNoteId,
   refetchPatchNotes,
   addNotification,
@@ -171,25 +173,26 @@ function EditRequestPatchNote({
               />
             </div>
           </div>
-
-          <div className={classes.requestButton}>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {user.role !== roles.superAdmin ? null : (
+            <div className={classes.requestButton}>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+                color={!isEditing ? "#3B6C54" : "#fff"}
+              >
+                {isEditing ? (
+                  <>
+                    Сохранить <img src="/saveDispatcher.png" alt="" />
+                  </>
+                ) : (
+                  <>
+                    Изменить <img src="/editDispetcher.png" alt="" />
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

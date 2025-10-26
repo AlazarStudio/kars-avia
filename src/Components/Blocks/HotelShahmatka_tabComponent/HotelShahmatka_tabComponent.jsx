@@ -11,22 +11,10 @@ import Button from "../../Standart/Button/Button.jsx";
 import CreateRequest from "../CreateRequest/CreateRequest.jsx";
 import ExistRequest from "../ExistRequest/ExistRequest.jsx";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
+import StatusLegend from "../StatusLegend/StatusLegend.jsx";
 
 function HotelShahmatka_tabComponent({ id, user }) {
     const token = getCookie("token")
-
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [open, setOpen] = useState(false);
-
-    const handleMenuOpen = (event) => {
-        setAnchorEl(event.currentTarget);
-        setOpen(true);
-    };
-
-    const handleMenuClose = () => {
-        setAnchorEl(null);
-        setOpen(false);
-    };
 
       const [showCreateRequest, setShowCreateRequest] = useState(false);
       const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -232,75 +220,10 @@ function HotelShahmatka_tabComponent({ id, user }) {
                 </div> */}
 
             <div className={classes.section_searchAndFilter_filter}>
-            <Button
-                className={`${classes.downloadsButton} ${anchorEl ? classes.open : ""}`}
-                onClick={handleMenuOpen}
-                minwidth={"160px"} maxWidth={"160px"} padding={"0 15px"}
-            >
-                Легенда
-                <span
-                style={{
-                    display: "inline-block",
-                    transform: anchorEl ? "rotate(180deg)" : "rotate(0deg)",
-                    transition: "transform 0.2s",
-                    fontSize: "12px",
-                }}
-                >
-                ▼
-                </span>
-            </Button>
-                <Menu
-                    id="legend-menu"
-                    anchorEl={anchorEl}
-                    open={open}
-                    onClose={handleMenuClose}
-                    PaperProps={{
-                    style: {
-                        borderRadius: 10,
-                        borderTopLeftRadius: 0,
-                        borderTopRightRadius: 0,
-                        // padding: "8px 0",
-                        width: 160,
-                        boxShadow: "1px 8px 12px rgba(0,0,0,0.1)",
-                    },
-                    }}
-                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                >
-                    <MenuItem className={classes.menuItem}>
-                        <div className={classes.legendInfoColor} style={{ backgroundColor: '#9e9e9e' }}></div>
-                        <div className={classes.legendInfoText}>Создан</div>
-                    </MenuItem>
-                    <MenuItem className={classes.menuItem}>
-                        <div className={classes.legendInfoColor} style={{ backgroundColor: '#2196f3' }}></div>
-                        <div className={classes.legendInfoText}>Продлен</div>
-                    </MenuItem>
-                    <MenuItem className={classes.menuItem}>
-                        <div className={classes.legendInfoColor} style={{ backgroundColor: '#4caf50' }}></div>
-                        <div className={classes.legendInfoText}>Забронирован</div>
-                    </MenuItem>
-                    <MenuItem className={classes.menuItem}>
-                        <div className={classes.legendInfoColor} style={{ backgroundColor: '#9575cd' }}></div>
-                        <div className={classes.legendInfoText}>Ранний заезд</div>
-                    </MenuItem>
-                    <MenuItem className={classes.menuItem}>
-                        <div className={classes.legendInfoColor} style={{ backgroundColor: '#ff9800' }}></div>
-                        <div className={classes.legendInfoText}>Перенесен</div>
-                    </MenuItem>
-                    <MenuItem className={classes.menuItem}>
-                        <div className={classes.legendInfoColor} style={{ backgroundColor: '#f44336' }}></div>
-                        <div className={classes.legendInfoText}>Сокращен</div>
-                    </MenuItem>
-                    <MenuItem className={classes.menuItem}>
-                        <div className={classes.legendInfoColor} style={{ backgroundColor: '#638ea4' }}></div>
-                        <div className={classes.legendInfoText}>Готов к архиву</div>
-                    </MenuItem>
-                    <MenuItem className={classes.menuItem}>
-                        <div className={classes.legendInfoColor} style={{ backgroundColor: '#3b653d' }}></div>
-                        <div className={classes.legendInfoText}>Архив</div>
-                    </MenuItem>
-                </Menu>
+                <StatusLegend/>
                 <Button onClick={toggleCreateRequest} minwidth={"160px"} maxWidth={"160px"} padding={"0 15px"}>
-                  <img src="/plus.png" alt="" style={{width:"10px"}} /> Создать заявку
+                  {/* <img src="/plus.png" alt="" style={{width:"10px"}} /> */}
+                  Создать заявку
                 </Button>
             </div>
 
@@ -315,7 +238,7 @@ function HotelShahmatka_tabComponent({ id, user }) {
                 </div>*/}
             </div>
 
-            <NewPlacement idHotelInfo={id} searchQuery={searchQuery} />
+            <NewPlacement idHotelInfo={id} searchQuery={searchQuery} user={user} />
 
             {/* {(hotelBronsInfo.length === 0) &&
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={[]} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />

@@ -17,6 +17,8 @@ import {
   CREATE_RESERVE_REPORT,
   DELETE_PASSENGER_FROM_HOTEL,
   DELETE_PERSON_FROM_HOTEL,
+  GET_AIRLINE_DEPARTMENT,
+  GET_AIRLINES_UPDATE_SUBSCRIPTION,
   GET_HOTELS_RELAY,
   GET_RESERVE_REQUEST,
   GET_RESERVE_REQUEST_HOTELS,
@@ -87,6 +89,40 @@ function ReservePlacement({ children, user, ...props }) {
       },
     }
   );
+
+    const [accessMenu, setAccessMenu] = useState({})
+    // console.log(user);
+    const { data: departmentData, refetch: departmentRefetch } = useQuery(GET_AIRLINE_DEPARTMENT, {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      variables: {
+        airlineDepartmentId: user?.departmentId
+      },
+      skip: !user?.departmentId
+    });
+  
+    const { data: dataSubscriptionUpd } = useSubscription(
+      GET_AIRLINES_UPDATE_SUBSCRIPTION,
+      {
+        context: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+        onData: () => {
+          departmentRefetch();
+        },
+      }
+    );
+  
+    useEffect(() => {
+      if (departmentData && departmentData.airlineDepartment.accessMenu) {
+        setAccessMenu(departmentData?.airlineDepartment?.accessMenu)
+      }
+    }, [departmentData, dataSubscriptionUpd])
 
   // console.log(subscriptionDataUpdate);
   // console.log(subscriptionData);
@@ -527,7 +563,7 @@ function ReservePlacement({ children, user, ...props }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id={"reserve"} />
+      <MenuDispetcher id={"reserve"} accessMenu={accessMenu}/>
 
       <div className={classes.section}>
         <Header>

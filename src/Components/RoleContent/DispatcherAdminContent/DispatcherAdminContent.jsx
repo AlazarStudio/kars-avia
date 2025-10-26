@@ -14,6 +14,8 @@ import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import RegisterOfContracts from "../../Blocks/RegisterOfContracts/RegisterOfContracts";
 import MyCompany from "../../Blocks/MyCompany/MyCompany";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
+import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
+import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 
 const DispatcherAdminContent = ({ user }) => {
   const { id, hotelID, airlineID } = useParams();
@@ -29,11 +31,13 @@ const DispatcherAdminContent = ({ user }) => {
       {id === "airlines" && <AirlinesList user={user} />}
       {id === "registerOfContracts" && <RegisterOfContracts user={user} />}
       {id === "reports" && <Reports user={user} />}
-      {id === "analytics" && <Analytics/>}
+      {id === "analytics" && <Analytics user={user} />}
       {id === "documentation" && <DocumentationList user={user} />}
       {id === "updates" && <UpdatesList user={user} />}
       {id === "myCompany" && <MyCompany user={user} />}
       {id === "patchNotes" && <PatchNotesList user={user} />}
+      {id === "access" && <AccessSettings user={user} />}
+      {id === "notifications" && <NotificationsSettings user={user} />}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
     </>

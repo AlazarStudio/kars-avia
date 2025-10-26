@@ -6,10 +6,15 @@ import {
   decodeJWT,
   GET_DISPATCHER,
   GET_DISPATCHERS_SUBSCRIPTION,
+  GET_USER_SUPPORT_CHAT,
   getCookie,
   LOGOUT,
+  MESSAGE_SENT_SUBSCRIPTION,
+  NEW_UNREAD_MESSAGE_SUBSCRIPTION,
   NOTIFICATIONS_SUBSCRIPTION,
+  REQUEST_MESSAGES_SUBSCRIPTION,
   server,
+  UNREAD_MESSAGES_COUNT,
 } from "../../../../graphQL_requests";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
@@ -23,9 +28,12 @@ import MUILoader from "../MUILoader/MUILoader";
 import MyCompanyIcon from "../../../shared/icons/MyCompanyIcon";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import ExitIcon from "../../../shared/icons/ExitIcon";
+import NotificationsSidebar from "../NotificationsSidebar/NotificationsSidebar";
 
 function Header({ children }) {
   const token = getCookie("token");
+  const user = decodeJWT(token);
+  
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isFullyVisible, setIsFullyVisible] = useState(false); // Управляет полным отображением профиля
@@ -101,19 +109,14 @@ function Header({ children }) {
     }
   };
 
-  const userID = useMemo(
-    () => (token ? decodeJWT(token).userId : null),
-    [token]
-  );
-
   const { loading, error, data, refetch } = useQuery(GET_DISPATCHER, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { userId: userID },
-    skip: !userID,
+    variables: { userId: user?.userId },
+    skip: !user?.userId,
   });
 
   const [logoutMutation] = useMutation(LOGOUT);
@@ -132,6 +135,50 @@ function Header({ children }) {
       setUserData(data.user); // Сохраняем данные пользователя в state
     }
   }, [data]);
+
+  const { data: notifySubscriptionData } = useSubscription(
+    NOTIFICATIONS_SUBSCRIPTION
+  );
+  
+  const { data: tsChatData } = useQuery(GET_USER_SUPPORT_CHAT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      userId: user?.userId,
+    },
+    skip: userData?.role !== roles.superAdmin ? false : true,
+  });
+
+
+  const { data: unreadMessagesCount, refetch: unreadRefetch } = useQuery(
+    UNREAD_MESSAGES_COUNT,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      variables: { chatId: tsChatData?.userSupportChat?.id, userId: user?.userId },
+    }
+  );
+
+  const { data: unreadMessagesSubscription } = useSubscription(
+    MESSAGE_SENT_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      // variables: { chatId: tsChatData?.userSupportChat?.id },
+      onData: () => {
+        unreadRefetch();
+      },
+    }
+  );
 
   const logout = async () => {
     let result = confirm("Вы уверены что хотите выйти?");
@@ -175,26 +222,39 @@ function Header({ children }) {
     }`;
   }, []);
 
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (
+  //       dropdownRef.current &&
+  //       !dropdownRef.current.contains(event.target) && // когда вернуться оповещения поставить &&
+  //       notificationsRef.current &&
+  //       !notificationsRef.current.contains(event.target) &&
+  //       !event.target.closest(`.${classes.notify_dropdown}`)
+  //     ) {
+  //       setIsDropdownOpen(false);
+  //       setTimeout(() => setIsFullyVisible(false), 300);
+  //       setIsNotificationsOpen(false);
+  //       setTimeout(() => setIsNotificationsFullyVisible(false), 300);
+  //     }
+  //   };
+
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, []);
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target) && // когда вернуться оповещения поставить &&
-        notificationsRef.current &&
-        !notificationsRef.current.contains(event.target) &&
-        !event.target.closest(`.${classes.notify_dropdown}`)
-      ) {
+      // Закрываем только дропдаун профиля
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
         setTimeout(() => setIsFullyVisible(false), 300);
-        setIsNotificationsOpen(false);
-        setTimeout(() => setIsNotificationsFullyVisible(false), 300);
       }
+      // Уведомления не трогаем — их закрывает NotificationsSidebar сам
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleProfileClick = () => {
@@ -269,12 +329,6 @@ function Header({ children }) {
   const [chooseObject, setChooseObject] = useState([]);
   const [chooseCityRequest, setChooseCityRequest] = useState("");
 
-  // console.log(chooseCityRequest);
-
-  const { data: notifySubscriptionData } = useSubscription(
-    NOTIFICATIONS_SUBSCRIPTION
-  );
-
   return (
     <>
       <div className={classes.section_top}>
@@ -289,6 +343,11 @@ function Header({ children }) {
                 className={classes.section_top_elems_support}
                 onClick={toggleSupportSidebar}
               >
+                {unreadMessagesCount?.unreadMessagesCount ? (
+                  <div className={classes.section_top_elems_unread_red}>
+                    {unreadMessagesCount?.unreadMessagesCount}
+                  </div>
+                ) : null}
                 <img src="/support.png" alt="Поддержка" />
               </div>
             ) : null}
@@ -307,7 +366,7 @@ function Header({ children }) {
               />
             </div>
 
-            {isNotificationsFullyVisible && (
+            {/* {isNotificationsFullyVisible && (
               <div
                 className={`${classes.notify_dropdown} ${
                   isNotificationsOpen ? classes.open : classes.closed
@@ -321,7 +380,7 @@ function Header({ children }) {
                   isNotificationsFullyVisible={isNotificationsFullyVisible}
                 />
               </div>
-            )}
+            )} */}
 
             <div className={classes.section_top_elems_date}>
               <div>{formattedDate}</div>
@@ -383,40 +442,70 @@ function Header({ children }) {
                       onClick={toggleRequestSidebar}
                     >
                       <div className={classes.settings_item__img}>
-                        <SettingsIcon width={21} height={22} />
+                        <SettingsIcon strokeWidth={1} />
                       </div>
                       <p>Настройки</p>
                     </div>
+                    {/* <div
+                      className={classes.settings_item}
+                      onClick={() => {navigate("/access")}}
+                    >
+                      <div className={classes.settings_item__img}>
+                        <SettingsIcon width={21} height={22} />
+                      </div>
+                      <p>Уведомления и доступ</p>
+                    </div> */}
                     <div className={classes.settings_item} onClick={logout}>
                       <div
                         className={`${classes.settings_item__img} ${classes.img_padding}`}
                       >
-                        <ExitIcon width={21} height={22} />
+                        <ExitIcon />
                       </div>
                       <p>Выход</p>
                     </div>
                   </div>
                 </div>
               )}
-
-              {notifications.map((n, index) => (
-                <Notification
-                  key={n.id}
-                  text={n.text}
-                  status={n.status}
-                  index={index}
-                  time={notifyTime}
-                  onClose={() => {
-                    setNotifications((prev) =>
-                      prev.filter((notif) => notif.id !== n.id)
-                    );
-                  }}
-                />
-              ))}
             </div>
           </div>
         )}
       </div>
+
+      {notifications.map((n, index) => (
+        <Notification
+          key={n.id}
+          text={n.text}
+          status={n.status}
+          index={index}
+          time={notifyTime}
+          onClose={() => {
+            setNotifications((prev) =>
+              prev.filter((notif) => notif.id !== n.id)
+            );
+          }}
+        />
+      ))}
+
+      {/* {isNotificationsFullyVisible && (
+        <div
+          className={`${classes.notify_dropdown} ${
+            isNotificationsOpen ? classes.open : classes.closed
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+        </div>
+      )} */}
+      <NotificationsSidebar
+        onRequestClick={handleNotificationClick}
+        user={data?.user}
+        token={token}
+        isNotificationsFullyVisible={isNotificationsFullyVisible}
+        show={isNotificationsOpen}
+        onClose={() => {
+          setIsNotificationsOpen(false);
+        }}
+      />
+
       <ExistRequestProfile
         show={showRequestSidebar}
         onClose={toggleRequestSidebar}
@@ -427,11 +516,14 @@ function Header({ children }) {
         addNotification={addNotification}
       />
 
-      <Support
-        show={showSupportSidebar}
-        onClose={toggleSupportSidebar}
-        user={data?.user}
-      />
+      {data?.user?.role !== roles.superAdmin && showSupportSidebar ? (
+        <Support
+          show={showSupportSidebar}
+          onClose={toggleSupportSidebar}
+          user={data?.user}
+          supportRefetch={unreadRefetch}
+        />
+      ) : null}
 
       <ExistRequest
         show={showERequestSidebar}

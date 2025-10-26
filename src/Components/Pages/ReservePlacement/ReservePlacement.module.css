@@ -91,6 +91,7 @@
 
 .downloadsButton {
     width: 160px;
+    min-height: 40px;
     text-transform: none;
     font-size: 14px;
     font-weight: 600;

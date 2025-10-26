@@ -2,19 +2,34 @@ import React, { lazy, Suspense } from "react";
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 
 // Lazy-loaded components for each tab
-const AirlineCompanyTab = lazy(() => import("../../../Blocks/AirlineCompany_tabComponent/AirlineCompany_tabComponent"));
-const AirlineTarifsTab = lazy(() => import("../../../Blocks/AirlineTarifs_tabComponent/AirlineTarifs_tabComponent"));
-const AirlineShahmatkaTabStaff = lazy(() => import("../../../Blocks/AirlineShahmatka_tabComponent_Staff/AirlineShahmatka_tabComponent_Staff"));
-const AirlineAboutTab = lazy(() => import("../../../Blocks/AirlineAbout_tabComponent/AirlineAbout_tabComponent"));
+const AirlineCompanyTab = lazy(() =>
+  import(
+    "../../../Blocks/AirlineCompany_tabComponent/AirlineCompany_tabComponent"
+  )
+);
+const AirlineTarifsTab = lazy(() =>
+  import(
+    "../../../Blocks/AirlineTarifs_tabComponent/AirlineTarifs_tabComponent"
+  )
+);
+const AirlineRegisterOfContracts = lazy(() =>
+  import(
+    "../../../Blocks/AirlineRegisterOfContracts/AirlineRegisterOfContracts"
+  )
+);
+const AirlineShahmatkaTabStaff = lazy(() =>
+  import(
+    "../../../Blocks/AirlineShahmatka_tabComponent_Staff/AirlineShahmatka_tabComponent_Staff"
+  )
+);
+const AirlineAboutTab = lazy(() =>
+  import("../../../Blocks/AirlineAbout_tabComponent/AirlineAbout_tabComponent")
+);
 
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
 import classes from "./SuperAdminAirlineContent.module.css";
 
-const SuperAdminAirlineContent = ({
-  id,
-  selectedTab,
-  handleTabSelect,
-}) => (
+const SuperAdminAirlineContent = ({ id, selectedTab, handleTabSelect }) => (
   <Tabs
     className={classes.tabs}
     selectedIndex={selectedTab}
@@ -23,7 +38,8 @@ const SuperAdminAirlineContent = ({
   >
     <TabList className={classes.tabList}>
       <Tab className={classes.tab}>Пользователи</Tab>
-      <Tab className={classes.tab}>Тарифы</Tab>
+      <Tab className={classes.tab}>Цены</Tab>
+      <Tab className={classes.tab}>Договоры</Tab>
       <Tab className={classes.tab}>Сотрудники</Tab>
       <Tab className={classes.tab}>Об авиакомпании</Tab>
     </TabList>
@@ -42,6 +58,12 @@ const SuperAdminAirlineContent = ({
 
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+        <AirlineRegisterOfContracts id={id} />
+      </Suspense>
+    </TabPanel>
+
+    <TabPanel className={classes.tabPanel} forceRender={false}>
+      <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
         <AirlineShahmatkaTabStaff id={id} />
       </Suspense>
     </TabPanel>
@@ -55,7 +77,6 @@ const SuperAdminAirlineContent = ({
 );
 
 export default SuperAdminAirlineContent;
-
 
 // import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 

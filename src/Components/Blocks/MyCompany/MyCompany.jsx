@@ -170,13 +170,6 @@ function MyCompany({ children, user, ...props }) {
         <Header>ГК Карс</Header>
 
         <div className={classes.section_searchAndFilter}>
-          {/* <input
-                type="text"
-                placeholder="Поиск"
-                style={{ width: '500px' }}
-                value={searchQuery}
-                onChange={handleSearch}
-              /> */}
           <MUITextField
             label={"Поиск по компаниям"}
             className={classes.mainSearch}

@@ -36,6 +36,7 @@ import DocIcon from "../../../shared/icons/DocIcon.jsx";
 function EditRequestAirlineContract({
   show,
   onClose,
+  id,
   tarif, // тут приходит airlineContractId
   addNotification,
 }) {
@@ -415,7 +416,9 @@ function EditRequestAirlineContract({
     <>
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.requestTitle}>
-          <div className={classes.requestTitle_name}>Изменить договор</div>
+          <div className={classes.requestTitle_name}>
+            {!id ? "Изменить договор" : formData?.contractNumber}
+          </div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
             <img src="/close.png" alt="" />
           </div>
@@ -453,7 +456,10 @@ function EditRequestAirlineContract({
         ) : (
           <>
             {activeTab === "Общая" ? (
-              <div className={classes.requestMiddle}>
+              <div
+                className={classes.requestMiddle}
+                style={id && { height: "calc(100% - 148px)" }}
+              >
                 <div className={classes.requestData}>
                   {/* Договор: основные поля */}
                   <div className={classes.requestDataItem}>
@@ -580,7 +586,7 @@ function EditRequestAirlineContract({
                     <div className={classes.notesWrapper}>
                       <div className={classes.notesHeader}>
                         <p>Комментарий</p>
-                        <FixIcon width={21} height={21} />
+                        <FixIcon />
                       </div>
                       <div className={classes.notes}>{formData.notes}</div>
                     </div>
@@ -593,40 +599,47 @@ function EditRequestAirlineContract({
                     multiple
                     disabled={!isEditing}
                   /> */}
-                  <div
-                    ref={dropRef}
-                    className={classes.fileDrop}
-                    onDragOver={onDragOver}
-                    onDragLeave={onDragLeave}
-                    onDrop={onDrop}
-                  >
-                    <input
-                      id="files"
-                      type="file"
-                      className={classes.fileInputHidden}
-                      onChange={onFilesPicked}
-                      multiple
-                      disabled={!isEditing}
-                    />
+                  {!id && (
+                    <div
+                      ref={dropRef}
+                      className={classes.fileDrop}
+                      onDragOver={onDragOver}
+                      onDragLeave={onDragLeave}
+                      onDrop={onDrop}
+                    >
+                      <input
+                        id="files"
+                        type="file"
+                        className={classes.fileInputHidden}
+                        onChange={onFilesPicked}
+                        multiple
+                        disabled={!isEditing}
+                      />
 
-                    <label htmlFor="files" className={classes.fileInner}>
-                      <AttachIcon width={19} height={19} />
+                      <label htmlFor="files" className={classes.fileInner}>
+                        <AttachIcon width={19} height={19} />
 
-                      <span className={classes.fileText}>
-                        {fileName.length
-                          ? `Выбрано файлов: ${fileName.length}` // список названий через запятую
-                          : "Прикрепить файлы"}
-                      </span>
-                    </label>
-                  </div>
+                        <span className={classes.fileText}>
+                          {fileName.length
+                            ? `Выбрано файлов: ${fileName.length}` // список названий через запятую
+                            : "Прикрепить файлы"}
+                        </span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : activeTab === "ДС" ? (
-              <div className={classes.requestMiddle}>
+              <div
+                className={classes.requestMiddle}
+                style={id && { height: "calc(100% - 148px)" }}
+              >
                 <div className={classes.requestData}>
-                  <Button type="button" onClick={openCreateAgreement}>
-                    + Добавить ДС
-                  </Button>
+                  {!id && (
+                    <Button type="button" onClick={openCreateAgreement}>
+                      + Добавить ДС
+                    </Button>
+                  )}
                   {formData.additionalAgreements.map((ag, index) => (
                     <div
                       key={ag.id || index}
@@ -657,24 +670,31 @@ function EditRequestAirlineContract({
                         </div>
                       </div>
 
-                      <img
-                        src="/edit.svg.png"
-                        alt="edit"
-                        onClick={() => openAgreement(ag, index)}
-                        style={{ justifySelf: "end", cursor: "pointer" }}
-                      />
-                      <img
-                        src="/deleteReport.png"
-                        alt="delete"
-                        onClick={() => deleteAgreement(ag, index)}
-                        style={{ cursor: "pointer" }}
-                      />
+                      { !id &&
+                        <>
+                          <img
+                            src="/edit.svg.png"
+                            alt="edit"
+                            onClick={() => openAgreement(ag, index)}
+                            style={{ justifySelf: "end", cursor: "pointer" }}
+                          />
+                          <img
+                            src="/deleteReport.png"
+                            alt="delete"
+                            onClick={() => deleteAgreement(ag, index)}
+                            style={{ cursor: "pointer" }}
+                          />
+                        </>
+                      }
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className={classes.requestMiddle}>
+              <div
+                className={classes.requestMiddle}
+                style={id && { height: "calc(100% - 148px)" }}
+              >
                 <div className={classes.requestData}>
                   {files?.map((i, index) => (
                     <a
@@ -694,7 +714,7 @@ function EditRequestAirlineContract({
               </div>
             )}
 
-            {activeTab === "Общая" && (
+            {activeTab === "Общая" && !id && (
               <div className={classes.requestButton}>
                 <Button
                   type="submit"
@@ -718,6 +738,7 @@ function EditRequestAirlineContract({
         )}
       </Sidebar>
       <EditAdditionalAgreement
+        id={id}
         updId={tarif}
         show={showAgreementEditor}
         onClose={closeAgreement}

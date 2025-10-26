@@ -21,23 +21,30 @@ import ReactPaginate from "react-paginate";
 import { Box, CircularProgress, TextField } from "@mui/material";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import { fullNotifyTime, notifyTime, statusMapping } from "../../../roles.js";
+import {
+  fullNotifyTime,
+  menuAccess,
+  notifyTime,
+  statusMapping,
+} from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
-function Estafeta({ user }) {
+function Estafeta({ user, accessMenu }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
 
+  // console.log(accessMenu);
+  
+
   const { search, pathname, state } = useLocation();
-  
+
   const requestIdFromState = state?.requestId || null;
-  
-  
+
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
   const [selectedAirline, setSelectedAirline] = useState(null);
@@ -48,12 +55,12 @@ function Estafeta({ user }) {
     endDate: null,
   });
 
- useEffect(() => {
-  if (requestIdFromState) {
-    setChooseRequestID(requestIdFromState);
-    setShowRequestSidebar(true);
-  }
-}, [requestIdFromState]);
+  useEffect(() => {
+    if (requestIdFromState) {
+      setChooseRequestID(requestIdFromState);
+      setShowRequestSidebar(true);
+    }
+  }, [requestIdFromState]);
 
   // Инициализация текущей страницы на основе параметров URL или по умолчанию
   const pageNumberRelay = new URLSearchParams(location.search).get("page");
@@ -339,8 +346,6 @@ function Estafeta({ user }) {
     setRequestId(id);
   };
 
-  // console.log(requestId);
-
   // Запрос на отмену созданной, но не размещенной заявки
   const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
     context: {
@@ -485,8 +490,6 @@ function Estafeta({ user }) {
     }
   }, [pathname, search, navigate]);
 
-
-
   // Обработчик для изменения текущей страницы при клике на элементы пагинации
   const handlePageClick = (event) => {
     const selectedPage = event.selected;
@@ -543,14 +546,9 @@ function Estafeta({ user }) {
           value={searchQuery}
           onChange={handleSearch}
         />
-        <Button onClick={toggleCreateSidebar}>
-          <img
-            src="/plus.png"
-            style={{ width: "10px", objectFit: "contain" }}
-            alt=""
-          />
-          Создать заявку
-        </Button>
+        {(!user?.airlineId || accessMenu.requestCreate) ? (
+          <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
+        ) : null}
       </div>
       {loading && <MUILoader />}
       {error && <p>Error: {error.message}</p>}
@@ -603,8 +601,9 @@ function Estafeta({ user }) {
         setChooseRequestID={setChooseRequestID}
         setShowChooseHotel={setShowChooseHotel}
         chooseRequestID={chooseRequestID ? chooseRequestID : existRequestData}
-        handleCancelRequest={handleCancelRequest}
+        // handleCancelRequest={handleCancelRequest}
         user={user}
+        accessMenu={accessMenu}
         openDeleteComponent={openDeleteComponent}
         setRequestId={setChooseRequestId}
       />

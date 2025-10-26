@@ -68,12 +68,11 @@
 }
 
 .circle {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   overflow: hidden;
   background-color: #ececec;
-  border: 1px solid #54587380;
 }
 
 .circle img {
@@ -123,7 +122,7 @@
 
 .contentWrapper {
   overflow: hidden;
-  overflow-y: scroll;
+  overflow-y: auto;
   height: 667px;
   display: flex;
   flex-direction: column;
@@ -137,6 +136,12 @@
 }
 
 .row {
+  display: flex;
+  gap: 20px;
+  padding-right: 10px;
+}
+
+.rowNoAdaptive {
   display: flex;
   gap: 20px;
   padding-right: 10px;

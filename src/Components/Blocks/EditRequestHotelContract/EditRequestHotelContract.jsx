@@ -34,6 +34,7 @@ import DocIcon from "../../../shared/icons/DocIcon.jsx";
 
 function EditRequestHotelContract({
   show,
+  id,
   onClose,
   tarif, // тут приходит airlineContractId
   addNotification,
@@ -350,9 +351,9 @@ function EditRequestHotelContract({
         date: formData.date ? new Date(formData.date).toISOString() : null,
         notes: formData.notes,
         applicationType: formData.applicationType,
-        region: formData.region,
+        cityId: formData.cityId,
         companyId: formData.companyId,
-        airlineId: formData.airlineId,
+        hotelId: formData.hotelId,
         signatureMark: formData.signatureMark,
         completionMark: formData.completionMark,
         // executor: formData.executor,
@@ -408,7 +409,9 @@ function EditRequestHotelContract({
     <>
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.requestTitle}>
-          <div className={classes.requestTitle_name}>Изменить договор</div>
+          <div className={classes.requestTitle_name}>
+            {!id ? "Изменить договор" : formData?.contractNumber}
+          </div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
             <img src="/close.png" alt="" />
           </div>
@@ -446,7 +449,10 @@ function EditRequestHotelContract({
         ) : (
           <>
             {activeTab === "Общая" ? (
-              <div className={classes.requestMiddle}>
+              <div
+                className={classes.requestMiddle}
+                style={id && { height: "calc(100% - 80px)" }}
+              >
                 <div className={classes.requestData}>
                   {/* Договор: основные поля */}
                   <div className={classes.requestDataItem}>
@@ -532,9 +538,9 @@ function EditRequestHotelContract({
                           : ""
                       }
                       renderOption={(optionProps, option) => {
-                        const cityPart = `, город: ${option?.information?.city}`;
+                        const cityPart = `,, город: ${option?.information?.city}`;
                         const labelText = `${option.name}${cityPart}`.trim();
-                        const words = labelText.split(" ");
+                        const words = labelText.split(", ");
 
                         return (
                           <li {...optionProps} key={option.id}>
@@ -745,7 +751,7 @@ function EditRequestHotelContract({
                     <div className={classes.notesWrapper}>
                       <div className={classes.notesHeader}>
                         <p>Комментарий</p>
-                        <FixIcon width={21} height={21} />
+                        <FixIcon />
                       </div>
                       <div className={classes.notes}>{formData.notes}</div>
                     </div>
@@ -758,40 +764,47 @@ function EditRequestHotelContract({
                     multiple
                     disabled={!isEditing}
                   /> */}
-                  <div
-                    ref={dropRef}
-                    className={classes.fileDrop}
-                    onDragOver={onDragOver}
-                    onDragLeave={onDragLeave}
-                    onDrop={onDrop}
-                  >
-                    <input
-                      id="filesHotel"
-                      type="file"
-                      className={classes.fileInputHidden}
-                      onChange={onFilesPicked}
-                      multiple
-                      disabled={!isEditing}
-                    />
+                  {!id && (
+                    <div
+                      ref={dropRef}
+                      className={classes.fileDrop}
+                      onDragOver={onDragOver}
+                      onDragLeave={onDragLeave}
+                      onDrop={onDrop}
+                    >
+                      <input
+                        id="filesHotel"
+                        type="file"
+                        className={classes.fileInputHidden}
+                        onChange={onFilesPicked}
+                        multiple
+                        disabled={!isEditing}
+                      />
 
-                    <label htmlFor="filesHotel" className={classes.fileInner}>
-                      <AttachIcon width={19} height={19} />
+                      <label htmlFor="filesHotel" className={classes.fileInner}>
+                        <AttachIcon width={19} height={19} />
 
-                      <span className={classes.fileText}>
-                        {fileName.length
-                          ? `Выбрано файлов: ${fileName.length}` // список названий через запятую
-                          : "Прикрепить файлы"}
-                      </span>
-                    </label>
-                  </div>
+                        <span className={classes.fileText}>
+                          {fileName.length
+                            ? `Выбрано файлов: ${fileName.length}` // список названий через запятую
+                            : "Прикрепить файлы"}
+                        </span>
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : activeTab === "ДС" ? (
-              <div className={classes.requestMiddle}>
+              <div
+                className={classes.requestMiddle}
+                style={id && { height: "calc(100% - 80px)" }}
+              >
                 <div className={classes.requestData}>
-                  <Button type="button" onClick={openCreateAgreement}>
-                    + Добавить ДС
-                  </Button>
+                  {!id && (
+                    <Button type="button" onClick={openCreateAgreement}>
+                      + Добавить ДС
+                    </Button>
+                  )}
                   {formData.additionalAgreements.map((ag, index) => (
                     <div
                       key={ag.id || index}
@@ -822,24 +835,31 @@ function EditRequestHotelContract({
                         </div>
                       </div>
 
-                      <img
-                        src="/edit.svg.png"
-                        alt="edit"
-                        onClick={() => openAgreement(ag, index)}
-                        style={{ justifySelf: "end", cursor: "pointer" }}
-                      />
-                      <img
-                        src="/deleteReport.png"
-                        alt="delete"
-                        onClick={() => deleteAgreement(ag, index)}
-                        style={{ cursor: "pointer" }}
-                      />
+                      {!id && (
+                        <>
+                          <img
+                            src="/edit.svg.png"
+                            alt="edit"
+                            onClick={() => openAgreement(ag, index)}
+                            style={{ justifySelf: "end", cursor: "pointer" }}
+                          />
+                          <img
+                            src="/deleteReport.png"
+                            alt="delete"
+                            onClick={() => deleteAgreement(ag, index)}
+                            style={{ cursor: "pointer" }}
+                          />
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className={classes.requestMiddle}>
+              <div
+                className={classes.requestMiddle}
+                style={id && { height: "calc(100% - 80px)" }}
+              >
                 <div className={classes.requestData}>
                   {files?.map((i, index) => (
                     <a
@@ -857,29 +877,31 @@ function EditRequestHotelContract({
                 </div>
               </div>
             )}
-
-            <div className={classes.requestButton}>
-              <Button
-                type="submit"
-                onClick={handleSubmit}
-                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-                color={!isEditing ? "#3B6C54" : "#fff"}
-              >
-                {isEditing ? (
-                  <>
-                    Сохранить <img src="/saveDispatcher.png" alt="" />
-                  </>
-                ) : (
-                  <>
-                    Изменить <img src="/editDispetcher.png" alt="" />
-                  </>
-                )}
-              </Button>
-            </div>
+            {!id && (
+              <div className={classes.requestButton}>
+                <Button
+                  type="submit"
+                  onClick={handleSubmit}
+                  backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+                  color={!isEditing ? "#3B6C54" : "#fff"}
+                >
+                  {isEditing ? (
+                    <>
+                      Сохранить <img src="/saveDispatcher.png" alt="" />
+                    </>
+                  ) : (
+                    <>
+                      Изменить <img src="/editDispetcher.png" alt="" />
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </>
         )}
       </Sidebar>
       <EditAdditionalAgreement
+        id={id}
         updId={tarif}
         show={showAgreementEditor}
         onClose={closeAgreement}

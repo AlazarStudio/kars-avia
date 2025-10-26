@@ -89,7 +89,9 @@ function Filter({
   ) {
     filterListShow = [
       { label: "Все заявки", value: "all" },
-      { label: "Создан / В обработке", value: "created / opened" },
+      { label: "Создан", value: "created" },
+      { label: "В обработке", value: "opened" },
+      // { label: "Создан / В обработке", value: "created / opened" },
       { label: "Размещен", value: "done" },
       { label: "Готов к архиву", value: "archiving" },
       { label: "Архивные", value: "archived" },
@@ -100,7 +102,9 @@ function Filter({
   if (user && user?.role === roles.hotelAdmin) {
     filterListShow = [
       { label: "Все заявки", value: "all" },
-      { label: "Создан / В обработке", value: "created / opened" },
+      { label: "Создан", value: "created" },
+      { label: "В обработке", value: "opened" },
+      // { label: "Создан / В обработке", value: "created / opened" },
       { label: "Размещен", value: "done" },
       { label: "Готов к архиву", value: "archiving" },
       { label: "Отменен", value: "canceled" },

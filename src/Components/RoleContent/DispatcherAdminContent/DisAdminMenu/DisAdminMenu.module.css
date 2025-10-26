@@ -13,6 +13,13 @@
   gap: 5px;
 }
 
+.svgWrapper {
+  width: 30px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+}
+
 .menu_items__elem {
   color: var(--menu-gray);
   display: flex;
@@ -181,6 +188,11 @@
   color: var(--white);
 }
 
+.menu_items__activeElem___fill:hover .tooltip {
+  opacity: 0.9;
+  visibility: visible;
+}
+
 .menu_items__activeElem___fill svg path {
   fill: var(--white);
 }
@@ -211,11 +223,13 @@
 }
 
 .menu_items__elem .countRequests {
+  width: 30px;
+  height: 30px;
   position: absolute;
   right: 10px;
   background-color: red;
   color: var(--white);
-  padding: 0px 8px;
+  /* padding: 0px 8px; */
   border-radius: 50%;
   display: flex;
   justify-content: center;

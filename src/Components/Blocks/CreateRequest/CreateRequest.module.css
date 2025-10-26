@@ -82,7 +82,7 @@ select {
 .requestMiddle {
     height: calc(100vh - 79px - 67px - 81px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -115,6 +115,10 @@ select {
     width: 100%;
     display: flex;
     justify-content: flex-end;
+}
+
+.requestButton button {
+    width: 49%;
 }
 
 .dropdownInputList {

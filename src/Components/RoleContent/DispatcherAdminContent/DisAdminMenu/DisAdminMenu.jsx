@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import classes from "./DisAdminMenu.module.css";
 import { useState } from "react";
+import DelayedText from "../../../Blocks/DelayedText/DelayedText";
 
 const DisAdminMenu = ({
   id,
@@ -28,6 +29,7 @@ const DisAdminMenu = ({
             classes.menu_items__activeElem
           }`}
         >
+          <div className={classes.svgWrapper}>
           <svg
             width="22"
             height="22"
@@ -42,8 +44,9 @@ const DisAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {/* {menuOpen ? "Эстафета" : ""} */}
-          {menuOpen ? "Эскадрилья" : ""}
+          </div>
+          {/* {menuOpen ? "Эскадрилья" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Эскадрилья</DelayedText>
           {allCreatedRequests > 0 && (
             <div
               className={`${classes.countRequests} ${
@@ -53,7 +56,6 @@ const DisAdminMenu = ({
               {allCreatedRequests}
             </div>
           )}
-          {/* {!menuOpen && <span className={classes.tooltip}>Эстафета</span>} */}
           {!menuOpen && <span className={classes.tooltip}>Эскадрилья</span>}
         </Link>
         <Link
@@ -62,6 +64,7 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "reserve" && classes.menu_items__activeElem}`}
         >
+          <div className={classes.svgWrapper}>
           <svg
             width="22"
             height="22"
@@ -82,7 +85,9 @@ const DisAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Пассажиры" : ""}
+          </div>
+          {/* {menuOpen ? "Пассажиры" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Пассажиры</DelayedText>
           {allCreatedReserves > 0 && (
             <div
               className={`${classes.countRequests} ${
@@ -100,58 +105,7 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "company" && classes.menu_items__activeElem}`}
         >
-          {/* <svg
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M3.21313 16.5501V16.4572C3.21313 14.7462 4.60019 13.3591 6.31122 13.3591H15.6891C17.4001 13.3591 18.7872 14.7462 18.7872 16.4572V16.5501"
-              stroke="var(--menu-gray)"
-              strokeMiterlimit="10"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M10.9991 13.3591L11.0004 16.5503"
-              stroke="var(--menu-gray)"
-              strokeMiterlimit="10"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M15.5933 10.2205C15.3476 9.23002 14.7877 8.34354 13.9947 7.69545C13.1493 7.00444 12.091 6.62695 10.9991 6.62695C9.90723 6.62695 8.84891 7.00444 8.00347 7.69545C7.21056 8.34352 6.65066 9.23001 6.40491 10.2204"
-              stroke="var(--menu-gray)"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M10.999 6.62706C12.7996 6.62706 13.8125 5.61419 13.8125 3.81354C13.8125 2.01287 12.7996 1 10.999 1C9.1983 1 8.18542 2.01287 8.18542 3.81354C8.18542 5.61419 9.1983 6.62706 10.999 6.62706Z"
-              stroke="var(--menu-gray)"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M3.21314 20.9763C4.62956 20.9763 5.42629 20.1796 5.42629 18.7632C5.42629 17.3467 4.62956 16.55 3.21314 16.55C1.79673 16.55 1 17.3467 1 18.7632C1 20.1796 1.79673 20.9763 3.21314 20.9763Z"
-              stroke="var(--menu-gray)"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M11.0007 20.9763C12.4171 20.9763 13.2139 20.1796 13.2139 18.7632C13.2139 17.3467 12.4171 16.55 11.0007 16.55C9.58432 16.55 8.7876 17.3467 8.7876 18.7632C8.7876 20.1796 9.58432 20.9763 11.0007 20.9763Z"
-              stroke="var(--menu-gray)"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M18.7869 20.9763C20.2032 20.9763 21 20.1796 21 18.7632C21 17.3467 20.2032 16.55 18.7869 16.55C17.3704 16.55 16.5736 17.3467 16.5736 18.7632C16.5736 20.1796 17.3704 20.9763 18.7869 20.9763Z"
-              stroke="var(--menu-gray)"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg> */}
+          <div className={classes.svgWrapper}>
           <svg
             width="24"
             height="24"
@@ -176,7 +130,9 @@ const DisAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Пользователи" : ""}
+          </div>
+          {/* {menuOpen ? "Пользователи" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Пользователи</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Пользователи</span>}
         </Link>
         <Link
@@ -185,6 +141,7 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "hotels" && classes.menu_items__activeElem}`}
         >
+          <div className={classes.svgWrapper}>
           <svg
             width="22"
             height="19"
@@ -205,7 +162,9 @@ const DisAdminMenu = ({
               stroke="var(--menu-gray)"
             />
           </svg>
-          {menuOpen ? "Гостиницы" : ""}
+          </div>
+          {/* {menuOpen ? "Гостиницы" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Гостиницы</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Гостиницы</span>}
         </Link>
         <Link
@@ -214,6 +173,7 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "airlines" && classes.menu_items__activeElem}`}
         >
+          <div className={classes.svgWrapper}>
           <svg
             width="22"
             height="22"
@@ -227,7 +187,9 @@ const DisAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Авиакомпании" : ""}
+          </div>
+          {/* {menuOpen ? "Авиакомпании" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Авиакомпании</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Авиакомпании</span>}
         </Link>
         <Link
@@ -236,6 +198,7 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "myCompany" && classes.menu_items__activeElem___fill}`}
         >
+          <div className={classes.svgWrapper}>
           <svg
             width="20"
             height="19"
@@ -262,8 +225,9 @@ const DisAdminMenu = ({
               fill="var(--menu-gray)"
             />
           </svg>
-
-          {menuOpen ? "ГК Карс" : ""}
+          </div>
+          {/* {menuOpen ? "ГК Карс" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >ГК Карс</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>ГК Карс</span>}
         </Link>
         <Link
@@ -272,6 +236,7 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "registerOfContracts" && classes.menu_items__activeElem}`}
         >
+          <div className={classes.svgWrapper}>
           <svg
             width="16"
             height="20"
@@ -286,8 +251,9 @@ const DisAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-
-          {menuOpen ? "Договоры" : ""}
+          </div>
+          {/* {menuOpen ? "Договоры" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Договоры</DelayedText>
           {!menuOpen && (
             <span className={classes.tooltip}>Договоры</span>
           )}
@@ -298,6 +264,7 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "reports" && classes.menu_items__activeElem}`}
         >
+          <div className={classes.svgWrapper}>
           <svg
             width="22"
             height="22"
@@ -342,7 +309,9 @@ const DisAdminMenu = ({
               strokeLinejoin="round"
             />
           </svg>
-          {menuOpen ? "Отчеты" : ""}
+          </div>
+          {/* {menuOpen ? "Отчеты" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Отчеты</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
         </Link>
         <Link
@@ -357,6 +326,7 @@ const DisAdminMenu = ({
             setHovered(false);
           }}
         >
+          <div className={classes.svgWrapper}>
           <svg
             width="18"
             height="21"
@@ -372,7 +342,9 @@ const DisAdminMenu = ({
               strokeWidth={0}
             />
           </svg>
-          {menuOpen ? "Обновления" : ""}
+          </div>
+          {/* {menuOpen ? "Обновления" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Обновления</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
         </Link>
         <Link
@@ -381,46 +353,49 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "analytics" && classes.menu_items__activeElem___fill}`}
         >
-          <svg
-            width="20"
-            height="18"
-            viewBox="0 0 20 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M16.1175 2.72254L14.9033 3.82066C14.6139 4.07033 13.895 4.61726 13.688 4.89748C13.1872 4.7617 12.8301 4.56763 12.2173 4.70589C11.6403 4.83604 11.4521 5.10835 11.0861 5.34276L9.37314 4.70742C9.12602 3.48898 8.55491 2.4667 7.0357 2.692C6.40812 2.78508 5.9492 3.14696 5.71058 3.51504C5.26503 4.20232 5.41614 4.46243 5.40682 5.28719C4.67639 5.84059 3.84502 6.38291 3.19117 6.96385C2.62379 6.78064 1.57119 6.25257 0.610257 7.21818C-0.841181 8.6767 0.790786 11.513 2.96116 10.4C3.90978 9.9135 3.98716 9.28993 3.97282 8.00774C4.6935 7.47406 5.55383 6.90013 6.18713 6.3314C7.69263 6.78052 7.44633 6.91588 8.92691 5.96128L10.6387 6.60082C10.7865 7.3231 10.9041 7.78849 11.3302 8.14785C11.7126 8.47033 12.3508 8.73087 13.0471 8.60055C14.1801 8.38848 14.9411 7.29382 14.5252 5.92559L16.9547 3.74997C17.6893 3.94907 18.7533 4.2631 19.5141 3.2863C20.1148 2.51512 20.0877 1.38972 19.4778 0.664517C18.2543 -0.790381 15.3799 0.289734 16.1175 2.72254ZM1.80461 8.04712C0.896152 8.4945 1.5888 9.5515 2.29606 9.24244C3.0626 8.90749 2.56006 7.67507 1.80461 8.04712ZM12.4343 6.05405C11.5258 6.50146 12.2182 7.55878 12.9257 7.24937C13.6922 6.91416 13.1898 5.68198 12.4343 6.05405ZM17.7491 1.40358C16.8406 1.85099 17.5333 2.90798 18.2405 2.59893C19.0072 2.2639 18.5046 1.03151 17.7491 1.40358ZM7.11943 4.061C6.21125 4.50824 6.90324 5.56557 7.61086 5.25632C8.37753 4.92128 7.87493 3.68893 7.11943 4.061Z"
-              fill="var(--menu-gray)"
-            />
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M16.987 5.37514C15.6819 5.75305 15.9858 7.12518 15.9858 8.55904C15.9858 9.76679 15.9068 16.2334 16.0106 16.8447C16.0978 17.3584 16.51 17.7919 17.0154 17.9043C17.3274 17.9737 18.7091 17.9708 19.0064 17.8878C20.2444 17.5423 19.9712 16.0368 19.9712 14.7043C19.9712 13.4973 20.0501 7.02947 19.9461 6.41882C19.8583 5.90357 19.4505 5.4714 18.9419 5.35876C18.5841 5.27954 17.3027 5.28373 16.987 5.37514ZM17.3138 16.6147H18.6428L18.6432 6.64869H17.3141L17.3138 16.6147Z"
-              fill="var(--menu-gray)"
-            />
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M6.35775 8.03269C5.23133 8.35884 5.35647 9.29809 5.35649 10.5522C5.35654 11.6229 5.18053 16.6934 5.56576 17.3148C5.76527 17.6367 6.10618 17.9064 6.68211 17.9402C9.91438 18.1297 9.34195 17.3245 9.34195 11.8809C9.34195 10.1656 9.77436 8.08278 8.01641 7.98074C7.60432 7.95682 6.70478 7.9322 6.35775 8.03269ZM6.68453 16.6148H8.01358L8.01391 9.30623H6.6745L6.68453 16.6148Z"
-              fill="var(--menu-gray)"
-            />
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M11.6726 10.0257C10.7284 10.2992 10.6689 10.9481 10.6712 12.047C10.6733 13.0434 10.6714 14.0401 10.6714 15.0366C10.6714 15.9835 10.5094 17.0553 11.1063 17.592C11.5569 17.9971 12.9547 18.0937 13.6921 17.8879C14.5741 17.6418 14.6593 16.9011 14.657 15.8671C14.6549 14.8706 14.6569 13.8739 14.6569 12.8774C14.6569 11.9408 14.8092 10.8498 14.223 10.3211C13.7772 9.91885 12.3762 9.82202 11.6726 10.0257ZM11.9995 16.6148H13.3285L13.3288 11.2993H11.9995V16.6148Z"
-              fill="var(--menu-gray)"
-            />
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M1.04266 12.0188C-0.323136 12.4142 0.0479976 14.0506 0.0407708 16.0334C0.0374045 16.9566 0.133119 17.4639 0.774823 17.7934C1.18699 18.005 2.58546 18.0209 3.0621 17.8879C4.41914 17.5092 4.02207 15.3894 4.02755 13.8737C4.03089 12.9528 3.93499 12.4401 3.29409 12.113C2.88098 11.9021 1.4899 11.8893 1.04266 12.0188ZM1.36947 16.6147H2.6985L2.69885 13.2923H1.36947V16.6147Z"
-              fill="var(--menu-gray)"
-            />
-          </svg>
+          <div className={classes.svgWrapper}>
+            <svg
+              width="20"
+              height="18"
+              viewBox="0 0 20 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M16.1175 2.72254L14.9033 3.82066C14.6139 4.07033 13.895 4.61726 13.688 4.89748C13.1872 4.7617 12.8301 4.56763 12.2173 4.70589C11.6403 4.83604 11.4521 5.10835 11.0861 5.34276L9.37314 4.70742C9.12602 3.48898 8.55491 2.4667 7.0357 2.692C6.40812 2.78508 5.9492 3.14696 5.71058 3.51504C5.26503 4.20232 5.41614 4.46243 5.40682 5.28719C4.67639 5.84059 3.84502 6.38291 3.19117 6.96385C2.62379 6.78064 1.57119 6.25257 0.610257 7.21818C-0.841181 8.6767 0.790786 11.513 2.96116 10.4C3.90978 9.9135 3.98716 9.28993 3.97282 8.00774C4.6935 7.47406 5.55383 6.90013 6.18713 6.3314C7.69263 6.78052 7.44633 6.91588 8.92691 5.96128L10.6387 6.60082C10.7865 7.3231 10.9041 7.78849 11.3302 8.14785C11.7126 8.47033 12.3508 8.73087 13.0471 8.60055C14.1801 8.38848 14.9411 7.29382 14.5252 5.92559L16.9547 3.74997C17.6893 3.94907 18.7533 4.2631 19.5141 3.2863C20.1148 2.51512 20.0877 1.38972 19.4778 0.664517C18.2543 -0.790381 15.3799 0.289734 16.1175 2.72254ZM1.80461 8.04712C0.896152 8.4945 1.5888 9.5515 2.29606 9.24244C3.0626 8.90749 2.56006 7.67507 1.80461 8.04712ZM12.4343 6.05405C11.5258 6.50146 12.2182 7.55878 12.9257 7.24937C13.6922 6.91416 13.1898 5.68198 12.4343 6.05405ZM17.7491 1.40358C16.8406 1.85099 17.5333 2.90798 18.2405 2.59893C19.0072 2.2639 18.5046 1.03151 17.7491 1.40358ZM7.11943 4.061C6.21125 4.50824 6.90324 5.56557 7.61086 5.25632C8.37753 4.92128 7.87493 3.68893 7.11943 4.061Z"
+                fill="var(--menu-gray)"
+              />
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M16.987 5.37514C15.6819 5.75305 15.9858 7.12518 15.9858 8.55904C15.9858 9.76679 15.9068 16.2334 16.0106 16.8447C16.0978 17.3584 16.51 17.7919 17.0154 17.9043C17.3274 17.9737 18.7091 17.9708 19.0064 17.8878C20.2444 17.5423 19.9712 16.0368 19.9712 14.7043C19.9712 13.4973 20.0501 7.02947 19.9461 6.41882C19.8583 5.90357 19.4505 5.4714 18.9419 5.35876C18.5841 5.27954 17.3027 5.28373 16.987 5.37514ZM17.3138 16.6147H18.6428L18.6432 6.64869H17.3141L17.3138 16.6147Z"
+                fill="var(--menu-gray)"
+              />
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M6.35775 8.03269C5.23133 8.35884 5.35647 9.29809 5.35649 10.5522C5.35654 11.6229 5.18053 16.6934 5.56576 17.3148C5.76527 17.6367 6.10618 17.9064 6.68211 17.9402C9.91438 18.1297 9.34195 17.3245 9.34195 11.8809C9.34195 10.1656 9.77436 8.08278 8.01641 7.98074C7.60432 7.95682 6.70478 7.9322 6.35775 8.03269ZM6.68453 16.6148H8.01358L8.01391 9.30623H6.6745L6.68453 16.6148Z"
+                fill="var(--menu-gray)"
+              />
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M11.6726 10.0257C10.7284 10.2992 10.6689 10.9481 10.6712 12.047C10.6733 13.0434 10.6714 14.0401 10.6714 15.0366C10.6714 15.9835 10.5094 17.0553 11.1063 17.592C11.5569 17.9971 12.9547 18.0937 13.6921 17.8879C14.5741 17.6418 14.6593 16.9011 14.657 15.8671C14.6549 14.8706 14.6569 13.8739 14.6569 12.8774C14.6569 11.9408 14.8092 10.8498 14.223 10.3211C13.7772 9.91885 12.3762 9.82202 11.6726 10.0257ZM11.9995 16.6148H13.3285L13.3288 11.2993H11.9995V16.6148Z"
+                fill="var(--menu-gray)"
+              />
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M1.04266 12.0188C-0.323136 12.4142 0.0479976 14.0506 0.0407708 16.0334C0.0374045 16.9566 0.133119 17.4639 0.774823 17.7934C1.18699 18.005 2.58546 18.0209 3.0621 17.8879C4.41914 17.5092 4.02207 15.3894 4.02755 13.8737C4.03089 12.9528 3.93499 12.4401 3.29409 12.113C2.88098 11.9021 1.4899 11.8893 1.04266 12.0188ZM1.36947 16.6147H2.6985L2.69885 13.2923H1.36947V16.6147Z"
+                fill="var(--menu-gray)"
+              />
+            </svg>
+          </div>
 
-          {menuOpen ? "Аналитика" : ""}
+          {/* {menuOpen ? "Аналитика" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Аналитика</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Аналитика</span>}
         </Link>
         {/* <Link
@@ -462,7 +437,8 @@ const DisAdminMenu = ({
         >
           <img src="/instruction.png" alt="" />
 
-          {menuOpen ? "Инструкции" : ""}
+          {/* {menuOpen ? "Инструкции" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >Инструкции</DelayedText>
           {!menuOpen && (
             <span className={classes.tooltipBottom}>Инструкции</span>
           )}
@@ -473,7 +449,8 @@ const DisAdminMenu = ({
             !menuOpen ? classes.jcc : ""
           } ${id == "patchNotes" && classes.menu_items__activeElem___bottom}`}
         >
-          {menuOpen ? "Kars Avia CRM" : "CRM"}
+          {menuOpen ? "3.1.0" : "3.1.0"}
+          {/* {menuOpen ? "Kars Avia CRM" : "CRM"} */}
           {!menuOpen && (
             <span className={classes.tooltipBottom2}>Kars Avia CRM</span>
           )}

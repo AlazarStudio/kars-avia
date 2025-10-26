@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./HotelAbout_tabComponent.module.css";
-import { useQuery, useSubscription } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
 import HotelAboutRoomBlock from "../HotelAboutRoomBlock/HotelAboutRoomBlock.jsx";
 import {
@@ -9,6 +9,8 @@ import {
   GET_HOTEL,
   decodeJWT,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
+  GET_HOTEL_MEAL_PRICE,
+  REORDER_GALLERY,
 } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
 import { useNavigate } from "react-router-dom";
@@ -21,6 +23,9 @@ import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
 import TextEditorOutput from "../TextEditorOutput/TextEditorOutput.jsx";
 import HotelAboutTariffs from "../HotelAboutTariffs/HotelAboutTariffs.jsx";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
+import TariffsIcon from "../../../shared/icons/TariffsIcon.jsx";
+import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
 
 function HotelAbout_tabComponent({ id }) {
   // const [userRole, setUserRole] = useState();
@@ -32,6 +37,10 @@ function HotelAbout_tabComponent({ id }) {
   const [displayInfo, setDisplayInfo] = useState("generalInfo2");
   const [swiper, setSwiper] = useState();
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState(null);
+  const deleteComponentRef = useRef(null);
 
   const [menuOpen] = useLocalStorage("menuOpen", true);
   const { width } = useWindowSize();
@@ -49,32 +58,102 @@ function HotelAbout_tabComponent({ id }) {
     variables: { hotelId: id },
     // fetchPolicy: "cache-and-network",
   });
+  const {
+    loading: mealPriceLoading,
+    error: mealPriceError,
+    data: mealPriceData,
+  } = useQuery(GET_HOTEL_MEAL_PRICE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: { hotelId: id },
+  });
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_HOTELS_UPDATE_SUBSCRIPTION
   );
 
-  // let infoCities = useQuery(GET_CITIES);
-  // const [cities, setCities] = useState([]);
-
-  // useEffect(() => {
-  //   if (infoCities.data) {
-  //     const mappedCities =
-  //       infoCities.data?.citys.map((item) => ({
-  //         label: `${item.city}, ${item.region}`,
-  //         value: item.city,
-  //       })) || [];
-  //     setCities(mappedCities);
-  //   }
-  // }, [infoCities]);
-
   const [hotel, setHotel] = useState(null);
   const [newImage, setNewImage] = useState(null);
+  const [additionalServices, setAdditionalServices] = useState([]);
+  const [mealPrices, setMealPrices] = useState({
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+  });
+  const [mealPricesAirline, setMealPricesAirline] = useState({
+    breakfast: 0,
+    lunch: 0,
+    dinner: 0,
+  });
+
+  const [imagesToDelete, setImagesToDelete] = useState([]);
+
+  const handleDeleteImage = (imagePath) => {
+    setImagesToDelete((prev) => [...prev, imagePath]);
+    setShowDelete(true);
+  };
+
+  const [reorderGallery] = useMutation(REORDER_GALLERY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
+
+  const closeDeleteComponent = () => setShowDelete(false);
 
   useEffect(() => {
     if (data) {
       setHotel(data.hotel);
+      setAdditionalServices(data?.hotel?.additionalServices);
     }
   }, [data]);
+
+  const imagesArray = hotel?.gallery.filter(
+    (img) => !imagesToDelete.includes(img)
+  );
+
+  // console.log(imagesArray);
+  // console.log(imagesToDelete);
+
+  const handleDeleteImages = async () => {
+    try {
+      // console.log(id);
+      // console.log(imagesArray);
+      // console.log(imagesToDelete);
+
+      await reorderGallery({
+        variables: {
+          reorderHotelGalleryImagesId: id,
+          imagesArray: imagesArray,
+          imagesToDeleteArray: imagesToDelete,
+        },
+      });
+      setImagesToDelete([]); // Clear deleted images
+      refetch();
+    } catch (error) {
+      console.error("Error deleting images:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (mealPriceData) {
+      setMealPrices({
+        breakfast: mealPriceData.hotel?.mealPrice?.breakfast,
+        lunch: mealPriceData.hotel?.mealPrice?.lunch,
+        dinner: mealPriceData.hotel?.mealPrice?.dinner,
+      });
+      setMealPricesAirline({
+        breakfast: mealPriceData.hotel?.mealPriceForAir?.breakfast,
+        lunch: mealPriceData.hotel?.mealPriceForAir?.lunch,
+        dinner: mealPriceData.hotel?.mealPriceForAir?.dinner,
+      });
+    }
+  }, [mealPriceData]);
 
   useEffect(() => {
     if (dataSubscriptionUpd) refetch();
@@ -84,6 +163,8 @@ function HotelAbout_tabComponent({ id }) {
     () => (hotel?.type !== "apartment" ? hotel?.roomKind : hotel?.rooms),
     [hotel]
   );
+
+  const meal = user?.airlineId ? mealPricesAirline : mealPrices;
   return (
     <>
       {loading && <MUILoader fullHeight={"70vh"} />}
@@ -109,7 +190,9 @@ function HotelAbout_tabComponent({ id }) {
                   setDisplayInfo("generalInfo2");
                 }}
               >
-                <img src="/houseIcon.png" alt="" /> Общая информация
+                {/* <img src="/houseIcon.png" alt="" />  */}
+                <HomeIcon />
+                Общая информация
               </button>
 
               <button
@@ -120,7 +203,7 @@ function HotelAbout_tabComponent({ id }) {
               >
                 <img src="/roomsIcon.png" alt="" /> Номера
               </button>
-              {/* 
+
               <button
                 className={
                   displayInfo == "tariffs" ? classes.activeButton : null
@@ -129,9 +212,23 @@ function HotelAbout_tabComponent({ id }) {
                   setDisplayInfo("tariffs");
                 }}
               >
-                <img src="/tariffsIcon.png" alt="" /> Тарифы
-              </button> */}
+                {/* <img src="/tariffsIcon.png" alt="" />  */}
+                <TariffsIcon />
+                Тарифы
+              </button>
             </div>
+
+            {/* <div><img src="/roomsIcon.png" alt="" /> Дешевле по рынку на {hotel.discount} %</div> */}
+            {hotel.discount && (
+              <Button
+                type="button"
+                backgroundcolor={"#3CBC6726"}
+                color={"#3B6C54"}
+                cursor={"default"}
+              >
+                Дешевле по рынку на {hotel.discount} %
+              </Button>
+            )}
           </div>
 
           <div
@@ -221,6 +318,10 @@ function HotelAbout_tabComponent({ id }) {
                       slidesPerView={hotel?.gallery.length !== 0 ? 2 : 1}
                       direction="horizontal"
                       // pagination={{ clickable: true }}
+                      // autoplay={{
+                      //   delay: 4000,
+                      //   disableOnInteraction: false
+                      // }}
                       onSwiper={setSwiper}
                       onSlideChange={(swiper) =>
                         setActiveIndex(swiper.realIndex)
@@ -234,7 +335,31 @@ function HotelAbout_tabComponent({ id }) {
                             className={classes.swiperSlide}
                           >
                             {/* <div className={classes.hotelAboutImage}> */}
-                            <img src={`${server}${img}`} alt="" />
+                            <img
+                              src={`${server}${img}`}
+                              alt=""
+                              // onClick={() =>
+                              //   user?.role === roles.dispatcerAdmin ||
+                              //   user?.roles === roles.superAdmin
+                              //     ? handleDeleteImage(img)
+                              //     : null
+                              // }
+                            />
+                            {/* {user?.role === roles.dispatcerAdmin ||
+                            user?.role === roles.superAdmin ? (
+                              <button
+                                className={classes.deleteImageBtn}
+                                onClick={(e) => {
+                                  // e.stopPropagation();
+                                  user?.role === roles.dispatcerAdmin ||
+                                  user?.roles === roles.superAdmin
+                                    ? handleDeleteImage(img)
+                                    : null;
+                                }}
+                              >
+                              </button>
+                            ) : null} */}
+
                             {/* </div> */}
                           </SwiperSlide>
                         ))
@@ -256,6 +381,18 @@ function HotelAbout_tabComponent({ id }) {
                       )}
                     </Swiper>
                   </div>
+                  {/* {showDelete && (
+                    <DeleteComponent
+                      ref={deleteComponentRef}
+                      remove={() => {
+                        handleDeleteImages();
+                        closeDeleteComponent();
+                      }}
+                      close={closeDeleteComponent}
+                      title="Вы действительно хотите удалить это изображение?"
+                    />
+                  )} */}
+
                   {/* </div> */}
                 </div>
                 <div className={classes.hotelAboutItemWrapper}>
@@ -296,7 +433,10 @@ function HotelAbout_tabComponent({ id }) {
                     )}
                     <div
                       className={classes.contactsWrapper}
-                      style={{ width: "fit-content", flexBasis: !hotel.meal && "100%" }}
+                      style={{
+                        width: "fit-content",
+                        flexBasis: !hotel.meal && "100%",
+                      }}
                     >
                       <div className={classes.scheduleWrapper}>
                         <div className={classes.contactItem}>
@@ -364,8 +504,14 @@ function HotelAbout_tabComponent({ id }) {
                   {/* {console.log(hotel)} */}
                 </div>
               </div>
-            ) : // <HotelAboutTariffs tariffs={hotel?.tariffs || {}}/>
-            null}
+            ) : (
+              <HotelAboutTariffs
+                user={user}
+                tariffs={rooms || {}}
+                mealPrices={hotel?.meal ? meal : null}
+                additionalServices={additionalServices || {}}
+              />
+            )}
           </div>
         </div>
       )}
