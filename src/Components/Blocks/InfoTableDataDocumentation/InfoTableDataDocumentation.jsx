@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Modal, Box, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import classes from "./InfoTableDataDocumentation.module.css";
 import { useQuery } from "@apollo/client";
 import {
@@ -8,20 +10,29 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import { roles } from "../../../roles";
+import TextEditorOutput from "../TextEditorOutput/TextEditorOutput";
 
-function DocNode({ node }) {
+function DocNode({ node, openModal }) {
   return (
     <div className={classes.node}>
       <h4 className={classes.nodeTitle}>{node.name}</h4>
 
       {/* HTML-описание узла */}
-      <div dangerouslySetInnerHTML={{ __html: node.description }} />
+      {/* <div dangerouslySetInnerHTML={{ __html: node.description }} /> */}
+      <TextEditorOutput description={node.description}/>
+
 
       {/* Файлы, если есть */}
       {!!node.images?.length && (
         <div className={classes.files}>
           {node.images.map((i, index) => (
-            <img key={index} src={`${server}${i}`} alt="" loading="lazy" />
+            <img
+              key={index}
+              src={`${server}${i}`}
+              alt=""
+              loading="lazy"
+              onClick={() => openModal(`${server}${i}`)}
+            />
           ))}
         </div>
       )}
@@ -30,7 +41,7 @@ function DocNode({ node }) {
       {!!node.children?.length && (
         <div className={classes.children}>
           {node.children.map((child) => (
-            <DocNode key={child.id} node={child} />
+            <DocNode key={child.id} node={child} openModal={openModal} />
           ))}
         </div>
       )}
@@ -49,6 +60,10 @@ function InfoTableDataDocumentation({
   const [selectedId, setSelectedId] = useState(
     requests.length > 0 ? requests[0].id : null
   );
+
+  // State for modal
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState("");
 
   // console.log(filterValue);
   // console.log(requests);
@@ -73,6 +88,17 @@ function InfoTableDataDocumentation({
   useEffect(() => {
     setSelectedId(requests.length ? requests[0].id : null);
   }, [requests]); // этого достаточно; filterValue сюда не нужен
+
+  const openModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+    setSelectedImage("");
+  };
+
   return (
     <div className={classes.container}>
       {/* Left panel: list of documentation names */}
@@ -216,12 +242,14 @@ function InfoTableDataDocumentation({
               <strong>Категория:</strong> {data.documentationTree?.category} |
               <strong>Подкатегория:</strong> {data.documentationTree?.chapter}
             </p> */}
-            <div
+            {/* <div
               className={classes.description}
               dangerouslySetInnerHTML={{
                 __html: data.documentationTree.description,
               }}
-            />
+            /> */}
+           <TextEditorOutput description={data.documentationTree.description}/>
+
             {!!data.documentationTree.images?.length && (
               <div className={classes.files}>
                 {data.documentationTree.images.map((i, index) => (
@@ -230,6 +258,7 @@ function InfoTableDataDocumentation({
                     src={`${server}${i}`}
                     alt=""
                     loading="lazy"
+                    onClick={() => openModal(`${server}${i}`)}
                   />
                 ))}
               </div>
@@ -238,7 +267,7 @@ function InfoTableDataDocumentation({
             {!!data.documentationTree.children?.length && (
               <div className={classes.tree}>
                 {data.documentationTree.children.map((n) => (
-                  <DocNode key={n.id} node={n} />
+                  <DocNode key={n.id} node={n} openModal={openModal} />
                 ))}
               </div>
             )}
@@ -259,6 +288,31 @@ function InfoTableDataDocumentation({
           </article>
         )}
       </section>
+      <Modal open={modalIsOpen} onClose={closeModal} className={classes.modal}>
+        <Box className={classes.modalContent}>
+          <IconButton
+            className={classes.closeButton}
+            onClick={closeModal}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              color: "white",
+              backgroundColor: "rgba(0,0,0,0.5)",
+              "&:hover": {
+                backgroundColor: "rgba(0,0,0,0.7)",
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <img
+            src={selectedImage}
+            alt="Увеличенное изображение"
+            className={classes.modalImage}
+          />
+        </Box>
+      </Modal>
     </div>
   );
 }

@@ -129,7 +129,7 @@
     /* flex-wrap: wrap; */
     gap: 80px;
     /* padding-top: 20px; */
-    height: 530px;
+    height: 510px;
     overflow: scroll;
     padding-right: 20px;
 }
@@ -709,7 +709,7 @@
 
 @media (min-height: 0px) and (max-height: 900px) {
     .hotelAbout_info {
-        height: 430px;
+        height: 420px;
     }
 
     .hotelAbout_info__hotel {
@@ -721,9 +721,9 @@
     }
 }
 
-@media (min-height: 0px) and (max-height: 800px) {
+@media (min-height: 0px) and (max-height: 850px) {
     .hotelAbout_info {
-        height: 360px;
+        height: 370px;
     }
 
     .hotelAbout_info__hotel {
@@ -732,6 +732,19 @@
 
     .hotelAbout_rooms_block__hotel {
         height: 560px;
+    }
+}
+
+@media (min-height: 0px) and (max-height: 790px) {
+    .hotelAbout_info {
+        height: 300px;
+    }
+}
+
+
+@media (min-height: 0px) and (max-height: 700px) {
+    .hotelAbout_info {
+        height: 210px;
     }
 }
 

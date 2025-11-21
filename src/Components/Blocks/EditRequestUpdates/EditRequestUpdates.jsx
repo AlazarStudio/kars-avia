@@ -11,6 +11,7 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
+import TextEditorOutput from "../TextEditorOutput/TextEditorOutput.jsx";
 
 /* ============================== helpers ============================== */
 
@@ -93,10 +94,11 @@ function BlockItem({ node, disabled, onChange, onAddChild, onRemove }) {
       <div className={classes.blockItemRow}>
         <label>Описание блока</label>
         {disabled ? (
-          <div
-            className={classes.descriptionPreview}
-            dangerouslySetInnerHTML={{ __html: node.description || "" }}
-          />
+          // <div
+          //   className={classes.descriptionPreview}
+          //   dangerouslySetInnerHTML={{ __html: node.description || "" }}
+          // />
+          <TextEditorOutput description={node.description || ""} />
         ) : (
           <TextEditor
             anotherDescription={node.description}
@@ -332,10 +334,11 @@ function EditRequestUpdates({
                   onChange={(val) => setRootField("description", val)}
                 />
               ) : (
-                <div
-                  className={classes.descriptionPreview}
-                  dangerouslySetInnerHTML={{ __html: root.description || "" }}
-                />
+                // <div
+                //   className={classes.descriptionPreview}
+                //   dangerouslySetInnerHTML={{ __html: root.description || "" }}
+                // />
+                <TextEditorOutput description={root.description || ""} />
               )}
 
               {/* Превью существующих изображений корня */}

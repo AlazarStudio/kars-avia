@@ -185,3 +185,9 @@
         height: 93px;
     }
 }
+
+@media (max-height: 750px) {
+    .menu {
+        gap: 30px;
+    }
+}

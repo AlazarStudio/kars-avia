@@ -200,19 +200,19 @@ function CreateRequestAirlineTarifCategory({
       // );
       // console.log(selectedContract.id);
       // console.log(id);
-      await updateTariffCategory({
-        variables: {
-          input: {
-            id: selectedContract.id,
-            airlinePrices: [
-              response_update_tariff.data.updateAirline.prices[
-                response_update_tariff.data.updateAirline.prices.length - 1
-              ].id,
-            ],
-            airlineId: id,
-          },
-        },
-      });
+      // await updateTariffCategory({
+      //   variables: {
+      //     input: {
+      //       id: selectedContract.id,
+      //       airlinePrices: [
+      //         response_update_tariff.data.updateAirline.prices[
+      //           response_update_tariff.data.updateAirline.prices.length - 1
+      //         ].id,
+      //       ],
+      //       airlineId: id,
+      //     },
+      //   },
+      // });
       // refetchAllCategories();
       resetForm();
       onClose();

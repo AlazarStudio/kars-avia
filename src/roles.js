@@ -102,3 +102,76 @@ export const menuAccess = {
   reportMenu: true,
   reportCreate: true,
 };
+
+export const exampleData = [
+  {
+    id: "0001",
+    name: "Иванов Иван Иванович",
+    fullName: "Иванов Иван Иванович",
+    time: "14:30",
+    passengersCount: 4,
+  },
+  {
+    id: "0002",
+    name: "Иванов Иван Иванович",
+    fullName: "Иванов Иван Иванович",
+    time: "14:30",
+    passengersCount: 7,
+  },
+  {
+    id: "0003",
+    name: "Иванов Иван Иванович",
+    fullName: "Иванов Иван Иванович",
+    time: "14:30",
+    passengersCount: 3,
+  },
+  {
+    id: "0004",
+    name: "Иванов Иван Иванович",
+    fullName: "Иванов Иван Иванович",
+    time: "14:30",
+    passengersCount: 6,
+  },
+  {
+    id: "0005",
+    name: "Иванов Иван Иванович",
+    fullName: "Иванов Иван Иванович",
+    time: "14:30",
+    passengersCount: 8,
+  },
+];
+
+export const hotelsReserveData = [
+  {
+    hotel: {
+      id: "0001",
+      name: "Кавказ",
+      address: "Lorem ipsum",
+      passengersCount: 24,
+    },
+  },
+  {
+    hotel: {
+      id: "0002",
+      name: "Жемчужина Кавказа",
+      address: "Lorem ipsum",
+      passengersCount: 14,
+    },
+  },
+  {
+    hotel: {
+      id: "0003",
+      name: "Тест",
+      address: "Lorem ipsum",
+      passengersCount: 20,
+    },
+  },
+  {
+    hotel: {
+      id: "0004",
+      name: "Апартаменты",
+      address: "Lorem ipsum",
+      passengersCount: 28,
+    },
+  },
+];

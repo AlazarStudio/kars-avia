@@ -5,6 +5,8 @@ import { useParams } from "react-router-dom";
 import AllRoles from "../../RoleContent/AllRoles.jsx";
 import { GET_AIRLINE_DEPARTMENT, GET_AIRLINES_UPDATE_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests.js";
 import { useQuery, useSubscription } from "@apollo/client";
+import { useCookies } from "../../../hooks/useCookies.jsx";
+import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice.jsx";
 
 function Main_Page({ user }) {
   // Получаем параметры из URL
@@ -18,6 +20,9 @@ function Main_Page({ user }) {
 
   const [accessMenu, setAccessMenu] = useState({})
   const token = getCookie("token");
+
+  const { cookiesAccepted, acceptCookies, isInitialized } = useCookies()
+
   // console.log(user);
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_DEPARTMENT, {
     context: {
@@ -59,6 +64,10 @@ function Main_Page({ user }) {
       <MenuDispetcher id={id || pageClicked} user={user} accessMenu={accessMenu} />
 
       <AllRoles user={user} accessMenu={accessMenu} />
+      {/* Показываем уведомление только если cookies не приняты */}
+      {isInitialized && !cookiesAccepted  && (
+        <CookiesNotice onAccept={acceptCookies} />
+      )}
     </div>
   );
 }

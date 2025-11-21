@@ -17,8 +17,9 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
 import { fullNotifyTime, notifyTime } from "../../../roles";
+import InfoTableDataRepresentativeAirlines from "../InfoTableDataRepresentativeAirlines/InfoTableDataRepresentativeAirlines";
 
-function AirlinesList({ children, ...props }) {
+function AirlinesList({ children, representative, ...props }) {
   const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -49,7 +50,7 @@ function AirlinesList({ children, ...props }) {
       },
     },
     variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
-    skip: isSearching
+    skip: isSearching,
   });
 
   useEffect(() => {
@@ -161,7 +162,6 @@ function AirlinesList({ children, ...props }) {
     navigate(`?page=${selectedPage + 1}`);
   };
 
-  let filterList = ["Москва", "Санкт-Петербург"];
 
   return (
     <>
@@ -169,13 +169,6 @@ function AirlinesList({ children, ...props }) {
         <Header>Авиакомпании</Header>
 
         <div className={classes.section_searchAndFilter}>
-          {/* <input
-                        type="text"
-                        placeholder="Поиск"
-                        style={{ width: '500px' }}
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    /> */}
           <MUITextField
             label={"Поиск"}
             className={classes.mainSearch}
@@ -196,14 +189,25 @@ function AirlinesList({ children, ...props }) {
 
         {!loading && !error && (
           <>
-            <InfoTableDataAirlines
-              toggleRequestSidebar={toggleRequestSidebar}
-              requests={filteredRequests.map((request, index) => ({
-                ...request,
-                order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
-              }))}
-              pageInfo={pageInfo.skip}
-            />
+            {representative ? (
+              <InfoTableDataRepresentativeAirlines
+                toggleRequestSidebar={toggleRequestSidebar}
+                requests={filteredRequests.map((request, index) => ({
+                  ...request,
+                  order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
+                }))}
+                pageInfo={pageInfo.skip}
+              />
+            ) : (
+              <InfoTableDataAirlines
+                toggleRequestSidebar={toggleRequestSidebar}
+                requests={filteredRequests.map((request, index) => ({
+                  ...request,
+                  order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
+                }))}
+                pageInfo={pageInfo.skip}
+              />
+            )}
 
             {totalPages > 0 && (
               <div className={classes.pagination}>

@@ -1911,7 +1911,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params, user }) => {
                         <DraggableRequest
                             hotelAccess={hotelInfo?.access || false}
                             requestId={requestId}
-                            userRole={user.role}
+                            userRole={user?.role}
                             request={activeDragItem}
                             dayWidth={DAY_WIDTH}
                             currentMonth={currentMonth}

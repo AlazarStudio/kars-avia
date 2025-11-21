@@ -37,7 +37,7 @@ const DispatcherAdminContent = ({ user }) => {
       {id === "myCompany" && <MyCompany user={user} />}
       {id === "patchNotes" && <PatchNotesList user={user} />}
       {id === "access" && <AccessSettings user={user} />}
-      {id === "notifications" && <NotificationsSettings user={user} />}
+      {/* {id === "notifications" && <NotificationsSettings user={user} />} */}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
     </>

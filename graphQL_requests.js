@@ -3,14 +3,17 @@ import { gql } from "@apollo/client";
 // export const path = '192.168.0.113:4000';
 // export const path = '89.169.39.59:4000';
 
-// export const path = 'backend.karsavia.ru:443';
-// export const server = `https://${path}`;
+export const path = 'backend.karsavia.ru:443';
+export const server = `https://${path}`;
 
 // export const path = '192.168.0.14:4000';
 // export const server = `http://${path}`;
 
-export const path = '45.130.42.244:4000';
-export const server = `http://${path}`;
+// export const path = 'demobackend.karsavia.ru:443';
+// export const server = `https://${path}`;
+
+// export const path = '45.130.42.244:4000';
+// export const server = `http://${path}`;
 
 export const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -2724,16 +2727,17 @@ export const DELETE_DISPATCHER_USER = gql`
 // Отчеты
 
 export const CREATE_REPORT = gql`
-  mutation CreateAirlineReport($input: CreateReportInput!) {
-    createAirlineReport(input: $input) {
+  mutation CreateAirlineReport($input: CreateReportInput!, $createFilterInput: createFilterInput) {
+    createAirlineReport(input: $input, createFilterInput: $createFilterInput) {
+      id
       url
     }
   }
 `;
 
 export const CREATE_HOTEL_REPORT = gql`
-  mutation CreateHotelReport($input: CreateReportInput!) {
-    createHotelReport(input: $input) {
+  mutation CreateHotelReport($input: CreateReportInput!, $createFilterInput: createFilterInput) {
+    createHotelReport(input: $input, createFilterInput: $createFilterInput) {
       url
     }
   }

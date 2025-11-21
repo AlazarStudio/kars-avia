@@ -113,7 +113,7 @@
 }
 
 .bottom {
-    height: calc(100vh - 296px);
+    height: calc(100vh - 200px);
     overflow: hidden;
     overflow-y: auto;
 }

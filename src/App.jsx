@@ -28,6 +28,7 @@ import Login from "./Components/Pages/Login/Login";
 import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
 import { TokenRefresher } from "./TokenRefresher";
+import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementRepresentative/ReservePlacementRepresentative";
 
 function App() {
   const { user } = useAuth();
@@ -41,8 +42,8 @@ function App() {
 
   const wsLink = new GraphQLWsLink(
     createClient({
-      // url: `wss://${path}/graphql`,
-      url: `ws://${path}/graphql`, 
+      url: `wss://${path}/graphql`,
+      // url: `ws://${path}/graphql`, 
       connectionParams: {
         Authorization: `Bearer ${token}`,
       },
@@ -100,6 +101,10 @@ function App() {
               path="/:id/reservePlacement/:idRequest"
               element={<ReservePlacement user={user} />}
             />
+            {/* <Route
+              path="/:id/representativeRequestsPlacement/:idRequest"
+              element={<ReservePlacementRepresentative user={user} />}
+            /> */}
 
             {/* Шахматка */}
             {/* <Route

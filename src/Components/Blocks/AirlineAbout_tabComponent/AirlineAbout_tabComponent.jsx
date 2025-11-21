@@ -13,7 +13,12 @@ import {
   UPDATE_AIRLINE,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
-import { fullNotifyTime, menuAccess, notifyTime, roles } from "../../../roles.js";
+import {
+  fullNotifyTime,
+  menuAccess,
+  notifyTime,
+  roles,
+} from "../../../roles.js";
 import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
@@ -245,32 +250,43 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
     }
   };
 
+  const INFO_FIELDS = new Set([
+    "country","city","address","bank","bik","email","index","inn","number","ogrn","rs"
+  ]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    // console.log(name);
-    
-
-    setAirline((prev) => {
-      // console.log(Object.keys(prev.information || {}));
-      
-      // Проверяем, обновляется ли поле в `information`
-      if (Object.keys(prev.information || {})) {
-        return {
-          ...prev,
-          information: {
-            ...prev.information,
-            [name]: value, // Обновляем только нужное поле в `information`
-          },
-        };
-      }
-
-      // Обновление верхнеуровневых полей
-      return {
-        ...prev,
-        [name]: value,
-      };
-    });
+    setAirline(prev =>
+      INFO_FIELDS.has(name)
+        ? { ...prev, information: { ...prev.information, [name]: value } }
+        : { ...prev, [name]: value }
+    );
   };
+
+  // const handleChange = (e) => {
+  //   const { name, value } = e.target;
+  //   // console.log(name);
+  //   // console.log(value);
+
+  //   setAirline((prev) => {
+  //     // Проверяем, обновляется ли поле в `information`
+  //     if (Object.keys(prev.information || {}).includes(name)) {
+  //       return {
+  //         ...prev,
+  //         information: {
+  //           ...prev.information,
+  //           [name]: value, // Обновляем только нужное поле в `information`
+  //         },
+  //       };
+  //     } else {
+  //       // Обновление верхнеуровневых полей
+  //       return {
+  //         ...prev,
+  //         [name]: value,
+  //       };
+  //     }
+  //   });
+  // };
 
   // console.log(user);
 
@@ -332,15 +348,15 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                         История
                       </button>
                     </div>
-                    {(!user?.airlineId || accessMenu?.airlineUpdate) &&
-                    <Button onClick={handleEditClick}>
-                      <img
-                        src={isEditing ? "/save.png" : "/editIcon.png"}
-                        alt=""
-                      />
-                      {isEditing ? "Сохранить" : "Редактировать"}
-                    </Button>
-                    }
+                    {(!user?.airlineId || accessMenu?.airlineUpdate) && (
+                      <Button onClick={handleEditClick}>
+                        <img
+                          src={isEditing ? "/save.png" : "/editIcon.png"}
+                          alt=""
+                        />
+                        {isEditing ? "Сохранить" : "Редактировать"}
+                      </Button>
+                    )}
                   </>
                 )}
               </div>
@@ -452,9 +468,7 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                 >
                   <div
                     className={`${classes.column} ${
-                      menuOpen && width <= 1600
-                        ? classes.w60
-                        : classes.w50
+                      menuOpen && width <= 1600 ? classes.w60 : classes.w50
                     }`}
                   >
                     <div className={classes.airlineAbout_info_label}>Адрес</div>
@@ -571,9 +585,7 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
 
                   <div
                     className={`${classes.column} ${
-                      menuOpen && width <= 1600
-                        ? classes.w60
-                        : classes.w50
+                      menuOpen && width <= 1600 ? classes.w60 : classes.w50
                     }`}
                   >
                     <div className={classes.airlineAbout_info_label}>

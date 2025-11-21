@@ -1,0 +1,93 @@
+.contentWithChat {
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 20px;
+}
+
+.tabContent {
+  /* min-height: 400px; */
+  height: 100%;
+}
+
+.w10 {
+  width: 10%;
+}
+
+.w15 {
+  width: 15%;
+}
+
+.w20 {
+  width: 20%;
+}
+
+.w25 {
+  width: 25%;
+}
+
+.w30 {
+  width: 30%;
+}
+
+.jcCenter {
+  display: flex;
+  justify-content: center;
+}
+
+.tableCard {
+  background: #fff;
+  /* border: 1px solid #E8EDF4; */
+  border-radius: 10px 10px 0 0;
+  overflow: hidden;
+}
+
+.tableHead,
+.tableRow {
+  display: flex;
+  align-items: center;
+  padding: 20px;
+  gap: 30px;
+}
+
+.tableHead {
+  background: #fff;
+  color: #9E9E9E;
+  font-size: 16px;
+  border-bottom: 1px solid #E4E4EF;
+  height: 65px;
+}
+
+.tableRow {
+  border-bottom: 1px solid #E4E4EF;
+  color: var(--main-gray);
+}
+
+.actionBtn {
+  background: #005EFF;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.actionBtn:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+/* ReservePlacementRepresentative.module.css — добавьте */
+.cardWrap {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: calc(100vh - 272px);
+  /* min-height: 420px */
+  overflow: hidden;
+}
+
+.countChip {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  color: #545873;
+}

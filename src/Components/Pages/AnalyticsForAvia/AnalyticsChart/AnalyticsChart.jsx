@@ -18,7 +18,7 @@ function AnalyticsChart({
   title,
   // colors = ["#0057C3", "#F44336", "#4CAF50", "#9575CD", "#9E9E9E", "#FF9800", "#638EA4", "#3B653D"],
   colors = ["#0057C3", "#2196f3", "#4CAF50", "#9575CD", "#ff9800", "#f44336", "#638EA4", "#3B653D"],
-  height = 250
+  height = 265
 }) {
   const renderChart = () => {
     if (!data || data.length === 0) return <p>Нет данных</p>;

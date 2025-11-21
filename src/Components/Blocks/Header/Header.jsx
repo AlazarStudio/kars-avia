@@ -423,7 +423,7 @@ function Header({ children }) {
                       <p>{data?.user?.position?.name}</p>
                     </div>
                   </div>
-                  <div>
+                  <div className={classes.dropdownButtons}>
                     {/* {userData.role === roles.superAdmin && (
                     <div
                       className={classes.settings_item}

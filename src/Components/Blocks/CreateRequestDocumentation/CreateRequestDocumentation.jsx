@@ -120,7 +120,8 @@ function BlockItem({ node, filter, onChange, onAddChild, onRemove }) {
         <Button
           type="button"
           onClick={onRemove}
-          style={{ background: "#e45757" }}
+          backgroundcolor={"#e45757"}
+          // style={{ background:  }}
         >
           Удалить блок
         </Button>

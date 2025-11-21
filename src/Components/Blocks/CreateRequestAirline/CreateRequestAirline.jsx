@@ -98,23 +98,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
       setIsLoading(false);
       return;
     }
-
-    // // Проверка на заполненность полей
-    // if (!formData.name.trim()) {
-    //     alert('Пожалуйста, введите название авиакомпании.');
-    //     return;
-    // }
-
-    // if (!formData.images) {
-    //     alert('Пожалуйста, выберите файл для загрузки.');
-    //     return;
-    // }
-
-    // if (!formData.images) {
-    //     alert('Пожалуйста, выберите файл для загрузки');
-    //     return;
-    // }
-
+    
     try {
       let response_create_airline = await uploadFile({
         variables: {

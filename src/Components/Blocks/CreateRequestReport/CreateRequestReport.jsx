@@ -34,9 +34,17 @@ function CreateRequestReport({
     personId: "",
     airportId: "",
     position: "",
+    meal: true,
+    living: true,
   });
 
-  const [category, setCategory] = useState("Эскадрилья");
+  const categories = [
+    { id: "squadron", name: "Эскадрилья" },
+    { id: "engineers", name: "Инженеры" },
+    { id: "all", name: "Все" },
+  ];
+
+  const [category, setCategory] = useState(categories[0]);
 
   // Определяем, для чего создаётся отчёт: для авиакомпании или для гостиницы
   const [airOrHotel, setAirOrHotel] = useState(
@@ -45,8 +53,10 @@ function CreateRequestReport({
 
   // Состояние для списка авиакомпаний / гостиниц
   const [airlines, setAirlines] = useState([]);
+  const [hotels, setHotels] = useState([]);
   // Состояние для выбранной авиакомпании/гостиницы
   const [selectedAirline, setSelectedAirline] = useState(null);
+  const [selectedHotel, setSelectedHotel] = useState(null);
 
   const sidebarRef = useRef();
   const [isLoading, setIsLoading] = useState(false);
@@ -57,25 +67,46 @@ function CreateRequestReport({
   }, [show, user?.airlineId, user?.hotelId]);
 
   // Готовим запрос в зависимости от того, что нужно: авиакомпании или гостиницы
-  const { data } = useQuery(
-    airOrHotel === "airline" ? GET_AIRLINES_RELAY : GET_HOTELS_RELAY,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  // const { data } = useQuery(
+  //   airOrHotel === "airline" ? GET_AIRLINES_RELAY : GET_HOTELS_RELAY,
+  //   {
+  //     context: {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     },
+  //   }
+  // );
+
+  const { data } = useQuery(GET_AIRLINES_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    }
-  );
+    },
+  });
+
+  const { data: hotelsData } = useQuery(GET_HOTELS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   // Массив авиакомпаний или гостиниц
-  const selectData =
-    airOrHotel === "airline" ? data?.airlines?.airlines : data?.hotels?.hotels;
+  // const selectData =
+  //   airOrHotel === "airline" ? data?.airlines?.airlines : data?.hotels?.hotels;
 
-  // Когда данные загрузились, сохраняем их во внутреннем состоянии
+  // // Когда данные загрузились, сохраняем их во внутреннем состоянии
+  // useEffect(() => {
+  //   setAirlines(selectData || []);
+  // }, [selectData]);
+
   useEffect(() => {
-    setAirlines(selectData || []);
-  }, [selectData]);
+    setAirlines(data?.airlines?.airlines || []);
+    setHotels(hotelsData?.hotels?.hotels || []);
+  }, [data, hotelsData]);
 
   // Если у пользователя есть airlineId и мы работаем с "airline",
   // то автоматически устанавливаем выбранную авиакомпанию
@@ -92,15 +123,28 @@ function CreateRequestReport({
           personId: "", // Сбросим сотрудника, если вдруг был выбран
         }));
       }
+      setCategory(categories[0]);
     }
-  }, [airOrHotel, user.airlineId, airlines]);
+    if (airOrHotel === "hotel" && user.hotelId && hotels?.length) {
+      const matchedAirline = hotels.find(
+        (airline) => airline.id === user.hotelId
+      );
+      if (matchedAirline) {
+        setSelectedAirline(matchedAirline);
+        setFormData((prev) => ({
+          ...prev,
+          hotelId: matchedAirline.id,
+        }));
+      }
+    }
+  }, [airOrHotel, user.airlineId, user.hotelId, airlines, hotels]);
 
   const specialPositions =
-    category === "Эскадрилья"
+    category.id === "squadron"
       ? positions.filter((position) => position.category === "squadron")
-      : category === "Инженеры"
+      : category.id === "engineers"
       ? positions.filter((position) => position.category === "engineers")
-      : [];
+      : positions;
 
   // Мутация для создания отчёта
   const [createReport] = useMutation(
@@ -124,9 +168,12 @@ function CreateRequestReport({
       personId: "",
       airportId: "",
       position: "",
+      meal: true,
+      living: true,
     });
     setSelectedAirline(null);
     setAirOrHotel("");
+    setCategory(categories[0]);
     setIsEdited(false);
   }, [user.airlineId, user.hotelId]);
 
@@ -160,11 +207,12 @@ function CreateRequestReport({
 
   // Поля формы меняются
   const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setIsEdited(true);
+
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
     }));
   }, []);
 
@@ -174,7 +222,9 @@ function CreateRequestReport({
       formData.startDate &&
       formData.endDate &&
       category &&
-      (formData.airlineId || formData.hotelId)
+      // formData.airportId &&
+      (formData.airlineId || formData.hotelId) &&
+      (formData.living || formData.meal)
     );
   };
 
@@ -209,17 +259,29 @@ function CreateRequestReport({
       filter: {
         startDate: `${formData.startDate}T00:10:00`,
         endDate: `${formData.endDate}T23:50:00`,
+        ...(airOrHotel === "airline" && {
+          airportId: formData.airportId,
+          positionId: selectedPosition?.id || "",
+          position: category.id,
+          personId: formData.personId,
+        }),
         airlineId: formData.airlineId,
         hotelId: formData.hotelId,
-        airportId: formData.airportId,
-        positionId: selectedPosition?.id || "",
-        personId: formData.personId,
+        // ...(airOrHotel === "hotel" && {
+        // }),
       },
       format: "xlsx",
     };
 
+    const createFilterInput = {
+      living: formData.living,
+      meal: formData.meal,
+    };
+
     try {
-      await createReport({ variables: { input } });
+      await createReport({
+        variables: { input, createFilterInput },
+      });
       resetForm();
       onClose();
       addNotification(
@@ -235,6 +297,9 @@ function CreateRequestReport({
       setIsLoading(false);
     }
   };
+  // console.log(formData);
+  // console.log(category);
+  // console.log(airOrHotel);
 
   // console.log(`${formData.startDate}T00:10:00`);
   // console.log(`${formData.endDate}T23:50:00`);
@@ -299,33 +364,11 @@ function CreateRequestReport({
                       setIsEdited(true);
                     }}
                   />
-                </>
-              )}
-
-              {airOrHotel === "hotel" && !user.hotelId && (
-                <>
                   <label>Гостиница</label>
-                  {/* <MUIAutocomplete
-                    dropdownWidth={"100%"}
-                    label={"Выберите гостиницу"}
-                    options={airlines?.map((hotel) => hotel.name)}
-                    value={selectedAirline?.name || ""}
-                    onChange={(event, newValue) => {
-                      const matched = airlines.find(
-                        (hotel) => hotel.name === newValue
-                      );
-                      setSelectedAirline(matched || null);
-                      setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        hotelId: matched?.id || "",
-                      }));
-                      setIsEdited(true);
-                    }}
-                  /> */}
                   <MUIAutocompleteColor
                     dropdownWidth="100%"
                     label={"Выберите гостиницу"}
-                    options={airlines}
+                    options={hotels}
                     getOptionLabel={(option) =>
                       option
                         ? `${option.name}, город: ${option?.information?.city}`.trim()
@@ -352,15 +395,83 @@ function CreateRequestReport({
                         </li>
                       );
                     }}
-                    value={selectedAirline ? selectedAirline : ""}
+                    value={selectedHotel ? selectedHotel : ""}
+                    onChange={(event, newValue) => {
+                      const matched = hotels.find(
+                        (hotel) => hotel === newValue
+                      );
+                      setSelectedHotel(matched || null);
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        hotelId: matched?.id || "",
+                      }));
+                      setIsEdited(true);
+                    }}
+                  />
+                </>
+              )}
+
+              {airOrHotel === "hotel" && !user.hotelId && (
+                <>
+                  <label>Гостиница</label>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label={"Выберите гостиницу"}
+                    options={hotels}
+                    getOptionLabel={(option) =>
+                      option
+                        ? `${option.name}, город: ${option?.information?.city}`.trim()
+                        : ""
+                    }
+                    renderOption={(optionProps, option) => {
+                      const cityPart = `,, город: ${option?.information?.city}`;
+                      const labelText = `${option.name}${cityPart}`.trim();
+                      const words = labelText.split(", ");
+
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: 4,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={selectedHotel ? selectedHotel : ""}
+                    onChange={(event, newValue) => {
+                      const matched = hotels.find(
+                        (hotel) => hotel === newValue
+                      );
+                      setSelectedHotel(matched || null);
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        hotelId: matched?.id || "",
+                      }));
+                      setIsEdited(true);
+                    }}
+                  />
+                  <label>Авиакомпания</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите авиакомпанию"}
+                    options={airlines?.map((airline) => airline.name)}
+                    value={selectedAirline?.name || ""}
                     onChange={(event, newValue) => {
                       const matched = airlines.find(
-                        (hotel) => hotel === newValue
+                        (airline) => airline.name === newValue
                       );
                       setSelectedAirline(matched || null);
                       setFormData((prevFormData) => ({
                         ...prevFormData,
-                        hotelId: matched?.id || "",
+                        airlineId: matched?.id || "",
+                        personId: "",
                       }));
                       setIsEdited(true);
                     }}
@@ -374,23 +485,6 @@ function CreateRequestReport({
                 (selectedAirline?.staff || user.airlineId) && (
                   <>
                     <label>Аэропорт</label>
-                    {/* <MUIAutocomplete
-                      dropdownWidth={"100%"}
-                      // isDisabled={!isEditing}
-                      label={"Выберите аэропорт"}
-                      options={airports.map(
-                        (airport) =>
-                          `${airport.code} ${airport.name}, город: ${airport.city}`
-                      )}
-                      value={formData.airport}
-                      onChange={(event, newValue) => {
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          airport: newValue,
-                        }));
-                        setIsEdited(true);
-                      }}
-                    /> */}
                     <MUIAutocompleteColor
                       dropdownWidth="100%"
                       label={"Выберите аэропорт"}
@@ -440,50 +534,6 @@ function CreateRequestReport({
                         setIsEdited(true);
                       }}
                     />
-                    {/* <MUIAutocompleteColor
-                      dropdownWidth={"100%"}
-                      label={"Выберите аэропорт"}
-                      options={airports}
-                      getOptionLabel={(option) =>
-                        option
-                          ? `${option.code} ${option.name}, город: ${option.city}`.trim()
-                          : ""
-                      }
-                      renderOption={(optionProps, option) => {
-                        // Формируем строку для отображения
-                        const labelText =
-                          `${option.code} ${option.name}, город: ${option.city}`.trim();
-                        // Разбиваем строку по пробелам
-                        const words = labelText.split(" ");
-                        return (
-                          <li {...optionProps} key={option.id}>
-                            {words.map((word, index) => (
-                              <span
-                                key={index}
-                                style={{
-                                  color: index === 0 ? "black" : "gray",
-                                  marginRight: "4px",
-                                }}
-                              >
-                                {word}
-                              </span>
-                            ))}
-                          </li>
-                        );
-                      }}
-                      value={
-                        airports.find(
-                          (option) => option.id === formData.airportId
-                        ) || null
-                      }
-                      onChange={(e, newValue) => {
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          airportId: newValue?.id || "",
-                        }));
-                        setIsEdited(true);
-                      }}
-                    /> */}
 
                     <label>Категория</label>
                     <MUIAutocomplete
@@ -491,10 +541,16 @@ function CreateRequestReport({
                       label={"Выберите категорию"}
                       // labelOnFocus={"Выберите должность"}
                       // options={["По всем должностям", ...positions.map((position) => position.name)]}
-                      options={["Эскадрилья", "Инженеры"]}
-                      value={category}
+                      options={categories.map((i) => i.name)}
+                      value={
+                        categories?.find((i) => i.id === category.id).name ||
+                        categories[0].name
+                      }
                       onChange={(event, newValue) => {
-                        setCategory(newValue);
+                        const matches =
+                          categories.find((i) => i.name === newValue) ||
+                          categories[0];
+                        setCategory(matches);
                         setIsEdited(true);
                       }}
                     />
@@ -586,6 +642,26 @@ function CreateRequestReport({
                   </>
                 )}
 
+              <label>
+                <input
+                  type="checkbox"
+                  name="living"
+                  checked={formData.living}
+                  onChange={handleChange}
+                />
+                Проживание
+              </label>
+
+              <label>
+                <input
+                  type="checkbox"
+                  name="meal"
+                  checked={formData.meal}
+                  onChange={handleChange}
+                />
+                Питание
+              </label>
+
               <label>Начальная дата</label>
               <input
                 type="date"
@@ -619,372 +695,3 @@ function CreateRequestReport({
 }
 
 export default CreateRequestReport;
-
-// import React, { useState, useRef, useEffect, useCallback } from "react";
-// import classes from "./CreateRequestReport.module.css";
-// import Button from "../../Standart/Button/Button";
-// import Sidebar from "../Sidebar/Sidebar";
-// import { useMutation, useQuery } from "@apollo/client";
-// import {
-//   CREATE_HOTEL_REPORT,
-//   CREATE_REPORT,
-//   decodeJWT,
-//   GET_AIRLINES_RELAY,
-//   GET_HOTELS_RELAY,
-//   getCookie,
-// } from "../../../../graphQL_requests";
-// import MUILoader from "../MUILoader/MUILoader";
-// import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
-
-// function CreateRequestReport({ show, onClose, addNotification }) {
-//   const token = getCookie("token");
-//   const user = decodeJWT(token);
-
-//   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
-//   const [formData, setFormData] = useState({
-//     startDate: "",
-//     endDate: "",
-//     airlineId: user.airlineId ? user.airlineId : "",
-//     hotelId: user.hotelId ? user.hotelId : "",
-//     personId: "",
-//   });
-
-//   const [airlines, setAirlines] = useState([]);
-//   const [airOrHotel, setAirOrHotel] = useState(
-//     user?.airlineId ? "airline" : user?.hotelId ? "hotel" : ""
-//   );
-
-//   useEffect(() => {
-//     setAirOrHotel(user?.airlineId ? "airline" : user?.hotelId ? "hotel" : "");
-//   }, [show]);
-
-//   const [selectedAirline, setSelectedAirline] = useState(null);
-
-//   const sidebarRef = useRef();
-
-//   const resetForm = useCallback(() => {
-//     setFormData({
-//       startDate: "",
-//       endDate: "",
-//       airlineId: user.airlineId ? user.airlineId : "",
-//       hotelId: user.hotelId ? user.hotelId : "",
-//       personId: "",
-//     });
-//     setAirOrHotel("");
-//     setSelectedAirline("");
-//     setIsEdited(false); // Сброс флага изменений
-//   }, [user.airlineId, user.hotelId]);
-
-//   const closeButton = useCallback(() => {
-//     if (!isEdited) {
-//       resetForm();
-//       onClose();
-//       return;
-//     }
-
-//     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
-//       resetForm();
-//       onClose();
-//     }
-//   }, [isEdited, resetForm, onClose]);
-
-//   const handleChange = useCallback((e) => {
-//     const { name, value } = e.target;
-//     setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-//     setFormData((prevState) => ({
-//       ...prevState,
-//       [name]: value,
-//     }));
-//   }, []);
-
-//   const getCurrentDate = () => {
-//     const today = new Date();
-//     const year = today.getFullYear();
-//     const month = String(today.getMonth() + 1).padStart(2, "0"); // Месяцы в JavaScript начинаются с 0
-//     const day = String(today.getDate()).padStart(2, "0");
-
-//     return `${year}-${month}-${day}`;
-//   };
-
-//   const handleFileChange = (e) => {
-//     const file = e.target.files[0];
-//     if (file) {
-//       setFormData((prevState) => ({
-//         ...prevState,
-//         airlineImg: file.name,
-//       }));
-//     }
-//   };
-
-//   const { data } = useQuery(
-//     airOrHotel === "airline" ? GET_AIRLINES_RELAY : GET_HOTELS_RELAY
-//   );
-
-//   const selectData =
-//     airOrHotel === "airline" ? data?.airlines.airlines : data?.hotels.hotels;
-
-//   useEffect(() => {
-//     setAirlines(selectData);
-//   }, [selectData]);
-
-//   // Мутация для создания нового отчета
-//   const [createReport] = useMutation(
-//     airOrHotel === "airline" ? CREATE_REPORT : CREATE_HOTEL_REPORT,
-//     {
-//       context: {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       },
-//     }
-//   );
-
-//   const isFormValid = () => {
-//     return (
-//       formData.startDate &&
-//       formData.endDate &&
-//       (formData.airlineId || formData.hotelId)
-//     );
-//   };
-
-//   const today = new Date().toISOString().split("T")[0];
-
-//   const [isLoading, setIsLoading] = useState(false);
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setIsLoading(true);
-
-//     if (!isFormValid()) {
-//       alert("Пожалуйста, заполните все обязательные поля.");
-//       setIsLoading(false);
-//       return;
-//     }
-
-//     if (formData.endDate < formData.startDate) {
-//       alert("Конечная дата не может быть раньше начальной.");
-//       setFormData((prevFormData) => ({
-//         ...prevFormData,
-//         endDate: "",
-//       }));
-//       return;
-//     }
-
-//     const input = {
-//       filter: {
-//         startDate: formData.startDate,
-//         endDate: formData.endDate,
-//         airlineId: formData.airlineId,
-//         hotelId: formData.hotelId,
-//         personId: formData.personId,
-//       },
-//       format: "xlsx",
-//     };
-
-//     try {
-//       await createReport({ variables: { input } });
-//       resetForm();
-//       onClose();
-//       addNotification(
-//         `Отчет ${formData.personId !== "" ? "по сотруднику" : ""} ${
-//           user?.hotelId || user?.airlineId
-//             ? ""
-//             : airOrHotel === "airline"
-//             ? "авиакомпании"
-//             : "гостинице"
-//         } создан успешно.`,
-//         "success"
-//       );
-//     } catch (error) {
-//       console.error("Catch: ", error);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     setFormData((prevFormData) => ({
-//       ...prevFormData,
-//       personId: "", // Обнуляем сотрудника
-//       airlineId: user.airlineId ? user.airlineId : "", // Сбрасываем, если выбрана гостиница
-//       hotelId: user.hotelId ? user.hotelId : "", // Сбрасываем, если выбрана авиакомпания
-//     }));
-//     setSelectedAirline(null);
-//   }, [airOrHotel]);
-
-//   useEffect(() => {
-//     const handleClickOutside = (event) => {
-//       if (
-//         sidebarRef.current?.contains(event.target) // Клик в боковой панели
-//       ) {
-//         return; // Если клик внутри, ничего не делаем
-//       }
-//       // Если клик был вне боковой панели, то закрываем её
-//       closeButton();
-//     };
-
-//     if (show) {
-//       document.addEventListener("mousedown", handleClickOutside);
-//     } else {
-//       document.removeEventListener("mousedown", handleClickOutside);
-//     }
-//     // Очистка эффекта при демонтировании компонента
-//     return () => document.removeEventListener("mousedown", handleClickOutside);
-//   }, [show, closeButton]);
-
-//   // console.log(formData);
-
-//   return (
-//     <Sidebar show={show} sidebarRef={sidebarRef}>
-//       <div className={classes.requestTitle}>
-//         <div className={classes.requestTitle_name}>Добавить отчет</div>
-//         <div className={classes.requestTitle_close} onClick={closeButton}>
-//           <img src="/close.png" alt="" />
-//         </div>
-//       </div>
-
-//       {isLoading ? (
-//         <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
-//       ) : (
-//         <>
-//           <div className={classes.requestMiddle}>
-//             <div className={classes.requestData}>
-//               {user.airlineId || user.hotelId ? null : (
-//                 <>
-//                   <label>Авиакомпания или гостиница</label>
-//                   <MUIAutocomplete
-//                     dropdownWidth={"100%"}
-//                     label={"Выберите тип отчета"}
-//                     options={["Авиакомпания", "Гостиница"]}
-//                     value={
-//                       airOrHotel
-//                         ? airOrHotel === "airline"
-//                           ? "Авиакомпания"
-//                           : "Гостиница"
-//                         : ""
-//                     }
-//                     onChange={(event, newValue) => {
-//                       setAirOrHotel(
-//                         newValue === "Авиакомпания" ? "airline" : "hotel"
-//                       );
-//                       setIsEdited(true);
-//                     }}
-//                   />
-//                   {airOrHotel === "airline" ? (
-//                     <>
-//                       <label>Авиакомпания</label>
-//                       <MUIAutocomplete
-//                         dropdownWidth={"100%"}
-//                         label={"Выберите авиакомпанию"}
-//                         options={airlines?.map((airline) => airline.name)}
-//                         value={selectedAirline?.name || ""}
-//                         onChange={(event, newValue) => {
-//                           const selectedAirline = airlines.find(
-//                             (airline) => airline.name === newValue
-//                           );
-//                           setSelectedAirline(selectedAirline);
-//                           setFormData((prevFormData) => ({
-//                             ...prevFormData,
-//                             airlineId: selectedAirline?.id || "",
-//                           }));
-//                           setIsEdited(true);
-//                         }}
-//                       />
-//                       {selectedAirline?.staff ? (
-//                         <>
-//                           <label>Сотрудник авиакомпании</label>
-//                           <MUIAutocomplete
-//                             dropdownWidth={"100%"}
-//                             label={"Выберите сотрудника авиакомпании"}
-//                             options={[
-//                               "По всем сотрудникам",
-//                               ...selectedAirline.staff.map(
-//                                 (person) => person.name
-//                               ),
-//                             ]}
-//                             value={
-//                               selectedAirline.staff.find(
-//                                 (person) => person.id === formData.personId
-//                               )?.name || "По всем сотрудникам"
-//                             }
-//                             onChange={(event, newValue) => {
-//                               if (newValue === "По всем сотрудникам") {
-//                                 // Логика, если выбрали "По всем сотрудникам"
-//                                 setFormData((prevFormData) => ({
-//                                   ...prevFormData,
-//                                   personId: "", // или своя логика
-//                                 }));
-//                               } else {
-//                                 const selectedPerson =
-//                                   selectedAirline.staff.find(
-//                                     (person) => person.name === newValue
-//                                   );
-//                                 setFormData((prevFormData) => ({
-//                                   ...prevFormData,
-//                                   personId: selectedPerson?.id || "",
-//                                 }));
-//                               }
-//                               setIsEdited(true);
-//                             }}
-//                           />
-//                         </>
-//                       ) : null}
-//                     </>
-//                   ) : airOrHotel === "hotel" ? (
-//                     <>
-//                       <label>Гостиница</label>
-//                       <MUIAutocomplete
-//                         dropdownWidth={"100%"}
-//                         label={"Выберите гостиницу"}
-//                         options={airlines?.map((airline) => airline.name)}
-//                         value={selectedAirline?.name || ""}
-//                         onChange={(event, newValue) => {
-//                           const selectedAirline = airlines.find(
-//                             (airline) => airline.name === newValue
-//                           );
-//                           setSelectedAirline(selectedAirline);
-//                           setFormData((prevFormData) => ({
-//                             ...prevFormData,
-//                             hotelId: selectedAirline?.id || "",
-//                           }));
-//                           setIsEdited(true);
-//                         }}
-//                       />
-//                     </>
-//                   ) : null}
-//                 </>
-//               )}
-
-//               <label>Начальная дата</label>
-//               <input
-//                 type="date"
-//                 name="startDate"
-//                 placeholder="Начальная дата"
-//                 value={formData.startDate}
-//                 onChange={handleChange}
-//               />
-
-//               <label>Конечная дата</label>
-//               <input
-//                 type="date"
-//                 name="endDate"
-//                 min={formData.startDate}
-//                 placeholder="Конечная дата"
-//                 value={formData.endDate}
-//                 onChange={handleChange}
-//               />
-//             </div>
-//           </div>
-
-//           <div className={classes.requestButton}>
-//             <Button type="submit" onClick={handleSubmit}>
-//               Добавить
-//             </Button>
-//           </div>
-//         </>
-//       )}
-//     </Sidebar>
-//   );
-// }
-
-// export default CreateRequestReport;

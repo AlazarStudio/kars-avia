@@ -142,9 +142,12 @@ select {
     margin-top: 8px;
 }
 
-.blockItemActions a {
-    /* flex: 1; */
+.blockItemActions button {
     font-size: 14px;
+}
+
+.blockItem :last-child {
+    flex: 1;
 }
 
 .blocksHeader {

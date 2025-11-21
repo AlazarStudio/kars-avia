@@ -12,6 +12,8 @@
   gap: 5px;
   align-items: center;
   justify-content: space-between;
+  border: none;
+  cursor: pointer;
 }
 
 .open {

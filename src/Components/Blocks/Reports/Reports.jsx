@@ -131,6 +131,9 @@ function Reports({ children, accessMenu, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    onData: () => {
+      refetch();
+    },
   });
 
   const [deleteReport] = useMutation(DELETE_REPORT, {
@@ -140,16 +143,6 @@ function Reports({ children, accessMenu, ...props }) {
       },
     },
   });
-
-  // const addDispatcher = (newDispatcher) => {
-  //     setCompanyData([...companyData, newDispatcher]);
-  // };
-
-  // const updateDispatcher = (updatedDispatcher, index) => {
-  //     const newData = [...companyData];
-  //     newData[index] = updatedDispatcher;
-  //     setCompanyData(newData);
-  // };
 
   const deleteDispatcher = async (index) => {
     try {
@@ -232,10 +225,7 @@ function Reports({ children, accessMenu, ...props }) {
           : companyData.getHotelReport[0].reports
       );
     }
-
-    // Подписка
-    refetch();
-  }, [companyData, refetch, dataSubscription]);
+  }, [companyData]);
 
   const filteredRequests = reports.filter((request) => {
     const name = isAirline ? request?.airline?.name : request?.hotel?.name;

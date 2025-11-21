@@ -67,7 +67,7 @@ export default function AccessSettings() {
       );
       // console.log(sortedDepartment);
 
-      setAccessMenu(sortedDepartment.accessMenu);
+      setAccessMenu(sortedDepartment?.accessMenu);
       setPositionIds(sortedDepartment?.position?.map((i) => String(i.id)));
       // setDepartment(sortedDepartment);
     }
@@ -80,7 +80,6 @@ export default function AccessSettings() {
     value: String(i.id), // используем value вместо id
     label: `${i.name}`,
   }));
-
   // реф, чтобы при сабмите забрать актуальный локальный стейт из дочерней панели
   const localStateRef = useRef(null);
 
@@ -174,7 +173,7 @@ export default function AccessSettings() {
         </Header>
 
         <div className={classes.segmented}>
-          <button
+          {/* <button
             className={classes.segment}
             onClick={() => {
               navigate("/notifications", { state: location?.state });
@@ -184,7 +183,7 @@ export default function AccessSettings() {
           </button>
           <button className={`${classes.segment} ${classes.segmentActive}`}>
             Доступ
-          </button>
+          </button> */}
           <div className={classes.saveBar}>
             <Button
               onClick={handleSubmit}
@@ -249,40 +248,40 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
   const initial = useMemo(
     () => ({
       squadron: {
-        access: b(accessMenu.requestMenu),
-        create: b(accessMenu.requestCreate),
-        chat: b(accessMenu.requestChat),
-        edit: b(accessMenu.requestUpdate),
+        access: b(accessMenu?.requestMenu),
+        create: b(accessMenu?.requestCreate),
+        chat: b(accessMenu?.requestChat),
+        edit: b(accessMenu?.requestUpdate),
       },
       passengers: {
-        access: b(accessMenu.reserveMenu),
-        create: b(accessMenu.reserveCreate),
-        edit: b(accessMenu.reserveUpdate),
+        access: b(accessMenu?.reserveMenu),
+        create: b(accessMenu?.reserveCreate),
+        edit: b(accessMenu?.reserveUpdate),
       },
       users: {
-        access: b(accessMenu.userMenu),
-        add: b(accessMenu.userCreate),
-        edit: b(accessMenu.userUpdate),
+        access: b(accessMenu?.userMenu),
+        add: b(accessMenu?.userCreate),
+        edit: b(accessMenu?.userUpdate),
       },
       employees: {
-        access: b(accessMenu.personalMenu),
-        add: b(accessMenu.personalCreate),
-        edit: b(accessMenu.personalUpdate),
+        access: b(accessMenu?.personalMenu),
+        add: b(accessMenu?.personalCreate),
+        edit: b(accessMenu?.personalUpdate),
       },
       contracts: {
-        access: b(accessMenu.contracts)
+        access: b(accessMenu?.contracts)
       },
       analytics: {
-        access: b(accessMenu.analyticsMenu),
-        export: b(accessMenu.analyticsUpload),
+        access: b(accessMenu?.analyticsMenu),
+        export: b(accessMenu?.analyticsUpload),
       },
       aboutAirlines: {
-        access: b(accessMenu.airlineMenu),
-        edit: b(accessMenu.airlineUpdate),
+        access: b(accessMenu?.airlineMenu),
+        edit: b(accessMenu?.airlineUpdate),
       },
       reports: {
-        access: b(accessMenu.reportMenu),
-        create: b(accessMenu.reportCreate),
+        access: b(accessMenu?.reportMenu),
+        create: b(accessMenu?.reportCreate),
       },
     }),
     [accessMenu]

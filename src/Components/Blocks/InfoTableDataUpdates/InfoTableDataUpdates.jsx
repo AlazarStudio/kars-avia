@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
 import classes from "./InfoTableDataUpdates.module.css";
+import { Modal, Box, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { useQuery } from "@apollo/client";
 import { GET_DOCUMENTATION_TREE, server } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import { roles } from "../../../roles";
 
-function DocNode({ node }) {
+function DocNode({ node, openModal }) {
   return (
     <div className={classes.node}>
       <h4 className={classes.nodeTitle}>{node.name}</h4>
@@ -17,7 +19,13 @@ function DocNode({ node }) {
       {!!node.images?.length && (
         <div className={classes.files}>
           {node.images.map((i, index) => (
-            <img key={index} src={`${server}${i}`} alt="" loading="lazy" />
+            <img
+              key={index}
+              src={`${server}${i}`}
+              alt=""
+              loading="lazy"
+              onClick={() => openModal(`${server}${i}`)}
+            />
           ))}
         </div>
       )}
@@ -26,7 +34,7 @@ function DocNode({ node }) {
       {!!node.children?.length && (
         <div className={classes.children}>
           {node.children.map((child) => (
-            <DocNode key={child.id} node={child} />
+            <DocNode key={child.id} node={child} openModal={openModal} />
           ))}
         </div>
       )}
@@ -45,6 +53,10 @@ function InfoTableDataUpdates({
   const [selectedId, setSelectedId] = useState(
     requests.length > 0 ? requests[0].id : null
   );
+
+  // State for modal
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState("");
 
   // Fetch details for the selected documentation
   const { loading, error, data } = useQuery(GET_DOCUMENTATION_TREE, {
@@ -66,6 +78,16 @@ function InfoTableDataUpdates({
   useEffect(() => {
     setSelectedId(requests.length ? requests[0].id : null);
   }, [requests]); // этого достаточно; filterValue сюда не нужен
+
+  const openModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+    setSelectedImage("");
+  };
 
   return (
     <div className={classes.container}>
@@ -224,6 +246,7 @@ function InfoTableDataUpdates({
                     src={`${server}${i}`}
                     alt=""
                     loading="lazy"
+                    onClick={() => openModal(`${server}${i}`)}
                   />
                 ))}
               </div>
@@ -232,7 +255,7 @@ function InfoTableDataUpdates({
             {!!data.documentationTree.children?.length && (
               <div className={classes.tree}>
                 {data.documentationTree.children.map((n) => (
-                  <DocNode key={n.id} node={n} />
+                  <DocNode key={n.id} node={n} openModal={openModal} />
                 ))}
               </div>
             )}
@@ -253,6 +276,31 @@ function InfoTableDataUpdates({
           </article>
         )}
       </section>
+      <Modal open={modalIsOpen} onClose={closeModal} className={classes.modal}>
+        <Box className={classes.modalContent}>
+          <IconButton
+            className={classes.closeButton}
+            onClick={closeModal}
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              color: "white",
+              backgroundColor: "rgba(0,0,0,0.5)",
+              "&:hover": {
+                backgroundColor: "rgba(0,0,0,0.7)",
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <img
+            src={selectedImage}
+            alt="Увеличенное изображение"
+            className={classes.modalImage}
+          />
+        </Box>
+      </Modal>
     </div>
   );
 }

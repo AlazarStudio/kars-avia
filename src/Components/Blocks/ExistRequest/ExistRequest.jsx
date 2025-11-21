@@ -1394,9 +1394,9 @@ function ExistRequest({
                         : "Отменить"}
                       {/* <img src="/user-check.png" alt="" /> */}
                     </button>
-                    {user.role === roles.superAdmin ||
-                      (user.role === roles.dispatcerAdmin &&
-                        !formData.hotelId && (
+                    {((user.role === roles.superAdmin ||
+                      user.role === roles.dispatcerAdmin) &&
+                        !formData.hotelId) && (
                           <Button
                             onClick={() => {
                               onClose();
@@ -1416,7 +1416,7 @@ function ExistRequest({
                               alt=""
                             />
                           </Button>
-                        ))}
+                        )}
                   </div>
                 )}
               {formData.status !== "created" &&

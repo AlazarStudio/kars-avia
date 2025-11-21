@@ -131,7 +131,7 @@ function SupportPage({ children, user, ...props }) {
   const filteredRequests = useMemo(() => {
     const dataSource = data?.supportChats || []; // Если data?.supportChats - undefined, используем пустой массив
     return dataSource.filter((request) =>
-      request.participants[0].name
+      request.participants[0]?.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     );

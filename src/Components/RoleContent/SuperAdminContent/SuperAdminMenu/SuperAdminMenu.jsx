@@ -374,7 +374,7 @@ const SuperAdminMenu = ({
           <DelayedText show={menuOpen} delay={200} >Поддержка</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Поддержка</span>}
         </Link>
-        <Link
+        {/* <Link
           to={"/updates"}
           className={`${classes.menu_items__elem} ${
             !menuOpen ? classes.jcc : ""
@@ -401,10 +401,9 @@ const SuperAdminMenu = ({
               strokeWidth={0}
             />
           </svg>
-          {/* {menuOpen ? "Обновления" : ""} */}
           <DelayedText show={menuOpen} delay={200} >Обновления</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
-        </Link>
+        </Link> */}
         <Link
           to={"/analytics"}
           className={`${classes.menu_items__elem___fill} ${
@@ -519,7 +518,7 @@ const SuperAdminMenu = ({
             />
           </svg> */}
           {/* {menuOpen ? "Kars Avia CRM" : "CRM"} */}
-          {menuOpen ? "3.1.0" : "3.1.0"}
+          {menuOpen ? "3.1.1" : "3.1.1"}
           {!menuOpen && (
             <span className={classes.tooltipBottom2}>Kars Avia CRM</span>
           )}

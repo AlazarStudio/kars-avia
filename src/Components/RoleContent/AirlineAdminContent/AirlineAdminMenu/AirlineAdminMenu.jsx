@@ -359,7 +359,7 @@ const AirlineAdminMenu = ({
           {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
         </Link>
       )}
-      <Link
+      {/* <Link
         to={"/updates"}
         className={`${classes.menu_items__elem} ${
           !menuOpen ? classes.jcc : ""
@@ -388,12 +388,11 @@ const AirlineAdminMenu = ({
             />
           </svg>
         </div>
-        {/* {menuOpen ? "Обновления" : ""} */}
         <DelayedText show={menuOpen} delay={200}>
           Обновления
         </DelayedText>
         {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
-      </Link>
+      </Link> */}
       <Link
         to={"/documentation"}
         className={`${classes.menu_items__elem} ${

@@ -305,17 +305,27 @@
 
 .files img {
     margin-top: 10px;
-    max-width: 300px;
+    /* margin-left: -20px; */
+    max-width: 400px;
     max-height: 300px;
     width: auto;
     height: auto;
-    object-fit: contain;
+    object-fit: cover;
+    border-radius: 10px;
+    transition: all ease-in-out 0.3s;
+    /* transform: scale(0.9); */
+    cursor: pointer;
 }
+
+/* .files img:hover {
+    transform: scale(1.0);
+    margin-left: 0px;
+} */
 
 .files a {
     text-decoration: none;
     color: #2f80ed;
-    color: #2f80ed;
+    /* color: #2f80ed; */
 }
 
 .files a:hover {
@@ -325,7 +335,7 @@
 
 /* InfoTableDataDocumentation.module.css */
 .node {
-    border-left: 2px dashed #0058c357;
+    /* border-left: 2px dashed #0058c357; */
     padding-left: 12px;
     /* margin: 12px 0; */
 }
@@ -342,6 +352,43 @@
 .error {
     color: #b00020;
     white-space: pre-wrap;
+}
+
+.clickableImage {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.clickableImage:hover {
+  transform: scale(1.02);
+}
+
+.modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalContent {
+  position: relative;
+  outline: none;
+  border: none;
+  background: transparent;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.modalImage {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+.modal .MuiBackdrop-root {
+  background-color: rgba(0, 0, 0, 0.75);
 }
 
 

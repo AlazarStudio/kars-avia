@@ -138,8 +138,22 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         }, {})
       );
 
+      // вариант 1 — короче
+      // sortedTarifs.forEach((category) => {
+      //   category.rooms.sort((a, b) =>
+      //     a.name.localeCompare(b.name, undefined, {
+      //       numeric: true,
+      //       sensitivity: "base",
+      //     })
+      //   );
+      // });
+      // или вариант 2 — Collator (быстрее на больших массивах)
+      const collator = new Intl.Collator(undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
       sortedTarifs.forEach((category) => {
-        category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+        category.rooms.sort((a, b) => collator.compare(a.name, b.name));
       });
 
       setAddTarif(sortedTarifs);
@@ -147,6 +161,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
     if (dataSubscriptionUpd) refetch();
   }, [data, dataSubscriptionUpd, refetch]);
+  // console.log(data?.hotel?.rooms);
 
   useEffect(() => {
     if (data && data.hotel.type) setType(data.hotel.type);

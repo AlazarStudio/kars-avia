@@ -249,7 +249,27 @@
 }
 
 @media (min-width: 0px) and (max-width: 1399px) {
-  .menu_items__elem {
+  .menu_items__elem,
+  .menu_items__elem___fill {
     font-size: 14px;
+  }
+
+}
+
+@media (min-height: 0px) and (max-height: 900px) {
+  .menuContainer {
+    height: 70vh;
+  }
+
+  .menu_items__elem,
+  .menu_items__elem___fill {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+@media (max-height: 750px) {
+  .menuContainer {
+    height: 60vh;
   }
 }

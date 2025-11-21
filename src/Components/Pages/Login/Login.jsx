@@ -127,6 +127,7 @@ function Login() {
           sx={{ fontWeight: "bold", color: "var(--main-gray)" }}
         >
           Вход в CRM Kars Avia
+          {/* Вход в демо-версию CRM Kars Avia */}
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mt: 2 }}>
