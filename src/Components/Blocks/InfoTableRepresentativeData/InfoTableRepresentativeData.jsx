@@ -40,7 +40,8 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                         )
                         )) && '0.5' }} >
                         {/* {item.status == 'created' && <div className={classes.newRequest}></div>} */}
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w7}`}>{item.reserveNumber.slice(0, 4)}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w7}`}>{index+1}</div>
+                        {/* <div className={`${classes.InfoTable_data_elem} ${classes.w7}`}>{item.reserveNumber.slice(0, 4)}</div> */}
                         {item?.chat?.some(chat => 
                             chat.unreadMessagesCount > 0 && (
                                 (user.hotelId && chat.hotelId === user.hotelId) ||
@@ -67,20 +68,23 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                         className={`${classes.InfoTable_data_elem} ${classes.w15}`} 
                         style={{justifyContent:"center"}}
                         >
-                            MRV1213
+                            {item.flightNumber}
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.p0} ${classes.w18}`} style={{justifyContent:"center"}}>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.p0} ${classes.w18}`} style={{justifyContent:"center", textAlign:'center'}}>
                                     {/* <span><img src="/calendar.png" alt="" /> {convertToDate(item.departure)}</span>
                                     <span><img src="/time.png" alt="" /> {convertToDate(item.departure, true)}</span> */}
-                                    Вода
+                                    {item.waterService?.plan?.enabled && <>Вода<br /></>}
+                                    {item.mealService?.plan?.enabled && <>Питание <br /></>}
+                                    {(item.livingService?.plan?.enabled && !item.livingService?.withTransfer) && <>Проживание <br /></>}
+                                    {item.livingService?.withTransfer && <>Трансфер+Проживание <br /></>}
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_position}>
-                                <div className={item.status}></div>
-                                {item.status == 'created' && 'Создан'}
-                                {item.status == 'opened' && 'В обработке'}
-                                {item.status == 'cancelled' && 'Отменен'}
-                                {item.status == 'done' && 'Размещен'}
+                                <div className={item.status?.toLowerCase()}></div>
+                                {item.status?.toLowerCase() == 'created' && 'Создан'}
+                                {item.status?.toLowerCase() == 'opened' && 'В обработке'}
+                                {item.status?.toLowerCase() == 'cancelled' && 'Отменен'}
+                                {item.status?.toLowerCase() == 'done' && 'Размещен'}
                             </div>
                         </div>
                     </Link>

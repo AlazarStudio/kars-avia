@@ -212,7 +212,7 @@ const RepresentativeAdminMenu = ({
           </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
         </Link>
-        <Link
+        {/* <Link
           to={"/updates"}
           className={`${classes.menu_items__elem} ${
             !menuOpen ? classes.jcc : ""
@@ -245,7 +245,7 @@ const RepresentativeAdminMenu = ({
             Обновления
           </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
-        </Link>
+        </Link> */}
         <Link
           to={"/documentation"}
           className={`${classes.menu_items__elem___fill} ${

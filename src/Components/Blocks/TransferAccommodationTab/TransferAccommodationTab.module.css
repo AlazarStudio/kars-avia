@@ -43,6 +43,7 @@
 .jcCenter {
   display: flex;
   justify-content: center;
+  text-align: center;
 }
 
 .jcEnd {
@@ -125,4 +126,12 @@
   gap: 6px;
   align-items: center;
   color: #545873;
+}
+
+@media (min-width: 0px) and (max-width: 1499px) {
+  .tableHead,
+  .tableRow {
+    font-size: 14px;
+    gap: 15px;
+  }
 }

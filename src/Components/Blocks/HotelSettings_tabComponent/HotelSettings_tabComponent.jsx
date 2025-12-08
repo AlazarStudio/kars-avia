@@ -149,12 +149,26 @@ function HotelSettings_tabComponent({ id }) {
 
   const [showDelete, setShowDelete] = useState(false);
 
+  // 1. начальная загрузка / обновление, но только когда не редактируем
   useEffect(() => {
-    if (data) {
+    if (!data?.hotel) return;
+
+    // если сейчас не редактируем — можно синхронизировать с сервером
+    if (!isEditing) {
       setHotel(data.hotel);
     }
-    if (dataSubscriptionUpd) refetch();
-  }, [data, dataSubscriptionUpd, refetch]);
+  }, [data, isEditing]);
+
+  // 2. подписка: если пришло обновление — рефетчим,
+  //   но НЕ во время редактирования, чтобы не сбивать форму
+  useEffect(() => {
+    if (dataSubscriptionUpd && !isEditing) {
+      refetch();
+    }
+  }, [dataSubscriptionUpd, isEditing, refetch]);
+
+
+  // console.log(dataSubscriptionUpd)
 
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);

@@ -18,6 +18,7 @@ import { useWindowSize } from "../../../hooks/useWindowSize";
 function Filter({
   toggleSidebar,
   isVisibleAirFiler,
+  representativeRequests,
   selectedAirline,
   setSelectedAirline,
   selectedAirport,
@@ -108,6 +109,22 @@ function Filter({
       { label: "Размещен", value: "done" },
       { label: "Готов к архиву", value: "archiving" },
       { label: "Отменен", value: "canceled" },
+    ];
+  }
+
+  if (
+    ((user && user?.role === roles.superAdmin) ||
+      user?.role === roles.dispatcerAdmin ||
+      user?.role === roles.airlineAdmin) &&
+    representativeRequests
+  ) {
+    filterListShow = [
+      { label: "Все заявки", value: null },
+      { label: "Создан", value: "CREATED" },
+      { label: "Ожидает обработки", value: "ACCEPTED" },
+      { label: "В процессе", value: "IN_PROGRESS" },
+      { label: "Завершен", value: "COMPLETED" },
+      { label: "Отменен", value: "CANCELLED" },
     ];
   }
 
@@ -388,13 +405,15 @@ function Filter({
             }}
           />
 
-          <DateRangeModalSelector
-            width={dropdownWidth}
-            initialRange={initialRange}
-            onChange={(start, end) =>
-              onRangeChange({ startDate: start, endDate: end })
-            }
-          />
+          {!representativeRequests && (
+            <DateRangeModalSelector
+              width={dropdownWidth}
+              initialRange={initialRange}
+              onChange={(start, end) =>
+                onRangeChange({ startDate: start, endDate: end })
+              }
+            />
+          )}
 
           {/* <DropDownList
             width={dropdownWidth}

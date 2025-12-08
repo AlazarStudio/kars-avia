@@ -22,12 +22,11 @@ const RepresentativeAdminContent = ({ user }) => {
       )}
       {id === "representativeCompany" && <RepresentativeAirlineCompany_tabComponent user={user} id={user?.airlineId} />}
       {id === "airlines" && <AirlinesList user={user} representative={true}/>}
-      {id === "registerOfContracts" && <RegisterOfContracts user={user} />}
       {id === "reports" && <Reports user={user} />}
       {id === "analytics" && <Analytics user={user} />}
       {id === "documentation" && <DocumentationList user={user} />}
-      {id === "updates" && <UpdatesList user={user} />}
-      {id === "patchNotes" && <PatchNotesList user={user} />}
+      {/* {id === "updates" && <UpdatesList user={user} />} */}
+      {/* {id === "patchNotes" && <PatchNotesList user={user} />} */}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
     </>

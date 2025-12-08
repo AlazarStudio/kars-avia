@@ -128,7 +128,7 @@
     justify-content: space-between;
     /* flex-wrap: wrap; */
     gap: 80px;
-    padding-top: 30px;
+    margin-top: 30px;
     height: 630px;
     overflow: scroll;
     padding-right: 10px;

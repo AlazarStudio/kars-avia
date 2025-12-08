@@ -12,8 +12,7 @@ function CreateRequestTarifCategory({
   show,
   id,
   onClose,
-  addTarif,
-  setAddTarif,
+  refetch,
   user,
   type,
   addNotification,
@@ -41,7 +40,7 @@ function CreateRequestTarifCategory({
     },
   });
 
-  const [tarifNames, setTarifNames] = useState([]);
+  // const [tarifNames, setTarifNames] = useState([]);
   const sidebarRef = useRef();
 
   const resetForm = () => {
@@ -147,6 +146,7 @@ function CreateRequestTarifCategory({
       onClose();
       setIsLoading(false);
       addNotification("Добавление тарифа прошло успешно.", "success");
+      refetch();
     } catch (error) {
       setIsLoading(false);
       alert("Произошло ошибка при добавлении тарифа.");
@@ -170,13 +170,13 @@ function CreateRequestTarifCategory({
     }
   }, [show]);
 
-  useEffect(() => {
-    const names = addTarif?.map((tarif) => ({
-      id: tarif.id,
-      name: tarif.name,
-    }));
-    setTarifNames(names);
-  }, [addTarif]);
+  // useEffect(() => {
+  //   const names = addTarif?.map((tarif) => ({
+  //     id: tarif.id,
+  //     name: tarif.name,
+  //   }));
+  //   setTarifNames(names);
+  // }, [addTarif]);
 
   const categories = [
     {
@@ -258,7 +258,7 @@ function CreateRequestTarifCategory({
                 onChange={(event, newValue) => {
                   const selectedCategory = useCategories.find(
                     (category) => category.label === newValue
-                  );
+                  ) || "";
                   setFormData((prevFormData) => ({
                     ...prevFormData,
                     category: selectedCategory.value,

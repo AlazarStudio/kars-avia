@@ -51,6 +51,7 @@ export default function WaterSupplyTab({
       addNotification("Поставка завершена", "success");
     },
   });
+// console.log(request);
 
   // WaterSupplyTab.jsx
   return (
@@ -69,9 +70,9 @@ export default function WaterSupplyTab({
           </div>
           <div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
             {/* <span>Время выдачи</span> */}
-            {!!request?.passengerCount && (
+            {!!request?.waterService?.plan?.peopleCount && (
               <span className={classes.countChip}>
-                <PeopleCountIcon /> {request.passengerCount}4
+                <PeopleCountIcon /> {request.waterService.plan.peopleCount}
               </span>
             )}
           </div>

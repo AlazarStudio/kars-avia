@@ -30,6 +30,7 @@ import EditRequestTarifAdditionalServices from "../EditRequestTarifAdditionalSer
 function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   const token = getCookie("token");
   // console.log(id);
+  const [showAddTarifCategory, setShowAddTarifCategory] = useState(false);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
     context: {
@@ -58,8 +59,10 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     GET_HOTELS_UPDATE_SUBSCRIPTION,
     {
       onData: () => {
-        refetch();
-        mealRefetch();
+        if (!showAddTarifCategory) {
+          refetch();
+          mealRefetch();
+        }
       },
     }
   );
@@ -81,7 +84,6 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   });
 
   const [showAddTarif, setShowAddTarif] = useState(false);
-  const [showAddTarifCategory, setShowAddTarifCategory] = useState(false);
   const [showAddAS, setShowAddAS] = useState(false);
   const [showEditAddTarif, setEditShowAddTarif] = useState(false);
   const [showEditAddTarifCategory, setEditShowAddTarifCategory] =
@@ -122,12 +124,11 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   });
 
   useEffect(() => {
-    if (data) {
+    if (!data || showAddTarifCategory) return;
       setAddTarif(data.hotel?.roomKind);
       setMeal(data.hotel?.meal);
       setAdditionalServices(data?.hotel?.additionalServices);
-    }
-  }, [data]);
+  }, [data, showAddTarifCategory]);
 
   useEffect(() => {
     if (mealPriceData) {
@@ -144,15 +145,29 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     }
   }, [mealPriceData]);
 
-  const handleSearchTarif = (e) => {
-    setSearchTarif(e.target.value);
-  };
-
   const deleteComponentRef = useRef();
 
-  const toggleTarifs = () => {
-    setShowAddTarif(!showAddTarif);
-  };
+  // const handleSearchTarif = (e) => {
+  //   setSearchTarif(e.target.value);
+  // };
+
+  // const toggleTarifs = () => {
+  //   setShowAddTarif(!showAddTarif);
+  // };
+
+  // const toggleEditTarifs = (tarif) => {
+  //   setSelectedTarif(tarif);
+  //   setEditShowAddTarif(true);
+  //   // setEditShowAddTarifCategory(true);
+  // };
+
+  // console.log(selectedTarif);
+
+  // const handleEditTarif = (updatedTarif) => {
+  //   setAddTarif(updatedTarif);
+  //   setEditShowAddTarif(false);
+  //   setSelectedTarif(null);
+  // };
 
   const toggleTarifsCategory = () => {
     setShowAddTarifCategory(!showAddTarifCategory);
@@ -160,17 +175,11 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
 
   const toggleAdditionalServices = (tarif) => {
     setShowAdditionalServices(!showAdditionalServices);
-    setSelectedAS(tarif)
+    setSelectedAS(tarif);
   };
 
   const toggleAS = () => {
     setShowAddAS(!showAddAS);
-  };
-
-  const toggleEditTarifs = (tarif) => {
-    setSelectedTarif(tarif);
-    setEditShowAddTarif(true);
-    // setEditShowAddTarifCategory(true);
   };
 
   const toggleEditTarifsCategory = (tarif) => {
@@ -182,14 +191,6 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     // });
     setSelectedTarif(tarif);
     setEditShowAddTarifCategory(true);
-  };
-
-  // console.log(selectedTarif);
-
-  const handleEditTarif = (updatedTarif) => {
-    setAddTarif(updatedTarif);
-    setEditShowAddTarif(false);
-    setSelectedTarif(null);
   };
 
   const handleEditTarifCategory = (updatedCategory) => {
@@ -424,9 +425,8 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         user={user}
         id={id}
         show={showAddTarifCategory}
+        refetch={refetch}
         onClose={toggleTarifsCategory}
-        addTarif={addTarif}
-        setAddTarif={setAddTarif}
         addNotification={addNotification}
       />
       <CreateRequestAdditionalServices
@@ -463,11 +463,9 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       <EditRequestTarifCategory
         user={user}
         id={id}
-        refetch={refetch}
-        setAddTarif={setAddTarif}
+        // refetch={refetch}
         show={showEditAddTarifCategory}
         onClose={() => setEditShowAddTarifCategory(false)}
-        addTarif={addTarif}
         tarif={selectedTarif}
         onSubmit={handleEditTarifCategory}
         addNotification={addNotification}

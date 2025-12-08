@@ -297,18 +297,18 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
             />
           )}
           {user.role == roles.dispatcerAdmin && (
-            <DisAdminMenu
-              id={id}
-              allCreatedReserves={allCreatedReserves}
-              allCreatedRequests={allCreatedRequests}
-              menuOpen={menuOpen}
-            />
-            // <RepresentativeAdminMenu
+            // <DisAdminMenu
             //   id={id}
             //   allCreatedReserves={allCreatedReserves}
             //   allCreatedRequests={allCreatedRequests}
             //   menuOpen={menuOpen}
             // />
+            <RepresentativeAdminMenu
+              id={id}
+              allCreatedReserves={allCreatedReserves}
+              allCreatedRequests={allCreatedRequests}
+              menuOpen={menuOpen}
+            />
           )}
         </div>
 

@@ -5,16 +5,31 @@ import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_AIRLINE, getCookie } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 
-function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
+function CreateRequestAirline({
+  show,
+  onClose,
+  representative,
+  airlines,
+  airports,
+  cities,
+  addHotel,
+  addNotification,
+}) {
   const token = getCookie("token");
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     name: "",
     nameFull: "",
+    airlineId: "",
+    airportId: "",
+    cityId: "",
     images: "",
   });
+  const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
 
   const sidebarRef = useRef();
 
@@ -22,6 +37,9 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
     setFormData({
       name: "",
       nameFull: "",
+      airlineId: "",
+      airportId: "",
+      cityId: "",
       images: "",
     });
     setIsEdited(false); // Сброс флага изменений
@@ -98,7 +116,7 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
       setIsLoading(false);
       return;
     }
-    
+
     try {
       let response_create_airline = await uploadFile({
         variables: {
@@ -163,16 +181,132 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название</label>
-              <input
-                type="text"
-                name="name"
-                placeholder="Авиакомпания Азимут"
-                value={formData.name}
-                onChange={handleChange}
-              />
+              {representative ? (
+                <>
+                  <label>Авиакомпания</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Введите авиакомпанию"}
+                    options={airlines?.map((airline) => airline.name)}
+                    value={selectedAirline ? selectedAirline?.name : ""}
+                    onChange={(event, newValue) => {
+                      const selectedAirline = airlines.find(
+                        (airline) => airline.name === newValue
+                      );
+                      setSelectedAirline(selectedAirline);
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        airlineId: selectedAirline?.id || "",
+                      }));
+                    }}
+                  />
+                  <label>Аэропорт</label>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label={"Выберите аэропорт"}
+                    options={airports}
+                    getOptionLabel={(option) => {
+                      if (!option) return "";
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      return `${option.code} ${option.name}${cityPart}`.trim();
+                    }}
+                    renderOption={(optionProps, option) => {
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      const labelText =
+                        `${option.code} ${option.name}${cityPart}`.trim();
+                      const words = labelText.split(" ");
 
-              {/* <label>Наименование</label>
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: 4,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={
+                      airports.find((o) => o.id === formData.airportId) || null
+                    }
+                    onChange={(e, newValue) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        airportId: newValue?.id || "",
+                        // city: newValue?.city,
+                      }));
+                    }}
+                  />
+                  <label>Город</label>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label={"Выберите город"}
+                    options={cities}
+                    getOptionLabel={(option) => {
+                      if (!option) return "";
+                      const cityPart =
+                        option.city && option.city !== option.region
+                          ? `, регион: ${option.region}`
+                          : "";
+                      return `${option.city}${cityPart}`.trim();
+                    }}
+                    renderOption={(optionProps, option) => {
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, регион: ${option.region}`
+                          : "";
+                      const labelText = `${option.city}${cityPart}`.trim();
+                      const words = labelText.split(" ");
+
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: 4,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={cities.find((o) => o.id === formData.cityId) || null}
+                    onChange={(e, newValue) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        cityId: newValue?.id,
+                      }));
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  <label>Название</label>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Авиакомпания Азимут"
+                    value={formData.name}
+                    onChange={handleChange}
+                  />
+
+                  {/* <label>Наименование</label>
               <input
                 type="text"
                 name="nameFull"
@@ -181,13 +315,15 @@ function CreateRequestAirline({ show, onClose, addHotel, addNotification }) {
                 onChange={handleChange}
               /> */}
 
-              <label>Картинка</label>
-              <input
-                type="file"
-                name="images"
-                onChange={handleFileChange}
-                ref={fileInputRef}
-              />
+                  <label>Картинка</label>
+                  <input
+                    type="file"
+                    name="images"
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
+                  />
+                </>
+              )}
             </div>
           </div>
 

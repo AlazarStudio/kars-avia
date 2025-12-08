@@ -43,8 +43,8 @@ function RepresentativeAirlineCompany_tabComponent({
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !id,
-    variables: { airlineId: id },
+    // skip: !id,
+    variables: { airlineId: "67af473ff18c7be5412e57fb" },
   });
 
   const {
@@ -57,7 +57,7 @@ function RepresentativeAirlineCompany_tabComponent({
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !id,
+    // skip: !id,
   });
 
   const {
@@ -70,7 +70,7 @@ function RepresentativeAirlineCompany_tabComponent({
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !id,
+    // skip: !id,
   });
 
   const { data: dataSubscriptionUpd } = useSubscription(
@@ -130,7 +130,8 @@ function RepresentativeAirlineCompany_tabComponent({
   const [selectedNomer, setSelectedNomer] = useState({});
 
   useEffect(() => {
-    if (data && id) {
+    if (data) {
+      // if (data && id) {
       const sortedTarifs = data.airline.department
         .map((tarif) => ({
           ...tarif,
@@ -142,7 +143,8 @@ function RepresentativeAirlineCompany_tabComponent({
       // setPositions(data.airline?.department?.position);
       refetch();
     }
-  }, [data, id, refetch]);
+  }, [data, refetch]);
+  // }, [data, id, refetch]);
 
   useEffect(() => {
     if (positionsData && airlinePositionsData) {
@@ -344,6 +346,7 @@ function RepresentativeAirlineCompany_tabComponent({
       {!loading && !error && (
         <InfoTableDataAirlineCompany
           user={user}
+          representative={true}
           accessMenu={accessMenu}
           airlineId={id}
           toggleRequestSidebar={toggleEditCategory}
@@ -358,6 +361,7 @@ function RepresentativeAirlineCompany_tabComponent({
         <>
           <CreateRequestAirlineCompany
             id={id}
+            representative={true}
             show={showAddTarif}
             onClose={toggleTarifs}
             addTarif={addTarif}
@@ -367,6 +371,7 @@ function RepresentativeAirlineCompany_tabComponent({
           />
           <CreateRequestAirlineOtdel
             id={id}
+            representative={true}
             show={showAddCategory}
             onClose={toggleCategory}
             addTarif={addTarif}
@@ -380,6 +385,7 @@ function RepresentativeAirlineCompany_tabComponent({
         id={id}
         show={showEditNomer}
         accessMenu={accessMenu}
+        representative={true}
         onClose={() => setShowEditNomer(false)}
         user={user}
         selectedUser={selectedNomer.user}

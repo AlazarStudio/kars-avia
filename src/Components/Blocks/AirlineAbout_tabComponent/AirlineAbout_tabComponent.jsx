@@ -143,12 +143,31 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
     },
   });
 
+  // useEffect(() => {
+  //   if (data) {
+  //     setAirline(data.airline);
+  //   }
+  //   if (dataSubscriptionUpd) refetch();
+  // }, [data, dataSubscriptionUpd, refetch]);
+
+    // 1. начальная загрузка / обновление, но только когда не редактируем
   useEffect(() => {
-    if (data) {
+    if (!data?.airline) return;
+
+    // если сейчас не редактируем — можно синхронизировать с сервером
+    if (!isEditing) {
       setAirline(data.airline);
     }
-    if (dataSubscriptionUpd) refetch();
-  }, [data, dataSubscriptionUpd, refetch]);
+  }, [data, isEditing]);
+
+  // 2. подписка: если пришло обновление — рефетчим,
+  //   но НЕ во время редактирования, чтобы не сбивать форму
+  useEffect(() => {
+    if (dataSubscriptionUpd && !isEditing) {
+      refetch();
+    }
+  }, [dataSubscriptionUpd, isEditing, refetch]);
+
 
   // console.log(data);
 

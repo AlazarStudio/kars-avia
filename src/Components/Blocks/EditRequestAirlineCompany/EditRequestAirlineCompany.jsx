@@ -17,6 +17,7 @@ function EditRequestAirlineCompany({
   show,
   onClose,
   user,
+  representative,
   selectedUser,
   accessMenu,
   department,
@@ -332,43 +333,47 @@ function EditRequestAirlineCompany({
                 />
               </div>
 
-              <div className={classes.requestDataInfo}>
-                <label>Почта</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Введите email"
-                  disabled={!isEditing}
-                />
-              </div>
-
-              {user?.role === roles.airlineModerator ? null : (
+              {!representative && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <label>Роль</label>
-                    <div className={classes.dropdown}>
-                      <MUIAutocomplete
-                        dropdownWidth={"100%"}
-                        isDisabled={!isEditing}
-                        label={"Выберите роль"}
-                        options={rolesObject.airline}
-                        value={
-                          rolesObject.airline.find(
-                            (option) => option.value === formData.role
-                          ) || null
-                        }
-                        onChange={(event, newValue) => {
-                          setFormData((prevFormData) => ({
-                            ...prevFormData,
-                            role: newValue ? newValue.value : "",
-                          }));
-                          setIsEdited(true);
-                        }}
-                      />
-                    </div>
+                    <label>Почта</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="Введите email"
+                      disabled={!isEditing}
+                    />
                   </div>
+
+                  {user?.role === roles.airlineModerator ? null : (
+                    <>
+                      <div className={classes.requestDataInfo}>
+                        <label>Роль</label>
+                        <div className={classes.dropdown}>
+                          <MUIAutocomplete
+                            dropdownWidth={"100%"}
+                            isDisabled={!isEditing}
+                            label={"Выберите роль"}
+                            options={rolesObject.airline}
+                            value={
+                              rolesObject.airline.find(
+                                (option) => option.value === formData.role
+                              ) || null
+                            }
+                            onChange={(event, newValue) => {
+                              setFormData((prevFormData) => ({
+                                ...prevFormData,
+                                role: newValue ? newValue.value : "",
+                              }));
+                              setIsEdited(true);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
 

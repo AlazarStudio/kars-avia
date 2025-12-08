@@ -4,6 +4,7 @@ import ServiceFooter from "../ServiceFooter/ServiceFooter";
 import { exampleData, hotelsReserveData } from "../../../roles";
 import Button from "../../Standart/Button/Button";
 import CopyIcon from "../../../shared/icons/CopyIcon";
+import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 
 export default function TransferAccommodationTab({
   id,
@@ -38,6 +39,11 @@ export default function TransferAccommodationTab({
                 Кол-во пассажиров
               </div>
               <div className={`${classes.w10} ${classes.jcEnd}`}>Ссылка</div>
+              {!!request?.livingService?.withTransfer && (
+                <span className={classes.countChip}>
+                  <PeopleCountIcon /> {request.livingService.plan.peopleCount}
+                </span>
+              )}
             </div>
             <div className={classes.tableCard}>
               {(drivers.length ? drivers : request?.drivers ?? exampleData).map(

@@ -17,6 +17,7 @@ import { rolesObject } from "../../../roles";
 function CreateRequestAirlineCompany({
   show,
   onClose,
+  representative,
   id,
   addTarif,
   setAddTarif,
@@ -117,8 +118,8 @@ function CreateRequestAirlineCompany({
   const isFormValid = () => {
     return (
       formData.name &&
-      formData.email &&
-      formData.role &&
+      // formData.email &&
+      // formData.role &&
       formData.position &&
       formData.login &&
       formData.password &&
@@ -183,53 +184,57 @@ function CreateRequestAirlineCompany({
       const selectedPosition = positions.find(
         (position) => position.name === formData.position
       );
-      let request = await createAirlineUser({
-        variables: {
-          input: {
-            name: formData.name,
-            role: formData.role,
-            positionId: selectedPosition?.id,
-            airlineId: id,
-            email: formData.email,
-            hotelId: null,
-            login: formData.login,
-            password: formData.password,
-            airlineDepartmentId: selectedDepartment?.id,
+      if (representative) {
+        //TODO: запрос для аккаунта представительств
+      } else {
+        let request = await createAirlineUser({
+          variables: {
+            input: {
+              name: formData.name,
+              role: formData.role,
+              positionId: selectedPosition?.id,
+              airlineId: id,
+              email: formData.email,
+              hotelId: null,
+              login: formData.login,
+              password: formData.password,
+              airlineDepartmentId: selectedDepartment?.id,
+            },
+            images: formData.images,
           },
-          images: formData.images,
-        },
-      });
-      if (request) {
-        const newUser = {
-          id: request.data.registerUser.id, // Если возвращается ID созданного пользователя
-          name: request.data.registerUser.name,
-          role: request.data.registerUser.role,
-          position: request.data.registerUser.position?.name,
-          images: request.data.registerUser.images,
-          email: request.data.registerUser.email,
-          login: request.data.registerUser.login,
-          password: request.data.registerUser.password,
-        };
-
-        const updatedTarifs = addTarif.map((department) => {
-          // if (department.id === formData.department) {
-          if (department.id === selectedDepartment?.id) {
-            const updatedUsers = [...department.users, newUser].sort((a, b) =>
-              a.name.localeCompare(b.name)
-            );
-            return {
-              ...department,
-              users: updatedUsers,
-            };
-          }
-          return department;
         });
+        if (request) {
+          const newUser = {
+            id: request.data.registerUser.id, // Если возвращается ID созданного пользователя
+            name: request.data.registerUser.name,
+            role: request.data.registerUser.role,
+            position: request.data.registerUser.position?.name,
+            images: request.data.registerUser.images,
+            email: request.data.registerUser.email,
+            login: request.data.registerUser.login,
+            password: request.data.registerUser.password,
+          };
 
-        setAddTarif(updatedTarifs);
-        resetForm();
-        onClose();
-        setIsLoading(false);
-        addNotification("Создание аккаунта прошло успешно.", "success");
+          const updatedTarifs = addTarif.map((department) => {
+            // if (department.id === formData.department) {
+            if (department.id === selectedDepartment?.id) {
+              const updatedUsers = [...department.users, newUser].sort((a, b) =>
+                a.name.localeCompare(b.name)
+              );
+              return {
+                ...department,
+                users: updatedUsers,
+              };
+            }
+            return department;
+          });
+
+          setAddTarif(updatedTarifs);
+          resetForm();
+          onClose();
+          setIsLoading(false);
+          addNotification("Создание аккаунта прошло успешно.", "success");
+        }
       }
     } catch (e) {
       setIsLoading(false);
@@ -307,34 +312,38 @@ function CreateRequestAirlineCompany({
                 autoComplete="new-password"
               />
 
-              <label>Почта</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Введите email"
-                // autoComplete="new-password"
-              />
+              {!representative && (
+                <>
+                  <label>Почта</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Введите email"
+                    // autoComplete="new-password"
+                  />
 
-              <label>Роль</label>
-              <MUIAutocomplete
-                dropdownWidth={"100%"}
-                label={"Выберите роль"}
-                options={rolesObject.airline}
-                value={
-                  rolesObject.airline.find(
-                    (option) => option.value === formData.role
-                  ) || null
-                }
-                onChange={(event, newValue) => {
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    role: newValue ? newValue.value : "",
-                  }));
-                  setIsEdited(true);
-                }}
-              />
+                  <label>Роль</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите роль"}
+                    options={rolesObject.airline}
+                    value={
+                      rolesObject.airline.find(
+                        (option) => option.value === formData.role
+                      ) || null
+                    }
+                    onChange={(event, newValue) => {
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        role: newValue ? newValue.value : "",
+                      }));
+                      setIsEdited(true);
+                    }}
+                  />
+                </>
+              )}
 
               <label>Должность</label>
               <MUIAutocomplete

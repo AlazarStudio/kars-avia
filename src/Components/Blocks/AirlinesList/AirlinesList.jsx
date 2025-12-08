@@ -5,6 +5,8 @@ import {
   GET_AIRLINES,
   GET_AIRLINES_SUBSCRIPTION,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  GET_AIRPORTS_RELAY,
+  GET_CITIES,
   getCookie,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
@@ -28,6 +30,8 @@ function AirlinesList({ children, representative, ...props }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
+  const [airports, setAirports] = useState([]); // Список аэропортов
+  const [cities, setCities] = useState([]); // Список аэропортов
 
   const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
   const { data: dataSubscriptionUpd } = useSubscription(
@@ -52,6 +56,33 @@ function AirlinesList({ children, representative, ...props }) {
     variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
     skip: isSearching,
   });
+
+  const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    skip: !representative,
+  });
+
+  const { data: citiesData } = useQuery(GET_CITIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    skip: !representative,
+  });
+
+  useEffect(() => {
+    if (infoAirports.data && representative) {
+      setAirports(infoAirports.data.airports || []);
+    }
+    if (citiesData) {
+      setCities(citiesData.citys);
+    }
+  }, [infoAirports.data, citiesData, representative]);
 
   useEffect(() => {
     if (data && data.airlines) {
@@ -162,7 +193,6 @@ function AirlinesList({ children, representative, ...props }) {
     navigate(`?page=${selectedPage + 1}`);
   };
 
-
   return (
     <>
       <div className={classes.section}>
@@ -231,6 +261,10 @@ function AirlinesList({ children, representative, ...props }) {
 
         <CreateRequestAirline
           show={showCreateSidebar}
+          airlines={companyData}
+          airports={airports}
+          cities={cities}
+          representative={representative}
           onClose={toggleCreateSidebar}
           addHotel={addAirline}
           addNotification={addNotification}

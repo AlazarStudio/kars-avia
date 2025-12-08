@@ -49,6 +49,7 @@ export default function PowerSupplyTab({
       addNotification("Поставка завершена", "success");
     },
   });
+// console.log(request);
 
   return (
     <div className={classes.cardWrap}>
@@ -66,9 +67,9 @@ export default function PowerSupplyTab({
           </div>
           <div style={{ flex: 1, display: "flex", justifyContent: "end" }}>
             {/* <span>Время выдачи</span> */}
-            {!!request?.passengerCount && (
+            {!!request?.mealService?.plan?.peopleCount && (
               <span className={classes.countChip}>
-                <PeopleCountIcon /> {request.passengerCount}4
+                <PeopleCountIcon /> {request.mealService.plan.peopleCount}
               </span>
             )}
           </div>

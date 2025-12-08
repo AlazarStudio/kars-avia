@@ -3,8 +3,8 @@ import { gql } from "@apollo/client";
 // export const path = '192.168.0.113:4000';
 // export const path = '89.169.39.59:4000';
 
-export const path = 'backend.karsavia.ru:443';
-export const server = `https://${path}`;
+// export const path = 'backend.karsavia.ru:443';
+// export const server = `https://${path}`;
 
 // export const path = '192.168.0.14:4000';
 // export const server = `http://${path}`;
@@ -12,8 +12,8 @@ export const server = `https://${path}`;
 // export const path = 'demobackend.karsavia.ru:443';
 // export const server = `https://${path}`;
 
-// export const path = '45.130.42.244:4000';
-// export const server = `http://${path}`;
+export const path = '45.130.42.244:4000';
+export const server = `http://${path}`;
 
 export const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -561,6 +561,14 @@ export const CREATE_REQUEST_MUTATION = gql`
     }
 `;
 
+export const CREATE_PASSENGER_REQUEST = gql`
+  mutation CreatePassengerRequest($input: PassengerRequestCreateInput!) {
+    createPassengerRequest(input: $input) {
+      flightNumber
+    }
+  }
+`;
+
 export const GET_AIRLINES_RELAY = gql` 
 query Airlines { 
   airlines(pagination: {all: true}) { 
@@ -753,6 +761,14 @@ export const UPDATE_REQUEST_RELAY = gql`
   mutation Mutation($updateRequestId: ID!, $input: UpdateRequestInput!) {
     updateRequest(id: $updateRequestId, input: $input) {
       status
+    }
+  }
+`;
+
+export const UPDATE_PASSENGER_REQUEST = gql`
+  mutation UpdatePassengerRequest($updatePassengerRequestId: ID!, $input: PassengerRequestUpdateInput!) {
+    updatePassengerRequest(id: $updatePassengerRequestId, input: $input) {
+      id
     }
   }
 `;
@@ -1212,6 +1228,65 @@ export const GET_RESERVE_REQUESTS = gql`
   }
 `;
 
+export const GET_PASSENGER_REQUESTS = gql`
+  query PassengerRequests($take: Int, $skip: Int, $filter: PassengerRequestFilterInput) {
+    passengerRequests(take: $take, skip: $skip, filter: $filter) {
+      id
+      createdAt
+      flightNumber
+      airline {
+        name
+        images
+      }
+      airport {
+        name
+        code
+      }
+      statusTimes {
+        acceptedAt
+        inProgressAt
+        finishedAt
+        cancelledAt
+      }
+      status
+      waterService {
+        status
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+        times {
+          acceptedAt
+          inProgressAt
+          finishedAt
+          cancelledAt
+        }
+        people {
+          fullName
+        }
+      }
+      mealService {
+        status
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+      }
+      livingService {
+        status
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+        withTransfer
+      }
+    }
+  }
+`;
+
 export const REQUEST_RESERVE_CREATED_SUBSCRIPTION = gql`
   subscription ReserveCreated {
     reserveCreated {
@@ -1326,6 +1401,105 @@ export const GET_RESERVE_REQUEST = gql`
         unreadMessagesCount
         hotelId
         airlineId
+      }
+    }
+  }
+`;
+
+export const GET_PASSENGER_REQUEST = gql`
+  query PassengerRequest($passengerRequestId: ID!) {
+    passengerRequest(id: $passengerRequestId) {
+      id
+      flightNumber
+      flightDate
+      createdBy {
+        id
+        name
+      }
+      airline {
+        id
+        name
+        images
+      }
+      livingService {
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+        withTransfer
+        status
+        times {
+          acceptedAt
+          inProgressAt
+          finishedAt
+          cancelledAt
+        }
+        hotels {
+          hotelId
+          name
+          peopleCount
+          address
+          link
+        }
+        drivers {
+          fullName
+          phone
+          peopleCount
+          pickupAt
+          link
+        }
+      }
+      mealService {
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+        status
+        times {
+          acceptedAt
+          inProgressAt
+          finishedAt
+          cancelledAt
+        }
+        people {
+          fullName
+          issuedAt
+          phone
+          seat
+        }
+      }
+      plannedPassengersCount
+      routeFrom
+      routeTo
+      status
+      statusTimes {
+        acceptedAt
+        inProgressAt
+        finishedAt
+        cancelledAt
+      }
+      updatedAt
+      waterService {
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+        status
+        times {
+          acceptedAt
+          inProgressAt
+          finishedAt
+          cancelledAt
+        }
+        people {
+          fullName
+          issuedAt
+          phone
+          seat
+        }
       }
     }
   }

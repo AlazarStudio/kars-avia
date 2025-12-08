@@ -9,6 +9,7 @@ import {
   GET_AIRLINE,
   GET_HOTEL_CITY,
   GET_HOTEL_TARIFS,
+  GET_PASSENGER_REQUESTS,
   GET_RESERVE_REQUESTS,
   getCookie,
   REQUEST_RESERVE_CREATED_SUBSCRIPTION,
@@ -26,12 +27,20 @@ import Button from "../../Standart/Button/Button";
 import InfoTableRepresentativeData from "../InfoTableRepresentativeData/InfoTableRepresentativeData";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
-function RepresentativeRequests({ children, user, idHotel, accessMenu, ...props }) {
+function RepresentativeRequests({
+  children,
+  user,
+  idHotel,
+  accessMenu,
+  ...props
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const token = getCookie("token");
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
+  const [selectedAirline, setSelectedAirline] = useState(null);
+  const [selectedAirport, setSelectedAirport] = useState(null);
 
   // Получение текущей страницы из URL или localStorage
   let pageNumberReserve = new URLSearchParams(location.search).get("page");
@@ -44,7 +53,7 @@ function RepresentativeRequests({ children, user, idHotel, accessMenu, ...props 
 
   // Состояние для фильтрации по статусу
   const [statusFilter, setStatusFilter] = useState(() => {
-    return localStorage.getItem("statusFilterReserve") || "all";
+    return localStorage.getItem("statusFilterPassenger") || null;
   });
 
   // console.log(user);
@@ -56,7 +65,7 @@ function RepresentativeRequests({ children, user, idHotel, accessMenu, ...props 
   });
 
   // Запрос на получение списка заявок с учетом пагинации
-  const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
+  const { loading, error, data, refetch } = useQuery(GET_PASSENGER_REQUESTS, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -66,8 +75,12 @@ function RepresentativeRequests({ children, user, idHotel, accessMenu, ...props 
       pagination: {
         skip: pageInfo.skip,
         take: pageInfo.take,
-        status: statusFilter.split(" / "),
+      },
+      filter: {
+        status: statusFilter === "all" ? null : statusFilter,
         search: debouncedSearch,
+        airlineId: selectedAirline?.id,
+        airportId: selectedAirport?.id,
       },
     },
   });
@@ -75,7 +88,7 @@ function RepresentativeRequests({ children, user, idHotel, accessMenu, ...props 
   // Обновление состояния фильтрации по статусу
   const handleStatusChange = (value) => {
     setStatusFilter(value);
-    localStorage.setItem("statusFilterReserve", value);
+    localStorage.setItem("statusFilterPassenger", value);
   };
 
   // Подписки на создание и обновление заявок
@@ -128,55 +141,38 @@ function RepresentativeRequests({ children, user, idHotel, accessMenu, ...props 
     }
   }, [pageNumberReserve]);
 
-  // Обновление списка заявок при добавлении новых через подписку
-  // useEffect(() => {
-  //   if (subscriptionData) {
-  //     const newRequest = subscriptionData.reserveCreated;
-  //     const statusMatchesFilter = statusFilter
-  //       .split(" / ")
-  //       .includes(newRequest.status);
-
-  //     if (statusMatchesFilter) {
-  //       setRequests((prevRequests) => {
-  //         const exists = prevRequests.some(
-  //           (request) => request.id === newRequest.id
-  //         );
-  //         if (!exists) {
-  //           if (currentPageReserve === 0) {
-  //             return [newRequest, ...prevRequests];
-  //           } else {
-  //             setNewRequests((prevNewRequests) => [
-  //               newRequest,
-  //               ...prevNewRequests,
-  //             ]);
-  //           }
-  //         }
-  //         return prevRequests;
-  //       });
-  //     }
-  //     refetch();
-  //   }
-  // }, [subscriptionData, currentPageReserve, refetch]);
-
   // Обновление данных заявок из запроса и новых заявок
   useEffect(() => {
-    if (data && data.reserves.reserves) {
-      let sortedRequests = [...data.reserves.reserves];
+    if (data && data.passengerRequests) {
+      let sortedRequests = [...data.passengerRequests];
       if (currentPageReserve === 0 && newRequests.length > 0) {
         sortedRequests = [...newRequests, ...sortedRequests];
         setNewRequests([]);
       }
       setRequests(sortedRequests);
-      setTotalPages(data.reserves.totalPages);
+      setTotalPages(data.passengerRequests.totalPages);
     }
-  }, [data, currentPageReserve, newRequests]);
+  }, [data, currentPageReserve, newRequests, statusFilter]);
 
-  // Обновление при изменении заявок через подписку на обновление
-  // useEffect(() => {
-  //   if (subscriptionUpdateData) {
-  //     refetch();
-  //   }
-  // }, [subscriptionUpdateData, refetch]);
+  useEffect(() => {
+    // сбрасываем на первую страницу
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1");
+
+    refetch({
+      pagination: {
+        skip: 0,
+        take: pageInfo.take,
+        status: statusFilter,
+      },
+      filter: {
+        status: statusFilter === "all" ? null : statusFilter,
+        search: debouncedSearch,
+        airlineId: selectedAirline?.id,
+        airportId: selectedAirport?.id,
+      },
+    }).catch(console.error);
+  }, [debouncedSearch, statusFilter, selectedAirline, selectedAirport]);
 
   // Обработчик смены страницы
   const handlePageClick = (event) => {
@@ -330,13 +326,19 @@ function RepresentativeRequests({ children, user, idHotel, accessMenu, ...props 
           <Filter
             user={user}
             isEstafeta={true}
+            isVisibleAirFiler={true}
+            representativeRequests={true}
+            selectedAirline={selectedAirline}
+            setSelectedAirline={setSelectedAirline}
+            selectedAirport={selectedAirport}
+            setSelectedAirport={setSelectedAirport}
             toggleSidebar={toggleCreateSidebar}
             handleChange={handleChange}
             filterData={filterData}
             buttonTitle={"Создать заявку"}
             filterList={filterList}
             needDate={true}
-            filterLocalData={localStorage.getItem("statusFilterReserve")}
+            filterLocalData={localStorage.getItem("statusFilterPassenger")}
             handleStatusChange={handleStatusChange} // передаем обработчик изменения статуса
           />
           <MUITextField

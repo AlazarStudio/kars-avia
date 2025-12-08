@@ -42,8 +42,8 @@ function App() {
 
   const wsLink = new GraphQLWsLink(
     createClient({
-      url: `wss://${path}/graphql`,
-      // url: `ws://${path}/graphql`, 
+      // url: `wss://${path}/graphql`,
+      url: `ws://${path}/graphql`, 
       connectionParams: {
         Authorization: `Bearer ${token}`,
       },
@@ -101,10 +101,10 @@ function App() {
               path="/:id/reservePlacement/:idRequest"
               element={<ReservePlacement user={user} />}
             />
-            {/* <Route
+            <Route
               path="/:id/representativeRequestsPlacement/:idRequest"
               element={<ReservePlacementRepresentative user={user} />}
-            /> */}
+            />
 
             {/* Шахматка */}
             {/* <Route

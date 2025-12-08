@@ -20,9 +20,7 @@ function EditRequestTarifCategory({
   tarif,
   refetch,
   onSubmit,
-  addTarif,
   id,
-  setAddTarif,
   user,
   type,
   addNotification,
@@ -33,6 +31,7 @@ function EditRequestTarifCategory({
   const [formData, setFormData] = useState({
     images: null,
   });
+  const [isEditing, setIsEditing] = useState(false);
 
   const [coverImage, setCoverImage] = useState(tarif && tarif?.images[0]);
   const [coverImage2, setCoverImage2] = useState(null);
@@ -51,14 +50,21 @@ function EditRequestTarifCategory({
     },
   });
 
-  useEffect(() => {
-    if (show && tarif) {
-      setFormData({ ...tarif, images: null });
-      setCoverImage(tarif?.images[0]);
-    }
-  }, [show, tarif]);
+  // useEffect(() => {
+  //   if (show && tarif) {
+  //     setFormData({ ...tarif, images: null });
+  //     setCoverImage(tarif?.images[0]);
+  //   }
+  // }, [show, tarif]);
 
-  const [isEditing, setIsEditing] = useState(false);
+  useEffect(() => {
+  if (show && tarif && !isEditing) {
+    setFormData({ ...tarif, images: null });
+    setCoverImage(tarif?.images[0] || null);
+    setCoverImage2(null);
+    setDeletedImages([]);
+  }
+}, [show, tarif, isEditing]);
 
   //   console.log(formData);
 
