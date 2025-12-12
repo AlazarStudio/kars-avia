@@ -21,6 +21,17 @@ export const statusMapping = {
   archived: "Архив",
 };
 
+export const statusMappingTransfer = {
+  opened: "В обработке",
+  canceled: "Отменен",
+  done: "Размещен",
+  created: "Создан",
+  extended: "Продлен",
+  reduced: "Сокращен",
+  transferred: "Перенесен",
+  earlyStart: "Ранний заезд",
+};
+
 export const rolesObject = {
   dispatcher: [
     {
@@ -175,3 +186,64 @@ export const hotelsReserveData = [
     },
   },
 ];
+
+export function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+export const mockDrivers = [
+  {
+    id: "drv-1",
+    name: "Иван",
+    rating: 5.0,
+    completedOrders: 2,
+    images: ["/mock/drivers/ivan.png"],
+    car: {
+      plate: "A666AA",
+      model: "Toyota Camry",
+      color: "черный",
+    },
+  },
+  {
+    id: "drv-2",
+    name: "Аслан",
+    rating: 4.9,
+    completedOrders: 4,
+    images: ["/mock/drivers/aslan.png"],
+    car: {
+      plate: "K123BC",
+      model: "Hyundai Sonata",
+      color: "белый",
+    },
+  },
+  {
+    id: "drv-3",
+    name: "Мурад",
+    rating: 5.0,
+    completedOrders: 3,
+    images: ["/mock/drivers/murad.png"],
+    car: {
+      plate: "М777MM",
+      model: "Kia K5",
+      color: "серый",
+    },
+  },
+  {
+    id: "drv-4",
+    name: "Руслан",
+    rating: 4.8,
+    completedOrders: 1,
+    images: ["/mock/drivers/ruslan.png"],
+    car: {
+      plate: "С900ХХ",
+      model: "Skoda Octavia",
+      color: "синий",
+    },
+  },
+];
+

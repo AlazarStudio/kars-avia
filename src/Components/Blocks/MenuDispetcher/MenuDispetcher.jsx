@@ -20,6 +20,7 @@ import SuperAdminMenu from "../../RoleContent/SuperAdminContent/SuperAdminMenu/S
 
 import classes from "./MenuDispetcher.module.css";
 import RepresentativeAdminMenu from "../../RoleContent/RepresentativeAdminContent/RepresentativeAdminMenu/RepresentativeAdminMenu";
+import TransferAdminMenu from "../../RoleContent/TransferAdminContent/TransferAdminMenu/TransferAdminMenu";
 
 function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   const token = getCookie("token");
@@ -236,7 +237,7 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   }, [data, dataRequest, hotelCity, airlineName, newReserves, newRequests]);
 
   // Пока значение menuOpen не загружено из localStorage, ничего не рендерим
-  if (menuOpen === null) {
+  if (menuOpen === null || !user) {
     return null; // или можно вернуть спиннер загрузки
   }
 
@@ -262,10 +263,16 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
             menuOpen ? `${classes.menu_logo}` : `${classes.side_menu_logo}`
           }
         >
-          {menuOpen ? (
-            <img src="/kars-avia-mainLogo.png" alt="" />
+          {user?.role === roles.dispatcerAdmin ? (
+            <img src="/kars_drive.png" alt="" style={{width:"fit-content"}} />
           ) : (
-            <img src="/miniLogo.png" alt="" />
+            <>
+              {menuOpen ? (
+                <img src="/kars-avia-mainLogo.png" alt="" />
+              ) : (
+                <img src="/miniLogo.png" alt="" />
+              )}
+            </>
           )}
         </Link>
         <div className={classes.menu_items}>
@@ -303,12 +310,18 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
             //   allCreatedRequests={allCreatedRequests}
             //   menuOpen={menuOpen}
             // />
-            <RepresentativeAdminMenu
+            <TransferAdminMenu
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
               menuOpen={menuOpen}
             />
+            // <RepresentativeAdminMenu
+            //   id={id}
+            //   allCreatedReserves={allCreatedReserves}
+            //   allCreatedRequests={allCreatedRequests}
+            //   menuOpen={menuOpen}
+            // />
           )}
         </div>
 

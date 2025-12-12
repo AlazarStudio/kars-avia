@@ -1,19 +1,16 @@
 import { gql } from "@apollo/client";
 
-// export const path = '192.168.0.113:4000';
-// export const path = '89.169.39.59:4000';
 
-// export const path = 'backend.karsavia.ru:443';
-// export const server = `https://${path}`;
+// export const path = import.meta.env.VITE_PRODUCTION_PATH;
+// export const server = import.meta.env.VITE_PRODUCTION_SERVER;
 
-// export const path = '192.168.0.14:4000';
-// export const server = `http://${path}`;
+// export const path = import.meta.env.VITE_DEMO_PATH;
+// export const server = import.meta.env.VITE_DEMO_SERVER;
 
-// export const path = 'demobackend.karsavia.ru:443';
-// export const server = `https://${path}`;
+export const path = import.meta.env.VITE_DEV_PATH;
+export const server = import.meta.env.VITE_DEV_SERVER;
 
-export const path = '45.130.42.244:4000';
-export const server = `http://${path}`;
+export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
 
 export const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -37,22 +34,48 @@ export const decodeJWT = (token) => {
   return payloadObject;
 }
 
+const makeFormatter = (includeTime) =>
+  new Intl.DateTimeFormat("ru-RU", {
+    timeZone: "Europe/Moscow",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    ...(includeTime
+      ? { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }
+      : {}),
+  });
+
+// const zones = Intl.supportedValuesOf("timeZone");
+// console.log(zones);
+
 export function convertToDate(dateString, includeTime = false) {
-  const date = new Date(dateString);
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const year = date.getUTCFullYear();
+  const date = dateString instanceof Date ? dateString : new Date(dateString);
+  if (Number.isNaN(date.getTime())) return "";
 
-  let formattedDate = `${day}.${month}.${year}`;
+  // чтобы получить ровно "DD.MM.YYYY HH:MM" без запятой
+  const parts = makeFormatter(includeTime).formatToParts(date);
+  const p = Object.fromEntries(parts.map((x) => [x.type, x.value]));
 
-  if (includeTime) {
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    formattedDate = ` ${hours}:${minutes}`;
-  }
-
-  return formattedDate;
+  const base = `${p.day}.${p.month}.${p.year}`;
+  return includeTime ? `${p.hour}:${p.minute}` : base;
 }
+
+// export function convertToDate(dateString, includeTime = false) {
+//   const date = new Date(dateString);
+//   const day = String(date.getUTCDate()).padStart(2, '0');
+//   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+//   const year = date.getUTCFullYear();
+
+//   let formattedDate = `${day}.${month}.${year}`;
+
+//   if (includeTime) {
+//     const hours = String(date.getUTCHours()).padStart(2, '0');
+//     const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+//     formattedDate = ` ${hours}:${minutes}`;
+//   }
+
+//   return formattedDate;
+// }
 
 export function generateTimestampId(min = 1, max = 1000000) {
   return Date.now() + Math.floor(Math.random() * (max - min + 1)) + min; // Возвращает количество миллисекунд с 1 января 1970 года
@@ -60,7 +83,406 @@ export function generateTimestampId(min = 1, max = 1000000) {
 
 export const normalize = (s) => (s || "").trim().toLowerCase();
 
+
+// текст → список адресов
+export const geocodeByTextInterNational = async (text) => {
+  if (!text || text.length < 3) return [];
+  const url =
+    `https://geocode-maps.yandex.ru/1.x/?apikey=${YMAPS_KEY}` +
+    `&format=json&lang=ru_RU&results=5&geocode=${encodeURIComponent(text)}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+  const members = data.response.GeoObjectCollection.featureMember || [];
+
+  return members.map(
+    (m) =>
+      m.GeoObject?.metaDataProperty?.GeocoderMetaData?.text ||
+      m.GeoObject?.name
+  );
+};
+
+// вспомогательная: поиск просто по России (как было раньше)
+const geocodeInRussia = async (text) => {
+  if (!text || text.length < 3) return [];
+  const query = `Россия, ${text}`;
+
+  const url =
+    `https://geocode-maps.yandex.ru/1.x/?apikey=${YMAPS_KEY}` +
+    `&format=json&lang=ru_RU&results=5` +
+    `&geocode=${encodeURIComponent(query)}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error("Yandex geocoder error", res.status);
+    return [];
+  }
+
+  const data = await res.json();
+  const members = data.response?.GeoObjectCollection?.featureMember || [];
+
+  return members.map(
+    (m) =>
+      m.GeoObject?.metaDataProperty?.GeocoderMetaData?.text ||
+      m.GeoObject?.name
+  );
+};
+
+// конвертация км → градусы
+const getSpanForRadiusKm = (radiusKm, lat) => {
+  const latDegPerKm = 1 / 111; // ~111 км в 1° широты
+  const lonDegPerKm = 1 / (111 * Math.cos((lat * Math.PI) / 180)); // зависит от широты :contentReference[oaicite:1]{index=1}
+
+  // spn — это полная "ширина/высота" окна, не радиус
+  const spanLat = radiusKm * latDegPerKm * 2;
+  const spanLon = radiusKm * lonDegPerKm * 2;
+  return { spanLat, spanLon };
+};
+
+
+// Текст → список адресов, ограничено РФ
+// export const geocodeByTextRU = async (text) => {
+//   if (!text || text.length < 3) return [];
+
+//   // ВАЖНО: добавляем "Россия" перед текстом
+//   const query = `Россия, ${text}`;
+
+//   const url =
+//     `https://geocode-maps.yandex.ru/1.x/?apikey=${YMAPS_KEY}` +
+//     `&format=json` +
+//     `&lang=ru_RU` +
+//     `&results=5` +
+//     `&geocode=${encodeURIComponent(query)}`;
+
+//   const res = await fetch(url);
+//   if (!res.ok) {
+//     console.error("Yandex geocoder error", res.status);
+//     return [];
+//   }
+
+//   const data = await res.json();
+//   const members = data.response?.GeoObjectCollection?.featureMember || [];
+
+//   return members.map(
+//     (m) =>
+//       m.GeoObject?.metaDataProperty?.GeocoderMetaData?.text ||
+//       m.GeoObject?.name
+//   );
+// };
+
+// основной геопоиск с расширением области
+export const geocodeByTextRU = async (text, options = {}) => {
+  const {
+    center,           // [lat, lon]
+    initialRadiusKm = 20,
+    maxRadiusKm = 80,
+    stepKm = 20,
+  } = options || {};
+
+  if (!text || text.length < 3) return [];
+
+  // если центр не задан — старое поведение: поиск по РФ
+  if (!center) {
+    return geocodeInRussia(text);
+  }
+
+  const [lat, lon] = center; // внимание: в ll нужно lon,lat!
+
+  let radiusKm = initialRadiusKm;
+
+  while (radiusKm <= maxRadiusKm) {
+    const { spanLat, spanLon } = getSpanForRadiusKm(radiusKm, lat);
+
+    const url =
+      `https://geocode-maps.yandex.ru/1.x/?apikey=${YMAPS_KEY}` +
+      `&format=json&lang=ru_RU&results=5` +
+      `&ll=${lon},${lat}` +              // центр области
+      `&spn=${spanLon},${spanLat}` +     // ширина/высота области
+      `&rspn=1` +                        // жёстко не вылезать за область :contentReference[oaicite:2]{index=2}
+      `&geocode=${encodeURIComponent(text)}`;
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error("Yandex geocoder error", res.status);
+      break;
+    }
+
+    const data = await res.json();
+    const members = data.response?.GeoObjectCollection?.featureMember || [];
+
+    if (members.length) {
+      return members.map(
+        (m) =>
+          m.GeoObject?.metaDataProperty?.GeocoderMetaData?.text ||
+          m.GeoObject?.name
+      );
+    }
+
+    // ничего не нашли — увеличиваем радиус
+    radiusKm += stepKm;
+  }
+
+  // вообще ничего не нашли поблизости — пробуем общий поиск по России
+  return geocodeInRussia(text);
+};
+
+// координаты → один адрес
+export const reverseGeocodeByCoords = async ([lat, lon]) => {
+  const url =
+    `https://geocode-maps.yandex.ru/1.x/?apikey=${YMAPS_KEY}` +
+    `&format=json&lang=ru_RU&geocode=${lon},${lat}`;
+
+  const res = await fetch(url);
+  const data = await res.json();
+  const member = data.response.GeoObjectCollection.featureMember[0];
+
+  return (
+    member?.GeoObject?.metaDataProperty?.GeocoderMetaData?.text ||
+    member?.GeoObject?.name ||
+    ""
+  );
+};
+
+
 // ----------------------------------------------------------------
+
+
+// TRANSFER
+
+export const TRANSFER_SING_IN = gql`
+  mutation TransferSignIn($input: TransferSignInInput!) {
+    transferSignIn(input: $input) {
+      token
+    }
+  }
+`;
+
+export const GET_TRANSFER_REQUESTS = gql`
+  query Transfers($pagination: TransferPaginationInput!) {
+    transfers(pagination: $pagination) {
+      transfers {
+        id
+        fromAddress
+        toAddress
+        persons {
+          id
+          email
+          name
+        }
+        airlineId
+        status
+        createdAt
+        scheduledPickupAt
+        description
+        driverAssignmentAt
+        orderAcceptanceAt
+        arrivedToPassengerAt
+        departedAt
+        finishedAt
+        driver {
+          id
+          name
+          rating
+          car
+          vehicleNumber
+          location {
+            lat
+            lng
+          }
+          organization {
+            name
+          }
+          transfers {
+            id
+            fromAddress
+            toAddress
+            status
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_TRANSFER_REQUEST = gql`
+query Transfer($transferId: ID!) {
+  transfer(id: $transferId) {
+        id
+        fromAddress
+        baggage
+        toAddress
+        persons {
+          id
+          email
+          name
+          images
+        }
+        airlineId
+        status
+        createdAt
+        scheduledPickupAt
+        description
+        driverAssignmentAt
+        orderAcceptanceAt
+        arrivedToPassengerAt
+        departedAt
+        finishedAt
+        driver {
+          id
+          name
+          rating
+          car
+          vehicleNumber
+          location {
+            lat
+            lng
+          }
+          organization {
+            name
+          }
+          transfers {
+            id
+            fromAddress
+            toAddress
+            status
+          }
+        }
+    
+  }
+}
+`;
+
+
+export const CREATE_TRANSFER_REQUEST_MUTATION = gql`
+  mutation CreateTransfer($input: TransferInput!) {
+    createTransfer(input: $input) {
+      createdAt
+      fromAddress
+    }
+  }
+`;
+
+export const UPDATE_TRANSFER_REQUEST_MUTATION = gql`
+  mutation UpdateTransfer($updateTransferId: ID!, $input: TransferUpdateInput!) {
+    updateTransfer(id: $updateTransferId, input: $input) {
+      id
+    }
+  }
+`;
+
+export const DRIVERS_QUERY = gql`
+  query Drivers($pagination: DriverPaginationInput!) {
+    drivers(pagination: $pagination) {
+      drivers {
+        id
+        name
+        registrationStatus
+        car
+        location {
+          lat
+          lng
+        }
+        vehicleNumber
+        createdAt
+        email
+        extraEquipment
+        organization {
+          name
+        }
+        organizationConfirmed
+        number
+        rating
+        driverLicenseNumber
+        active
+        online
+        documents {
+          carPhotos
+          driverPhoto
+          licensePhoto
+          osagoPhoto
+          ptsPhoto
+          stsPhoto
+        }
+        transfers {
+          id
+          fromAddress
+          toAddress
+          status
+        }
+      }
+    }
+  }
+`;
+
+export const GET_ORGANIZATIONS = gql`
+  query Organizations {
+    organizations {
+      id
+      name
+    }
+  }
+`;
+
+export const GET_ORGANIZATION = gql`
+  query Organization($organizationId: ID!) {
+    organization(id: $organizationId) {
+      id
+      information {
+        country
+        city
+        address
+        index
+        email
+        number
+        inn
+        ogrn
+        rs
+        bank
+        bik
+        link
+        description
+      }
+      name
+      drivers {
+        id
+        name
+        rating
+      }
+    }
+  }
+`;
+
+export const CREATE_ORGANIZATION = gql`
+  mutation CreateOrganization($input: OrganizationInput) {
+    createOrganization(input: $input) {
+      id
+      name
+    }
+  }
+`;
+
+export const TRANSFER_CREATED_SUBSCRIPTION = gql`
+  subscription TransferCreated {
+    transferCreated {
+      id
+      status
+      fromAddress
+    }
+  }
+`;
+
+export const TRANSFER_UPDATED_SUBSCRIPTION = gql`
+  subscription TransferUpdated {
+    transferUpdated {
+      id
+      status
+      driverAssignmentAt
+    }
+  }
+`;
+
+// TRANSFER
+
 
 // Запросы получения пользователя
 
@@ -72,6 +494,7 @@ export const SINGIN = gql`
     }
   }
 `;
+
 
 export const SINGUP = gql`
   mutation SignUp($input: SignUpInput!) {

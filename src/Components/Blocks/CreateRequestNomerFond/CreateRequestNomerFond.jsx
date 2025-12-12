@@ -38,12 +38,13 @@ function CreateRequestNomerFond({
     description: "",
     descriptionSecond: "",
     price: type === "apartment" ? null : "",
-    roomImages: "",
+    roomImages: null,
     roomsName: "",
     roomsQuantity: 0, // количество комнат
   });
   const [selectedRoomKind, setSelectedRoomKind] = useState(null);
   const [hotelTariff, setHotelTariff] = useState([]);
+  const [coverImage, setCoverImage] = useState(null);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
     context: {
@@ -92,12 +93,13 @@ function CreateRequestNomerFond({
       description: "",
       descriptionSecond: "",
       price: type === "apartment" ? null : "",
-      roomImages: "",
+      roomImages: null,
       roomsName: "",
       roomsQuantity: 0,
     });
     setIsEdited(false); // Сброс флага изменений
     setSelectedRoomKind(null);
+    setCoverImage(null);
   }, []);
 
   useEffect(() => {
@@ -137,6 +139,10 @@ function CreateRequestNomerFond({
     }));
   }, []);
 
+  const handleCoverImageChange = (image) => {
+    setCoverImage(image);
+  };
+
   const handleFileChange = (e) => {
     const files = e.target.files;
     if (files.length > 8) {
@@ -152,6 +158,10 @@ function CreateRequestNomerFond({
       roomImages: fileArray,
     }));
   };
+
+  const imagesArray = coverImage
+    ? [coverImage, ...formData.roomImages?.filter((img) => img !== coverImage)]
+    : formData.roomImages;
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -217,14 +227,14 @@ function CreateRequestNomerFond({
         // Если не выбрано множество комнат, используем только updateHotel
         let response_update_room;
 
-        if (formData.roomImages.length > 0) {
+        if (formData.roomImages) {
           response_update_room = await updateHotel({
             variables: {
               updateHotelId: id,
               input: {
                 rooms: [roomInput],
               },
-              roomImages: formData.roomImages,
+              roomImages: imagesArray,
             },
           });
         } else {
@@ -238,48 +248,48 @@ function CreateRequestNomerFond({
           });
         }
 
-        if (response_update_room) {
-          const sortedTarifs = Object.values(
-            response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
-              if (!acc[room.category]) {
-                acc[room.category] = {
-                  name:
-                    room.category === "onePlace"
-                      ? "Одноместный"
-                      : room.category === "twoPlace"
-                      ? "Двухместный"
-                      : room.category === "threePlace"
-                      ? "Трехместный"
-                      : room.category === "fourPlace"
-                      ? "Четырехместный"
-                      : room.category === "fivePlace"
-                      ? "Пятиместный"
-                      : room.category === "sixPlace"
-                      ? "Шестиместный"
-                      : room.category === "sevenPlace"
-                      ? "Семиместный"
-                      : room.category === "eightPlace"
-                      ? "Восьмиместный"
-                      : room.category === "apartment"
-                      ? "Апартаменты"
-                      : room.category === "studio"
-                      ? "Студия"
-                      : "",
-                  origName: room.category,
-                  rooms: [],
-                };
-              }
-              acc[room.category].rooms.push(room);
-              return acc;
-            }, {})
-          );
+        // if (response_update_room) {
+        //   const sortedTarifs = Object.values(
+        //     response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
+        //       if (!acc[room.category]) {
+        //         acc[room.category] = {
+        //           name:
+        //             room.category === "onePlace"
+        //               ? "Одноместный"
+        //               : room.category === "twoPlace"
+        //               ? "Двухместный"
+        //               : room.category === "threePlace"
+        //               ? "Трехместный"
+        //               : room.category === "fourPlace"
+        //               ? "Четырехместный"
+        //               : room.category === "fivePlace"
+        //               ? "Пятиместный"
+        //               : room.category === "sixPlace"
+        //               ? "Шестиместный"
+        //               : room.category === "sevenPlace"
+        //               ? "Семиместный"
+        //               : room.category === "eightPlace"
+        //               ? "Восьмиместный"
+        //               : room.category === "apartment"
+        //               ? "Апартаменты"
+        //               : room.category === "studio"
+        //               ? "Студия"
+        //               : "",
+        //           origName: room.category,
+        //           rooms: [],
+        //         };
+        //       }
+        //       acc[room.category].rooms.push(room);
+        //       return acc;
+        //     }, {})
+        //   );
 
-          sortedTarifs.forEach((category) => {
-            category.rooms.sort((a, b) => a.name.localeCompare(b.name));
-          });
+        //   sortedTarifs.forEach((category) => {
+        //     category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+        //   });
 
-          setAddTarif(sortedTarifs);
-        }
+        //   setAddTarif(sortedTarifs);
+        // }
       }
 
       resetForm();
@@ -542,13 +552,29 @@ function CreateRequestNomerFond({
                     onChange={handleChange}
                   ></textarea>
 
-                  <label>Изображение</label>
+                  <label>Изображения</label>
                   <input
                     type="file"
                     name="roomImages"
                     onChange={handleFileChange}
                     multiple
                   />
+                  <div className={classes.imageList}>
+                    {formData?.roomImages?.map((image, index) => (
+                      <div
+                        key={`${image.name}-${index}`} // Используйте `image.name` для уникальности ключа
+                        className={`${classes.imageItem} ${
+                          coverImage === image ? classes.selected : ""
+                        }`}
+                        onClick={() => handleCoverImageChange(image)}
+                      >
+                        <img
+                          src={URL.createObjectURL(image)}
+                          alt={`Image ${index + 1}`}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </>
               ) : null}
 

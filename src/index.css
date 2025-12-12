@@ -17,7 +17,7 @@ a {
     --menu-width: 345px;
     --blockWidth: 1300px;
     --menu-gray: #7f808a;
-    --main-gray: #F1F4FB;
+    --gray: #F1F4FB;
     --menu-bg: #353B55;
     --menu-item-bg: #303552;
     --white: #fff;
@@ -32,6 +32,12 @@ a {
 
 .blueText {
     color: var(--blue);
+}
+
+button {
+    border: none;
+    outline: none;
+    cursor: pointer;
 }
 
 body {
@@ -134,10 +140,11 @@ textarea {
 
 /* DateRangePicker внутри элемента с классом no-sidebar */
 .no-sidebar .rdrDefinedRangesWrapper {
-  display: none;
+    display: none;
 }
+
 .no-sidebar .rdrCalendarWrapper {
-  grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr auto;
 }
 
 .ql-snow {
@@ -145,13 +152,13 @@ textarea {
 }
 
 .ql-editor p {
-  line-height: 150% !important;
-  padding-bottom: 12px !important;
+    line-height: 150% !important;
+    padding-bottom: 12px !important;
 }
 
 
 *:focus {
-  outline: none;
+    outline: none;
 }
 
 .opened {
@@ -224,6 +231,57 @@ textarea {
     border-radius: 50%;
     background-color: #a0a0a0;
     /* тёмно-серый для архивных */
+}
+
+
+/* transfer */
+.pending {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #FED806;
+}
+
+.assigned {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #285FE5;
+}
+
+.accepted {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #ffbd97;
+}
+
+.arrived {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #ffbd97;
+}
+
+.in_progress_to_client {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #ffbd97;
+}
+
+.in_progress_to_hotel {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #ffbd97;
+}
+
+.completed {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #56BA53;
 }
 
 

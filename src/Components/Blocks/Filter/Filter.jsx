@@ -18,6 +18,7 @@ import { useWindowSize } from "../../../hooks/useWindowSize";
 function Filter({
   toggleSidebar,
   isVisibleAirFiler,
+  transfer,
   representativeRequests,
   selectedAirline,
   setSelectedAirline,
@@ -116,15 +117,17 @@ function Filter({
     ((user && user?.role === roles.superAdmin) ||
       user?.role === roles.dispatcerAdmin ||
       user?.role === roles.airlineAdmin) &&
-    representativeRequests
+    transfer
   ) {
     filterListShow = [
       { label: "Все заявки", value: null },
-      { label: "Создан", value: "CREATED" },
-      { label: "Ожидает обработки", value: "ACCEPTED" },
-      { label: "В процессе", value: "IN_PROGRESS" },
-      { label: "Завершен", value: "COMPLETED" },
-      { label: "Отменен", value: "CANCELLED" },
+      { label: "Ожидание обработки", value: "PENDING" },
+      { label: "Назначен водитель", value: "ASSIGNED" },
+      { label: "Принят водителем", value: "ACCEPTED" },
+      { label: "Водитель приехал", value: "ARRIVED" },
+      { label: "В пути к клиенту", value: "IN_PROGRESS_TO_CLIENT" },
+      { label: "Завершена", value: "COMPLETED" },
+      { label: "Отменена", value: "CANCELLED" },
     ];
   }
 
@@ -173,241 +176,105 @@ function Filter({
     <div className={classes.filter}>
       {isVisibleAirFiler && (
         <>
-          {user?.role === roles.airlineAdmin ? null : (
-            <MUIAutocomplete
+          {user?.role === roles.airlineAdmin
+            ? null
+            : !transfer && (
+                <MUIAutocomplete
+                  dropdownWidth={dropdownWidth}
+                  label={"Авиакомпания"}
+                  options={[
+                    "Все авиакомпании",
+                    ...airlines.map((airline) => airline.name),
+                  ]}
+                  value={selectedAirline ? selectedAirline.name : ""}
+                  onChange={(event, newValue) => {
+                    if (newValue === "Все авиакомпании" || !newValue) {
+                      setSelectedAirline(null);
+                      handleChange({ target: { name: "airline", value: "" } });
+                    } else {
+                      const selectedOption = airlines.find(
+                        (airline) => airline.name === newValue
+                      );
+                      setSelectedAirline(selectedOption);
+                      handleChange({
+                        target: {
+                          name: "airline",
+                          value: selectedOption?.id || "",
+                        },
+                      });
+                    }
+                  }}
+                />
+              )}
+
+          {!transfer && (
+            <MUIAutocompleteColor
               dropdownWidth={dropdownWidth}
-              label={"Авиакомпания"}
+              label={"Аэропорт"}
               options={[
-                "Все авиакомпании",
-                ...airlines.map((airline) => airline.name),
+                { id: null, name: "Все аэропорты", code: "" },
+                ...airports,
               ]}
-              value={selectedAirline ? selectedAirline.name : ""}
-              onChange={(event, newValue) => {
-                if (newValue === "Все авиакомпании" || !newValue) {
-                  setSelectedAirline(null);
-                  handleChange({ target: { name: "airline", value: "" } });
-                } else {
-                  const selectedOption = airlines.find(
-                    (airline) => airline.name === newValue
+              getOptionLabel={(option) =>
+                option ? `${option.code} ${option.name}`.trim() : ""
+              }
+              renderOption={(optionProps, option) => {
+                const isAll =
+                  option.name === "Все аэропорты" || option.code === "";
+
+                if (isAll) {
+                  return (
+                    <li {...optionProps} key={option.id ?? "all-airports"}>
+                      <span style={{ color: "black" }}>{option.name}</span>
+                    </li>
                   );
-                  setSelectedAirline(selectedOption);
+                }
+
+                // Формируем строку для отображения
+                const labelText = `${option.code} ${option.name}`.trim();
+                // Разбиваем строку по пробелам
+                const words = labelText.split(" ");
+
+                return (
+                  <li {...optionProps} key={option.id}>
+                    {words.map((word, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          color: index === 0 ? "black" : "gray",
+                          marginRight: "4px",
+                        }}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </li>
+                );
+              }}
+              value={selectedAirport ? selectedAirport : ""}
+              onChange={(event, newValue) => {
+                if (newValue === "Все аэропорты" || !newValue) {
+                  setSelectedAirport(null);
+                  handleChange({ target: { name: "airport", value: "" } });
+                } else {
+                  const selectedOption = airports.find(
+                    (airport) => airport === newValue
+                  );
+                  setSelectedAirport(selectedOption || null);
                   handleChange({
                     target: {
-                      name: "airline",
+                      name: "airport",
                       value: selectedOption?.id || "",
                     },
                   });
                 }
               }}
             />
-            // <Autocomplete
-            //   options={[
-            //     "Все авиакомпании",
-            //     ...airlines.map((airline) => airline.name),
-            //   ]}
-            //   slotProps={{
-            //     popper: {
-            //       modifiers: [
-            //         {
-            //           name: "preventOverflow",
-            //           options: {
-            //             boundary: "window",
-            //           },
-            //         },
-            //       ],
-            //     },
-            //     listbox: {
-            //       sx: {
-            //         fontSize: "14px", // Уменьшаем размер шрифта списка
-            //         padding: "0",
-            //       },
-            //     },
-            //   }}
-            //   value={selectedAirline ? selectedAirline.name : ""}
-            //   onChange={(event, newValue) => {
-            //     if (newValue === "Все авиакомпании" || !newValue) {
-            //       setSelectedAirline(null);
-            //       handleChange({ target: { name: "airline", value: "" } });
-            //     } else {
-            //       const selectedOption = airlines.find(
-            //         (airline) => airline.name === newValue
-            //       );
-            //       setSelectedAirline(selectedOption);
-            //       handleChange({
-            //         target: {
-            //           name: "airline",
-            //           value: selectedOption?.id || "",
-            //         },
-            //       });
-            //     }
-            //   }}
-            //   renderInput={(params) => (
-            //     <TextField
-            //       {...params}
-            //       label="Авиакомпания"
-            //       variant="outlined"
-            //       sx={{
-            //         "& label": {
-            //           top: "50%",
-            //           padding: "0 12px",
-            //           transform: "translateY(-50%)",
-            //           transition: "all 0.1s ease-out", // Плавная анимация при фокусе
-            //           fontSize: "14px",
-            //         },
-            //         "& .MuiInputBase-root": {
-            //           minHeight: "40px",
-            //           display: "flex",
-            //           alignItems: "center",
-            //         },
-            //         "& .MuiOutlinedInput-root": {
-            //           padding: "0 8px",
-            //         },
-            //         "& .MuiInputLabel-shrink": {
-            //           padding: "0",
-            //           top: "0px",
-            //           transform: "translate(14px, -9px) scale(0.75)", // Обычное поведение при фокусе
-            //         },
-            //       }}
-            //     />
-            //   )}
-            //   sx={{
-            //     width: dropdownWidth,
-            //     bgcolor: "white",
-            //     // Стили для самого Autocomplete
-            //     "& .MuiOutlinedInput-root": {
-            //       // уменьшаем высоту
-            //       minHeight: "40px",
-            //       // настраиваем внутренние отступы
-            //       padding: "0 8px",
-            //       // уменьшаем размер шрифта
-            //       fontSize: "14px",
-            //     },
-            //     // уменьшаем иконку (стрелку)
-            //     "& .MuiSvgIcon-root": {
-            //       fontSize: "18px",
-            //     },
-            //     // стили для списка опций
-            //     "& .MuiAutocomplete-listbox": {
-            //       fontSize: "10px",
-            //     },
-            //   }}
-            // />
-            // <DropDownList
-            //   width={dropdownWidth}
-            //   placeholder="Выберите авиакомпанию"
-            //   searchable={true}
-            //   options={[
-            //     "Все авиакомпании",
-            //     ...airlines.map((airline) => airline.name),
-            //   ]} // Добавляем 'Все авиакомпании'
-            //   initialValue={selectedAirline?.name || "Все авиакомпании"} // Устанавливаем "Все авиакомпании" по умолчанию
-            //   onSelect={(value) => {
-            //     if (value === "Все авиакомпании") {
-            //       setSelectedAirline(null); // Если выбрали "Все авиакомпании", сбрасываем выбранную авиакомпанию
-            //       handleChange({ target: { name: "airline", value: "" } }); // Убираем фильтрацию по авиакомпании
-            //     } else {
-            //       const selectedOption = airlines.find(
-            //         (airline) => airline.name === value
-            //       );
-            //       setSelectedAirline(selectedOption);
-            //       handleChange({
-            //         target: {
-            //           name: "airline",
-            //           value: selectedOption?.id || "",
-            //         },
-            //       });
-            //     }
-            //   }}
-            // />
           )}
-
-          {/* <MUIAutocomplete
-            dropdownWidth={dropdownWidth}
-            label={"Аэропорт"}
-            options={[
-              "Все аэропорты",
-              ...airports.map((airport) => airport.name),
-            ]}
-            value={selectedAirport ? selectedAirport.name : ""}
-            onChange={(event, newValue) => {
-              if (newValue === "Все аэропорты" || !newValue) {
-                setSelectedAirport(null);
-                handleChange({ target: { name: "airport", value: "" } });
-              } else {
-                const selectedOption = airports.find(
-                  (airport) => airport.name === newValue
-                );
-                setSelectedAirport(selectedOption);
-                handleChange({
-                  target: { name: "airport", value: selectedOption?.id || "" },
-                });
-              }
-            }}
-          /> */}
-
-          <MUIAutocompleteColor
-            dropdownWidth={dropdownWidth}
-            label={"Аэропорт"}
-            options={[
-              { id: null, name: "Все аэропорты", code: "" },
-              ...airports,
-            ]}
-            getOptionLabel={(option) =>
-              option ? `${option.code} ${option.name}`.trim() : ""
-            }
-            renderOption={(optionProps, option) => {
-              const isAll =
-                option.name === "Все аэропорты" || option.code === "";
-
-              if (isAll) {
-                return (
-                  <li {...optionProps} key={option.id ?? "all-airports"}>
-                    <span style={{ color: "black" }}>{option.name}</span>
-                  </li>
-                );
-              }
-
-              // Формируем строку для отображения
-              const labelText = `${option.code} ${option.name}`.trim();
-              // Разбиваем строку по пробелам
-              const words = labelText.split(" ");
-
-              return (
-                <li {...optionProps} key={option.id}>
-                  {words.map((word, index) => (
-                    <span
-                      key={index}
-                      style={{
-                        color: index === 0 ? "black" : "gray",
-                        marginRight: "4px",
-                      }}
-                    >
-                      {word}
-                    </span>
-                  ))}
-                </li>
-              );
-            }}
-            value={selectedAirport ? selectedAirport : ""}
-            onChange={(event, newValue) => {
-              if (newValue === "Все аэропорты" || !newValue) {
-                setSelectedAirport(null);
-                handleChange({ target: { name: "airport", value: "" } });
-              } else {
-                const selectedOption = airports.find(
-                  (airport) => airport === newValue
-                );
-                setSelectedAirport(selectedOption || null);
-                handleChange({
-                  target: { name: "airport", value: selectedOption?.id || "" },
-                });
-              }
-            }}
-          />
 
           {!representativeRequests && (
             <DateRangeModalSelector
-              width={dropdownWidth}
+              width={transfer ? "200px" : dropdownWidth}
               initialRange={initialRange}
               onChange={(start, end) =>
                 onRangeChange({ startDate: start, endDate: end })
@@ -446,7 +313,7 @@ function Filter({
         <>
           {/* <div className={classes.filter_title}>Статус:</div> */}
           <MUIAutocomplete
-            dropdownWidth={dropdownWidth}
+            dropdownWidth={ transfer ? "200px" : dropdownWidth}
             label={"Статус"}
             options={statusOptions?.map((option) => option.label)}
             value={
@@ -507,7 +374,7 @@ function Filter({
                     /> */}
         </>
       )}
-      {user?.role == roles.hotelAdmin || isEstafeta ? null : (
+      {user?.role == roles.hotelAdmin || isEstafeta || !buttonTitle ? null : (
         <Button onClick={toggleSidebar} minwidth={dropdownWidth}>
           {/* { isEstafeta  && <img src="/plus.png" style={{width:'10px', objectFit:'contain'}} alt="" /> } */}
           {buttonTitle}

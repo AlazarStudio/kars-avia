@@ -116,9 +116,9 @@ function HotelAboutRoomBlock({
             </div>
           ) : (
             <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
-              {props.priceForAirReq
+              {props.price
                 ? "Цена по запросу"
-                : `${props.price.toLocaleString()} ₽`}
+                : `${props?.price?.toLocaleString() || ""} ₽`}
             </div>
           )}
         </div>
@@ -209,9 +209,9 @@ function HotelAboutRoomBlock({
                 </span>
               ) : (
                 <span className={classes.price}>
-                  {props.priceForAirReq
+                  {props.price
                     ? "Цена по запросу"
-                    : `${props.price.toLocaleString()} ₽`}
+                    : `${props?.price?.toLocaleString() || ""} ₽`}
                 </span>
               )}
               {/* <div

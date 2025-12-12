@@ -9,7 +9,7 @@ import {
 } from "@mui/material";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
-import { SINGIN, SINGUP } from "../../../../graphQL_requests.js";
+import { SINGIN, SINGUP, TRANSFER_SING_IN } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 
@@ -67,6 +67,7 @@ function Login() {
         variables: {
           input: {
             login: username,
+            // identifier: username,
             password: password,
             fingerprint: fpHash,
           },
@@ -76,6 +77,7 @@ function Login() {
       // console.log(response_signIn);
       
 
+      // let token = response_signIn && response_signIn.data.transferSignIn.token;
       let token = response_signIn && response_signIn.data.signIn.token;
       let refreshToken = response_signIn && response_signIn.data.signIn.refreshToken;
       // console.log(refreshToken);

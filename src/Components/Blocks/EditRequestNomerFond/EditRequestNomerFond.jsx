@@ -7,6 +7,8 @@ import {
   GET_HOTEL_TARIFS,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   getCookie,
+  REORDER_ROOM_KIND_IMAGES,
+  server,
   UPDATE_HOTEL,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
@@ -38,6 +40,11 @@ function EditRequestNomerFond({
   // console.log(nomer);
   const [selectedRoomKind, setSelectedRoomKind] = useState(null);
   const [hotelTariff, setHotelTariff] = useState([]);
+
+  const [coverImage, setCoverImage] = useState(nomer && nomer?.images[0]);
+  const [coverImage2, setCoverImage2] = useState(null);
+
+  const [deletedImages, setDeletedImages] = useState([]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
     context: {
@@ -145,6 +152,35 @@ function EditRequestNomerFond({
     }));
   }, []);
 
+  // переключает пометку удаления для серверного изображения (по его пути)
+  const toggleDeleteServerImage = (imagePath) => {
+    setDeletedImages((prev) => {
+      if (prev.includes(imagePath)) {
+        return prev.filter((p) => p !== imagePath);
+      } else {
+        return [...prev, imagePath];
+      }
+    });
+
+    // Если удаляем текущую обложку — сбросим её
+    if (coverImage === imagePath) {
+      setCoverImage(null);
+    }
+  };
+
+  // удаление нового выбранного файла из formData.images (File)
+  const removeNewFile = (index) => {
+    setFormData((prev) => {
+      const newFiles = Array.from(prev.images || []);
+      newFiles.splice(index, 1);
+      return { ...prev, images: newFiles };
+    });
+
+    // если удаляли coverImage2 (File), сбрасываем его
+    const file = formData.images?.[index];
+    if (coverImage2 === file) setCoverImage2(null);
+  };
+
   const handleFileChange = (e) => {
     const files = e.target.files;
     if (files.length > 8) {
@@ -160,6 +196,13 @@ function EditRequestNomerFond({
       ...prevState,
       roomImages: fileArray, // Сохраняем массив файлов
     }));
+  };
+
+  const handleCoverImageChange = (image) => {
+    if (isEditing) {
+      setCoverImage(image);
+    }
+    // setIsEditing(!isEditing);
   };
 
   const [updateHotel] = useMutation(UPDATE_HOTEL, {
@@ -272,6 +315,29 @@ function EditRequestNomerFond({
   //     // addNotification("Редактирование номера прошло успешно.", "success");
   //   }
   // };
+  const [reorderRoomKindImages] = useMutation(REORDER_ROOM_KIND_IMAGES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
+  const imagesArray = coverImage
+    ? [
+        coverImage,
+        ...nomer?.images.filter(
+          (img) => img !== coverImage && !deletedImages.includes(img)
+        ),
+      ]
+    : nomer?.images?.filter((img) => !deletedImages.includes(img));
+
+  const imagesArray2 = coverImage2
+    ? [
+        coverImage2,
+        ...(formData?.roomImages?.filter((f) => f !== coverImage2) || []),
+      ]
+    : formData?.roomImages || [];
 
   const handleSubmit = async (e) => {
     if (isEditing) {
@@ -279,6 +345,16 @@ function EditRequestNomerFond({
       setIsLoading(true);
 
       try {
+        // const finalImagesOrder = imagesArray; // Задаем порядок изображений
+        // if (finalImagesOrder && finalImagesOrder.length && imagesArray2.length === 0) {
+        // await reorderRoomKindImages({
+        //   variables: {
+        //     reorderRoomKindImagesId: roomId ? roomId : nomer.id,
+        //     imagesArray: finalImagesOrder, // Порядок изображений
+        //     imagesToDeleteArray: deletedImages, // Массив путей изображений на удаление
+        //   },
+        // });
+
         // Определяем имя номера в зависимости от режима (резерв/квота)
         let nomerName;
         if (formData.reserve) {
@@ -588,6 +664,33 @@ function EditRequestNomerFond({
                 isDisabled={!isEditing}
               />
 
+              <label>Состояние</label>
+              <select
+                name="active"
+                value={
+                  formData.active === true
+                    ? "true"
+                    : formData.active === false
+                    ? "false"
+                    : ""
+                }
+                onChange={(e) => {
+                  const value = e.target.value === "true";
+                  setIsEdited(true);
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    active: value,
+                  }));
+                }}
+                disabled={!isEditing}
+              >
+                <option value="" disabled>
+                  Выберите состояние
+                </option>
+                <option value="false">Не работает</option>
+                <option value="true">Работает</option>
+              </select>
+
               {type === "apartment" ? (
                 <>
                   <label>Категория</label>
@@ -630,7 +733,7 @@ function EditRequestNomerFond({
                     disabled={!isEditing}
                   ></textarea>
 
-                  <label>Изображение</label>
+                  <label>Изображения</label>
                   <input
                     type="file"
                     name="roomImages"
@@ -638,35 +741,78 @@ function EditRequestNomerFond({
                     multiple
                     disabled={!isEditing}
                   />
+                  {/* список новых файлов (локальные файлы) */}
+                  <div className={classes.imageList}>
+                    {formData?.roomImages?.map((image, index) => (
+                      <div
+                        key={`${image.name}-${index}`}
+                        className={`${classes.imageItem} ${
+                          coverImage2 === image ? classes.selected : ""
+                        }`}
+                      >
+                        <img
+                          src={URL.createObjectURL(image)}
+                          alt={`Image ${index + 1}`}
+                          // onClick={() => handleCoverImageChange2(image)}
+                        />
+                        {/* кнопка удалить локальный файл */}
+                        {isEditing && (
+                          <button
+                            className={classes.deleteImageBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeNewFile(index);
+                            }}
+                            title="Удалить"
+                          >
+                            {/* ✕ */}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* список изображений с сервера */}
+                  <div className={classes.imageList}>
+                    {nomer?.images?.map((image, index) => {
+                      const isMarked = deletedImages.includes(image);
+                      return (
+                        <div
+                          key={`${image}-${index}`}
+                          className={`${classes.imageItem} 
+                          ${
+                            coverImage === image ? classes.selected : ""
+                          } ${!isEditing && classes.disImage} ${
+                            isMarked ? classes.toDelete : ""
+                          }
+                          `}
+                          // onClick={() => {
+                          //   if (!isMarked) {
+                          //     handleCoverImageChange(image);
+                          //   }
+                          // }}
+                        >
+                          <img
+                            src={`${server}${image}`}
+                            alt={`Image ${index + 1}`}
+                          />
+                          {/* {isEditing && (
+                            <button
+                              className={classes.deleteImageBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDeleteServerImage(image);
+                              }}
+                              title={isMarked ? "Отменить удаление" : "Удалить"}
+                            >
+                            </button>
+                          )} */}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </>
               ) : null}
-
-              <label>Состояние</label>
-              <select
-                name="active"
-                value={
-                  formData.active === true
-                    ? "true"
-                    : formData.active === false
-                    ? "false"
-                    : ""
-                }
-                onChange={(e) => {
-                  const value = e.target.value === "true";
-                  setIsEdited(true);
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    active: value,
-                  }));
-                }}
-                disabled={!isEditing}
-              >
-                <option value="" disabled>
-                  Выберите состояние
-                </option>
-                <option value="false">Не работает</option>
-                <option value="true">Работает</option>
-              </select>
             </div>
           </div>
 

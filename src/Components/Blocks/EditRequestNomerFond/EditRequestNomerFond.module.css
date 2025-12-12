@@ -131,4 +131,106 @@ select {
     line-height: 19.36px;
 }
 
+.imageList {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    /* justify-content: space-between; */
+    /* row-gap: 5px; */
+    /* flex-direction: column; */
+    gap: 2px;
+}
+
+.imageItem {
+    padding: 5px;
+    flex-basis: 33%;
+    height: 130px;
+    /* width: 90%; */
+    cursor: pointer;
+    transition: all ease-in-out 0.3s;
+    border-radius: 10px;
+}
+
+.imageItem img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.selected {
+    background-color: var(--blue);
+}
+
+.disImage {
+    opacity: 0.5;
+}
+
+/* Контейнер для изображений с кнопкой удаления */
+.imageItem {
+    position: relative;
+    display: inline-block;
+    /* margin: 8px; */
+}
+
+.deleteImageBtn {
+    position: absolute;
+    top: 10px;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 18px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    border-radius: 50%;
+    /* Если хотите, можно добавить немного округления */
+}
+
+/* При наведении на изображение показываем кнопку удаления */
+.imageItem:hover .deleteImageBtn {
+    opacity: 1;
+    transform: scale(1.1);
+    /* border: 1px solid #ffffff; */
+}
+
+/* Кнопка с крестиком */
+.deleteImageBtn::before {
+    content: '✕';
+    /* Символ крестика */
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1;
+    display: inline-block;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* Эффект нажатия на кнопку */
+.deleteImageBtn:active {
+    transform: scale(0.9);
+}
+
+/* Когда кнопка неактивна, можно уменьшить её прозрачность */
+.imageItem.toDelete .deleteImageBtn {
+    color: #fff;
+    background-color: #e02d2d;
+}
+
+/* Стиль для обертки изображений при удалении */
+.toDelete {
+    opacity: 0.5;
+    border: 2px dashed red;
+    /* можно поменять на любой другой стиль */
+}
+
+
 @media (min-width: 0px) and (max-width: 1299px) {}

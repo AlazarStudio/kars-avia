@@ -18,6 +18,7 @@
     "@mui/icons-material": "^6.1.7",
     "@mui/material": "^6.1.10",
     "@mui/system": "^6.1.10",
+    "@pbe/react-yandex-maps": "^1.2.5",
     "@react-input/mask": "^2.0.4",
     "apollo-upload-client": "^18.0.1",
     "date-fns": "^4.1.0",

@@ -414,7 +414,7 @@ function Message({
 
     return (
         <>
-            {loading && <MUILoader loadSize={'50px'} fullHeight={'78vh'}/>}
+            {loading && <MUILoader loadSize={'50px'} fullHeight={'58vh'}/>}
             {error && <p>Error: {error.message}</p>}
 
             {!loading && !error && messages?.messages && data && (

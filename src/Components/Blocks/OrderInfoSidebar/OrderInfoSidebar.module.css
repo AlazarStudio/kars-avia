@@ -1,0 +1,147 @@
+.sidebar {
+  width: 100%;
+}
+
+.card {
+  height: calc(100vh - 210px);
+  background-color: #ffffff;
+  border-radius: 16px;
+  /* box-shadow: 0 0 0 1px #e4e4ef; */
+  padding: 20px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--main-gray);
+}
+
+/* аватар + имя + рейтинг */
+
+.clientBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.clientAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.clientName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.clientRating {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* маршрут */
+
+.routeCard {
+  position: relative;
+  padding: 16px 16px 16px 36px;
+  border-radius: 16px;
+  border: 1px solid #e4e4ef;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.routeLine {
+  position: absolute;
+  left: 22px;
+  /* top: 26px;
+  bottom: 27px; */
+  top: 29px;
+  bottom: 31px;
+  width: 2px;
+  background-color: #e0e3f0;
+}
+
+.routeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.routeDot {
+  min-width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  box-sizing: border-box;
+  display: none;
+}
+
+.routeDotEmpty {
+  border: 2px solid #d4d7e8;
+  background-color: #ffffff;
+}
+
+.routeDotFilled {
+  border: 2px solid #0057c3;
+  background-color: #0057c3;
+}
+
+.routeText {
+  font-size: 13px;
+  color: #374151;
+}
+
+.routeTextBold {
+  font-weight: 600;
+}
+
+/* мета и поля */
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.metaLabel {
+  color: #c4c7d4;
+  font-size: 14px;
+}
+
+.metaValue {
+  color: #111827;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fakeInput {
+  height: 56px;
+  border-radius: 12px;
+  background-color: #f5f5fb;
+}
+
+
+@media (max-width: 1499px) {
+  .routeText {
+    font-size: 12px;
+  }
+
+  .card {
+    padding: 15px 20px;
+  }
+}
