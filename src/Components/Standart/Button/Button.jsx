@@ -6,6 +6,7 @@ function Button({ children, timeLeft, dataObject, ...props }) {
     const buttonStyles = {
         // Используем CSS-переменные
         '--button-padding': props.padding || "0 30px",
+        '--button-flex': props.flex || "",
         '--button-min-width': props.minwidth,
         '--button-max-width': props.maxWidth,
         // '--button-width': props.width,

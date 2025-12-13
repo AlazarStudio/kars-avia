@@ -264,7 +264,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
           }
         >
           {user?.role === roles.dispatcerAdmin ? (
-            <img src="/kars_drive.png" alt="" style={{width:"fit-content"}} />
+                <img src="/kars-avia-mainLogo.png" alt="" />
+            // <img src="/kars_drive.png" alt="" style={{width:"fit-content"}} />
           ) : (
             <>
               {menuOpen ? (
@@ -304,18 +305,18 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
             />
           )}
           {user.role == roles.dispatcerAdmin && (
-            // <DisAdminMenu
-            //   id={id}
-            //   allCreatedReserves={allCreatedReserves}
-            //   allCreatedRequests={allCreatedRequests}
-            //   menuOpen={menuOpen}
-            // />
-            <TransferAdminMenu
+            <DisAdminMenu
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
               menuOpen={menuOpen}
             />
+            // <TransferAdminMenu
+            //   id={id}
+            //   allCreatedReserves={allCreatedReserves}
+            //   allCreatedRequests={allCreatedRequests}
+            //   menuOpen={menuOpen}
+            // />
             // <RepresentativeAdminMenu
             //   id={id}
             //   allCreatedReserves={allCreatedReserves}

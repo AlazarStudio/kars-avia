@@ -37,7 +37,10 @@ function InfoTableDataDriversCompanies({
         >
           ID
         </div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>
+        <div
+          className={`${classes.InfoTable_title_elem} ${classes.w30}`}
+          style={{ paddingLeft: "40px" }}
+        >
           Название
         </div>
       </div>
@@ -56,11 +59,11 @@ function InfoTableDataDriversCompanies({
             >
               {item.order}
             </div>
-            <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
+            <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
               <div className={classes.InfoTable_data_elem_userInfo}>
-                {/* <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={`${server}${item.images[0]}`} alt="" />
-                                </div> */}
+                <div className={classes.InfoTable_data_elem_avatar}>
+                  <img src={`${server}${item.images[0]}`} alt="" />
+                </div>
                 <div className={classes.InfoTable_data_elem_title}>
                   {item.name}
                 </div>

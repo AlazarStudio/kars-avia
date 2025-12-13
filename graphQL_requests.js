@@ -10,6 +10,7 @@ import { gql } from "@apollo/client";
 export const path = import.meta.env.VITE_DEV_PATH;
 export const server = import.meta.env.VITE_DEV_SERVER;
 
+
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
 
 export const getCookie = (name) => {
@@ -33,6 +34,13 @@ export const decodeJWT = (token) => {
 
   return payloadObject;
 }
+
+export const buildScheduledISO = (date, time) => {
+  const d = String(date || "").trim();          // "2025-12-13"
+  const t = String(time || "00:00").trim();     // "21:30"
+  // строка без offset парсится как local datetime, дальше конвертим в UTC
+  return new Date(`${d}T${t}:00`).toISOString(); // "YYYY-MM-DDTHH:mm:ss.sssZ"
+};
 
 const makeFormatter = (includeTime) =>
   new Intl.DateTimeFormat("ru-RU", {
@@ -352,7 +360,6 @@ query Transfer($transferId: ID!) {
 }
 `;
 
-
 export const CREATE_TRANSFER_REQUEST_MUTATION = gql`
   mutation CreateTransfer($input: TransferInput!) {
     createTransfer(input: $input) {
@@ -386,6 +393,7 @@ export const DRIVERS_QUERY = gql`
         createdAt
         email
         extraEquipment
+        organizationId
         organization {
           name
         }
@@ -414,11 +422,56 @@ export const DRIVERS_QUERY = gql`
   }
 `;
 
+export const CREATE_DRIVER_MUTATION = gql`
+  mutation CreateDriver($input: DriverCreateInput!) {
+    createDriver(input: $input) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_DRIVER_WITH_PHOTO_MUTATION = gql`
+  mutation UpdateDriver($updateDriverId: ID!, $driverPhoto: [Upload], $input: DriverUpdateInput, $carPhotos: [Upload], $stsPhoto: [Upload], $ptsPhoto: [Upload], $osagoPhoto: [Upload], $licensePhoto: [Upload]) {
+    updateDriver(id: $updateDriverId, driverPhoto: $driverPhoto, input: $input, carPhotos: $carPhotos, stsPhoto: $stsPhoto, ptsPhoto: $ptsPhoto, osagoPhoto: $osagoPhoto, licensePhoto: $licensePhoto) {
+      documents {
+        carPhotos
+        driverPhoto
+        licensePhoto
+        osagoPhoto
+        ptsPhoto
+        stsPhoto
+      }
+    }
+  }
+`;
+
+export const UPDATE_DRIVER_MUTATION = gql`
+  mutation UpdateDriver($updateDriverId: ID!, $input: DriverUpdateInput) {
+    updateDriver(id: $updateDriverId, input: $input) {
+      car
+      email
+      name
+      number
+      organization {
+        name
+      }
+      rating
+      vehicleNumber
+      registrationStatus
+      driverLicenseNumber
+      documents {
+        driverPhoto
+      }
+    }
+  }
+`;
+
 export const GET_ORGANIZATIONS = gql`
   query Organizations {
     organizations {
       id
       name
+      images
     }
   }
 `;
@@ -427,6 +480,7 @@ export const GET_ORGANIZATION = gql`
   query Organization($organizationId: ID!) {
     organization(id: $organizationId) {
       id
+      images
       information {
         country
         city
@@ -444,9 +498,38 @@ export const GET_ORGANIZATION = gql`
       }
       name
       drivers {
-        id
-        name
-        rating
+          id
+          name
+          registrationStatus
+          car
+          location {
+            lat
+            lng
+          }
+          vehicleNumber
+          createdAt
+          email
+          extraEquipment
+          organizationConfirmed
+          number
+          rating
+          driverLicenseNumber
+          active
+          online
+          documents {
+            carPhotos
+            driverPhoto
+            licensePhoto
+            osagoPhoto
+            ptsPhoto
+            stsPhoto
+          }
+          transfers {
+            id
+            fromAddress
+            toAddress
+            status
+          }
       }
     }
   }
@@ -457,6 +540,14 @@ export const CREATE_ORGANIZATION = gql`
     createOrganization(input: $input) {
       id
       name
+    }
+  }
+`;
+
+export const UPDATE_ORGANIZATION = gql`
+  mutation UpdateOrganization($updateOrganizationId: ID!, $input: UpdateOrganizationInput, $images: [Upload!]) {
+    updateOrganization(id: $updateOrganizationId, input: $input, images: $images) {
+      id
     }
   }
 `;
@@ -477,6 +568,22 @@ export const TRANSFER_UPDATED_SUBSCRIPTION = gql`
       id
       status
       driverAssignmentAt
+    }
+  }
+`;
+
+export const ORGANIZATION_CREATED_SUBSCRIPTION = gql`
+  subscription OrganizationCreated {
+    organizationCreated {
+      id
+    }
+  }
+`;
+
+export const DRIVER_UPDATED_SUBSCRIPTION = gql`
+  subscription DriverUpdated {
+    driverUpdated {
+      id
     }
   }
 `;

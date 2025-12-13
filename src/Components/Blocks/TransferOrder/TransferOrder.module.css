@@ -92,7 +92,8 @@
 
 .mapAndList {
     flex: 1;
-    height: calc(100vh - 210px);
+    height: calc(100vh - 152px);
+    /* height: calc(100vh - 210px); */
     display: flex;
     flex-direction: column;
     gap: 12px;

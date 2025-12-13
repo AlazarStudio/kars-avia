@@ -13,8 +13,8 @@ const AllRoles = ({ user, accessMenu }) => {
 		[roles.airlineAdmin]: <AirlineAdminContent user={user} accessMenu={accessMenu} />,
 		[roles.superAdmin]: <SuperAdminContent user={user} />,
 		// [roles.dispatcerAdmin]: <RepresentativeAdminContent user={user} />
-		[roles.dispatcerAdmin]: <TransferAdminContent user={user} />
-		// [roles.dispatcerAdmin]: <DispatcherAdminContent user={user} />
+		// [roles.dispatcerAdmin]: <TransferAdminContent user={user} />
+		[roles.dispatcerAdmin]: <DispatcherAdminContent user={user} />
 	}
 
 	return roleComponents[user?.role] || null

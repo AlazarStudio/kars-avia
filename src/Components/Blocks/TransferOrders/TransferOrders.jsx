@@ -31,14 +31,14 @@ import Button from "../../Standart/Button/Button.jsx";
 import CreateTransferRequest from "../CreateTransferRequest/CreateTransferRequest.jsx";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
-function TransferOrders({ user, accessMenu }) {
+function TransferOrders({ user, disAdmin, accessMenu }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { search, pathname, state } = useLocation();
+  // const { search, pathname, state } = useLocation();
 
-  const requestIdFromState = state?.requestId || null;
+  // const requestIdFromState = state?.requestId || null;
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
@@ -50,16 +50,16 @@ function TransferOrders({ user, accessMenu }) {
     endDate: null,
   });
 
-  useEffect(() => {
-    if (requestIdFromState) {
-      setChooseRequestID(requestIdFromState);
-      setShowRequestSidebar(true);
-    }
-  }, [requestIdFromState]);
+  // useEffect(() => {
+  //   if (requestIdFromState) {
+  //     setChooseRequestID(requestIdFromState);
+  //     setShowRequestSidebar(true);
+  //   }
+  // }, [requestIdFromState]);
 
   // Инициализация текущей страницы на основе параметров URL или по умолчанию
-  const pageNumberRelay = new URLSearchParams(location.search).get("page");
-  const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
+  // const pageNumberRelay = new URLSearchParams(location.search).get("page");
+  // const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
 
   // Состояние для фильтрации по статусу. Получаем фильтр из localStorage или устанавливаем значение по умолчанию
   const [statusFilterTransfer, setStatusFilter] = useState(() => {
@@ -67,10 +67,10 @@ function TransferOrders({ user, accessMenu }) {
   });
 
   // Состояние для хранения информации о странице (для пагинации)
-  const [pageInfo, setPageInfo] = useState({
-    skip: currentPageRelay,
-    take: 50,
-  });
+  // const [pageInfo, setPageInfo] = useState({
+  //   skip: currentPageRelay,
+  //   take: 50,
+  // });
 
   const query =
     statusFilterTransfer === "archived"
@@ -104,12 +104,12 @@ function TransferOrders({ user, accessMenu }) {
     TRANSFER_CREATED_SUBSCRIPTION,
     {
       onData: ({ data }) => {
-        console.log('Новая заявка создана:', data.data?.transferCreated);
+        // console.log("Новая заявка создана:", data.data?.transferCreated);
         refetch(); // Обновляем данные
       },
       onError: (error) => {
-        console.error('Ошибка подписки на создание:', error);
-      }
+        console.error("Ошибка подписки на создание:", error);
+      },
     }
   );
   const { data: subscriptionUpdateData } = useSubscription(
@@ -133,10 +133,10 @@ function TransferOrders({ user, accessMenu }) {
   useEffect(() => {
     if (data && data.transfers?.transfers) {
       let sortedRequests = [...data.transfers.transfers];
-      if (currentPageRelay === 0 && newRequests.length > 0) {
-        sortedRequests = [...newRequests, ...sortedRequests];
-        setNewRequests([]);
-      }
+      // if (currentPageRelay === 0 && newRequests.length > 0) {
+      //   sortedRequests = [...newRequests, ...sortedRequests];
+      //   setNewRequests([]);
+      // }
 
       setRequests(sortedRequests);
       // setTotalPages(data.transfers.totalPages);
@@ -152,7 +152,8 @@ function TransferOrders({ user, accessMenu }) {
     //   setTotalPages(data.requestArchive.totalPages);
     // }
     // refetch();
-  }, [data, currentPageRelay, newRequests, refetch]);
+  }, [data, newRequests, refetch]);
+  // }, [data, currentPageRelay, newRequests, refetch]);
 
   // Обновление данных при получении новой информации по подписке на обновление заявок
   // useEffect(() => {
@@ -167,8 +168,8 @@ function TransferOrders({ user, accessMenu }) {
     localStorage.setItem("statusFilterTransfer", value);
 
     // Сбрасываем текущую страницу на первую
-    setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    navigate("?page=1");
+    // setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    // navigate("?page=1");
   };
 
   // Управление состоянием боковых панелей для создания и просмотра заявок
@@ -215,8 +216,8 @@ function TransferOrders({ user, accessMenu }) {
 
   useEffect(() => {
     // сбрасываем на первую страницу
-    setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    navigate("?page=1");
+    // setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    // navigate("?page=1");
 
     refetch({
       pagination: {
@@ -350,7 +351,6 @@ function TransferOrders({ user, accessMenu }) {
   }, [isSearching, allFilteredData, requests, filterData, searchQuery]);
 
   // console.log(requests);
-  
 
   const filterList = ["Азимут", "S7 airlines", "Северный ветер"];
 
@@ -392,8 +392,8 @@ function TransferOrders({ user, accessMenu }) {
   // const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
 
   return (
-    <div className={classes.section}>
-      <Header>Заказы</Header>
+    <div className={classes.section} style={disAdmin && { padding: "0px" }}>
+      {!disAdmin && <Header>Заказы</Header>}
       <div className={classes.section_searchAndFilter}>
         <Filter
           user={user}
@@ -418,7 +418,7 @@ function TransferOrders({ user, accessMenu }) {
         />
         <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
       </div>
-      {loading && <MUILoader />}
+      {loading && <MUILoader fullHeight={"70vh"} />}
       {error && <p>Error: {error.message}</p>}
 
       {/* Отображение таблицы заявок и компонентов пагинации */}
@@ -426,14 +426,15 @@ function TransferOrders({ user, accessMenu }) {
         <>
           <InfoTableDataTransferOrders
             user={user}
+            disAdmin={disAdmin}
             token={token}
             toggleRequestSidebar={toggleRequestSidebar}
             requests={requests}
             chooseRequestID={chooseRequestID}
             setChooseObject={setChooseObject}
             setChooseRequestID={setChooseRequestID}
-            pageInfo={pageInfo.skip}
-            scrollToId={requestIdFromState}
+            // pageInfo={pageInfo.skip}
+            // scrollToId={requestIdFromState}
           />
 
           {/* {totalPages > 0 && (

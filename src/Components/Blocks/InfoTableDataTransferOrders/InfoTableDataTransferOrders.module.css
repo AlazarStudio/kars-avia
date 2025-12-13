@@ -31,7 +31,7 @@
 .InfoTable_row:hover,
 .InfoTable_row_active {
     background-color: var(--hover-gray);
-    box-shadow: 0 10px 30px rgba(15, 35, 95, 0.08);
+    /* box-shadow: 0 10px 30px rgba(15, 35, 95, 0.08); */
 }
 
 /* Общие колонки */

@@ -10,6 +10,7 @@ import classes from "./CreateTransferRequest.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
+  buildScheduledISO,
   CREATE_TRANSFER_REQUEST_MUTATION,
   decodeJWT,
   GET_AIRLINES_RELAY,
@@ -21,6 +22,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { AddressField } from "../AddressField/AddressField.jsx";
+import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 
 // Компонент для создания новой заявки
 function CreateTransferRequest({ show, onClose, user, addNotification }) {
@@ -226,7 +228,8 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
       fromAddress: formData.fromAddress,
       toAddress: formData.toAddress,
       personsId: formData.personsId,
-      scheduledPickupAt: `${formData.scheduledPickupAt}T${formData.scheduledPickupAtTime}:00+00:00`,
+      // scheduledPickupAt: `${formData.scheduledPickupAt}T${formData.scheduledPickupAtTime}:00+00:00`,
+      scheduledPickupAt: buildScheduledISO(formData.scheduledPickupAt, formData.scheduledPickupAtTime),
       passengersCount: formData.personsId.length,
       description: formData.description,
     };
@@ -283,7 +286,12 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
     }
   }, [newStaffId, disableAutocomplete]);
 
-  // console.log(formData);
+  const AirlineStaff = selectedAirline?.staff.map((i) => ({
+    id: i.id,
+    label: `${i?.name} ${i?.position?.name || ""} ${i?.gender}`
+  })) || []
+
+  // console.log(selectedAirline?.staff);
 
   return (
     <>
@@ -366,10 +374,27 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
                   {selectedAirline && (
                     <>
                       <label>Сотрудник авиакомпании</label>
-                      <MUIAutocompleteColor
+                      <MultiSelectAutocomplete
+                        isMultiple={true}
+                        dropdownWidth={"100%"}
+                        label={"Выберите сотрудников авиакомпании"}
+                        options={AirlineStaff}
+                        value={AirlineStaff.filter((option) =>
+                          formData.personsId?.includes(option.id)
+                        )}
+                        onChange={(event, newValue) => {
+                          setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            personsId: newValue.map((option) => option.id),
+                            // city: newValue.length > 0 ? newValue[0].city : "",
+                          }));
+                          // setIsEdited(true);
+                        }}
+                      />
+                      {/* <MUIAutocompleteColor
                         isDisabled={disableAutocomplete}
                         dropdownWidth="100%"
-                        label="Введите сотрудника"
+                        label="Выберите сотрудников"
                         // Передаём исходный массив объектов сотрудников
                         options={selectedAirline.staff}
                         // getOptionLabel правильно формирует строку, даже если option – объект
@@ -422,7 +447,7 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
                           }));
                           setIsEdited(true);
                         }}
-                      />
+                      /> */}
                     </>
                   )}
 

@@ -21,6 +21,17 @@ export const statusMapping = {
   archived: "Архив",
 };
 
+export const statusLabels = {
+  PENDING: "Ожидание обработки",
+  ASSIGNED: "Назначен водитель",
+  ACCEPTED: "Принят водителем",
+  ARRIVED: "Водитель приехал",
+  IN_PROGRESS_TO_CLIENT: "В пути к клиенту",
+  IN_PROGRESS_TO_HOTEL: "В пути к месту назначения",
+  COMPLETED: "Завершена",
+  CANCELLED: "Отменена",
+};
+
 export const statusMappingTransfer = {
   opened: "В обработке",
   canceled: "Отменен",

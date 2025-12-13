@@ -2,13 +2,14 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import classes from "./InfoTableDataTransferOrders.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, server } from "../../../../graphQL_requests";
-import { roles } from "../../../roles";
+import { roles, statusLabels } from "../../../roles";
 import Message from "../Message/Message";
 import { useNavigate } from "react-router-dom";
 
 function InfoTableDataTransferOrders({
   user,
   token,
+  disAdmin,
   toggleRequestSidebar,
   scrollToId,
   requests,
@@ -47,17 +48,6 @@ function InfoTableDataTransferOrders({
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
   const [orgName, setOrgName] = useState("");
 
-  const statusLabels = {
-    PENDING: "Ожидание обработки",
-    ASSIGNED: "Назначен водитель",
-    ACCEPTED: "Принят водителем",
-    ARRIVED: "Водитель приехал",
-    IN_PROGRESS_TO_CLIENT: "В пути к клиенту",
-    IN_PROGRESS_TO_HOTEL: "В пути в отель",
-    COMPLETED: "Завершена",
-    CANCELLED: "Отменена",
-  };
-
   const listContainerRef = useRef(null);
 
   useEffect(() => {
@@ -68,11 +58,16 @@ function InfoTableDataTransferOrders({
       });
     }
   }, [pageInfo]);
+  // console.log(disAdmin);
 
   return (
     <div className={classes.wrapper}>
       <InfoTable>
-        <div className={classes.list} ref={listContainerRef}>
+        <div
+          className={classes.list}
+          style={disAdmin ? { height: "calc(100vh - 281px)" } : {}}
+          ref={listContainerRef}
+        >
           {requests.map((item, index) => {
             const isActive = chooseRequestID === item.id;
             const unreadForUser = (item?.chat || []).filter((chat) => {
@@ -125,12 +120,10 @@ function InfoTableDataTransferOrders({
                     //   );
                     // }}
                   >
-                    № {index+1}
+                    № {index + 1}
                   </button>
                   <div className={classes.statusRow}>
-                    <span
-                      className={item?.status.toLowerCase()}
-                    ></span>
+                    <span className={item?.status.toLowerCase()}></span>
                     <span className={classes.statusText}>
                       {statusLabels[item.status] || item.status}
                     </span>
@@ -146,7 +139,9 @@ function InfoTableDataTransferOrders({
                     {item.persons.length > 0 ? (
                       <>
                         <span className={classes.clientName}>
-                          {item.persons[0]?.name} {item.persons.length > 1 && `+ ${item.persons - 1}`}
+                          {item.persons[0]?.name}{" "}
+                          {item.persons.length > 1 &&
+                            `+ ${item.persons.length - 1}`}
                           {/* <span className={classes.clientPosition}>
                             {item?.person?.position?.name}
                           </span> */}

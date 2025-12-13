@@ -9,6 +9,7 @@ import {
   GET_CITIES,
   GET_ORGANIZATIONS,
   getCookie,
+  ORGANIZATION_CREATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import Header from "../Header/Header";
@@ -24,7 +25,7 @@ import InfoTableDataRepresentativeAirlines from "../InfoTableDataRepresentativeA
 import CreateRequestDriversCompany from "../CreateRequestDriversCompany/CreateRequestDriversCompany";
 import InfoTableDataDriversCompanies from "../InfoTableDataDriversCompanies/InfoTableDataDriversCompanies";
 
-function DriversCompanyList({ children, representative, ...props }) {
+function DriversCompanyList({ children, representative, disAdmin, ...props }) {
   const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -35,11 +36,6 @@ function DriversCompanyList({ children, representative, ...props }) {
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
   const [airports, setAirports] = useState([]); // Список аэропортов
   const [cities, setCities] = useState([]); // Список аэропортов
-
-  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION
-  );
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -58,6 +54,23 @@ function DriversCompanyList({ children, representative, ...props }) {
     },
   });
 
+  const { data: subscriptionData, error: subCreateError } = useSubscription(
+    ORGANIZATION_CREATED_SUBSCRIPTION,
+    {
+      onData: ({ data }) => {
+        // console.log("Новая заявка создана:", data.data?.transferCreated);
+        refetch(); // Обновляем данные
+      },
+      onError: (error) => {
+        console.error("Ошибка подписки на создание:", error);
+      },
+    }
+  );
+
+  // console.log(subscriptionData);
+  // const { data: dataSubscriptionUpd } = useSubscription(
+  //   GET_AIRLINES_UPDATE_SUBSCRIPTION
+  // );
 
   useEffect(() => {
     if (data && data.organizations) {
@@ -78,7 +91,7 @@ function DriversCompanyList({ children, representative, ...props }) {
     // }
 
     refetch();
-  }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
+  }, [data]);
 
   const addAirline = (airline) => {
     setCompanyData(
@@ -170,8 +183,8 @@ function DriversCompanyList({ children, representative, ...props }) {
 
   return (
     <>
-      <div className={classes.section}>
-        <Header>Организации</Header>
+      <div className={classes.section} style={disAdmin ? { padding: "0" } : {}}>
+        {!disAdmin && <Header>Организации</Header>}
 
         <div className={classes.section_searchAndFilter}>
           <MUITextField
@@ -189,7 +202,7 @@ function DriversCompanyList({ children, representative, ...props }) {
           />
         </div>
 
-        {loading && <MUILoader />}
+        {loading && <MUILoader fullHeight={"70vh"} />}
         {error && <p>Error: {error.message}</p>}
 
         {!loading && !error && (

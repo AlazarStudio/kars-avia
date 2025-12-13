@@ -42,14 +42,12 @@ function DriversCompanyPage({ children, id, user, accessMenu, ...props }) {
   const getTitle = () => {
     if (user.role === roles.airlineAdmin) {
       switch (params.id) {
-        // case "driversCompanyStaff":
-        //   return "Сотрудники";
         case "driversCompany":
-          return "Пользователи";
+          return "Водители";
         case "driversCompanyAbout":
-          return "Об авиакомпании";
-        case "driversCompanyRegisterOfContracts":
-          return "Договоры";
+          return "Об организации";
+        // case "driversCompanyRegisterOfContracts":
+        //   return "Договоры";
         default:
           return "Пользователи";
       }
@@ -58,7 +56,6 @@ function DriversCompanyPage({ children, id, user, accessMenu, ...props }) {
       return data?.organization?.name;
     }
   };
-
   return (
     <>
       <div className={classes.section}>

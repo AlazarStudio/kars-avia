@@ -10,11 +10,15 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
   DELETE_DISPATCHER_USER,
+  DRIVER_UPDATED_SUBSCRIPTION,
+  DRIVERS_QUERY,
   GET_ALL_DISPATCHERS,
   GET_DISPATCHER_POSITIONS,
   GET_DISPATCHERS,
   GET_DISPATCHERS_SUBSCRIPTION,
+  GET_ORGANIZATION,
   getCookie,
+  ORGANIZATION_CREATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
@@ -23,6 +27,8 @@ import { fullNotifyTime, notifyTime } from "../../../roles";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import InfoTableDataDriversCompany from "../InfoTableDataDriversCompany/InfoTableDataDriversCompany";
+import AddDriverToOrganization from "../AddDriverToOrganization/AddDriverToOrganization";
+import ConfirmDriver from "../ConfirmDriver/ConfirmDriver";
 
 function DriversCompany_tabComponent({ children, id, user, ...props }) {
   const token = getCookie("token");
@@ -38,27 +44,53 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
   //   take: 20,
   // });
 
-  const { loading, error, data, refetch } = useQuery(GET_ALL_DISPATCHERS, {
+  const { loading, error, data } = useQuery(DRIVERS_QUERY, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    // variables: {
-    //   pagination: {
-    //     skip: pageInfo.skip,
-    //     take: pageInfo.take,
-    //   },
-    // },
+    variables: {
+      pagination: {
+        all: true,
+      },
+    },
   });
 
-  const { data: dataSubscription } = useSubscription(
-    GET_DISPATCHERS_SUBSCRIPTION,
+  const {
+    loading: ordLoading,
+    data: orgData,
+    refetch,
+  } = useQuery(GET_ORGANIZATION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      organizationId: id,
+    },
+  });
+
+  const { data: subscriptionData, error: subCreateError } = useSubscription(
+    ORGANIZATION_CREATED_SUBSCRIPTION,
     {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      onData: ({ data }) => {
+        // console.log("Новая заявка создана:", data.data?.transferCreated);
+        refetch(); // Обновляем данные
+      },
+      onError: (error) => {
+        console.error("Ошибка подписки на создание:", error);
+      },
+    }
+  );
+
+  const { data: subscriptionDataDriver } = useSubscription(
+    DRIVER_UPDATED_SUBSCRIPTION,
+    {
+      onData: ({ data }) => {
+        // console.log("Новая заявка создана:", data.data?.transferCreated);
+        refetch(); // Обновляем данные
       },
     }
   );
@@ -90,15 +122,15 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
   const [positions, setPositions] = useState([]);
 
   useEffect(() => {
-    if (data) {
-      const sortedDispatchers = [...data.dispatcherUsers.users].sort((a, b) =>
+    if (orgData) {
+      const sortedDispatchers = [...orgData.organization.drivers].sort((a, b) =>
         a.name.localeCompare(b.name)
       );
       setCompanyData(sortedDispatchers);
-      setTotalPages(data.dispatcherUsers.totalPages);
+      // setTotalPages(data.dispatcherUsers.totalPages);
     }
     refetch();
-  }, [data, dataSubscription, refetch]);
+  }, [orgData, subscriptionData, refetch]);
 
   useEffect(() => {
     if (positionsData) {
@@ -207,13 +239,15 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
 
   const filteredRequests = companyData.filter((request) => {
     return (
-      (filterData.filterSelect === "" ||
-        request.role.includes(filterData.filterSelect)) &&
-      (request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.position.toLowerCase().includes(searchQuery.toLowerCase()))
+      request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.car.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.driverLicenseNumber
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
     );
   });
+
+  // console.log(companyData);
 
   let filterList = ["Модератор", "Администратор"];
   // const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
@@ -233,7 +267,7 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
           <Filter
             toggleSidebar={toggleCreateSidebar}
             handleChange={handleChange}
-            buttonTitle={"Добавить водителя"}
+            buttonTitle={"Добавить водителей"}
             filterData={filterData}
             filterList={filterList}
             needDate={false}
@@ -274,7 +308,17 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
           </>
         )}
 
-        <ExistRequestCompany
+        <AddDriverToOrganization
+          show={showCreateSidebar}
+          orgId={id}
+          onClose={toggleCreateSidebar}
+          addDispatcher={addDispatcher}
+          positions={positions}
+          drivers={data?.drivers?.drivers}
+          addNotification={addNotification}
+        />
+
+        <ConfirmDriver
           show={showRequestSidebar}
           onClose={toggleRequestSidebar}
           chooseObject={chooseObject}

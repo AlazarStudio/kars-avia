@@ -45,9 +45,12 @@ function InfoTableDataDriversCompany({
     }
   }, [requests, activeTab]); // при смене таба тоже будет новое "случайное" деление
 
-  const middleIndex = Math.ceil(shuffledRequests.length / 2);
-  const confirmedList = shuffledRequests.slice(0, middleIndex);
-  const pendingList = shuffledRequests.slice(middleIndex);
+  const confirmedList = shuffledRequests.filter(
+    (i) => i.organizationConfirmed && i.organizationConfirmed === true
+  );
+  const pendingList = shuffledRequests.filter(
+    (i) => !i.organizationConfirmed || i.organizationConfirmed === null
+  );
   const listForRender = activeTab === "confirmed" ? confirmedList : pendingList;
 
   return (
@@ -98,7 +101,7 @@ function InfoTableDataDriversCompany({
           })}
         </div>
       </InfoTable>
-      {activeTab !== "pending" && (
+      {/* {activeTab !== "pending" && (
         <div className={classes.chatWrapper}>
           {user.role !== roles.superAdmin &&
           user.role !== roles.dispatcerAdmin ? null : (
@@ -107,19 +110,12 @@ function InfoTableDataDriversCompany({
               <span>Иван</span>
             </div>
           )}
-          {/* {user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin ? (
-          <p className={classes.chatName}>
-            {separator === "airline" ? "" : orgName}
-          </p>
-        ) : null} */}
           <Message
             activeTab={"Комментарий"}
             setIsHaveTwoChats={setIsHaveTwoChats}
-            //   setHotelChats={setHotelChats}
             setTitle={setOrgName}
             choosePersonId={choosePersonId}
             chooseReserveID={""}
-            //   filteredPlacement={filteredPlacement}
             token={token}
             user={user}
             chatPadding={"0"}
@@ -129,10 +125,9 @@ function InfoTableDataDriversCompany({
                 : "calc(100vh - 280px)"
             }
             separator={separator}
-            //   hotelChatId={selectedHotelChatId}
           />
         </div>
-      )}
+      )} */}
     </div>
   );
 }

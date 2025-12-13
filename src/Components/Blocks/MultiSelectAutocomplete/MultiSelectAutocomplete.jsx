@@ -126,7 +126,7 @@ function MultiSelectAutocomplete({
       renderOption={
         isMultiple
           ? (optionProps, option, { selected }) => (
-              <li {...optionProps}>
+              <li {...optionProps} key={option.id}>
                 <Checkbox
                   icon={icon}
                   checkedIcon={checkedIcon}

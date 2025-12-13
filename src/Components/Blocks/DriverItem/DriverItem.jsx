@@ -10,7 +10,7 @@ function DriverItem({
   unreadCount,
   handleObject,
   activeTransfersCount,
-  btnTitle = 'Данные профиля',
+  btnTitle = "Данные профиля",
   ...props
 }) {
   return (
@@ -30,7 +30,15 @@ function DriverItem({
                   >
                     №{props.order}
                   </button> */}
-        <img src="/avatar1.png" alt="" />
+        {/* {console.log(props?.documents?.driverPhoto)} */}
+        <img
+          src={
+            props?.documents?.driverPhoto.length > 0
+              ? `${server}${props?.documents?.driverPhoto[0]}`
+              : "/no-avatar.png"
+          }
+          alt=""
+        />
       </div>
       <div className={`${classes.col} ${classes.colClient}`}>
         <div className={classes.clientTop}>
@@ -42,14 +50,20 @@ function DriverItem({
           </span>
         </div>
         <div className={classes.clientBottom}>
-          <CarIcon /> {activeTransfersCount}
+          <CarIcon />{" "}
+          {activeTransfersCount ||
+            props.transfers.filter(
+              (i) =>
+                i.status.toLowerCase() !== "completed" &&
+                i.status.toLowerCase() !== "cancelled"
+            ).length}
         </div>
       </div>
       <div className={`${classes.col} ${classes.colCarInfo}`}>
-        <div className={classes.colLabel}>А666АА</div>
+        <div className={classes.colLabel}>{props.driverLicenseNumber}</div>
         <div className={classes.routeItem}>
-          <span className={classes.routeIndex}>Toyota Camry</span>
-          <span className={classes.routeText}>черный</span>
+          <span className={classes.routeIndex}>{props?.car}</span>
+          {/* <span className={classes.routeText}>черный</span> */}
         </div>
       </div>
 
@@ -58,14 +72,14 @@ function DriverItem({
         {/* <button className={classes.colChatButton}>
           <CarIcon color={"var(--main-gray)"} /> Заказы
         </button> */}
-        <div className={classes.chatButton}>
+        {/* <div className={classes.chatButton}>
           <img src="/chatReserve.png" alt="" />
           {unreadCount && unreadCount > 0 && (
             <div className={classes.chatBadge}>
               {unreadCount > 99 ? "99+" : unreadCount}
             </div>
           )}
-        </div>
+        </div> */}
         <Button padding="0 15px" minwidth="150px">
           {btnTitle}
         </Button>

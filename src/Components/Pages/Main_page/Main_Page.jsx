@@ -10,12 +10,11 @@ import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice.jsx";
 
 function Main_Page({ user }) {
   // Получаем параметры из URL
-  const { id, hotelID, airlineID, driversCompanyID } = useParams();
-
+  const { id, hotelID, airlineID, driversCompanyID, orderId } = useParams();
   // Вычисляем текущую страницу на основе параметров
   const pageClicked = useMemo(
-    () => (hotelID ? "hotels" : airlineID ? "airlines" : driversCompanyID ? "driversCompany" : ""),
-    [hotelID, airlineID, driversCompanyID]
+    () => (hotelID ? "hotels" : airlineID ? "airlines" : driversCompanyID ? "driversCompany" : orderId ? "orders" : ""),
+    [hotelID, airlineID, driversCompanyID, orderId]
   );
 
   const [accessMenu, setAccessMenu] = useState({})

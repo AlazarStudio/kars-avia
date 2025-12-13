@@ -22,8 +22,8 @@ const AirlineShahmatkaTabStaff = lazy(() =>
     "../../../Blocks/AirlineShahmatka_tabComponent_Staff/AirlineShahmatka_tabComponent_Staff"
   )
 );
-const AirlineAboutTab = lazy(() =>
-  import("../../../Blocks/AirlineAbout_tabComponent/AirlineAbout_tabComponent")
+const OrganizationAboutTab = lazy(() =>
+  import("../../../Blocks/OrganizationAbout_tabComponent/OrganizationAbout_tabComponent")
 );
 
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
@@ -37,10 +37,7 @@ const TransferAdminDriversContent = ({ id, user, selectedTab, handleTabSelect })
     forceRenderTabPanel={false}
   >
     <TabList className={classes.tabList}>
-      <Tab className={classes.tab}>Пользователи</Tab>
-      {/* <Tab className={classes.tab}>Цены</Tab> */}
-      <Tab className={classes.tab}>Договоры</Tab>
-      {/* <Tab className={classes.tab}>Сотрудники</Tab> */}
+      <Tab className={classes.tab}>Водители</Tab>
       <Tab className={classes.tab}>Об организации</Tab>
     </TabList>
 
@@ -50,30 +47,12 @@ const TransferAdminDriversContent = ({ id, user, selectedTab, handleTabSelect })
         <DriversCompanyTab id={id} user={user} />
       </Suspense>
     </TabPanel>
-
-    {/* <TabPanel className={classes.tabPanel} forceRender={false}>
-      <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineTarifsTab id={id} />
-      </Suspense>
-    </TabPanel> */}
-
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineRegisterOfContracts id={id} />
+        <OrganizationAboutTab id={id} />
       </Suspense>
     </TabPanel>
 
-    {/* <TabPanel className={classes.tabPanel} forceRender={false}>
-      <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineShahmatkaTabStaff id={id} />
-      </Suspense>
-    </TabPanel> */}
-
-    <TabPanel className={classes.tabPanel} forceRender={false}>
-      <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineAboutTab id={id} />
-      </Suspense>
-    </TabPanel>
   </Tabs>
 );
 

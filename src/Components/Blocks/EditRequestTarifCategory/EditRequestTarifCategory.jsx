@@ -507,7 +507,7 @@ function EditRequestTarifCategory({
                     <img
                       src={URL.createObjectURL(image)}
                       alt={`Image ${index + 1}`}
-                      // onClick={() => handleCoverImageChange2(image)}
+                      onClick={() => type === "apartment" ? null : handleCoverImageChange2(image)}
                     />
                     {/* кнопка удалить локальный файл */}
                     {isEditing && (

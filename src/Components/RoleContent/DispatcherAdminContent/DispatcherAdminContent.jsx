@@ -16,13 +16,22 @@ import MyCompany from "../../Blocks/MyCompany/MyCompany";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
 import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
+import DisAdminTransferContent from "./DisAdminTransferContent/DisAdminTransferContent";
 
 const DispatcherAdminContent = ({ user }) => {
-  const { id, hotelID, airlineID } = useParams();
+  const { id, orderId, driversCompanyID, hotelID, airlineID } = useParams();
+
+  const isTransfer =
+    id === "orders" ||
+    id === "driversCompany" ||
+    !!orderId ||
+    (!!driversCompanyID && !id) 
+    // ||
+    // (!id && !hotelID && !airlineID && !orderId && !driversCompanyID); // если хочешь “заказы” по умолчанию
 
   return (
     <>
-      {(id === "relay" || (!id && !hotelID && !airlineID)) && (
+      {(id === "relay" || (!id && !hotelID && !airlineID && !orderId && !driversCompanyID)) && (
         <Estafeta user={user} />
       )}
       {id === "reserve" && <Reserve user={user} />}
@@ -40,6 +49,7 @@ const DispatcherAdminContent = ({ user }) => {
       {/* {id === "notifications" && <NotificationsSettings user={user} />} */}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
+      {isTransfer && <DisAdminTransferContent user={user} />}
     </>
   );
 };

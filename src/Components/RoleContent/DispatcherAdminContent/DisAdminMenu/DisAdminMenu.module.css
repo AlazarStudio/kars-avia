@@ -121,7 +121,7 @@
 
 .jcc {
   justify-content: center;
-  padding: 15px 5px;
+  /* padding: 15px 5px; */
 }
 
 .menu_items__elem svg path {
