@@ -1,28 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import classes from "./YandexMapModal.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import {
+  DEFAULT_CENTER,
   reverseGeocodeByCoords,
   YMAPS_KEY,
 } from "../../../../graphQL_requests.js";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 
-// Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
-  const [coords, setCoords] = useState(initialCenter || [44.225, 42.057]); // центр региона
+  const effectiveCenter = useMemo(() => {
+    if (initialCenter && initialCenter.length === 2) return initialCenter;
+    return DEFAULT_CENTER;
+  }, [initialCenter]);
+
+  const [coords, setCoords] = useState(effectiveCenter);
   const [address, setAddress] = useState("");
+
+  // когда приходит новый initialCenter — обновляем coords
+  useEffect(() => {
+    if (open) {
+      setCoords(effectiveCenter);
+      setAddress("");
+    }
+  }, [effectiveCenter, open]);
 
   if (!open) return null;
 
-  const handleMapClick = async (e) => {
-    const newCoords = e.get("coords"); // [lat, lon]
+  const updateByCoords = async (newCoords) => {
     setCoords(newCoords);
     try {
       const addr = await reverseGeocodeByCoords(newCoords);
       setAddress(addr);
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     }
+  };
+
+  const handleMapClick = (e) => {
+    const newCoords = e.get("coords");
+    updateByCoords(newCoords);
+  };
+
+  const handlePlacemarkDragEnd = (e) => {
+    const newCoords = e.get("target").geometry.getCoordinates();
+    updateByCoords(newCoords);
   };
 
   const handleApply = () => {
@@ -30,11 +52,8 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
     onSelect(address);
   };
 
-  // клик по подложке = закрыть, по контенту — нет
   const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   return (
@@ -54,14 +73,22 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
           </button>
         </div>
 
+        {/* Карта рендерится только когда есть валидный центр */}
         <YMaps query={{ apikey: YMAPS_KEY, lang: "ru_RU" }}>
           <Map
-            defaultState={{ center: coords, zoom: 13 }}
+            // state={{ center: coords, zoom: 15 }}
+            defaultState={{ center: coords, zoom: 15 }}
             width="100%"
             height="320px"
             onClick={handleMapClick}
           >
-            {coords && <Placemark geometry={coords} />}
+            {coords && (
+              <Placemark
+                geometry={coords}
+                options={{ draggable: true }}
+                onDragEnd={handlePlacemarkDragEnd}
+              />
+            )}
           </Map>
         </YMaps>
 

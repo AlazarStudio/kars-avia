@@ -89,7 +89,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
         all: true,
         // skip: pageInfo.skip,
         // take: pageInfo.take,
-        airlineId: selectedAirline?.id,
+        // airlineId: selectedAirline?.id,
         // status: statusFilterTransfer.split(" / "),
         // airportId: selectedAirport?.id,
         // arrival: dateRange.startDate?.toISOString(),
@@ -214,31 +214,31 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     // никакого refetch — ждем debounce
   };
 
-  useEffect(() => {
-    // сбрасываем на первую страницу
-    // setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    // navigate("?page=1");
+  // useEffect(() => {
+  //   // сбрасываем на первую страницу
+  //   // setPageInfo((prev) => ({ ...prev, skip: 0 }));
+  //   // navigate("?page=1");
 
-    refetch({
-      pagination: {
-        // skip: 0,
-        // take: pageInfo.take,
-        all: true,
-        airlineId: selectedAirline?.id,
-        // status: statusFilterTransfer.split(" / "),
-        // airportId: selectedAirport?.id,
-        // arrival: dateRange.startDate?.toISOString(),
-        // departure: dateRange.endDate?.toISOString(),
-        // search: debouncedSearch,
-      },
-    }).catch(console.error);
-  }, [
-    debouncedSearch,
-    statusFilterTransfer,
-    selectedAirline,
-    selectedAirport,
-    dateRange,
-  ]);
+  //   refetch({
+  //     pagination: {
+  //       // skip: 0,
+  //       // take: pageInfo.take,
+  //       all: true,
+  //       // airlineId: selectedAirline?.id,
+  //       // status: statusFilterTransfer.split(" / "),
+  //       // airportId: selectedAirport?.id,
+  //       // arrival: dateRange.startDate?.toISOString(),
+  //       // departure: dateRange.endDate?.toISOString(),
+  //       // search: debouncedSearch,
+  //     },
+  //   }).catch(console.error);
+  // }, [
+  //   debouncedSearch,
+  //   statusFilterTransfer,
+  //   selectedAirline,
+  //   selectedAirport,
+  //   dateRange,
+  // ]);
 
   const handleOpenExistRequest = (matchData) => {
     setExistRequestData(matchData); // Сохраняем данные match

@@ -155,8 +155,8 @@ function InfoTableDataTransferOrders({
                   </div>
                   <div className={classes.clientBottom}>
                     <div className={classes.createdAt}>
-                      {convertToDate(item.createdAt)}{" "}
-                      {convertToDate(item.createdAt, true)}
+                      {convertToDate(item.scheduledPickupAt)}{" "}
+                      {convertToDate(item.scheduledPickupAt, true)}
                     </div>
                   </div>
                 </div>

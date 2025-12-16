@@ -40,83 +40,48 @@ function OrderInfoSidebar({
             <div className={classes.clientName}>{info.name}</div>
           </div>
           {/* блок маршрута (верстка та же) */}
-          <div className={classes.routeCard}>
-            <div className={classes.routeLine} />
-            <div className={classes.routeRow}>
-              <span
-                className={`${classes.routeDot} ${classes.routeDotEmpty}`}
-              />
-              <span className={classes.routeText}>
-                {!isEditing ? (
-                  info.fromAddress
-                ) : (
-                  // <input
-                  //   name="fromAddress"
-                  //   value={formData?.fromAddress || ""}
-                  //   onChange={onChange}
-                  //   disabled={disabledInputs}
-                  //   style={{
-                  //     width: "100%",
-                  //     border: "none",
-                  //     outline: "none",
-                  //     background: "transparent",
-                  //     font: "inherit",
-                  //   }}
-                  // />
-                  <AddressField
-                    // label="Адрес отправления"
-                    placeholder="г. Черкесск, Ленина, 57Б"
-                    value={formData.fromAddress}
-                    onChange={(addr) => {
-                      setFormData((prev) => ({ ...prev, fromAddress: addr }));
-                    }}
-                  />
-                )}
-              </span>
-            </div>
-            <div
-              style={{
-                backgroundColor: "#E8EDF1",
-                height: "1px",
-                margin: "10px 0px",
-              }}
-            />
-            <div className={classes.routeRow}>
-              <span
-                className={`${classes.routeDot} ${classes.routeDotFilled}`}
-              />
-              <span className={classes.routeText}>
-                {!isEditing ? (
-                  info.toAddress
-                ) : (
-                  // <input
-                  //   name="toAddress"
-                  //   value={formData?.toAddress || ""}
-                  //   onChange={onChange}
-                  //   disabled={disabledInputs}
-                  //   style={{
-                  //     width: "100%",
-                  //     border: "none",
-                  //     outline: "none",
-                  //     background: "transparent",
-                  //     font: "inherit",
-                  //   }}
-                  // />
-                  <AddressField
-                    // label="Адрес прибытия"
-                    placeholder="г. Минеральные Воды, Ленина, 10К1"
-                    value={formData.toAddress}
-                    onChange={(addr) => {
-                      setFormData((prev) => ({
-                        ...prev,
-                        toAddress: addr,
-                      }));
-                    }}
-                  />
-                )}
-              </span>
-            </div>
-          </div>
+<div className={classes.routeCard}>
+  {/* левая вертикальная линия + точки */}
+  <div className={classes.routeMarkers}>
+    <div className={`${classes.routeDot} ${classes.routeDotEmpty}`} />
+    <div className={classes.routeLine} />
+    <div className={`${classes.routeDot} ${classes.routeDotFilled}`} />
+  </div>
+
+  {/* правая колонка с адресами */}
+  <div className={classes.routeContent}>
+    <div className={classes.routeRow}>
+      {!isEditing ? (
+        <div className={classes.routeText}>{info.fromAddress}</div>
+      ) : (
+        <AddressField
+          placeholder="г. Черкесск, Ленина, 57Б"
+          value={formData.fromAddress}
+          onChange={(addr) =>
+            setFormData((prev) => ({ ...prev, fromAddress: addr }))
+          }
+        />
+      )}
+    </div>
+
+    <div className={classes.routeDivider} />
+
+    <div className={classes.routeRow}>
+      {!isEditing ? (
+        <div className={classes.routeText}>{info.toAddress}</div>
+      ) : (
+        <AddressField
+          placeholder="г. Минеральные Воды, Ленина, 10К1"
+          value={formData.toAddress}
+          onChange={(addr) =>
+            setFormData((prev) => ({ ...prev, toAddress: addr }))
+          }
+        />
+      )}
+    </div>
+  </div>
+</div>
+
           {/* дата заявки */}
           <div className={classes.metaRow}>
             <span className={classes.metaLabel}>Дата заказа</span>
@@ -229,7 +194,7 @@ function OrderInfoSidebar({
 
         {/* кнопки как в твоей логике */}
         {canEditByStatus && (
-          <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
+          <div style={{ display: "flex", gap: 10 }}>
             {isEditing && (
               <button
                 type="button"
@@ -247,27 +212,6 @@ function OrderInfoSidebar({
                 Отмена
               </button>
             )}
-            {/* 
-            <button
-              type="button"
-              onClick={onToggleEditOrSave}
-              // disabled={isSaving}
-              style={{
-                flex: 1,
-                borderRadius: 10,
-                border: "none",
-                padding: "10px 12px",
-                background: !isEditing ? "#3CBC6726" : "#0057C3",
-                color: !isEditing ? "#3B6C54" : "#fff",
-                cursor: "pointer",
-              }}
-            >
-              {isSaving
-                ? "Сохранение..."
-                : isEditing
-                ? "Сохранить"
-                : "Изменить"}
-            </button> */}
             <Button
               type="button"
               flex="1"

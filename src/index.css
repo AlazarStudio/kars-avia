@@ -284,6 +284,13 @@ textarea {
     background-color: #56BA53;
 }
 
+.cancelled {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #C03B28;
+}
+
 
 /* 
 .opened {

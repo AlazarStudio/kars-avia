@@ -57,61 +57,77 @@
 /* маршрут */
 
 .routeCard {
-  position: relative;
-  padding: 16px 16px 16px 36px;
+  padding: 14px 16px;
   border-radius: 16px;
   border: 1px solid #e4e4ef;
   background-color: #ffffff;
   display: flex;
-  flex-direction: column;
+  /* flex-direction: column; */
   gap: 10px;
 }
 
-.routeLine {
-  position: absolute;
-  left: 22px;
-  /* top: 26px;
-  bottom: 27px; */
-  top: 29px;
-  bottom: 31px;
-  width: 2px;
-  background-color: #e0e3f0;
-}
-
-.routeRow {
+/* левая колонка с линией и точками */
+.routeMarkers {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
+/* вертикальная линия по высоте контента справа */
+.routeLine {
+  flex: 1;
+  width: 2px;
+  background-color: #d4dce5;
+}
+
+/* точки */
 .routeDot {
-  min-width: 14px;
-  height: 14px;
-  border-radius: 999px;
-  box-sizing: border-box;
-  display: none;
-}
-
-.routeDotEmpty {
-  border: 2px solid #d4d7e8;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #c4ceda;
   background-color: #ffffff;
 }
 
+.routeDotEmpty {
+  /* margin-bottom: 4px; */
+}
+
 .routeDotFilled {
-  border: 2px solid #0057c3;
+  /* margin-top: 4px; */
+  border-color: #0057c3;
   background-color: #0057c3;
 }
 
-.routeText {
-  width: 100%;
+/* правая колонка */
+.routeContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* отдельная строка адреса */
+.routeRow {
   font-size: 13px;
-  color: #374151;
+  line-height: 1.4;
+  color: #1b2733;
 }
 
-.routeTextBold {
-  font-weight: 600;
+/* разделитель между адресами */
+.routeDivider {
+  height: 1px;
+  background-color: #e8edf1;
 }
 
+/* текст адреса (многострочный) */
+.routeText {
+  white-space: normal;
+  word-break: break-word;
+}
 /* мета и поля */
 
 .metaRow {

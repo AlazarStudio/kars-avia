@@ -12,6 +12,7 @@ export const server = import.meta.env.VITE_DEV_SERVER;
 
 
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
+export const DEFAULT_CENTER = [55.755864, 37.617698]; // твой регион
 
 export const getCookie = (name) => {
   const value = `; ${document.cookie}`;
@@ -249,6 +250,33 @@ export const reverseGeocodeByCoords = async ([lat, lon]) => {
     member?.GeoObject?.name ||
     ""
   );
+};
+
+// вспомогалка: геокодируем строку в [lat, lon]
+export const geocodeAddressToCoords = async (text) => {
+  if (!text || text.length < 3) return null;
+
+  const url =
+    `https://geocode-maps.yandex.ru/1.x/?apikey=${YMAPS_KEY}` +
+    `&format=json&lang=ru_RU&geocode=${encodeURIComponent(text)}`;
+
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error("Yandex geocodeAddressToCoords error", res.status);
+    return null;
+  }
+
+  const data = await res.json();
+  const member =
+    data.response?.GeoObjectCollection?.featureMember?.[0]?.GeoObject;
+
+  const pointStr = member?.Point?.pos; // "lon lat"
+  if (!pointStr) return null;
+
+  const [lon, lat] = pointStr.split(" ").map(Number);
+  if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+
+  return [lat, lon]; // [lat, lon]
 };
 
 

@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useSubscription } from "@apollo/client";
 
 import classes from "./TransferOrder.module.css";
 import Header from "../Header/Header.jsx";
@@ -14,6 +14,7 @@ import {
   YMAPS_KEY,
   getCookie,
   buildScheduledISO,
+  TRANSFER_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests.js";
 
 import OrderInfoSidebar from "../OrderInfoSidebar/OrderInfoSidebar.jsx";
@@ -184,7 +185,7 @@ function TransferOrder({ user, token }) {
   const [mapInstance, setMapInstance] = useState(null);
 
   // --- 1) заявка ---
-  const { data, loading: requestLoading } = useQuery(GET_TRANSFER_REQUEST, {
+  const { data, loading: requestLoading, refetch } = useQuery(GET_TRANSFER_REQUEST, {
     variables: { transferId: orderId },
     context: {
       headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
@@ -372,7 +373,7 @@ const routePoints = useMemo(() => {
   // 1) Водитель едет к клиенту
   if (
     // (status === "ACCEPTED" || status === "IN_PROGRESS_TO_CLIENT") &&
-    (status === "IN_PROGRESS_TO_CLIENT" && status === "CANCELLED") &&
+    (status === "IN_PROGRESS_TO_CLIENT" || status === "CANCELLED") &&
     driverCoords &&
     fromCoords
   ) {
@@ -382,7 +383,7 @@ const routePoints = useMemo(() => {
   // 2) Начиная с ARRIVED (и дальше до завершения поездки) показываем водитель -> КУДА
   // (если у тебя статусы другие — добавь их сюда же)
   if (
-    (status === "IN_PROGRESS_TO_HOTEL" && status === "CANCELLED") &&
+    (status === "IN_PROGRESS_TO_HOTEL" || status === "CANCELLED") &&
     // (status === "ARRIVED" || status === "IN_PROGRESS_TO_HOTEL") &&
     driverCoords &&
     toCoords
@@ -526,6 +527,15 @@ const routePoints = useMemo(() => {
     };
   }, [transfer]);
 
+    const { data: subscriptionUpdateData } = useSubscription(
+    TRANSFER_UPDATED_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+
   return (
     <div className={classes.page}>
       <Header>
@@ -538,7 +548,7 @@ const routePoints = useMemo(() => {
       </Header>
 
       <div className={classes.dateLabel}>
-        {transfer ? convertToDate(transfer.createdAt) : ""}
+        {transfer ? convertToDate(transfer.scheduledPickupAt) : ""}
       </div>
 
       <section className={classes.layout}>
