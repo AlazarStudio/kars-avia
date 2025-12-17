@@ -44,7 +44,6 @@ function InfoTableDataDriversCompanies({
           Название
         </div>
       </div>
-
       <div className={classes.bottom} ref={listContainerRef}>
         {requests.map((item, index) => (
           <Link
@@ -62,7 +61,7 @@ function InfoTableDataDriversCompanies({
             <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
               <div className={classes.InfoTable_data_elem_userInfo}>
                 <div className={classes.InfoTable_data_elem_avatar}>
-                  <img src={`${server}${item.images[0]}`} alt="" />
+                  {(item?.images && item.images.length > 0) ? <img src={`${server}${item?.images[0]}`} alt="" /> : <img src="/no-avatar.png"/>}
                 </div>
                 <div className={classes.InfoTable_data_elem_title}>
                   {item.name}

@@ -104,7 +104,18 @@ function HotelAboutRoomBlock({
             )}
             {props.square ? <span>{props.square} м²</span> : null}
           </div>
-          {user?.airlineId ? (
+
+          <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
+            {props.priceForAirReq
+              ? "Цена по запросу"
+              : `${
+                  props.priceForAirline
+                    ? props?.priceForAirline?.toLocaleString()
+                    : ""
+                } ₽`}
+          </div>
+
+          {/* {user?.airlineId ? (
             <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
               {props.priceForAirReq
                 ? "Цена по запросу"
@@ -120,7 +131,7 @@ function HotelAboutRoomBlock({
                 ? "Цена по запросу"
                 : `${props?.price?.toLocaleString() || ""} ₽`}
             </div>
-          )}
+          )} */}
         </div>
       </article>
 
@@ -197,26 +208,16 @@ function HotelAboutRoomBlock({
                   <span className="blueText">{props.square} м²</span>
                 ) : null}
               </div>
-              {user?.airlineId ? (
-                <span className={classes.price}>
-                  {props.priceForAirReq
-                    ? "Цена по запросу"
-                    : `${
-                        props.priceForAirline
-                          ? props?.priceForAirline?.toLocaleString()
-                          : ""
-                      } ₽`}
-                </span>
-              ) : (
-                <span className={classes.price}>
-                  {props.price
-                    ? "Цена по запросу"
-                    : `${props?.price?.toLocaleString() || ""} ₽`}
-                </span>
-              )}
-              {/* <div
-                dangerouslySetInnerHTML={{ __html: props.description }}
-              /> */}
+              <span className={classes.price}>
+                {props.priceForAirReq
+                  ? "Цена по запросу"
+                  : `${
+                      props.priceForAirline
+                        ? props?.priceForAirline?.toLocaleString()
+                        : ""
+                    } ₽`}
+              </span>
+
               <TextEditorOutput description={props.description} />
             </div>
           </div>

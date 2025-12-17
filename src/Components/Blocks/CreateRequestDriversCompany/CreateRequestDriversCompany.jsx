@@ -86,7 +86,7 @@ function CreateRequestDriversCompany({
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // "Apollo-Require-Preflight": "true",
+        "Apollo-Require-Preflight": "true",
       },
     },
   });
@@ -114,7 +114,7 @@ function CreateRequestDriversCompany({
             name: formData.name,
             // nameFull: formData.nameFull,
           },
-          // images: formData.images,
+          images: formData.images,
         },
       });
 
@@ -180,13 +180,13 @@ function CreateRequestDriversCompany({
                 onChange={handleChange}
               />
 
-              {/* <label>Картинка</label>
+              <label>Картинка</label>
               <input
                 type="file"
                 name="images"
                 onChange={handleFileChange}
                 ref={fileInputRef}
-              /> */}
+              />
             </div>
           </div>
 

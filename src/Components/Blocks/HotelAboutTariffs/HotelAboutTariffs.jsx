@@ -40,6 +40,8 @@ export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null
       (k) => typeof mealPrices[k] === "number"
     );
     // console.log(mealPrices);
+
+    // console.log(additionalServices)
     
 
   return (
@@ -81,7 +83,7 @@ export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null
               ))}
             </>
           )}
-          {additionalServices && (
+          {(additionalServices && additionalServices.length > 0) && (
             <>
               <tr className={classes.sectionRow}>
                 <td>Дополнительные услуги</td>
@@ -90,7 +92,7 @@ export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null
               {additionalServices.map((k) => (
                 <tr key={k.id}>
                   <td className={classes.mealName}>{k.name}</td>
-                  <td className={classes.price}>{fmt(user?.airlineId ? k?.priceForAirline: k?.price)}</td>
+                  <td className={classes.price}>{fmt(k?.priceForAirline)}</td>
                 </tr>
               ))}
             </>

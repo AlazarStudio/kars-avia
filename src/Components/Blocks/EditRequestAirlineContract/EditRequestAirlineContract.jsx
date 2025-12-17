@@ -36,6 +36,7 @@ import DocIcon from "../../../shared/icons/DocIcon.jsx";
 function EditRequestAirlineContract({
   show,
   onClose,
+  activeFilterTab,
   id,
   tarif, // тут приходит airlineContractId
   addNotification,
@@ -73,7 +74,6 @@ function EditRequestAirlineContract({
     context: { headers: { Authorization: `Bearer ${token}` } },
     variables: { airlineContractId: tarif },
     skip: !tarif || !show,
-    fetchPolicy: "cache-and-network",
   });
 
   const [updateAirlineContract] = useMutation(UPDATE_AIRLINE_CONTRACT, {
@@ -670,7 +670,7 @@ function EditRequestAirlineContract({
                         </div>
                       </div>
 
-                      { !id &&
+                      {!id && (
                         <>
                           <img
                             src="/edit.svg.png"
@@ -685,7 +685,7 @@ function EditRequestAirlineContract({
                             style={{ cursor: "pointer" }}
                           />
                         </>
-                      }
+                      )}
                     </div>
                   ))}
                 </div>
@@ -751,6 +751,7 @@ function EditRequestAirlineContract({
 
       <CreateAdditionalAgreement
         updId={tarif}
+        activeFilterTab={activeFilterTab}
         show={showCreateAgreementEditor}
         onClose={closeCreateAgreement}
         agreement={null}

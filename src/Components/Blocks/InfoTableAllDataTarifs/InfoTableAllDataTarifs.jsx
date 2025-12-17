@@ -53,10 +53,10 @@ function InfoTableAllDataTarifs({
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w10}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>№ Договора</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w15}`} >Дата заключения</div>
-                {id ? null : (<div className={`${classes.InfoTable_title_elem} ${classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 30px'}}>{activeTab !== "hotels" && !id ? "Авиакомпания" : "Гостиница"}</div>)}
-                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{activeTab !== "hotels" ? "Вид приложения" : "Вид услуги"}</div>
+                {id ? null : (<div className={`${classes.InfoTable_title_elem} ${classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 50px'}}>{activeTab === "airlines" && !id ? "Авиакомпания" : activeTab === "hotels" && !id ? "Гостиница" : "Организация"}</div>)}
+                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{activeTab === "airlines" ? "Вид приложения" : "Вид услуги"}</div>
                 <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>ГК КАРС</div>
-                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>{activeTab !== "hotels" ? "Регион" : "Город"}</div>
+                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>{activeTab === "airlines" ? "Регион" : "Город"}</div>
             </div>
 
             {/* Данные о заявках */}
@@ -79,12 +79,13 @@ function InfoTableAllDataTarifs({
                         {id ? null : (
                             <div
                                 className={`${classes.InfoTable_data_elem} ${classes.w20}`}
-                                style={{ justifyContent:'flex-start', textAlign:'left', padding:'0 10px 0 30px' }}
+                                style={{ justifyContent:'flex-start', textAlign:'left', padding:'0 10px 0 10px' }}
                             >
                                 {(() => {
                                     const isHotel = activeTab === "hotels";
-                                    const name = isHotel ? item?.hotel?.name : item?.airline?.name;
-                                    const img  = isHotel ? item?.hotel?.images?.[0] : item?.airline?.images?.[0];
+                                    const isTransfer = activeTab === "transfer";
+                                    const name = isHotel ? item?.hotel?.name : isTransfer ? item?.organization?.name : item?.airline?.name;
+                                    const img  = isHotel ? item?.hotel?.images?.[0] : isTransfer ? item?.organization?.images[0] : item?.airline?.images?.[0];
 
                                     if (!name) {
                                     return <></>;

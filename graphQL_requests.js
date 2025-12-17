@@ -500,6 +500,10 @@ export const GET_ORGANIZATIONS = gql`
       id
       name
       images
+      information {
+        country
+        city
+      }
     }
   }
 `;
@@ -564,8 +568,8 @@ export const GET_ORGANIZATION = gql`
 `;
 
 export const CREATE_ORGANIZATION = gql`
-  mutation CreateOrganization($input: OrganizationInput) {
-    createOrganization(input: $input) {
+  mutation CreateOrganization($input: OrganizationInput, $images: [Upload!]) {
+    createOrganization(input: $input, images: $images) {
       id
       name
     }
@@ -577,6 +581,99 @@ export const UPDATE_ORGANIZATION = gql`
     updateOrganization(id: $updateOrganizationId, input: $input, images: $images) {
       id
     }
+  }
+`;
+
+export const GET_ORGANIZATION_CONTRACTS = gql`
+  query OrganizationContracts($pagination: ContractPaginationInput, $filter: OrganizationContractFilter) {
+    organizationContracts(pagination: $pagination, filter: $filter) {
+      totalPages
+      totalCount
+      items {
+        id
+        companyId
+        organizationId
+        company {
+          name
+        }
+        organization {
+          id
+          name
+          images
+        }
+        cityId
+        region {
+          id
+          city
+          region
+        }
+        date
+        contractNumber
+        notes
+        applicationType
+        files
+      }
+    }
+  }
+`;
+
+export const GET_ORGANIZATION_CONTRACT = gql`
+  query OrganizationContract($organizationContractId: ID!) {
+    organizationContract(id: $organizationContractId) {
+      id
+      companyId
+      organizationId
+      company {
+        name
+      }
+      organization {
+        id
+        name
+        images
+      }
+      cityId
+      region {
+        id
+        city
+        region
+      }
+      date
+      contractNumber
+      notes
+      applicationType
+      files
+      additionalAgreements {
+        id
+        itemAgreement
+        date
+        contractNumber
+        files
+        notes
+        organizationContractId
+      }
+    }
+  }
+`;
+
+export const CREATE_ORGANIZATION_CONTRACT = gql`
+  mutation CreateOrganizationContract($input: OrganizationContractCreateInput!, $files: [Upload!]) {
+    createOrganizationContract(input: $input, files: $files) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_ORGANIZATION_CONTRACT = gql`
+  mutation UpdateOrganizationContract($updateOrganizationContractId: ID!, $input: OrganizationContractUpdateInput!, $files: [Upload!]) {
+    updateOrganizationContract(id: $updateOrganizationContractId, input: $input, files: $files) {
+      id
+    }
+  }
+`;
+
+export const DELETE_ORGANIZATION_CONTRACT = gql`
+  mutation DeleteOrganizationContract($deleteOrganizationContractId: ID!) {
+    deleteOrganizationContract(id: $deleteOrganizationContractId)
   }
 `;
 
@@ -603,6 +700,14 @@ export const TRANSFER_UPDATED_SUBSCRIPTION = gql`
 export const ORGANIZATION_CREATED_SUBSCRIPTION = gql`
   subscription OrganizationCreated {
     organizationCreated {
+      id
+    }
+  }
+`;
+
+export const SUBSCRIPTION_ORGANIZATION_CONTRACTS = gql`
+  subscription ContractOrganization {
+    contractOrganization {
       id
     }
   }

@@ -15,8 +15,8 @@
     border-top: 1px solid #54587380;
 }
 
-.requestButton a {
-    flex-basis: 48%;
+.requestButton button {
+    flex-basis: 49%;
 }
 
 .requestTitle_name {

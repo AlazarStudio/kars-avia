@@ -155,6 +155,8 @@ function HotelAbout_tabComponent({ id }) {
     }
   }, [mealPriceData]);
 
+  console.log(mealPriceData)
+
   useEffect(() => {
     if (dataSubscriptionUpd) refetch();
   }, [dataSubscriptionUpd]);
@@ -164,7 +166,10 @@ function HotelAbout_tabComponent({ id }) {
     [hotel]
   );
 
-  const meal = user?.airlineId ? mealPricesAirline : mealPrices;
+  const meal = mealPricesAirline;
+  // const meal = user?.airlineId ? mealPricesAirline : mealPrices;
+
+  
   return (
     <>
       {loading && <MUILoader fullHeight={"70vh"} />}
@@ -226,7 +231,7 @@ function HotelAbout_tabComponent({ id }) {
                 color={"#3B6C54"}
                 cursor={"default"}
               >
-                Дешевле по рынку на {hotel.discount} %
+                Выгода от {hotel.discount} %
               </Button>
             )}
           </div>

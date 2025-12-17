@@ -120,8 +120,6 @@ function EditAdditionalAgreement({
       variables: {
         updateAdditionalAgreementId: agreement?.id,
         input: {
-          // airlineContractId: updId,
-          // hotelContractId: updId,
           contractNumber: local.contractNumber,
           date: new Date(local.date).toISOString(),
           itemAgreement: local.itemAgreement,

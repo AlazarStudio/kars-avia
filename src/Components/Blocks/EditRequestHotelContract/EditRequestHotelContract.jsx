@@ -5,21 +5,15 @@ import Sidebar from "../Sidebar/Sidebar.jsx";
 
 import {
   convertToDate,
-  CREATE_AIRLINE_AA,
   DELETE_AIRLINE_CONTRACT_AA,
-  GET_AIRLINE_CONTRACT,
-  GET_AIRLINES_RELAY,
-  GET_AIRPORTS_RELAY,
-  GET_ALL_COMPANIES,
   GET_ALL_DISPATCHERS,
-  GET_CITIES,
   GET_HOTEL_CONTRACT,
-  GET_HOTELS_RELAY,
+  GET_ORGANIZATION_CONTRACT,
   getCookie,
   normalize,
   server,
-  UPDATE_AIRLINE_CONTRACT,
   UPDATE_HOTEL_CONTRACT,
+  UPDATE_ORGANIZATION_CONTRACT,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
@@ -35,38 +29,48 @@ import DocIcon from "../../../shared/icons/DocIcon.jsx";
 function EditRequestHotelContract({
   show,
   id,
+  activeFilterTab,
+  companiesData,
+  hotelsData,
+  orgsData,
+  citiesData,
   onClose,
   tarif, // тут приходит airlineContractId
   addNotification,
 }) {
   const token = getCookie("token");
 
+  const query =
+    activeFilterTab === "hotels"
+      ? GET_HOTEL_CONTRACT
+      : GET_ORGANIZATION_CONTRACT;
+
   // Тянем справочник аэропортов, если он тебе нужен далее (оставляю как в исходнике)
-  const infoAirports = useQuery(GET_CITIES, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    skip: !show,
-  });
+  // const citiesData = useQuery(GET_CITIES, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   },
+  //   skip: !show,
+  // });
 
-  const { data: airlinesData } = useQuery(GET_HOTELS_RELAY, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    skip: !show,
-  });
+  // const { data: airlinesData } = useQuery(GET_HOTELS_RELAY, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   },
+  //   skip: !show,
+  // });
 
-  const { data: companiesData } = useQuery(GET_ALL_COMPANIES, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
+  // const { data: companiesData } = useQuery(GET_ALL_COMPANIES, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   },
+  // });
 
   const { data: dispatchersData } = useQuery(GET_ALL_DISPATCHERS, {
     context: {
@@ -76,14 +80,17 @@ function EditRequestHotelContract({
     },
   });
 
-  const { data, loading, error, refetch } = useQuery(GET_HOTEL_CONTRACT, {
+  const typeId =
+    activeFilterTab === "hotels" ? "hotelContractId" : "organizationContractId";
+
+  const { data, loading, error, refetch } = useQuery(query, {
     context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: { hotelContractId: tarif },
+    variables: { [typeId]: tarif },
     skip: !tarif || !show,
-    fetchPolicy: "cache-and-network",
+    // fetchPolicy: "cache-and-network",
   });
 
-  const [updateAirlineContract] = useMutation(UPDATE_HOTEL_CONTRACT, {
+  const [updateHotelContract] = useMutation(UPDATE_HOTEL_CONTRACT, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -91,6 +98,18 @@ function EditRequestHotelContract({
       },
     },
   });
+
+  const [updateOrganizationContract] = useMutation(
+    UPDATE_ORGANIZATION_CONTRACT,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Apollo-Require-Preflight": "true",
+        },
+      },
+    }
+  );
 
   const [deleteAirlineContractAA] = useMutation(DELETE_AIRLINE_CONTRACT_AA, {
     context: {
@@ -104,8 +123,8 @@ function EditRequestHotelContract({
   // Управление режимом редактирования (как в исходнике)
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("Общая");
-  const [airlines, setAirlines] = useState([]); // Список авиакомпаний
-  const [airports, setAirports] = useState([]); // Список аэропортов
+  const [hotels, setHotels] = useState([]); // Список авиакомпаний
+  const [cities, setCities] = useState([]); // Список аэропортов
   const [companies, setCompanies] = useState([]); // Список авиакомпаний
   const [dispatchers, setDispatchers] = useState([]); // Список авиакомпаний
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
@@ -133,34 +152,60 @@ function EditRequestHotelContract({
 
   // Гидрация из запроса
   useEffect(() => {
-    if (!data?.hotelContract) return;
-    const c = data.hotelContract;
-    setFormData({
-      contractNumber: c.contractNumber || "",
-      date: c.date || "",
-      companyId: c.companyId || "",
-      signatureMark: c.signatureMark || "",
-      normativeAct: c.normativeAct || "",
-      legalEntity: c.legalEntity || "",
-      executor: c.executor || "",
-      completionMark: c.completionMark || "",
-      hotelId: c.hotelId || "",
-      cityId: c.cityId || "",
-      applicationType: c.applicationType || "",
-      notes: c.notes || "",
-      files: [],
-      additionalAgreements: Array.isArray(c.additionalAgreements)
-        ? c.additionalAgreements.map((a) => ({
-            id: a.id,
-            contractNumber: a.contractNumber || "",
-            date: a.date || "",
-            itemAgreement: a.itemAgreement || "",
-            notes: a.notes || "",
-            files: Array.isArray(a.files) ? a.files : [],
-          }))
-        : [],
-    });
-    setFiles(Array.isArray(c.files) ? c.files : []);
+    if (!data) return;
+    if (data.hotelContract) {
+      const c = data.hotelContract;
+      setFormData({
+        contractNumber: c.contractNumber || "",
+        date: c.date || "",
+        companyId: c.companyId || "",
+        signatureMark: c.signatureMark || "",
+        normativeAct: c.normativeAct || "",
+        legalEntity: c.legalEntity || "",
+        executor: c.executor || "",
+        completionMark: c.completionMark || "",
+        hotelId: c.hotelId || "",
+        cityId: c.cityId || "",
+        applicationType: c.applicationType || "",
+        notes: c.notes || "",
+        files: [],
+        additionalAgreements: Array.isArray(c.additionalAgreements)
+          ? c.additionalAgreements.map((a) => ({
+              id: a.id,
+              contractNumber: a.contractNumber || "",
+              date: a.date || "",
+              itemAgreement: a.itemAgreement || "",
+              notes: a.notes || "",
+              files: Array.isArray(a.files) ? a.files : [],
+            }))
+          : [],
+      });
+      setFiles(Array.isArray(c.files) ? c.files : []);
+    }
+    if (data.organizationContract) {
+      const c = data.organizationContract;
+      setFormData({
+        contractNumber: c.contractNumber || "",
+        date: c.date || "",
+        companyId: c.companyId || "",
+        cityId: c.cityId || "",
+        hotelId: c.organizationId || "",
+        applicationType: c.applicationType || "",
+        notes: c.notes || "",
+        files: [],
+        additionalAgreements: Array.isArray(c.additionalAgreements)
+          ? c.additionalAgreements.map((a) => ({
+              id: a.id,
+              contractNumber: a.contractNumber || "",
+              date: a.date || "",
+              itemAgreement: a.itemAgreement || "",
+              notes: a.notes || "",
+              files: Array.isArray(a.files) ? a.files : [],
+            }))
+          : [],
+      });
+      setFiles(Array.isArray(c.files) ? c.files : []);
+    }
   }, [data]);
 
   // refs для закрытия по клику вне сайдбара
@@ -178,17 +223,17 @@ function EditRequestHotelContract({
   }, [isEditing, onClose]);
 
   useEffect(() => {
-    if (infoAirports.data) {
-      setAirports(infoAirports.data.citys || []);
+    if (citiesData) {
+      setCities(citiesData.citys || []);
     }
-  }, [infoAirports.data]);
+  }, [citiesData]);
 
   useEffect(() => {
     if (show) {
-      setAirlines(airlinesData?.hotels?.hotels);
+      setHotels(hotelsData?.hotels?.hotels);
       //   refetch();
     }
-  }, [show, airlinesData]);
+  }, [show, hotelsData]);
 
   useEffect(() => {
     if (show) {
@@ -346,7 +391,7 @@ function EditRequestHotelContract({
       // тут подставь свои мутации обновления договора/ДС,
       // используя данные из formData (files и files у ДС отправляй так же, как при создании).
       // пример полезной структуры:
-      const payload = {
+      const hotelPayload = {
         contractNumber: formData.contractNumber,
         date: formData.date ? new Date(formData.date).toISOString() : null,
         notes: formData.notes,
@@ -360,18 +405,38 @@ function EditRequestHotelContract({
         legalEntity: formData.legalEntity,
         normativeAct: formData.normativeAct,
         files: formData.files,
-        // additionalAgreements: formData.additionalAgreements.map(a => ({
-        //   ...a,
-        //   date: a.date ? new Date(a.date).toISOString() : null
-        // })),
       };
-      await updateAirlineContract({
-        variables: {
-          updateHotelContractId: tarif,
-          input: payload,
-          files: formData.files,
-        },
-      });
+
+      const transferPayload = {
+        contractNumber: formData.contractNumber,
+        date: formData.date ? new Date(formData.date).toISOString() : null,
+        notes: formData.notes,
+        applicationType: formData.applicationType,
+        cityId: formData.cityId,
+        companyId: formData.companyId,
+        organizationId: formData.hotelId,
+        files: formData.files,
+      };
+
+      if (activeFilterTab === "hotels") {
+        await updateHotelContract({
+          variables: {
+            updateHotelContractId: tarif,
+            input: hotelPayload,
+            files: formData.files,
+          },
+        });
+      }
+
+      if (activeFilterTab === "transfer") {
+        await updateOrganizationContract({
+          variables: {
+            updateOrganizationContractId: tarif,
+            input: transferPayload,
+            files: formData.files,
+          },
+        });
+      }
 
       addNotification?.("Изменения сохранены.", "success");
       onClose();
@@ -505,40 +570,29 @@ function EditRequestHotelContract({
                   </div>
 
                   <div className={classes.requestDataItem}>
-                    <label>Гостиница</label>
-                    {/* <MUIAutocomplete
-                      dropdownWidth={"59%"}
-                      label={"Выберите гостиницу"}
-                      isDisabled={!isEditing}
-                      options={airlines?.map((airline) => airline.name)}
-                      value={
-                        airlines?.find(
-                          (airline) => airline.id === formData.hotelId
-                        )?.name || null
-                      }
-                      onChange={(event, newValue) => {
-                        const selectedAirline = airlines.find(
-                          (airline) => airline.name === newValue
-                        );
-                        setSelectedAirline(selectedAirline);
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          hotelId: selectedAirline?.id || "",
-                        }));
-                      }}
-                    /> */}
+                    <label>
+                      {activeFilterTab === "hotels"
+                        ? "Гостиница"
+                        : "Организация"}
+                    </label>
                     <MUIAutocompleteColor
                       dropdownWidth={"59%"}
-                      label={"Выберите гостиницу"}
+                      label={
+                        activeFilterTab === "hotels"
+                          ? "Выберите гостиницу"
+                          : "Выберите организацию"
+                      }
                       isDisabled={!isEditing}
-                      options={airlines}
+                      options={hotels}
                       getOptionLabel={(option) =>
                         option
                           ? `${option.name}, город: ${option?.information?.city}`.trim()
                           : ""
                       }
                       renderOption={(optionProps, option) => {
-                        const cityPart = `,, город: ${option?.information?.city}`;
+                        const cityPart = `,, город: ${
+                          option?.information?.city || "не указан"
+                        }`;
                         const labelText = `${option.name}${cityPart}`.trim();
                         const words = labelText.split(", ");
 
@@ -559,14 +613,14 @@ function EditRequestHotelContract({
                         );
                       }}
                       value={
-                        airlines?.find(
+                        hotels?.find(
                           (airline) => airline.id === formData.hotelId
                         ) || null
                       }
                       onChange={(event, newValue) => {
                         // console.log(newValue);
 
-                        const nextHotel = airlines.find(
+                        const nextHotel = hotels.find(
                           (airline) => airline.id === newValue.id
                         );
                         setSelectedAirline(nextHotel);
@@ -574,7 +628,7 @@ function EditRequestHotelContract({
                         // автоматически подставляем город
                         const hotelCity = nextHotel?.information?.city;
                         const matchedCity =
-                          airports.find(
+                          cities.find(
                             (c) =>
                               normalize(c.city) === normalize(hotelCity) ||
                               normalize(c.name) === normalize(hotelCity) // на случай, если в объекте город лежит в name
@@ -591,18 +645,10 @@ function EditRequestHotelContract({
 
                   <div className={classes.requestDataItem}>
                     <label>Город</label>
-                    {/* <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleChange}
-                    placeholder="Введите город"
-                    disabled={!isEditing}
-                  /> */}
                     <MUIAutocompleteColor
                       dropdownWidth="59%"
                       label={"Выберите город"}
-                      options={airports}
+                      options={cities}
                       isDisabled={!isEditing}
                       getOptionLabel={(option) => {
                         if (!option) return "";
@@ -637,7 +683,7 @@ function EditRequestHotelContract({
                         );
                       }}
                       value={
-                        airports.find((o) => o.id === formData.cityId) || null
+                        cities.find((o) => o.id === formData.cityId) || null
                       }
                       onChange={(e, newValue) => {
                         setFormData((prev) => ({
@@ -648,55 +694,44 @@ function EditRequestHotelContract({
                     />
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Наименования организации</label>
-                    <input
-                      type="text"
-                      name="legalEntity"
-                      value={formData.legalEntity}
-                      onChange={handleChange}
-                      placeholder='Например: ООО "Буфет"'
-                      disabled={!isEditing}
-                    />
-                  </div>
+                  {activeFilterTab === "hotels" && (
+                    <>
+                      <div className={classes.requestDataItem}>
+                        <label>Наименования организации</label>
+                        <input
+                          type="text"
+                          name="legalEntity"
+                          value={formData.legalEntity}
+                          onChange={handleChange}
+                          placeholder='Например: ООО "Буфет"'
+                          disabled={!isEditing}
+                        />
+                      </div>
+                      <div className={classes.requestDataItem}>
+                        <label>Отметка о подписании</label>
+                        <input
+                          type="text"
+                          name="signatureMark"
+                          value={formData.signatureMark}
+                          onChange={handleChange}
+                          placeholder="Например: Подписан"
+                          disabled={!isEditing}
+                        />
+                      </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Вид услуги</label>
-                    <input
-                      type="text"
-                      name="applicationType"
-                      value={formData.applicationType}
-                      onChange={handleChange}
-                      placeholder="Например: Проживание"
-                      disabled={!isEditing}
-                    />
-                  </div>
+                      <div className={classes.requestDataItem}>
+                        <label>Нормативный Акт, Форма договора</label>
+                        <input
+                          type="text"
+                          name="normativeAct"
+                          value={formData.normativeAct}
+                          onChange={handleChange}
+                          placeholder="Например: Наша форма договора"
+                          disabled={!isEditing}
+                        />
+                      </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Отметка о подписании</label>
-                    <input
-                      type="text"
-                      name="signatureMark"
-                      value={formData.signatureMark}
-                      onChange={handleChange}
-                      placeholder="Например: Подписан"
-                      disabled={!isEditing}
-                    />
-                  </div>
-
-                  <div className={classes.requestDataItem}>
-                    <label>Нормативный Акт, Форма договора</label>
-                    <input
-                      type="text"
-                      name="normativeAct"
-                      value={formData.normativeAct}
-                      onChange={handleChange}
-                      placeholder="Например: Наша форма договора"
-                      disabled={!isEditing}
-                    />
-                  </div>
-
-                  {/* <div className={classes.requestDataItem}>
+                      {/* <div className={classes.requestDataItem}>
                     <label>Исполнитель</label>
                     <MUIAutocomplete
                       dropdownWidth={"59%"}
@@ -717,24 +752,38 @@ function EditRequestHotelContract({
                     />
                   </div> */}
 
-                  <label className={classes.checkboxLabel}>
+                      <label className={classes.checkboxLabel}>
+                        <input
+                          type="checkbox"
+                          checked={formData.completionMark === "Исполнено"}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              completionMark: e.target.checked
+                                ? "Исполнено"
+                                : "Не исполнено",
+                            }))
+                          }
+                          disabled={!isEditing}
+                        />
+                        <span style={{ marginLeft: 8 }}>
+                          Отметка о исполнении: {formData.completionMark}
+                        </span>
+                      </label>
+                    </>
+                  )}
+
+                  <div className={classes.requestDataItem}>
+                    <label>Вид услуги</label>
                     <input
-                      type="checkbox"
-                      checked={formData.completionMark === "Исполнено"}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          completionMark: e.target.checked
-                            ? "Исполнено"
-                            : "Не исполнено",
-                        }))
-                      }
+                      type="text"
+                      name="applicationType"
+                      value={formData.applicationType}
+                      onChange={handleChange}
+                      placeholder="Например: Проживание"
                       disabled={!isEditing}
                     />
-                    <span style={{ marginLeft: 8 }}>
-                      Отметка о исполнении: {formData.completionMark}
-                    </span>
-                  </label>
+                  </div>
 
                   {isEditing ? (
                     <>
@@ -877,7 +926,7 @@ function EditRequestHotelContract({
                 </div>
               </div>
             )}
-            {!id && (
+            {activeTab === "Общая" && !id && (
               <div className={classes.requestButton}>
                 <Button
                   type="submit"
@@ -914,6 +963,7 @@ function EditRequestHotelContract({
 
       <CreateAdditionalAgreement
         updId={tarif}
+        activeFilterTab={activeFilterTab}
         show={showCreateAgreementEditor}
         onClose={closeCreateAgreement}
         agreement={null}

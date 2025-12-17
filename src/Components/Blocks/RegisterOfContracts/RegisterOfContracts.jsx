@@ -14,6 +14,10 @@ import {
   GET_ALL_COMPANIES,
   GET_HOTELS_RELAY,
   GET_CITIES,
+  GET_ORGANIZATIONS,
+  GET_ORGANIZATION_CONTRACTS,
+  SUBSCRIPTION_ORGANIZATION_CONTRACTS,
+  DELETE_ORGANIZATION_CONTRACT,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
@@ -59,15 +63,21 @@ function RegisterOfContracts({ children, id, user, ...props }) {
   const [airlines, setAirlines] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [hotels, setHotels] = useState([]);
+  const [orgs, setOrgs] = useState([]);
   const [cities, setCities] = useState([]);
   const [selectedAirline, setSelectedAirline] = useState(null);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedHotel, setSelectedHotel] = useState(null);
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
 
   const query =
-    activeTab === "airlines" ? GET_AIRLINE_CONTRACTS : GET_HOTEL_CONTRACTS;
+    activeTab === "airlines"
+      ? GET_AIRLINE_CONTRACTS
+      : activeTab === "hotels"
+      ? GET_HOTEL_CONTRACTS
+      : GET_ORGANIZATION_CONTRACTS;
 
   const { loading, error, data, refetch } = useQuery(query, {
     context: {
@@ -81,6 +91,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         take: pageInfo.take,
       },
       filter: {
+        search: debouncedSearch,
         companyId: selectedCompany?.id,
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
@@ -92,11 +103,14 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           hotelId: selectedHotel?.id,
           cityId: selectedCity?.id,
         }),
-        search: debouncedSearch,
+        ...(activeTab === "transfer" && {
+          organizationId: selectedOrganization?.id,
+          cityId: selectedCity?.id,
+        }),
       },
     },
   });
-  // console.log(debouncedSearch);
+  // console.log(selectedOrganization);
 
   const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
     context: {
@@ -104,6 +118,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: activeTab !== "airlines" ? true : false,
   });
 
   const { data: hotelsData } = useQuery(GET_HOTELS_RELAY, {
@@ -112,6 +127,16 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: activeTab !== "hotels" ? true : false,
+  });
+
+  const { data: orgsData } = useQuery(GET_ORGANIZATIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    skip: activeTab !== "transfer" ? true : false,
   });
 
   const { data: companiesData } = useQuery(GET_ALL_COMPANIES, {
@@ -128,6 +153,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: activeTab === "airlines" ? true : false,
   });
 
   const [addTarif, setAddTarif] = useState([]);
@@ -162,6 +188,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
       },
     },
   });
+
   const [deleteHotelContract] = useMutation(DELETE_HOTEL_CONTRACT, {
     context: {
       headers: {
@@ -169,6 +196,17 @@ function RegisterOfContracts({ children, id, user, ...props }) {
       },
     },
   });
+
+  const [deleteOrganizationContract] = useMutation(
+    DELETE_ORGANIZATION_CONTRACT,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  );
 
   useEffect(() => {
     if (data && data.airlineContracts) {
@@ -178,6 +216,10 @@ function RegisterOfContracts({ children, id, user, ...props }) {
     if (data && data.hotelContracts) {
       setAddTarif(data.hotelContracts.items);
       setTotalPages(data.hotelContracts.totalPages);
+    }
+    if (data && data.organizationContracts) {
+      setAddTarif(data.organizationContracts.items);
+      setTotalPages(data.organizationContracts.totalPages);
     }
   }, [data]);
 
@@ -194,7 +236,10 @@ function RegisterOfContracts({ children, id, user, ...props }) {
     if (citiesData) {
       setCities(citiesData.citys);
     }
-  }, [airlinesData, companiesData, hotelsData, citiesData]);
+    if (orgsData) {
+      setOrgs(orgsData.organizations);
+    }
+  }, [airlinesData, companiesData, hotelsData, citiesData, orgsData]);
 
   const { data: subscriptionData } = useSubscription(
     SUBSCRIPTION_AIRLINE_CONTRACTS,
@@ -206,6 +251,14 @@ function RegisterOfContracts({ children, id, user, ...props }) {
   );
   const { data: subscriptionUpdateData } = useSubscription(
     SUBSCRIPTION_HOTEL_CONTRACTS,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
+  const { data: subscriptionOrgData } = useSubscription(
+    SUBSCRIPTION_ORGANIZATION_CONTRACTS,
     {
       onData: () => {
         refetch();
@@ -256,6 +309,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         take: pageInfo.take,
       },
       filter: {
+        search: debouncedSearch,
         companyId: selectedCompany?.id,
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
@@ -267,7 +321,10 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           hotelId: selectedHotel?.id,
           cityId: selectedCity?.id,
         }),
-        search: debouncedSearch,
+        ...(activeTab === "transfer" && {
+          organizationId: selectedOrganization?.id,
+          cityId: selectedCity?.id,
+        }),
       },
     }).catch(console.error);
   }, [
@@ -275,6 +332,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
     dateRange,
     selectedAirline,
     selectedHotel,
+    selectedOrganization,
     selectedCompany,
     selectedCity,
   ]);
@@ -308,9 +366,13 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         await deleteAirlineContract({
           variables: { deleteAirlineContractId: contract.id },
         });
-      } else {
+      } else if (activeTab === "hotels") {
         await deleteHotelContract({
           variables: { deleteHotelContractId: contract.id },
+        });
+      } else {
+        await deleteOrganizationContract({
+          variables: { deleteOrganizationContractId: contract.id },
         });
       }
       // оптимистично выкидываем из списка + подстраховочно refetch
@@ -372,28 +434,16 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         {[
           { key: "airlines", label: "Авиакомпании" },
           { key: "hotels", label: "Гостиницы" },
-          // { key: "registers", label: "Реестры" },
+          { key: "transfer", label: "Трансфер" },
         ].map((t, i) => (
           <button
             key={t.key}
             type="button"
-            role="tab"
             id={`tab-${t.key}`}
-            aria-selected={activeTab === t.key}
-            aria-controls={`panel-${t.key}`}
-            tabIndex={activeTab === t.key ? 0 : -1}
             className={`${classes.segment} ${
               activeTab === t.key ? classes.segmentActive : ""
             }`}
             onClick={() => setActiveTab(t.key)}
-            onKeyDown={(e) => {
-              const order = ["airlines", "hotels", "registers"];
-              const idx = order.indexOf(activeTab);
-              if (e.key === "ArrowRight")
-                setActiveTab(order[(idx + 1) % order.length]);
-              if (e.key === "ArrowLeft")
-                setActiveTab(order[(idx + order.length - 1) % order.length]);
-            }}
           >
             {t.label}
           </button>
@@ -579,6 +629,92 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           </>
         )}
 
+        {activeTab === "transfer" && (
+          <>
+            <MUIAutocomplete
+              dropdownWidth={"170px"}
+              label={"Организация"}
+              options={["Все организации", ...orgs.map((org) => org.name)]}
+              value={selectedOrganization ? selectedOrganization.name : ""}
+              onChange={(event, newValue) => {
+                if (newValue === "Все организации" || !newValue) {
+                  setSelectedOrganization(null);
+                } else {
+                  const selectedOption = orgs.find(
+                    (org) => org.name === newValue
+                  );
+                  setSelectedOrganization(selectedOption);
+                }
+              }}
+            />
+
+            <MUIAutocompleteColor
+              dropdownWidth={"170px"}
+              label={"Город"}
+              options={[
+                {
+                  id: null,
+                  city: "Все города",
+                  region: null,
+                },
+                ...cities,
+              ]}
+              // getOptionLabel={(option) => {
+              //   if (!option) return "";
+              //   const cityPart =
+              //     option.city && option.city !== option.region
+              //       ? `, регион: ${option.region}`
+              //       : "";
+              //   return `${option.city}${cityPart}`.trim();
+              // }}
+              getOptionLabel={(option) => option?.city ?? ""}
+              renderOption={(optionProps, option) => {
+                const isAll = option.id === null;
+
+                if (isAll) {
+                  return (
+                    <li {...optionProps} key={option.id ?? "all-hotels"}>
+                      <span style={{ color: "black" }}>{option.city}</span>
+                    </li>
+                  );
+                }
+
+                const cityPart =
+                  option.city && option.city !== option.name
+                    ? `, регион: ${option.region}`
+                    : "";
+                const labelText = `${option.city}${cityPart}`.trim();
+                const words = labelText.split(" ");
+
+                return (
+                  <li {...optionProps} key={option.id}>
+                    {words.map((word, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          color: index === 0 ? "black" : "gray",
+                          marginRight: 4,
+                        }}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </li>
+                );
+              }}
+              value={selectedCity ? selectedCity : ""}
+              onChange={(e, newValue) => {
+                if (newValue === "Все города" || !newValue) {
+                  setSelectedCity(null);
+                } else {
+                  const nextHotel = cities.find((item) => item === newValue);
+                  setSelectedCity(nextHotel);
+                }
+              }}
+            />
+          </>
+        )}
+
         <MUIAutocomplete
           dropdownWidth={"170px"}
           label={"ГК Карс"}
@@ -595,13 +731,6 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             }
           }}
         />
-
-        {/* <MUIAutocomplete
-          dropdownWidth={"170px"}
-          options={["Все", "Авиакомпании", "Гостиницы", "ГК Карс"]}
-          value={typeFilter}
-          onChange={(event, newValue) => setTypeFilter(newValue)}
-        /> */}
 
         <Filter
           toggleSidebar={toggleTarifsCategory}
@@ -663,6 +792,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           <EditRequestAirlineContract
             user={user}
             id={id}
+            activeFilterTab={activeTab}
             setAddTarif={setAddTarif}
             show={showEditAddTarif}
             onClose={() => setEditShowAddTarif(false)}
@@ -673,13 +803,15 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         </>
       ) : null}
 
-      {activeTab === "hotels" ? (
+      {activeTab === "hotels" || activeTab === "transfer" ? (
         <>
           <CreateRequestHotelContract
             user={user}
             id={id}
+            activeFilterTab={activeTab}
             companiesData={companiesData}
             hotelsData={hotelsData}
+            orgsData={orgsData}
             citiesData={citiesData}
             show={showAddTarifCategory}
             onClose={toggleTarifsCategory}
@@ -691,6 +823,11 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           <EditRequestHotelContract
             user={user}
             id={id}
+            activeFilterTab={activeTab}
+            companiesData={companiesData}
+            hotelsData={hotelsData}
+            orgsData={orgsData}
+            citiesData={citiesData}
             setAddTarif={setAddTarif}
             show={showEditAddTarif}
             onClose={() => setEditShowAddTarif(false)}

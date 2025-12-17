@@ -15,6 +15,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 function CreateAdditionalAgreement({
   show,
   onClose,
+  activeFilterTab,
   agreement,
   onSave,
   refetch,
@@ -110,13 +111,13 @@ function CreateAdditionalAgreement({
   };
   const [isLoading, setIsLoading] = useState(false);
 
+  const typeId = activeFilterTab === "hotels" ? "hotelContractId": activeFilterTab === "airlines" ? "airlineContractId" : "organizationContractId"
   const create = async () => {
     setIsLoading(true);
     await createAirlineAA({
       variables: {
         input: {
-          airlineContractId: updId,
-          hotelContractId: updId,
+          [typeId]: updId,
           contractNumber: local.contractNumber,
           date: new Date(local.date).toISOString(),
           itemAgreement: local.itemAgreement,
