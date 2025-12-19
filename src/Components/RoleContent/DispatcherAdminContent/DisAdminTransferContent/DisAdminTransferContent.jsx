@@ -6,10 +6,21 @@ import classes from "./DisAdminTransferContent.module.css";
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
 import Header from "../../../Blocks/Header/Header";
 
-const TransferOrders = lazy(() => import("../../../Blocks/TransferOrders/TransferOrders"));
-const DriversCompanyList = lazy(() => import("../../../Blocks/DriversCompanyList/DriversCompanyList"));
-const TransferOrder = lazy(() => import("../../../Blocks/TransferOrder/TransferOrder"));
-const DriversCompanyPage = lazy(() => import("../../../Blocks/DriversCompanyPage/DriversCompanyPage"));
+const TransferOrders = lazy(() =>
+  import("../../../Blocks/TransferOrders/TransferOrders")
+);
+const DriversCompanyList = lazy(() =>
+  import("../../../Blocks/DriversCompanyList/DriversCompanyList")
+);
+const DriversList = lazy(() =>
+  import("../../../Blocks/DriversList/DriversList")
+);
+const TransferOrder = lazy(() =>
+  import("../../../Blocks/TransferOrder/TransferOrder")
+);
+const DriversCompanyPage = lazy(() =>
+  import("../../../Blocks/DriversCompanyPage/DriversCompanyPage")
+);
 
 const DisAdminTransferContent = ({ user }) => {
   const navigate = useNavigate();
@@ -21,6 +32,7 @@ const DisAdminTransferContent = ({ user }) => {
 
   const selectedTab = useMemo(() => {
     if (id === "driversCompany") return 1;
+    if (id === "driversList") return 2;
     return 0;
   }, [id]);
 
@@ -31,13 +43,23 @@ const DisAdminTransferContent = ({ user }) => {
     return (
       id === "orders" ||
       id === "driversCompany" ||
+      id === "driversList" ||
       (!id && !hotelID && !airlineID && !driversCompanyID && !orderId)
     );
-  }, [id, hotelID, airlineID, driversCompanyID, orderId, isOrderDetails, isCompanyDetails]);
+  }, [
+    id,
+    hotelID,
+    airlineID,
+    driversCompanyID,
+    orderId,
+    isOrderDetails,
+    isCompanyDetails,
+  ]);
 
   const handleTabSelect = (index) => {
     if (index === 0) navigate("/orders");
     if (index === 1) navigate("/driversCompany");
+    if (index === 2) navigate("/driversList");
   };
 
   // ✅ теперь можно return’ить — хуки уже вызваны
@@ -58,7 +80,6 @@ const DisAdminTransferContent = ({ user }) => {
   }
 
   if (!shouldShowTabs) return null;
-
 
   return (
     <div className={classes.section}>
@@ -81,6 +102,7 @@ const DisAdminTransferContent = ({ user }) => {
         <TabList className={classes.tabList}>
           <Tab className={classes.tab}>Заказы</Tab>
           <Tab className={classes.tab}>Организации</Tab>
+          <Tab className={classes.tab}>Водители</Tab>
         </TabList>
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
@@ -92,6 +114,12 @@ const DisAdminTransferContent = ({ user }) => {
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
             <DriversCompanyList user={user} disAdmin={true} />
+          </Suspense>
+        </TabPanel>
+
+        <TabPanel className={classes.tabPanel} forceRender={false}>
+          <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+            <DriversList user={user} disAdmin={true}/>
           </Suspense>
         </TabPanel>
       </Tabs>

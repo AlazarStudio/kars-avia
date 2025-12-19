@@ -495,14 +495,18 @@ export const UPDATE_DRIVER_MUTATION = gql`
 `;
 
 export const GET_ORGANIZATIONS = gql`
-  query Organizations {
-    organizations {
-      id
-      name
-      images
-      information {
-        country
-        city
+  query Organizations($pagination: OrganizationPaginationInput) {
+    organizations(pagination: $pagination) {
+      totalCount
+      totalPages
+      organizations {
+        id
+        name
+        images
+        information {
+          country
+          city
+        }
       }
     }
   }

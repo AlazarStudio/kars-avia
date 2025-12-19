@@ -17,6 +17,7 @@ import NotificationsSettings from "../../Blocks/NotificationsSettings/Notificati
 import TransferOrder from "../../Blocks/TransferOrder/TransferOrder";
 import DriversCompanyList from "../../Blocks/DriversCompanyList/DriversCompanyList";
 import DriversCompanyPage from "../../Blocks/DriversCompanyPage/DriversCompanyPage";
+import DriversList from "../../Blocks/DriversList/DriversList";
 
 const TransferAdminContent = ({ user }) => {
   const { id, hotelID, airlineID, orderId, driversCompanyID } = useParams();
@@ -31,6 +32,7 @@ const TransferAdminContent = ({ user }) => {
       {orderId && <TransferOrder user={user} />}
 
       {id === "driversCompany" && <DriversCompanyList user={user} />}
+      {id === "driversList" && <DriversList user={user} />}
       {/* {id === "drivers" && <DriversCompany user={user} />} */}
       {/* {id === "hotels" && <HotelsList user={user} />}
       {id === "airlines" && <AirlinesList user={user} />}

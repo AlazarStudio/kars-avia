@@ -52,6 +52,7 @@ function DriversCompanyList({ children, representative, disAdmin, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
   });
 
   const { data: subscriptionData, error: subCreateError } = useSubscription(
@@ -74,7 +75,7 @@ function DriversCompanyList({ children, representative, disAdmin, ...props }) {
 
   useEffect(() => {
     if (data && data.organizations) {
-      const sortedAirlines = [...data.organizations].sort((a, b) =>
+      const sortedAirlines = [...data.organizations.organizations].sort((a, b) =>
         a.name.localeCompare(b.name)
       );
       setCompanyData(sortedAirlines);
@@ -146,8 +147,8 @@ function DriversCompanyList({ children, representative, disAdmin, ...props }) {
         pagination: { all: true }, // Загрузить большое количество данных для поиска
       });
 
-      if (data && data.airlines?.airlines) {
-        setAllFilteredData(data.airlines.airlines); // Сохраняем все данные для локального поиска
+      if (data && data.organizations?.organizations) {
+        setAllFilteredData(data.organizations.organizations); // Сохраняем все данные для локального поиска
       }
     } catch (err) {
       console.error("Ошибка при поиске:", err);

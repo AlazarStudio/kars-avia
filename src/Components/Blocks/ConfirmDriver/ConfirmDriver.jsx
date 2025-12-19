@@ -17,6 +17,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 function ConfirmDriver({
   show,
   onClose,
+  confirm,
   chooseObject,
   updateDispatcher,
   openDeleteComponent,
@@ -244,7 +245,7 @@ function ConfirmDriver({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} style={confirm ? {height: "calc(100vh-"} : {}}>
             <div className={classes.requestData}>
               <div className={classes.requestDataInfo_img}>
                 <div className={classes.requestDataInfo_img_imgBlock}>
@@ -432,30 +433,32 @@ function ConfirmDriver({
             </div>
           </div>
 
-          {/* <div className={classes.requestButton}>
-            <Button
-              onClick={() => openDeleteComponent(index, formData.id)}
-              backgroundcolor={"#FF9C9C"}
-            >
-              Удалить <img src="/delete.png" alt="" />
-            </Button>
+          {confirm && (
+            <div className={classes.requestButton}>
+              <Button
+                onClick={() => openDeleteComponent(index, formData.id)}
+                backgroundcolor={"#FF9C9C"}
+              >
+                Удалить <img src="/delete.png" alt="" />
+              </Button>
 
-            <Button
-              onClick={handleUpdate}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div> */}
+              <Button
+                onClick={handleUpdate}
+                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+                color={!isEditing ? "#3B6C54" : "#fff"}
+              >
+                {isEditing ? (
+                  <>
+                    Сохранить <img src="/saveDispatcher.png" alt="" />
+                  </>
+                ) : (
+                  <>
+                    Изменить <img src="/editDispetcher.png" alt="" />
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

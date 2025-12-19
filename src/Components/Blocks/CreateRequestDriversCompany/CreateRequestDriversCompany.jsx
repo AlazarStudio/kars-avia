@@ -21,7 +21,7 @@ function CreateRequestDriversCompany({
   const [formData, setFormData] = useState({
     name: "",
     nameFull: "",
-    images: "",
+    images: null,
   });
 
   const sidebarRef = useRef();
@@ -30,7 +30,7 @@ function CreateRequestDriversCompany({
     setFormData({
       name: "",
       nameFull: "",
-      images: "",
+      images: null,
     });
     setIsEdited(false); // Сброс флага изменений
   }, []);
