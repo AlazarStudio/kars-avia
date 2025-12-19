@@ -155,7 +155,6 @@ function HotelAbout_tabComponent({ id }) {
     }
   }, [mealPriceData]);
 
-  console.log(mealPriceData)
 
   useEffect(() => {
     if (dataSubscriptionUpd) refetch();

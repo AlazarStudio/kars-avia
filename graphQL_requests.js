@@ -408,6 +408,8 @@ export const UPDATE_TRANSFER_REQUEST_MUTATION = gql`
 export const DRIVERS_QUERY = gql`
   query Drivers($pagination: DriverPaginationInput!) {
     drivers(pagination: $pagination) {
+      totalCount
+      totalPages
       drivers {
         id
         name

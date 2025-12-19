@@ -3,224 +3,156 @@ import classes from "./ConfirmDriver.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
-  decodeJWT,
   getCookie,
   server,
-  UPDATE_DISPATCHER_USER,
+  UPDATE_DRIVER_MUTATION,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
-import DropDownList from "../DropDownList/DropDownList";
-import { roles, rolesObject } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
-import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 
 function ConfirmDriver({
   show,
   onClose,
   confirm,
   chooseObject,
-  updateDispatcher,
-  openDeleteComponent,
-  filterList,
-  positions,
+  updateDriver,
   addNotification,
 }) {
   const token = getCookie("token");
-  const user = decodeJWT(token);
 
-  const [uploadFile, { data, loading, error }] = useMutation(
-    UPDATE_DISPATCHER_USER,
+  const [updateDriverMutation, { loading: mutationLoading }] = useMutation(
+    UPDATE_DRIVER_MUTATION,
     {
       context: {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Apollo-Require-Preflight": "true",
         },
       },
     }
   );
 
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
-  const [formData, setFormData] = useState({
-    id: chooseObject?.id || "",
-    name: chooseObject?.name || "",
-    email: chooseObject?.email || "",
-    number: chooseObject?.number || "",
-    vehicleNumber: chooseObject?.vehicleNumber || "",
-    car: chooseObject?.car || "",
-    driverLicenseNumber: chooseObject?.driverLicenseNumber || "",
-  });
-
   const sidebarRef = useRef();
-
-  const [index, setIndex] = useState(null);
   const [showIMG, setShowIMG] = useState();
+  const [isLoading, setIsLoading] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [refusalReason, setRefusalReason] = useState("");
 
   useEffect(() => {
     if (chooseObject) {
-      setFormData({
-        id: chooseObject.id || "",
-        name: chooseObject.name || "",
-        email: chooseObject.email || "",
-        number: chooseObject?.number || "",
-        vehicleNumber: chooseObject?.vehicleNumber || "",
-        car: chooseObject?.car || "",
-        driverLicenseNumber: chooseObject?.driverLicenseNumber || "",
-      });
       setShowIMG(chooseObject?.documents?.driverPhoto);
-      setIndex(chooseObject.index);
     }
   }, [chooseObject]);
 
-  const resetForm = useCallback(() => {
-    setFormData({
-      id: chooseObject?.id || "",
-      name: chooseObject?.name || "",
-      email: chooseObject?.email || "",
-      number: chooseObject?.number || "",
-      vehicleNumber: chooseObject?.vehicleNumber || "",
-      car: chooseObject?.car || "",
-      driverLicenseNumber: chooseObject?.driverLicenseNumber || "",
-    });
-    setIsEdited(false); // Сброс флага изменений
-    setShowOldPassword(false);
-    setShowNewPassword(false);
-  }, []);
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [showOldPassword, setShowOldPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-
   const closeButton = useCallback(() => {
-    if (!isEdited) {
-      resetForm();
-      onClose();
-      setIsEditing(false);
-      return;
-    }
+    setRefusalReason("");
+    setShowRejectModal(false);
+    onClose();
+  }, [onClose]);
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
-      resetForm();
-      onClose();
-      setIsEditing(false);
-    }
-  }, [isEdited, isEditing, onClose]);
+  const handleApprove = async () => {
+    if (!chooseObject?.id) return;
 
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
-    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  }, []);
+    setIsLoading(true);
+    try {
+      await updateDriverMutation({
+        variables: {
+          updateDriverId: chooseObject.id,
+          input: {
+            registrationStatus: "APPROVED",
+          },
+        },
+      });
 
-  const fileInputRef = useRef(null);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
-      setFormData((prevState) => ({
-        ...prevState,
-        images: null,
-      }));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
+      if (updateDriver) {
+        updateDriver(
+          {
+            ...chooseObject,
+            registrationStatus: "APPROVED",
+          },
+          chooseObject.index
+        );
       }
-      return;
-    }
 
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        images: file,
-      }));
+      addNotification?.("Водитель принят.", "success");
+      closeButton();
+    } catch (error) {
+      console.error("Ошибка при принятии водителя:", error);
+      addNotification?.("Не удалось принять водителя.", "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleUpdate = async () => {
-    if (isEditing) {
-      setIsLoading(true);
-      // Проверяем обязательные поля
-      // const requiredFields = ["name", "email",];
-      // const emptyFields = requiredFields.filter(
-      //   (field) => !formData[field]?.trim()
-      // );
+  const handleReject = () => {
+    setShowRejectModal(true);
+  };
 
-      // if (emptyFields.length > 0) {
-      //   alert("Пожалуйста, заполните все обязательные поля.");
-      //   setIsLoading(false);
-      //   return;
-      // }
-      // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      // if (!emailRegex.test(formData.email)) {
-      //   alert("Введите корректный email.");
-      //   setIsLoading(false);
-      //   return;
-      // }
-      // if (formData.password !== "" && formData.password.length < 8) {
-      //   alert("Новый пароль должен содержать минимум 8 символов.");
-      //   setIsLoading(false);
-      //   return;
-      // }
-      try {
-        const selectedPosition = positions.find(
-          (position) => position.name === formData.position
-        );
-        let response_update_user = await uploadFile({
-          variables: {
-            input: {
-              id: formData.id,
-              name: formData.name,
-              email: formData.email,
-              role: formData.role,
-              positionId: selectedPosition?.id,
-              login: formData.login,
-              password: formData.password,
-              oldPassword: formData.oldPassword,
-            },
-          },
-        });
-
-        if (response_update_user) {
-          // updateDispatcher(response_update_user.data.updateUser, index);
-          resetForm();
-          onClose();
-          setIsLoading(false);
-          addNotification(
-            "Редактирование диспетчера прошло успешно.",
-            "success"
-          );
-        }
-      } catch (error) {
-        console.error("Ошибка обновления пользователя:", error);
-      } finally {
-        resetForm();
-        // onClose();
-        setIsLoading(false); // Сбрасываем isLoading после завершения запроса
-        // addNotification("Редактирование диспетчера прошло успешно.", "success");
-        setShowOldPassword(false);
-        setShowNewPassword(false);
-      }
+  const handleRejectConfirm = async () => {
+    if (!refusalReason.trim()) {
+      addNotification?.("Пожалуйста, укажите причину отклонения.", "warning");
+      return;
     }
-    setIsEditing(!isEditing);
+
+    if (!chooseObject?.id) return;
+
+    setIsLoading(true);
+    try {
+      await updateDriverMutation({
+        variables: {
+          updateDriverId: chooseObject.id,
+          input: {
+            registrationStatus: "REJECTED",
+            refusalReason: refusalReason.trim(),
+          },
+        },
+      });
+
+      if (updateDriver) {
+        updateDriver(
+          {
+            ...chooseObject,
+            registrationStatus: "REJECTED",
+            refusalReason: refusalReason.trim(),
+          },
+          chooseObject.index
+        );
+      }
+
+      addNotification?.("Водитель отклонен.", "success");
+      setShowRejectModal(false);
+      setRefusalReason("");
+      closeButton();
+    } catch (error) {
+      console.error("Ошибка при отклонении водителя:", error);
+      addNotification?.("Не удалось отклонить водителя.", "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      // Не закрываем sidebar, если открыто модальное окно
+      if (showRejectModal) {
+        return;
+      }
+
+      // Проверяем, что клик не внутри sidebar и не внутри Dialog
+      const isClickInsideSidebar = sidebarRef.current?.contains(event.target);
+      const isClickInsideDialog = event.target.closest('[role="dialog"]');
+
+      if (isClickInsideSidebar || isClickInsideDialog) {
+        return; // Если клик внутри sidebar или Dialog, ничего не делаем
       }
 
       closeButton();
     };
 
-    if (show) {
+    if (show && !showRejectModal) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -229,7 +161,7 @@ function ConfirmDriver({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, showRejectModal, closeButton]);
 
   // console.log(user);
 
@@ -245,7 +177,7 @@ function ConfirmDriver({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle} style={confirm ? {height: "calc(100vh-"} : {}}>
+          <div className={classes.requestMiddle} style={confirm ? { height: "calc(100% - 90px - 71px)" } : { height: "calc(100% - 80px)" }}>
             <div className={classes.requestData}>
               <div className={classes.requestDataInfo_img}>
                 <div className={classes.requestDataInfo_img_imgBlock}>
@@ -265,11 +197,8 @@ function ConfirmDriver({
                 <div className={classes.requestDataInfo_title}>ФИО</div>
                 <input
                   type="text"
-                  name="name"
-                  placeholder="Иванов Иван Иванович"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={!isEditing}
+                  value={chooseObject?.name || ""}
+                  disabled
                 />
               </div>
 
@@ -277,11 +206,8 @@ function ConfirmDriver({
                 <div className={classes.requestDataInfo_title}>Почта</div>
                 <input
                   type="email"
-                  name="email"
-                  placeholder="example@mail.ru"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={!isEditing}
+                  value={chooseObject?.email || ""}
+                  disabled
                 />
               </div>
 
@@ -289,11 +215,8 @@ function ConfirmDriver({
                 <div className={classes.requestDataInfo_title}>Номер</div>
                 <input
                   type="text"
-                  name="number"
-                  // placeholder="example@mail.ru"
-                  value={formData.number}
-                  onChange={handleChange}
-                  disabled={!isEditing}
+                  value={chooseObject?.number || ""}
+                  disabled
                 />
               </div>
 
@@ -303,11 +226,8 @@ function ConfirmDriver({
                 </div>
                 <input
                   type="text"
-                  name="vehicleNumber"
-                  placeholder="example@mail.ru"
-                  value={formData.vehicleNumber}
-                  onChange={handleChange}
-                  disabled={!isEditing}
+                  value={chooseObject?.vehicleNumber || ""}
+                  disabled
                 />
               </div>
 
@@ -315,11 +235,8 @@ function ConfirmDriver({
                 <div className={classes.requestDataInfo_title}>Машина</div>
                 <input
                   type="text"
-                  name="car"
-                  // placeholder="example@mail.ru"
-                  value={formData.car}
-                  onChange={handleChange}
-                  disabled={!isEditing}
+                  value={chooseObject?.car || ""}
+                  disabled
                 />
               </div>
 
@@ -329,11 +246,8 @@ function ConfirmDriver({
                 </div>
                 <input
                   type="text"
-                  name="driverLicenseNumber"
-                  // placeholder="example@mail.ru"
-                  value={formData.driverLicenseNumber}
-                  onChange={handleChange}
-                  disabled={!isEditing}
+                  value={chooseObject?.driverLicenseNumber || ""}
+                  disabled
                 />
               </div>
 
@@ -343,11 +257,8 @@ function ConfirmDriver({
                 </div>
                 <input
                   type="text"
-                  name="driverLicenseNumber"
-                  // placeholder="example@mail.ru"
-                  value={formData.driverLicenseNumber}
-                  onChange={handleChange}
-                  disabled={!isEditing}
+                  value={chooseObject?.extraEquipment || ""}
+                  disabled
                 />
               </div>
 
@@ -433,34 +344,99 @@ function ConfirmDriver({
             </div>
           </div>
 
-          {confirm && (
+          {confirm && chooseObject?.registrationStatus !== "APPROVED" && (
             <div className={classes.requestButton}>
               <Button
-                onClick={() => openDeleteComponent(index, formData.id)}
-                backgroundcolor={"#FF9C9C"}
+                onClick={handleReject}
+                backgroundcolor={"var(--red)"}
+                disabled={isLoading || mutationLoading}
               >
-                Удалить <img src="/delete.png" alt="" />
+                Отклонить
               </Button>
 
               <Button
-                onClick={handleUpdate}
-                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-                color={!isEditing ? "#3B6C54" : "#fff"}
+                onClick={handleApprove}
+                backgroundcolor={"#3CBC6726"}
+                color={"#3B6C54"}
+                disabled={isLoading || mutationLoading}
               >
-                {isEditing ? (
-                  <>
-                    Сохранить <img src="/saveDispatcher.png" alt="" />
-                  </>
-                ) : (
-                  <>
-                    Изменить <img src="/editDispetcher.png" alt="" />
-                  </>
-                )}
+                Принять
               </Button>
             </div>
           )}
         </>
       )}
+
+      {/* Модальное окно для ввода причины отклонения */}
+      <Dialog
+        open={showRejectModal}
+        onClose={(event, reason) => {
+          // Закрываем только при клике на backdrop или ESC, но не при клике внутри
+          if (reason === "backdropClick" || reason === "escapeKeyDown") {
+            setShowRejectModal(false);
+            setRefusalReason("");
+          }
+        }}
+        maxWidth="sm"
+        fullWidth
+        onClick={(e) => e.stopPropagation()}
+        PaperProps={{
+          sx: {
+            borderRadius: "10px",
+          },
+        }}
+      >
+        <DialogTitle 
+          onClick={(e) => e.stopPropagation()}
+          sx={{ padding: "24px" }}
+        >
+          Причина отклонения
+        </DialogTitle>
+        <DialogContent 
+          onClick={(e) => e.stopPropagation()}
+          sx={{ padding: "24px" }}
+        >
+          <textarea
+            value={refusalReason}
+            onChange={(e) => setRefusalReason(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            onFocus={(e) => e.stopPropagation()}
+            placeholder="Введите причину отклонения..."
+            style={{
+              width: "100%",
+              height: "120px",
+              padding: "12px",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              fontSize: "14px",
+              fontFamily: "inherit",
+              resize: "none",
+            }}
+          />
+        </DialogContent>
+        <DialogActions 
+          onClick={(e) => e.stopPropagation()}
+          sx={{ padding: "0 24px 24px 24px" }}
+        >
+          <Button
+            onClick={() => {
+              setShowRejectModal(false);
+              setRefusalReason("");
+            }}
+            backgroundcolor={"#e0e0e0"}
+          >
+            Отмена
+          </Button>
+          <Button
+            onClick={handleRejectConfirm}
+            backgroundcolor={"var(--red)"}
+            color={"#fff"}
+            disabled={isLoading || mutationLoading || !refusalReason.trim()}
+          >
+            Отклонить
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Sidebar>
   );
 }

@@ -51,7 +51,7 @@ function InfoTableAllDataTarifs({
         <InfoTable>
             {/* Заголовки колонок */}
             <div className={classes.InfoTable_title}>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w10}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>№ Договора</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w10}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>№Договора</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w15}`} >Дата заключения</div>
                 {id ? null : (<div className={`${classes.InfoTable_title_elem} ${classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px 0 50px'}}>{activeTab === "airlines" && !id ? "Авиакомпания" : activeTab === "hotels" && !id ? "Гостиница" : "Организация"}</div>)}
                 <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w15 : classes.w20}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{activeTab === "airlines" ? "Вид приложения" : "Вид услуги"}</div>

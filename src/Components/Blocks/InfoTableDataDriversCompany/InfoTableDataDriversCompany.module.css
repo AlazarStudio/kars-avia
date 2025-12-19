@@ -1,4 +1,7 @@
 .list {
+    /* Базовая высота для обычных экранов.
+       Для диспетчера в модуле "Трансфер" переопределяется inline-стилем
+       (см. InfoTableDataDriversCompany.jsx, prop disAdmin). */
     height: calc(100vh - 347px);
     overflow-y: auto;
 }

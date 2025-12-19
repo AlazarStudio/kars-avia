@@ -207,7 +207,7 @@ const DisAdminMenu = ({
           to={"/orders"}
           className={`${classes.menu_items__elem___fill} ${
             !menuOpen ? classes.jcc : ""
-          } ${(id == "orders" || id == "driversCompany") && classes.menu_items__activeElem___fill}`}
+          } ${(id == "orders" || id == "driversCompany" || id == "driversList") && classes.menu_items__activeElem___fill}`}
         >
           <div className={classes.svgWrapper}>
             <svg

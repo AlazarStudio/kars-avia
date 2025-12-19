@@ -46,8 +46,8 @@ function DriversCompanyPage({ children, id, user, accessMenu, ...props }) {
           return "Водители";
         case "driversCompanyAbout":
           return "Об организации";
-        // case "driversCompanyRegisterOfContracts":
-        //   return "Договоры";
+        case "driversCompanyRegisterOfContracts":
+          return "Договоры";
         default:
           return "Пользователи";
       }

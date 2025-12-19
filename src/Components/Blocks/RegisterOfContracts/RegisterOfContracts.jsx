@@ -136,6 +136,9 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    variables: {
+      pagination: { all: true },
+    },
     skip: activeTab !== "transfer" ? true : false,
   });
 
@@ -237,7 +240,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
       setCities(citiesData.citys);
     }
     if (orgsData) {
-      setOrgs(orgsData.organizations);
+      setOrgs(orgsData.organizations?.organizations || []);
     }
   }, [airlinesData, companiesData, hotelsData, citiesData, orgsData]);
 

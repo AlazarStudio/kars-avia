@@ -164,7 +164,7 @@ function DriversCompanyList({ children, representative, disAdmin, ...props }) {
   }, [isSearching, allFilteredData, companyData, searchQuery]);
 
   // Пагинация: общее количество страниц
-  const totalPages = data?.airlines?.totalPages;
+  const totalPages = data?.organizations?.totalPages || 1;
 
   // Корректировка текущей страницы
   const validCurrentPage = currentPage < totalPages ? currentPage : 0;

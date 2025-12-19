@@ -17,6 +17,7 @@ function InfoTableDataDriversCompany({
   setChooseObject,
   choosePersonId,
   setChooseRequestID,
+  disAdmin,
 }) {
   const handleObject = useCallback(
     (id, item) => {
@@ -45,12 +46,26 @@ function InfoTableDataDriversCompany({
     }
   }, [requests, activeTab]); // при смене таба тоже будет новое "случайное" деление
 
-  const confirmedList = shuffledRequests.filter(
-    (i) => i.organizationConfirmed && i.organizationConfirmed === true
-  );
-  const pendingList = shuffledRequests.filter(
-    (i) => !i.organizationConfirmed || i.organizationConfirmed === null
-  );
+  // Определяем источник: если disAdmin передан, значит это страница водителей
+  // и используем registrationStatus, иначе - organizationConfirmed (страница организации)
+  const useRegistrationStatus = !!disAdmin;
+
+  const confirmedList = useRegistrationStatus
+    ? shuffledRequests.filter(
+        (i) => i.registrationStatus === "APPROVED"
+      )
+    : shuffledRequests.filter(
+        (i) => i.organizationConfirmed && i.organizationConfirmed === true
+      );
+
+  const pendingList = useRegistrationStatus
+    ? shuffledRequests.filter(
+        (i) => i.registrationStatus === "PENDING"
+      )
+    : shuffledRequests.filter(
+        (i) => !i.organizationConfirmed || i.organizationConfirmed === null
+      );
+
   const listForRender = activeTab === "confirmed" ? confirmedList : pendingList;
 
   return (
@@ -76,7 +91,10 @@ function InfoTableDataDriversCompany({
             Ожидают подтверждения
           </button>
         </div>
-        <div className={classes.list}>
+        <div
+          className={classes.list}
+          style={disAdmin ? { height: "calc(100vh - 427px)" } : {}}
+        >
           {listForRender.map((item) => {
             const unreadForUser = (item?.chat || []).filter((chat) => {
               if (chat.unreadMessagesCount <= 0) return false;

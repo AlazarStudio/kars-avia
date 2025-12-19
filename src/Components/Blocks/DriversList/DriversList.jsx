@@ -1,19 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import classes from "./DriversList.module.css";
-import Filter from "../Filter/Filter";
-import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
-import { requestsCompany } from "../../../requests";
 import Header from "../Header/Header";
-import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
-import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
-import DeleteComponent from "../DeleteComponent/DeleteComponent";
-import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { useQuery, useSubscription } from "@apollo/client";
 import {
-  DELETE_DISPATCHER_USER,
   DRIVERS_QUERY,
-  GET_DISPATCHER_POSITIONS,
-  GET_DISPATCHERS,
-  GET_DISPATCHERS_SUBSCRIPTION,
+  DRIVER_UPDATED_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
@@ -30,14 +21,14 @@ function DriversList({ children, user, disAdmin, ...props }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Инициализация текущей страницы на основе параметров URL или по умолчанию
-  const pageNumberRelay = new URLSearchParams(location.search).get("page");
-  const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
+  // Получение текущей страницы из URL
+  const pageNumber = new URLSearchParams(location.search).get("page");
+  const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
 
-  const [pageInfo, setPageInfo] = useState({
-    skip: currentPageRelay,
-    take: 20,
-  });
+  const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
+  const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
   const { loading, error, data, refetch } = useQuery(DRIVERS_QUERY, {
     context: {
@@ -45,138 +36,52 @@ function DriversList({ children, user, disAdmin, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: {
-      pagination: {
-        skip: pageInfo.skip,
-        take: pageInfo.take,
-      },
-    },
+    variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
   });
 
-  const { data: dataSubscription } = useSubscription(
-    GET_DISPATCHERS_SUBSCRIPTION,
+  const { data: subscriptionData, error: subCreateError } = useSubscription(
+    DRIVER_UPDATED_SUBSCRIPTION,
     {
       context: {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
+      onData: ({ data }) => {
+        refetch(); // Обновляем данные
+      },
+      onError: (error) => {
+        console.error("Ошибка подписки на обновление водителя:", error);
+      },
     }
   );
 
-  const {
-    loading: positionsLoading,
-    error: positionsError,
-    data: positionsData,
-  } = useQuery(GET_DISPATCHER_POSITIONS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-
-  const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [chooseObject, setChooseObject] = useState(null);
-  const [showDelete, setShowDelete] = useState(false);
-  const [deleteIndex, setDeleteIndex] = useState(null);
-
-  const [totalPages, setTotalPages] = useState(1);
-
-  const deleteComponentRef = useRef();
 
   const [companyData, setCompanyData] = useState([]);
 
-  const [positions, setPositions] = useState([]);
-
   useEffect(() => {
-    if (data) {
-      const sortedDispatchers = [...data.drivers.drivers].sort((a, b) =>
+    if (data && data.drivers) {
+      const sortedDrivers = [...data.drivers.drivers].sort((a, b) =>
         a.name.localeCompare(b.name)
       );
-      setCompanyData(sortedDispatchers);
-      setTotalPages(data.drivers.totalPages);
+      setCompanyData(sortedDrivers);
     }
     refetch();
-  }, [data, dataSubscription, refetch]);
+  }, [data, subscriptionData, refetch]);
 
-  useEffect(() => {
-    if (positionsData) {
-      setPositions(positionsData?.getDispatcherPositions);
-    }
-  }, [positionsData]);
-
-  const addDispatcher = (newDispatcher) => {
-    setCompanyData(
-      [...companyData, newDispatcher].sort((a, b) =>
-        a.name.localeCompare(b.name)
-      )
-    );
-  };
-
-  const updateDispatcher = (updatedDispatcher, index) => {
+  const updateDriver = (updatedDriver, index) => {
     const newData = [...companyData];
-    newData[index] = updatedDispatcher;
+    newData[index] = updatedDriver;
     setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
-  };
-
-  const [deleteDispatcherUser] = useMutation(DELETE_DISPATCHER_USER, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
-      },
-    },
-  });
-
-  const deleteDispatcher = async (index, userID) => {
-    try {
-      let response_delete_user = await deleteDispatcherUser({
-        variables: {
-          deleteUserId: userID,
-        },
-      });
-      if (response_delete_user) {
-        setCompanyData(companyData.filter((_, i) => i !== index));
-        setShowDelete(false);
-        setShowRequestSidebar(false);
-        addNotification("Удаление диспетчера прошло успешно.", "success");
-      }
-    } catch (error) {
-      console.error("Ошибка при удалении пользователя", error);
-      // addNotification(
-      //   "Ошибка, у вас недостаточно прав для удаления диспетчера.",
-      //   "error"
-      // );
-      alert("Ошибка при удалении пользователя");
-    }
-  };
-
-  const toggleCreateSidebar = () => {
-    setShowCreateSidebar(!showCreateSidebar);
   };
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
   };
 
-  const openDeleteComponent = (index, userID) => {
-    setShowDelete(true);
-    setDeleteIndex({ index, userID });
-    setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
-  };
 
-  const closeDeleteComponent = () => {
-    setShowDelete(false);
-    setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
-  };
-
-  const [filterData, setFilterData] = useState({
-    filterSelect: "",
-  });
-
-  const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState([]);
 
   const addNotification = (text, status) => {
@@ -187,37 +92,58 @@ function DriversList({ children, user, disAdmin, ...props }) {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     }, fullNotifyTime);
   };
+
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim() == "") {
+      // Если строка поиска пуста, возвращаемся к стандартному режиму
+      setIsSearching(false);
+      refetch({
+        pagination: { skip: currentPage, take: 20 }, // Загрузить большое количество данных для поиска
+      }); // Запускаем повторный запрос с пагинацией
+      return;
+    }
+
+    setIsSearching(true); // Активируем режим поиска
+
+    try {
+      const { data } = await refetch({
+        pagination: { all: true }, // Загрузить большое количество данных для поиска
+      });
+
+      if (data && data.drivers?.drivers) {
+        setAllFilteredData(data.drivers.drivers); // Сохраняем все данные для локального поиска
+      }
+    } catch (err) {
+      console.error("Ошибка при поиске:", err);
+    }
+  };
+
+  // Фильтрация запросов по имени водителя, машине, номеру прав
+  const filteredRequests = useMemo(() => {
+    const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
+    return dataSource.filter((request) =>
+      request.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.car?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.driverLicenseNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.organization?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [isSearching, allFilteredData, companyData, searchQuery]);
+
+  // Пагинация: общее количество страниц
+  const totalPages = data?.drivers?.totalPages || 1;
+
+  // Корректировка текущей страницы
+  const validCurrentPage = currentPage < totalPages ? currentPage : 0;
+
   // Обработчик для изменения текущей страницы при клике на элементы пагинации
   const handlePageClick = (event) => {
     const selectedPage = event.selected;
     setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
     navigate(`?page=${selectedPage + 1}`);
   };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilterData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
-
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const filteredRequests = companyData.filter((request) => {
-    return (
-      (filterData.filterSelect === "" ||
-        request.role.includes(filterData.filterSelect)) &&
-      (request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.position.toLowerCase().includes(searchQuery.toLowerCase()))
-    );
-  });
-
-  let filterList = ["Модератор", "Администратор"];
-  const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
 
   return (
     <>
@@ -231,16 +157,9 @@ function DriversList({ children, user, disAdmin, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          {/* <Filter
-            toggleSidebar={toggleCreateSidebar}
-            handleChange={handleChange}
-            filterData={filterData}
-            buttonTitle={"Добавить аккаунт диспетчера"}
-            filterList={filterList}
-            needDate={false}
-          /> */}
         </div>
-        {loading && <MUILoader />}
+
+        {loading && <MUILoader fullHeight={"70vh"} />}
         {error && <p>Error: {error.message}</p>}
 
         {!loading && !error && (
@@ -250,11 +169,13 @@ function DriversList({ children, user, disAdmin, ...props }) {
               toggleRequestSidebar={toggleRequestSidebar}
               requests={filteredRequests.map((request, index) => ({
                 ...request,
-                // order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
+                order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
               }))}
               setChooseObject={setChooseObject}
               choosePersonId={chooseObject?.id}
+              disAdmin={disAdmin}
             />
+
             {totalPages > 0 && (
               <div className={classes.pagination}>
                 <ReactPaginate
@@ -275,37 +196,14 @@ function DriversList({ children, user, disAdmin, ...props }) {
           </>
         )}
 
-        {/* <CreateRequestCompany
-          show={showCreateSidebar}
-          onClose={toggleCreateSidebar}
-          addDispatcher={addDispatcher}
-          positions={positions}
-          addNotification={addNotification}
-        /> */}
-
         <ConfirmDriver
           show={showRequestSidebar}
           confirm={true}
           onClose={toggleRequestSidebar}
           chooseObject={chooseObject}
-          updateDispatcher={updateDispatcher}
-          openDeleteComponent={openDeleteComponent}
-          deleteComponentRef={deleteComponentRef}
-          filterList={filterList}
-          positions={positions}
+          updateDriver={updateDriver}
           addNotification={addNotification}
         />
-
-        {showDelete && (
-          <DeleteComponent
-            ref={deleteComponentRef}
-            remove={() =>
-              deleteDispatcher(deleteIndex.index, deleteIndex.userID)
-            }
-            close={closeDeleteComponent}
-            title={`Вы действительно хотите удалить диспетчера?`}
-          />
-        )}
         {notifications.map((n, index) => (
           <Notification
             key={n.id}

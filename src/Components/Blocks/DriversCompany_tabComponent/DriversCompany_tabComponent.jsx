@@ -247,6 +247,11 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
     );
   });
 
+  // Фильтруем водителей с подтвержденным статусом для добавления в организацию
+  const approvedDrivers = data?.drivers?.drivers?.filter(
+    (driver) => driver.registrationStatus === "APPROVED"
+  ) || [];
+
   // console.log(companyData);
 
   let filterList = ["Модератор", "Администратор"];
@@ -314,7 +319,7 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
           onClose={toggleCreateSidebar}
           addDispatcher={addDispatcher}
           positions={positions}
-          drivers={data?.drivers?.drivers}
+          drivers={approvedDrivers}
           addNotification={addNotification}
         />
 
