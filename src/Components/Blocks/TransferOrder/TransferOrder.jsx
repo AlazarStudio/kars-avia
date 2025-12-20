@@ -15,6 +15,7 @@ import {
   getCookie,
   buildScheduledISO,
   TRANSFER_UPDATED_SUBSCRIPTION,
+  GET_AIRLINES_RELAY,
 } from "../../../../graphQL_requests.js";
 
 import OrderInfoSidebar from "../OrderInfoSidebar/OrderInfoSidebar.jsx";
@@ -239,6 +240,29 @@ function TransferOrder({ user, token }) {
     fetchPolicy: "cache-and-network",
   });
 
+  // --- 2.5) авиакомпании и сотрудники для выбора пассажиров ---
+  const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
+    context: {
+      headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
+    },
+    skip: !transfer?.airlineId,
+  });
+
+  const selectedAirline = useMemo(() => {
+    if (!airlinesData?.airlines?.airlines || !transfer?.airlineId) return null;
+    return airlinesData.airlines.airlines.find(
+      (airline) => airline.id === transfer.airlineId
+    );
+  }, [airlinesData, transfer?.airlineId]);
+
+  const airlineStaffOptions = useMemo(() => {
+    if (!selectedAirline?.staff) return [];
+    return selectedAirline.staff.map((person) => ({
+      id: person.id,
+      label: `${person.name} ${person.position?.name || ""} ${person.gender || ""}`.trim(),
+    }));
+  }, [selectedAirline]);
+
   const drivers = useMemo(() => {
     if (status === "COMPLETED" || status === "CANCELLED") return [];
 
@@ -452,6 +476,7 @@ const routePoints = useMemo(() => {
             baggage: formData.baggage,
             description: formData.description,
             scheduledPickupAt,
+            personsId: formData.personsId || [],
           },
         },
         refetchQueries: [{ query: GET_TRANSFER_REQUEST, variables: { transferId: orderId } }],
@@ -649,6 +674,7 @@ const routePoints = useMemo(() => {
             setFormData={setFormData}
             onToggleEditOrSave={toggleEditOrSave}
             onCancelEditing={cancelEditing}
+            airlineStaffOptions={airlineStaffOptions}
           />
         </div>
       </section>

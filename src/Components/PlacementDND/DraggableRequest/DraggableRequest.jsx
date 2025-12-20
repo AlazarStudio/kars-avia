@@ -344,12 +344,11 @@ const DraggableRequest = ({
               }}
               sx={{
                 width: "10px",
-                height: "100%",
+                height: "23px",
                 cursor: "ew-resize",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                height: "23px",
                 userSelect: "none",
               }}
             >
@@ -654,12 +653,11 @@ const DraggableRequest = ({
               }}
               sx={{
                 width: "10px",
-                height: "100%",
+                height: "23px",
                 cursor: "ew-resize",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                height: "23px",
                 userSelect: "none",
               }}
             >

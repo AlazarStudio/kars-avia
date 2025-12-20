@@ -14,11 +14,13 @@
 }
 
 .cardContent {
+  padding: 0 0 20px 0;
   height: calc(100vh - 234px);
   display: flex;
   flex-direction: column;
   overflow: auto;
   gap: 20px;
+  scrollbar-width: none;
 }
 
 .title {

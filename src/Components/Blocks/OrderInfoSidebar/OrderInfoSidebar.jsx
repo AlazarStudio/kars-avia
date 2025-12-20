@@ -2,6 +2,7 @@ import React from "react";
 import classes from "./OrderInfoSidebar.module.css";
 import { AddressField } from "../AddressField/AddressField";
 import Button from "../../Standart/Button/Button";
+import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete";
 
 function OrderInfoSidebar({
   data,
@@ -14,6 +15,7 @@ function OrderInfoSidebar({
   setFormData,
   onToggleEditOrSave,
   onCancelEditing,
+  airlineStaffOptions = [],
 }) {
   const fallback = {
     name: "",
@@ -37,7 +39,28 @@ function OrderInfoSidebar({
         <div className={classes.cardContent}>
           <p className={classes.title}>Информация о заказе</p>
           <div className={classes.clientBlock}>
-            <div className={classes.clientName}>{info.name}</div>
+            {!isEditing ? (
+              <div className={classes.clientName}>{info.name}</div>
+            ) : (
+              <div style={{ width: "100%" }}>
+                <MultiSelectAutocomplete
+                  isMultiple={true}
+                  dropdownWidth={"100%"}
+                  label={"Выберите сотрудников авиакомпании"}
+                  options={airlineStaffOptions}
+                  value={airlineStaffOptions.filter((option) =>
+                    formData?.personsId?.includes(option.id)
+                  )}
+                  onChange={(event, newValue) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      personsId: newValue.map((option) => option.id),
+                    }));
+                  }}
+                  isDisabled={!canEditByStatus || !isEditing || isSaving}
+                />
+              </div>
+            )}
           </div>
           {/* блок маршрута (верстка та же) */}
 <div className={classes.routeCard}>

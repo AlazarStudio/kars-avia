@@ -1861,7 +1861,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params, user }) => {
 
                     {checkRoomsType && showReserveInfo && showModalForAddHotelInReserve &&
                         <Box sx={{ width: "300px", height: 'fit-content', backgroundColor: "#fff", border: '1px solid #ddd' }}>
-                            <Typography variant="h6" sx={{ padding: '5px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 'normal' }}>
+                            <Typography variant="h6" sx={{ padding: '5px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #ddd', textAlign: "center", fontSize: '14px', fontWeight: '700', minHeight: '50px', height: 'fit-content', justifyContent: 'center', lineHeight: 'normal' }}>
                                 <img src="/arrow-left-back.png" alt="" style={{ height: '16px', cursor: 'pointer', marginRight: '10px' }}
                                     onClick={handleCloseReserveInfo}
                                 />

@@ -5,6 +5,7 @@ import { convertToDate, server } from "../../../../graphQL_requests";
 import { roles, statusLabels } from "../../../roles";
 import Message from "../Message/Message";
 import { useNavigate } from "react-router-dom";
+import ReportTimer from "./ReportTimer";
 
 function InfoTableDataTransferOrders({
   user,
@@ -154,6 +155,7 @@ function InfoTableDataTransferOrders({
                     )}
                   </div>
                   <div className={classes.clientBottom}>
+                    <ReportTimer item={item} />
                     <div className={classes.createdAt}>
                       {convertToDate(item.scheduledPickupAt)}{" "}
                       {convertToDate(item.scheduledPickupAt, true)}
