@@ -9,6 +9,7 @@ function InfoTableDataDriversCompanies({
   toggleRequestSidebar,
   requests,
   pageInfo,
+  disAdmin,
   ...props
 }) {
   const handleObject = (item, index) => {
@@ -44,7 +45,7 @@ function InfoTableDataDriversCompanies({
           Название
         </div>
       </div>
-      <div className={classes.bottom} ref={listContainerRef}>
+      <div className={classes.bottom} ref={listContainerRef} style={disAdmin ? { height: "calc(100vh - 427px)" } : {}}>
         {requests.map((item, index) => (
           <Link
             to={`/driversCompany/${item.id}`}

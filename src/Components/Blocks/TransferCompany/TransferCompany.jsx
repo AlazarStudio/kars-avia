@@ -1,24 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
-import classes from "./DriversCompany_tabComponent.module.css";
+import classes from "./TransferCompany.module.css";
 import Filter from "../Filter/Filter";
-import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
+import CreateRequestTransferCompany from "../CreateRequestTransferCompany/CreateRequestTransferCompany";
 import { requestsCompany } from "../../../requests";
 import Header from "../Header/Header";
 import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
-import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
+import ExistRequestTransferCompany from "../ExistRequestTransferCompany/ExistRequestTransferCompany";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
   DELETE_DISPATCHER_USER,
-  DRIVER_UPDATED_SUBSCRIPTION,
-  DRIVERS_QUERY,
-  GET_ALL_DISPATCHERS,
   GET_DISPATCHER_POSITIONS,
   GET_DISPATCHERS,
   GET_DISPATCHERS_SUBSCRIPTION,
-  GET_ORGANIZATION,
   getCookie,
-  ORGANIZATION_CREATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
@@ -26,25 +21,22 @@ import Notification from "../../Notification/Notification";
 import { fullNotifyTime, notifyTime } from "../../../roles";
 import { useLocation, useNavigate } from "react-router-dom";
 import ReactPaginate from "react-paginate";
-import InfoTableDataDriversCompany from "../InfoTableDataDriversCompany/InfoTableDataDriversCompany";
-import AddDriverToOrganization from "../AddDriverToOrganization/AddDriverToOrganization";
-import ConfirmDriver from "../ConfirmDriver/ConfirmDriver";
 
-function DriversCompany_tabComponent({ children, id, user, ...props }) {
+function TransferCompany({ children, user, disAdmin, ...props }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
 
   // Инициализация текущей страницы на основе параметров URL или по умолчанию
-  // const pageNumberRelay = new URLSearchParams(location.search).get("page");
-  // const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
+  const pageNumberRelay = new URLSearchParams(location.search).get("page");
+  const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
 
-  // const [pageInfo, setPageInfo] = useState({
-  //   skip: currentPageRelay,
-  //   take: 20,
-  // });
+  const [pageInfo, setPageInfo] = useState({
+    skip: currentPageRelay,
+    take: 20,
+  });
 
-  const { loading, error, data } = useQuery(DRIVERS_QUERY, {
+  const { loading, error, data, refetch } = useQuery(GET_DISPATCHERS, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -52,45 +44,20 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
     },
     variables: {
       pagination: {
-        all: true,
+        skip: pageInfo.skip,
+        take: pageInfo.take,
+        category: "transfer",
       },
     },
   });
 
-  const {
-    loading: ordLoading,
-    data: orgData,
-    refetch,
-  } = useQuery(GET_ORGANIZATION, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
-      organizationId: id,
-    },
-  });
-
-  const { data: subscriptionData, error: subCreateError } = useSubscription(
-    ORGANIZATION_CREATED_SUBSCRIPTION,
+  const { data: dataSubscription } = useSubscription(
+    GET_DISPATCHERS_SUBSCRIPTION,
     {
-      onData: ({ data }) => {
-        // console.log("Новая заявка создана:", data.data?.transferCreated);
-        refetch(); // Обновляем данные
-      },
-      onError: (error) => {
-        console.error("Ошибка подписки на создание:", error);
-      },
-    }
-  );
-
-  const { data: subscriptionDataDriver } = useSubscription(
-    DRIVER_UPDATED_SUBSCRIPTION,
-    {
-      onData: ({ data }) => {
-        // console.log("Новая заявка создана:", data.data?.transferCreated);
-        refetch(); // Обновляем данные
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     }
   );
@@ -122,19 +89,22 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
   const [positions, setPositions] = useState([]);
 
   useEffect(() => {
-    if (orgData) {
-      const sortedDispatchers = [...orgData.organization.drivers].sort((a, b) =>
+    if (data) {
+      const sortedDispatchers = [...data.dispatcherUsers.users].sort((a, b) =>
         a.name.localeCompare(b.name)
       );
       setCompanyData(sortedDispatchers);
-      // setTotalPages(data.dispatcherUsers.totalPages);
+      setTotalPages(data.dispatcherUsers.totalPages);
     }
     refetch();
-  }, [orgData, subscriptionData, refetch]);
+  }, [data, dataSubscription, refetch]);
 
   useEffect(() => {
     if (positionsData) {
-      setPositions(positionsData?.getDispatcherPositions);
+      const filteredPositions = positionsData?.getDispatcherPositions?.filter(
+        (position) => position.category === "transfer"
+      ) || [];
+      setPositions(filteredPositions);
     }
   }, [positionsData]);
 
@@ -150,18 +120,6 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
     const newData = [...companyData];
     newData[index] = updatedDispatcher;
     setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
-  };
-
-  const updateDriver = (updatedDriver, index) => {
-    const newData = [...companyData];
-    const driverIndex = newData.findIndex((d) => d.id === updatedDriver.id);
-    if (driverIndex !== -1) {
-      newData[driverIndex] = updatedDriver;
-      setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
-    } else {
-      // Если водитель не найден, обновляем весь список
-      refetch();
-    }
   };
 
   const [deleteDispatcherUser] = useMutation(DELETE_DISPATCHER_USER, {
@@ -231,11 +189,11 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
     }, fullNotifyTime);
   };
   // Обработчик для изменения текущей страницы при клике на элементы пагинации
-  // const handlePageClick = (event) => {
-  //   const selectedPage = event.selected;
-  //   setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
-  //   navigate(`?page=${selectedPage + 1}`);
-  // };
+  const handlePageClick = (event) => {
+    const selectedPage = event.selected;
+    setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
+    navigate(`?page=${selectedPage + 1}`);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -251,28 +209,24 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
 
   const filteredRequests = companyData.filter((request) => {
     return (
-      request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.car.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.driverLicenseNumber
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+      (filterData.filterSelect === "" ||
+        request.role.includes(filterData.filterSelect)) &&
+      (request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.position?.name?.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   });
 
-  // Фильтруем водителей с подтвержденным статусом для добавления в организацию
-  const approvedDrivers = data?.drivers?.drivers?.filter(
-    (driver) => driver.registrationStatus === "APPROVED"
-  ) || [];
-
-  // console.log(companyData);
-
   let filterList = ["Модератор", "Администратор"];
-  // const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
+  const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
 
   return (
     <>
-      <div className={classes.section}>
-        {/* <Header>Водители</Header> */}
+      <div
+        className={classes.section}
+        style={disAdmin ? { padding: "0px" } : {}}
+      >
+        {!disAdmin && <Header>Пользователи</Header>}
 
         <div className={classes.section_searchAndFilter}>
           <MUITextField
@@ -284,8 +238,8 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
           <Filter
             toggleSidebar={toggleCreateSidebar}
             handleChange={handleChange}
-            buttonTitle={"Добавить водителей"}
             filterData={filterData}
+            buttonTitle={"Добавить аккаунт диспетчера"}
             filterList={filterList}
             needDate={false}
           />
@@ -295,17 +249,16 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
 
         {!loading && !error && (
           <>
-            <InfoTableDataDriversCompany
-              user={user}
+            <InfoTableDataCompany
               toggleRequestSidebar={toggleRequestSidebar}
               requests={filteredRequests.map((request, index) => ({
                 ...request,
-                // order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
+                order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
               }))}
               setChooseObject={setChooseObject}
-              choosePersonId={chooseObject?.id}
+              disAdmin={disAdmin}
             />
-            {/* {totalPages > 0 && (
+            {totalPages > 0 && (
               <div className={classes.pagination}>
                 <ReactPaginate
                   previousLabel={"←"}
@@ -321,32 +274,28 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
                   pageLinkClassName={classes.paginationNumber}
                 />
               </div>
-            )} */}
+            )}
           </>
         )}
 
-        <AddDriverToOrganization
+        <CreateRequestTransferCompany
           show={showCreateSidebar}
-          orgId={id}
           onClose={toggleCreateSidebar}
           addDispatcher={addDispatcher}
           positions={positions}
-          drivers={approvedDrivers}
           addNotification={addNotification}
         />
 
-        <ConfirmDriver
+        <ExistRequestTransferCompany
           show={showRequestSidebar}
           onClose={toggleRequestSidebar}
           chooseObject={chooseObject}
           updateDispatcher={updateDispatcher}
-          updateDriver={updateDriver}
           openDeleteComponent={openDeleteComponent}
           deleteComponentRef={deleteComponentRef}
           filterList={filterList}
           positions={positions}
           addNotification={addNotification}
-          organizationId={id}
         />
 
         {showDelete && (
@@ -378,4 +327,5 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
   );
 }
 
-export default DriversCompany_tabComponent;
+export default TransferCompany;
+

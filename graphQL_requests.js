@@ -544,6 +544,9 @@ export const GET_ORGANIZATION = gql`
             lat
             lng
           }
+          organization {
+            name
+          }
           vehicleNumber
           createdAt
           email
@@ -834,6 +837,7 @@ export const GET_DISPATCHER_POSITIONS = gql`
       id
       name
       separator
+      category
     }
   }
 `;

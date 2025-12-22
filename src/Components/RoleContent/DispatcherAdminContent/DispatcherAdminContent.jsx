@@ -25,6 +25,7 @@ const DispatcherAdminContent = ({ user }) => {
     id === "orders" ||
     id === "driversCompany" ||
     id === "driversList" ||
+    id === "transerDispatchers" ||
     !!orderId ||
     (!!driversCompanyID && !id) 
     // ||

@@ -299,25 +299,12 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     if (airlineData) setAirlineName(airlineData.airline.name);
   }, [airlineData]);
 
-  // Маппинг статусов: ключ – внутреннее значение, значение – отображаемое название
-  //   const statusMapping = {
-  //     opened: "В обработке",
-  //     canceled: "Отменен",
-  //     done: "Размещен",
-  //     created: "Создан",
-  //     extended: "Продлен",
-  //     reduced: "Сокращен",
-  //     transferred: "Перенесен",
-  //     earlyStart: "Ранний заезд",
-  //     archiving: "Готов к архиву",
-  //     archived: "Архив",
-  //   };
 
-  // Мемоизированная функция для фильтрации заявок на основе выбранных параметров
+  // Мемоизированная функция для фильтрации и сортировки заявок
   const filteredRequests = useMemo(() => {
     const dataSource = requests; // Используем данные из поиска или стандартные
 
-    return dataSource.filter((request) => {
+    const filtered = dataSource.filter((request) => {
       // console.log(request);
       const matchesSelect =
         !filterData.filterSelect ||
@@ -325,28 +312,79 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       const matchesDate =
         !filterData.filterDate ||
         convertToDate(Number(request.createdAt)) === filterData.filterDate;
-      const matchesSearch = searchQuery.toLowerCase();
+      const matchesSearch = searchQuery.toLowerCase().trim();
 
-      // Получаем читаемое название статуса
-      const statusDisplay = statusMapping[request.status] || request.status;
+      // Если поиск пустой, не фильтруем по поиску
+      const matchesSearchFilter = !matchesSearch || (() => {
+        // Получаем читаемое название статуса
+        const statusDisplay = statusMapping[request.status] || request.status;
+        
+        const searchFields = [
+          request?.persons?.map(p => p.name).join(" ") || "",
+          request?.persons?.map(p => p.email).join(" ") || "",
+          request.airline?.name || "",
+          statusDisplay || "",
+        ].filter(Boolean);
 
-      const searchFields = [
-        // request.requestNumber,
-        // request?.person?.name,
-        // request?.person?.email,
-        // request.airline.name,
-        // statusDisplay,
-      ];
+        return searchFields.some((field) =>
+          String(field)?.toLowerCase().includes(matchesSearch)
+        );
+      })();
 
       return (
-        // matchesAirline &&
-        // matchesAirport &&
         matchesSelect &&
         matchesDate &&
-        searchFields?.some((field) =>
-          String(field)?.toLowerCase().includes(matchesSearch)
-        )
+        matchesSearchFilter
       );
+    });
+
+    // Сортировка: сначала заявки до которых < 2 часов, потом на сегодня, потом остальные по scheduledPickupAt
+    return filtered.sort((a, b) => {
+      const aScheduledTime = a.scheduledPickupAt ? new Date(a.scheduledPickupAt) : null;
+      const bScheduledTime = b.scheduledPickupAt ? new Date(b.scheduledPickupAt) : null;
+
+      // Если нет времени начала, помещаем в конец
+      if (!aScheduledTime && !bScheduledTime) return 0;
+      if (!aScheduledTime) return 1;
+      if (!bScheduledTime) return -1;
+
+      const now = new Date();
+      const twoHoursInMs = 2 * 60 * 60 * 1000;
+
+      // Проверяем, до заявки меньше 2 часов
+      const aTimeDiff = aScheduledTime.getTime() - now.getTime();
+      const bTimeDiff = bScheduledTime.getTime() - now.getTime();
+      
+      const aIsLessThan2Hours = aTimeDiff > 0 && aTimeDiff < twoHoursInMs;
+      const bIsLessThan2Hours = bTimeDiff > 0 && bTimeDiff < twoHoursInMs;
+
+      // Если одна заявка до которой < 2 часов, а другая нет - та что < 2 часов вверху
+      if (aIsLessThan2Hours && !bIsLessThan2Hours) return -1;
+      if (!aIsLessThan2Hours && bIsLessThan2Hours) return 1;
+
+      // Если обе до которых < 2 часов - сортируем по времени (ближайшие вверху)
+      if (aIsLessThan2Hours && bIsLessThan2Hours) {
+        return aScheduledTime.getTime() - bScheduledTime.getTime();
+      }
+
+      // Проверяем, является ли заявка сегодняшней
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const aDate = new Date(aScheduledTime);
+      aDate.setHours(0, 0, 0, 0);
+      const bDate = new Date(bScheduledTime);
+      bDate.setHours(0, 0, 0, 0);
+
+      const aIsToday = aDate.getTime() === today.getTime();
+      const bIsToday = bDate.getTime() === today.getTime();
+
+      // Если одна заявка на сегодня, а другая нет - сегодняшняя вверху
+      if (aIsToday && !bIsToday) return -1;
+      if (!aIsToday && bIsToday) return 1;
+
+      // Если обе на сегодня или обе не на сегодня - сортируем по времени (новые вверху)
+      return bScheduledTime.getTime() - aScheduledTime.getTime();
     });
   }, [isSearching, allFilteredData, requests, filterData, searchQuery]);
 
@@ -422,14 +460,14 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       {error && <p>Error: {error.message}</p>}
 
       {/* Отображение таблицы заявок и компонентов пагинации */}
-      {!loading && !error && requests && (
+      {!loading && !error && (
         <>
           <InfoTableDataTransferOrders
             user={user}
             disAdmin={disAdmin}
             token={token}
             toggleRequestSidebar={toggleRequestSidebar}
-            requests={requests}
+            requests={filteredRequests || []}
             chooseRequestID={chooseRequestID}
             setChooseObject={setChooseObject}
             setChooseRequestID={setChooseRequestID}

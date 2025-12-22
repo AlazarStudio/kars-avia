@@ -215,6 +215,7 @@ function DriversCompanyList({ children, representative, disAdmin, ...props }) {
                 order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
               }))}
               pageInfo={pageInfo.skip}
+              disAdmin={disAdmin}
             />
 
             {totalPages > 0 && (

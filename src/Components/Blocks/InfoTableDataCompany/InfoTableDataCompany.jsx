@@ -5,7 +5,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import { server } from '../../../../graphQL_requests.js';
 import { roles } from "../../../roles.js";
 
-function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, setChooseObject, id, ...props }) {
+function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, setChooseObject, id, disAdmin, ...props }) {
     const handleObject = (item, index) => {
         setChooseObject({ ...item, index });
         toggleRequestSidebar();
@@ -21,7 +21,7 @@ function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, 
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Уровень доступа</div>
             </div>
 
-            <div className={classes.bottom} style={user?.hotelId ? {height: 'calc(100vh - 269px)'} : {}}>
+            <div className={classes.bottom} style={disAdmin ? { height: "calc(100vh - 427px)" } : user?.hotelId ? {height: 'calc(100vh - 269px)'} : {}}>
                 {requests.map((item, index) => (
                     <div
                         className={classes.InfoTable_data}

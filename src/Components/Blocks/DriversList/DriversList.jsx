@@ -199,6 +199,7 @@ function DriversList({ children, user, disAdmin, ...props }) {
         <ConfirmDriver
           show={showRequestSidebar}
           confirm={true}
+          disAdmin={disAdmin}
           onClose={toggleRequestSidebar}
           chooseObject={chooseObject}
           updateDriver={updateDriver}
