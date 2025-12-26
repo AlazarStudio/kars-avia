@@ -75,6 +75,11 @@ function CreateRepresentativeRequest({
   const { data: dataSubscription } = useSubscription(
     GET_AIRLINES_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },
@@ -85,6 +90,11 @@ function CreateRepresentativeRequest({
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },

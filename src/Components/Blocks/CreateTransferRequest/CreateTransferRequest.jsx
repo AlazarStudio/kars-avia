@@ -23,6 +23,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { AddressField } from "../AddressField/AddressField.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
+import { roles } from "../../../roles";
 
 // Компонент для создания новой заявки
 function CreateTransferRequest({ show, onClose, user, addNotification }) {
@@ -63,6 +64,11 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
   const { data: dataSubscription } = useSubscription(
     GET_AIRLINES_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },
@@ -72,6 +78,11 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },
@@ -223,7 +234,7 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
     }
 
     const input = {
-      dispatcherId: formData.senderId,
+      dispatcherId: user?.role === roles.dispatcerAdmin ? formData.senderId : null,
       airlineId: formData.airlineId,
       fromAddress: formData.fromAddress,
       toAddress: formData.toAddress,
@@ -240,9 +251,9 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
       onClose();
       addNotification
         ? addNotification(
-            "Создание заявки для экипажа прошло успешно.",
-            "success"
-          )
+          "Создание заявки для экипажа прошло успешно.",
+          "success"
+        )
         : null;
       // console.log(response);
     } catch (error) {
@@ -305,9 +316,8 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
 
         <div className={classes.tabs}>
           <div
-            className={`${classes.tab} ${
-              activeTab === "Общая" ? classes.activeTab : ""
-            }`}
+            className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
+              }`}
             onClick={() => handleTabChange("Общая")}
           >
             Общая
@@ -323,7 +333,33 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
               {/* Вкладка "Общая" */}
               {activeTab === "Общая" && (
                 <div className={classes.requestData}>
-                  {user?.airlineId ? null : (
+                  {user?.airlineId ? (
+                    <>
+                      {/* Для airlineAdmin показываем только выбор сотрудников своей авиакомпании */}
+                      {selectedAirline && (
+                        <>
+                          <label>Сотрудник авиакомпании</label>
+                          <MultiSelectAutocomplete
+                            isMultiple={true}
+                            dropdownWidth={"100%"}
+                            label={"Выберите сотрудников авиакомпании"}
+                            options={AirlineStaff}
+                            value={AirlineStaff.filter((option) =>
+                              formData.personsId?.includes(option.id)
+                            )}
+                            onChange={(event, newValue) => {
+                              setFormData((prevFormData) => ({
+                                ...prevFormData,
+                                personsId: newValue.map((option) => option.id),
+                                // city: newValue.length > 0 ? newValue[0].city : "",
+                              }));
+                              // setIsEdited(true);
+                            }}
+                          />
+                        </>
+                      )}
+                    </>
+                  ) : (
                     <>
                       <label>Авиакомпания</label>
                       <MUIAutocomplete
@@ -343,6 +379,28 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
                           setIsEdited(true);
                         }}
                       />
+                      {selectedAirline && (
+                        <>
+                          <label>Сотрудник авиакомпании</label>
+                          <MultiSelectAutocomplete
+                            isMultiple={true}
+                            dropdownWidth={"100%"}
+                            label={"Выберите сотрудников авиакомпании"}
+                            options={AirlineStaff}
+                            value={AirlineStaff.filter((option) =>
+                              formData.personsId?.includes(option.id)
+                            )}
+                            onChange={(event, newValue) => {
+                              setFormData((prevFormData) => ({
+                                ...prevFormData,
+                                personsId: newValue.map((option) => option.id),
+                                // city: newValue.length > 0 ? newValue[0].city : "",
+                              }));
+                              // setIsEdited(true);
+                            }}
+                          />
+                        </>
+                      )}
                     </>
                   )}
 
@@ -370,86 +428,6 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
                       setIsEdited(true);
                     }}
                   />
-
-                  {selectedAirline && (
-                    <>
-                      <label>Сотрудник авиакомпании</label>
-                      <MultiSelectAutocomplete
-                        isMultiple={true}
-                        dropdownWidth={"100%"}
-                        label={"Выберите сотрудников авиакомпании"}
-                        options={AirlineStaff}
-                        value={AirlineStaff.filter((option) =>
-                          formData.personsId?.includes(option.id)
-                        )}
-                        onChange={(event, newValue) => {
-                          setFormData((prevFormData) => ({
-                            ...prevFormData,
-                            personsId: newValue.map((option) => option.id),
-                            // city: newValue.length > 0 ? newValue[0].city : "",
-                          }));
-                          // setIsEdited(true);
-                        }}
-                      />
-                      {/* <MUIAutocompleteColor
-                        isDisabled={disableAutocomplete}
-                        dropdownWidth="100%"
-                        label="Выберите сотрудников"
-                        // Передаём исходный массив объектов сотрудников
-                        options={selectedAirline.staff}
-                        // getOptionLabel правильно формирует строку, даже если option – объект
-                        getOptionLabel={(option) =>
-                          option
-                            ? `${option.name || ""} ${option.position?.name} ${
-                                option.gender
-                              }`.trim()
-                            : ""
-                        }
-                        // Если нужно кастомное раскрашивание, используйте renderOption (с isColor)
-                        renderOption={(optionProps, option) => {
-                          // Формируем строку для отображения
-                          const labelText = `${option.name || ""} ${
-                            option.position?.name
-                          } ${option.gender}`.trim();
-                          // Разбиваем строку по пробелам
-                          const words = labelText.split(". ");
-                          return (
-                            <li {...optionProps} key={option.id}>
-                              {words.map((word, index) => (
-                                <span
-                                  key={index}
-                                  style={{
-                                    color:
-                                      index === 0
-                                        ? "black"
-                                        : index === 1
-                                        ? "gray"
-                                        : "gray",
-                                    marginRight: "4px",
-                                  }}
-                                >
-                                  {word}
-                                </span>
-                              ))}
-                            </li>
-                          );
-                        }}
-                        // Значение контролируется объектом; если person не найден, возвращаем null
-                        value={
-                          selectedAirline.staff.find(
-                            (person) => person.id === formData.personId
-                          ) || null
-                        }
-                        onChange={(event, newValue) => {
-                          setFormData((prevFormData) => ({
-                            ...prevFormData,
-                            personsId: [newValue?.id] || [],
-                          }));
-                          setIsEdited(true);
-                        }}
-                      /> */}
-                    </>
-                  )}
 
                   <label>Дата и время заказа</label>
                   <div className={classes.reis_info}>

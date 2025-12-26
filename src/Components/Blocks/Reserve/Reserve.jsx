@@ -325,16 +325,9 @@ function Reserve({ children, user, idHotel, ...props }) {
   return (
     <>
       <div className={classes.section}>
-        {/* <Header>Пассажиры</Header> */}
-        <Header>Пассажиры (в разработке)</Header>
+        <Header>Пассажиры</Header>
+        {/* <Header>Пассажиры (в разработке)</Header> */}
         <div className={classes.section_searchAndFilter}>
-          {/* <input
-                        type="text"
-                        placeholder="Поиск"
-                        style={{ 'width': '500px' }}
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    /> */}
           <MUITextField
             className={classes.mainSearch}
             label={"Поиск"}

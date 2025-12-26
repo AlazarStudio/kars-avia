@@ -10,6 +10,8 @@ import Reports from "../../Blocks/Reports/Reports";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
+import TransferOrders from "../../Blocks/TransferOrders/TransferOrders";
+import TransferOrder from "../../Blocks/TransferOrder/TransferOrder";
 
 import { menuAccess } from "../../../roles";
 import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
@@ -34,7 +36,7 @@ const NoAccess = () =>
   </div>;
 
 const AirlineAdminContent = ({ user, accessMenu }) => {
-  const { id, hotelID, airlineID } = useParams();
+  const { id, hotelID, airlineID, orderId } = useParams();
   const safeAccessMenu = accessMenu || {};
 
   // 1) Мапа «секция → какой компонент и какое право нужно»
@@ -43,6 +45,7 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
     () => ([
       { ids: ["relay"],               guardKey: "requestMenu",   Comp: Estafeta,    props: () => ({ user, accessMenu: safeAccessMenu }) },
       { ids: ["reserve"],             guardKey: "reserveMenu",   Comp: Reserve,     props: () => ({ user, accessMenu: safeAccessMenu }) },
+      { ids: ["orders"],              guardKey: null,            Comp: TransferOrders, props: () => ({ user, accessMenu: safeAccessMenu, disAdmin: false }) },
       { ids: ["hotels"],              guardKey: null,            Comp: HotelsList,  props: () => ({ user }) },
 
       { ids: ["analytics"],           guardKey: "analyticsMenu", Comp: Analytics,   props: () => ({ user, accessMenu: safeAccessMenu }) },
@@ -79,6 +82,11 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
   );
 
   // 2) Спец-случаи по URL (item-страницы), до общих правил
+  // Детальная страница трансфера
+  if (orderId) {
+    return <TransferOrder user={user} />;
+  }
+  
   if (!id && hotelID)   return <HotelPage id={hotelID} user={user} />;
   if (!id && airlineID) return <AirlinePage id={airlineID} user={user} accessMenu={safeAccessMenu} />;
 

@@ -40,6 +40,7 @@ function EditRequestAirlineContract({
   id,
   tarif, // тут приходит airlineContractId
   addNotification,
+  canEdit = false, // Флаг для разрешения редактирования
 }) {
   const token = getCookie("token");
 
@@ -417,7 +418,7 @@ function EditRequestAirlineContract({
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>
-            {!id ? "Изменить договор" : formData?.contractNumber}
+            {canEdit ? "Изменить договор" : formData?.contractNumber}
           </div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
             <img src="/close.png" alt="" />
@@ -458,7 +459,7 @@ function EditRequestAirlineContract({
             {activeTab === "Общая" ? (
               <div
                 className={classes.requestMiddle}
-                style={id && { height: "calc(100% - 148px)" }}
+                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
               >
                 <div className={classes.requestData}>
                   {/* Договор: основные поля */}
@@ -599,7 +600,7 @@ function EditRequestAirlineContract({
                     multiple
                     disabled={!isEditing}
                   /> */}
-                  {!id && (
+                  {canEdit && (
                     <div
                       ref={dropRef}
                       className={classes.fileDrop}
@@ -632,10 +633,10 @@ function EditRequestAirlineContract({
             ) : activeTab === "ДС" ? (
               <div
                 className={classes.requestMiddle}
-                style={id && { height: "calc(100% - 148px)" }}
+                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
               >
                 <div className={classes.requestData}>
-                  {!id && (
+                  {canEdit && (
                     <Button type="button" onClick={openCreateAgreement}>
                       + Добавить ДС
                     </Button>
@@ -670,7 +671,7 @@ function EditRequestAirlineContract({
                         </div>
                       </div>
 
-                      {!id && (
+                      {canEdit && (
                         <>
                           <img
                             src="/edit.svg.png"
@@ -693,7 +694,7 @@ function EditRequestAirlineContract({
             ) : (
               <div
                 className={classes.requestMiddle}
-                style={id && { height: "calc(100% - 148px)" }}
+                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
               >
                 <div className={classes.requestData}>
                   {files?.map((i, index) => (
@@ -714,7 +715,7 @@ function EditRequestAirlineContract({
               </div>
             )}
 
-            {activeTab === "Общая" && !id && (
+            {activeTab === "Общая" && canEdit && (
               <div className={classes.requestButton}>
                 <Button
                   type="submit"
@@ -739,6 +740,7 @@ function EditRequestAirlineContract({
       </Sidebar>
       <EditAdditionalAgreement
         id={id}
+        canEdit={canEdit}
         updId={tarif}
         show={showAgreementEditor}
         onClose={closeAgreement}
@@ -750,6 +752,7 @@ function EditRequestAirlineContract({
       />
 
       <CreateAdditionalAgreement
+        canEdit={canEdit}
         updId={tarif}
         activeFilterTab={activeFilterTab}
         show={showCreateAgreementEditor}

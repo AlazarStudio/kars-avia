@@ -59,7 +59,7 @@ const DisAdminAirlineContent = ({ id, user, selectedTab, handleTabSelect }) => (
 
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineRegisterOfContracts id={id} />
+        <AirlineRegisterOfContracts id={id} user={user} />
       </Suspense>
     </TabPanel>
 

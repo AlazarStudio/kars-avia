@@ -128,6 +128,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
   const { data: subscriptionData } = useSubscription(
     REQUEST_CREATED_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         // bronRefetch(); // Обновляем данные после новых событий
         refetch();
@@ -138,6 +143,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
   const { data: subscriptionUpdateData } = useSubscription(
     REQUEST_UPDATED_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         // bronRefetch(); // Обновляем данные после новых событий
         refetch();
@@ -148,6 +158,11 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         // bronRefetch();
         refetch();

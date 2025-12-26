@@ -210,6 +210,11 @@
   color: var(--white);
 }
 
+.menu_items__elem___fill:hover .tooltip {
+  opacity: 0.9;
+  visibility: visible;
+}
+
 /* fill svg */
 
 .menu_items__activeElem img {

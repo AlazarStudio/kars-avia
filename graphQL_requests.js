@@ -236,21 +236,236 @@ export const geocodeByTextRU = async (text, options = {}) => {
 };
 
 // координаты → один адрес
+/**
+ * Обратный геокодинг координат в адрес
+ * Приоритет: адрес дома (улица + номер) > улица > топоним/POI
+ * 
+ * Проблема с POI: при клике на объект (ЦУМ, храм и т.д.) API возвращает
+ * первым результатом сам POI с его названием, а не адрес дома рядом.
+ * Решение: запрашиваем больше результатов (results=10) и ищем среди них
+ * объект типа "house" с номером дома.
+ * 
+ * @param {[number, number]} coords - [lat, lon]
+ * @returns {Promise<string>} - адрес или пустая строка
+ */
+/**
+ * ДИАГНОСТИКА: Старая версия через HTTP API (может блокироваться CORS)
+ * Оставлена для диагностики. Используйте reverseGeocodeByCoordsWithYmaps вместо этого.
+ */
 export const reverseGeocodeByCoords = async ([lat, lon]) => {
+  // Важно: координаты в формате lon,lat для Yandex API
   const url =
     `https://geocode-maps.yandex.ru/1.x/?apikey=${YMAPS_KEY}` +
-    `&format=json&lang=ru_RU&geocode=${lon},${lat}`;
+    `&format=json` +
+    `&lang=ru_RU` +
+    `&geocode=${lon},${lat}` +
+    `&results=10`;
 
-  const res = await fetch(url);
-  const data = await res.json();
-  const member = data.response.GeoObjectCollection.featureMember[0];
+  try {
+    const res = await fetch(url);
+    
+    // ДИАГНОСТИКА: логируем статус и ответ
+    const responseText = await res.text();
+    console.log("🔍 DIAGNOSTIC: reverseGeocodeByCoords HTTP response");
+    console.log("Status:", res.status);
+    console.log("Response:", responseText.substring(0, 500)); // первые 500 символов
+    
+    if (!res.ok) {
+      console.error("❌ Yandex reverseGeocode HTTP error", res.status);
+      console.error("Response body:", responseText);
+      return "";
+    }
 
-  return (
-    member?.GeoObject?.metaDataProperty?.GeocoderMetaData?.text ||
-    member?.GeoObject?.name ||
-    ""
-  );
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr) {
+      console.error("❌ Failed to parse JSON:", parseErr);
+      console.error("Response was:", responseText);
+      return "";
+    }
+
+    const members = data.response?.GeoObjectCollection?.featureMember || [];
+    console.log("📦 Found", members.length, "results");
+
+    if (members.length === 0) {
+      console.warn("⚠️ No results from geocoder");
+      return "";
+    }
+
+    // Шаг 1: Ищем адрес дома (kind=house) с номером дома
+    for (const member of members) {
+      const geoObject = member?.GeoObject;
+      if (!geoObject) continue;
+
+      const metaData = geoObject?.metaDataProperty?.GeocoderMetaData;
+      const kind = metaData?.kind;
+      const address = metaData?.Address;
+      
+      // Проверяем, что это дом и есть номер дома
+      if (kind === "house") {
+        const houseComponent = address?.Components?.find(
+          (c) => c.kind === "house"
+        );
+        
+        if (houseComponent?.name) {
+          // Используем formatted адрес (полный адрес), если есть
+          // Иначе используем text (тоже полный адрес, но может быть менее структурирован)
+          const formatted = address?.formatted || metaData?.text;
+          if (formatted) {
+            return formatted;
+          }
+        }
+      }
+    }
+
+    // Шаг 2: Если нет дома с номером, ищем любой дом (без номера)
+    for (const member of members) {
+      const geoObject = member?.GeoObject;
+      if (!geoObject) continue;
+
+      const metaData = geoObject?.metaDataProperty?.GeocoderMetaData;
+      const kind = metaData?.kind;
+      
+      if (kind === "house") {
+        const formatted = metaData?.Address?.formatted || metaData?.text;
+        if (formatted) {
+          return formatted;
+        }
+      }
+    }
+
+    // Шаг 3: Ищем улицу (kind=street)
+    for (const member of members) {
+      const geoObject = member?.GeoObject;
+      if (!geoObject) continue;
+
+      const metaData = geoObject?.metaDataProperty?.GeocoderMetaData;
+      const kind = metaData?.kind;
+      
+      if (kind === "street") {
+        const formatted = metaData?.Address?.formatted || metaData?.text;
+        if (formatted) {
+          return `≈ ${formatted}`; // Помечаем как приблизительный
+        }
+      }
+    }
+
+    // Шаг 4: Если ничего не нашли, берем первый результат (может быть POI или топоним)
+    // но используем formatted адрес, если он есть
+    const firstMember = members[0]?.GeoObject;
+    if (firstMember) {
+      const metaData = firstMember?.metaDataProperty?.GeocoderMetaData;
+      const formatted = metaData?.Address?.formatted ||
+                       metaData?.text ||
+                       firstMember?.name;
+      
+      if (formatted) {
+        // Если это не дом и не улица, помечаем как приблизительный
+        const kind = metaData?.kind;
+        if (kind !== "house" && kind !== "street") {
+          return `≈ ${formatted}`;
+        }
+        return formatted;
+      }
+    }
+
+    return "";
+  } catch (err) {
+    console.error("❌ Error in reverseGeocodeByCoords:", err);
+    // Если это CORS ошибка
+    if (err.message?.includes("CORS") || err.message?.includes("Failed to fetch")) {
+      console.error("🚫 CORS blocked! Use reverseGeocodeByCoordsWithYmaps instead.");
+    }
+    return "";
+  }
 };
+
+/**
+ * ОСНОВНОЕ РЕШЕНИЕ: Обратный геокодинг через JS API Яндекс.Карт
+ * Работает без проблем с CORS, так как использует уже загруженный ymaps.
+ * 
+ * @param {object} ymaps - экземпляр ymaps из @pbe/react-yandex-maps
+ * @param {[number, number]} coords - [lat, lon] (в JS API порядок lat,lon)
+ * @returns {Promise<string>} - адрес или пустая строка
+ */
+export const reverseGeocodeByCoordsWithYmaps = async (ymaps, coords) => {
+  if (!ymaps || typeof ymaps.geocode !== "function") return "";
+
+  const pick = (geoObjects) => {
+    const count = geoObjects.getLength();
+    if (!count) return "";
+
+    // пробуем найти результат с домом/номером
+    for (let i = 0; i < count; i++) {
+      const obj = geoObjects.get(i);
+      const md = obj.properties.get("metaDataProperty")?.GeocoderMetaData;
+      const kind = md?.kind;
+      const comps = md?.Address?.Components || [];
+      const hasHouse = comps.some((c) => c.kind === "house" && c.name);
+      if (kind === "house" || hasHouse) {
+        const line = obj.getAddressLine();
+        if (line) return line;
+      }
+    }
+
+    // иначе — что есть (улица/площадь/район/POI), помечаем как приблизительно
+    const line = geoObjects.get(0).getAddressLine();
+    return line ? `≈ ${line}` : "";
+  };
+
+  // 1) сначала просим именно "house"
+  const resHouse = await ymaps.geocode(coords, { kind: "house", results: 10 });
+  const a1 = pick(resHouse.geoObjects);
+  if (a1 && !a1.startsWith("≈")) return a1; // нашли “нормальный” дом
+
+  // 2) иначе — общий поиск (улица/площадь/POI)
+  const resAny = await ymaps.geocode(coords, { results: 10 });
+  return pick(resAny.geoObjects);
+};
+
+
+/**
+ * АЛЬТЕРНАТИВНОЕ РЕШЕНИЕ (B): Обратный геокодинг через backend прокси
+ * Используйте, если по каким-то причинам JS API не подходит.
+ * 
+ * Backend endpoint (Express.js пример):
+ * 
+ * app.get('/api/geocode/reverse', async (req, res) => {
+ *   const { lat, lon } = req.query;
+ *   if (!lat || !lon) {
+ *     return res.status(400).json({ error: 'lat and lon required' });
+ *   }
+ * 
+ *   try {
+ *     const url = `https://geocode-maps.yandex.ru/1.x/?apikey=${YMAPS_KEY}` +
+ *                 `&format=json&lang=ru_RU&geocode=${lon},${lat}&results=10`;
+ *     const response = await fetch(url);
+ *     const data = await response.json();
+ *     
+ *     // Та же логика поиска дома, что и в reverseGeocodeByCoords
+ *     const members = data.response?.GeoObjectCollection?.featureMember || [];
+ *     // ... поиск дома/улицы ...
+ *     
+ *     res.json({ address: foundAddress });
+ *   } catch (err) {
+ *     res.status(500).json({ error: err.message });
+ *   }
+ * });
+ * 
+ * Frontend вызов:
+ * 
+ * export const reverseGeocodeByCoordsViaBackend = async ([lat, lon]) => {
+ *   try {
+ *     const res = await fetch(`/api/geocode/reverse?lat=${lat}&lon=${lon}`);
+ *     const data = await res.json();
+ *     return data.address || "";
+ *   } catch (err) {
+ *     console.error("Error:", err);
+ *     return "";
+ *   }
+ * };
+ */
 
 // вспомогалка: геокодируем строку в [lat, lon]
 export const geocodeAddressToCoords = async (text) => {
@@ -293,9 +508,47 @@ export const TRANSFER_SING_IN = gql`
   }
 `;
 
+export const GET_MESSAGES_TRANSFER = gql`
+  query Chats($requestId: ID, $reserveId: ID) {
+    chats(requestId: $requestId, reserveId: $reserveId) {
+      id
+      separator
+      hotelId
+      hotel {
+        name
+      }
+      airlineId
+      unreadMessagesCount
+      messages {
+        id
+        separator
+        text
+        createdAt
+        sender {
+          id
+          name
+          role
+          position {
+            id
+            name
+          }
+        }
+        readBy {
+          user {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const GET_TRANSFER_REQUESTS = gql`
   query Transfers($pagination: TransferPaginationInput!) {
     transfers(pagination: $pagination) {
+      totalPages
+      totalCount
       transfers {
         id
         fromAddress
@@ -1620,6 +1873,242 @@ export const UPDATE_MESSAGE_BRON = gql`
         role
       }
       createdAt
+    }
+  }
+`;
+
+// Transfer Chat Queries
+export const GET_TRANSFER_CHATS = gql`
+  query GetTransferChats($transferId: ID!) {
+    transferChats(transferId: $transferId) {
+      id
+      type
+      createdAt
+      dispatcher {
+        id
+        name
+        email
+      }
+      driver {
+        id
+        name
+      }
+      personal {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const GET_TRANSFER_MESSAGES = gql`
+  query GetTransferMessages($chatId: ID!) {
+    transferMessages(chatId: $chatId) {
+      id
+      text
+      createdAt
+      isRead
+      authorType
+      chatId
+      senderUser {
+        id
+        name
+        images
+      }
+      senderDriver {
+        id
+        name
+      }
+      senderPersonal {
+        id
+        name
+      }
+      readBy {
+        id
+        readerType
+        readAt
+        user {
+          id
+          name
+        }
+        driver {
+          id
+          name
+        }
+        personal {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+export const GET_TRANSFER_CHAT_BY_TYPE = gql`
+  query GetTransferChatByType($transferId: ID!, $type: TransferChatType!, $personalId: ID) {
+    transferChatByType(transferId: $transferId, type: $type, personalId: $personalId) {
+      id
+      type
+      createdAt
+      dispatcher {
+        id
+        name
+      }
+      driver {
+        id
+        name
+      }
+      personal {
+        id
+        name
+      }
+      messages {
+        id
+        text
+        createdAt
+        authorType
+        senderUser {
+          id
+          name
+        }
+        senderDriver {
+          id
+          name
+        }
+        senderPersonal {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+// Transfer Chat Mutations
+export const SEND_TRANSFER_MESSAGE = gql`
+  mutation SendTransferMessage($input: SendTransferMessageInput!) {
+    sendTransferMessage(input: $input) {
+      id
+      text
+      createdAt
+      isRead
+      authorType
+      chatId
+      senderUser {
+        id
+        name
+      }
+      senderDriver {
+        id
+        name
+      }
+      senderPersonal {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const MARK_TRANSFER_MESSAGE_AS_READ = gql`
+  mutation MarkTransferMessageAsRead($input: MarkTransferMessageReadInput!) {
+    markTransferMessageAsRead(input: $input) {
+      id
+      readAt
+      readerType
+      message {
+        id
+        text
+      }
+      user {
+        id
+        name
+      }
+      driver {
+        id
+        name
+      }
+      personal {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const MARK_ALL_TRANSFER_MESSAGES_AS_READ = gql`
+  mutation MarkAllTransferMessagesAsRead(
+    $chatId: ID!
+    $readerType: ActorType!
+    $userId: ID
+    $driverId: ID
+    $personalId: ID
+  ) {
+    markAllTransferMessagesAsRead(
+      chatId: $chatId
+      readerType: $readerType
+      userId: $userId
+      driverId: $driverId
+      personalId: $personalId
+    )
+  }
+`;
+
+// Transfer Chat Subscriptions
+export const TRANSFER_MESSAGE_SENT_SUBSCRIPTION = gql`
+  subscription TransferMessageSent($transferId: ID!) {
+    transferMessageSent(transferId: $transferId) {
+      id
+      text
+      createdAt
+      isRead
+      authorType
+      chatId
+      senderUser {
+        id
+        name
+        images
+      }
+      senderDriver {
+        id
+        name
+      }
+      senderPersonal {
+        id
+        name
+      }
+      readBy {
+        id
+        readerType
+        readAt
+      }
+    }
+  }
+`;
+
+export const TRANSFER_MESSAGE_READ_SUBSCRIPTION = gql`
+  subscription TransferMessageRead($chatId: ID!) {
+    transferMessageRead(chatId: $chatId) {
+      id
+      readAt
+      readerType
+      message {
+        id
+        text
+        chatId
+      }
+      user {
+        id
+        name
+      }
+      driver {
+        id
+        name
+      }
+      personal {
+        id
+        name
+      }
     }
   }
 `;

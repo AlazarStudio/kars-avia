@@ -74,8 +74,9 @@ function DriversCompanyPage({ children, id, user, accessMenu, ...props }) {
 
         {user.role === roles.superAdmin && (
           <>
-            <SuperAdminAirlineContent
+            <TransferAdminDriversContent
               id={id}
+              user={user}
               selectedTab={selectedTab}
               handleTabSelect={handleTabSelect}
             />

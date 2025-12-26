@@ -83,6 +83,11 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
   const { data: dataSubscription } = useSubscription(
     GET_DISPATCHERS_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },

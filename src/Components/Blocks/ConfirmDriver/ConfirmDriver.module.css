@@ -152,7 +152,7 @@
 
 .requestDataInfo_desc {
     background-color: #9CA4D91A;
-    height: 37px;
+    min-height: 37px;
     font-family: Nunito Sans;
     font-size: 14px;
     font-weight: 400;

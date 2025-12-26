@@ -440,7 +440,7 @@ const routePoints = useMemo(() => {
     await updateTransfer({
       variables: {
         updateTransferId: orderId,
-        input: { driverId, status: "ASSIGNED" },
+        input: { driverId, status: "ASSIGNED", dispatcherId: user?.userId },
       },
       refetchQueries: [{ query: GET_TRANSFER_REQUEST, variables: { transferId: orderId } }],
       awaitRefetchQueries: true,

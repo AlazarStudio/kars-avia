@@ -264,12 +264,12 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
           }
         >
           {user?.role === roles.dispatcerAdmin ? (
-                <img src="/kars-avia-mainLogo.png" alt="" />
+                <img src="/KARSAVIA_withoutLogo.png" alt="" />
             // <img src="/kars_drive.png" alt="" style={{width:"fit-content"}} />
           ) : (
             <>
               {menuOpen ? (
-                <img src="/kars-avia-mainLogo.png" alt="" />
+                <img src="/KARSAVIA_withoutLogo.png" alt="" />
               ) : (
                 <img src="/miniLogo.png" alt="" />
               )}

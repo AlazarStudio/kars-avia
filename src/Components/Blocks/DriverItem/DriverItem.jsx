@@ -57,6 +57,7 @@ function DriverItem({
                 i.status.toLowerCase() !== "completed" &&
                 i.status.toLowerCase() !== "cancelled"
             ).length}
+          <span className={classes.tooltip}>Активные заявки</span>
         </div>
       </div>
       <div className={`${classes.col} ${classes.colCarInfo}`}>

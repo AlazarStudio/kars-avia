@@ -135,7 +135,7 @@ function CreateRequestHotelContract({
       setAirlines(hotelsData?.hotels?.hotels);
     }
     if (show && orgsData && activeFilterTab === "transfer") {
-      setAirlines(orgsData?.organizations);
+      setAirlines(orgsData?.organizations?.organizations);
     }
   }, [show, hotelsData, orgsData]);
 

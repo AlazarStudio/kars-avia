@@ -22,6 +22,7 @@ import {
   menuAccess,
   notifyTime,
   statusMapping,
+  roles,
 } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import Notification from "../../Notification/Notification.jsx";
@@ -36,9 +37,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // const { search, pathname, state } = useLocation();
-
-  // const requestIdFromState = state?.requestId || null;
+  const { search, pathname } = useLocation();
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
@@ -50,16 +49,10 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     endDate: null,
   });
 
-  // useEffect(() => {
-  //   if (requestIdFromState) {
-  //     setChooseRequestID(requestIdFromState);
-  //     setShowRequestSidebar(true);
-  //   }
-  // }, [requestIdFromState]);
-
   // Инициализация текущей страницы на основе параметров URL или по умолчанию
-  // const pageNumberRelay = new URLSearchParams(location.search).get("page");
-  // const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
+  const pageNumberTransfer = new URLSearchParams(location.search).get("page");
+  const currentPageTransfer = pageNumberTransfer ? parseInt(pageNumberTransfer) - 1 : 0;
+
 
   // Состояние для фильтрации по статусу. Получаем фильтр из localStorage или устанавливаем значение по умолчанию
   const [statusFilterTransfer, setStatusFilter] = useState(() => {
@@ -67,15 +60,11 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   });
 
   // Состояние для хранения информации о странице (для пагинации)
-  // const [pageInfo, setPageInfo] = useState({
-  //   skip: currentPageRelay,
-  //   take: 50,
-  // });
+  const [pageInfo, setPageInfo] = useState({
+    skip: currentPageTransfer,
+    take: 50,
+  });
 
-  const query =
-    statusFilterTransfer === "archived"
-      ? GET_REQUESTS_ARCHIVED
-      : GET_TRANSFER_REQUESTS;
 
   // Запрос на получение списка заявок с использованием параметров пагинации
   const { loading, error, data, refetch } = useQuery(GET_TRANSFER_REQUESTS, {
@@ -86,9 +75,8 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     },
     variables: {
       pagination: {
-        all: true,
-        // skip: pageInfo.skip,
-        // take: pageInfo.take,
+        skip: pageInfo.skip,
+        take: pageInfo.take,
         // airlineId: selectedAirline?.id,
         // status: statusFilterTransfer.split(" / "),
         // airportId: selectedAirport?.id,
@@ -121,8 +109,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     }
   );
 
-  // console.log(subscriptionData);
-  // console.log(subscriptionUpdateData);
 
   // Локальное состояние для хранения новых заявок и всех заявок
   const [newRequests, setNewRequests] = useState([]);
@@ -133,34 +119,17 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   useEffect(() => {
     if (data && data.transfers?.transfers) {
       let sortedRequests = [...data.transfers.transfers];
-      // if (currentPageRelay === 0 && newRequests.length > 0) {
-      //   sortedRequests = [...newRequests, ...sortedRequests];
-      //   setNewRequests([]);
-      // }
+      if (currentPageTransfer === 0 && newRequests.length > 0) {
+        sortedRequests = [...newRequests, ...sortedRequests];
+        setNewRequests([]);
+      }
 
       setRequests(sortedRequests);
-      // setTotalPages(data.transfers.totalPages);
+      setTotalPages(data.transfers.totalPages);
     }
-    // if (data && data.requestArchive?.requests) {
-    //   let sortedRequests = [...data.requestArchive.requests];
-    //   if (currentPageRelay === 0 && newRequests.length > 0) {
-    //     sortedRequests = [...newRequests, ...sortedRequests];
-    //     setNewRequests([]);
-    //   }
+  }, [data, currentPageTransfer, newRequests, refetch]);
 
-    //   setRequests(sortedRequests);
-    //   setTotalPages(data.requestArchive.totalPages);
-    // }
-    // refetch();
-  }, [data, newRequests, refetch]);
-  // }, [data, currentPageRelay, newRequests, refetch]);
 
-  // Обновление данных при получении новой информации по подписке на обновление заявок
-  // useEffect(() => {
-  //   if (subscriptionUpdateData) refetch();
-  // }, [subscriptionUpdateData, refetch]);
-
-  // console.log(subscriptionUpdateData);
 
   // Обновление состояния фильтрации по статусу
   const handleStatusChange = (value) => {
@@ -168,8 +137,8 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     localStorage.setItem("statusFilterTransfer", value);
 
     // Сбрасываем текущую страницу на первую
-    // setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    // navigate("?page=1");
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1");
   };
 
   // Управление состоянием боковых панелей для создания и просмотра заявок
@@ -305,7 +274,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     const dataSource = requests; // Используем данные из поиска или стандартные
 
     const filtered = dataSource.filter((request) => {
-      // console.log(request);
       const matchesSelect =
         !filterData.filterSelect ||
         request.airline?.name.includes(filterData.filterSelect);
@@ -386,38 +354,38 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       // Если обе на сегодня или обе не на сегодня - сортируем по времени (новые вверху)
       return bScheduledTime.getTime() - aScheduledTime.getTime();
     });
-  }, [isSearching, allFilteredData, requests, filterData, searchQuery]);
+  }, [isSearching, allFilteredData, requests, filterData, searchQuery, user]);
 
-  // console.log(requests);
+  console.log(disAdmin);
 
   const filterList = ["Азимут", "S7 airlines", "Северный ветер"];
 
   // Текущая страница из URL (0-based)
-  // const urlPage = useMemo(() => {
-  //   const p = Number(new URLSearchParams(search).get("page") || "1");
-  //   return Math.max(0, p - 1);
-  // }, [search]);
+  const urlPage = useMemo(() => {
+    const p = Number(new URLSearchParams(search).get("page") || "1");
+    return Math.max(0, p - 1);
+  }, [search]);
 
   // Синхронизируем внутренний стейт пагинации со значением из URL
-  // useEffect(() => {
-  //   setPageInfo((prev) =>
-  //     prev.skip === urlPage ? prev : { ...prev, skip: urlPage }
-  //   );
-  // }, [urlPage]);
+  useEffect(() => {
+    setPageInfo((prev) =>
+      prev.skip === urlPage ? prev : { ...prev, skip: urlPage }
+    );
+  }, [urlPage]);
 
-  // Если открыли /relay без ?page — проставим ?page=1
-  // useEffect(() => {
-  //   if (pathname === "/orders" && !new URLSearchParams(search).has("page")) {
-  //     navigate("?page=1", { replace: true });
-  //   }
-  // }, [pathname, search, navigate]);
+  // Если открыли /orders без ?page — проставим ?page=1
+  useEffect(() => {
+    if (pathname === "/orders" && !new URLSearchParams(search).has("page")) {
+      navigate("?page=1", { replace: true });
+    }
+  }, [pathname, search, navigate]);
 
   // Обработчик для изменения текущей страницы при клике на элементы пагинации
-  // const handlePageClick = (event) => {
-  //   const selectedPage = event.selected;
-  //   setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
-  //   navigate(`?page=${selectedPage + 1}`);
-  // };
+  const handlePageClick = (event) => {
+    const selectedPage = event.selected;
+    setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
+    navigate(`?page=${selectedPage + 1}`);
+  };
 
   // Конвертация времени создания из милисекунд в дату
   function convertToDate(timestamp) {
@@ -426,11 +394,10 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   }
 
   // Корректировка текущей страницы
-  // const validCurrentPage = urlPage < totalPages ? urlPage : 0;
-  // const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
+  const validCurrentPage = urlPage < totalPages ? urlPage : 0;
 
   return (
-    <div className={classes.section} style={disAdmin && { padding: "0px" }}>
+    <div className={classes.section} style={disAdmin ? { padding: "0px" } : {}}>
       {!disAdmin && <Header>Заказы</Header>}
       <div className={classes.section_searchAndFilter}>
         <Filter
@@ -471,11 +438,10 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
             chooseRequestID={chooseRequestID}
             setChooseObject={setChooseObject}
             setChooseRequestID={setChooseRequestID}
-            // pageInfo={pageInfo.skip}
-            // scrollToId={requestIdFromState}
+            pageInfo={pageInfo.skip}
           />
 
-          {/* {totalPages > 0 && (
+          {totalPages > 0 && (
             <div className={classes.pagination}>
               <ReactPaginate
                 previousLabel={"←"}
@@ -491,7 +457,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
                 pageLinkClassName={classes.paginationNumber}
               />
             </div>
-          )} */}
+          )}
         </>
       )}
       {/* Боковые панели для создания и выбора заявок */}

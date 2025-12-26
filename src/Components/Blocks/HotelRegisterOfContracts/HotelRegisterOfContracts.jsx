@@ -34,6 +34,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import { roles } from "../../../roles.js";
 
 function HotelRegisterOfContracts({ children, id, user, ...props }) {
   const token = getCookie("token");
@@ -64,6 +65,9 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
   const [selectedType, setSelectedType] = useState(null);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
+
+  // Проверка прав доступа: только dispatcherAdmin и superAdmin могут редактировать
+  const canEdit = user?.role === roles.dispatcerAdmin || user?.role === roles.superAdmin;
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_CONTRACTS, {
     context: {
@@ -412,6 +416,13 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
             }
           }}
         />
+        {canEdit && (
+          <Filter
+            toggleSidebar={toggleTarifsCategory}
+            handleChange={""}
+            buttonTitle={"Создать договор"}
+          />
+        )}
       </div>
 
       {loading && <MUILoader fullHeight={"70vh"} />}
@@ -430,6 +441,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
             openDeleteComponent={openDeleteComponent}
             openDeleteComponentCategory={openDeleteComponentCategory}
             openDeleteContract={openDeleteContract}
+            canEdit={canEdit}
           />
 
           {totalPages > 0 && (
@@ -452,9 +464,29 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
         </>
       )}
 
+      {canEdit && (
+        <CreateRequestHotelContract
+          user={user}
+          id={id}
+          activeFilterTab={"hotels"}
+          companiesData={companiesData}
+          hotelsData={hotelsData}
+          citiesData={citiesData}
+          show={showAddTarifCategory}
+          onClose={toggleTarifsCategory}
+          addTarif={addTarif}
+          setAddTarif={setAddTarif}
+          addNotification={addNotification}
+        />
+      )}
       <EditRequestHotelContract
         user={user}
         id={id}
+        canEdit={canEdit}
+        activeFilterTab={"hotels"}
+        companiesData={companiesData}
+        hotelsData={hotelsData}
+        citiesData={citiesData}
         setAddTarif={setAddTarif}
         show={showEditAddTarif}
         onClose={() => setEditShowAddTarif(false)}
@@ -462,6 +494,17 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
         tarif={selectedTarif}
         addNotification={addNotification}
       />
+
+      {canEdit && showDelete && (
+        <DeleteComponent
+          ref={deleteComponentRef}
+          remove={() => {
+            return deleteContract(deleteIndex.data.contract);
+          }}
+          close={closeDeleteComponent}
+          title={`Вы действительно хотите удалить ${deleteIndex.type === "deleteTarif" ? "тариф" : deleteIndex.type === "deleteCategory" ? "категорию" : "договор"}?`}
+        />
+      )}
 
       {notifications.map((n, index) => (
         <Notification

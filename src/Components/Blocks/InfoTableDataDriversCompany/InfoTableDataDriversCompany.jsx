@@ -3,7 +3,7 @@ import classes from "./InfoTableDataDriversCompany.module.css";
 import InfoTable from "../InfoTable/InfoTable.jsx";
 
 import { convertToDate, server } from "../../../../graphQL_requests.js";
-import { roles, shuffleArray } from "../../../roles.js";
+import { roles } from "../../../roles.js";
 import Message from "../Message/Message.jsx";
 import CarIcon from "../../../shared/icons/CarIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
@@ -35,34 +35,23 @@ function InfoTableDataDriversCompany({
   // табы сверху: подтверждены / ожидают
   const [activeTab, setActiveTab] = useState("confirmed");
 
-  // рандомно перемешанный список
-  const [shuffledRequests, setShuffledRequests] = useState([]);
-
-  useEffect(() => {
-    if (requests && requests.length) {
-      setShuffledRequests(shuffleArray(requests));
-    } else {
-      setShuffledRequests([]);
-    }
-  }, [requests, activeTab]); // при смене таба тоже будет новое "случайное" деление
-
   // Определяем источник: если disAdmin передан, значит это страница водителей
   // и используем registrationStatus, иначе - organizationConfirmed (страница организации)
   const useRegistrationStatus = !!disAdmin;
 
   const confirmedList = useRegistrationStatus
-    ? shuffledRequests.filter(
+    ? (requests || []).filter(
         (i) => i.registrationStatus === "APPROVED"
       )
-    : shuffledRequests.filter(
+    : (requests || []).filter(
         (i) => i.organizationConfirmed && i.organizationConfirmed === true
       );
 
   const pendingList = useRegistrationStatus
-    ? shuffledRequests.filter(
+    ? (requests || []).filter(
         (i) => i.registrationStatus === "PENDING"
       )
-    : shuffledRequests.filter(
+    : (requests || []).filter(
         (i) => !i.organizationConfirmed || i.organizationConfirmed === null
       );
 

@@ -750,6 +750,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           <InfoTableAllDataTarifs
             pageInfo={pageInfo}
             activeTab={activeTab}
+            canEdit={true}
             toggleRequestSidebar={toggleEditTarifs}
             toggleEditTarifsCategory={toggleEditTarifsCategory}
             requests={addTarif}
@@ -795,6 +796,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           <EditRequestAirlineContract
             user={user}
             id={id}
+            canEdit={true}
             activeFilterTab={activeTab}
             setAddTarif={setAddTarif}
             show={showEditAddTarif}
@@ -826,6 +828,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           <EditRequestHotelContract
             user={user}
             id={id}
+            canEdit={true}
             activeFilterTab={activeTab}
             companiesData={companiesData}
             hotelsData={hotelsData}

@@ -87,6 +87,7 @@ function AirlinePage({ children, id, user, accessMenu, ...props }) {
           <>
             <DisAdminAirlineContent
               id={id}
+              user={user}
               selectedTab={selectedTab}
               handleTabSelect={handleTabSelect}
             />

@@ -16,6 +16,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 function EditAdditionalAgreement({
   show,
   id,
+  canEdit = false,
   onClose,
   agreement,
   onSave,
@@ -186,7 +187,7 @@ function EditAdditionalAgreement({
         <>
           <div
             className={classes.requestMiddle}
-            style={id && { height: "calc(100% - 80px)" }}
+            style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
           >
             <div className={classes.requestData}>
               <label>№ ДС</label>
@@ -266,7 +267,7 @@ function EditAdditionalAgreement({
                 </a>
               ))}
               {/* <input type="file" onChange={handleFiles} multiple /> */}
-              {!id && (
+              {canEdit && (
                 <div
                   ref={dropRef}
                   className={classes.fileDrop}
@@ -297,7 +298,7 @@ function EditAdditionalAgreement({
             </div>
           </div>
 
-          {!id && (
+          {canEdit && (
             <div className={classes.requestButton}>
               <Button
                 type="button"

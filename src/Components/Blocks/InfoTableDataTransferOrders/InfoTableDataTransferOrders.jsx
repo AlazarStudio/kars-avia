@@ -3,9 +3,9 @@ import classes from "./InfoTableDataTransferOrders.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, server } from "../../../../graphQL_requests";
 import { roles, statusLabels } from "../../../roles";
-import Message from "../Message/Message";
 import { useNavigate } from "react-router-dom";
 import ReportTimer from "./ReportTimer";
+import TransferMessage from "../TransferMessage/TransferMessage";
 
 function InfoTableDataTransferOrders({
   user,
@@ -45,9 +45,8 @@ function InfoTableDataTransferOrders({
     [setChooseObject, setChooseRequestID, toggleRequestSidebar]
   );
 
-  const [separator, setSeparator] = useState("airline");
-  const [isHaveTwoChats, setIsHaveTwoChats] = useState();
-  const [orgName, setOrgName] = useState("");
+  const [selectedTransferId, setSelectedTransferId] = useState(null);
+  const [showChat, setShowChat] = useState(false);
 
   const listContainerRef = useRef(null);
 
@@ -66,7 +65,7 @@ function InfoTableDataTransferOrders({
       <InfoTable>
         <div
           className={classes.list}
-          style={disAdmin ? { height: "calc(100vh - 281px)" } : {}}
+          style={disAdmin ? { height: "calc(100vh - 352px)" } : { height: "calc(100vh - 281px)" }}
           ref={listContainerRef}
         >
           {requests.map((item, index) => {
@@ -96,12 +95,19 @@ function InfoTableDataTransferOrders({
                 //         ? 1
                 //         : 0.5,
                 //   }}
-                onClick={() =>
+                onClick={(e) => {
+                  // Если клик по кнопке чата, не переходим на страницу
+                  if (e.target.closest(`.${classes.chatButton}`)) {
+                    e.stopPropagation();
+                    setSelectedTransferId(item.id);
+                    setShowChat(true);
+                    return;
+                  }
                   // Переход на отдельную страницу с заявкой
                   navigate(`/orders/${item.id}`, {
-                    state: { requestId: item.id }, // если хочешь передать ещё что-то
-                  })
-                }
+                    state: { requestId: item.id },
+                  });
+                }}
                 // data-id={item.id}
               >
                 {/* {console.log(item)} */}
@@ -187,78 +193,52 @@ function InfoTableDataTransferOrders({
                   </div>
                 </div>
                 {/* Колонка чат */}
-                {/* <div className={`${classes.col} ${classes.colChat}`}>
+                <div className={`${classes.col} ${classes.colChat}`}>
                   <div
                     className={classes.chatButton}
-                    onClick={() =>
-                      handleObject(
-                        item.id,
-                        item.arrival,
-                        item.departure,
-                        item.person,
-                        item.requestNumber
-                      )
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedTransferId(item.id);
+                      setShowChat(true);
+                    }}
                   >
                     <img src="/chatReserve.png" alt="" />
-                    {unreadCount > 0 && (
-                      <div className={classes.chatBadge}>
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </div>
-                    )}
+                    {/* TODO: добавить подсчет непрочитанных сообщений из transfer chats */}
                   </div>
-                </div> */}
+                </div>
               </div>
             );
           })}
         </div>
       </InfoTable>
-      {/* <div className={classes.chatWrapper}>
-        {user.role !== roles.superAdmin &&
-        user.role !== roles.dispatcerAdmin ? null : (
-          <div className={classes.separatorWrapper}>
-            {isHaveTwoChats === false ? (
-              <button
-                onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                className={separator === "airline" ? classes.active : null}
-              >
-                Сотрудник
-              </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => setSeparator("airline")} // Установить separator как 'airline'
-                  className={separator === "airline" ? classes.active : null}
-                >
-                  Сотрудник
-                </button>
-                <button
-                  onClick={() => setSeparator("hotel")} // Установить separator как 'hotel'
-                  className={separator === "hotel" ? classes.active : null}
-                >
-                  Водитель
-                </button>
-              </>
-            )}
-          </div>
-        )}
-        <Message
-          activeTab={"Комментарий"}
-          setIsHaveTwoChats={setIsHaveTwoChats}
-          setTitle={setOrgName}
-          chooseRequestID={chooseRequestID}
-          chooseReserveID={""}
-          token={token}
-          user={user}
-          chatPadding={"0"}
-          chatHeight={
-            user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin
-              ? "calc(100vh - 399px)"
-              : "calc(100vh - 280px)"
-          }
-          separator={separator}
-        />
-      </div> */}
+      {showChat && selectedTransferId && (
+        <div className={classes.chatWrapper}>
+          {/* <div className={classes.chatHeader}>
+            <span>Чат трансфера</span>
+            <button
+              className={classes.chatCloseButton}
+              onClick={() => {
+                setShowChat(false);
+                setSelectedTransferId(null);
+              }}
+            >
+              ✕
+            </button>
+          </div> */}
+          <TransferMessage
+            transferId={selectedTransferId}
+            token={token}
+            user={user}
+            // chatPadding={"0"}
+            chatHeight={ 
+              // "calc(100vh - 423px)"
+              user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin
+                ? "calc(100vh - 282px)"
+                : "calc(100vh - 270px)"
+            }
+          />
+        </div>
+      )}
     </div>
   );
 }

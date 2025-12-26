@@ -37,6 +37,7 @@ function EditRequestHotelContract({
   onClose,
   tarif, // тут приходит airlineContractId
   addNotification,
+  canEdit = false, // Флаг для разрешения редактирования
 }) {
   const token = getCookie("token");
 
@@ -230,10 +231,20 @@ function EditRequestHotelContract({
 
   useEffect(() => {
     if (show) {
-      setHotels(hotelsData?.hotels?.hotels);
+      if (activeFilterTab === "transfer") {
+        // Для организаций используем orgsData
+        // orgsData может быть массивом или объектом с organizations.organizations
+        const orgs = Array.isArray(orgsData) 
+          ? orgsData 
+          : orgsData?.organizations?.organizations || [];
+        setHotels(orgs);
+      } else {
+        // Для гостиниц используем hotelsData
+        setHotels(hotelsData?.hotels?.hotels || []);
+      }
       //   refetch();
     }
-  }, [show, hotelsData]);
+  }, [show, hotelsData, orgsData, activeFilterTab]);
 
   useEffect(() => {
     if (show) {
@@ -382,7 +393,7 @@ function EditRequestHotelContract({
   // Сабмит (оставляю локально; сюда можно подставить твои UPDATE_* мутации)
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
-    if (!isEditing) {
+    if (!isEditing && canEdit) {
       setIsEditing(true);
       return;
     }
@@ -475,7 +486,7 @@ function EditRequestHotelContract({
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>
-            {!id ? "Изменить договор" : formData?.contractNumber}
+            {canEdit ? "Изменить договор" : formData?.contractNumber}
           </div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
             <img src="/close.png" alt="" />
@@ -516,7 +527,7 @@ function EditRequestHotelContract({
             {activeTab === "Общая" ? (
               <div
                 className={classes.requestMiddle}
-                style={id && { height: "calc(100% - 80px)" }}
+                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
               >
                 <div className={classes.requestData}>
                   {/* Договор: основные поля */}
@@ -549,13 +560,13 @@ function EditRequestHotelContract({
                     <MUIAutocomplete
                       dropdownWidth={"59%"}
                       label={"Введите компанию"}
-                      options={companies?.map((item) => item.name)}
+                      options={companies?.map((item) => item.name) || []}
                       value={
-                        companies.find((item) => item.id === formData.companyId)
+                        companies?.find((item) => item.id === formData.companyId)
                           ?.name || null
                       }
                       onChange={(event, newValue) => {
-                        const selectedCompany = companies.find(
+                        const selectedCompany = companies?.find(
                           (item) => item.name === newValue
                         );
                         // setSelectedCompany(selectedCompany);
@@ -584,15 +595,20 @@ function EditRequestHotelContract({
                       }
                       isDisabled={!isEditing}
                       options={hotels}
-                      getOptionLabel={(option) =>
-                        option
-                          ? `${option.name}, город: ${option?.information?.city}`.trim()
-                          : ""
-                      }
+                      getOptionLabel={(option) => {
+                        if (!option) return "";
+                        if (activeFilterTab === "transfer") {
+                          // Для организаций
+                          return `${option.name}${option?.information?.city ? `, город: ${option.information.city}` : ""}`.trim();
+                        } else {
+                          // Для гостиниц
+                          return `${option.name}, город: ${option?.information?.city || ""}`.trim();
+                        }
+                      }}
                       renderOption={(optionProps, option) => {
-                        const cityPart = `,, город: ${
-                          option?.information?.city || "не указан"
-                        }`;
+                        const cityPart = option?.information?.city 
+                          ? `, город: ${option.information.city}`
+                          : "";
                         const labelText = `${option.name}${cityPart}`.trim();
                         const words = labelText.split(", ");
 
@@ -614,29 +630,29 @@ function EditRequestHotelContract({
                       }}
                       value={
                         hotels?.find(
-                          (airline) => airline.id === formData.hotelId
+                          (item) => item.id === formData.hotelId
                         ) || null
                       }
                       onChange={(event, newValue) => {
-                        // console.log(newValue);
+                        if (!newValue) return;
 
-                        const nextHotel = hotels.find(
-                          (airline) => airline.id === newValue.id
+                        const selectedItem = hotels?.find(
+                          (item) => item.id === newValue.id
                         );
-                        setSelectedAirline(nextHotel);
+                        setSelectedAirline(selectedItem);
 
                         // автоматически подставляем город
-                        const hotelCity = nextHotel?.information?.city;
+                        const itemCity = selectedItem?.information?.city;
                         const matchedCity =
                           cities.find(
                             (c) =>
-                              normalize(c.city) === normalize(hotelCity) ||
-                              normalize(c.name) === normalize(hotelCity) // на случай, если в объекте город лежит в name
+                              normalize(c.city) === normalize(itemCity) ||
+                              normalize(c.name) === normalize(itemCity) // на случай, если в объекте город лежит в name
                           ) || null;
 
                         setFormData((prevFormData) => ({
                           ...prevFormData,
-                          hotelId: nextHotel?.id || "",
+                          hotelId: selectedItem?.id || "",
                           cityId: matchedCity?.id || "", // <-- вот это и выбирает город
                         }));
                       }}
@@ -813,7 +829,7 @@ function EditRequestHotelContract({
                     multiple
                     disabled={!isEditing}
                   /> */}
-                  {!id && (
+                  {canEdit && (
                     <div
                       ref={dropRef}
                       className={classes.fileDrop}
@@ -846,10 +862,10 @@ function EditRequestHotelContract({
             ) : activeTab === "ДС" ? (
               <div
                 className={classes.requestMiddle}
-                style={id && { height: "calc(100% - 80px)" }}
+                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
               >
                 <div className={classes.requestData}>
-                  {!id && (
+                  {canEdit && (
                     <Button type="button" onClick={openCreateAgreement}>
                       + Добавить ДС
                     </Button>
@@ -884,7 +900,7 @@ function EditRequestHotelContract({
                         </div>
                       </div>
 
-                      {!id && (
+                      {canEdit && (
                         <>
                           <img
                             src="/edit.svg.png"
@@ -907,7 +923,7 @@ function EditRequestHotelContract({
             ) : (
               <div
                 className={classes.requestMiddle}
-                style={id && { height: "calc(100% - 80px)" }}
+                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
               >
                 <div className={classes.requestData}>
                   {files?.map((i, index) => (
@@ -926,7 +942,7 @@ function EditRequestHotelContract({
                 </div>
               </div>
             )}
-            {activeTab === "Общая" && !id && (
+            {activeTab === "Общая" && canEdit && (
               <div className={classes.requestButton}>
                 <Button
                   type="submit"
@@ -951,6 +967,7 @@ function EditRequestHotelContract({
       </Sidebar>
       <EditAdditionalAgreement
         id={id}
+        canEdit={canEdit}
         updId={tarif}
         show={showAgreementEditor}
         onClose={closeAgreement}
@@ -962,6 +979,7 @@ function EditRequestHotelContract({
       />
 
       <CreateAdditionalAgreement
+        canEdit={canEdit}
         updId={tarif}
         activeFilterTab={activeFilterTab}
         show={showCreateAgreementEditor}

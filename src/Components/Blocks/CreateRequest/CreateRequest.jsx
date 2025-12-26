@@ -85,6 +85,11 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   const { data: dataSubscription } = useSubscription(
     GET_AIRLINES_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },
@@ -94,6 +99,11 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },

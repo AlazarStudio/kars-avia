@@ -17,6 +17,7 @@ function InfoTableAllDataTarifs({
   openDeleteContract,
   openDeleteComponent,
   openDeleteComponentCategory,
+  canEdit = false,
   ...props
 }) {
     // Функция для установки выбранного объекта и переключения боковой панели
@@ -114,7 +115,7 @@ function InfoTableAllDataTarifs({
                         >
                             {item?.region?.city ? item.region.city : item.region}
                         </div>
-                        {!id && (
+                        {canEdit && (
 
                           <div className={`${classes.buttonsWrapper} ${classes.w10}`} onClick={(e) => e.stopPropagation()}>
                             <img 

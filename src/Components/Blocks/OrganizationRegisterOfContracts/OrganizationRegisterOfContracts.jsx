@@ -28,6 +28,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import { roles } from "../../../roles.js";
 
 function OrganizationRegisterOfContracts({ children, id, user, ...props }) {
   const token = getCookie("token");
@@ -55,6 +56,9 @@ function OrganizationRegisterOfContracts({ children, id, user, ...props }) {
   const [cities, setCities] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
+
+  // Проверка прав доступа: только dispatcherAdmin и superAdmin могут редактировать
+  const canEdit = user?.role === roles.dispatcerAdmin || user?.role === roles.superAdmin;
 
   const { loading, error, data, refetch } = useQuery(GET_ORGANIZATION_CONTRACTS, {
     context: {
@@ -108,6 +112,7 @@ function OrganizationRegisterOfContracts({ children, id, user, ...props }) {
   });
 
   const [addTarif, setAddTarif] = useState([]);
+  const [showAddTarifCategory, setShowAddTarifCategory] = useState(false);
   const [showEditAddTarif, setEditShowAddTarif] = useState(false);
   const [showEditAddTarifCategory, setEditShowAddTarifCategory] = useState(false);
   const [selectedTarif, setSelectedTarif] = useState(null);
@@ -354,6 +359,13 @@ function OrganizationRegisterOfContracts({ children, id, user, ...props }) {
             }
           }}
         />
+        {canEdit && (
+          <Filter
+            toggleSidebar={() => setShowAddTarifCategory(true)}
+            handleChange={""}
+            buttonTitle={"Создать договор"}
+          />
+        )}
       </div>
 
       {loading && <MUILoader fullHeight={"70vh"} />}
@@ -372,6 +384,7 @@ function OrganizationRegisterOfContracts({ children, id, user, ...props }) {
             openDeleteComponent={openDeleteComponent}
             openDeleteComponentCategory={openDeleteComponentCategory}
             openDeleteContract={openDeleteContract}
+            canEdit={canEdit}
           />
 
           {totalPages > 0 && (
@@ -394,12 +407,28 @@ function OrganizationRegisterOfContracts({ children, id, user, ...props }) {
         </>
       )}
 
+      {canEdit && (
+        <CreateRequestHotelContract
+          user={user}
+          id={id}
+          activeFilterTab={"transfer"}
+          companiesData={companiesData}
+          orgsData={orgsData || []}
+          citiesData={citiesData}
+          show={showAddTarifCategory}
+          onClose={() => setShowAddTarifCategory(false)}
+          addTarif={addTarif}
+          setAddTarif={setAddTarif}
+          addNotification={addNotification}
+        />
+      )}
       <EditRequestHotelContract
         user={user}
         id={id}
-        activeFilterTab={activeTab}
+        canEdit={canEdit}
+        activeFilterTab={"transfer"}
         companiesData={companiesData}
-        orgsData={orgsData?.organizations?.organizations || []}
+        orgsData={orgsData || []}
         citiesData={citiesData}
         setAddTarif={setAddTarif}
         show={showEditAddTarif}
@@ -409,14 +438,14 @@ function OrganizationRegisterOfContracts({ children, id, user, ...props }) {
         addNotification={addNotification}
       />
 
-      {showDelete && (
+      {canEdit && showDelete && (
         <DeleteComponent
           ref={deleteComponentRef}
           remove={() => {
             return deleteContract(deleteIndex.data.contract);
           }}
           close={closeDeleteComponent}
-          title={`Вы действительно хотите удалить договор?`}
+          title={`Вы действительно хотите удалить ${deleteIndex.type === "deleteTarif" ? "тариф" : deleteIndex.type === "deleteCategory" ? "категорию" : "договор"}?`}
         />
       )}
       {notifications.map((n, index) => (

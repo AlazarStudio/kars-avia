@@ -108,9 +108,9 @@ function Login() {
       }}
     >
       <img
-        src="/kars-avia-mainLogo.png"
+        src="/KARSAVIA_withoutLogo.png"
         alt=""
-        style={{ userSelect: "none" }}
+        style={{ userSelect: "none", height:"90px" }}
       />
       <Box
         sx={{

@@ -107,34 +107,35 @@ const DisAdminTransferContent = ({ user }) => {
       >
         <TabList className={classes.tabList}>
           <Tab className={classes.tab}>Заказы</Tab>
+          {/* <Tab className={classes.tab}>Пользователи</Tab> */}
           <Tab className={classes.tab}>Организации</Tab>
           <Tab className={classes.tab}>Водители</Tab>
-          <Tab className={classes.tab}>Пользователи</Tab>
         </TabList>
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
-          <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+          <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
             <TransferOrders user={user} disAdmin={true} />
           </Suspense>
         </TabPanel>
 
+        {/* <TabPanel className={classes.tabPanel} forceRender={false}>
+          <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
+            <TransferCompany user={user} disAdmin={true} />
+          </Suspense>
+        </TabPanel> */}
+
         <TabPanel className={classes.tabPanel} forceRender={false}>
-          <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+          <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
             <DriversCompanyList user={user} disAdmin={true} />
           </Suspense>
         </TabPanel>
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
-          <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-            <DriversList user={user} disAdmin={true}/>
+          <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
+            <DriversList user={user} disAdmin={true} />
           </Suspense>
         </TabPanel>
 
-        <TabPanel className={classes.tabPanel} forceRender={false}>
-          <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-            <TransferCompany user={user} disAdmin={true} />
-          </Suspense>
-        </TabPanel>
       </Tabs>
     </div>
   );

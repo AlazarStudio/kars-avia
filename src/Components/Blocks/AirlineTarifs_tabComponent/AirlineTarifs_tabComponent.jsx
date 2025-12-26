@@ -55,6 +55,11 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const { data: dataSubscriptionAirUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },
@@ -64,6 +69,11 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const { data: dataSubscriptionUpd } = useSubscription(
     PRICE_CATEGORY_CHANGE_SUBSCRIPTION,
     {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
       onData: () => {
         refetch();
       },

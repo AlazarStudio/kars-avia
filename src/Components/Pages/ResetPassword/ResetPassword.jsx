@@ -76,11 +76,23 @@ function ResetPassword() {
         backgroundColor: "var(--menu-bg)",
       }}
     >
-      <img
-        src="/kars-avia-mainLogo.png"
-        alt=""
-        style={{ userSelect: "none" }}
-      />
+      <Box
+        sx={{
+          textAlign: "center",
+          fontFamily: "'Montserrat', 'Inter', sans-serif",
+          color: "#fff",
+          fontWeight: 800,
+          fontSize: "48px",
+          lineHeight: 0.95,
+          letterSpacing: "1px",
+          textTransform: "uppercase",
+          mb: 3,
+          userSelect: "none",
+        }}
+      >
+        <div>KARS</div>
+        <div>AVIA</div>
+      </Box>
       <Box
         sx={{
           padding: "50px 20px",

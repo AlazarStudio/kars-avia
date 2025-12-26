@@ -1,0 +1,264 @@
+.requestData {
+  height: calc(100vh - 282px);
+  display: flex;
+  flex-direction: column;
+  /* padding: 0px 20px 20px 30px; */
+  gap: 10px;
+  position: relative;
+  background-color: var(--white);
+}
+
+.emptyState {
+  padding: 20px;
+  text-align: center;
+  color: #545873;
+  font-family: Nunito Sans;
+  font-size: 14px;
+}
+
+.chatTypeSelector {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 15px 10px 15px;
+  border-bottom: 1px solid #CBDEFB;
+}
+
+.chatTypeButton {
+  padding: 10px;
+  flex-basis: 48%;
+  color: #545873;
+  background-color: #F1F4FB;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: all ease-in-out 0.3s;
+  opacity: 0.5;
+  font-family: Nunito Sans;
+  font-size: 14px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatTypeButton:hover {
+  opacity: 0.7;
+}
+
+.chatTypeButton.active {
+  color: #000;
+  opacity: 1;
+  background-color: #F1F4FB;
+  outline: none;
+}
+
+.unreadBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #ff4444;
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.requestData_messages {
+  padding: 0 10px;
+  height: 100%;
+  /* height: calc(100vh - 250px); */
+  overflow: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* padding-top: 10px; */
+}
+
+.requestData_message {
+  width: fit-content;
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+}
+
+.requestData_message_name {
+  font-family: Nunito Sans;
+  font-size: 12px;
+  font-weight: 600;
+  color: #545873;
+}
+
+.requestData_message_post {
+  font-family: Nunito Sans;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16.37px;
+  color: #00000099;
+}
+
+.requestData_message_text {
+  font-family: Nunito Sans;
+  font-size: 14px;
+  font-weight: 500;
+  color: #545873;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  word-break: break-word;
+}
+
+.requestData_message__message {
+  border-radius: 7px 7px 7px 0px;
+  padding: 10px 15px;
+  background-color: #F6F6FC;
+}
+
+.myMesBorderRadius {
+  border-radius: 7px 7px 0px 7px;
+  background-color: #CBDEFB;
+}
+
+.requestData_message_text__name {
+  padding: 10px 0px 5px 5px;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.requestData_message_time {
+  padding: 0 5px;
+  display: flex;
+  flex-direction: column;
+  font-family: Nunito Sans;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 16.37px;
+  color: #545873;
+}
+
+.requestData_message_full {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.myMes {
+  display: flex;
+  justify-content: flex-end;
+  /* padding-right: 10px; */
+}
+
+.myMes .requestData_message_name,
+.myMes .requestData_message_post,
+.myMes .requestData_message_time {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.myMes .requestData_message_text {
+  border-radius: 20px 20px 0px 20px;
+}
+
+.myMes .requestData_message_text__name {
+  display: none;
+}
+
+.sendBlock {
+  padding: 0 15px 15px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sendBlock_message {
+  width: fit-content;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0057C3;
+  border-radius: 50px;
+  color: #FFFFFF;
+  font-family: Nunito Sans;
+  font-size: 16px;
+  font-weight: 400;
+  transition: all 0.3s ease-in-out;
+  gap: 10px;
+  opacity: 0.8;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.sendBlock_message:hover {
+  opacity: 1;
+}
+
+.sendBlock img {
+  height: 100%;
+}
+
+.sendBlock input {
+  width: 100%;
+  height: 40px;
+  outline: none;
+  padding: 10px;
+  cursor: pointer;
+  resize: none;
+  border-radius: 10px;
+}
+
+.smiles {
+  position: relative;
+}
+
+.smiles .smilesBlock {
+  cursor: pointer;
+}
+
+.scrollButton {
+  position: fixed;
+  bottom: 110px;
+  right: 55px;
+  background-color: #333;
+  color: #fff;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 20px;
+  z-index: 10;
+}
+
+.newMessagesCount {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: #6200ea;
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.scrollArrow {
+  font-size: 20px;
+}
+

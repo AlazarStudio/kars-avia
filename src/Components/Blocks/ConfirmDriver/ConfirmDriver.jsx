@@ -267,8 +267,8 @@ function ConfirmDriver({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Не закрываем sidebar, если открыто модальное окно
-      if (showRejectModal) {
+      // Не закрываем sidebar, если открыты модальные окна
+      if (showRejectModal || imageModalOpen) {
         return;
       }
 
@@ -283,7 +283,7 @@ function ConfirmDriver({
       closeButton();
     };
 
-    if (show && !showRejectModal) {
+    if (show && !showRejectModal && !imageModalOpen) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -292,7 +292,7 @@ function ConfirmDriver({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, showRejectModal, closeButton]);
+  }, [show, showRejectModal, imageModalOpen, closeButton]);
 
   const getStatusText = (status) => {
     switch (status) {
@@ -766,8 +766,8 @@ function ConfirmDriver({
             alt="Увеличенное изображение"
             onMouseDown={handleMouseDown}
             style={{
-              maxWidth: "100%",
-              maxHeight: "100%",
+              maxWidth: "90%",
+              maxHeight: "90%",
               transform: `scale(${imageZoom}) translate(${imagePosition.x / imageZoom}px, ${imagePosition.y / imageZoom}px)`,
               cursor: imageZoom > 1 ? (isDragging ? "grabbing" : "grab") : "default",
               transition: isDragging ? "none" : "transform 0.1s ease-out",

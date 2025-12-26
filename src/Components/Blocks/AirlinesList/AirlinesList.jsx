@@ -33,9 +33,21 @@ function AirlinesList({ children, representative, ...props }) {
   const [airports, setAirports] = useState([]); // Список аэропортов
   const [cities, setCities] = useState([]); // Список аэропортов
 
-  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION);
+  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
   const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION
+    GET_AIRLINES_UPDATE_SUBSCRIPTION, {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
   );
 
   const location = useLocation();
