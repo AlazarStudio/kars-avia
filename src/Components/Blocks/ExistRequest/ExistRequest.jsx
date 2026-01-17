@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import classes from "./ExistRequest.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
@@ -11,6 +11,8 @@ import {
   GET_AIRLINE,
   GET_AIRLINE_POSITIONS,
   GET_REQUEST,
+  GET_HOTELS_RELAY,
+  GET_HOTEL_ROOMS,
   getCookie,
   REQUEST_UPDATED_SUBSCRIPTION,
   SAVE_HANDLE_EXTEND_MUTATION,
@@ -107,6 +109,13 @@ function ExistRequest({
   const [isEditing, setIsEditing] = useState(false);
   const [isEditing2, setIsEditing2] = useState(false);
 
+  // Состояние для изменения гостиницы и номера
+  const [hotels, setHotels] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [selectedHotelId, setSelectedHotelId] = useState(null);
+  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [selectedPlace, setSelectedPlace] = useState(null);
+
   const [showDelete, setShowDelete] = useState(false);
 
   const openDeleteComponent = () => {
@@ -186,6 +195,10 @@ function ExistRequest({
     setNewStaffId(null);
     setIsEditing(false);
     setIsEditing2(false);
+    // Сброс состояния гостиницы и номера
+    setSelectedHotelId(null);
+    setSelectedRoomId(null);
+    setSelectedPlace(null);
   }, [onClose, setChooseRequestID]);
 
   const resetForm = useCallback(() => setActiveTab("Общая"), []);
@@ -306,22 +319,54 @@ function ExistRequest({
     if (isEditing) {
       setIsLoading(true);
       try {
-        const response = await updateRequestRelay({
+        // Определяем, что изменилось
+        const hotelIdChanged = canChangeHotel && selectedHotelId && selectedHotelId !== formData.hotelId;
+        const roomOrPlaceChanged = canChangeHotel && 
+          selectedRoomId && 
+          (selectedRoomId !== formData.hotelChess?.room?.id ||
+           selectedPlace !== formData.hotelChess?.place);
+        const hotelRoomChangeAllowed = canChangeHotel && selectedHotelId && selectedRoomId;
+
+        // Подготовка input для UPDATE_REQUEST_RELAY
+        const requestInput = {
+          arrival: `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`,
+          departure: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
+          status:
+            formData.status === "opened" || formData.status === "created"
+              ? formData.status
+              : newStatus,
+        };
+
+        // Добавляем изменения гостиницы/номера/места только при валидном выборе
+        if (hotelRoomChangeAllowed && (hotelIdChanged || roomOrPlaceChanged)) {
+          if (!canChangeHotel) {
+            alert("Невозможно сохранить изменения: дата заезда уже наступила.");
+            setIsLoading(false);
+            return;
+          }
+
+          if (hotelIdChanged) {
+            requestInput.hotelId = selectedHotelId;
+          }
+
+          if (roomOrPlaceChanged) {
+            const selectedRoom = rooms.find((room) => room.id === selectedRoomId);
+            requestInput.roomId = selectedRoomId;
+            // requestInput.place = selectedRoom?.places > 1 ? Number(selectedPlace) : null;
+          }
+
+          if (formData?.person?.id) {
+            requestInput.personId = formData.person.id;
+          }
+        }
+
+        // Сохранение изменений дат и hotelId (если изменился)
+        await updateRequestRelay({
           variables: {
             updateRequestId: chooseRequestID,
-            input: {
-              // requestId: chooseRequestID,
-              arrival: `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`,
-              departure: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
-              status:
-                formData.status === "opened" || formData.status === "created"
-                  ? formData.status
-                  : newStatus,
-              // newEndName: formDataExtend.departureName,
-            },
+            input: requestInput,
           },
         });
-        // console.log(response);
 
         alert(
           user?.airlineId && formData.status !== "created"
@@ -347,7 +392,7 @@ function ExistRequest({
               ? parseDateTime(formData.arrival).time
               : "",
         }));
-        // await refetch(); // Обновляем данные после изменения
+        await refetch(); // Обновляем данные после изменения
       } catch (error) {
         console.error("Ошибка при сохранении:", error);
         if (
@@ -370,8 +415,12 @@ function ExistRequest({
               ? parseDateTime(formData.arrival).time
               : "",
           }));
-        } else {
-          // alert("Ошибка при сохранении");
+        } else if (
+          String(error).startsWith(
+            "ApolloError: Error: Невозможно разместить заявку: свободных мест нет"
+          )
+        ) {
+          alert("Свободных мест в этом номере нет");
         }
       } finally {
         setIsLoading(false);
@@ -379,6 +428,36 @@ function ExistRequest({
     }
     setIsEditing(!isEditing);
   };
+
+  // Обработчики для изменения гостиницы и номера
+  const handleHotelChange = useCallback((event, newValue) => {
+    if (newValue) {
+      // newValue теперь объект гостиницы, а не строка
+      setSelectedHotelId(newValue.id);
+      setSelectedRoomId(null);
+      setSelectedPlace(null);
+    } else {
+      setSelectedHotelId(null);
+      setSelectedRoomId(null);
+      setSelectedPlace(null);
+    }
+  }, []);
+
+  const handleRoomChange = useCallback((event, newValue) => {
+    if (newValue) {
+      // newValue теперь объект номера, а не строка
+      setSelectedRoomId(newValue.id);
+      // Если номер двухместный (type === 2), нужно выбрать место
+      if (newValue.type === 2 && !selectedPlace) {
+        setSelectedPlace(1); // По умолчанию место 1
+      } else if (newValue.type !== 2) {
+        setSelectedPlace(null);
+      }
+    } else {
+      setSelectedRoomId(null);
+      setSelectedPlace(null);
+    }
+  }, [selectedPlace]);
 
   // console.log(formDataExtend);
 
@@ -528,6 +607,34 @@ function ExistRequest({
     variables: { airlineId: formData?.airline?.id },
   });
 
+  // Запрос для получения списка гостиниц
+  const { data: hotelsData, loading: hotelsLoading } = useQuery(
+    GET_HOTELS_RELAY,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  );
+
+  // Запрос для получения номеров выбранной гостиницы
+  const {
+    data: roomsData,
+    loading: roomsLoading,
+    refetch: refetchRooms,
+  } = useQuery(GET_HOTEL_ROOMS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: { hotelId: selectedHotelId },
+    skip: !selectedHotelId,
+    fetchPolicy: "network-only",
+  });
+
   const {
     loading: airlinePositionsLoading,
     error: airlinePositionsError,
@@ -556,6 +663,56 @@ function ExistRequest({
       setPositions(airlinePositionsData?.getAirlinePositions);
     }
   }, [airlinePositionsData]);
+
+  // Инициализация списка гостиниц
+  useEffect(() => {
+    if (hotelsData && hotelsData.hotels?.hotels) {
+      const filteredHotels = hotelsData.hotels.hotels.filter(
+        (h) => h.information?.city?.trim() === formData?.airport?.city?.trim()
+      )
+      setHotels(filteredHotels);
+    }
+  }, [hotelsData, formData]);
+
+  // Инициализация списка номеров при выборе гостиницы
+  useEffect(() => {
+    if (roomsData && roomsData.hotel?.rooms) {
+      setRooms(roomsData.hotel.rooms);
+    } else {
+      setRooms([]);
+    }
+  }, [roomsData, selectedHotelId]);
+
+
+  // Инициализация значений гостиницы и номера при загрузке заявки
+  useEffect(() => {
+    if (formData && show) {
+      if (formData.hotel?.id) {
+        setSelectedHotelId(formData.hotel.id);
+      }
+      if (formData.hotelChess?.room?.id) {
+        setSelectedRoomId(formData.hotelChess.room.id);
+        setSelectedPlace(formData.hotelChess.place || null);
+      }
+    }
+  }, [formData, show]);
+
+  // Проверка, можно ли изменять гостиницу и номер (дата заезда еще не наступила)
+  const canChangeHotel = useMemo(() => {
+    if (!formData?.arrival) return false;
+    const arrivalDate = new Date(formData.arrival);
+    const now = new Date();
+    return arrivalDate > now;
+  }, [formData?.arrival]);
+
+  // Динамические опции для выбора места в номере на основе количества мест
+  const placeOptions = useMemo(() => {
+    const selectedRoom = rooms.find((r) => r.id === selectedRoomId);
+    if (!selectedRoom || !selectedRoom.places || selectedRoom.places <= 1) {
+      return [];
+    }
+    return Array.from({ length: selectedRoom.places }, (_, i) => String(i + 1));
+  }, [rooms, selectedRoomId]);
 
   const handleSaveChanges = () => {
     setIsLoading(true);
@@ -594,6 +751,12 @@ function ExistRequest({
   };
 
   const handleUpdateRequest = async () => {
+    // Проверяем, можно ли редактировать гостиницу/номер при включении режима редактирования
+    if (!isEditing && !canChangeHotel) {
+      alert("Невозможно изменить гостиницу и номер: дата заезда уже наступила.");
+      return;
+    }
+    
     if (isEditing) {
       await handleExtendChangeRequest();
       await refetch();
@@ -940,22 +1103,141 @@ function ExistRequest({
                               {formData?.airport?.city}
                             </div>
                           </div>
-                          <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>
-                              Гостиница
-                            </div>
-                            <div className={classes.requestDataInfo_desc}>
-                              {formData.hotel?.name || "—"}
-                            </div>
-                          </div>
-                          <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>
-                              Номер комнаты
-                            </div>
-                            <div className={classes.requestDataInfo_desc}>
-                              {formData.hotelChess?.room?.name || "—"}
-                            </div>
-                          </div>
+                          {isEditing && canChangeHotel ? (
+                            <>
+                              <div className={classes.requestDataInfo}>
+                                <div className={classes.requestDataInfo_title}>
+                                  Гостиница
+                                </div>
+                                <MUIAutocompleteColor
+                                  dropdownWidth="60%"
+                                  label="Введите гостиницу"
+                                  options={hotels}
+                                  getOptionLabel={(option) =>
+                                    option
+                                      ? `${option.name}, город: ${option?.information?.city || "не указан"}`.trim()
+                                      : ""
+                                  }
+                                  renderOption={(optionProps, option) => {
+                                    const cityPart = `, город: ${option?.information?.city || "не указан"}`;
+                                    const labelText = `${option.name}${cityPart}`.trim();
+                                    const words = labelText.split(", ");
+                                    return (
+                                      <li {...optionProps} key={option.id}>
+                                        {words.map((word, index) => (
+                                          <span
+                                            key={index}
+                                            style={{
+                                              color: index === 0 ? "black" : "gray",
+                                              marginRight: 4,
+                                            }}
+                                          >
+                                            {word}
+                                          </span>
+                                        ))}
+                                      </li>
+                                    );
+                                  }}
+                                  value={
+                                    hotels.find((h) => h.id === selectedHotelId) || null
+                                  }
+                                  onChange={handleHotelChange}
+                                  isDisabled={!isEditing}
+                                />
+                              </div>
+                              {selectedHotelId && (
+                                <>
+                                  <div className={classes.requestDataInfo}>
+                                    <div className={classes.requestDataInfo_title}>
+                                      Номер
+                                    </div>
+                                    {roomsLoading ? (
+                                      <MUILoader loadSize={"20px"} />
+                                    ) : (
+                                      <MUIAutocompleteColor
+                                        dropdownWidth="60%"
+                                        label="Введите номер"
+                                        options={rooms}
+                                        getOptionLabel={(option) =>
+                                          option
+                                            ? `${option.name}${option.roomKind?.name ? `, ${option.roomKind.name}` : ""}`.trim()
+                                            : ""
+                                        }
+                                        renderOption={(optionProps, option) => {
+                                          const kindPart = option.roomKind?.name ? `, ${option.roomKind.name}` : "";
+                                          const labelText = `${option.name}${kindPart}`.trim();
+                                          const words = labelText.split(", ");
+                                          return (
+                                            <li {...optionProps} key={option.id}>
+                                              {words.map((word, index) => (
+                                                <span
+                                                  key={index}
+                                                  style={{
+                                                    color: index === 0 ? "black" : "gray",
+                                                    marginRight: 4,
+                                                  }}
+                                                >
+                                                  {word}
+                                                </span>
+                                              ))}
+                                            </li>
+                                          );
+                                        }}
+                                        value={
+                                          rooms.find((r) => r.id === selectedRoomId) || null
+                                        }
+                                        onChange={handleRoomChange}
+                                        isDisabled={!isEditing}
+                                      />
+                                    )}
+                                  </div>
+                                  {/* {selectedRoomId && (
+                                    <>
+                                      {rooms.find((r) => r.id === selectedRoomId)
+                                        ?.places > 1 && (
+                                        <>
+                                          <div className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title}>
+                                              Место в номере
+                                            </div>
+                                            <MUIAutocomplete
+                                              dropdownWidth="60%"
+                                              label="Выберите место"
+                                              options={placeOptions}
+                                              value={selectedPlace ? String(selectedPlace) : ""}
+                                              onChange={(event, newValue) => {
+                                                setSelectedPlace(newValue ? parseInt(newValue) : null);
+                                              }}
+                                              disabled={!isEditing}
+                                            />
+                                          </div>
+                                        </>
+                                      )}
+                                    </>
+                                  )} */}
+                                </>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div className={classes.requestDataInfo}>
+                                <div className={classes.requestDataInfo_title}>
+                                  Гостиница
+                                </div>
+                                <div className={classes.requestDataInfo_desc}>
+                                  {formData.hotel?.name || "—"}
+                                </div>
+                              </div>
+                              <div className={classes.requestDataInfo}>
+                                <div className={classes.requestDataInfo_title}>
+                                  Номер комнаты
+                                </div>
+                                <div className={classes.requestDataInfo_desc}>
+                                  {formData.hotelChess?.room?.name || "—"}
+                                </div>
+                              </div>
+                            </>
+                          )}
                           <div className={classes.requestDataInfo}>
                             <div className={classes.requestDataInfo_title}>
                               Заезд

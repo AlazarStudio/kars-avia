@@ -1,18 +1,16 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import classes from "./DraggableRequest.module.css";
+import React, { useEffect, useRef, useState } from "react";
+import classes from "./DraggableRequestV2.module.css";
 import ReactDOM from "react-dom";
-import { Box, Tooltip, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
 import { convertToDate, server } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
-import { ConstructionOutlined } from "@mui/icons-material";
 
-// Функция для ограничения значения в диапазоне
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
 
-const DraggableRequest = ({
+const DraggableRequestV2 = ({
   requestId,
   checkRoomsType,
   isClick,
@@ -30,7 +28,6 @@ const DraggableRequest = ({
   toggleRequestSidebar,
   isOverlay = false,
 }) => {
-  // Настройка dnd-kit
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: request.id.toString(),
@@ -45,7 +42,6 @@ const DraggableRequest = ({
   const checkIn = new Date(`${request.checkInDate}T${request.checkInTime}`);
   const checkOut = new Date(`${request.checkOutDate}T${request.checkOutTime}`);
 
-  // Рассчитываем смещения для позиционирования заявки
   const checkInOffset =
     (differenceInMilliseconds(checkIn, startDate) / (24 * 60 * 60 * 1000)) *
     dayWidth;
@@ -53,7 +49,6 @@ const DraggableRequest = ({
     (differenceInMilliseconds(checkOut, checkIn) / (24 * 60 * 60 * 1000)) *
     dayWidth;
 
-  // Функция выбора цвета в зависимости от статуса заявки
   const getStatusColors = (status) => {
     switch (status) {
       case "Забронирован":
@@ -90,22 +85,18 @@ const DraggableRequest = ({
     }
   }
 
-  // console.log(hotelAccess)
-  
   const [isBlinking, setIsBlinking] = useState(false);
   useEffect(() => {
-    // Если это целевая заявка — включаем мерцание
     if (requestId && request.requestID === requestId) {
       setIsBlinking(true);
       const timer = setTimeout(() => {
         setIsBlinking(false);
-      }, 4000); // секунды
+      }, 4000);
 
       return () => clearTimeout(timer);
     }
   }, [requestId, request.requestID]);
 
-  // Анимация мерцания для заявки со статусом "Ожидает"
   const blinkAnimation = `
     @keyframes blinkBackground {
       0% { background-color: rgb(194, 194, 194); border: 1px solid rgb(175, 175, 175) }
@@ -123,7 +114,6 @@ const DraggableRequest = ({
     };
   }, []);
 
-  // Сохраняем исходное состояние заявки для обработки ресайза
   const originalRequestRef = useRef(null);
   const handleResizeStart = () => {
     originalRequestRef.current = { ...request };
@@ -132,7 +122,6 @@ const DraggableRequest = ({
     onOpenModal(updatedRequest, originalRequestRef.current);
   };
 
-  // Обновление заявки при изменении размера
   const handleResize = (type, deltaDays) => {
     const updatedRequest = { ...request };
 
@@ -158,11 +147,7 @@ const DraggableRequest = ({
       }
     }
 
-    // Проверка пересечения заявок
     if (isOverlap(updatedRequest)) {
-      console.warn(
-        "Изменение размера заявки недопустимо: пересечение с другой заявкой!"
-      );
       return request;
     }
 
@@ -203,17 +188,15 @@ const DraggableRequest = ({
     });
   };
 
-  // Состояния и обработчики для тултипа
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [mouseIsMoving, setMouseIsMoving] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [startPosition, setStartPosition] = useState({ x: 0, y: 0 });
 
-  // Константы для позиционирования тултипа
-  const TOOLTIP_WIDTH = 370; // как указано в minWidth стилей
-  const TOOLTIP_HEIGHT = 200; // ориентировочная высота тултипа, подберите при необходимости
-  const OFFSET = 30; // отступ от курсора
-  const MARGIN = 5; // отступ от краёв окна
+  const TOOLTIP_WIDTH = 370;
+  const TOOLTIP_HEIGHT = 200;
+  const OFFSET = 30;
+  const MARGIN = 5;
 
   const handleMouseEnter = () => {
     setMouseIsMoving(false);
@@ -230,14 +213,12 @@ const DraggableRequest = ({
     setTooltipVisible(false);
   };
 
-  // Обновляем позицию тултипа с учетом переворота (если места снизу недостаточно) и ограничений по экрану
   const handleMouseMove = (e) => {
     setMouseIsMoving(true);
 
     if (!isDraggingGlobal) {
-      let rawX = e.clientX - TOOLTIP_WIDTH / 2; // Центрирование тултипа по оси X
+      let rawX = e.clientX - TOOLTIP_WIDTH / 2;
       let rawY;
-      // Если снизу от курсора места меньше, чем TOOLTIP_HEIGHT + OFFSET, показываем тултип над курсором
       if (window.innerHeight - e.clientY < TOOLTIP_HEIGHT + OFFSET) {
         rawY = e.clientY - TOOLTIP_HEIGHT - (OFFSET + 40);
       } else {
@@ -257,19 +238,19 @@ const DraggableRequest = ({
     }
   };
 
-  const handleMouseUp = (e) => {
+  const handleMouseUp = () => {
     if (isClick) {
       toggleRequestSidebar && toggleRequestSidebar(request.requestID);
     }
   };
 
-  const handleClick = (e) => {
+  const handleClick = () => {
     if (!isClick && !mouseIsMoving) {
       toggleRequestSidebar && toggleRequestSidebar(request.requestID);
     }
   };
 
-  let styleToolTip = {
+  const styleToolTip = {
     display: "flex",
     justifyContent: "space-between",
     fontSize: "14px",
@@ -277,21 +258,24 @@ const DraggableRequest = ({
 
   const baseHeight = request.status === "Ожидает" ? "65px" : "45px";
   const isPlaced = request.room && request.room.id && !isOverlay;
+  const isWaiting = request.status === "Ожидает";
   const style = {
     position: isPlaced ? "absolute" : "relative",
     top: isPlaced ? `${position * 50 + 2}px` : "auto",
     left: isPlaced ? `${checkInOffset}px` : "auto",
-    width: isOverlay ? `${duration}px` : isPlaced ? `${duration}px` : "100%",
-    minHeight: isOverlay ? undefined : baseHeight,
-    height: isOverlay ? baseHeight : undefined,
+    width: isWaiting
+      ? "100%"
+      : isOverlay
+      ? `${duration}px`
+      : isPlaced
+      ? `${duration}px`
+      : "100%",
+    // minHeight: isOverlay ? undefined : baseHeight,
+    // height: isOverlay ? baseHeight : undefined,
+    minHeight: baseHeight,
+    height: baseHeight,
     backgroundColor: backgroundColor,
-    animation:
-      // requestId &&
-      // request.requestID === requestId
-      // request.status === "Ожидает"
-      isBlinking
-        ? "blinkBackground 1s infinite"
-        : "none",
+    animation: isBlinking ? "blinkBackground 1s infinite" : "none",
     opacity: isDragging && !isOverlay ? 0 : request.isRequest ? showBlockRequest : showBlockReserve,
     border: `1px solid ${borderColor}`,
     borderRadius: "3px",
@@ -299,9 +283,7 @@ const DraggableRequest = ({
     alignItems: "center",
     justifyContent: "space-between",
     color:
-      !isBlinking && request?.status === "Ожидает"
-        ? "#1A1A1A"
-        : "#fff",
+      !isBlinking && request?.status === "Ожидает" ? "#1A1A1A" : "#fff",
     fontSize: "12px",
     zIndex: isDragging ? 10 : 2,
     userSelect: "none",
@@ -310,19 +292,17 @@ const DraggableRequest = ({
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : undefined,
-    pointerEvents: isOverlay || (isDragging && !isOverlay) ? "none" : "auto",
+    // pointerEvents: isOverlay || (isDragging && !isOverlay) ? "none" : "auto",
   };
-
-  // console.log(request.status);
 
   return (
     <>
       <Box sx={style}>
-        {/* Левая ручка для изменения начала */}
         {request.status !== "Ожидает" &&
           request.status !== "Архив" &&
           request.isRequest &&
-          showBlockRequest === 1 && (user?.hotelId && hotelAccess || !user?.hotelId) && (
+          showBlockRequest === 1 &&
+          (user?.hotelId && hotelAccess || !user?.hotelId) && (
             <Box
               onMouseDown={(e) => {
                 const startX = e.clientX;
@@ -372,7 +352,6 @@ const DraggableRequest = ({
             </Box>
           )}
 
-        {/* Центральная область для перетаскивания */}
         {request.isRequest && showBlockRequest === 1 ? (
           <Box
             ref={setNodeRef}
@@ -391,7 +370,6 @@ const DraggableRequest = ({
               alignItems: "center",
               textAlign: "left",
               justifyContent: "left",
-              // cursor: "grab",
               zIndex: 1,
               overflow: "hidden",
               padding: "0 5px",
@@ -411,14 +389,8 @@ const DraggableRequest = ({
                   src="/drag-vertical.svg"
                   alt=""
                   style={{
-                    // filter:
-                    // request.status === "Ожидает" &&
-                    // requestId !== request.requestID ? "brightness(0)" : null,
-                    filter:
-                      !isBlinking ? "brightness(0)" : null,
+                    filter: !isBlinking ? "brightness(0)" : null,
                     pointerEvents: "none",
-                    // width: "100%",
-                    // height: "100%",
                     height: "30px",
                     padding: "4px 0",
                     cursor: "ew-resize",
@@ -481,10 +453,7 @@ const DraggableRequest = ({
                     <p
                       className={classes.text}
                       style={{
-                        color:
-                          !isBlinking
-                            ? "var(--main-gray)"
-                            : "#fff",
+                        color: !isBlinking ? "var(--main-gray)" : "#fff",
                         fontSize: "11px",
                       }}
                     >
@@ -497,12 +466,7 @@ const DraggableRequest = ({
                     <p
                       className={classes.text}
                       style={{
-                        color:
-                          // request.status === "Ожидает" &&
-                          // requestId !== request.requestID
-                          !isBlinking
-                            ? "var(--main-gray)"
-                            : "#fff",
+                        color: !isBlinking ? "var(--main-gray)" : "#fff",
                         fontSize: "11px",
                       }}
                     >
@@ -535,7 +499,6 @@ const DraggableRequest = ({
               alignItems: "center",
               textAlign: "left",
               justifyContent: "left",
-              // cursor: "grab",
               zIndex: 1,
               overflow: "hidden",
               padding: "0 5px",
@@ -585,7 +548,6 @@ const DraggableRequest = ({
               alignItems: "center",
               textAlign: "left",
               justifyContent: "left",
-              // cursor: "grab",
               zIndex: 1,
               overflow: "hidden",
               padding: "0 5px",
@@ -627,11 +589,11 @@ const DraggableRequest = ({
           </Box>
         )}
 
-        {/* Правая ручка для изменения конца */}
         {request.status !== "Ожидает" &&
           request.status !== "Архив" &&
           request.isRequest &&
-          showBlockRequest === 1 && (user?.hotelId && hotelAccess || !user?.hotelId) && (
+          showBlockRequest === 1 &&
+          (user?.hotelId && hotelAccess || !user?.hotelId) && (
             <Box
               onMouseDown={(e) => {
                 const startX = e.clientX;
@@ -767,4 +729,4 @@ const DraggableRequest = ({
   );
 };
 
-export default DraggableRequest;
+export default DraggableRequestV2;

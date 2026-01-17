@@ -1548,6 +1548,12 @@ export const GET_HOTELS_RELAY = gql`
         information {
           city
         }
+        airport {
+          id
+          name
+          city
+          code
+        }
       }
     }
   }

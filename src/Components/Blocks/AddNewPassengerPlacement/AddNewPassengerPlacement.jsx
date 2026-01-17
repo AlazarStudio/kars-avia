@@ -7,6 +7,8 @@ import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../g
 import { roles } from "../../../roles";
 
 function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacement, user, hotelInfo, showChooseHotels, setshowModalForAddHotelInReserve, setShowReserveInfo }) {
+    if (!request) return null;
+    
     const [city, setCity] = useState("");
     const [hotel, setHotel] = useState('');
 
@@ -46,6 +48,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
     const [error, setError] = useState('');
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (!request) return;
         const maxCount = request.passengerCount;
         const maxCountChoose = request.passengerCount - showChooseHotels;
 
@@ -208,7 +211,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
                         name="passengers"
                         placeholder="Пример: 30"
                         min="1"
-                        max={(request.passengerCount - showChooseHotels) || 0}
+                        max={(request?.passengerCount - showChooseHotels) || 0}
                         value={formData.passengers}
                         onChange={handleChange}
                     />

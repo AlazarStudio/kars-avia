@@ -14,17 +14,26 @@ import {
 import { ru } from "date-fns/locale";
 
 const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth, setShowReserveInfo, setshowModalForAddHotelInReserve }) => {
+    // Убеждаемся, что currentMonth - это Date объект
+    const safeCurrentMonth = currentMonth instanceof Date ? currentMonth : new Date(currentMonth);
+    
     const daysInMonth = eachDayOfInterval({
-        start: startOfMonth(currentMonth),
-        end: endOfMonth(currentMonth),
+        start: startOfMonth(safeCurrentMonth),
+        end: endOfMonth(safeCurrentMonth),
     });
 
     const handlePreviousMonth = () => {
-        setCurrentMonth((prev) => addMonths(prev, -1));
+        setCurrentMonth((prev) => {
+            const prevDate = prev instanceof Date ? prev : new Date(prev);
+            return addMonths(prevDate, -1);
+        });
     };
 
     const handleNextMonth = () => {
-        setCurrentMonth((prev) => addMonths(prev, 1));
+        setCurrentMonth((prev) => {
+            const prevDate = prev instanceof Date ? prev : new Date(prev);
+            return addMonths(prevDate, 1);
+        });
     };
 
     const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
@@ -104,7 +113,7 @@ const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentM
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="subtitle2" sx={{ fontWeight: "bold", margin: "0 8px" }}>
-                        {capitalizeFirstLetter(format(currentMonth, "LLLL yyyy", { locale: ru }))}
+                        {capitalizeFirstLetter(format(safeCurrentMonth, "LLLL yyyy", { locale: ru }))}
                     </Typography>
                     <IconButton onClick={handleNextMonth} size="small">
                         <ArrowForwardIcon />
@@ -135,7 +144,7 @@ const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentM
                             >
                                 <Typography
                                     variant="caption"
-                                    sx={{ fontWeight: isCurrentDay ? "bold" : "normal" }}
+                                    sx={{ fontWeight: isCurrentDay ? "bold" : "normal", letterSpacing: 0 }}
                                 >
                                     {format(day, "d", { locale: ru })}
                                 </Typography>

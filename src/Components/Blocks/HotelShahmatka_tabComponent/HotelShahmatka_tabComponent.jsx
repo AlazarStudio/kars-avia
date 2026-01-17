@@ -5,6 +5,7 @@ import classes from './HotelShahmatka_tabComponent.module.css';
 import { CANCEL_REQUEST, GET_BRONS_HOTEL, GET_HOTEL_ROOMS, getCookie } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
 import NewPlacement from "../../PlacementDND/NewPlacement/NewPlacement.jsx";
+import NewPlacementV2 from "../../PlacementDNDV2/NewPlacementV2.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import { Menu, MenuItem } from "@mui/material";
 import Button from "../../Standart/Button/Button.jsx";
@@ -15,6 +16,8 @@ import StatusLegend from "../StatusLegend/StatusLegend.jsx";
 
 function HotelShahmatka_tabComponent({ id, user }) {
     const token = getCookie("token")
+    const isPlacementV2 =
+        new URLSearchParams(window.location.search).get("placementV2") === "1";
 
       const [showCreateRequest, setShowCreateRequest] = useState(false);
       const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -238,7 +241,13 @@ function HotelShahmatka_tabComponent({ id, user }) {
                 </div>*/}
             </div>
 
-            <NewPlacement idHotelInfo={id} searchQuery={searchQuery} user={user} />
+            {/* {isPlacementV2 ? (
+              <NewPlacement idHotelInfo={id} searchQuery={searchQuery} user={user} />
+            ) : (
+              <NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} />
+            )} */}
+
+<NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} />
 
             {/* {(hotelBronsInfo.length === 0) &&
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={[]} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />

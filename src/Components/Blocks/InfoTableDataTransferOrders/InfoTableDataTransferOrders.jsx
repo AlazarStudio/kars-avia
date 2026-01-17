@@ -233,7 +233,7 @@ function InfoTableDataTransferOrders({
             chatHeight={ 
               // "calc(100vh - 423px)"
               user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin
-                ? "calc(100vh - 282px)"
+                ? "calc(100vh - 352px)"
                 : "calc(100vh - 270px)"
             }
           />

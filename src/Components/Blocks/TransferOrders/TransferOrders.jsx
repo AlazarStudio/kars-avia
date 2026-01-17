@@ -356,7 +356,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     });
   }, [isSearching, allFilteredData, requests, filterData, searchQuery, user]);
 
-  console.log(disAdmin);
 
   const filterList = ["Азимут", "S7 airlines", "Северный ветер"];
 

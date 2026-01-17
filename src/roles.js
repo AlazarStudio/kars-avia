@@ -86,6 +86,7 @@ export const FILTER_OPTIONS = [
 
 export const action = [
   "Все под запрос",
+  "ЦРМ",
   "Фиксированная ставка",
   "Экипаж",
   "Пассажиры",

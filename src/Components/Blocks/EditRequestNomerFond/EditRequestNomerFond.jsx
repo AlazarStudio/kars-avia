@@ -41,7 +41,7 @@ function EditRequestNomerFond({
   const [selectedRoomKind, setSelectedRoomKind] = useState(null);
   const [hotelTariff, setHotelTariff] = useState([]);
 
-  const [coverImage, setCoverImage] = useState(nomer && nomer?.images[0]);
+  const [coverImage, setCoverImage] = useState(nomer && nomer?.images?.[0]);
   const [coverImage2, setCoverImage2] = useState(null);
 
   const [deletedImages, setDeletedImages] = useState([]);
@@ -315,6 +315,7 @@ function EditRequestNomerFond({
   //     // addNotification("Редактирование номера прошло успешно.", "success");
   //   }
   // };
+  
   const [reorderRoomKindImages] = useMutation(REORDER_ROOM_KIND_IMAGES, {
     context: {
       headers: {
