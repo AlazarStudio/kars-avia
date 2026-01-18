@@ -499,12 +499,12 @@ const DisAdminMenu = ({
         >
           <img src="/instruction.png" alt="" />
 
-          {/* {menuOpen ? "Инструкции" : ""} */}
+          {/* {menuOpen ? "Помощь" : ""} */}
           <DelayedText show={menuOpen} delay={200}>
-            Инструкции
+            Помощь
           </DelayedText>
           {!menuOpen && (
-            <span className={classes.tooltipBottom}>Инструкции</span>
+            <span className={classes.tooltipBottom}>Помощь</span>
           )}
         </Link>
         <Link

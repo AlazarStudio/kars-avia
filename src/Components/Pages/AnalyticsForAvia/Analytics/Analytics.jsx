@@ -84,6 +84,10 @@ export default Analytics;
 //         // Количество созданных заявок (5-50 штук)
 //         value = Math.floor(Math.random() * 45 + 5);
 //         break;
+//       case 'processedRequests':
+//         // Количество обработанных заявок (5-50 штук)
+//         value = Math.floor(Math.random() * 45 + 5);
+//         break;
 //       case 'averageTime':
 //         // Среднее время размещения (1-8 часов)
 //         value = Math.floor(Math.random() * 7 + 1) + Math.random();
@@ -95,6 +99,14 @@ export default Analytics;
 //       case 'activityTime':
 //         // Среднее время ожидания обработки (0.5-4 часа)
 //         value = Math.random() * 3.5 + 0.5;
+//         break;
+//       case 'processingTime':
+//         // Время обработки заявки (0.5-6 часов)
+//         value = Math.random() * 5.5 + 0.5;
+//         break;
+//       case 'systemWorkTime':
+//         // Время работы в системе (4-12 часов)
+//         value = Math.random() * 8 + 4;
 //         break;
 //       case 'duplicatedRequests':
 //         // Дублированные заявки (0-8 штук)

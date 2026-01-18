@@ -125,7 +125,7 @@ function DocumentationList({ children, user, ...props }) {
   return (
     <>
       <div className={classes.section}>
-        <Header>Инструкции</Header>
+        <Header>Помощь</Header>
 
         <div className={classes.section_searchAndFilter}>
           <div className={classes.section_searchAndFilter}>

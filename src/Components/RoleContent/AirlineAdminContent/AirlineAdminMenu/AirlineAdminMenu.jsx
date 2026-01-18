@@ -448,11 +448,11 @@ const AirlineAdminMenu = ({
           <img src="/instruction.png" alt="" />
         </div>
 
-        {/* {menuOpen ? "Инструкции" : ""} */}
+        {/* {menuOpen ? "Помощь" : ""} */}
         <DelayedText show={menuOpen} delay={200}>
-          Инструкции
+          Помощь
         </DelayedText>
-        {!menuOpen && <span className={classes.tooltip}>Инструкции</span>}
+        {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
       </Link>
       {accessMenu?.analyticsMenu && (
         <Link

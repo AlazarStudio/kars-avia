@@ -276,9 +276,9 @@ const RepresentativeAdminMenu = ({
           </div>
 
           <DelayedText show={menuOpen} delay={200}>
-            Инструкции
+            Помощь
           </DelayedText>
-          {!menuOpen && <span className={classes.tooltip}>Инструкции</span>}
+          {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
         </Link>
       </div>
       {/* <div
@@ -296,10 +296,10 @@ const RepresentativeAdminMenu = ({
           <img src="/instruction.png" alt="" />
 
           <DelayedText show={menuOpen} delay={200}>
-            Инструкции
+            Помощь
           </DelayedText>
           {!menuOpen && (
-            <span className={classes.tooltipBottom}>Инструкции</span>
+            <span className={classes.tooltipBottom}>Помощь</span>
           )}
         </Link>
         <Link

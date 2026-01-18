@@ -377,7 +377,6 @@ export default AirlineAnalytics;
 //   startOfToday,
 //   format,
 //   eachDayOfInterval,
-//   differenceInDays,
 // } from "date-fns";
 // import {
 //   GET_AIRLINES,
@@ -440,6 +439,11 @@ export default AirlineAnalytics;
 //     },
 //   });
 
+//   // useEffect(() => {
+//   //   if (airlinesData?.airlines?.airlines) {
+//   //     setAirlines(airlinesData.airlines.airlines || []);
+//   //   }
+//   // }, [airlinesData]);
 //   useEffect(() => {
 //     const conn = airlinesData?.airlines;
 //     const page = conn?.airlines ?? [];
@@ -448,13 +452,14 @@ export default AirlineAnalytics;
 //     if (page.length) {
 //       setAirlines(page);
 //       setTotal(count);
-//       setHasMore(page.length < count);
+//       setHasMore(page.length < count); // если пришло меньше total — показываем кнопку
 //     }
 //     if (user?.airlineId) {
 //       setSelectedAirline(page.find((i) => i.id === user?.airlineId));
 //     }
 //   }, [airlinesData, user]);
 
+//   // 4) догрузка следующих 15
 //   const handleLoadMore = async () => {
 //     const nextTake = Math.min(
 //       airlines.length + PAGE_SIZE,
@@ -469,9 +474,9 @@ export default AirlineAnalytics;
 //     const newList = conn?.airlines ?? [];
 //     const newTotal = conn?.totalCount ?? total;
 
-//     setAirlines(newList);
+//     setAirlines(newList); // просто заменяем массив на «первые nextTake»
 //     setTotal(newTotal);
-//     setHasMore(newList.length < newTotal);
+//     setHasMore(newList.length < newTotal); // если всё забрали — кнопка исчезает
 //   };
 
 //   const airlineId = selectedAirline ? selectedAirline.id : airlines[0]?.id;
@@ -518,46 +523,18 @@ export default AirlineAnalytics;
 //   const handleSearch = (e) => {
 //     setSearchQuery(e.target.value);
 //   };
-  
 //   // const createdRequests = fillMissingDates(
 //   //   rawCreatedRequests,
 //   //   dateRange.startDate,
 //   //   dateRange.endDate
 //   // );
 
-//   // Генерация подставных данных для всех графиков
-//   const createdRequests = useMemo(() => 
+//     const createdRequests = useMemo(() => 
 //     generateMockData(dateRange.startDate, dateRange.endDate, 'createdRequests'),
 //     [dateRange]
 //   );
 
-//   const averagePlacementTime = useMemo(() => 
-//     generateMockData(dateRange.startDate, dateRange.endDate, 'averageTime'),
-//     [dateRange]
-//   );
-
-//   const crmTimeData = useMemo(() => 
-//     generateMockData(dateRange.startDate, dateRange.endDate, 'crmTime'),
-//     [dateRange]
-//   );
-
-//   const activityTimeData = useMemo(() => 
-//     generateMockData(dateRange.startDate, dateRange.endDate, 'activityTime'),
-//     [dateRange]
-//   );
-
-//   const duplicatedRequestsData = useMemo(() => 
-//     generateMockData(dateRange.startDate, dateRange.endDate, 'duplicatedRequests'),
-//     [dateRange]
-//   );
-
-//     // Генерация данных для pie-чартов
-//   const cancelledRequestsData = useMemo(() => 
-//     generatePieData(['Отработанные', 'Отмененные'], [200, 800]),
-//     [dateRange]
-//   );
-
-//   const statusRequestsData = useMemo(() => 
+//     const statusRequestsData = useMemo(() => 
 //     generatePieData([
 //       "Создано",
 //       "Продлено", 
@@ -569,6 +546,23 @@ export default AirlineAnalytics;
 //       "Архив"
 //     ], [300, 1000]),
 //     [dateRange]
+//   );
+
+//   // Генерация mock-данных для новых графиков
+//   const requestsByCities = useMemo(() => 
+//     generatePieData ? generatePieData(
+//       ["Москва", "Санкт-Петербург", "Сочи", "Казань", "Екатеринбург", "Новосибирск"],
+//       [200, 800]
+//     ) : [],
+//     [generatePieData, dateRange]
+//   );
+
+//   const requestsByType = useMemo(() => 
+//     generatePieData ? generatePieData(
+//       ["Трансфер", "Эстафета", "Сбойная ситуация"],
+//       [300, 1000]
+//     ) : [],
+//     [generatePieData, dateRange]
 //   );
 
 //   const filteredAirlines = useMemo(() => {
@@ -584,6 +578,7 @@ export default AirlineAnalytics;
 //       {user?.airlineId ? null : (
 //         <div className={classes.sidebarContainer}>
 //           <div className={classes.searchContainer}>
+//             {/* <input type="text" placeholder="Поиск" name="search" id="search" value={searchQuery} onChange={handleSearch}/> */}
 //             <MUITextField
 //               label={"Поиск"}
 //               value={searchQuery}
@@ -676,61 +671,19 @@ export default AirlineAnalytics;
 
 //               <AnalyticsChart
 //                 type="pie"
-//                 title="Отмененные заявки"
-//                 // data={[
-//                 //   {
-//                 //     x: "Отработанные",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.totalCreatedRequests || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Отмененые",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.totalCancelledRequests ||
-//                 //       0,
-//                 //   },
-//                 // ]}
-//                 data={cancelledRequestsData}
+//                 title="Заявки по городам"
+//                 data={requestsByCities}
 //                 xKey="x"
 //                 dataKey="value"
 //               />
-//             </div>
 
-//             {/* <div className={classes.row}>
-//                             <AnalyticsChart
-//                 type="line"
-//                 title="Среднее время размещения (часы)"
-//                 data={averagePlacementTime}
-//                 xKey="date"
-//                 yKey="hours"
-//               />
-
-//               <AnalyticsChart
-//                 type="bar"
-//                 title="Количество проведенного времени в CRM (часы)"
-//                 data={crmTimeData}
-//                 xKey="date"
-//                 yKey="hours"
-//               />
-//             </div> */}
-
-//             <div className={classes.row}>
-
-//               <AnalyticsChart
-//                 type="line"
-//                 title="Среднее время ожидания обработки заявки"
-//                 data={activityTimeData}
-//                 xKey="date"
-//                 yKey="hours"
-//               />
-
-//               <AnalyticsChart
-//                 type="bar"
-//                 title="Количество дублированных заявок"
-//                 data={duplicatedRequestsData}
-//                 xKey="date"
-//                 yKey="count"
-//               />
+//               {/* <AnalyticsChart
+//                   type="line"
+//                   title="Среднее время ожидания обработки заявки"
+//                   data={filteredAverageTime}
+//                   xKey="date"
+//                   yKey="hours"
+//                 /> */}
 //             </div>
 
 //             <div className={classes.row}>
@@ -738,53 +691,14 @@ export default AirlineAnalytics;
 //                 type="pie"
 //                 title="Заявки по статусам"
 //                 data={statusRequestsData}
-//                 // data={[
-//                 //   {
-//                 //     x: "Создано",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.created || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Продлено",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.extended ||
-//                 //       0,
-//                 //   },
-//                 //   {
-//                 //     x: "Забронировано",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.done || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Ранний заезд",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.earlyStart ||
-//                 //       0,
-//                 //   },
-//                 //   {
-//                 //     x: "Перенесено ",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts
-//                 //         ?.transferred || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Сокращено ",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.reduced || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Готово к архиву ",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.archiving ||
-//                 //       0,
-//                 //   },
-//                 //   {
-//                 //     x: "Архив",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.archived ||
-//                 //       0,
-//                 //   },
-//                 // ]}
+//                 xKey="x"
+//                 dataKey="value"
+//               />
+
+//               <AnalyticsChart
+//                 type="pie"
+//                 title="Заявки по типу"
+//                 data={requestsByType}
 //                 xKey="x"
 //                 dataKey="value"
 //               />

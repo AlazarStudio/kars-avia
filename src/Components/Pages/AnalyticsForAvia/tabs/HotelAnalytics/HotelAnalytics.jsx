@@ -515,29 +515,13 @@ export default HotelAnalytics;
 //     setSearchQuery(e.target.value);
 //   };
 
-//   // const createdRequests = fillMissingDates(
-//   //   rawCreatedRequests,
-//   //   dateRange.startDate,
-//   //   dateRange.endDate
-//   // );
-
-//   const createdRequests = useMemo(
-//     () =>
-//       generateMockData(
-//         dateRange.startDate,
-//         dateRange.endDate,
-//         "createdRequests"
-//       ),
-//     [dateRange]
+//   const createdRequests = fillMissingDates(
+//     rawCreatedRequests,
+//     dateRange.startDate,
+//     dateRange.endDate
 //   );
 
-//   // Генерация данных для pie-чартов
-//   const cancelledRequestsData = useMemo(
-//     () => generatePieData(["Отработанные", "Отмененные"], [200, 800]),
-//     [dateRange]
-//   );
-
-//   const statusRequestsData = useMemo(
+//     const statusRequestsData = useMemo(
 //     () =>
 //       generatePieData(
 //         [
@@ -555,10 +539,23 @@ export default HotelAnalytics;
 //     [dateRange]
 //   );
 
-//   const averagePlacementTime = useMemo(
-//     () =>
-//       generateMockData(dateRange.startDate, dateRange.endDate, "averageTime"),
-//     [dateRange]
+//   // Генерация mock-данных для новых графиков
+//   const processedRequests = useMemo(() => 
+//     generateMockData ? generateMockData(dateRange.startDate, dateRange.endDate, 'processedRequests') : [],
+//     [generateMockData, dateRange]
+//   );
+
+//   const processingTime = useMemo(() => 
+//     generateMockData ? generateMockData(dateRange.startDate, dateRange.endDate, 'processingTime') : [],
+//     [generateMockData, dateRange]
+//   );
+
+//   const requestsByType = useMemo(() => 
+//     generatePieData ? generatePieData(
+//       ["Эстафета", "Сбойные ситуации"],
+//       [200, 600]
+//     ) : [],
+//     [generatePieData, dateRange]
 //   );
 
 //   //   const filteredAirlines = airlines.filter((item) =>
@@ -651,104 +648,45 @@ export default HotelAnalytics;
 //             <div className={classes.row}>
 //               <AnalyticsChart
 //                 type="bar"
-//                 title="Количество созданных заявок"
-//                 data={createdRequests}
+//                 title="Количество обработанных заявок"
+//                 data={processedRequests}
 //                 xKey="date"
 //                 yKey="count"
 //               />
 
 //               <AnalyticsChart
-//                 type="pie"
-//                 title="Отмененные заявки"
-//                 data={cancelledRequestsData}
-//                 // data={[
-//                 //   {
-//                 //     x: "Отработанные",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.totalCreatedRequests || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Отмененые",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.totalCancelledRequests ||
-//                 //       0,
-//                 //   },
-//                 // ]}
-//                 xKey="x"
-//                 dataKey="value"
+//                 type="line"
+//                 title="Время обработки заявки"
+//                 data={processingTime}
+//                 xKey="date"
+//                 yKey="hours"
 //               />
+
+//               {/* <AnalyticsChart
+//                   type="line"
+//                   title="Среднее время ожидания обработки заявки"
+//                   data={filteredAverageTime}
+//                   xKey="date"
+//                   yKey="hours"
+//                 /> */}
 //             </div>
 
 //             <div className={classes.row}>
 //               <AnalyticsChart
-//                 type="line"
-//                 title="Среднее время размещения (в часах)"
-//                 data={averagePlacementTime}
-//                 xKey="date"
-//                 yKey="hours"
-//               />
-//               <AnalyticsChart
 //                 type="pie"
 //                 title="Заявки по статусам"
 //                 data={statusRequestsData}
-//                 // data={[
-//                 //   {
-//                 //     x: "Создано",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.created || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Продлено",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.extended ||
-//                 //       0,
-//                 //   },
-//                 //   {
-//                 //     x: "Забронировано",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.done || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Ранний заезд",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.earlyStart ||
-//                 //       0,
-//                 //   },
-//                 //   {
-//                 //     x: "Перенесено ",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts
-//                 //         ?.transferred || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Сокращено ",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.reduced || 0,
-//                 //   },
-//                 //   {
-//                 //     x: "Готово к архиву ",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.archiving ||
-//                 //       0,
-//                 //   },
-//                 //   {
-//                 //     x: "Архив",
-//                 //     value:
-//                 //       data?.analyticsEntityRequests?.statusCounts?.archived ||
-//                 //       0,
-//                 //   },
-//                 // ]}
 //                 xKey="x"
 //                 dataKey="value"
 //               />
 
-//               {/* <AnalyticsChart
-//                   type="bar"
-//                   title="Количество дублированных заявок"
-//                   data={filteredDuplicated}
-//                   xKey="date"
-//                   yKey="count"
-//                 /> */}
+//               <AnalyticsChart
+//                 type="pie"
+//                 title="Заявки по типу"
+//                 data={requestsByType}
+//                 xKey="x"
+//                 dataKey="value"
+//               />
 //             </div>
 //           </div>
 //         </div>

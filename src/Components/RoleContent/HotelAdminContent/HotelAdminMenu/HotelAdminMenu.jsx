@@ -391,9 +391,9 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       >
         <img src="/instruction.png" alt="" />
 
-        {/* {menuOpen ? "Инструкции" : ""} */}
-        <DelayedText show={menuOpen} delay={200} >Инструкции</DelayedText>
-        {!menuOpen && <span className={classes.tooltip}>Инструкции</span>}
+        {/* {menuOpen ? "Помощь" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Помощь</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
       </Link>
     </>
   );
