@@ -239,7 +239,7 @@ function EditAdditionalAgreement({
                     disabled={!isEditing}
                   ></textarea>
                 </>
-              ) : (
+              ) : local.notes ? (
                 <div className={classes.notesWrapper}>
                   <div className={classes.notesHeader}>
                     <p>Комментарий</p>
@@ -247,7 +247,7 @@ function EditAdditionalAgreement({
                   </div>
                   <div className={classes.notes}>{local.notes}</div>
                 </div>
-              )}
+              ) : null}
 
               <label>Файлы ДС</label>
               {/* {console.log(local.files)} */}

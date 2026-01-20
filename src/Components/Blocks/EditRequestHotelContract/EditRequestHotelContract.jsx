@@ -812,7 +812,7 @@ function EditRequestHotelContract({
                         disabled={!isEditing}
                       ></textarea>
                     </>
-                  ) : (
+                  ) : formData.notes ? (
                     <div className={classes.notesWrapper}>
                       <div className={classes.notesHeader}>
                         <p>Комментарий</p>
@@ -820,7 +820,7 @@ function EditRequestHotelContract({
                       </div>
                       <div className={classes.notes}>{formData.notes}</div>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* <label>Файлы договора</label> */}
                   {/* <input

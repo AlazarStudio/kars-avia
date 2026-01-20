@@ -48,7 +48,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
   const token = getCookie("token");
 
   const [checkRoomsType, setCheckRoomsType] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [hasInitialLoadCompleted, setHasInitialLoadCompleted] = useState(false);
 
   const [showEditNomer, setShowEditNomer] = useState(false);
   const [selectedNomer, setSelectedNomer] = useState(null);
@@ -86,7 +86,12 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
 
   const {
     hotelInfo,
+    loadingHotel,
     loadingRooms,
+    loadingRequests,
+    loadingReserves,
+    loadingReserveOne,
+    loadingHotelReserveOne,
     rooms,
     roomsRefetch,
     requests,
@@ -110,6 +115,26 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
     openReserveId,
     showModalForAddHotelInReserve,
   });
+
+  const initialLoading =
+    Boolean(hotelId) &&
+    (loadingHotel ||
+      loadingRooms ||
+      bronLoading ||
+      loadingRequests ||
+      loadingReserves ||
+      loadingReserveOne ||
+      loadingHotelReserveOne);
+
+  useEffect(() => {
+    if (!initialLoading && !hasInitialLoadCompleted) {
+      setHasInitialLoadCompleted(true);
+    }
+  }, [hasInitialLoadCompleted, initialLoading]);
+
+  useEffect(() => {
+    setHasInitialLoadCompleted(false);
+  }, [hotelId]);
 
   const [updateHotelBron] = useMutation(UPDATE_HOTEL_BRON, {
     context: {
@@ -336,7 +361,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
       }
 
       try {
-        setIsLoading(true);
         await updateHotelBron({
           variables: {
             updateHotelId: hotelId,
@@ -348,10 +372,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
           "success"
         );
       } catch (err) {
-        setIsLoading(false);
         addNotification("Ошибка при перемещении внутри номера", "error");
-      } finally {
-        setIsLoading(false);
       }
       return;
     }
@@ -508,7 +529,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
           }
 
           try {
-            setIsLoading(true);
             await updateHotelBron({
               variables: {
                 updateHotelId: hotelId,
@@ -521,8 +541,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
               "Произошла ошибка при подтверждении бронирования",
               "error"
             );
-          } finally {
-            setIsLoading(false);
           }
         }
       } else {
@@ -596,7 +614,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
     setIsModalOpen(false);
 
     try {
-      setIsLoading(true);
       await updateRequest({
         variables: {
           updateRequestId: requestToSave.requestID,
@@ -633,8 +650,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
       );
     } catch (err) {
       console.log("Произошла ошибка при подтверждении бронирования", err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -688,7 +703,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
     }
 
     try {
-      setIsLoading(true);
       setSelectedRequest(null);
       setIsConfirmModalOpen(false);
       await updateHotelBron({
@@ -701,8 +715,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
       refetchHotelReserveOne();
     } catch (err) {
       console.error("Произошла ошибка при подтверждении бронирования", err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -1639,7 +1651,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
         user={user}
       />
 
-      {(loadingRooms || isLoading || bronLoading) && (
+      {!hasInitialLoadCompleted && initialLoading && (
         <Box
           sx={{
             position: "absolute",

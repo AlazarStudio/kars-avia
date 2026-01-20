@@ -314,14 +314,6 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
   return (
     <>
       <div className={classes.section_searchAndFilter}>
-        {/* <input
-                    type="text"
-                    placeholder="Поиск по аккаунтам"
-                    // placeholder="Поиск по номеру"
-                    style={{ 'width': '500px' }}
-                    value={searchTarif}
-                    onChange={handleSearchTarif}
-                /> */}
         <MUITextField
           label={"Поиск по аккаунтам"}
           className={classes.mainSearch}

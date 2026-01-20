@@ -583,7 +583,7 @@ function EditRequestAirlineContract({
                         disabled={!isEditing}
                       ></textarea>
                     </>
-                  ) : (
+                  ) : formData.notes ? (
                     <div className={classes.notesWrapper}>
                       <div className={classes.notesHeader}>
                         <p>Комментарий</p>
@@ -591,7 +591,7 @@ function EditRequestAirlineContract({
                       </div>
                       <div className={classes.notes}>{formData.notes}</div>
                     </div>
-                  )}
+                  ) : null}
 
                   {/* <label>Файлы договора</label> */}
                   {/* <input
