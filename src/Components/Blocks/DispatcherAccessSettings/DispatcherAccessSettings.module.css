@@ -1,0 +1,117 @@
+.section {
+    width: 100%;
+    min-width: 1000px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 30px;
+    overflow: hidden;
+    position: relative;
+}
+
+.titleHeader {
+    display: flex;
+    gap: 10px;
+    font-family: Inter;
+    font-size: 32px;
+    font-weight: 500;
+    line-height: 38.73px;
+}
+
+.backButton {
+    width: 35px;
+    height: 35px;
+    border: 1px dotted #545873;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px;
+    cursor: pointer;
+    background: transparent;
+}
+
+.backButton img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.segmented {
+    display: inline-flex;
+    gap: 10px;
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.saveBar {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.accessPanel {
+    overflow: auto;
+    scrollbar-width: none;
+}
+
+.accessGrid {
+    padding-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(260px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    border-radius: 16px;
+}
+
+.cardTitle {
+    font-family: Inter, sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: var(--main-gray, #2B2B34);
+    margin-bottom: 25px;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.row {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 38px;
+    padding: 10px 28px;
+    border-radius: 10px;
+}
+
+.rowDisabled {
+    opacity: 0.55;
+}
+
+.rowLabel {
+    font-family: Nunito Sans, sans-serif;
+    font-size: 16px;
+    color: var(--main-gray, #2B2B34);
+}
+
+.rowControl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.emptyState {
+    width: 100%;
+    padding: 40px;
+    text-align: center;
+    color: #9E9E9E;
+    font-family: Nunito Sans;
+    font-size: 16px;
+}

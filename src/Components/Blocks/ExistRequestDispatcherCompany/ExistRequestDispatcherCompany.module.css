@@ -1,0 +1,78 @@
+.requestTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 20px 30px;
+    border-bottom: 1px solid #54587380;
+}
+
+.requestButton {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 20px 20px 30px;
+    border-top: 1px solid #54587380;
+}
+
+.requestTitle_name {
+    font-family: Inter;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 38.73px;
+    color: var(--main-gray);
+}
+
+.requestTitle_close {
+    width: 25px;
+    height: 25px;
+    cursor: pointer;
+}
+
+.requestTitle_close img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.requestData {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 20px 20px 30px;
+    gap: 15px;
+}
+
+.requestData label {
+    display: flex;
+    gap: 15px;
+}
+
+.requestData input,
+.requestData select {
+    width: 60%;
+    height: 40px;
+    outline: none;
+    padding: 0 10px;
+}
+
+.requestData select {
+    cursor: pointer;
+}
+
+.requestMiddle {
+    height: calc(100% - 90px - 71px);
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+.requestButton button {
+    width: 49%;
+}
+
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: Nunito Sans;
+    font-size: 14px;
+}

@@ -1,54 +1,66 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./Сompany.module.css";
 import Filter from "../Filter/Filter";
-import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
-import { requestsCompany } from "../../../requests";
 import Header from "../Header/Header";
-import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
-import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
+  DELETE_DISPATCHER_DEPARTMENT,
   DELETE_DISPATCHER_USER,
+  GET_ALL_DISPATCHERS,
+  GET_DISPATCHER_DEPARTMENTS,
   GET_DISPATCHER_POSITIONS,
-  GET_DISPATCHERS,
   GET_DISPATCHERS_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
-import { useLocation, useNavigate } from "react-router-dom";
-import ReactPaginate from "react-paginate";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles";
+import { useNavigate } from "react-router-dom";
+import InfoTableDataDispatcherCompany from "../InfoTableDataDispatcherCompany/InfoTableDataDispatcherCompany";
+import CreateRequestDispatcherCompany from "../CreateRequestDispatcherCompany/CreateRequestDispatcherCompany";
+import ExistRequestDispatcherCompany from "../ExistRequestDispatcherCompany/ExistRequestDispatcherCompany";
+import CreateRequestDispatcherDepartment from "../CreateRequestDispatcherDepartment/CreateRequestDispatcherDepartment";
+import EditRequestDispatcherDepartment from "../EditRequestDispatcherDepartment/EditRequestDispatcherDepartment";
 
-function Company({ children, user, ...props }) {
+function Company({ user, accessMenu }) {
   const token = getCookie("token");
-  const location = useLocation();
   const navigate = useNavigate();
+  const canCreate = !!accessMenu?.userCreate || user?.role === roles.superAdmin;
+  const canEdit = !!accessMenu?.userUpdate || user?.role === roles.superAdmin;
 
-  // Инициализация текущей страницы на основе параметров URL или по умолчанию
-  const pageNumberRelay = new URLSearchParams(location.search).get("page");
-  const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
-
-  const [pageInfo, setPageInfo] = useState({
-    skip: currentPageRelay,
-    take: 20,
+  const {
+    loading: dispatchersLoading,
+    error: dispatchersError,
+    data: dispatchersData,
+    refetch: refetchDispatchers,
+  } = useQuery(GET_ALL_DISPATCHERS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
   });
 
-  const { loading, error, data, refetch } = useQuery(GET_DISPATCHERS, {
+  const {
+    loading: departmentsLoading,
+    error: departmentsError,
+    data: departmentsData,
+    refetch: refetchDepartments,
+  } = useQuery(GET_DISPATCHER_DEPARTMENTS, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
     variables: {
-      pagination: {
-        skip: pageInfo.skip,
-        take: pageInfo.take,
-      },
+      pagination: { all: true },
     },
   });
+
+  // console.log(dispatchersData)
+  // console.log(departmentsData)
 
   const { data: dataSubscription } = useSubscription(
     GET_DISPATCHERS_SUBSCRIPTION,
@@ -73,30 +85,38 @@ function Company({ children, user, ...props }) {
     },
   });
 
-  const [showCreateSidebar, setShowCreateSidebar] = useState(false);
-  const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-  const [chooseObject, setChooseObject] = useState(null);
-  const [showDelete, setShowDelete] = useState(false);
-  const [deleteIndex, setDeleteIndex] = useState(null);
+  const [notifications, setNotifications] = useState([]);
 
-  const [totalPages, setTotalPages] = useState(1);
+  const addNotification = (text, status) => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, text, status }]);
 
-  const deleteComponentRef = useRef();
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, fullNotifyTime);
+  };
 
-  const [companyData, setCompanyData] = useState([]);
-
+  const [departments, setDepartments] = useState([]);
+  const [dispatchers, setDispatchers] = useState([]);
   const [positions, setPositions] = useState([]);
 
   useEffect(() => {
-    if (data) {
-      const sortedDispatchers = [...data.dispatcherUsers.users].sort((a, b) =>
-        a.name.localeCompare(b.name)
+    if (dispatchersData?.dispatcherUsers?.users) {
+      const sortedDispatchers = [...dispatchersData.dispatcherUsers.users].sort(
+        (a, b) => a.name.localeCompare(b.name)
       );
-      setCompanyData(sortedDispatchers);
-      setTotalPages(data.dispatcherUsers.totalPages);
+      setDispatchers(sortedDispatchers);
     }
-    refetch();
-  }, [data, dataSubscription, refetch]);
+  }, [dispatchersData]);
+
+  useEffect(() => {
+    if (departmentsData?.dispatcherDepartments?.departments) {
+      const sortedDepartments = [
+        ...departmentsData.dispatcherDepartments.departments,
+      ].sort((a, b) => a.name.localeCompare(b.name));
+      setDepartments(sortedDepartments);
+    }
+  }, [departmentsData]);
 
   useEffect(() => {
     if (positionsData) {
@@ -104,117 +124,184 @@ function Company({ children, user, ...props }) {
     }
   }, [positionsData]);
 
-  const addDispatcher = (newDispatcher) => {
-    setCompanyData(
-      [...companyData, newDispatcher].sort((a, b) =>
-        a.name.localeCompare(b.name)
-      )
-    );
-  };
+  useEffect(() => {
+    if (dataSubscription) {
+      refetchDispatchers();
+      refetchDepartments();
+    }
+  }, [dataSubscription, refetchDispatchers, refetchDepartments]);
 
-  const updateDispatcher = (updatedDispatcher, index) => {
-    const newData = [...companyData];
-    newData[index] = updatedDispatcher;
-    setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
+  const [showCreateDispatcher, setShowCreateDispatcher] = useState(false);
+  const [showEditDispatcher, setShowEditDispatcher] = useState(false);
+  const [selectedDispatcher, setSelectedDispatcher] = useState(null);
+
+  const [showCreateDepartment, setShowCreateDepartment] = useState(false);
+  const [showEditDepartment, setShowEditDepartment] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
+
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const deleteComponentRef = useRef();
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
   };
 
   const [deleteDispatcherUser] = useMutation(DELETE_DISPATCHER_USER, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
-        // 'Apollo-Require-Preflight': 'true',
       },
     },
   });
 
-  const deleteDispatcher = async (index, userID) => {
-    try {
-      let response_delete_user = await deleteDispatcherUser({
-        variables: {
-          deleteUserId: userID,
-        },
-      });
-      if (response_delete_user) {
-        setCompanyData(companyData.filter((_, i) => i !== index));
-        setShowDelete(false);
-        setShowRequestSidebar(false);
-        addNotification("Удаление диспетчера прошло успешно.", "success");
-      }
-    } catch (error) {
-      console.error("Ошибка при удалении пользователя", error);
-      // addNotification(
-      //   "Ошибка, у вас недостаточно прав для удаления диспетчера.",
-      //   "error"
-      // );
-      alert("Ошибка при удалении пользователя");
-    }
+  const [deleteDispatcherDepartment] = useMutation(DELETE_DISPATCHER_DEPARTMENT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const openEditDepartment = (department) => {
+    if (!canEdit) return;
+    setSelectedDepartment(department);
+    setShowEditDepartment(true);
   };
 
-  const toggleCreateSidebar = () => {
-    setShowCreateSidebar(!showCreateSidebar);
+  const openEditDispatcher = (dispatcher) => {
+    if (!canEdit) return;
+    const index = dispatchers.findIndex((item) => item.id === dispatcher.id);
+    setSelectedDispatcher({ ...dispatcher, index });
+    setShowEditDispatcher(true);
   };
 
-  const toggleRequestSidebar = () => {
-    setShowRequestSidebar(!showRequestSidebar);
+  const openAccessDepartment = (department) => {
+    if (!canEdit) return;
+    navigate("/dispatcherAccess", {
+      state: { departmentId: department?.id },
+    });
   };
 
-  const openDeleteComponent = (index, userID) => {
+  const openDeleteDepartment = (department) => {
+    if (!canEdit) return;
+    setDeleteTarget({ type: "department", department });
     setShowDelete(true);
-    setDeleteIndex({ index, userID });
-    setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
+    setShowEditDepartment(false);
+  };
+
+  const openDeleteDispatcher = (dispatcher) => {
+    if (!canEdit) return;
+    setDeleteTarget({ type: "dispatcher", dispatcher });
+    setShowDelete(true);
+    setShowEditDispatcher(false);
   };
 
   const closeDeleteComponent = () => {
     setShowDelete(false);
-    setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
   };
 
-  const [filterData, setFilterData] = useState({
-    filterSelect: "",
-  });
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState([]);
+    try {
+      if (deleteTarget.type === "department") {
+        await deleteDispatcherDepartment({
+          variables: {
+            deleteDispatcherDepartmentId: deleteTarget.department.id,
+          },
+        });
+        addNotification("Удаление отдела прошло успешно.", "success");
+        refetchDepartments();
+      }
 
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
+      if (deleteTarget.type === "dispatcher") {
+        await deleteDispatcherUser({
+          variables: {
+            deleteUserId: deleteTarget.dispatcher.id,
+          },
+        });
+        addNotification("Удаление диспетчера прошло успешно.", "success");
+        refetchDispatchers();
+        refetchDepartments();
+      }
+    } catch (error) {
+      console.error("Ошибка при удалении", error);
+      addNotification("Ошибка при удалении.", "error");
+    } finally {
+      setShowDelete(false);
+    }
   };
-  // Обработчик для изменения текущей страницы при клике на элементы пагинации
-  const handlePageClick = (event) => {
-    const selectedPage = event.selected;
-    setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
-    navigate(`?page=${selectedPage + 1}`);
+
+  const openDeleteDispatcherFromSidebar = (index, userId) => {
+    const dispatcher = dispatchers.find((item) => item.id === userId) || {
+      id: userId,
+    };
+    openDeleteDispatcher(dispatcher);
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilterData((prevState) => ({
-      ...prevState,
-      [name]: value,
+  const filteredDispatchers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return dispatchers;
+
+    return dispatchers.filter((dispatcher) => {
+      return (
+        dispatcher.name?.toLowerCase().includes(query) ||
+        dispatcher.role?.toLowerCase().includes(query) ||
+        dispatcher.position?.name?.toLowerCase().includes(query)
+      );
+    });
+  }, [dispatchers, searchQuery]);
+
+  const groups = useMemo(() => {
+    const groupsList = departments.map((department) => ({
+      ...department,
+      dispatchers: [],
     }));
-  };
 
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const filteredRequests = companyData.filter((request) => {
-    return (
-      (filterData.filterSelect === "" ||
-        request.role.includes(filterData.filterSelect)) &&
-      (request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request.position.toLowerCase().includes(searchQuery.toLowerCase()))
+    const departmentMap = new Map(
+      groupsList.map((department) => [department.id, department])
     );
-  });
 
-  let filterList = ["Модератор", "Администратор"];
-  const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
+    const noDepartment = {
+      id: "no-department",
+      name: "Без отдела",
+      isNoDepartment: true,
+      dispatchers: [],
+    };
+
+    filteredDispatchers.forEach((dispatcher) => {
+      const department = departmentMap.get(dispatcher.dispatcherDepartmentId);
+      if (department) {
+        department.dispatchers.push(dispatcher);
+      } else {
+        noDepartment.dispatchers.push(dispatcher);
+      }
+    });
+
+    const sorted = [...departmentMap.values()].map((department) => ({
+      ...department,
+      dispatchers: [...department.dispatchers].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      ),
+    }));
+
+    if (noDepartment.dispatchers.length > 0) {
+      sorted.push({
+        ...noDepartment,
+        dispatchers: [...noDepartment.dispatchers].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
+      });
+    }
+
+    return sorted;
+  }, [departments, filteredDispatchers]);
+
+  const isLoading = dispatchersLoading || departmentsLoading || positionsLoading;
+  const hasError = dispatchersError || departmentsError || positionsError;
 
   return (
     <>
@@ -222,91 +309,105 @@ function Company({ children, user, ...props }) {
         <Header>Пользователи</Header>
 
         <div className={classes.section_searchAndFilter}>
-          {/* <input
-                type="text"
-                placeholder="Поиск"
-                style={{ width: '500px' }}
-                value={searchQuery}
-                onChange={handleSearch}
-              /> */}
           <MUITextField
-            label={"Поиск"}
+            label={"Поиск по аккаунтам"}
             className={classes.mainSearch}
             value={searchQuery}
             onChange={handleSearch}
           />
-          <Filter
-            toggleSidebar={toggleCreateSidebar}
-            handleChange={handleChange}
-            filterData={filterData}
-            buttonTitle={"Добавить аккаунт диспетчера"}
-            filterList={filterList}
-            needDate={false}
-          />
+          {canCreate && (
+            <div className={classes.section_searchAndFilter_filter}>
+              <Filter
+                toggleSidebar={() => setShowCreateDepartment(true)}
+                handleChange={""}
+                buttonTitle={"Добавить отдел"}
+              />
+              <Filter
+                toggleSidebar={() => setShowCreateDispatcher(true)}
+                handleChange={""}
+                buttonTitle={"Добавить аккаунт диспетчера"}
+              />
+            </div>
+          )}
         </div>
-        {loading && <MUILoader />}
-        {error && <p>Error: {error.message}</p>}
 
-        {!loading && !error && (
-          <>
-            <InfoTableDataCompany
-              toggleRequestSidebar={toggleRequestSidebar}
-              requests={filteredRequests.map((request, index) => ({
-                ...request,
-                order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
-              }))}
-              setChooseObject={setChooseObject}
-            />
-            {totalPages > 0 && (
-              <div className={classes.pagination}>
-                <ReactPaginate
-                  previousLabel={"←"}
-                  nextLabel={"→"}
-                  breakLabel={"..."}
-                  pageCount={totalPages}
-                  marginPagesDisplayed={2}
-                  pageRangeDisplayed={5}
-                  onPageChange={handlePageClick}
-                  forcePage={validCurrentPage}
-                  containerClassName={classes.pagination}
-                  activeClassName={classes.activePaginationNumber}
-                  pageLinkClassName={classes.paginationNumber}
-                />
-              </div>
-            )}
-          </>
+        {isLoading && <MUILoader />}
+        {hasError && <p>Error: {hasError.message}</p>}
+
+        {!isLoading && !hasError && (
+          <InfoTableDataDispatcherCompany
+            user={user}
+            groups={groups}
+            onEditDepartment={openEditDepartment}
+            onDeleteDepartment={openDeleteDepartment}
+            onOpenAccess={openAccessDepartment}
+            onEditDispatcher={openEditDispatcher}
+            onDeleteDispatcher={openDeleteDispatcher}
+            accessMenu={accessMenu}
+          />
         )}
 
-        <CreateRequestCompany
-          show={showCreateSidebar}
-          onClose={toggleCreateSidebar}
-          addDispatcher={addDispatcher}
-          positions={positions}
-          addNotification={addNotification}
-        />
+        {canCreate && (
+          <CreateRequestDispatcherCompany
+            show={showCreateDispatcher}
+            onClose={() => setShowCreateDispatcher(false)}
+            onCreated={() => {
+              refetchDispatchers();
+              refetchDepartments();
+            }}
+            positions={positions}
+            departments={departments}
+            addNotification={addNotification}
+          />
+        )}
 
-        <ExistRequestCompany
-          show={showRequestSidebar}
-          onClose={toggleRequestSidebar}
-          chooseObject={chooseObject}
-          updateDispatcher={updateDispatcher}
-          openDeleteComponent={openDeleteComponent}
-          deleteComponentRef={deleteComponentRef}
-          filterList={filterList}
-          positions={positions}
-          addNotification={addNotification}
-        />
+        {canEdit && (
+          <ExistRequestDispatcherCompany
+            show={showEditDispatcher}
+            onClose={() => setShowEditDispatcher(false)}
+            chooseObject={selectedDispatcher}
+            updateDispatcher={() => {}}
+            openDeleteComponent={openDeleteDispatcherFromSidebar}
+            positions={positions}
+            departments={departments}
+            addNotification={addNotification}
+            onUpdated={() => {
+              refetchDispatchers();
+              refetchDepartments();
+            }}
+          />
+        )}
+
+        {canCreate && (
+          <CreateRequestDispatcherDepartment
+            show={showCreateDepartment}
+            onClose={() => setShowCreateDepartment(false)}
+            onCreated={() => refetchDepartments()}
+            addNotification={addNotification}
+          />
+        )}
+
+        {canEdit && (
+          <EditRequestDispatcherDepartment
+            show={showEditDepartment}
+            onClose={() => setShowEditDepartment(false)}
+            department={selectedDepartment}
+            onUpdated={() => refetchDepartments()}
+            addNotification={addNotification}
+          />
+        )}
 
         {showDelete && (
           <DeleteComponent
             ref={deleteComponentRef}
-            remove={() =>
-              deleteDispatcher(deleteIndex.index, deleteIndex.userID)
-            }
+            remove={handleDelete}
             close={closeDeleteComponent}
-            title={`Вы действительно хотите удалить диспетчера?`}
+            title={`Вы действительно хотите удалить ${
+              deleteTarget?.type === "dispatcher" ? "диспетчера" : "отдел"
+            }?`}
           />
         )}
+
         {notifications.map((n, index) => (
           <Notification
             key={n.id}

@@ -17,6 +17,7 @@ import Analytics from '../../Pages/AnalyticsForAvia/Analytics/Analytics'
 import RegisterOfContracts from '../../Blocks/RegisterOfContracts/RegisterOfContracts'
 import AccessSettings from '../../Blocks/AccessSettings/AccessSettings'
 import DisAdminTransferContent from '../DispatcherAdminContent/DisAdminTransferContent/DisAdminTransferContent'
+import DispatcherAccessSettings from '../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings'
 
 const SuperAdminContent = ({ user }) => {
   const { id, hotelID, airlineID, orderId, driversCompanyID } = useParams()
@@ -45,6 +46,7 @@ const SuperAdminContent = ({ user }) => {
       {id === 'updates' && <UpdatesList user={user} />}
       {id === 'registerOfContracts' && <RegisterOfContracts user={user} />}
       {id === 'access' && <AccessSettings user={user} />}
+      {id === 'dispatcherAccess' && <DispatcherAccessSettings user={user} />}
       {id === 'myCompany' && <MyCompany user={user} />}
       {id === 'patchNotes' && <PatchNotesList user={user} />}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}

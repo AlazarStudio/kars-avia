@@ -3923,6 +3923,7 @@ export const GET_DISPATCHERS = gql`
       totalPages
       users {
         id
+        dispatcherDepartmentId
         name
         images
         role
@@ -3944,6 +3945,7 @@ export const GET_ALL_DISPATCHERS = gql`
       totalPages
       users {
         id
+        dispatcherDepartmentId
         name
         images
         role
@@ -3954,6 +3956,86 @@ export const GET_ALL_DISPATCHERS = gql`
         email
         login
       }
+    }
+  }
+`;
+
+export const GET_DISPATCHER_DEPARTMENTS = gql`
+  query DispatcherDepartments($pagination: DispatcherDepartmentPaginationInput) {
+    dispatcherDepartments(pagination: $pagination) {
+      totalCount
+      totalPages
+      departments {
+        id
+        name
+        active
+        email
+        accessMenu {
+          requestMenu
+          requestCreate
+          requestUpdate
+          requestChat
+          transferMenu
+          transferCreate
+          transferUpdate
+          transferChat
+          personalMenu
+          personalCreate
+          personalUpdate
+          reserveMenu
+          reserveCreate
+          reserveUpdate
+          analyticsMenu
+          analyticsUpload
+          reportMenu
+          reportCreate
+          userMenu
+          userCreate
+          userUpdate
+          airlineMenu
+          airlineUpdate
+          contracts
+        }
+        dispatchers {
+          id
+          dispatcherDepartmentId
+          name
+          images
+          role
+          position {
+            id
+            name
+          }
+          email
+          login
+        }
+      }
+    }
+  }
+`;
+
+export const CREATE_DISPATCHER_DEPARTMENT = gql`
+  mutation CreateDispatcherDepartment($input: DispatcherDepartmentInput!) {
+    createDispatcherDepartment(input: $input) {
+      id
+      name
+      email
+    }
+  }
+`;
+
+export const UPDATE_DISPATCHER_DEPARTMENT = gql`
+  mutation UpdateDispatcherDepartment($updateDispatcherDepartmentId: ID!, $input: DispatcherDepartmentInput!) {
+    updateDispatcherDepartment(id: $updateDispatcherDepartmentId, input: $input) {
+      id
+    }
+  }
+`;
+
+export const DELETE_DISPATCHER_DEPARTMENT = gql`
+  mutation DeleteDispatcherDepartment($deleteDispatcherDepartmentId: ID!) {
+    deleteDispatcherDepartment(id: $deleteDispatcherDepartmentId) {
+      id
     }
   }
 `;
@@ -4006,6 +4088,7 @@ export const CREATE_DISPATCHER_USER = gql`
   mutation RegisterUser($input: RegisterUserInput!, $images: [Upload!]) {
     registerUser(input: $input, images: $images) {
       id
+      dispatcherDepartmentId
       name
       email
       role
@@ -4023,6 +4106,7 @@ export const UPDATE_DISPATCHER_USER = gql`
   mutation Mutation($input: UpdateUserInput!, $images: [Upload!]) {
     updateUser(input: $input, images: $images) {
       id
+      dispatcherDepartmentId
       name
       email
       role

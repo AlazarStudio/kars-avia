@@ -310,6 +310,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
               menuOpen={menuOpen}
+              accessMenu={accessMenu}
+              user={user}
             />
             // <TransferAdminMenu
             //   id={id}

@@ -512,15 +512,6 @@ function Estafeta({ user, accessMenu }) {
       {/* <Header>Эстафета</Header> */}
       <Header>Эскадрилья</Header>
       <div className={classes.section_searchAndFilter}>
-        {/* <input
-              type="text"
-              placeholder="Поиск"
-              className={classes.mainSearch}
-              // style={{ width: '500px' }}
-              value={searchQuery}
-              onChange={handleSearch}
-            /> */}
-
         <Filter
           user={user}
           isEstafeta={true}

@@ -23,6 +23,13 @@
      justify-content: space-between;
  }
 
+.section_searchAndFilter_filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
  .mainSearch {
      width: 500px;
  }

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 
 import AirlinePage from "../../Blocks/AirlinePage/AirlinePage";
@@ -17,9 +18,28 @@ import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
 import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 import DisAdminTransferContent from "./DisAdminTransferContent/DisAdminTransferContent";
+import DispatcherAccessSettings from "../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings";
+import { roles } from "../../../roles";
 
-const DispatcherAdminContent = ({ user }) => {
+const NoAccess = () => (
+  <div
+    style={{
+      height: "100vh",
+      width: "100%",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "40px",
+      color: "var(--main-gray)",
+    }}
+  />
+);
+
+const DispatcherAdminContent = ({ user, accessMenu }) => {
   const { id, orderId, driversCompanyID, hotelID, airlineID } = useParams();
+  const safeAccessMenu = accessMenu || {};
+  console.log(safeAccessMenu)
+  const isSuperAdmin = user?.role === roles.superAdmin;
 
   const isTransfer =
     id === "orders" ||
@@ -31,29 +51,113 @@ const DispatcherAdminContent = ({ user }) => {
     // ||
     // (!id && !hotelID && !airlineID && !orderId && !driversCompanyID); // если хочешь “заказы” по умолчанию
 
-  return (
-    <>
-      {(id === "relay" || (!id && !hotelID && !airlineID && !orderId && !driversCompanyID)) && (
-        <Estafeta user={user} />
-      )}
-      {id === "reserve" && <Reserve user={user} />}
-      {id === "company" && <Company user={user} />}
-      {id === "hotels" && <HotelsList user={user} />}
-      {id === "airlines" && <AirlinesList user={user} />}
-      {id === "registerOfContracts" && <RegisterOfContracts user={user} />}
-      {id === "reports" && <Reports user={user} />}
-      {id === "analytics" && <Analytics user={user} />}
-      {id === "documentation" && <DocumentationList user={user} />}
-      {id === "updates" && <UpdatesList user={user} />}
-      {id === "myCompany" && <MyCompany user={user} />}
-      {id === "patchNotes" && <PatchNotesList user={user} />}
-      {id === "access" && <AccessSettings user={user} />}
-      {/* {id === "notifications" && <NotificationsSettings user={user} />} */}
-      {!id && hotelID && <HotelPage id={hotelID} user={user} />}
-      {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
-      {isTransfer && <DisAdminTransferContent user={user} />}
-    </>
+  const CONFIG = useMemo(
+    () => [
+      {
+        ids: ["relay"],
+        guardKey: "requestMenu",
+        Comp: Estafeta,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["reserve"],
+        guardKey: "reserveMenu",
+        Comp: Reserve,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["company"],
+        guardKey: "userMenu",
+        Comp: Company,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["registerOfContracts"],
+        guardKey: "contracts",
+        Comp: RegisterOfContracts,
+        props: () => ({ user }),
+      },
+      {
+        ids: ["reports"],
+        guardKey: "reportMenu",
+        Comp: Reports,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["analytics"],
+        guardKey: "analyticsMenu",
+        Comp: Analytics,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["access"],
+        guardKey: "userUpdate",
+        Comp: AccessSettings,
+        props: () => ({ user }),
+      },
+      {
+        ids: ["dispatcherAccess"],
+        guardKey: "userUpdate",
+        Comp: DispatcherAccessSettings,
+        props: () => ({}),
+      },
+      { ids: ["hotels"], guardKey: null, Comp: HotelsList, props: () => ({ user }) },
+      {
+        ids: ["airlines"],
+        guardKey: null,
+        Comp: AirlinesList,
+        props: () => ({ user }),
+      },
+      {
+        ids: ["documentation"],
+        guardKey: null,
+        Comp: DocumentationList,
+        props: () => ({ user }),
+      },
+      { ids: ["updates"], guardKey: null, Comp: UpdatesList, props: () => ({ user }) },
+      { ids: ["myCompany"], guardKey: null, Comp: MyCompany, props: () => ({ user }) },
+      {
+        ids: ["patchNotes"],
+        guardKey: null,
+        Comp: PatchNotesList,
+        props: () => ({ user }),
+      },
+    ],
+    [safeAccessMenu, user]
   );
+
+  if (isTransfer) {
+    if (!safeAccessMenu.transferMenu && !isSuperAdmin) {
+      return <NoAccess />;
+    }
+    return <DisAdminTransferContent user={user} />;
+  }
+
+  if (!id && hotelID) return <HotelPage id={hotelID} user={user} />;
+  if (!id && airlineID) return <AirlinePage id={airlineID} user={user} />;
+
+  if (!id && !hotelID && !airlineID && !orderId && !driversCompanyID) {
+    if (safeAccessMenu?.requestMenu || isSuperAdmin) {
+      return <Estafeta user={user} accessMenu={safeAccessMenu} />;
+    }
+    if (safeAccessMenu?.reserveMenu || isSuperAdmin) {
+      return <Reserve user={user} accessMenu={safeAccessMenu} />;
+    }
+    return <HotelsList user={user} />;
+  }
+
+  if (id) {
+    const rule = CONFIG.find((item) => item.ids.includes(id));
+    if (!rule) return <NoAccess />;
+
+    const allowed = rule.guardKey
+      ? !!safeAccessMenu[rule.guardKey] || isSuperAdmin
+      : true;
+    const Comp = allowed ? rule.Comp : NoAccess;
+    return <Comp {...(rule.props ? rule.props() : { user })} />;
+  }
+
+  return null;
 };
 
 export default DispatcherAdminContent;

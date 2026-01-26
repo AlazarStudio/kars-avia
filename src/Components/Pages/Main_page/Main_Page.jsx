@@ -3,10 +3,16 @@ import classes from "./Main_Page.module.css";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import { useParams } from "react-router-dom";
 import AllRoles from "../../RoleContent/AllRoles.jsx";
-import { GET_AIRLINE_DEPARTMENT, GET_AIRLINES_UPDATE_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests.js";
+import {
+  GET_AIRLINE_DEPARTMENT,
+  GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  GET_DISPATCHER_DEPARTMENTS,
+  getCookie,
+} from "../../../../graphQL_requests.js";
 import { useQuery, useSubscription } from "@apollo/client";
 import { useCookies } from "../../../hooks/useCookies.jsx";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice.jsx";
+import { roles } from "../../../roles.js";
 
 function Main_Page({ user }) {
   // Получаем параметры из URL
@@ -17,43 +23,87 @@ function Main_Page({ user }) {
     [hotelID, airlineID, driversCompanyID, orderId]
   );
 
-  const [accessMenu, setAccessMenu] = useState({})
+  const [accessMenu, setAccessMenu] = useState({});
   const token = getCookie("token");
+  const isDispatcherRole =
+    user?.role === roles.dispatcerAdmin ||
+    user?.role === roles.dispatcherModerator;
+  const isAirlineRole =
+    user?.role === roles.airlineAdmin || user?.role === roles.airlineModerator;
+  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
+  
 
   const { cookiesAccepted, acceptCookies, isInitialized } = useCookies()
 
   // console.log(user);
-  const { loading, error, data, refetch } = useQuery(GET_AIRLINE_DEPARTMENT, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
+    useQuery(GET_AIRLINE_DEPARTMENT, {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    },
-    variables: {
-      airlineDepartmentId: user?.departmentId
-    },
-    skip: !user?.departmentId
-	});
+      variables: {
+        airlineDepartmentId: user?.departmentId,
+      },
+      skip: !isAirlineRole || !user?.departmentId,
+    });
 
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  const { data: dispatcherDepartmentsData } = useQuery(
+    GET_DISPATCHER_DEPARTMENTS,
     {
       context: {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
-      onData: () => {
-        refetch();
+      variables: {
+        pagination: { all: true },
       },
+      // skip: !isDispatcherRole || !dispatcherDepartmentId,
     }
   );
 
+//   console.log(user);
+//   console.log(isDispatcherRole)
+// console.log(isAirlineRole)
+// console.log(dispatcherDepartmentId)
+console.log()
+  useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    skip: !isAirlineRole || !user?.departmentId,
+    onData: () => {
+      refetchAirlineDepartment();
+    },
+  });
+
   useEffect(() => {
-    if (data && data.airlineDepartment.accessMenu) {
-      setAccessMenu(data?.airlineDepartment?.accessMenu)
+    if (isDispatcherRole) {
+      const department =
+        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
+          (item) => item.id === dispatcherDepartmentId
+        );
+      setAccessMenu(department?.accessMenu || {});
+      return;
     }
-  }, [data, dataSubscriptionUpd])
+
+    if (isAirlineRole) {
+      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
+      return;
+    }
+
+    setAccessMenu({});
+  }, [
+    isDispatcherRole,
+    isAirlineRole,
+    dispatcherDepartmentId,
+    dispatcherDepartmentsData,
+    airlineDepartmentData,
+  ]);
 
 
 
