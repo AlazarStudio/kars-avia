@@ -24,6 +24,11 @@ import EditRequestNomerFond from "../Blocks/EditRequestNomerFond/EditRequestNome
 import { useWindowSize } from "../../hooks/useWindowSize";
 import { roles } from "../../roles";
 import {
+  canCreateRequest as canCreateRequestAccess,
+  getDispatcherAccess,
+  hasAccessMenu,
+} from "../../utils/access";
+import {
   convertToDate,
   generateTimestampId,
   getCookie,
@@ -41,11 +46,19 @@ const LEFT_WIDTH = 220;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
-const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
+const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   const { idHotel, requestId } = useParams();
 
   const hotelId = idHotelInfo ? idHotelInfo : idHotel;
   const token = getCookie("token");
+
+  const dispatcherCanChat = getDispatcherAccess(accessMenu, "requestChat", user);
+  const dispatcherCanUpdate = getDispatcherAccess(
+    accessMenu,
+    "requestUpdate",
+    user
+  );
+  const canCreateRequest = canCreateRequestAccess(user, accessMenu);
 
   const [checkRoomsType, setCheckRoomsType] = useState(false);
   const [hasInitialLoadCompleted, setHasInitialLoadCompleted] = useState(false);
@@ -624,16 +637,16 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
               newStatus === "Сокращен"
                 ? "reduced"
                 : newStatus === "Продлен"
-                ? "extended"
-                : newStatus === "Ранний заезд"
-                ? "earlyStart"
-                : newStatus === "Перенесен"
-                ? "transferred"
-                : newStatus === "Забронирован"
-                ? "done"
-                : newStatus === "Готов к архиву"
-                ? "archiving"
-                : "",
+                  ? "extended"
+                  : newStatus === "Ранний заезд"
+                    ? "earlyStart"
+                    : newStatus === "Перенесен"
+                      ? "transferred"
+                      : newStatus === "Забронирован"
+                        ? "done"
+                        : newStatus === "Готов к архиву"
+                          ? "archiving"
+                          : "",
           },
         },
       });
@@ -642,10 +655,10 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
         newStatus === "Сокращен"
           ? "Заявка сокращена успешно"
           : newStatus === "Продлен"
-          ? "Заявка продлена успешно"
-          : newStatus === "Ранний заезд"
-          ? "Заезд успешно изменен"
-          : "Заявка успешно изменена",
+            ? "Заявка продлена успешно"
+            : newStatus === "Ранний заезд"
+              ? "Заезд успешно изменен"
+              : "Заявка успешно изменена",
         "success"
       );
     } catch (err) {
@@ -1021,14 +1034,14 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
                   user?.role === roles.hotelAdmin && height > 880
                     ? 610
                     : user?.role === roles.hotelAdmin && height < 830
-                    ? 420
-                    : user?.role === roles.hotelAdmin && height < 880
-                    ? 530
-                    : user?.role !== roles.hotelAdmin && height < 830
-                    ? 390
-                    : user?.role !== roles.hotelAdmin && height < 900
-                    ? 460
-                    : 530
+                      ? 420
+                      : user?.role === roles.hotelAdmin && height < 880
+                        ? 530
+                        : user?.role !== roles.hotelAdmin && height < 830
+                          ? 390
+                          : user?.role !== roles.hotelAdmin && height < 900
+                            ? 460
+                            : 530
                 }
                 overscanCount={5}
                 style={{ overflowY: "scroll", overflowX: "hidden" }}
@@ -1061,18 +1074,16 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
                               hoveredRoom === room.roomId
                                 ? "#cce5ff"
                                 : !room.active
-                                ? "#a9a9a9"
-                                : "#fff",
+                                  ? "#a9a9a9"
+                                  : "#fff",
                           }}
                         >
                           <Tooltip
-                            title={`${room.roomType !== "apartment" ? "№" : ""} ${room.id} ${
-                              room.roomType !== "apartment"
+                            title={`${room.roomType !== "apartment" ? "№" : ""} ${room.id} ${room.roomType !== "apartment"
                                 ? room?.roomKind?.name
                                 : ""
-                            } ${
-                              room.descriptionSecond ? room.descriptionSecond : ""
-                            } ${!room.active ? "(не работает)" : ""}`}
+                              } ${room.descriptionSecond ? room.descriptionSecond : ""
+                              } ${!room.active ? "(не работает)" : ""}`}
                             arrow
                             placement="top"
                             enterDelay={1000}
@@ -1108,12 +1119,12 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
                                   style={
                                     room.type === 1
                                       ? {
-                                          fontSize: "12px",
-                                          display: "-webkit-box",
-                                          WebkitLineClamp: 1,
-                                          WebkitBoxOrient: "vertical",
-                                          overflow: "hidden",
-                                        }
+                                        fontSize: "12px",
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: 1,
+                                        WebkitBoxOrient: "vertical",
+                                        overflow: "hidden",
+                                      }
                                       : { fontSize: "12px" }
                                   }
                                 >
@@ -1127,12 +1138,12 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
                                   style={
                                     room.type === 1
                                       ? {
-                                          fontSize: "10px",
-                                          display: "-webkit-box",
-                                          WebkitLineClamp: 2,
-                                          WebkitBoxOrient: "vertical",
-                                          overflow: "hidden",
-                                        }
+                                        fontSize: "10px",
+                                        display: "-webkit-box",
+                                        WebkitLineClamp: 2,
+                                        WebkitBoxOrient: "vertical",
+                                        overflow: "hidden",
+                                      }
                                       : { fontSize: "10px" }
                                   }
                                 >
@@ -1253,7 +1264,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
                 Заявки по эскадрильи в городе {hotelInfo?.information?.city}
               </Typography>
               {newRequests?.length > 0 &&
-              ((user?.hotelId && hotelInfo?.access) || !user?.hotelId) ? (
+                ((user?.hotelId && hotelInfo?.access) || !user?.hotelId) ? (
                 <Box
                   sx={{
                     display: "flex",
@@ -1347,7 +1358,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
               </Typography>
 
               {filteredRequestsReserves?.length > 0 &&
-              ((user?.hotelId && hotelInfo?.access) || !user?.hotelId) ? (
+                ((user?.hotelId && hotelInfo?.access) || !user?.hotelId) ? (
                 <Box
                   sx={{
                     display: "flex",
@@ -1474,17 +1485,17 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
                   {requestsReserveOne?.reserveForPerson ? "экипаж" : "пассажиры"}
                   {targetReserveHotelCPassPersonCount <
                     targetReserveHotelCapacity && (
-                    <img
-                      src="/addReserve.png"
-                      alt=""
-                      style={{
-                        height: "16px",
-                        cursor: "pointer",
-                        marginLeft: "10px",
-                      }}
-                      onClick={handleOpenAddPassengersModal}
-                    />
-                  )}
+                      <img
+                        src="/addReserve.png"
+                        alt=""
+                        style={{
+                          height: "16px",
+                          cursor: "pointer",
+                          marginLeft: "10px",
+                        }}
+                        onClick={handleOpenAddPassengersModal}
+                      />
+                    )}
                   <img
                     src="/chat.png"
                     alt=""
@@ -1596,15 +1607,20 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
         onConfirm={confirmBooking}
         request={selectedRequest}
       />
+      {hasAccessMenu(accessMenu, "requestMenu") && (
+        <ExistRequest
+          show={showRequestSidebar}
+          onClose={() => setShowRequestSidebar(false)}
+          setChooseRequestID={setSelectedRequestID}
+          setShowChooseHotel={setShowChooseHotel}
+          chooseRequestID={selectedRequestID}
+          user={user}
+          dispatcherCanChat={dispatcherCanChat}
+          dispatcherCanUpdate={dispatcherCanUpdate}
+          accessMenu={accessMenu}
+        />
 
-      <ExistRequest
-        show={showRequestSidebar}
-        onClose={() => setShowRequestSidebar(false)}
-        setChooseRequestID={setSelectedRequestID}
-        setShowChooseHotel={setShowChooseHotel}
-        chooseRequestID={selectedRequestID}
-        user={user}
-      />
+      )}
 
       {showEditNomer && (
         <EditRequestNomerFond
@@ -1671,10 +1687,10 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user }) => {
               user?.role === roles.hotelAdmin && height > 800
                 ? "82vh"
                 : user?.role === roles.hotelAdmin && height < 800
-                ? "75vh"
-                : user?.role !== roles.hotelAdmin && height > 870
-                ? "83vh"
-                : "68vh"
+                  ? "75vh"
+                  : user?.role !== roles.hotelAdmin && height > 870
+                    ? "83vh"
+                    : "68vh"
             }
           />
         </Box>

@@ -19,7 +19,7 @@ import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutoc
 export default function AccessSettings() {
   const token = getCookie("token");
   const location = useLocation();
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -97,6 +97,11 @@ export default function AccessSettings() {
     requestCreate: !!s?.squadron?.create,
     requestChat: !!s?.squadron?.chat,
     requestUpdate: !!s?.squadron?.edit,
+
+    transferMenu: !!s?.transfer?.access,
+    transferCreate: !!s?.transfer?.create,
+    transferUpdate: !!s?.transfer?.edit,
+    transferChat: !!s?.transfer?.chat,
 
     reserveMenu: !!s?.passengers?.access,
     reserveCreate: !!s?.passengers?.create,
@@ -253,6 +258,12 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
         chat: b(accessMenu?.requestChat),
         edit: b(accessMenu?.requestUpdate),
       },
+      transfer: {
+        access: b(accessMenu?.transferMenu),
+        create: b(accessMenu?.transferCreate),
+        chat: b(accessMenu?.transferChat),
+        edit: b(accessMenu?.transferUpdate),
+      },
       passengers: {
         access: b(accessMenu?.reserveMenu),
         create: b(accessMenu?.reserveCreate),
@@ -368,6 +379,34 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
             disabled={!isEditing || !state.passengers.access}
           />
         </SectionCard>
+        {/* Трансфер */}
+        <SectionCard title="Трансфер">
+          <RowSwitch
+            label="Доступ к разделу"
+            checked={state.transfer.access}
+            onChange={(v) => set("transfer", "access", v)}
+            disabled={!isEditing}
+          />
+          <RowSwitch
+            label="Создание заявки"
+            checked={state.transfer.create}
+            onChange={(v) => set("transfer", "create", v)}
+            disabled={!isEditing || !state.transfer.access}
+          />
+          <RowSwitch
+            label="Сообщение в чате заявки"
+            checked={state.transfer.chat}
+            onChange={(v) => set("transfer", "chat", v)}
+            disabled={!isEditing || !state.transfer.access}
+          />
+          <RowSwitch
+            label="Редактирование заявки"
+            checked={state.transfer.edit}
+            onChange={(v) => set("transfer", "edit", v)}
+            disabled={!isEditing || !state.transfer.access}
+          />
+        </SectionCard>
+
 
         {/* Пользователи */}
         <SectionCard title="Пользователи">

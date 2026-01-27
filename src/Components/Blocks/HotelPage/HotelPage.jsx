@@ -4,6 +4,11 @@ import { Link, useParams } from "react-router-dom";
 
 import { GET_HOTEL_NAME, getCookie } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
+import {
+  isAirlineAdmin,
+  isDispatcherAdmin,
+  isSuperAdmin,
+} from "../../../utils/access";
 import HotelAdminHotelContent from "../../RoleContent/HotelAdminContent/HotelAdminHotelContent/HotelAdminHotelContent.jsx";
 import SDAdminHotelContent from "../../RoleContent/SuperAdminContent/SuperAdminHotelContent/SuperAdminHotelContent.jsx";
 import Header from "../Header/Header";
@@ -14,7 +19,7 @@ import SuperAdminHotelContent from "../../RoleContent/SuperAdminContent/SuperAdm
 import DisAdminHotelContent from "../../RoleContent/DispatcherAdminContent/DisAdminHotelContent/DisAdminHotelContent.jsx";
 import AirlineAdminHotelContent from "../../RoleContent/AirlineAdminContent/AirlineAdminHotelContent/AirlineAdminHotelContent.jsx";
 
-function HotelPage({ children, id, user, ...props }) {
+function HotelPage({ children, id, user, accessMenu = {}, ...props }) {
   const params = useParams();
   const token = getCookie("token");
 
@@ -77,10 +82,10 @@ function HotelPage({ children, id, user, ...props }) {
       <div className={classes.section}>
         <Header>
           <div className={classes.titleHeader}>
-            {(user.role == roles.superAdmin ||
-              user.role == roles.airlineAdmin ||
+            {(isSuperAdmin(user) ||
+              isAirlineAdmin(user) ||
               // user.role == roles.hotelAdmin ||
-              user.role == roles.dispatcerAdmin) && (
+              isDispatcherAdmin(user)) && (
               // <Link to={params.requestId ? `/relay` : `/hotels`} className={classes.backButton}>
               //   <img src="/arrow.png" alt="" />
               // </Link>
@@ -92,7 +97,7 @@ function HotelPage({ children, id, user, ...props }) {
           </div>
         </Header>
 
-        {user.role == roles.superAdmin && (
+        {isSuperAdmin(user) && (
           <>
             <SuperAdminHotelContent
               id={id}
@@ -102,7 +107,7 @@ function HotelPage({ children, id, user, ...props }) {
             />
           </>
         )}
-        {user.role == roles.dispatcerAdmin && (
+        {isDispatcherAdmin(user) && (
           <>
             <DisAdminHotelContent
               id={id}
@@ -110,13 +115,14 @@ function HotelPage({ children, id, user, ...props }) {
               selectedTab={selectedTab}
               handleTabSelect={handleTabSelect}
               type={data?.hotel?.type}
+              accessMenu={accessMenu}
             />
           </>
         )}
         {user.role == roles.hotelAdmin && (
           <HotelAdminHotelContent id={id} user={user} />
         )}
-        {user.role == roles.airlineAdmin && (
+        {isAirlineAdmin(user) && (
           <>
             <AirlineAdminHotelContent id={id} />
           </>

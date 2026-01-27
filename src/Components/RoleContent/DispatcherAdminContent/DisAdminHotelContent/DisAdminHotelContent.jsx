@@ -38,6 +38,7 @@ const DisAdminHotelContent = ({
   selectedTab,
   handleTabSelect,
   type,
+  accessMenu,
 }) => {
   return (
     <>
@@ -63,7 +64,7 @@ const DisAdminHotelContent = ({
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-            <HotelShahmatkaTab id={id} user={user} />
+            <HotelShahmatkaTab id={id} user={user} accessMenu={accessMenu} />
           </Suspense>
         </TabPanel>
 

@@ -22,6 +22,7 @@ import OrderInfoSidebar from "../OrderInfoSidebar/OrderInfoSidebar.jsx";
 import DriverItem from "../DriverItem/DriverItem.jsx";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import { statusLabels } from "../../../roles.js";
+import { canAccessMenu } from "../../../utils/access";
 
 const isFinishedOrCanceled = (status) => {
   const s = String(status || "").toUpperCase();
@@ -160,7 +161,7 @@ const toDateAndTime = (iso) => {
   return { date, time };
 };
 
-function TransferOrder({ user, token }) {
+function TransferOrder({ user, token, accessMenu }) {
   const params = useParams();
   const orderId = params.orderId || params.id;
   const navigate = useNavigate();
@@ -197,13 +198,17 @@ function TransferOrder({ user, token }) {
   const transfer = data?.transfer || null;
   const status = String(transfer?.status || "").toUpperCase();
   const canEditByStatus = EDITABLE_STATUSES.has(status);
+  const canUpdate = accessMenu
+    ? canAccessMenu(accessMenu, "transferUpdate", user)
+    : true;
+  const canEditTransfer = canEditByStatus && canUpdate;
 
   // если статус стал неразрешённым — выходим из редактирования
   useEffect(() => {
-    if (!canEditByStatus && isEditing) {
+    if (!canEditTransfer && isEditing) {
       setIsEditing(false);
     }
-  }, [canEditByStatus, isEditing]);
+  }, [canEditTransfer, isEditing]);
 
   // init formData когда пришла заявка (и мы НЕ в редактировании)
   useEffect(() => {
@@ -435,6 +440,7 @@ const routePoints = useMemo(() => {
   );
 
   const handleAssignDriver = async (driverId) => {
+    if (!canUpdate) return;
     if (!orderId || !driverId || assigning) return;
 
     await updateTransfer({
@@ -451,13 +457,13 @@ const routePoints = useMemo(() => {
   const toggleEditOrSave = async () => {
     // если не редактируем -> включаем
     if (!isEditing) {
-      if (!canEditByStatus) return;
+      if (!canEditTransfer) return;
       setIsEditing(true);
       return;
     }
 
     // если редактируем -> сохраняем
-    if (!canEditByStatus) return;
+    if (!canEditTransfer) return;
     if (isSaving) return;
 
     setIsSaving(true);
@@ -518,6 +524,7 @@ const routePoints = useMemo(() => {
   const [confirm, setConfirm] = useState({ open: false, driver: null });
 
   const openConfirm = (driver) => {
+    if (!canUpdate) return;
     if (!driver?.id) return;
     if (driver.id === assignedDriverId) return;
     setConfirm({ open: true, driver });
@@ -653,7 +660,7 @@ const routePoints = useMemo(() => {
                 activeTransfersCount={driver.activeTransfersCount}
                 handleObject={() => openConfirm(driver)}
                 btnTitle={driver.id === assignedDriverId ? "Назначен" : "Назначить"}
-                disabled={assigning || driver.id === assignedDriverId}
+                disabled={assigning || driver.id === assignedDriverId || !canUpdate}
               />
             ))}
           </div>
@@ -666,7 +673,7 @@ const routePoints = useMemo(() => {
             data={sidebarData}
             loading={requestLoading || driversLoading}
             // edit props
-            canEditByStatus={canEditByStatus}
+            canEditByStatus={canEditTransfer}
             isEditing={isEditing}
             isSaving={isSaving}
             formData={formData}

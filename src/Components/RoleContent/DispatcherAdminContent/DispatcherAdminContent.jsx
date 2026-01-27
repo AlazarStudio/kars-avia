@@ -19,7 +19,7 @@ import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 import DisAdminTransferContent from "./DisAdminTransferContent/DisAdminTransferContent";
 import DispatcherAccessSettings from "../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings";
-import { roles } from "../../../roles";
+import { canAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
 
 const NoAccess = () => (
   <div
@@ -37,9 +37,8 @@ const NoAccess = () => (
 
 const DispatcherAdminContent = ({ user, accessMenu }) => {
   const { id, orderId, driversCompanyID, hotelID, airlineID } = useParams();
-  const safeAccessMenu = accessMenu || {};
-  console.log(safeAccessMenu)
-  const isSuperAdmin = user?.role === roles.superAdmin;
+  const safeAccessMenu = getSafeAccessMenu(accessMenu);
+  // console.log(safeAccessMenu)
 
   const isTransfer =
     id === "orders" ||
@@ -90,7 +89,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
-        ids: ["access"],
+        ids: ["airlineAccess"],
         guardKey: "userUpdate",
         Comp: AccessSettings,
         props: () => ({ user }),
@@ -127,20 +126,20 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
   );
 
   if (isTransfer) {
-    if (!safeAccessMenu.transferMenu && !isSuperAdmin) {
+    if (!canAccessMenu(accessMenu, "transferMenu", user)) {
       return <NoAccess />;
     }
-    return <DisAdminTransferContent user={user} />;
+    return <DisAdminTransferContent user={user} accessMenu={safeAccessMenu} />;
   }
 
-  if (!id && hotelID) return <HotelPage id={hotelID} user={user} />;
+  if (!id && hotelID) return <HotelPage id={hotelID} user={user} accessMenu={safeAccessMenu} />;
   if (!id && airlineID) return <AirlinePage id={airlineID} user={user} />;
 
   if (!id && !hotelID && !airlineID && !orderId && !driversCompanyID) {
-    if (safeAccessMenu?.requestMenu || isSuperAdmin) {
+    if (canAccessMenu(accessMenu, "requestMenu", user)) {
       return <Estafeta user={user} accessMenu={safeAccessMenu} />;
     }
-    if (safeAccessMenu?.reserveMenu || isSuperAdmin) {
+    if (canAccessMenu(accessMenu, "reserveMenu", user)) {
       return <Reserve user={user} accessMenu={safeAccessMenu} />;
     }
     return <HotelsList user={user} />;
@@ -150,9 +149,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
     const rule = CONFIG.find((item) => item.ids.includes(id));
     if (!rule) return <NoAccess />;
 
-    const allowed = rule.guardKey
-      ? !!safeAccessMenu[rule.guardKey] || isSuperAdmin
-      : true;
+    const allowed = canAccessMenu(accessMenu, rule.guardKey, user);
     const Comp = allowed ? rule.Comp : NoAccess;
     return <Comp {...(rule.props ? rule.props() : { user })} />;
   }

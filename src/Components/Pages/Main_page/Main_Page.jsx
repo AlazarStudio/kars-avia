@@ -12,7 +12,10 @@ import {
 import { useQuery, useSubscription } from "@apollo/client";
 import { useCookies } from "../../../hooks/useCookies.jsx";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice.jsx";
-import { roles } from "../../../roles.js";
+import {
+  isAirlineRole as isAirlineRoleCheck,
+  isDispatcherRole as isDispatcherRoleCheck,
+} from "../../../utils/access";
 
 function Main_Page({ user }) {
   // Получаем параметры из URL
@@ -25,17 +28,13 @@ function Main_Page({ user }) {
 
   const [accessMenu, setAccessMenu] = useState({});
   const token = getCookie("token");
-  const isDispatcherRole =
-    user?.role === roles.dispatcerAdmin ||
-    user?.role === roles.dispatcherModerator;
-  const isAirlineRole =
-    user?.role === roles.airlineAdmin || user?.role === roles.airlineModerator;
+  const isDispatcherRole = isDispatcherRoleCheck(user);
+  const isAirlineRole = isAirlineRoleCheck(user);
   const dispatcherDepartmentId = user?.dispatcherDepartmentId;
   
 
   const { cookiesAccepted, acceptCookies, isInitialized } = useCookies()
 
-  // console.log(user);
   const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
     useQuery(GET_AIRLINE_DEPARTMENT, {
       context: {
@@ -44,9 +43,9 @@ function Main_Page({ user }) {
         },
       },
       variables: {
-        airlineDepartmentId: user?.departmentId,
+        airlineDepartmentId: user?.airlineDepartmentId,
       },
-      skip: !isAirlineRole || !user?.departmentId,
+      skip: !isAirlineRole || !user?.airlineDepartmentId,
     });
 
   const { data: dispatcherDepartmentsData } = useQuery(
@@ -68,14 +67,13 @@ function Main_Page({ user }) {
 //   console.log(isDispatcherRole)
 // console.log(isAirlineRole)
 // console.log(dispatcherDepartmentId)
-console.log()
   useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !isAirlineRole || !user?.departmentId,
+    skip: !isAirlineRole || !user?.airlineDepartmentId,
     onData: () => {
       refetchAirlineDepartment();
     },
@@ -104,7 +102,6 @@ console.log()
     dispatcherDepartmentsData,
     airlineDepartmentData,
   ]);
-
 
 
   return (

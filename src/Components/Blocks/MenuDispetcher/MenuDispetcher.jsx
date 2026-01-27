@@ -12,6 +12,11 @@ import {
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import { roles } from "../../../roles";
+import {
+  isAirlineAdmin,
+  isDispatcherAdmin,
+  isSuperAdmin,
+} from "../../../utils/access";
 
 import HotelAdminMenu from "../../RoleContent/HotelAdminContent/HotelAdminMenu/HotelAdminMenu";
 import AirlineAdminMenu from "../../RoleContent/AirlineAdminContent/AirlineAdminMenu/AirlineAdminMenu";
@@ -263,7 +268,7 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
             menuOpen ? `${classes.menu_logo}` : `${classes.side_menu_logo}`
           }
         >
-          {user?.role === roles.dispatcerAdmin ? (
+          {isDispatcherAdmin(user) ? (
                 <img src="/KARSAVIA_withoutLogo.png" alt="" />
             // <img src="/kars_drive.png" alt="" style={{width:"fit-content"}} />
           ) : (
@@ -285,7 +290,7 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
             />
           )}
 
-          {user.role == roles.airlineAdmin && (
+          {isAirlineAdmin(user) && (
             <AirlineAdminMenu
               id={id}
               allCreatedRequests={allCreatedRequests}
@@ -296,7 +301,7 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
             />
           )}
 
-          {user.role == roles.superAdmin && (
+          {isSuperAdmin(user) && (
             <SuperAdminMenu
               id={id}
               allCreatedReserves={allCreatedReserves}
@@ -304,7 +309,7 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
               menuOpen={menuOpen}
             />
           )}
-          {user.role == roles.dispatcerAdmin && (
+          {isDispatcherAdmin(user) && (
             <DisAdminMenu
               id={id}
               allCreatedReserves={allCreatedReserves}

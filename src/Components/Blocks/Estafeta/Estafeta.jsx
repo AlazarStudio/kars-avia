@@ -27,6 +27,10 @@ import {
   notifyTime,
   statusMapping,
 } from "../../../roles.js";
+import {
+  canCreateRequest as canCreateRequestAccess,
+  getDispatcherAccess,
+} from "../../../utils/access";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { useDebounce } from "../../../hooks/useDebounce.jsx";
@@ -39,7 +43,13 @@ function Estafeta({ user, accessMenu }) {
   const navigate = useNavigate();
 
   // console.log(accessMenu);
-  
+  const dispatcherCanChat = getDispatcherAccess(accessMenu, "requestChat", user);
+  const dispatcherCanUpdate = getDispatcherAccess(
+    accessMenu,
+    "requestUpdate",
+    user
+  );
+  const canCreateRequest = canCreateRequestAccess(user, accessMenu);
 
   const { search, pathname, state } = useLocation();
 
@@ -537,7 +547,7 @@ function Estafeta({ user, accessMenu }) {
           value={searchQuery}
           onChange={handleSearch}
         />
-        {(!user?.airlineId || accessMenu.requestCreate) ? (
+        {canCreateRequest ? (
           <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
         ) : null}
       </div>
@@ -595,6 +605,8 @@ function Estafeta({ user, accessMenu }) {
         // handleCancelRequest={handleCancelRequest}
         user={user}
         accessMenu={accessMenu}
+        dispatcherCanChat={dispatcherCanChat}
+        dispatcherCanUpdate={dispatcherCanUpdate}
         openDeleteComponent={openDeleteComponent}
         setRequestId={setChooseRequestId}
       />

@@ -1,4 +1,5 @@
-import { roles } from '../../roles.js'
+import { roles } from "../../roles.js";
+import { isAirlineAdmin, isDispatcherAdmin } from "../../utils/access";
 
 import AirlineAdminContent from './AirlineAdminContent/AirlineAdminContent'
 import HotelAdminContent from './HotelAdminContent/HotelAdminContent'
@@ -8,16 +9,27 @@ import RepresentativeAdminContent from './RepresentativeAdminContent/Representat
 import TransferAdminContent from './TransferAdminContent/TransferAdminContent.jsx'
 
 const AllRoles = ({ user, accessMenu }) => {
-	const roleComponents = {
-		[roles.hotelAdmin]: <HotelAdminContent user={user} />,
-		[roles.airlineAdmin]: <AirlineAdminContent user={user} accessMenu={accessMenu} />,
-		[roles.superAdmin]: <SuperAdminContent user={user} />,
-		// [roles.dispatcerAdmin]: <RepresentativeAdminContent user={user} />
-		// [roles.dispatcerAdmin]: <TransferAdminContent user={user} />
-		[roles.dispatcerAdmin]: <DispatcherAdminContent user={user} accessMenu={accessMenu} />
-	}
+  if (!user?.role) return null;
 
-	return roleComponents[user?.role] || null
-}
+  if (user.role === roles.hotelAdmin) {
+    return <HotelAdminContent user={user} />;
+  }
 
-export default AllRoles
+  if (isAirlineAdmin(user)) {
+    return <AirlineAdminContent user={user} accessMenu={accessMenu} />;
+  }
+
+  if (user.role === roles.superAdmin) {
+    return <SuperAdminContent user={user} />;
+  }
+
+  // [roles.dispatcerAdmin]: <RepresentativeAdminContent user={user} />
+  // [roles.dispatcerAdmin]: <TransferAdminContent user={user} />
+  if (isDispatcherAdmin(user)) {
+    return <DispatcherAdminContent user={user} accessMenu={accessMenu} />;
+  }
+
+  return null;
+};
+
+export default AllRoles;

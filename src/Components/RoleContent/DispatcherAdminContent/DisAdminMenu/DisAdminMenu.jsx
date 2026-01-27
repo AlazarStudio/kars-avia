@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import classes from "./DisAdminMenu.module.css";
 import { useState } from "react";
 import DelayedText from "../../../Blocks/DelayedText/DelayedText";
-import { roles } from "../../../../roles";
+import { canAccessMenu } from "../../../../utils/access";
 
 const DisAdminMenu = ({
   id,
@@ -14,8 +14,6 @@ const DisAdminMenu = ({
   user,
 }) => {
   const [hovered, setHovered] = useState(false);
-  const safeAccessMenu = accessMenu || {};
-  const isSuperAdmin = user?.role === roles.superAdmin;
   // console.log(id);
 
   const strokeVal = hovered || id == "updates" ? "unset" : "unset";
@@ -26,7 +24,7 @@ const DisAdminMenu = ({
   return (
     <div className={classes.menuContainer}>
       <div className={classes.menuMain}>
-        {(safeAccessMenu.requestMenu || isSuperAdmin) && (
+        {canAccessMenu(accessMenu, "requestMenu", user) && (
           <Link
             to={"/relay?page=1"}
             className={`${classes.menu_items__elem} ${
@@ -67,7 +65,7 @@ const DisAdminMenu = ({
             {!menuOpen && <span className={classes.tooltip}>Эскадрилья</span>}
           </Link>
         )}
-        {(safeAccessMenu.reserveMenu || isSuperAdmin) && (
+        {canAccessMenu(accessMenu, "reserveMenu", user) && (
           <Link
             to={"/reserve"}
             className={`${classes.menu_items__elem} ${
@@ -111,7 +109,7 @@ const DisAdminMenu = ({
             {!menuOpen && <span className={classes.tooltip}>Пассажиры</span>}
           </Link>
         )}
-        {(safeAccessMenu.transferMenu || isSuperAdmin) && (
+        {canAccessMenu(accessMenu, "transferMenu", user) && (
           <Link
             to={"/orders"}
             className={`${classes.menu_items__elem___fill} ${
@@ -161,12 +159,12 @@ const DisAdminMenu = ({
             {!menuOpen && <span className={classes.tooltip}>Трансфер</span>}
           </Link>
         )}
-        {(safeAccessMenu.userMenu || isSuperAdmin) && (
+        {canAccessMenu(accessMenu, "userMenu", user) && (
           <Link
             to={"/company"}
             className={`${classes.menu_items__elem} ${
               !menuOpen ? classes.jcc : ""
-            } ${id == "company" && classes.menu_items__activeElem}`}
+            } ${(id == "company"  || id == "dispatcherAccess") && classes.menu_items__activeElem}`}
           >
             <div className={classes.svgWrapper}>
               <svg
@@ -238,7 +236,7 @@ const DisAdminMenu = ({
           to={"/airlines"}
           className={`${classes.menu_items__elem} ${
             !menuOpen ? classes.jcc : ""
-          } ${id == "airlines" && classes.menu_items__activeElem}`}
+          } ${(id == "airlines" || id == "airlineAccess") && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -301,7 +299,7 @@ const DisAdminMenu = ({
           </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>ГК Карс</span>}
         </Link>
-        {(safeAccessMenu.contracts || isSuperAdmin) && (
+        {canAccessMenu(accessMenu, "contracts", user) && (
           <Link
             to={"/registerOfContracts"}
             className={`${classes.menu_items__elem} ${
@@ -331,7 +329,7 @@ const DisAdminMenu = ({
           {!menuOpen && <span className={classes.tooltip}>Договоры</span>}
           </Link>
         )}
-        {(safeAccessMenu.reportMenu || isSuperAdmin) && (
+        {canAccessMenu(accessMenu, "reportMenu", user) && (
           <Link
             to={"/reports"}
             className={`${classes.menu_items__elem} ${
@@ -423,7 +421,7 @@ const DisAdminMenu = ({
           <DelayedText show={menuOpen} delay={200} >Обновления</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
         </Link> */}
-        {(safeAccessMenu.analyticsMenu || isSuperAdmin) && (
+        {canAccessMenu(accessMenu, "analyticsMenu", user) && (
           <Link
             to={"/analytics"}
             className={`${classes.menu_items__elem___fill} ${

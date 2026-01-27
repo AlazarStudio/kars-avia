@@ -49,7 +49,7 @@
 
 .requestData input,
 .requestData select {
-    width: 60%;
+    width: 100%;
     height: 40px;
     outline: none;
     padding: 0 10px;
@@ -75,4 +75,24 @@
     gap: 10px;
     font-family: Nunito Sans;
     font-size: 14px;
+}
+
+.requestDataInfo_img {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.requestDataInfo_img_imgBlock {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.requestDataInfo_img_imgBlock img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }

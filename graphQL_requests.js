@@ -3685,6 +3685,10 @@ export const GET_AIRLINE_COMPANY = gql`
           requestCreate
           requestUpdate
           requestChat
+          transferMenu
+          transferCreate
+          transferUpdate
+          transferChat
           personalMenu
           personalCreate
           personalUpdate
@@ -3838,6 +3842,10 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         requestCreate
         requestUpdate
         requestChat
+        transferMenu
+        transferCreate
+        transferUpdate
+        transferChat
         personalMenu
         personalCreate
         personalUpdate

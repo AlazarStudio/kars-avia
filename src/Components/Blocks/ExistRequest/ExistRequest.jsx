@@ -20,7 +20,12 @@ import {
   UPDATE_REQUEST_RELAY,
 } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
-import { menuAccess, roles } from "../../../roles";
+import {
+  hasAccessMenu,
+  isAirlineAdmin,
+  isDispatcherAdmin,
+  isSuperAdmin,
+} from "../../../utils/access";
 import { Link } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
@@ -36,6 +41,8 @@ function ExistRequest({
   chooseRequestID,
   // handleCancelRequest,
   accessMenu,
+  dispatcherCanChat,
+  dispatcherCanUpdate,
   user,
   setChooseRequestID,
   totalMeals,
@@ -115,6 +122,13 @@ function ExistRequest({
   const [selectedHotelId, setSelectedHotelId] = useState(null);
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [selectedPlace, setSelectedPlace] = useState(null);
+
+  const canChatTab =
+    dispatcherCanChat ??
+    (!user?.airlineId || hasAccessMenu(accessMenu, "requestChat"));
+  const canUpdateActions =
+    dispatcherCanUpdate ??
+    (!user?.airlineId || hasAccessMenu(accessMenu, "requestUpdate"));
 
   const [showDelete, setShowDelete] = useState(false);
 
@@ -839,7 +853,7 @@ function ExistRequest({
                       Питание
                     </div>
                   )}
-                {(!user?.airlineId || accessMenu.requestChat) && (
+                {canChatTab && (
                   <div
                     className={`${classes.tab} ${
                       activeTab === "Комментарии" ? classes.activeTab : ""
@@ -868,7 +882,7 @@ function ExistRequest({
                   История
                 </div>
 
-                {user?.role !== roles.airlineAdmin
+                {!isAirlineAdmin(user)
                   ? // && handleCancelRequest
                     formData.status !== "created" &&
                     formData.status !== "opened" &&
@@ -898,7 +912,11 @@ function ExistRequest({
                     formData.status !== "created" &&
                     formData.status !== "canceled" &&
                     // formData.status !== "archiving" &&
-                    formData.status !== "archived" && (accessMenu ? (user?.airlineId && accessMenu?.requestUpdate) : true) )
+                    formData.status !== "archived" &&
+                    (accessMenu
+                      ? user?.airlineId &&
+                        hasAccessMenu(accessMenu, "requestUpdate")
+                      : true))
                     ? "calc(100vh - 227px)" 
                     : 
                     (activeTab !== "Комментарии" &&
@@ -906,7 +924,12 @@ function ExistRequest({
                     formData.status !== "created" &&
                     formData.status !== "canceled" &&
                     // formData.status !== "archiving" &&
-                    formData.status !== "archived" && (accessMenu ? (!user?.airlineId && accessMenu?.requestUpdate) : true)) 
+                    formData.status !== "archived" &&
+                    (accessMenu
+                      ? !user?.airlineId &&
+                        (dispatcherCanUpdate ??
+                          hasAccessMenu(accessMenu, "requestUpdate"))
+                      : true))
                     ? "calc(100vh - 230px)" 
                     : null,
                 }}
@@ -1351,7 +1374,7 @@ function ExistRequest({
                     {/* Продление */}
                     {formData.status == "archiving" &&
                       formData.status !== "opened" &&
-                      user?.role === roles.dispatcerAdmin && isEditing && (
+                      isDispatcherAdmin(user) && isEditing && (
                         <Button onClick={handleСhangeToArchive}>
                           Отправить в архив
                         </Button>
@@ -1542,8 +1565,7 @@ function ExistRequest({
                 {/* Вкладка "Комментарии" */}
                 {activeTab === "Комментарии" && (
                   <>
-                    {user?.role !== roles.superAdmin &&
-                    user?.role !== roles.dispatcerAdmin ? null : (
+                    {!isSuperAdmin(user) && !isDispatcherAdmin(user) ? null : (
                       <div className={classes.separatorWrapper}>
                         {isHaveTwoChats === false ? (
                           <button
@@ -1676,8 +1698,7 @@ function ExistRequest({
                         : "Отменить"}
                       {/* <img src="/user-check.png" alt="" /> */}
                     </button>
-                    {((user.role === roles.superAdmin ||
-                      user.role === roles.dispatcerAdmin) &&
+                    {((isSuperAdmin(user) || isDispatcherAdmin(user)) &&
                         !formData.hotelId) && (
                           <Button
                             onClick={() => {
@@ -1708,7 +1729,7 @@ function ExistRequest({
                 formData.status !== "archived" &&
                 activeTab !== "Комментарии" &&
                 activeTab !== "История" &&
-                (!user?.airlineId || accessMenu.requestUpdate) && (
+                canUpdateActions && (
                   <div className={classes.requestButton}>
                     <button
                       onClick={() => {

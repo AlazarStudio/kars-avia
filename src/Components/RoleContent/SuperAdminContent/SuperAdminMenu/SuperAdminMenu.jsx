@@ -142,7 +142,7 @@ const SuperAdminMenu = ({
           to={"/company"}
           className={`${classes.menu_items__elem} ${
             !menuOpen ? classes.jcc : ""
-          } ${id == "company" && classes.menu_items__activeElem}`}
+          } ${(id == "company" || id == "dispatcherAccess") && classes.menu_items__activeElem}`}
         >
           <svg
             width="24"
@@ -205,7 +205,7 @@ const SuperAdminMenu = ({
           to={"/airlines"}
           className={`${classes.menu_items__elem} ${
             !menuOpen ? classes.jcc : ""
-          } ${id == "airlines" && classes.menu_items__activeElem}`}
+          } ${(id == "airlines" || id == "airlineAccess") && classes.menu_items__activeElem}`}
         >
           <svg
             width="22"

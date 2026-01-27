@@ -13,7 +13,7 @@ import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
 import TransferOrders from "../../Blocks/TransferOrders/TransferOrders";
 import TransferOrder from "../../Blocks/TransferOrder/TransferOrder";
 
-import { menuAccess } from "../../../roles";
+import { hasAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
 import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import { useQuery, useSubscription } from "@apollo/client";
 import { GET_AIRLINE_DEPARTMENT, GET_AIRLINES_UPDATE_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests";
@@ -37,7 +37,7 @@ const NoAccess = () =>
 
 const AirlineAdminContent = ({ user, accessMenu }) => {
   const { id, hotelID, airlineID, orderId } = useParams();
-  const safeAccessMenu = accessMenu || {};
+  const safeAccessMenu = getSafeAccessMenu(accessMenu);
 
   // 1) Мапа «секция → какой компонент и какое право нужно»
   // guardKey === null => доступ открыт без проверки
@@ -45,7 +45,7 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
     () => ([
       { ids: ["relay"],               guardKey: "requestMenu",   Comp: Estafeta,    props: () => ({ user, accessMenu: safeAccessMenu }) },
       { ids: ["reserve"],             guardKey: "reserveMenu",   Comp: Reserve,     props: () => ({ user, accessMenu: safeAccessMenu }) },
-      { ids: ["orders"],              guardKey: null,            Comp: TransferOrders, props: () => ({ user, accessMenu: safeAccessMenu, disAdmin: false }) },
+      { ids: ["orders"],              guardKey: "transferMenu",  Comp: TransferOrders, props: () => ({ user, accessMenu: safeAccessMenu, disAdmin: false }) },
       { ids: ["hotels"],              guardKey: null,            Comp: HotelsList,  props: () => ({ user }) },
 
       { ids: ["analytics"],           guardKey: "analyticsMenu", Comp: Analytics,   props: () => ({ user, accessMenu: safeAccessMenu }) },
@@ -84,7 +84,7 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
   // 2) Спец-случаи по URL (item-страницы), до общих правил
   // Детальная страница трансфера
   if (orderId) {
-    return <TransferOrder user={user} />;
+    return <TransferOrder user={user} accessMenu={safeAccessMenu} />;
   }
   
   if (!id && hotelID)   return <HotelPage id={hotelID} user={user} />;
@@ -92,7 +92,13 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
 
   // 3) Главная (когда нет id/hotelID/airlineID): показываем Estafeta, если есть requestMenu, иначе Reserve
   if (!id && !hotelID && !airlineID) {
-    return safeAccessMenu?.requestMenu ? <Estafeta user={user} accessMenu={safeAccessMenu} /> : safeAccessMenu?.reserveMenu ? <Reserve user={user} accessMenu={safeAccessMenu}/> : <HotelsList user={user}/>;
+    return hasAccessMenu(accessMenu, "requestMenu") ? (
+      <Estafeta user={user} accessMenu={safeAccessMenu} />
+    ) : hasAccessMenu(accessMenu, "reserveMenu") ? (
+      <Reserve user={user} accessMenu={safeAccessMenu} />
+    ) : (
+      <HotelsList user={user} />
+    );
   }
 
   // 4) По id — ищем правило и проверяем доступ
@@ -100,7 +106,7 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
     const rule = CONFIG?.find(r => r.ids.includes(id));
     if (!rule) return <NoAccess />;
 
-    const allowed = rule?.guardKey ? !!safeAccessMenu[rule?.guardKey] : true;
+    const allowed = hasAccessMenu(accessMenu, rule?.guardKey);
     const Comp = allowed ? rule.Comp : NoAccess;
     return <Comp {...(rule.props ? rule.props() : { user })} />;
   }

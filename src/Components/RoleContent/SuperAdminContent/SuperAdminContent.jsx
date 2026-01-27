@@ -45,7 +45,7 @@ const SuperAdminContent = ({ user }) => {
       {id === 'documentation' && <DocumentationList user={user} />}
       {id === 'updates' && <UpdatesList user={user} />}
       {id === 'registerOfContracts' && <RegisterOfContracts user={user} />}
-      {id === 'access' && <AccessSettings user={user} />}
+      {id === 'airlineAccess' && <AccessSettings user={user} />}
       {id === 'dispatcherAccess' && <DispatcherAccessSettings user={user} />}
       {id === 'myCompany' && <MyCompany user={user} />}
       {id === 'patchNotes' && <PatchNotesList user={user} />}

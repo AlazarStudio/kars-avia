@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import classes from "./ExistRequestCompany.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
@@ -10,7 +10,8 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
-import { roles, rolesObject } from "../../../roles";
+import { rolesObject } from "../../../roles";
+import { isDispatcherModerator } from "../../../utils/access";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 
@@ -18,6 +19,7 @@ function ExistRequestCompany({
   show,
   onClose,
   chooseObject,
+  departments,
   updateDispatcher,
   openDeleteComponent,
   filterList,
@@ -50,6 +52,7 @@ function ExistRequestCompany({
     login: chooseObject?.login || "",
     oldPassword: "",
     password: chooseObject?.password || "",
+    departmentId: chooseObject?.dispatcherDepartmentId || "",
   });
 
   const sidebarRef = useRef();
@@ -69,6 +72,7 @@ function ExistRequestCompany({
         login: chooseObject.login || "",
         oldPassword: "",
         password: chooseObject.password || "",
+        departmentId: chooseObject?.dispatcherDepartmentId || "",
       });
       setShowIMG(chooseObject.images);
       setIndex(chooseObject.index);
@@ -86,6 +90,7 @@ function ExistRequestCompany({
       login: chooseObject?.login || "",
       oldPassword: "",
       password: chooseObject?.password || "",
+      departmentId: chooseObject?.dispatcherDepartmentId || "",
     });
     setIsEdited(false); // Сброс флага изменений
     setShowOldPassword(false);
@@ -146,6 +151,17 @@ function ExistRequestCompany({
     }
   };
 
+  const departmentOptions = useMemo(
+    () => [
+      { label: "Без отдела", value: "" },
+      ...(departments || []).map((department) => ({
+        label: department.name,
+        value: department.id,
+      })),
+    ],
+    [departments]
+  );
+
   const handleUpdate = async () => {
     if (isEditing) {
       setIsLoading(true);
@@ -186,6 +202,7 @@ function ExistRequestCompany({
               login: formData.login,
               password: formData.password,
               oldPassword: formData.oldPassword,
+              dispatcherDepartmentId: formData.departmentId || null,
             },
             images: formData.images,
           },
@@ -306,7 +323,29 @@ function ExistRequestCompany({
                   disabled={!isEditing}
                 />
               </div>
-              {user.role === roles.dispatcherModerator ? null : (
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Отдел</div>
+                <MUIAutocomplete
+                  dropdownWidth={"60%"}
+                  label={"Выберите отдел"}
+                  options={departmentOptions}
+                  value={
+                    departmentOptions.find(
+                      (option) => option.value === formData.departmentId
+                    ) || null
+                  }
+                  onChange={(event, newValue) => {
+                    setIsEdited(true);
+                    setFormData((prevData) => ({
+                      ...prevData,
+                      departmentId: newValue ? newValue.value : "",
+                    }));
+                  }}
+                  isDisabled={!isEditing}
+                />
+              </div>
+              {isDispatcherModerator(user) ? null : (
                 <>
                   <div className={classes.requestDataInfo}>
                     <div className={classes.requestDataInfo_title}>Роль</div>
@@ -351,19 +390,6 @@ function ExistRequestCompany({
                       }));
                     }}
                   />
-                  {/* <DropDownList
-                    placeholder="Выберите должность"
-                    searchable={false}
-                    options={positions}
-                    initialValue={formData.position}
-                    onSelect={(value) => {
-                      setIsEdited(true);
-                      setFormData((prevData) => ({
-                        ...prevData,
-                        position: value,
-                      }));
-                    }}
-                  /> */}
                 </div>
               </div>
               <div className={classes.requestDataInfo}>

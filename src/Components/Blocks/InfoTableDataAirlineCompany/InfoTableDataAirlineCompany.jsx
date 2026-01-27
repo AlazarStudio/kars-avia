@@ -25,7 +25,7 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                 {(!user?.airlineId || accessMenu.userUpdate) && 
                                 <><img src="/editPassenger.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} />
                                 {/* <img src="/settings.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} /> */}
-                                {!representative && (<SettingsIcon cursor={"pointer"} strokeWidth={0.5} onClick={() => navigate("/access", { state:{ item: item, airlineId: airlineId } } )} />)}
+                                {!representative && (<SettingsIcon cursor={"pointer"} strokeWidth={0.5} onClick={() => navigate("/airlineAccess", { state:{ item: item, airlineId: airlineId } } )} />)}
                                 <img src="/deletePassenger.png" alt="Delete" onClick={() => openDeleteComponent(index, item.id)} /></>}
                             </div>
 

@@ -11,6 +11,7 @@ function InfoTableDataTransferOrders({
   user,
   token,
   disAdmin,
+  canChat = true,
   toggleRequestSidebar,
   scrollToId,
   requests,
@@ -47,6 +48,7 @@ function InfoTableDataTransferOrders({
 
   const [selectedTransferId, setSelectedTransferId] = useState(null);
   const [showChat, setShowChat] = useState(false);
+  const canShowChat = !!canChat;
 
   const listContainerRef = useRef(null);
 
@@ -99,6 +101,7 @@ function InfoTableDataTransferOrders({
                   // Если клик по кнопке чата, не переходим на страницу
                   if (e.target.closest(`.${classes.chatButton}`)) {
                     e.stopPropagation();
+                    if (!canShowChat) return;
                     setSelectedTransferId(item.id);
                     setShowChat(true);
                     return;
@@ -194,24 +197,26 @@ function InfoTableDataTransferOrders({
                 </div>
                 {/* Колонка чат */}
                 <div className={`${classes.col} ${classes.colChat}`}>
-                  <div
-                    className={classes.chatButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedTransferId(item.id);
-                      setShowChat(true);
-                    }}
-                  >
-                    <img src="/chatReserve.png" alt="" />
-                    {/* TODO: добавить подсчет непрочитанных сообщений из transfer chats */}
-                  </div>
+                  {canShowChat && (
+                    <div
+                      className={classes.chatButton}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedTransferId(item.id);
+                        setShowChat(true);
+                      }}
+                    >
+                      <img src="/chatReserve.png" alt="" />
+                      {/* TODO: добавить подсчет непрочитанных сообщений из transfer chats */}
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
       </InfoTable>
-      {showChat && selectedTransferId && (
+      {canShowChat && showChat && selectedTransferId && (
         <div className={classes.chatWrapper}>
           {/* <div className={classes.chatHeader}>
             <span>Чат трансфера</span>

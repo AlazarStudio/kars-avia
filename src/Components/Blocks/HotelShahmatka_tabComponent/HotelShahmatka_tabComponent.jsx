@@ -14,7 +14,7 @@ import ExistRequest from "../ExistRequest/ExistRequest.jsx";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import StatusLegend from "../StatusLegend/StatusLegend.jsx";
 
-function HotelShahmatka_tabComponent({ id, user }) {
+function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
     const token = getCookie("token")
     const isPlacementV2 =
         new URLSearchParams(window.location.search).get("placementV2") === "1";
@@ -247,7 +247,7 @@ function HotelShahmatka_tabComponent({ id, user }) {
               <NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} />
             )} */}
 
-<NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} />
+<NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} accessMenu={accessMenu} />
 
             {/* {(hotelBronsInfo.length === 0) &&
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={[]} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />

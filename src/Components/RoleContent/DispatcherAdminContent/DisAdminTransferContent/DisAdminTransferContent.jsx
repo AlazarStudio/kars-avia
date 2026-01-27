@@ -25,7 +25,7 @@ const TransferCompany = lazy(() =>
   import("../../../Blocks/TransferCompany/TransferCompany")
 );
 
-const DisAdminTransferContent = ({ user }) => {
+const DisAdminTransferContent = ({ user, accessMenu }) => {
   const navigate = useNavigate();
   const { id, orderId, driversCompanyID, hotelID, airlineID } = useParams();
 
@@ -72,7 +72,7 @@ const DisAdminTransferContent = ({ user }) => {
   if (isOrderDetails) {
     return (
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <TransferOrder user={user} />
+        <TransferOrder user={user} accessMenu={accessMenu} />
       </Suspense>
     );
   }
@@ -114,7 +114,7 @@ const DisAdminTransferContent = ({ user }) => {
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
-            <TransferOrders user={user} disAdmin={true} />
+            <TransferOrders user={user} disAdmin={true} accessMenu={accessMenu} />
           </Suspense>
         </TabPanel>
 

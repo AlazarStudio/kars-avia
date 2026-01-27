@@ -30,6 +30,7 @@ import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import InfoTableDataTransferOrders from "../InfoTableDataTransferOrders/InfoTableDataTransferOrders.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import CreateTransferRequest from "../CreateTransferRequest/CreateTransferRequest.jsx";
+import { hasAccessMenu } from "../../../utils/access";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 function TransferOrders({ user, disAdmin, accessMenu }) {
@@ -165,6 +166,12 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
   const [notifications, setNotifications] = useState([]);
+  const canCreateTransfer = accessMenu
+    ? hasAccessMenu(accessMenu, "transferCreate")
+    : true;
+  const canChatTransfer = accessMenu
+    ? hasAccessMenu(accessMenu, "transferChat")
+    : true;
 
   const addNotification = (text, status) => {
     const id = Date.now(); // Уникальный ID
@@ -420,7 +427,9 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
           value={searchQuery}
           onChange={handleSearch}
         />
-        <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
+        {canCreateTransfer && (
+          <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
+        )}
       </div>
       {loading && <MUILoader fullHeight={"70vh"} />}
       {error && <p>Error: {error.message}</p>}
@@ -432,6 +441,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
             user={user}
             disAdmin={disAdmin}
             token={token}
+            canChat={canChatTransfer}
             toggleRequestSidebar={toggleRequestSidebar}
             requests={filteredRequests || []}
             chooseRequestID={chooseRequestID}

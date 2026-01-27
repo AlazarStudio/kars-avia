@@ -16,19 +16,21 @@ import {
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles";
+import { fullNotifyTime, notifyTime } from "../../../roles";
+import { canAccessMenu } from "../../../utils/access";
 import { useNavigate } from "react-router-dom";
 import InfoTableDataDispatcherCompany from "../InfoTableDataDispatcherCompany/InfoTableDataDispatcherCompany";
 import CreateRequestDispatcherCompany from "../CreateRequestDispatcherCompany/CreateRequestDispatcherCompany";
 import ExistRequestDispatcherCompany from "../ExistRequestDispatcherCompany/ExistRequestDispatcherCompany";
 import CreateRequestDispatcherDepartment from "../CreateRequestDispatcherDepartment/CreateRequestDispatcherDepartment";
 import EditRequestDispatcherDepartment from "../EditRequestDispatcherDepartment/EditRequestDispatcherDepartment";
+import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
 
 function Company({ user, accessMenu }) {
   const token = getCookie("token");
   const navigate = useNavigate();
-  const canCreate = !!accessMenu?.userCreate || user?.role === roles.superAdmin;
-  const canEdit = !!accessMenu?.userUpdate || user?.role === roles.superAdmin;
+  const canCreate = canAccessMenu(accessMenu, "userCreate", user);
+  const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
 
   const {
     loading: dispatchersLoading,
@@ -362,7 +364,7 @@ function Company({ user, accessMenu }) {
         )}
 
         {canEdit && (
-          <ExistRequestDispatcherCompany
+          <ExistRequestCompany
             show={showEditDispatcher}
             onClose={() => setShowEditDispatcher(false)}
             chooseObject={selectedDispatcher}

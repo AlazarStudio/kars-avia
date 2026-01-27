@@ -162,7 +162,7 @@ function CreateRequestDispatcherCompany({
           input: {
             name: formData.name,
             email: formData.email,
-            role: formData.role,
+            role: "DISPATCHERADMIN",
             positionId: selectedPosition?.id,
             login: formData.login,
             password: formData.password,
@@ -260,7 +260,7 @@ function CreateRequestDispatcherCompany({
                 autoComplete="new-password"
               />
 
-              <label>Роль</label>
+              {/* <label>Роль</label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
@@ -277,7 +277,7 @@ function CreateRequestDispatcherCompany({
                     role: newValue ? newValue.value : "",
                   }));
                 }}
-              />
+              /> */}
 
               <label>Отдел</label>
               <MUIAutocomplete

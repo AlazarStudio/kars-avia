@@ -3,7 +3,7 @@ import classes from "./InfoTableDataDispatcherCompany.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { server } from "../../../../graphQL_requests";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
-import { roles } from "../../../roles";
+import { canAccessMenu, isDispatcherAdmin } from "../../../utils/access";
 
 function InfoTableDataDispatcherCompany({
   user,
@@ -15,7 +15,7 @@ function InfoTableDataDispatcherCompany({
   onDeleteDispatcher,
   accessMenu,
 }) {
-  const canEdit = !!accessMenu?.userUpdate || user?.role === roles.superAdmin;
+  const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
 
   return (
     <InfoTable>
@@ -53,9 +53,9 @@ function InfoTableDataDispatcherCompany({
             </div>
 
             <div className={classes.InfoTable_BottomInfo}>
-              {group.dispatchers.length === 0 && (
+              {/* {group.dispatchers.length === 0 && (
                 <div className={classes.emptyDepartment}>Нет диспетчеров</div>
-              )}
+              )} */}
               {group.dispatchers.map((dispatcher, dispatcherIndex) => (
                 <div
                   className={classes.InfoTable_BottomInfo__item}
@@ -78,7 +78,7 @@ function InfoTableDataDispatcherCompany({
                         {dispatcher.name}
                       </div>
                       <div className={classes.employeePost}>
-                        {dispatcher.role === roles.dispatcerAdmin
+                        {isDispatcherAdmin(dispatcher)
                           ? "Администратор"
                           : "Модератор"}
                       </div>

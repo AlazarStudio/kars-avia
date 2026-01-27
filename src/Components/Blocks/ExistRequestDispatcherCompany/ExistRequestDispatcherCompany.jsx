@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import {
   decodeJWT,
   getCookie,
+  server,
   UPDATE_DISPATCHER_USER,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
@@ -269,6 +270,19 @@ function ExistRequestDispatcherCompany({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              <div className={classes.requestDataInfo_img}>
+                <div className={classes.requestDataInfo_img_imgBlock}>
+                  <img
+                    src={
+                      showIMG?.length !== 0
+                        ? `${server}${showIMG}`
+                        : "/no-avatar.png"
+                    }
+                    alt=""
+                    style={{ userSelect: "none" }}
+                  />
+                </div>
+              </div>
               <label>ФИО</label>
               <input
                 type="text"
@@ -413,6 +427,13 @@ function ExistRequestDispatcherCompany({
 
           <div className={classes.requestButton}>
             <Button
+              onClick={() => openDeleteComponent?.(index, formData.id)}
+              backgroundcolor={"var(--red)"}
+              color={"#fff"}
+            >
+              Удалить
+            </Button>
+            <Button
               onClick={handleUpdate}
               backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
               color={!isEditing ? "#3B6C54" : "#fff"}
@@ -426,13 +447,6 @@ function ExistRequestDispatcherCompany({
                   Изменить <img src="/editDispetcher.png" alt="" />
                 </>
               )}
-            </Button>
-            <Button
-              onClick={() => openDeleteComponent?.(index, formData.id)}
-              backgroundcolor={"#ff000033"}
-              color={"#FF0000"}
-            >
-              Удалить
             </Button>
           </div>
         </>
