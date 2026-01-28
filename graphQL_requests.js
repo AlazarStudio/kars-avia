@@ -3664,6 +3664,7 @@ export const GET_AIRLINE_COMPANY = gql`
       department {
         id
         name
+        email
         users {
           id
           name
@@ -3737,6 +3738,7 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
       department {
         id
         name
+        email
         users {
           id
           name

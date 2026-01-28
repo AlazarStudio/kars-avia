@@ -31,6 +31,7 @@ function EditRequestAirlineOtdel({
 
   const [formData, setFormData] = useState({
     type: category?.name || "",
+    email: category?.email || "",
   });
 
   // Инициализируем выбранные должности из category?.position (если они есть)
@@ -42,7 +43,7 @@ function EditRequestAirlineOtdel({
 
   useEffect(() => {
     if (show && category) {
-      setFormData({ type: category.name });
+      setFormData({ type: category.name, email: category.email || "" });
       // setSelectedPositions(
       //   category.position ? category.position.map((pos) => pos.id) : []
       // );
@@ -52,6 +53,7 @@ function EditRequestAirlineOtdel({
   const resetForm = useCallback(() => {
     setFormData({
       type: category?.name || "",
+      email: category?.email || "",
     });
     // setSelectedPositions(
     //   category && category.position ? category.position.map((pos) => pos.id) : []
@@ -114,6 +116,15 @@ function EditRequestAirlineOtdel({
     e.preventDefault();
     setIsLoading(true);
 
+    if (formData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        alert("Введите корректный email.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       let request = await createAirlineDepartment({
         variables: {
@@ -123,6 +134,7 @@ function EditRequestAirlineOtdel({
               {
                 id: category.id,
                 name: formData.type,
+                email: formData.email || null,
                 // positionIds: selectedPositions, // Передаём выбранные id должностей
               },
             ],
@@ -195,6 +207,15 @@ function EditRequestAirlineOtdel({
                 value={formData.type}
                 onChange={handleChange}
                 placeholder="Пример: Отдел продаж"
+                disabled={!isEditing}
+              />
+              <label>Почта</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="example@mail.ru"
                 disabled={!isEditing}
               />
               {/* <div className={classes.positionsContainer}>

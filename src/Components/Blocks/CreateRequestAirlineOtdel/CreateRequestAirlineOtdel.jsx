@@ -30,6 +30,7 @@ function CreateRequestAirlineOtdel({
 
   const [formData, setFormData] = useState({
     category: "",
+    email: "",
   });
 
   // Состояние для выбранных должностей (id)
@@ -40,6 +41,7 @@ function CreateRequestAirlineOtdel({
   const resetForm = useCallback(() => {
     setFormData({
       category: "",
+      email: "",
     });
     setSelectedPositions([]);
     setIsEdited(false); // Сброс флага изменений
@@ -100,6 +102,15 @@ function CreateRequestAirlineOtdel({
       return;
     }
 
+    if (formData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        alert("Введите корректный email.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       let request = await createAirlineDepartment({
         variables: {
@@ -108,6 +119,7 @@ function CreateRequestAirlineOtdel({
             department: [
               {
                 name: formData.category,
+                email: formData.email || null,
                 // positionIds: selectedPositions,
               },
             ],
@@ -181,6 +193,14 @@ function CreateRequestAirlineOtdel({
                 value={formData.category}
                 onChange={handleChange}
                 placeholder="Пример: Отдел продаж"
+              />
+              <label>Почта</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="example@mail.ru"
               />
               {/* <div className={classes.positionsContainer}>
                 <label>Должности:</label>
