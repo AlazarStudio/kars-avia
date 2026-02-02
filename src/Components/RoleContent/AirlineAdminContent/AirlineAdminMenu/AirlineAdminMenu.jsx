@@ -198,7 +198,7 @@ const AirlineAdminMenu = ({
           <Link
             to={"/airlineCompany"}
             className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-              } ${id == "airlineCompany" && classes.menu_items__activeElem}`}
+              } ${(id == "airlineCompany" || id == "access" || id == "notifications") && classes.menu_items__activeElem}`}
           >
             <div className={classes.svgWrapper}>
               <svg

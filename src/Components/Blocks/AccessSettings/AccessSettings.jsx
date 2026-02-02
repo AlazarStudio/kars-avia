@@ -15,11 +15,12 @@ import { fullNotifyTime } from "../../../roles";
 import Notification from "../../Notification/Notification";
 import Button from "../../Standart/Button/Button";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete";
+import { isDispatcherRole, isAirlineRole } from "../../../utils/access";
 
-export default function AccessSettings() {
+export default function AccessSettings({ user }) {
   const token = getCookie("token");
   const location = useLocation();
-  // const navigate = useNavigate();
+  const navigate = useNavigate();
 
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -169,7 +170,10 @@ export default function AccessSettings() {
       <div className={classes.section}>
         <Header>
           <div className={classes.titleHeader}>
-            <Link to={`/airlines/${airlineId}`} className={classes.backButton}>
+            <Link 
+              to={isAirlineRole(user) ? "/airlineCompany" : `/airlines/${airlineId}`} 
+              className={classes.backButton}
+            >
               <img src="/arrow.png" alt="" />
             </Link>
             Настройки доступа{" "}
@@ -181,14 +185,15 @@ export default function AccessSettings() {
           {/* <button
             className={classes.segment}
             onClick={() => {
-              navigate("/notifications", { state: location?.state });
+              const notificationsPath = isDispatcherRole(user) ? "/airlineNotifications" : "/notifications";
+              navigate(notificationsPath, { state: location?.state });
             }}
           >
             Уведомления
-          </button>
+          </button> */}
           <button className={`${classes.segment} ${classes.segmentActive}`}>
             Доступ
-          </button> */}
+          </button>
           <div className={classes.saveBar}>
             <Button
               onClick={handleSubmit}

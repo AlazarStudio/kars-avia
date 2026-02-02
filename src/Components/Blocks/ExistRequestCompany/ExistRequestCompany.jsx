@@ -29,7 +29,7 @@ function ExistRequestCompany({
   const token = getCookie("token");
   const user = decodeJWT(token);
 
-  const [uploadFile, { data, loading, error }] = useMutation(
+  const [uploadFile] = useMutation(
     UPDATE_DISPATCHER_USER,
     {
       context: {
@@ -166,7 +166,7 @@ function ExistRequestCompany({
     if (isEditing) {
       setIsLoading(true);
       // Проверяем обязательные поля
-      const requiredFields = ["name", "email", "role", "position", "login"];
+      const requiredFields = ["name", "email", "role", "login"];
       const emptyFields = requiredFields.filter(
         (field) => !formData[field]?.trim()
       );

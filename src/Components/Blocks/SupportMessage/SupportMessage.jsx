@@ -4,11 +4,13 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Smiles from "../Smiles/Smiles";
 import {
   convertToDate,
+  CLAIM_SUPPORT_TICKET,
   GET_USER_SUPPORT_CHAT,
   MARK_ALL_MESSAGES_AS_READ,
   MARK_MESSAGE_AS_READ,
   MESSAGE_SENT_SUBSCRIPTION,
   REQUEST_MESSAGES_SUBSCRIPTION,
+  RESOLVE_SUPPORT_TICKET,
   UPDATE_MESSAGE_BRON,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
@@ -37,6 +39,7 @@ function SupportMessage({
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
   const [isUserMessage, setIsUserMessage] = useState(false);
+  const [messages, setMessages] = useState({ messages: [] });
 
   // console.log(user?.id);
 
@@ -54,6 +57,26 @@ function SupportMessage({
     fetchPolicy: "network-only",
     skip: userID ? false : true,
   });
+
+  const chatState = data?.userSupportChat ?? messages;
+  const chatMessages = chatState?.messages || [];
+
+  const isSupportAgent = user?.support === true;
+  const supportStatus = chatState?.supportStatus || "OPEN";
+  const assignedToId = chatState?.assignedTo?.id;
+  const isAssignedToMe = assignedToId && assignedToId === user?.id;
+  const canClaim =
+    isSupportAgent && supportStatus === "OPEN" && !isAssignedToMe;
+  const canResolve =
+    isSupportAgent && supportStatus === "IN_PROGRESS" && isAssignedToMe;
+  const canSendMessage = !isSupportAgent || isAssignedToMe;
+
+  const statusLabelMap = {
+    OPEN: "Открыт",
+    IN_PROGRESS: "В работе",
+    RESOLVED: "Решён",
+  };
+  const statusLabel = statusLabelMap[supportStatus] || "Открыт";
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -75,9 +98,9 @@ function SupportMessage({
 
   // При клике помечаем все сообщения как прочитанные и обновляем данные
   const scrollToUnread = () => {
-    if (!data?.userSupportChat?.id) return;
+    if (!chatState?.id) return;
     markAllMessagesAsReadMutation({
-      variables: { chatId: data?.userSupportChat?.id, userId: user.id },
+      variables: { chatId: chatState?.id, userId: user.id },
     })
       .then(() => {
         refetch();
@@ -95,12 +118,26 @@ function SupportMessage({
     return scrollHeight - scrollTop <= clientHeight + 10;
   };
 
-  // const [messages, setMessages] = useState([]);
-  const [messages, setMessages] = useState({ messages: [] });
   // console.log(data?.userSupportChat?.id);
 
   // Мутация для отметки отдельного сообщения как прочитанного
   const [markMessageAsReadMutation] = useMutation(MARK_MESSAGE_AS_READ, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const [claimSupportTicket] = useMutation(CLAIM_SUPPORT_TICKET, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const [resolveSupportTicket] = useMutation(RESOLVE_SUPPORT_TICKET, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -145,34 +182,33 @@ function SupportMessage({
       //   setIsInitialLoad(false);
       // }
     }
-    refetch();
-  }, [data, refetch]);
+  }, [data]);
 
   useEffect(() => {
-    if (messages?.unreadMessagesCount != null) {
-      setNewMessagesCount(messages.unreadMessagesCount);
+    if (chatState?.unreadMessagesCount != null) {
+      setNewMessagesCount(chatState.unreadMessagesCount);
     }
-  }, [messages]);
+  }, [chatState?.unreadMessagesCount]);
 
   // console.log(messages);
   
 
   useEffect(() => {
-    if (isInitialLoad && messages?.messages?.length) {
-      const firstUnreadIndex = messages.messages.findIndex(
+    if (isInitialLoad && chatMessages.length) {
+      const firstUnreadIndex = chatMessages.findIndex(
         (msg) =>
           msg.sender.id !== user.id &&
           !msg.readBy?.some((rb) => rb.user.id === user.id)
       );
       if (firstUnreadIndex !== -1) {
-        const firstUnreadId = messages.messages[firstUnreadIndex].id;
+        const firstUnreadId = chatMessages[firstUnreadIndex].id;
         scrollToFirstUnread(firstUnreadId);
       } else {
         scrollToBottom();
       }
       setIsInitialLoad(false);
     }
-  }, [isInitialLoad, messages?.messages, user?.id]);
+  }, [isInitialLoad, chatMessages, user?.id]);
 
   useEffect(() => {
     setIsInitialLoad(true);
@@ -199,7 +235,11 @@ function SupportMessage({
   useEffect(() => {
     if (subscriptionData) {
       const newMessage = subscriptionData.messageSent;
-      if (newMessage.chatId !== data?.userSupportChat?.id) return;
+      if (!newMessage?.sender || !Array.isArray(newMessage?.readBy)) {
+        refetch();
+        return;
+      }
+      if (newMessage.chatId && chatState?.id && newMessage.chatId !== chatState?.id) return;
       setMessages((prevMessages) => {
         const messageExists = prevMessages.messages.some(
           (message) => message.id === newMessage.id
@@ -215,8 +255,8 @@ function SupportMessage({
 
       // Если это чужое сообщение и оно не прочитано пользователем, увеличиваем локально счётчик
       if (
-        newMessage.sender.id !== user.id &&
-        !newMessage.readBy?.some((rb) => rb.user.id === user.id)
+        newMessage.sender?.id !== user.id &&
+        !newMessage.readBy?.some((rb) => rb?.user?.id === user.id)
       ) {
         setNewMessagesCount((prevCount) => prevCount + 1);
         setTimeout(() => {
@@ -258,9 +298,9 @@ function SupportMessage({
 
   // Подписываемся на IntersectionObserver для каждого непрочитанного сообщения
   useEffect(() => {
-    if (!messages?.messages?.length) return;
+    if (!chatMessages.length) return;
 
-    messages.messages.forEach((msg) => {
+    chatMessages.forEach((msg) => {
       if (!messageRefs.current[msg.id]) {
         messageRefs.current[msg.id] = React.createRef();
       }
@@ -301,7 +341,7 @@ function SupportMessage({
         }
       }
     });
-  }, [messages, markMessageAsReadMutation, user?.id, refetch]);
+  }, [chatMessages, markMessageAsReadMutation, user?.id, refetch]);
 
   const [messageText, setMessageText] = useState({
     text: "",
@@ -312,7 +352,7 @@ function SupportMessage({
   const handleTextareaChange = (e) => {
     setMessageText({
       senderId: user.id,
-      chatId: data.userSupportChat.id,
+      chatId: chatState?.id,
       text: e.target.value,
     });
   };
@@ -327,7 +367,7 @@ function SupportMessage({
   const handleSmileChange = (emoji) => {
     setMessageText((prevState) => ({
       senderId: user.id,
-      chatId: data.userSupportChat.id,
+      chatId: chatState?.id,
       text: prevState.text + emoji,
     }));
   };
@@ -341,6 +381,10 @@ function SupportMessage({
   });
 
   const handleSubmitMessage = async () => {
+    if (!canSendMessage) {
+      alert("Возьмите тикет в работу, чтобы отвечать пользователю.");
+      return;
+    }
     if (messageText.text.trim()) {
       try {
         let request = await createRequest({
@@ -357,9 +401,11 @@ function SupportMessage({
           //   refetch();
           //   scrollToBottom();
           // });
-        await markAllMessagesAsReadMutation({
-          variables: { chatId: data?.userSupportChat?.id, userId: user.id },
-        });
+        if (chatState?.id) {
+          await markAllMessagesAsReadMutation({
+            variables: { chatId: chatState.id, userId: user.id },
+          });
+        }
         await refetch();
         // После refetch данные обновлены, но возможно, DOM еще не обновился.
         // Поэтому используем setTimeout для прокрутки после обновления DOM.
@@ -389,6 +435,32 @@ function SupportMessage({
     }
   };
 
+  const handleClaimTicket = async () => {
+    if (!chatState?.id) return;
+    try {
+      await claimSupportTicket({
+        variables: { chatId: chatState.id },
+      });
+      await refetch();
+      supportRefetch?.();
+    } catch (err) {
+      console.error("Ошибка при взятии тикета в работу:", err);
+    }
+  };
+
+  const handleResolveTicket = async () => {
+    if (!chatState?.id) return;
+    try {
+      await resolveSupportTicket({
+        variables: { chatId: chatState.id },
+      });
+      await refetch();
+      supportRefetch?.();
+    } catch (err) {
+      console.error("Ошибка при закрытии тикета:", err);
+    }
+  };
+
 
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -401,10 +473,46 @@ function SupportMessage({
       {loading && <MUILoader loadSize={"50px"} fullHeight={"78vh"} />}
       {error && <p>Error: {error.message}</p>}
 
-      {!loading && !error && messages && data && (
+      {!loading && !error && chatState && (
         <div className={classes.requestData}>
+          <div className={classes.ticketHeader}>
+            <div className={classes.ticketMeta}>
+              <span className={classes.ticketBadge}>{statusLabel}</span>
+              <span>
+                Исполнитель:{" "}
+                {chatState?.assignedTo?.name
+                  ? chatState.assignedTo.name
+                  : "Не назначен"}
+              </span>
+              {chatState?.resolvedBy?.name && (
+                <span>Закрыл: {chatState.resolvedBy.name}</span>
+              )}
+            </div>
+            {isSupportAgent && (canClaim || canResolve) && (
+              <div className={classes.ticketActions}>
+                {canClaim && (
+                  <button
+                    type="button"
+                    className={classes.ticketButton}
+                    onClick={handleClaimTicket}
+                  >
+                    Взять в работу
+                  </button>
+                )}
+                {canResolve && (
+                  <button
+                    type="button"
+                    className={classes.ticketButtonSecondary}
+                    onClick={handleResolveTicket}
+                  >
+                    Закрыть
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           <div className={classes.requestData_messages}>
-            {messages.messages?.map((message, index) => {
+            {chatMessages.map((message, index) => {
               if (!messageRefs.current[message.id]) {
                 messageRefs.current[message.id] = React.createRef();
               }
@@ -512,6 +620,7 @@ function SupportMessage({
               type="text"
               value={messageText.text}
               onChange={handleTextareaChange}
+              disabled={!canSendMessage}
               placeholder="Введите сообщение"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
@@ -524,6 +633,7 @@ function SupportMessage({
             <div
               className={classes.sendBlock_message}
               onClick={handleSubmitMessage}
+              style={{ opacity: canSendMessage ? 0.8 : 0.4, cursor: canSendMessage ? "pointer" : "not-allowed" }}
             >
               <img src="/message.png" alt="Отправить" />
             </div>

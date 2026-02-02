@@ -554,6 +554,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
               "Произошла ошибка при подтверждении бронирования",
               "error"
             );
+            console.error(err)
           }
         }
       } else {

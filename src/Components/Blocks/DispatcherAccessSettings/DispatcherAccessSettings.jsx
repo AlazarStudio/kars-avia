@@ -161,7 +161,7 @@ export default function DispatcherAccessSettings() {
             <button
               type="button"
               className={classes.backButton}
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/company")}
             >
               <img src="/arrow.png" alt="" />
             </button>
@@ -171,6 +171,17 @@ export default function DispatcherAccessSettings() {
         </Header>
 
         <div className={classes.segmented}>
+          {/* <button
+            className={classes.segment}
+            onClick={() => {
+              navigate("/dispatcherNotifications", { state: location?.state });
+            }}
+          >
+            Уведомления
+          </button> */}
+          <button className={`${classes.segment} ${classes.segmentActive}`}>
+            Доступ
+          </button>
           <div className={classes.saveBar}>
             <Button
               onClick={handleSubmit}

@@ -164,7 +164,7 @@ const DisAdminMenu = ({
             to={"/company"}
             className={`${classes.menu_items__elem} ${
               !menuOpen ? classes.jcc : ""
-            } ${(id == "company"  || id == "dispatcherAccess") && classes.menu_items__activeElem}`}
+            } ${(id == "company" || id == "dispatcherAccess" || id == "dispatcherNotifications") && classes.menu_items__activeElem}`}
           >
             <div className={classes.svgWrapper}>
               <svg
@@ -236,7 +236,7 @@ const DisAdminMenu = ({
           to={"/airlines"}
           className={`${classes.menu_items__elem} ${
             !menuOpen ? classes.jcc : ""
-          } ${(id == "airlines" || id == "airlineAccess") && classes.menu_items__activeElem}`}
+          } ${(id == "airlines" || id == "airlineAccess" || id == "airlineNotifications") && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg

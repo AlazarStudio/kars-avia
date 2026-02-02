@@ -1,43 +1,54 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import classes from "./NotificationsSettings.module.css";
+import classes from "./DispatcherNotificationsSettings.module.css";
 import Header from "../Header/Header";
 import {
-  GET_AIRLINE_COMPANY,
+  GET_DISPATCHER_DEPARTMENTS,
+  UPDATE_DISPATCHER_DEPARTMENT,
   getCookie,
-  UPDATE_AIRLINE,
 } from "../../../../graphQL_requests";
 import MUISwitch from "../MUISwitch/MUISwitch";
 import MUILoader from "../MUILoader/MUILoader";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@apollo/client";
 import { fullNotifyTime } from "../../../roles";
 import Notification from "../../Notification/Notification";
 import Button from "../../Standart/Button/Button";
-import { isDispatcherRole } from "../../../utils/access";
 
-export default function NotificationsSettings({ user }) {
+export default function DispatcherNotificationsSettings() {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
+
+  const departmentId = location?.state?.departmentId;
 
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
 
   const [notificationMenu, setNotificationMenu] = useState();
-  const airlineId = location?.state?.airlineId;
 
-  const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  const { loading, error, data, refetch } = useQuery(
+    GET_DISPATCHER_DEPARTMENTS,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    },
-    skip: !airlineId,
-    variables: { airlineId: airlineId },
-  });
+      skip: !departmentId,
+      variables: {
+        pagination: { all: true },
+      },
+    }
+  );
 
-  const [updateAirline] = useMutation(UPDATE_AIRLINE, {
+  const department = useMemo(() => {
+    return data?.dispatcherDepartments?.departments?.find(
+      (item) => item.id === departmentId
+    );
+  }, [data, departmentId]);
+
+  const [updateDispatcherDepartment] = useMutation(UPDATE_DISPATCHER_DEPARTMENT, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -47,15 +58,11 @@ export default function NotificationsSettings({ user }) {
   });
 
   useEffect(() => {
-    if (data && airlineId) {
-      const sortedDepartment = data.airline.department.find(
-        (i) => i.id === location.state.item?.id
-      );
-      setNotificationMenu(sortedDepartment?.notificationMenu);
+    if (department) {
+      setNotificationMenu(department.notificationMenu);
     }
-  }, [data, airlineId]);
+  }, [department]);
 
-  // реф, чтобы при сабмите забрать актуальный локальный стейт из дочерней панели
   const localStateRef = useRef(null);
 
   const addNotification = (text, status = "success") => {
@@ -66,7 +73,6 @@ export default function NotificationsSettings({ user }) {
     }, fullNotifyTime);
   };
 
-  // сборка payload для notificationMenu
   const buildNotificationPayload = (s) => ({
     requestCreate: !!s?.requestCreate,
     requestDatesChange: !!s?.requestDatesChange,
@@ -85,21 +91,21 @@ export default function NotificationsSettings({ user }) {
       return;
     }
 
+    if (!department) {
+      addNotification("Отдел не найден.", "error");
+      return;
+    }
+
     try {
       setIsLoading(true);
       const current = localStateRef.current;
       const notificationPayload = buildNotificationPayload(current);
 
-      await updateAirline({
+      await updateDispatcherDepartment({
         variables: {
-          updateAirlineId: airlineId,
+          updateDispatcherDepartmentId: department.id,
           input: {
-            department: [
-              {
-                id: location?.state?.item?.id,
-                notificationMenu: notificationPayload,
-              },
-            ],
+            notificationMenu: notificationPayload,
           },
         },
       });
@@ -114,16 +120,24 @@ export default function NotificationsSettings({ user }) {
     }
   };
 
+  if (!departmentId) {
+    return <div className={classes.emptyState}>Отдел не найден.</div>;
+  }
+
   return (
     <>
       <div className={classes.section}>
         <Header>
           <div className={classes.titleHeader}>
-            <Link to={`/airlines/${airlineId}`} className={classes.backButton}>
+            <button
+              type="button"
+              className={classes.backButton}
+              onClick={() => navigate("/company")}
+            >
               <img src="/arrow.png" alt="" />
-            </Link>
+            </button>
             Настройки уведомлений{" "}
-            {location?.state?.item?.name ? `"${location.state.item.name}"` : ""}
+            {department?.name ? `"${department.name}"` : ""}
           </div>
         </Header>
 
@@ -134,8 +148,7 @@ export default function NotificationsSettings({ user }) {
           <button
             className={classes.segment}
             onClick={() => {
-              const accessPath = isDispatcherRole(user) ? "/airlineAccess" : "/access";
-              navigate(accessPath, { state: location?.state });
+              navigate("/dispatcherAccess", { state: location?.state });
             }}
           >
             Доступ
@@ -156,40 +169,35 @@ export default function NotificationsSettings({ user }) {
                 </>
               )}
             </Button>
-            {/* <button
-              className={classes.saveBtn}
-              onClick={handleSubmit}
-              disabled={isLoading}
-            >
-            </button> */}
           </div>
         </div>
 
-        {!isLoading && !loading && (
-          <>
-            <NotificationsPanel
-              notificationMenu={notificationMenu}
-              stateRef={localStateRef}
-              isEditing={isEditing}
-            />
-          </>
-        )}
-        {(isLoading || loading) && <MUILoader fullHeight={"70vh"} />}
-      </div>
+        {loading && <MUILoader fullHeight={"60vh"} />}
+        {error && <p>Error: {error.message}</p>}
 
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
+        {!loading && !error && (
+          <NotificationsPanel
+            notificationMenu={notificationMenu || {}}
+            stateRef={localStateRef}
+            isEditing={isEditing}
+          />
+        )}
+
+        {notifications.map((n, index) => (
+          <Notification
+            key={n.id}
+            text={n.text}
+            status={n.status}
+            index={index}
+            time={fullNotifyTime}
+            onClose={() => {
+              setNotifications((prev) =>
+                prev.filter((notif) => notif.id !== n.id)
+              );
+            }}
+          />
+        ))}
+      </div>
     </>
   );
 }
@@ -292,8 +300,7 @@ function NotificationsPanel({ notificationMenu = {}, stateRef, isEditing }) {
   );
 }
 
-// Вспомогательные UI-элементы
-function SectionCard({ title, children, mailBrowser }) {
+function SectionCard({ title, children }) {
   return (
     <div className={classes.card}>
       <div className={classes.cardTitle}>

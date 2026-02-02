@@ -5,6 +5,12 @@ import { Link } from "react-router-dom";
 import { server } from "../../../../graphQL_requests";
 
 function InfoTableDataSupport({ children, toggleRequestSidebar, user, requests, pageInfo, onSelectId, ...props }) {
+    const statusLabelMap = {
+        OPEN: "Открыт",
+        IN_PROGRESS: "В работе",
+        RESOLVED: "Решён",
+    };
+
     const handleObject = (item, index) => {
         // const otherParticipant = item.participants.find(
         //     (participant) => participant.id !== user.id
@@ -34,6 +40,8 @@ function InfoTableDataSupport({ children, toggleRequestSidebar, user, requests, 
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>ID</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>ФИО</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Статус</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w20}`}>Исполнитель</div>
             </div>
 
             <div className={classes.bottom} ref={listContainerRef}>
@@ -42,6 +50,9 @@ function InfoTableDataSupport({ children, toggleRequestSidebar, user, requests, 
                     //     (participant) => participant.id !== user.id
                     // );
                     const otherParticipant = item.participants[0]
+                    const statusLabel =
+                        statusLabelMap[item.supportStatus || "OPEN"] || "Открыт";
+                    const assigneeName = item.assignedTo?.name || "Не назначен";
                 return (
                     <div
                         className={classes.InfoTable_data}
@@ -60,6 +71,8 @@ function InfoTableDataSupport({ children, toggleRequestSidebar, user, requests, 
                                 <div className={classes.InfoTable_data_elem_title}>{otherParticipant?.name}</div>
                             </div>
                         </div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{statusLabel}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>{assigneeName}</div>
                     </div>
                 )})}
             </div>

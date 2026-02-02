@@ -18,6 +18,8 @@ import RegisterOfContracts from '../../Blocks/RegisterOfContracts/RegisterOfCont
 import AccessSettings from '../../Blocks/AccessSettings/AccessSettings'
 import DisAdminTransferContent from '../DispatcherAdminContent/DisAdminTransferContent/DisAdminTransferContent'
 import DispatcherAccessSettings from '../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings'
+import NotificationsSettings from '../../Blocks/NotificationsSettings/NotificationsSettings'
+import DispatcherNotificationsSettings from '../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings'
 
 const SuperAdminContent = ({ user }) => {
   const { id, hotelID, airlineID, orderId, driversCompanyID } = useParams()
@@ -46,7 +48,9 @@ const SuperAdminContent = ({ user }) => {
       {id === 'updates' && <UpdatesList user={user} />}
       {id === 'registerOfContracts' && <RegisterOfContracts user={user} />}
       {id === 'airlineAccess' && <AccessSettings user={user} />}
+      {id === 'airlineNotifications' && <NotificationsSettings user={user} />}
       {id === 'dispatcherAccess' && <DispatcherAccessSettings user={user} />}
+      {id === 'dispatcherNotifications' && <DispatcherNotificationsSettings user={user} />}
       {id === 'myCompany' && <MyCompany user={user} />}
       {id === 'patchNotes' && <PatchNotesList user={user} />}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}

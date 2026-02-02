@@ -19,6 +19,7 @@ import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 import DisAdminTransferContent from "./DisAdminTransferContent/DisAdminTransferContent";
 import DispatcherAccessSettings from "../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings";
+import DispatcherNotificationsSettings from "../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings";
 import { canAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
 
 const NoAccess = () => (
@@ -95,9 +96,21 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         props: () => ({ user }),
       },
       {
+        ids: ["airlineNotifications"],
+        guardKey: "userUpdate",
+        Comp: NotificationsSettings,
+        props: () => ({ user }),
+      },
+      {
         ids: ["dispatcherAccess"],
         guardKey: "userUpdate",
         Comp: DispatcherAccessSettings,
+        props: () => ({}),
+      },
+      {
+        ids: ["dispatcherNotifications"],
+        guardKey: "userUpdate",
+        Comp: DispatcherNotificationsSettings,
         props: () => ({}),
       },
       { ids: ["hotels"], guardKey: null, Comp: HotelsList, props: () => ({ user }) },

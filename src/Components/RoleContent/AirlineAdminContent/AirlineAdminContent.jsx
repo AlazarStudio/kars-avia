@@ -51,8 +51,8 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
       { ids: ["analytics"],           guardKey: "analyticsMenu", Comp: Analytics,   props: () => ({ user, accessMenu: safeAccessMenu }) },
 
       { ids: ["reports"],             guardKey: "reportMenu",    Comp: Reports,               props: () => ({ user, accessMenu: safeAccessMenu }) },
-      { ids: ["access"],              guardKey: "userUpdate",    Comp: AccessSettings,        props: () => ({ }) },
-      // { ids: ["notifications"],       guardKey: "userUpdate",    Comp: NotificationsSettings, props: () => ({ }) },
+      { ids: ["access", "airlineAccess"], guardKey: "userUpdate", Comp: AccessSettings,        props: () => ({ user }) },
+      { ids: ["notifications"],       guardKey: "userUpdate",    Comp: NotificationsSettings, props: () => ({ }) },
       { ids: ["updates"],             guardKey: null,            Comp: UpdatesList,           props: () => ({ user }) },
       { ids: ["documentation"],       guardKey: null,            Comp: DocumentationList,     props: () => ({ user }) },
 

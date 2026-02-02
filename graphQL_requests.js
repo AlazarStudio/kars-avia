@@ -3707,6 +3707,17 @@ export const GET_AIRLINE_COMPANY = gql`
           airlineUpdate
           contracts
         }
+        notificationMenu {
+          requestCreate
+          requestDatesChange
+          requestPlacementChange
+          requestCancel
+          reserveCreate
+          reserveDatesChange
+          reserveUpdate
+          reservePlacementChange
+          newMessage
+        }
       }
     }
   }
@@ -4006,6 +4017,17 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           airlineUpdate
           contracts
         }
+        notificationMenu {
+          requestCreate
+          requestDatesChange
+          requestPlacementChange
+          requestCancel
+          reserveCreate
+          reserveDatesChange
+          reserveUpdate
+          reservePlacementChange
+          newMessage
+        }
         dispatchers {
           id
           dispatcherDepartmentId
@@ -4116,7 +4138,6 @@ export const UPDATE_DISPATCHER_USER = gql`
   mutation Mutation($input: UpdateUserInput!, $images: [Upload!]) {
     updateUser(input: $input, images: $images) {
       id
-      dispatcherDepartmentId
       name
       email
       role
@@ -4253,6 +4274,22 @@ export const GET_USER_SUPPORT_CHATS = gql`
     supportChats {
       id
       createdAt
+      supportStatus
+      assignedTo {
+        id
+        name
+        email
+        images
+        support
+      }
+      resolvedAt
+      resolvedBy {
+        id
+        name
+        email
+        images
+        support
+      }
       participants {
         id
         name
@@ -4283,6 +4320,22 @@ export const GET_USER_SUPPORT_CHAT = gql`
   query UserSupportChat($userId: ID!) {
     userSupportChat(userId: $userId) {
       id
+      supportStatus
+      assignedTo {
+        id
+        name
+        email
+        images
+        support
+      }
+      resolvedAt
+      resolvedBy {
+        id
+        name
+        email
+        images
+        support
+      }
       participants {
         id
         name
@@ -4306,6 +4359,55 @@ export const GET_USER_SUPPORT_CHAT = gql`
         }
       }
       unreadMessagesCount
+    }
+  }
+`;
+
+
+export const CLAIM_SUPPORT_TICKET = gql`
+  mutation ClaimSupportTicket($chatId: ID!) {
+    claimSupportTicket(chatId: $chatId) {
+      id
+      supportStatus
+      assignedTo {
+        id
+        name
+        email
+        images
+        support
+      }
+      resolvedAt
+      resolvedBy {
+        id
+        name
+        email
+        images
+        support
+      }
+    }
+  }
+`;
+
+export const RESOLVE_SUPPORT_TICKET = gql`
+  mutation ResolveSupportTicket($chatId: ID!) {
+    resolveSupportTicket(chatId: $chatId) {
+      id
+      supportStatus
+      assignedTo {
+        id
+        name
+        email
+        images
+        support
+      }
+      resolvedAt
+      resolvedBy {
+        id
+        name
+        email
+        images
+        support
+      }
     }
   }
 `;
