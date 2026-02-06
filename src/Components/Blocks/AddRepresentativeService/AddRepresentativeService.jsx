@@ -11,6 +11,7 @@ import {
   UPDATE_PASSENGER_REQUEST,
 } from "../../../../graphQL_requests.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function AddRepresentativeService({
   show,
@@ -51,7 +52,7 @@ function AddRepresentativeService({
         Authorization: `Bearer ${token}`,
       },
     },
-    refetchQueries: [{query: GET_PASSENGER_REQUEST, variables: {passengerRequestId: request?.id}}],
+    refetchQueries: [{ query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: request?.id } }],
     awaitRefetchQueries: true,
   });
 
@@ -163,7 +164,7 @@ function AddRepresentativeService({
 
   const isFormValid = () => {
     // Проверяем только те услуги, которых еще нет в заявке
-    const hasAnyNewService = 
+    const hasAnyNewService =
       (!hasWaterService && formData.waterSupply) ||
       (!hasMealService && formData.foodSupply) ||
       (!hasLivingService && (formData.habitation || formData.transferHabitation));
@@ -281,7 +282,7 @@ function AddRepresentativeService({
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>Добавить услугу</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
-            <img src="/close.png" alt="" />
+            <CloseIcon />
           </div>
         </div>
 

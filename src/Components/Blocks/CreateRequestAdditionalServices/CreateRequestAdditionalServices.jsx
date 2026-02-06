@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 function CreateRequestAdditionalServices({
   show,
   id,
@@ -114,7 +115,7 @@ function CreateRequestAdditionalServices({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить доп услугу</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

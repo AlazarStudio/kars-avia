@@ -39,7 +39,7 @@ const SuperAdminAirlineContent = ({ id, selectedTab, handleTabSelect }) => (
     <TabList className={classes.tabList}>
       <Tab className={classes.tab}>Пользователи</Tab>
       <Tab className={classes.tab}>Цены</Tab>
-      <Tab className={classes.tab}>Договоры</Tab>
+      <Tab className={classes.tab}>Реестр договоров</Tab>
       <Tab className={classes.tab}>Сотрудники</Tab>
       <Tab className={classes.tab}>Об авиакомпании</Tab>
     </TabList>

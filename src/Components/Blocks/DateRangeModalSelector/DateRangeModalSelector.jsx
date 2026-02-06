@@ -170,14 +170,14 @@ export default function DateRangeModalSelector({
     <>
       {/* Поле ввода, по клику открывает окно */}
       <TextField
-        label="Диапазон дат"
+        label="Период"
         // placeholder="Выберите диапазон"
         value={formatted}
         onClick={() => setOpen(true)}
         autoComplete="new-password"
         fullWidth
         sx={{
-          bgcolor: "white",
+          bgcolor: "transparent",
           height: "40px",
           width: width,
           borderRadius: "10px !important",
@@ -187,6 +187,23 @@ export default function DateRangeModalSelector({
             fontFamily: "Inter",
             padding: "0 8px",
             fontSize: "14px",
+            backgroundColor: "transparent",
+            transition: "all 0.3s ease-in-out",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "rgba(0, 0, 0, 0.23)",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "rgba(0, 0, 0, 0.23)",
+            },
+            "&:hover": {
+              backgroundColor: "white",
+            },
+            "&.Mui-focused": {
+              backgroundColor: "white",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "primary.main",
+            },
           },
 
           "& label": {

@@ -6,7 +6,7 @@ import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import { useNavigate } from "react-router-dom";
 import { menuAccess } from "../../../roles";
 
-function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, ...props }) {
+function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, onOpenSettings, ...props }) {
     const navigate = useNavigate();
 
     return (
@@ -25,7 +25,7 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                 {(!user?.airlineId || accessMenu.userUpdate) && 
                                 <><img src="/editPassenger.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} />
                                 {/* <img src="/settings.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} /> */}
-                                {!representative && (<SettingsIcon cursor={"pointer"} strokeWidth={0.5} onClick={() => navigate("/airlineAccess", { state:{ item: item, airlineId: airlineId } } )} />)}
+                                {!representative && (<SettingsIcon cursor={"pointer"} strokeWidth={0.5} onClick={() => onOpenSettings ? onOpenSettings(item) : navigate("/airlineAccess", { state:{ item: item, airlineId: airlineId } } )} />)}
                                 <img src="/deletePassenger.png" alt="Delete" onClick={() => openDeleteComponent(index, item.id)} /></>}
                             </div>
 

@@ -26,6 +26,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { Box, CircularProgress } from "@mui/material";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 // Компонент для создания новой заявки
 function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
@@ -289,7 +290,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     date.setMonth(date.getMonth() - 1);
     return date.toISOString().split("T")[0];
   }, []);
-  
+
   // Обработчик изменений в полях формы
   const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
@@ -524,9 +525,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       onClose();
       addNotification
         ? addNotification(
-            "Создание заявки для экипажа прошло успешно.",
-            "success"
-          )
+          "Создание заявки для экипажа прошло успешно.",
+          "success"
+        )
         : null;
       // console.log(response);
     } catch (error) {
@@ -591,11 +592,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       );
       setWarningMessage(
         overlap
-          ? ` В это время сотрудник уже забронирован в отеле "${
-              overlap.hotel.name
-            }" с ${convertToDate_Date(overlap.start)} ${
-              overlap.startTime
-            } по ${convertToDate_Date(overlap.end)} ${overlap.endTime};`
+          ? ` В это время сотрудник уже забронирован в отеле "${overlap.hotel.name
+          }" с ${convertToDate_Date(overlap.start)} ${overlap.startTime
+          } по ${convertToDate_Date(overlap.end)} ${overlap.endTime};`
           : ""
       );
     }
@@ -667,15 +666,14 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>Создать заявку</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
-            <img src="/close.png" alt="" />
+            <CloseIcon />
           </div>
         </div>
 
         <div className={classes.tabs}>
           <div
-            className={`${classes.tab} ${
-              activeTab === "Общая" ? classes.activeTab : ""
-            }`}
+            className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
+              }`}
             onClick={() => handleTabChange("Общая")}
           >
             Общая
@@ -790,17 +788,15 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                           // getOptionLabel правильно формирует строку, даже если option – объект
                           getOptionLabel={(option) =>
                             option
-                              ? `${option.name || ""} ${
-                                  option.position?.name
+                              ? `${option.name || ""} ${option.position?.name
                                 } ${option.gender}`.trim()
                               : ""
                           }
                           // Если нужно кастомное раскрашивание, используйте renderOption (с isColor)
                           renderOption={(optionProps, option) => {
                             // Формируем строку для отображения
-                            const labelText = `${option.name || ""} ${
-                              option.position?.name
-                            } ${option.gender}`.trim();
+                            const labelText = `${option.name || ""} ${option.position?.name
+                              } ${option.gender}`.trim();
                             // Разбиваем строку по пробелам
                             const words = labelText.split(". ");
                             return (
@@ -813,8 +809,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                                         index === 0
                                           ? "black"
                                           : index === 1
-                                          ? "gray"
-                                          : "gray",
+                                            ? "gray"
+                                            : "gray",
                                       marginRight: "4px",
                                     }}
                                   >
@@ -1067,7 +1063,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
             airlineRefetch={refetch}
             setNewStaffId={setNewStaffId}
             positions={positions}
-            // setSelectedAirline={setSelectedAirline}
+          // setSelectedAirline={setSelectedAirline}
           />
         )}
       </Sidebar>

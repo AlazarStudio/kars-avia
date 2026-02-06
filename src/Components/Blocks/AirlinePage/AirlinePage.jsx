@@ -48,7 +48,7 @@ function AirlinePage({ children, id, user, accessMenu, ...props }) {
         case "airlineAbout":
           return "Об авиакомпании";
         case "airlineRegisterOfContracts":
-          return "Договоры";
+          return "Реестр договоров";
         default:
           return "Пользователи";
       }

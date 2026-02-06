@@ -13,6 +13,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import { InputMask } from "@react-input/mask";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { menuAccess, positions } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function UpdateRequestAirlineStaff({
   show,
@@ -199,7 +200,7 @@ function UpdateRequestAirlineStaff({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Изменить сотрудника</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

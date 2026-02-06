@@ -14,6 +14,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { rolesObject } from "../../../roles";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestMyCompany({
   show,
@@ -47,7 +48,7 @@ function CreateRequestMyCompany({
     bank: "",
     index: "",
   });
-  
+
   const [cities, setCities] = useState([]);
   useEffect(() => {
     if (infoCities.data) {
@@ -232,7 +233,7 @@ function CreateRequestMyCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить компанию</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

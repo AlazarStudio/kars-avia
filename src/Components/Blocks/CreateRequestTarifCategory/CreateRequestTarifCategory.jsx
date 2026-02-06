@@ -8,6 +8,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 function CreateRequestTarifCategory({
   show,
   id,
@@ -235,7 +236,7 @@ function CreateRequestTarifCategory({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить тариф</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 
@@ -349,9 +350,8 @@ function CreateRequestTarifCategory({
                 {formData?.images?.map((image, index) => (
                   <div
                     key={`${image.name}-${index}`} // Используйте `image.name` для уникальности ключа
-                    className={`${classes.imageItem} ${
-                      coverImage === image ? classes.selected : ""
-                    }`}
+                    className={`${classes.imageItem} ${coverImage === image ? classes.selected : ""
+                      }`}
                     onClick={() => handleCoverImageChange(image)}
                   >
                     <img

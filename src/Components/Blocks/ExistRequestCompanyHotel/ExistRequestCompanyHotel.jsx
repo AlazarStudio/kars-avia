@@ -14,6 +14,7 @@ import DropDownList from "../DropDownList/DropDownList.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import { roles, rolesObject } from "../../../roles.js";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function ExistRequestCompanyHotel({
   show,
@@ -260,7 +261,7 @@ function ExistRequestCompanyHotel({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Пользователь</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="Close" />
+          <CloseIcon />
         </div>
       </div>
 

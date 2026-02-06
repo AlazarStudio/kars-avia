@@ -438,73 +438,72 @@ function HotelSettings_tabComponent({ id }) {
             {(user?.role == roles.superAdmin ||
               user?.role == roles.hotelAdmin ||
               user?.role == roles.dispatcerAdmin) && (
-              <div className={classes.hotelAbout_top}>
-                <div className={classes.hotelAbout_top_complete}>
-                  <div className={classes.hotelAbout_top_img}>
-                    <img
-                      src={
-                        newImage
-                          ? URL.createObjectURL(newImage)
-                          : hotel.images.length !== 0
-                          ? `${server}${hotel.images[0]}`
-                          : "/no-avatar.png"
-                      }
-                      alt={hotel.name}
-                    />
-                  </div>
-                  <div className={classes.hotelAbout_top_title}>
-                    <div className={classes.hotelAbout_top_title_name}>
-                      {hotel.name}
+                <div className={classes.hotelAbout_top}>
+                  <div className={classes.hotelAbout_top_complete}>
+                    <div className={classes.hotelAbout_top_img}>
+                      <img
+                        src={
+                          newImage
+                            ? URL.createObjectURL(newImage)
+                            : hotel.images.length !== 0
+                              ? `${server}${hotel.images[0]}`
+                              : "/no-avatar.png"
+                        }
+                        alt={hotel.name}
+                      />
                     </div>
-                    <div className={classes.hotelAbout_top_title_desc}>
-                      {hotel.information?.city && hotel.information?.city && (
-                        <>
-                          <img src="/map.png" alt="" />
-                          {hotel.information?.city},{" "}
-                          {hotel.information?.address}
-                        </>
-                      )}
-                      {hotel.information?.link && (
-                        <>
-                          <img src="/web.png" alt="" />
-                          <a
-                            href={`${
-                              /^(https?:\/\/)/.test(hotel.link)
-                                ? hotel.link
-                                : "https://" + hotel.link
-                            }`}
-                            target="_blank"
-                          >
-                            {hotel.link}
-                          </a>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className={classes.hotelAbout_top_button}>
-                  {(user?.role == roles.superAdmin ||
-                    user?.role == roles.hotelAdmin ||
-                    user?.role == roles.dispatcerAdmin) && (
-                    <>
-                      {/* <Button onClick={toggleLogsSidebar}>История</Button> */}
-                      <div className={classes.hotelAbout_info__filters}>
-                        <button onClick={toggleLogsSidebar}>
-                          <img src="/scheduleIcon.png" alt="" /> История
-                        </button>
+                    <div className={classes.hotelAbout_top_title}>
+                      <div className={classes.hotelAbout_top_title_name}>
+                        {hotel.name}
                       </div>
-                      <Button onClick={handleEditClick}>
-                        <img
-                          src={isEditing ? "/save.png" : "/editIcon.png"}
-                          alt=""
-                        />
-                        {isEditing ? "Сохранить" : "Редактировать"}
-                      </Button>
-                    </>
-                  )}
+                      <div className={classes.hotelAbout_top_title_desc}>
+                        {hotel.information?.city && hotel.information?.city && (
+                          <>
+                            <img src="/map.png" alt="" />
+                            {hotel.information?.city},{" "}
+                            {hotel.information?.address}
+                          </>
+                        )}
+                        {hotel.information?.link && (
+                          <>
+                            <img src="/web.png" alt="" />
+                            <a
+                              href={`${/^(https?:\/\/)/.test(hotel.link)
+                                  ? hotel.link
+                                  : "https://" + hotel.link
+                                }`}
+                              target="_blank"
+                            >
+                              {hotel.link}
+                            </a>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className={classes.hotelAbout_top_button}>
+                    {(user?.role == roles.superAdmin ||
+                      user?.role == roles.hotelAdmin ||
+                      user?.role == roles.dispatcerAdmin) && (
+                        <>
+                          {/* <Button onClick={toggleLogsSidebar}>История</Button> */}
+                          <div className={classes.hotelAbout_info__filters}>
+                            <button onClick={toggleLogsSidebar}>
+                              <img src="/scheduleIcon.png" alt="" /> История
+                            </button>
+                          </div>
+                          <Button onClick={handleEditClick}>
+                            <img
+                              src={isEditing ? "/save.png" : "/editIcon.png"}
+                              alt=""
+                            />
+                            {isEditing ? "Сохранить" : "Редактировать"}
+                          </Button>
+                        </>
+                      )}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             <div className={classes.hotelAbout_info__filters}>
               <button
                 className={
@@ -752,8 +751,8 @@ function HotelSettings_tabComponent({ id }) {
                       menuOpen && width <= 1707
                         ? { width: "18%" }
                         : !menuOpen && width <= 1690
-                        ? { width: "20%" }
-                        : {}
+                          ? { width: "20%" }
+                          : {}
                     }
                   >
                     Удалённость от аэропорта (мин)
@@ -787,28 +786,30 @@ function HotelSettings_tabComponent({ id }) {
                     }
                   />
                 </div>
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Аватарка</label>
-                  <input
-                    type="file"
-                    name="images"
-                    onChange={handleFileChange}
-                    ref={fileInputRef}
-                    disabled={!isEditing}
-                    className={classes.hotelAbout_info_input}
-                  />
-                </div>
-                <div className={classes.hotelAbout_info_item}>
-                  <label>Галерея</label>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleGalleryFileChange}
-                    ref={fileInputRefGallery}
-                    disabled={!isEditing}
-                    className={classes.hotelAbout_info_input}
-                  />
-                </div>
+                {isEditing ? (<>
+                  <div className={classes.hotelAbout_info_item}>
+                    <label>Аватарка</label>
+                    <input
+                      type="file"
+                      name="images"
+                      onChange={handleFileChange}
+                      ref={fileInputRef}
+                      disabled={!isEditing}
+                      className={classes.hotelAbout_info_input}
+                    />
+                  </div>
+                  <div className={classes.hotelAbout_info_item}>
+                    <label>Галерея</label>
+                    <input
+                      type="file"
+                      multiple
+                      onChange={handleGalleryFileChange}
+                      ref={fileInputRefGallery}
+                      disabled={!isEditing}
+                      className={classes.hotelAbout_info_input}
+                    />
+                  </div>
+                </>) : null}
 
                 {(hotel?.gallery?.length > 0 && isEditing) && (
                   <div className={classes.galleryList}>
@@ -817,9 +818,8 @@ function HotelSettings_tabComponent({ id }) {
                       return (
                         <div
                           key={`${img}-${idx}`}
-                          className={`${classes.galleryItem} ${
-                            marked ? classes.toDelete : ""
-                          }`}
+                          className={`${classes.galleryItem} ${marked ? classes.toDelete : ""
+                            }`}
                           onClick={() =>
                             isEditing ? toggleDeleteGalleryImage(img) : null
                           }
@@ -870,7 +870,7 @@ function HotelSettings_tabComponent({ id }) {
                 )}
 
                 {user.role === roles.superAdmin ||
-                user.role === roles.dispatcerAdmin ? (
+                  user.role === roles.dispatcerAdmin ? (
                   <>
                     <div className={classes.hotelAbout_info_item}>
                       <div
@@ -1285,13 +1285,12 @@ function HotelSettings_tabComponent({ id }) {
             <DeleteComponent
               remove={confirmDeleteGalleryImages}
               close={() => setShowDeleteGallery(false)}
-              title={`Удалить ${imagesToDelete.length} изображен${
-                imagesToDelete.length === 1
+              title={`Удалить ${imagesToDelete.length} изображен${imagesToDelete.length === 1
                   ? "ие"
                   : imagesToDelete.length < 5
-                  ? "ия"
-                  : "ий"
-              } из галереи?`}
+                    ? "ия"
+                    : "ий"
+                } из галереи?`}
             />
           )}
         </div>

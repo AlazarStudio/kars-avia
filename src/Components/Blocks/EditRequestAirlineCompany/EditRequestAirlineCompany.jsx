@@ -12,6 +12,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { roles, rolesObject } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function EditRequestAirlineCompany({
   show,
@@ -299,7 +300,7 @@ function EditRequestAirlineCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="Close" />
+          <CloseIcon />
         </div>
       </div>
 

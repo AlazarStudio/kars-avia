@@ -19,7 +19,7 @@ function MUITextField({
         value={value}
         onChange={onChange}
         sx={{
-          bgcolor: "white",
+          bgcolor: "transparent",
           height: "40px",
           borderRadius: "10px !important",
           "& .MuiOutlinedInput-root": {
@@ -28,6 +28,23 @@ function MUITextField({
             fontFamily: "Inter",
             padding: "0 8px",
             fontSize: "14px",
+            backgroundColor: "transparent",
+            transition: "all 0.3s ease-in-out",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "rgba(0, 0, 0, 0.23)",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "rgba(0, 0, 0, 0.23)",
+            },
+            "&:hover": {
+              backgroundColor: "white",
+            },
+            "&.Mui-focused": {
+              backgroundColor: "white",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "primary.main",
+            },
           },
 
           "& label": {

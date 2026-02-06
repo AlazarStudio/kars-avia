@@ -16,6 +16,7 @@ import { roles } from "../../../roles";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestReserve({ show, onClose, user, addNotification }) {
   const token = getCookie("token");
@@ -293,7 +294,7 @@ function CreateRequestReserve({ show, onClose, user, addNotification }) {
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Создать заявку</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

@@ -49,7 +49,7 @@ function ConfirmDriver({
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [refusalReason, setRefusalReason] = useState("");
   const [localDriverStatus, setLocalDriverStatus] = useState(null);
-  
+
   // Состояния для модального окна изображения
   const [imageModalOpen, setImageModalOpen] = useState(false);
   const [selectedImageUrl, setSelectedImageUrl] = useState("");
@@ -216,13 +216,13 @@ function ConfirmDriver({
       // Если страница организации (disAdmin !== true) - удаляем связь с организацией (organizationId: null)
       const input = disAdmin === true
         ? {
-            registrationStatus: "REJECTED",
-            refusalReason: refusalReason.trim(),
-          }
+          registrationStatus: "REJECTED",
+          refusalReason: refusalReason.trim(),
+        }
         : {
-            organizationId: null,
-            refusalReason: refusalReason.trim(),
-          };
+          organizationId: null,
+          refusalReason: refusalReason.trim(),
+        };
 
       await updateDriverMutation({
         variables: {
@@ -242,11 +242,11 @@ function ConfirmDriver({
             ...chooseObject,
             ...(disAdmin === true
               ? { registrationStatus: "REJECTED" }
-              : { 
-                  organizationId: null,
-                  organization: null,
-                  organizationConfirmed: false 
-                }),
+              : {
+                organizationId: null,
+                organization: null,
+                organizationConfirmed: false
+              }),
             refusalReason: refusalReason.trim(),
           },
           chooseObject.index
@@ -331,13 +331,13 @@ function ConfirmDriver({
     const year = date.getFullYear();
     return `${day} ${month} ${year} г., ${formattedTime}`;
   };
-  
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Данные водителя</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="Close" />
+          <CloseIcon />
         </div>
       </div>
       {isLoading ? (
@@ -430,7 +430,7 @@ function ConfirmDriver({
               {/* Секция "Документы" */}
               <div className={classes.section}>
                 <div className={classes.sectionTitle}>Документы</div>
-                
+
                 {chooseObject?.documents?.driverPhoto && (
                   <>
                     <label>Фото водителя</label>
@@ -453,8 +453,8 @@ function ConfirmDriver({
                     <div className={classes.imageList}>
                       {chooseObject.documents.licensePhoto.map((image, index) => (
                         <div key={`license-${index}`} className={classes.imageItem}>
-                          <img 
-                            src={`${server}${image}`} 
+                          <img
+                            src={`${server}${image}`}
                             alt={`Водительское удостоверение ${index + 1}`}
                             onClick={() => openImageModal(`${server}${image}`)}
                             style={{ cursor: "pointer" }}
@@ -471,8 +471,8 @@ function ConfirmDriver({
                     <div className={classes.imageList}>
                       {chooseObject.documents.stsPhoto.map((image, index) => (
                         <div key={`sts-${index}`} className={classes.imageItem}>
-                          <img 
-                            src={`${server}${image}`} 
+                          <img
+                            src={`${server}${image}`}
                             alt={`СТС ${index + 1}`}
                             onClick={() => openImageModal(`${server}${image}`)}
                             style={{ cursor: "pointer" }}
@@ -489,8 +489,8 @@ function ConfirmDriver({
                     <div className={classes.imageList}>
                       {chooseObject.documents.ptsPhoto.map((image, index) => (
                         <div key={`pts-${index}`} className={classes.imageItem}>
-                          <img 
-                            src={`${server}${image}`} 
+                          <img
+                            src={`${server}${image}`}
                             alt={`ПТС ${index + 1}`}
                             onClick={() => openImageModal(`${server}${image}`)}
                             style={{ cursor: "pointer" }}
@@ -507,8 +507,8 @@ function ConfirmDriver({
                     <div className={classes.imageList}>
                       {chooseObject.documents.osagoPhoto.map((image, index) => (
                         <div key={`osago-${index}`} className={classes.imageItem}>
-                          <img 
-                            src={`${server}${image}`} 
+                          <img
+                            src={`${server}${image}`}
                             alt={`ОСАГО ${index + 1}`}
                             onClick={() => openImageModal(`${server}${image}`)}
                             style={{ cursor: "pointer" }}
@@ -525,8 +525,8 @@ function ConfirmDriver({
                     <div className={classes.imageList}>
                       {chooseObject.documents.carPhotos.map((image, index) => (
                         <div key={`car-${index}`} className={classes.imageItem}>
-                          <img 
-                            src={`${server}${image}`} 
+                          <img
+                            src={`${server}${image}`}
                             alt={`Фото машины ${index + 1}`}
                             onClick={() => openImageModal(`${server}${image}`)}
                             style={{ cursor: "pointer" }}

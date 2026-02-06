@@ -25,6 +25,7 @@ import CreateAdditionalAgreement from "../CreateAdditionalAgreement/CreateAdditi
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function EditRequestHotelContract({
   show,
@@ -172,13 +173,13 @@ function EditRequestHotelContract({
         files: [],
         additionalAgreements: Array.isArray(c.additionalAgreements)
           ? c.additionalAgreements.map((a) => ({
-              id: a.id,
-              contractNumber: a.contractNumber || "",
-              date: a.date || "",
-              itemAgreement: a.itemAgreement || "",
-              notes: a.notes || "",
-              files: Array.isArray(a.files) ? a.files : [],
-            }))
+            id: a.id,
+            contractNumber: a.contractNumber || "",
+            date: a.date || "",
+            itemAgreement: a.itemAgreement || "",
+            notes: a.notes || "",
+            files: Array.isArray(a.files) ? a.files : [],
+          }))
           : [],
       });
       setFiles(Array.isArray(c.files) ? c.files : []);
@@ -196,13 +197,13 @@ function EditRequestHotelContract({
         files: [],
         additionalAgreements: Array.isArray(c.additionalAgreements)
           ? c.additionalAgreements.map((a) => ({
-              id: a.id,
-              contractNumber: a.contractNumber || "",
-              date: a.date || "",
-              itemAgreement: a.itemAgreement || "",
-              notes: a.notes || "",
-              files: Array.isArray(a.files) ? a.files : [],
-            }))
+            id: a.id,
+            contractNumber: a.contractNumber || "",
+            date: a.date || "",
+            itemAgreement: a.itemAgreement || "",
+            notes: a.notes || "",
+            files: Array.isArray(a.files) ? a.files : [],
+          }))
           : [],
       });
       setFiles(Array.isArray(c.files) ? c.files : []);
@@ -234,8 +235,8 @@ function EditRequestHotelContract({
       if (activeFilterTab === "transfer") {
         // Для организаций используем orgsData
         // orgsData может быть массивом или объектом с organizations.organizations
-        const orgs = Array.isArray(orgsData) 
-          ? orgsData 
+        const orgs = Array.isArray(orgsData)
+          ? orgsData
           : orgsData?.organizations?.organizations || [];
         setHotels(orgs);
       } else {
@@ -489,31 +490,28 @@ function EditRequestHotelContract({
             {canEdit ? "Изменить договор" : formData?.contractNumber}
           </div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
-            <img src="/close.png" alt="" />
+            <CloseIcon />
           </div>
         </div>
 
         <div className={classes.tabs}>
           <div
-            className={`${classes.tab} ${
-              activeTab === "Общая" ? classes.activeTab : ""
-            }`}
+            className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
+              }`}
             onClick={() => handleTabChange("Общая")}
           >
             Общая
           </div>
           <div
-            className={`${classes.tab} ${
-              activeTab === "ДС" ? classes.activeTab : ""
-            }`}
+            className={`${classes.tab} ${activeTab === "ДС" ? classes.activeTab : ""
+              }`}
             onClick={() => handleTabChange("ДС")}
           >
             ДС
           </div>
           <div
-            className={`${classes.tab} ${
-              activeTab === "Файлы" ? classes.activeTab : ""
-            }`}
+            className={`${classes.tab} ${activeTab === "Файлы" ? classes.activeTab : ""
+              }`}
             onClick={() => handleTabChange("Файлы")}
           >
             Файлы
@@ -606,7 +604,7 @@ function EditRequestHotelContract({
                         }
                       }}
                       renderOption={(optionProps, option) => {
-                        const cityPart = option?.information?.city 
+                        const cityPart = option?.information?.city
                           ? `, город: ${option.information.city}`
                           : "";
                         const labelText = `${option.name}${cityPart}`.trim();

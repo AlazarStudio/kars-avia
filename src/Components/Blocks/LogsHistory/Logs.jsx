@@ -11,6 +11,7 @@ import {
 } from "../../../../graphQL_requests";
 import ReactPaginate from "react-paginate";
 import MUILoader from "../MUILoader/MUILoader";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const token = getCookie("token");
@@ -58,15 +59,15 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
         type === "hotel"
           ? dataLogs.hotel.logs
           : type === "airline"
-          ? dataLogs.airline.logs
-          : dataLogs.reserve.logs
+            ? dataLogs.airline.logs
+            : dataLogs.reserve.logs
       );
       setTotalPages(
         type === "hotel"
           ? dataLogs.hotel.logs.totalPages
           : type === "airline"
-          ? dataLogs.airline.logs.totalPages
-          : dataLogs.reserve.logs.totalPages
+            ? dataLogs.airline.logs.totalPages
+            : dataLogs.reserve.logs.totalPages
       );
     }
     if (show) refetch();
@@ -121,7 +122,7 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>{`История ${name}`}</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
-            <img src="/close.png" alt="" />
+            <CloseIcon />
           </div>
         </div>
 

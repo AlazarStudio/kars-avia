@@ -33,6 +33,7 @@ import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateReques
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function ExistRequest({
   show,
@@ -319,12 +320,12 @@ function ExistRequest({
     formData?.departure && new Date(formData.departure) < departureTime
       ? "extended"
       : formData?.departure && new Date(formData.departure) > departureTime
-      ? "reduced"
-      : formData?.arrival && new Date(formData.arrival) > arrivalTime
-      ? "earlyStart"
-      : formData?.arrival && new Date(formData.arrival) < arrivalTime
-      ? "reduced"
-      : formData?.status;
+        ? "reduced"
+        : formData?.arrival && new Date(formData.arrival) > arrivalTime
+          ? "earlyStart"
+          : formData?.arrival && new Date(formData.arrival) < arrivalTime
+            ? "reduced"
+            : formData?.status;
 
   // console.log("newStatus:", newStatus);
   const [isLoading, setIsLoading] = useState(false);
@@ -335,10 +336,10 @@ function ExistRequest({
       try {
         // Определяем, что изменилось
         const hotelIdChanged = canChangeHotel && selectedHotelId && selectedHotelId !== formData.hotelId;
-        const roomOrPlaceChanged = canChangeHotel && 
-          selectedRoomId && 
+        const roomOrPlaceChanged = canChangeHotel &&
+          selectedRoomId &&
           (selectedRoomId !== formData.hotelChess?.room?.id ||
-           selectedPlace !== formData.hotelChess?.place);
+            selectedPlace !== formData.hotelChess?.place);
         const hotelRoomChangeAllowed = canChangeHotel && selectedHotelId && selectedRoomId;
 
         // Подготовка input для UPDATE_REQUEST_RELAY
@@ -770,7 +771,7 @@ function ExistRequest({
       alert("Невозможно изменить гостиницу и номер: дата заезда уже наступила.");
       return;
     }
-    
+
     if (isEditing) {
       await handleExtendChangeRequest();
       await refetch();
@@ -826,7 +827,7 @@ function ExistRequest({
                 )} */}
             </div>
             <div className={classes.requestTitle_close} onClick={closeButton}>
-              <img src="/close.png" alt="" />
+              <CloseIcon />
             </div>
           </div>
           {isLoading ? (
@@ -835,9 +836,8 @@ function ExistRequest({
             <>
               <div className={classes.tabs}>
                 <div
-                  className={`${classes.tab} ${
-                    activeTab === "Общая" ? classes.activeTab : ""
-                  }`}
+                  className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
+                    }`}
                   onClick={() => handleTabChange("Общая")}
                 >
                   Общая
@@ -845,9 +845,8 @@ function ExistRequest({
                 {formData.status !== "created" &&
                   formData.status !== "opened" && (
                     <div
-                      className={`${classes.tab} ${
-                        activeTab === "Питание" ? classes.activeTab : ""
-                      }`}
+                      className={`${classes.tab} ${activeTab === "Питание" ? classes.activeTab : ""
+                        }`}
                       onClick={() => handleTabChange("Питание")}
                     >
                       Питание
@@ -855,9 +854,8 @@ function ExistRequest({
                   )}
                 {canChatTab && (
                   <div
-                    className={`${classes.tab} ${
-                      activeTab === "Комментарии" ? classes.activeTab : ""
-                    }`}
+                    className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
+                      }`}
                     style={{ position: "relative" }}
                     onClick={() => handleTabChange("Комментарии")}
                   >
@@ -874,9 +872,8 @@ function ExistRequest({
                   </div>
                 )}
                 <div
-                  className={`${classes.tab} ${
-                    activeTab === "История" ? classes.activeTab : ""
-                  }`}
+                  className={`${classes.tab} ${activeTab === "История" ? classes.activeTab : ""
+                    }`}
                   onClick={() => handleTabChange("История")}
                 >
                   История
@@ -884,22 +881,22 @@ function ExistRequest({
 
                 {!isAirlineAdmin(user)
                   ? // && handleCancelRequest
-                    formData.status !== "created" &&
-                    formData.status !== "opened" &&
-                    formData.status !== "canceled" && (
-                      <div className={classes.shahmatka_icon}>
-                        <Link
-                          to={`/hotels/${formData.hotelId}/${formData.id}`}
-                          onClick={() => {
-                            localStorage.setItem("selectedTab", 0);
-                            closeButton();
-                          }}
-                          title="Шахматка"
-                        >
-                          <img src="/table.png" alt="" />
-                        </Link>
-                      </div>
-                    )
+                  formData.status !== "created" &&
+                  formData.status !== "opened" &&
+                  formData.status !== "canceled" && (
+                    <div className={classes.shahmatka_icon}>
+                      <Link
+                        to={`/hotels/${formData.hotelId}/${formData.id}`}
+                        onClick={() => {
+                          localStorage.setItem("selectedTab", 0);
+                          closeButton();
+                        }}
+                        title="Шахматка"
+                      >
+                        <img src="/table.png" alt="" />
+                      </Link>
+                    </div>
+                  )
                   : null}
               </div>
 
@@ -907,31 +904,31 @@ function ExistRequest({
                 className={classes.requestMiddle}
                 style={{
                   height:
-                   (activeTab !== "Комментарии" &&
-                    activeTab !== "История" &&
-                    formData.status !== "created" &&
-                    formData.status !== "canceled" &&
-                    // formData.status !== "archiving" &&
-                    formData.status !== "archived" &&
-                    (accessMenu
-                      ? user?.airlineId &&
-                        hasAccessMenu(accessMenu, "requestUpdate")
-                      : true))
-                    ? "calc(100vh - 227px)" 
-                    : 
                     (activeTab !== "Комментарии" &&
-                    activeTab !== "История" &&
-                    formData.status !== "created" &&
-                    formData.status !== "canceled" &&
-                    // formData.status !== "archiving" &&
-                    formData.status !== "archived" &&
-                    (accessMenu
-                      ? !user?.airlineId &&
-                        (dispatcherCanUpdate ??
-                          hasAccessMenu(accessMenu, "requestUpdate"))
-                      : true))
-                    ? "calc(100vh - 230px)" 
-                    : null,
+                      activeTab !== "История" &&
+                      formData.status !== "created" &&
+                      formData.status !== "canceled" &&
+                      // formData.status !== "archiving" &&
+                      formData.status !== "archived" &&
+                      (accessMenu
+                        ? user?.airlineId &&
+                        hasAccessMenu(accessMenu, "requestUpdate")
+                        : true))
+                      ? "calc(100vh - 227px)"
+                      :
+                      (activeTab !== "Комментарии" &&
+                        activeTab !== "История" &&
+                        formData.status !== "created" &&
+                        formData.status !== "canceled" &&
+                        // formData.status !== "archiving" &&
+                        formData.status !== "archived" &&
+                        (accessMenu
+                          ? !user?.airlineId &&
+                          (dispatcherCanUpdate ??
+                            hasAccessMenu(accessMenu, "requestUpdate"))
+                          : true))
+                        ? "calc(100vh - 230px)"
+                        : null,
                 }}
               >
                 {/* Вкладка "Общая" */}
@@ -1004,17 +1001,15 @@ function ExistRequest({
                           // getOptionLabel правильно формирует строку, даже если option – объект
                           getOptionLabel={(option) =>
                             option
-                              ? `${option.name || ""} ${
-                                  option.position?.name
+                              ? `${option.name || ""} ${option.position?.name
                                 } ${option.gender}`.trim()
                               : ""
                           }
                           // Если нужно кастомное раскрашивание, используйте renderOption (с isColor)
                           renderOption={(optionProps, option) => {
                             // Формируем строку для отображения
-                            const labelText = `${option.name || ""} ${
-                              option.position?.name
-                            } ${option.gender}`.trim();
+                            const labelText = `${option.name || ""} ${option.position?.name
+                              } ${option.gender}`.trim();
                             // Разбиваем строку по пробелам
                             const words = labelText.split(". ");
                             return (
@@ -1027,8 +1022,8 @@ function ExistRequest({
                                         index === 0
                                           ? "black"
                                           : index === 1
-                                          ? "gray"
-                                          : "gray",
+                                            ? "gray"
+                                            : "gray",
                                       marginRight: "4px",
                                     }}
                                   >
@@ -1292,8 +1287,8 @@ function ExistRequest({
                         <>
                           <div className={classes.requestDataTitle}>
                             {user?.airlineId &&
-                            (formData.status !== "created" ||
-                              formData.status === "opened")
+                              (formData.status !== "created" ||
+                                formData.status === "opened")
                               ? "Запрос на изменение даты"
                               : "Изменение даты"}
                           </div>
@@ -1307,7 +1302,7 @@ function ExistRequest({
                               placeholder="Дата"
                               disabled={
                                 formData.status === "created" ||
-                                formData.status === "opened"
+                                  formData.status === "opened"
                                   ? false
                                   : !isEditing
                               }
@@ -1320,7 +1315,7 @@ function ExistRequest({
                               placeholder="Время"
                               disabled={
                                 formData.status === "created" ||
-                                formData.status === "opened"
+                                  formData.status === "opened"
                                   ? false
                                   : !isEditing
                               }
@@ -1343,7 +1338,7 @@ function ExistRequest({
                               placeholder="Дата"
                               disabled={
                                 formData.status === "created" ||
-                                formData.status === "opened"
+                                  formData.status === "opened"
                                   ? false
                                   : !isEditing
                               }
@@ -1356,7 +1351,7 @@ function ExistRequest({
                               placeholder="Время"
                               disabled={
                                 formData.status === "created" ||
-                                formData.status === "opened"
+                                  formData.status === "opened"
                                   ? false
                                   : !isEditing
                               }
@@ -1364,10 +1359,10 @@ function ExistRequest({
                           </div>
                           {(formData.status === "created" ||
                             formData.status === "opened") && (
-                            <Button onClick={handleExtendChangeRequest}>
-                              Изменить даты
-                            </Button>
-                          )}
+                              <Button onClick={handleExtendChangeRequest}>
+                                Изменить даты
+                              </Button>
+                            )}
                         </>
                       )}
 
@@ -1599,9 +1594,8 @@ function ExistRequest({
                       </div>
                     )}
                     <Message
-                      key={`${
-                        chooseRequestID ? chooseRequestID : chooseReserveID
-                      }-${activeTab}`}
+                      key={`${chooseRequestID ? chooseRequestID : chooseReserveID
+                        }-${activeTab}`}
                       activeTab={activeTab}
                       show={show}
                       setIsHaveTwoChats={setIsHaveTwoChats}
@@ -1699,27 +1693,27 @@ function ExistRequest({
                       {/* <img src="/user-check.png" alt="" /> */}
                     </button>
                     {((isSuperAdmin(user) || isDispatcherAdmin(user)) &&
-                        !formData.hotelId) && (
-                          <Button
-                            onClick={() => {
-                              onClose();
-                              setShowChooseHotel(true);
-                              setChooseCityRequest(formData?.airport?.city);
-                              localStorage.setItem("selectedTab", 0);
+                      !formData.hotelId) && (
+                        <Button
+                          onClick={() => {
+                            onClose();
+                            setShowChooseHotel(true);
+                            setChooseCityRequest(formData?.airport?.city);
+                            localStorage.setItem("selectedTab", 0);
+                          }}
+                        >
+                          {/* {console.log(formData)} */}
+                          Разместить
+                          <img
+                            style={{
+                              width: "fit-content",
+                              height: "fit-content",
                             }}
-                          >
-                            {/* {console.log(formData)} */}
-                            Разместить
-                            <img
-                              style={{
-                                width: "fit-content",
-                                height: "fit-content",
-                              }}
-                              src="/user-check.png"
-                              alt=""
-                            />
-                          </Button>
-                        )}
+                            src="/user-check.png"
+                            alt=""
+                          />
+                        </Button>
+                      )}
                   </div>
                 )}
               {formData.status !== "created" &&
@@ -1737,8 +1731,8 @@ function ExistRequest({
                       }}
                     >
                       {user?.airlineId &&
-                      formData.status !== "archived" &&
-                      formData.status !== "archiving"
+                        formData.status !== "archived" &&
+                        formData.status !== "archiving"
                         ? "Запрос на отмену"
                         : "Отменить"}
                       {/* <img src="/user-check.png" alt="" /> */}
@@ -1799,7 +1793,7 @@ function ExistRequest({
             isExist={true}
             positions={positions}
             setNewStaffId={setNewStaffId}
-            // setSelectedAirline={setSelectedAirline}
+          // setSelectedAirline={setSelectedAirline}
           />
         </Sidebar>
       )}

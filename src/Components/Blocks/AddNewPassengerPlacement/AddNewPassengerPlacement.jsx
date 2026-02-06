@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacement, user, hotelInfo, showChooseHotels, setshowModalForAddHotelInReserve, setShowReserveInfo }) {
     if (!request) return null;
@@ -168,7 +169,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
                 <div className={classes.requestTitle_name}>{user?.role == roles.hotelAdmin ? 'Выбрать количество' : 'Добавить гостиницу'}</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
+                <div className={classes.requestTitle_close} onClick={closeButton}><CloseIcon /></div>
             </div>
 
             <div className={classes.requestMiddle}>

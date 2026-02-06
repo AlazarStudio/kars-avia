@@ -24,6 +24,7 @@ import EditAdditionalAgreement from "../EditAdditionalAgreement/EditAdditionalAg
 import CreateAdditionalAgreement from "../CreateAdditionalAgreement/CreateAdditionalAgreement.jsx";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 /**
  * Компонент редактирования договора авиакомпании.
@@ -136,13 +137,13 @@ function EditRequestAirlineContract({
       files: [],
       additionalAgreements: Array.isArray(c.additionalAgreements)
         ? c.additionalAgreements.map((a) => ({
-            id: a.id,
-            contractNumber: a.contractNumber || "",
-            date: a.date || "",
-            itemAgreement: a.itemAgreement || "",
-            notes: a.notes || "",
-            files: Array.isArray(a.files) ? a.files : [],
-          }))
+          id: a.id,
+          contractNumber: a.contractNumber || "",
+          date: a.date || "",
+          itemAgreement: a.itemAgreement || "",
+          notes: a.notes || "",
+          files: Array.isArray(a.files) ? a.files : [],
+        }))
         : [],
     });
     setFiles(Array.isArray(c.files) ? c.files : []);
@@ -421,31 +422,28 @@ function EditRequestAirlineContract({
             {canEdit ? "Изменить договор" : formData?.contractNumber}
           </div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
-            <img src="/close.png" alt="" />
+            <CloseIcon />
           </div>
         </div>
 
         <div className={classes.tabs}>
           <div
-            className={`${classes.tab} ${
-              activeTab === "Общая" ? classes.activeTab : ""
-            }`}
+            className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
+              }`}
             onClick={() => handleTabChange("Общая")}
           >
             Общая
           </div>
           <div
-            className={`${classes.tab} ${
-              activeTab === "ДС" ? classes.activeTab : ""
-            }`}
+            className={`${classes.tab} ${activeTab === "ДС" ? classes.activeTab : ""
+              }`}
             onClick={() => handleTabChange("ДС")}
           >
             ДС
           </div>
           <div
-            className={`${classes.tab} ${
-              activeTab === "Файлы" ? classes.activeTab : ""
-            }`}
+            className={`${classes.tab} ${activeTab === "Файлы" ? classes.activeTab : ""
+              }`}
             onClick={() => handleTabChange("Файлы")}
           >
             Файлы

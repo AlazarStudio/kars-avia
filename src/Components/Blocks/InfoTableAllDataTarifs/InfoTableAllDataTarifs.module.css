@@ -19,7 +19,7 @@
 }
 
 .InfoTable_title {
-    color: var(--text-gray);
+    color: var(--no-active);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
     padding-right: 8px;
 }
@@ -54,7 +54,7 @@
     /* font-size: 16px; */
     font-size: 15px;
     font-weight: 400;
-    color: var(--main-gray);
+    color: var(--text);
     width: 100%;
     text-align: left;
 }
@@ -231,7 +231,7 @@
 }
 
 .InfoTable_title {
-    color: var(--text-gray);
+    color: var(--no-active);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
     padding-right: 8px;
 }

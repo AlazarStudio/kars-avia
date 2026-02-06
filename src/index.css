@@ -19,6 +19,8 @@ a {
     --menu-width: 345px;
     --blockWidth: 1300px;
     --menu-gray: #7f808a;
+    --no-active: #AFB4BA;
+    --text: #191919;
     --gray: #F1F4FB;
     --menu-bg: #353B55;
     --menu-item-bg: #303552;
@@ -26,7 +28,8 @@ a {
     --red: #C03B28;
     --main-gray: #545873;
     --text-gray: #9E9E9E;
-    --hover-gray: #F5F6F8;
+    --hover-gray: #EDF0F7;
+    /* --hover-gray: #F5F6F8; */
     --blue: #007AFF;
     --dark-blue: #0057C3;
     --black: #000;
@@ -132,13 +135,13 @@ textarea {
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #0057C3;
-    border-radius: 10px;
+    background-color: var(--hover-gray);
+    /* border-radius: 10px; */
 }
 
-::-webkit-scrollbar-thumb:hover {
+/* ::-webkit-scrollbar-thumb:hover {
     background-color: #0063DE;
-}
+} */
 
 /* DateRangePicker внутри элемента с классом no-sidebar */
 .no-sidebar .rdrDefinedRangesWrapper {

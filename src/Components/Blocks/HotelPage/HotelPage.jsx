@@ -62,7 +62,7 @@ function HotelPage({ children, id, user, accessMenu = {}, ...props }) {
         case "hotelTarifs":
           return "Тарифы";
         case "hotelRegisterOfContracts":
-          return "Договоры";
+          return "Реестр договоров";
         case "hotelSettings":
           return "Настройки гостиницы";
         default:

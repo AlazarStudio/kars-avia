@@ -87,12 +87,12 @@ function MUIAutocomplete({
                 fontSize: "14px",
               },
               "& .MuiInputBase-root": {
-                // minHeight: "40px",
                 height: "40px",
-                maxHeight:"40px",
+                maxHeight: "40px",
                 display: "flex",
                 alignItems: "center",
                 borderRadius: "10px !important",
+                backgroundColor: "transparent",
               },
               "& .MuiOutlinedInput-root": {
                 padding: "0 px",
@@ -108,16 +108,30 @@ function MUIAutocomplete({
         )}
         sx={{
           width: dropdownWidth ? dropdownWidth : "",
-          bgcolor: "white",
+          bgcolor: "transparent",
           borderRadius: "10px !important",
           // Стили для самого Autocomplete
           "& .MuiOutlinedInput-root": {
-            // уменьшаем высоту
             minHeight: "40px",
-            // настраиваем внутренние отступы
             padding: "0 8px",
-            // уменьшаем размер шрифта
             fontSize: "14px",
+            backgroundColor: "transparent",
+            transition: "all 0.3s ease-in-out",
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "rgba(0, 0, 0, 0.23)",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderColor: "rgba(0, 0, 0, 0.23)",
+            },
+            "&:hover": {
+              backgroundColor: "white",
+            },
+            "&.Mui-focused": {
+              backgroundColor: "white",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              borderColor: "primary.main",
+            },
           },
           // уменьшаем иконку (стрелку)
           "& .MuiSvgIcon-root": {

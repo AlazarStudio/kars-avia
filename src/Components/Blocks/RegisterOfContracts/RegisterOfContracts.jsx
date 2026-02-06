@@ -76,8 +76,8 @@ function RegisterOfContracts({ children, id, user, ...props }) {
     activeTab === "airlines"
       ? GET_AIRLINE_CONTRACTS
       : activeTab === "hotels"
-      ? GET_HOTEL_CONTRACTS
-      : GET_ORGANIZATION_CONTRACTS;
+        ? GET_HOTEL_CONTRACTS
+        : GET_ORGANIZATION_CONTRACTS;
 
   const { loading, error, data, refetch } = useQuery(query, {
     context: {
@@ -428,7 +428,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
 
   return (
     <div className={classes.tariffsWrapper}>
-      <Header>Договоры</Header>
+      <Header>Реестр договоров</Header>
       <div
         className={classes.segmented}
         role="tablist"
@@ -443,9 +443,8 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             key={t.key}
             type="button"
             id={`tab-${t.key}`}
-            className={`${classes.segment} ${
-              activeTab === t.key ? classes.segmentActive : ""
-            }`}
+            className={`${classes.segment} ${activeTab === t.key ? classes.segmentActive : ""
+              }`}
             onClick={() => setActiveTab(t.key)}
           >
             {t.label}
@@ -453,12 +452,6 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         ))}
       </div>
       <div className={classes.section_searchAndFilter}>
-        <MUITextField
-          className={classes.mainSearch}
-          label={"Поиск по договорам"}
-          value={searchTarif}
-          onChange={handleSearchTarif}
-        />
 
         <DateRangeModalSelector
           width={"170px"}
@@ -735,6 +728,13 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           }}
         />
 
+        <MUITextField
+          className={classes.mainSearch}
+          label={"Поиск по договорам"}
+          value={searchTarif}
+          onChange={handleSearchTarif}
+        />
+
         <Filter
           toggleSidebar={toggleTarifsCategory}
           handleChange={""}
@@ -851,13 +851,12 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             return deleteContract(deleteIndex.data.contract);
           }}
           close={closeDeleteComponent}
-          title={`Вы действительно хотите удалить ${
-            deleteIndex.type === "deleteTarif"
+          title={`Вы действительно хотите удалить ${deleteIndex.type === "deleteTarif"
               ? "тариф"
               : deleteIndex.type === "deleteCategory"
-              ? "категорию"
-              : "договор"
-          }?`}
+                ? "категорию"
+                : "договор"
+            }?`}
         />
       )}
       {notifications.map((n, index) => (

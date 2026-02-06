@@ -36,20 +36,34 @@
   font-size: 14px;
   font-weight: 600;
   color: #545873;
-  /* border: 1px solid rgba(84, 88, 115, 0.62); */
-  background-color: var(--white);
+  background-color: transparent;
   padding: 0px 15px;
   display: inline-flex;
   gap: 5px;
   align-items: center;
   justify-content: space-between;
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.23);
   border-radius: 10px;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
+
+.downloadsButton:hover {
+  background-color: var(--white);
+  border-color: rgba(0, 0, 0, 0.23);
+}
+
+/* .downloadsButton:focus {
+  outline: none;
+  background-color: var(--white);
+  border-color: #1976d2;
+} */
 
 .open {
   border-radius: 10px 10px 0px 0px;
+  background-color: var(--white);
+  border-color: #fff;
+  /* border-color: #1976d2; */
 }
 
 .menu {

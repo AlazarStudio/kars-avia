@@ -15,6 +15,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 function CreateRequestAirlineTarifCategory({
   show,
   id,
@@ -304,7 +305,7 @@ function CreateRequestAirlineTarifCategory({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить договор</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 
@@ -433,7 +434,7 @@ function CreateRequestAirlineTarifCategory({
               <label>Стоимость люкса</label>
               <input
                 type="number"
-                name="priceEightCategory"
+                name="priceLuxe"
                 value={formData.priceLuxe}
                 onChange={handleChange}
                 placeholder="Введите стоимость"

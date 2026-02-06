@@ -82,15 +82,37 @@ function MUISwitch({ label, checked, onChange, disabled, sx, width, ...props }) 
           disableFocusRipple
           disableTouchRipple
           style={{
-            marginLeft: "-15px",
+            marginLeft: "-12px",
+            marginTop: "6px",
             zIndex: 999,
           }}
           sx={{
+            width: 65,
             "& .MuiSwitch-switchBase:hover": {
-              backgroundColor: "transparent", // Убирает фоновый цвет при наведении
+              backgroundColor: "transparent",
             },
             "& .MuiSwitch-switchBase.Mui-checked:hover": {
-              backgroundColor: "transparent", // Убирает фоновый цвет при наведении
+              backgroundColor: "transparent",
+            },
+            "& .MuiSwitch-track": {
+              backgroundColor: "var(--no-active)",
+              borderRadius: "14px",
+              height: "24px",
+              opacity: 1,
+            },
+            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+              backgroundColor: "#2196F3",
+              opacity: 1,
+            },
+            "& .MuiSwitch-thumb": {
+              color: "#fff",
+              backgroundColor: "#fff",
+              boxShadow: "none",
+              width: "12px",
+              height: "12px",
+            },
+            "& .MuiSwitch-switchBase:not(.Mui-checked) .MuiSwitch-thumb": {
+              marginLeft: "5px",
             },
           }}
           {...props}

@@ -10,6 +10,7 @@ import {
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import TextEditor from "../TextEditor/TextEditor";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestPatchNote({
   show,
@@ -183,7 +184,7 @@ function CreateRequestPatchNote({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить патч</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

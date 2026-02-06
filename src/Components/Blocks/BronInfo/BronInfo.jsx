@@ -3,6 +3,7 @@ import classes from './BronInfo.module.css';
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { convertToDate } from "../../../../graphQL_requests";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function BronInfo({ show, onClose, data }) {
     const [activeTab, setActiveTab] = useState('Информация о бронировании');
@@ -39,7 +40,7 @@ function BronInfo({ show, onClose, data }) {
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
                 <div className={classes.requestTitle_name}>Бронирование</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
+                <div className={classes.requestTitle_close} onClick={closeButton}><CloseIcon /></div>
             </div>
 
             <div className={classes.requestMiddle}>

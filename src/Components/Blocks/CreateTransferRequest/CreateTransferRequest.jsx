@@ -24,6 +24,7 @@ import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.j
 import { AddressField } from "../AddressField/AddressField.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import { roles } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 // Компонент для создания новой заявки
 function CreateTransferRequest({ show, onClose, user, addNotification }) {
@@ -310,7 +311,7 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>Создать заявку</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
-            <img src="/close.png" alt="" />
+            <CloseIcon />
           </div>
         </div>
 

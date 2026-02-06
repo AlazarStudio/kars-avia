@@ -8,6 +8,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestDispatcherDepartment({
   show,
@@ -133,7 +134,7 @@ function CreateRequestDispatcherDepartment({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить отдел</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

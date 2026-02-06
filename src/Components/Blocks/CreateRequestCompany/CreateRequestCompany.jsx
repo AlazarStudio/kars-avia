@@ -11,6 +11,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { rolesObject } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestCompany({
   show,
@@ -248,7 +249,7 @@ function CreateRequestCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить диспетчера</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

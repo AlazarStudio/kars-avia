@@ -3,13 +3,14 @@ import classes from "./Support.module.css";
 import Sidebar from "../Sidebar/Sidebar";
 import { getCookie } from "../../../../graphQL_requests";
 import SupportMessage from "../SupportMessage/SupportMessage";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function Support({ show, onClose, user, supportRefetch, selectedId }) {
   const token = getCookie("token");
   // console.log(user.id);
 
   // let userId = user ? user : selectedId
-  
+
 
   const [activeTab, setActiveTab] = useState("Комментарии");
   const [formData, setFormData] = useState(null);
@@ -46,17 +47,17 @@ function Support({ show, onClose, user, supportRefetch, selectedId }) {
               Техническая поддержка
             </div>
             <div className={classes.requestTitle_close} onClick={closeButton}>
-              <img src="/close.png" alt="" />
+              <CloseIcon />
             </div>
           </div>
 
           <div
             className={classes.requestMiddle}
-            // style={{
-            //   height:
-            //     (activeTab === "Комментарии") &&
-            //     "calc(100vh - 79px - 67px)",
-            // }}
+          // style={{
+          //   height:
+          //     (activeTab === "Комментарии") &&
+          //     "calc(100vh - 79px - 67px)",
+          // }}
           >
             <SupportMessage
               formData={formData}

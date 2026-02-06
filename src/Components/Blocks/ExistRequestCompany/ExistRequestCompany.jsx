@@ -14,6 +14,7 @@ import { rolesObject } from "../../../roles";
 import { isDispatcherModerator } from "../../../utils/access";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function ExistRequestCompany({
   show,
@@ -277,7 +278,7 @@ function ExistRequestCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Диспетчер</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="Close" />
+          <CloseIcon />
         </div>
       </div>
       {isLoading ? (

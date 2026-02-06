@@ -13,6 +13,7 @@ import DropDownListObj from "../DropDownListObj/DropDownListObj";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { rolesObject } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestAirlineCompany({
   show,
@@ -292,7 +293,7 @@ function CreateRequestAirlineCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить аккаунт</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="Close" />
+          <CloseIcon />
         </div>
       </div>
 
@@ -321,7 +322,7 @@ function CreateRequestAirlineCompany({
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Введите email"
-                    // autoComplete="new-password"
+                  // autoComplete="new-password"
                   />
 
                   <label>Роль</label>

@@ -14,6 +14,7 @@ import {
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function EditRequestNomerFond({
   type,
@@ -315,7 +316,7 @@ function EditRequestNomerFond({
   //     // addNotification("Редактирование номера прошло успешно.", "success");
   //   }
   // };
-  
+
   const [reorderRoomKindImages] = useMutation(REORDER_ROOM_KIND_IMAGES, {
     context: {
       headers: {
@@ -326,18 +327,18 @@ function EditRequestNomerFond({
   });
   const imagesArray = coverImage
     ? [
-        coverImage,
-        ...nomer?.images.filter(
-          (img) => img !== coverImage && !deletedImages.includes(img)
-        ),
-      ]
+      coverImage,
+      ...nomer?.images.filter(
+        (img) => img !== coverImage && !deletedImages.includes(img)
+      ),
+    ]
     : nomer?.images?.filter((img) => !deletedImages.includes(img));
 
   const imagesArray2 = coverImage2
     ? [
-        coverImage2,
-        ...(formData?.roomImages?.filter((f) => f !== coverImage2) || []),
-      ]
+      coverImage2,
+      ...(formData?.roomImages?.filter((f) => f !== coverImage2) || []),
+    ]
     : formData?.roomImages || [];
 
   const handleSubmit = async (e) => {
@@ -403,24 +404,24 @@ function EditRequestNomerFond({
                     room.category === "onePlace"
                       ? "Одноместный"
                       : room.category === "twoPlace"
-                      ? "Двухместный"
-                      : room.category === "threePlace"
-                      ? "Трехместный"
-                      : room.category === "fourPlace"
-                      ? "Четырехместный"
-                      : room.category === "fivePlace"
-                      ? "Пятиместный"
-                      : room.category === "sixPlace"
-                      ? "Шестиместный"
-                      : room.category === "sevenPlace"
-                      ? "Семиместный"
-                      : room.category === "eightPlace"
-                      ? "Восьмиместный"
-                      : room.category === "apartment"
-                      ? "Апартаменты"
-                      : room.category === "studio"
-                      ? "Студия"
-                      : "",
+                        ? "Двухместный"
+                        : room.category === "threePlace"
+                          ? "Трехместный"
+                          : room.category === "fourPlace"
+                            ? "Четырехместный"
+                            : room.category === "fivePlace"
+                              ? "Пятиместный"
+                              : room.category === "sixPlace"
+                                ? "Шестиместный"
+                                : room.category === "sevenPlace"
+                                  ? "Семиместный"
+                                  : room.category === "eightPlace"
+                                    ? "Восьмиместный"
+                                    : room.category === "apartment"
+                                      ? "Апартаменты"
+                                      : room.category === "studio"
+                                        ? "Студия"
+                                        : "",
                   origName: room.category,
                   rooms: [],
                 };
@@ -569,7 +570,7 @@ function EditRequestNomerFond({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать номер</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
       {isLoading ? (
@@ -672,8 +673,8 @@ function EditRequestNomerFond({
                   formData.active === true
                     ? "true"
                     : formData.active === false
-                    ? "false"
-                    : ""
+                      ? "false"
+                      : ""
                 }
                 onChange={(e) => {
                   const value = e.target.value === "true";
@@ -747,14 +748,13 @@ function EditRequestNomerFond({
                     {formData?.roomImages?.map((image, index) => (
                       <div
                         key={`${image.name}-${index}`}
-                        className={`${classes.imageItem} ${
-                          coverImage2 === image ? classes.selected : ""
-                        }`}
+                        className={`${classes.imageItem} ${coverImage2 === image ? classes.selected : ""
+                          }`}
                       >
                         <img
                           src={URL.createObjectURL(image)}
                           alt={`Image ${index + 1}`}
-                          // onClick={() => handleCoverImageChange2(image)}
+                        // onClick={() => handleCoverImageChange2(image)}
                         />
                         {/* кнопка удалить локальный файл */}
                         {isEditing && (
@@ -781,17 +781,15 @@ function EditRequestNomerFond({
                         <div
                           key={`${image}-${index}`}
                           className={`${classes.imageItem} 
-                          ${
-                            coverImage === image ? classes.selected : ""
-                          } ${!isEditing && classes.disImage} ${
-                            isMarked ? classes.toDelete : ""
-                          }
+                          ${coverImage === image ? classes.selected : ""
+                            } ${!isEditing && classes.disImage} ${isMarked ? classes.toDelete : ""
+                            }
                           `}
-                          // onClick={() => {
-                          //   if (!isMarked) {
-                          //     handleCoverImageChange(image);
-                          //   }
-                          // }}
+                        // onClick={() => {
+                        //   if (!isMarked) {
+                        //     handleCoverImageChange(image);
+                        //   }
+                        // }}
                         >
                           <img
                             src={`${server}${image}`}

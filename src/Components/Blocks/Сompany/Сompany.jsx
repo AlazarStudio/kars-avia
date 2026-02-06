@@ -25,6 +25,7 @@ import ExistRequestDispatcherCompany from "../ExistRequestDispatcherCompany/Exis
 import CreateRequestDispatcherDepartment from "../CreateRequestDispatcherDepartment/CreateRequestDispatcherDepartment";
 import EditRequestDispatcherDepartment from "../EditRequestDispatcherDepartment/EditRequestDispatcherDepartment";
 import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
+import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
 
 function Company({ user, accessMenu }) {
   const token = getCookie("token");
@@ -141,6 +142,10 @@ function Company({ user, accessMenu }) {
   const [showEditDepartment, setShowEditDepartment] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
+  const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
+  const [selectedDepartmentForSettings, setSelectedDepartmentForSettings] = useState(null);
+  const settingsSidebarRef = useRef(null);
+
   const [showDelete, setShowDelete] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const deleteComponentRef = useRef();
@@ -182,9 +187,8 @@ function Company({ user, accessMenu }) {
 
   const openAccessDepartment = (department) => {
     if (!canEdit) return;
-    navigate("/dispatcherAccess", {
-      state: { departmentId: department?.id },
-    });
+    setSelectedDepartmentForSettings(department);
+    setShowSettingsSidebar(true);
   };
 
   const openDeleteDepartment = (department) => {
@@ -409,6 +413,19 @@ function Company({ user, accessMenu }) {
             }?`}
           />
         )}
+
+        <SettingsSidebar
+          show={showSettingsSidebar}
+          sidebarRef={settingsSidebarRef}
+          onClose={() => {
+            setShowSettingsSidebar(false);
+            setSelectedDepartmentForSettings(null);
+          }}
+          user={user}
+          departmentId={selectedDepartmentForSettings?.id}
+          departmentItem={selectedDepartmentForSettings}
+          type="dispatcher"
+        />
 
         {notifications.map((n, index) => (
           <Notification

@@ -41,7 +41,7 @@ const TransferAdminDriversContent = ({ id, user, selectedTab, handleTabSelect })
   >
     <TabList className={classes.tabList}>
       <Tab className={classes.tab}>Водители</Tab>
-      <Tab className={classes.tab}>Договоры</Tab>
+      <Tab className={classes.tab}>Реестр договоров</Tab>
       <Tab className={classes.tab}>Об организации</Tab>
     </TabList>
 

@@ -13,6 +13,7 @@ import DropDownList from "../DropDownList/DropDownList.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import { rolesObject } from "../../../roles.js";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function CreateRequestCompanyHotel({
   show,
@@ -234,7 +235,7 @@ function CreateRequestCompanyHotel({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить учетку</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
       {isLoading ? (

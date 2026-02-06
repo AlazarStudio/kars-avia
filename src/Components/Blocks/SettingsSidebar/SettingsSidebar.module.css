@@ -1,0 +1,324 @@
+.sidebarContent {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    /* background: #F6F7FB; */
+    overflow: hidden;
+}
+
+.header {
+    background: #fff;
+    padding: 20px 30px;
+    /* border-bottom: 1px solid #E4E4EF; */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.title {
+    font-family: Inter;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 29px;
+    color: #2B2B34;
+}
+
+.closeButton {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 24px;
+    color: #545873;
+    transition: color 0.2s ease;
+}
+
+.closeButton:hover {
+    color: #2B2B34;
+}
+
+.tabs {
+    position: relative;
+    background: #fff;
+    padding: 15px 30px 0 30px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.tabs::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--no-active);
+    z-index: 1;
+}
+
+.tab {
+    position: relative;
+    font-size: 16px;
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: #ffffff;
+    color: var(--no-active);
+    /* opacity: 0.5; */
+    transition: all 0.3s ease-in-out;
+    outline: none;
+}
+
+.tabActive {
+    /* background-color: #E4E4EF; */
+    color: var(--text);
+    opacity: 1;
+}
+
+.tabActive::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--dark-blue);
+    z-index: 2;
+}
+
+.tab:hover {
+    /* background-color: #E4E4EF; */
+    color: var(--text);
+    opacity: 1;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px;
+    /* scrollbar-width: thin; */
+}
+
+/* .content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+} */
+
+.footer {
+    background: #fff;
+    padding: 20px 30px;
+    border-top: 1px solid #E4E4EF;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.cancelButton {
+    padding: 10px 20px;
+    border: 1px solid #E4E4EF;
+    border-radius: 10px;
+    background: #fff;
+    color: #545873;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancelButton:hover {
+    background: #F6F7FB;
+}
+
+.saveButton {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #0057C3;
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.saveButton:hover {
+    background: #004499;
+}
+
+.saveButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.editButton {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: #3CBC6726;
+    color: #3B6C54;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.editButton:hover {
+    background: #3CBC673a;
+}
+
+/* Панель доступа */
+.accessPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.accessGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.card {
+    border-radius: 16px;
+}
+
+.cardTitle {
+    font-family: Inter, sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #2B2B34;
+    margin-bottom: 15px;
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.row {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    /* min-height: 38px; */
+    /* padding: 10px 20px; */
+    /* border-radius: 10px; */
+    border-bottom: 1px dashed var(--no-active);
+    ;
+}
+
+.rowDisabled {
+    opacity: 0.55;
+}
+
+.rowLabel {
+    font-family: Nunito Sans, sans-serif;
+    font-size: 14px;
+    color: #2B2B34;
+}
+
+.rowControl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Панель уведомлений */
+.notificationsGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.notificationCard {
+    border-radius: 16px;
+}
+
+.notificationCardTitle {
+    font-family: Inter, sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #2B2B34;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notificationLabel {
+    flex: 1;
+}
+
+.notificationChannels {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #545873;
+}
+
+.channelLabel {
+    width: 80px;
+    text-align: center;
+}
+
+.notificationRow {
+    background: #fff;
+    display: flex;
+    align-items: center;
+    /* min-height: 38px; */
+    /* padding: 10px 20px; */
+    /* border-radius: 10px; */
+    border-bottom: 1px dashed var(--no-active);
+    ;
+}
+
+.notificationRowLabel {
+    font-family: Nunito Sans, sans-serif;
+    font-size: 14px;
+    color: #2B2B34;
+    flex: 1;
+}
+
+.notificationRowControl {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 40px;
+}
+
+.loaderContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+}

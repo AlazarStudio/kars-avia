@@ -4,6 +4,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { useQuery } from "@apollo/client";
 import { GET_RESERVE_REQUEST, getCookie } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
   const token = getCookie("token");
@@ -52,7 +53,7 @@ function ExistReserveMess({ show, onClose, chooseRequestID, hotelId, user }) {
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>Сообщения</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
-            <img src="/close.png" alt="" />
+            <CloseIcon />
           </div>
         </div>
 

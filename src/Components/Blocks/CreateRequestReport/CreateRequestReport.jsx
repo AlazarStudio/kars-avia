@@ -14,6 +14,7 @@ import {
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestReport({
   show,
@@ -309,7 +310,7 @@ function CreateRequestReport({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить отчет</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

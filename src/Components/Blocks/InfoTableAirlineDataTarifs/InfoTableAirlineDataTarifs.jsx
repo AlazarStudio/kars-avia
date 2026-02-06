@@ -337,7 +337,7 @@
 
 // export default InfoTableAirlineDataTarifs;
 
- import React from "react";
+ import React, { useState } from "react";
  import classes from "./InfoTableAirlineDataTarifs.module.css";
  import InfoTable from "../InfoTable/InfoTable";
  import { roles } from "../../../roles";
@@ -351,6 +351,20 @@
    user,
    ...props
  }) {
+   const [expandedRows, setExpandedRows] = useState(new Set());
+
+   const toggleRow = (index) => {
+     setExpandedRows((prev) => {
+       const newSet = new Set(prev);
+       if (newSet.has(index)) {
+         newSet.delete(index);
+       } else {
+         newSet.add(index);
+       }
+       return newSet;
+     });
+   };
+
    return (
      <div className={classes.tarifsWrapper}>
          <div className={classes.contractsContainer}>
@@ -358,7 +372,17 @@
              <div className={classes.contractRow} key={index}>
                {/* Заголовок договора и иконки действий */}
                <div className={classes.contractRowHeader}>
-                 <span>{item.name}</span>
+                 <div className={classes.contractRowHeaderLeft}>
+                   <div
+                     className={`${classes.expandButton} ${expandedRows.has(index) ? classes.expanded : ""}`}
+                     onClick={() => toggleRow(index)}
+                   >
+                     <svg width="8" height="12" viewBox="0 0 8 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                       <path d="M1.5 1L6.5 6L1.5 11" stroke="#545873" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                     </svg>
+                   </div>
+                   <span>{item.name}</span>
+                 </div>
                  <div className={classes.contractRowActions}>
                    <img
                      src="/editPassenger.png"
@@ -368,6 +392,8 @@
                  </div>
                </div>
 
+               {expandedRows.has(index) && (
+                 <>
                {/* <p style={{ marginTop: "10px" }}>Категории - цены</p> */}
                <div className={classes.airportListTitle}>Категории - цены</div>
                {/* Ряд с категориями цен */}
@@ -523,6 +549,8 @@
                      </div>
                    ))}
                  </div>
+               )}
+                 </>
                )}
              </div>
            ))}

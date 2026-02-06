@@ -14,6 +14,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { InputMask } from "@react-input/mask";
 import { positions } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestAirlineStaff({
   show,
@@ -140,18 +141,18 @@ function CreateRequestAirlineStaff({
         // console.log(request.data.updateAirline.staff.at(-1));
         setNewStaffId
           ? setNewStaffId(
-              isExist
-                ? request.data.updateAirline.staff.at(-1)
-                : request.data.updateAirline.staff.at(-1).id
-            )
+            isExist
+              ? request.data.updateAirline.staff.at(-1)
+              : request.data.updateAirline.staff.at(-1).id
+          )
           : null;
 
         setAddTarif
           ? setAddTarif(
-              request.data.updateAirline.staff.sort((a, b) =>
-                a.name.localeCompare(b.name)
-              )
+            request.data.updateAirline.staff.sort((a, b) =>
+              a.name.localeCompare(b.name)
             )
+          )
           : null;
 
         resetForm();
@@ -199,7 +200,7 @@ function CreateRequestAirlineStaff({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить сотрудника</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

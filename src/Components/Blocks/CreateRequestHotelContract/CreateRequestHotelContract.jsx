@@ -26,6 +26,7 @@ import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutoc
 import { action } from "../../../roles.js";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 function CreateRequestHotelContract({
   show,
   id,
@@ -438,23 +439,21 @@ function CreateRequestHotelContract({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Создать договор</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 
       <div className={classes.tabs}>
         <div
-          className={`${classes.tab} ${
-            activeTab === "Общая" ? classes.activeTab : ""
-          }`}
+          className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
+            }`}
           onClick={() => handleTabChange("Общая")}
         >
           Общая
         </div>
         <div
-          className={`${classes.tab} ${
-            activeTab === "ДС" ? classes.activeTab : ""
-          }`}
+          className={`${classes.tab} ${activeTab === "ДС" ? classes.activeTab : ""
+            }`}
           onClick={() => handleTabChange("ДС")}
         >
           ДС
@@ -521,9 +520,8 @@ function CreateRequestHotelContract({
                       : ""
                   }
                   renderOption={(optionProps, option) => {
-                    const cityPart = `,, город: ${
-                      option?.information?.city || "не указан"
-                    }`;
+                    const cityPart = `,, город: ${option?.information?.city || "не указан"
+                      }`;
                     const labelText = `${option.name}${cityPart}`.trim();
                     const words = labelText.split(", ");
 

@@ -7,6 +7,7 @@ import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestDriversCompany({
   show,
@@ -161,7 +162,7 @@ function CreateRequestDriversCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить организацию</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

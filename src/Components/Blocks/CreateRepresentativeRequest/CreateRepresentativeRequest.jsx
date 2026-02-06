@@ -16,6 +16,7 @@ import {
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 // Компонент для создания новой заявки
 function CreateRepresentativeRequest({
@@ -449,7 +450,7 @@ function CreateRepresentativeRequest({
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>Создать заявку</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
-            <img src="/close.png" alt="" />
+            <CloseIcon />
           </div>
         </div>
 

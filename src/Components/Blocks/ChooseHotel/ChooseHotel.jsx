@@ -19,6 +19,7 @@ import {
 import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUILoader from "../MUILoader/MUILoader";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function ChooseHotel({
   show,
@@ -122,8 +123,8 @@ function ChooseHotel({
     () =>
       formData.city
         ? hotels.filter(
-            (h) => h.information?.city?.trim() === formData.city.trim()
-          )
+          (h) => h.information?.city?.trim() === formData.city.trim()
+        )
         : [],
     [formData.city, hotels]
   );
@@ -213,7 +214,7 @@ function ChooseHotel({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Выбрать гостиницу</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

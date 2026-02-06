@@ -27,6 +27,7 @@ function MultiSelectAutocomplete({
       getOptionLabel={(option) =>
         typeof option === "string" ? option : option.label
       }
+      limitTags={2}
       disablePortal
       disabled={isDisabled || false}
       clearText="Очистить"
@@ -114,6 +115,7 @@ function MultiSelectAutocomplete({
           minHeight: "40px",
           padding: "0 8px",
           fontSize: "14px",
+          transition: "all 0.3s ease-in-out",
         },
         "& .MuiSvgIcon-root": {
           fontSize: "18px",

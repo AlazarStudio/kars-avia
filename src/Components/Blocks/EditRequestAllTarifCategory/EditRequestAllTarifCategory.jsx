@@ -15,6 +15,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function EditRequestAllTarifCategory({
   show,
@@ -198,7 +199,7 @@ function EditRequestAllTarifCategory({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Изменить договор</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

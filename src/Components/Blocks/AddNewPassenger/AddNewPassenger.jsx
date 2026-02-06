@@ -10,6 +10,7 @@ import {
 } from "../../../../graphQL_requests";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function AddNewPassenger({
   show,
@@ -197,13 +198,13 @@ function AddNewPassenger({
 
   // console.log(request.id);
 
-//   console.log(formData);
+  //   console.log(formData);
 
   const addedHotelIds = placement.map((item) => item.hotel.name);
   const filteredHotels = formData.city
     ? hotels.filter(
-        (hotel) => hotel.information?.city?.trim() === formData.city.trim()
-      )
+      (hotel) => hotel.information?.city?.trim() === formData.city.trim()
+    )
     : [];
   // console.log(request?.airport?.city);
 
@@ -218,7 +219,7 @@ function AddNewPassenger({
             : "Добавить гостиницу"}
         </div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

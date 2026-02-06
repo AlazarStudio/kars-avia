@@ -26,6 +26,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
 import { fullNotifyTime, menuAccess, notifyTime } from "../../../roles";
+import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
 
 function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props }) {
   const token = getCookie("token");
@@ -126,6 +127,10 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
 
   const [showEditNomer, setShowEditNomer] = useState(false);
   const [selectedNomer, setSelectedNomer] = useState({});
+
+  const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
+  const [selectedDepartmentForSettings, setSelectedDepartmentForSettings] = useState(null);
+  const settingsSidebarRef = useRef(null);
 
   useEffect(() => {
     if (data && id) {
@@ -270,6 +275,11 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
     setSelectedNomer({});
   };
 
+  const openSettings = (department) => {
+    setSelectedDepartmentForSettings(department);
+    setShowSettingsSidebar(true);
+  };
+
   // const uniqueCategories = Array.from(new Set(addTarif.map(request => request.type)));
 
   // const filteredRequestsTarif = addTarif.filter(request => {
@@ -348,6 +358,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
           requests={filteredRequestsEmployees}
           openDeleteComponent={openDeleteComponent}
           openDeleteNomerComponent={openDeleteNomerComponent}
+          onOpenSettings={openSettings}
         />
       )}
 
@@ -415,6 +426,19 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
           }?`}
         />
       )}
+
+      <SettingsSidebar
+        show={showSettingsSidebar}
+        sidebarRef={settingsSidebarRef}
+        onClose={() => {
+          setShowSettingsSidebar(false);
+          setSelectedDepartmentForSettings(null);
+        }}
+        user={user}
+        airlineId={id}
+        departmentItem={selectedDepartmentForSettings}
+        type="airline"
+      />
 
       {notifications.map((n, index) => (
         <Notification

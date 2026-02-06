@@ -13,6 +13,7 @@ import {
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function CreateRequestNomerFond({
   type,
@@ -192,8 +193,8 @@ function CreateRequestNomerFond({
         formData.reserve === false
           ? formData.nomerName
           : formData.reserve === true && formData.nomerName.includes("резерв")
-          ? formData.nomerName
-          : `${formData.nomerName} (резерв)`;
+            ? formData.nomerName
+            : `${formData.nomerName} (резерв)`;
 
       const roomInput = {
         name: nomerName,
@@ -417,7 +418,7 @@ function CreateRequestNomerFond({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить номер</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 
@@ -568,9 +569,8 @@ function CreateRequestNomerFond({
                     {formData?.roomImages?.map((image, index) => (
                       <div
                         key={`${image.name}-${index}`} // Используйте `image.name` для уникальности ключа
-                        className={`${classes.imageItem} ${
-                          coverImage === image ? classes.selected : ""
-                        }`}
+                        className={`${classes.imageItem} ${coverImage === image ? classes.selected : ""
+                          }`}
                         onClick={() => handleCoverImageChange(image)}
                       >
                         <img

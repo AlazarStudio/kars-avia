@@ -457,7 +457,7 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
           />
         </SectionCard>
 
-        <SectionCard title="Договоры">
+        <SectionCard title="Реестр договоров">
           <RowSwitch
             label="Доступ к разделу"
             checked={state.contracts.access}

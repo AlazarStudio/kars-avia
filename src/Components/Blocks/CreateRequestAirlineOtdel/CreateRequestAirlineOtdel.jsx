@@ -9,6 +9,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestAirlineOtdel({
   show,
@@ -169,14 +170,14 @@ function CreateRequestAirlineOtdel({
   }, [show, closeButton]);
 
   // console.log(selectedPositions);
-  
+
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить отдел</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

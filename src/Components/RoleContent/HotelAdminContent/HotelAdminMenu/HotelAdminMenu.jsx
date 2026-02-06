@@ -16,9 +16,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
     <>
       <Link
         to={"/reserveRequests"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "reserveRequests" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "reserveRequests" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -44,9 +43,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
         <DelayedText show={menuOpen} delay={200} >Пассажиры</DelayedText>
         {allCreatedReserves > 0 && (
           <div
-            className={`${classes.countRequests} ${
-              !menuOpen ? classes.countRequestsMini : ""
-            }`}
+            className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""
+              }`}
           >
             {allCreatedReserves}
           </div>
@@ -55,12 +53,10 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/hotelChess"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${
-          (id == "hotelChess" || id == undefined || !id) &&
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${(id == "hotelChess" || id == undefined || !id) &&
           classes.menu_items__activeElem
-        }`}
+          }`}
       >
         <svg
           width="22"
@@ -107,9 +103,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/hotelTarifs"}
-        className={`${classes.menu_items__elem} ${
-          id == "hotelTarifs" && classes.menu_items__activeElem
-        }`}
+        className={`${classes.menu_items__elem} ${id == "hotelTarifs" && classes.menu_items__activeElem
+          }`}
       >
         <svg
           width="22"
@@ -143,9 +138,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/hotelRooms"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "hotelRooms" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelRooms" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -179,9 +173,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/hotelCompany"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "hotelCompany" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelCompany" && classes.menu_items__activeElem}`}
       >
         <svg
           width="24"
@@ -213,9 +206,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/hotelAbout"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "hotelAbout" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelAbout" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -243,9 +235,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/hotelSettings"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "hotelSettings" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelSettings" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -273,36 +264,22 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/hotelRegisterOfContracts"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${
-          id == "hotelRegisterOfContracts" && classes.menu_items__activeElem
-        }`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelRegisterOfContracts" && classes.menu_items__activeElem
+          }`}
       >
-        <svg
-          width="16"
-          height="20"
-          viewBox="0 0 16 20"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M5 15H11M5 12H11M9.00038 1.00087C8.90484 1 8.79738 1 8.67471 1H4.2002C3.08009 1 2.51962 1 2.0918 1.21799C1.71547 1.40973 1.40973 1.71547 1.21799 2.0918C1 2.51962 1 3.08009 1 4.2002V15.8002C1 16.9203 1 17.4801 1.21799 17.9079C1.40973 18.2842 1.71547 18.5905 2.0918 18.7822C2.51921 19 3.079 19 4.19694 19L11.8031 19C12.921 19 13.48 19 13.9074 18.7822C14.2837 18.5905 14.5905 18.2842 14.7822 17.9079C15 17.4805 15 16.9215 15 15.8036V7.32568C15 7.20302 14.9999 7.09553 14.999 7M9.00038 1.00087C9.28583 1.00348 9.46572 1.01407 9.63818 1.05547C9.84225 1.10446 10.0379 1.18526 10.2168 1.29492C10.4186 1.41857 10.5918 1.59181 10.9375 1.9375L14.063 5.06298C14.4089 5.40889 14.5809 5.58136 14.7046 5.78319C14.8142 5.96214 14.8953 6.15726 14.9443 6.36133C14.9857 6.53379 14.9964 6.71454 14.999 7M9.00038 1.00087L9 3.80021C9 4.92031 9 5.48015 9.21799 5.90797C9.40973 6.2843 9.71547 6.59048 10.0918 6.78223C10.5192 7 11.079 7 12.1969 7H14.999"
-            stroke="var(--menu-gray)"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+        <svg width="15" height="19" viewBox="0 0 15 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4.5 14.5H10.5M4.5 11.5H10.5M8.50038 0.500872C8.40484 0.5 8.29738 0.5 8.17471 0.5H3.7002C2.58009 0.5 2.01962 0.5 1.5918 0.717988C1.21547 0.909735 0.909734 1.21547 0.717987 1.5918C0.5 2.01962 0.5 2.58009 0.5 3.7002V15.3002C0.5 16.4203 0.5 16.9801 0.717988 17.4079C0.909735 17.7842 1.21547 18.0905 1.5918 18.2822C2.01921 18.5 2.579 18.5 3.69694 18.5L11.3031 18.5C12.421 18.5 12.98 18.5 13.4074 18.2822C13.7837 18.0905 14.0905 17.7842 14.2822 17.4079C14.5 16.9805 14.5 16.4215 14.5 15.3036V6.82568C14.5 6.70302 14.4999 6.59553 14.499 6.5M8.50038 0.500872C8.78583 0.503475 8.96572 0.514066 9.13818 0.55547C9.34225 0.604464 9.53785 0.685265 9.7168 0.794922C9.91857 0.918567 10.0918 1.09181 10.4375 1.4375L13.563 4.56298C13.9089 4.90889 14.0809 5.08136 14.2046 5.28319C14.3142 5.46214 14.3953 5.65726 14.4443 5.86133C14.4857 6.03379 14.4964 6.21454 14.499 6.5M8.50038 0.500872L8.5 3.30021C8.5 4.42031 8.5 4.98015 8.71799 5.40797C8.90973 5.7843 9.21547 6.09048 9.5918 6.28223C10.0192 6.5 10.579 6.5 11.6969 6.5H14.499" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
 
-        {/* {menuOpen ? "Договоры" : ""} */}
-        <DelayedText show={menuOpen} delay={200} >Договоры</DelayedText>
-        {!menuOpen && <span className={classes.tooltip}>Договоры</span>}
+        {/* {menuOpen ? "Реестр договоров" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Реестр договоров</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Реестр договоров</span>}
       </Link>
       <Link
         to={"/reports"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "reports" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "reports" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -354,9 +331,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/updates"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "updates" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "updates" && classes.menu_items__activeElem}`}
         onMouseEnter={() => {
           setHovered(true);
         }}
@@ -385,9 +361,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </Link>
       <Link
         to={"/documentation"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "documentation" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "documentation" && classes.menu_items__activeElem}`}
       >
         <img src="/instruction.png" alt="" />
 

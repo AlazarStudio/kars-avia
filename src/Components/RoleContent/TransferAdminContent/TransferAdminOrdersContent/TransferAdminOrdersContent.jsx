@@ -53,7 +53,7 @@ const TransferAdminOrdersContent = ({
             <Tab className={classes.tab}>Тарифы</Tab>
           )}
 
-          <Tab className={classes.tab}>Договоры</Tab>
+          <Tab className={classes.tab}>Реестр договоров</Tab>
           <Tab className={classes.tab}>Номерной фонд</Tab>
           <Tab className={classes.tab}>Пользователи</Tab>
           <Tab className={classes.tab}>О гостинице</Tab>

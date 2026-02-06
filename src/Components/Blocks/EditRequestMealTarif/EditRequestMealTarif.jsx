@@ -9,6 +9,7 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function EditRequestMealTarif({
   show,
@@ -189,7 +190,7 @@ function EditRequestMealTarif({
           Редактировать цены на питание
         </div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

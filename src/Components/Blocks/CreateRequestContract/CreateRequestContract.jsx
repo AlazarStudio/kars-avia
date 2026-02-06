@@ -19,6 +19,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import { action } from "../../../roles.js";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 function CreateRequestContract({
   show,
   id,
@@ -363,23 +364,21 @@ function CreateRequestContract({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Создать договор</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 
       <div className={classes.tabs}>
         <div
-          className={`${classes.tab} ${
-            activeTab === "Общая" ? classes.activeTab : ""
-          }`}
+          className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
+            }`}
           onClick={() => handleTabChange("Общая")}
         >
           Общая
         </div>
         <div
-          className={`${classes.tab} ${
-            activeTab === "ДС" ? classes.activeTab : ""
-          }`}
+          className={`${classes.tab} ${activeTab === "ДС" ? classes.activeTab : ""
+            }`}
           onClick={() => handleTabChange("ДС")}
         >
           ДС

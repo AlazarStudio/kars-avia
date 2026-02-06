@@ -10,6 +10,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestHotelReserve({ show, onClose }) {
   const token = getCookie("token");
@@ -162,7 +163,7 @@ function CreateRequestHotelReserve({ show, onClose }) {
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить гостиницу</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 

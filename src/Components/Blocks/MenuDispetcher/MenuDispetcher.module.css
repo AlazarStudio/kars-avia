@@ -4,12 +4,19 @@
     height: 100vh;
     background-color: var(--menu-bg);
     color: var(--white);
-    padding: 25px 25px;
+    padding: 40px 25px 25px 25px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 55px;
     transition: all ease-in-out 0.3s;
     position: relative;
+}
+
+.logoWrapper {
+    display: flex;
+    gap: 20px;
+    align-items: center;
 }
 
 /* .menuClosed {
@@ -22,30 +29,30 @@
     height: 100vh;
     background-color: var(--menu-bg);
     color: var(--white);
-    padding: 30px 15px 15px 15px;
+    padding: 50px 15px 15px 15px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 25px;
     transition: all ease-in-out 0.3s;
     position: relative;
 }
 
 /* Скрываем кнопку menuToggle по умолчанию */
-.menuToggle,
+/* .menuToggle,
 .w_closed .menuToggle {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
-}
+} */
 
 /* Показываем кнопку при наведении на menu или w_closed */
-.menu:hover .menuToggle,
+/* .menu:hover .menuToggle,
 .w_closed:hover .menuToggle {
     opacity: 1;
     visibility: visible;
     transition: opacity 0.3s ease-in-out, visibility 0s 0s;
-    /* убираем задержку для visibility */
-}
+} */
 
 .menuHeader {
     width: 100%;
@@ -58,22 +65,33 @@
 }
 
 .menuToggle {
+    position: absolute;
+    top: 44px;
+    right: 20px;
     background: none;
     border: none;
-    color: var(--white);
-    font-size: 25px;
+    /* color: var(--white); */
+    /* font-size: 25px; */
     cursor: pointer;
-    opacity: 0;
+    opacity: 1;
     /* по умолчанию скрыто */
-    visibility: hidden;
+    /* visibility: hidden; */
     /* по умолчанию скрыто */
     transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
 }
 
-.menuToggle span img {
+.menuToggleClose {
+    position: absolute;
+    top: 10px;
+    right: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+/* .menuToggle span img {
     height: 15px;
     transition: all ease-in-out 0.3s;
-}
+} */
 
 .menu_logo {
     width: 100%;
@@ -198,6 +216,7 @@
 @media (min-width: 0px) and (max-width: 1450px) {
     .menu {
         min-width: 280px;
+        padding: 40px 20px 20px 20px;
     }
 
     .menu_logo {
@@ -208,6 +227,10 @@
     .menu_logo img {
         /* width: 220px; */
         height: 93px;
+    }
+
+    .logoWrapper {
+        gap: 10px;
     }
 }
 
