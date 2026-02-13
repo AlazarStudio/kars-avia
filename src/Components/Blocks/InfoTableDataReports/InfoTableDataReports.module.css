@@ -144,6 +144,8 @@
 .InfoTable_data_elem_avatar {
     width: 40px;
     height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--no-active);
 }
 
 .InfoTable_data {

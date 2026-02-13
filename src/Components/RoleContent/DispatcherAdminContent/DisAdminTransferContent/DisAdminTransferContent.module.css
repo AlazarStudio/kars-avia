@@ -65,7 +65,7 @@
   padding: 0;
   list-style-type: none;
   margin-bottom: 40px;
-  gap: 10px;
+  /* gap: 10px; */
   align-items: center;
 }
 

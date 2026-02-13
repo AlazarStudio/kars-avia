@@ -24,6 +24,8 @@
 
 .requestTitle_close {
     cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .requestTitle_close img {

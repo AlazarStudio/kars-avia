@@ -25,6 +25,11 @@
 }
 
 .requestTitle_close {
+    display: flex;
+    gap: 15px;
+}
+
+.requestTitle_close svg {
     cursor: pointer;
 }
 
@@ -35,29 +40,61 @@
 }
 
 .tabs {
-    width: 100%;
+    position: relative;
     display: flex;
-    /* justify-content: space-between; */
-    gap: 20px;
-    padding: 20px 20px 20px 30px;
-    /* position: fixed; */
-    background-color: #fff;
-    box-shadow: 0 0 1px #545873c5;
-    z-index: 9999999;
+    padding: 0;
+    list-style-type: none;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.tabs::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--no-active);
+    z-index: 1;
 }
 
 .tab {
+    position: relative;
+    font-size: 16px;
+    padding: 10px;
     cursor: pointer;
-    font-family: Nunito Sans;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 21.82px;
-    border-bottom: 5px solid transparent
+    background-color: transparent;
+    color: var(--no-active);
+    transition: all 0.3s ease-in-out;
+    outline: none;
+    border: none;
+}
+
+.tab:hover {
+    color: var(--text);
 }
 
 .activeTab {
-    border-bottom: 5px solid #54587380;
+    color: var(--text) !important;
+    background-color: transparent !important;
 }
+
+.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--dark-blue);
+    z-index: 2;
+}
+
+/* .activeTab {
+    border-bottom: 5px solid #54587380;
+} */
 
 .shahmatka_icon {
     display: flex;
@@ -96,7 +133,7 @@ select {
 
 .requestMiddle {
     /* height: calc(100vh - 79px - 67px - 81px); */
-    height: calc(100vh - 65px - 81px);
+    height: calc(100vh - 38px - 81px);
     overflow: hidden;
     overflow-y: auto;
 }
@@ -185,7 +222,621 @@ select {
     font-size: 20px;
     font-weight: 700;
     line-height: 24.2px;
+    /* color: var(--main-gray); */
+    color: var(--text);
+    padding: 10px 0;
+}
+
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 40%;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-height: 37px;
+}
+
+.requestDataInfo input {
+    width: 60%;
+}
+
+.requestData_messages {
+    height: 590px;
+    overflow: hidden;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.requestData_date {
+    display: flex;
+    justify-content: center;
+}
+
+.requestData_date_info {
+    background-color: #F3F3F3;
+    padding: 5px 15px;
+    border-radius: 10px;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 21.82px;
+    text-align: center;
+}
+
+.requestData_message {
+    width: fit-content;
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.requestData_message_name {
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 600;
+    color: #545873;
+}
+
+.requestData_message_post {
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16.37px;
+    color: #0057C3;
+}
+
+.requestData_message_text {
+    background-color: #F6F6FC;
+    padding: 15px;
+    border-radius: 20px 20px 20px 0px;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 500;
+    color: #545873;
+}
+
+.requestData_message_text__name {
+    margin-bottom: 20px;
+    font-size: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.requestData_message_time {
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 16.37px;
+    color: #545873;
+}
+
+.requestData_message_full {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.myMes {
+    display: flex;
+    justify-content: flex-end;
+    padding-right: 10px;
+}
+
+.myMes .requestData_message_name,
+.myMes .requestData_message_post,
+.myMes .requestData_message_time {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.myMes .requestData_message_text {
+    border-radius: 20px 20px 0px 20px;
+}
+
+.myMes .requestData_message_text__name {
+    display: none;
+}
+
+.sendBlock {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.sendBlock_message {
+    width: fit-content;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0057C3;
+    border-radius: 50px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.sendBlock_message:hover {
+    opacity: 1;
+}
+
+.sendBlock img {
+    height: 100%;
+}
+
+.sendBlock textarea {
+    width: 100%;
+    height: 40px;
+    outline: none;
+    padding: 10px;
+    cursor: pointer;
+    resize: none;
+    border-radius: 10px;
+}
+
+.closeIconWrapper {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.historyDate {
+    /* box-shadow: 0px 4px 16px 0px #00000026; */
+    border-radius: 10px;
+    width: 160px;
+    height: 33px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 21.82px;
+    background-color: #f3f3f3;
+    color: #545873;
+}
+
+.logs {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    align-items: center;
+    height: auto;
+    overflow: hidden;
+    overflow-y: auto;
+    /* padding: 10px 0; */
+}
+
+.historyLog {
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: #54587380;
+}
+
+.historyLog span {
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    text-align: center;
+    color: #545873;
+}
+
+.smiles {
+    position: relative;
+}
+
+.smiles .smilesBlock {
+    cursor: pointer;
+}
+
+.mealInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.mealRow {
+    display: grid;
+    grid-template-columns: 160px repeat(3, 72px);
+    /* дата + 3 поля */
+    column-gap: 12px;
+    align-items: center;
+    /* выравнивание по центру ячеек */
+}
+
+.mealHeader {
+    font-weight: 600;
+    opacity: .7;
+    text-align: center;
+    /* «З О У» по центру ячеек */
+}
+
+.mealInfoDate {
+    /* колонка с датой */
+    font-weight: 600;
+}
+
+.mealRow input {
+    width: 100%;
+    padding: 6px 10px;
+    text-align: center;
+}
+
+.mealInfoDate {
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 700;
+    /* line-height: 24.2px; */
     color: var(--main-gray);
+    /* padding: 10px 0; */
+}
+
+.separatorWrapper {
+    /* position: absolute; */
+    /* top: 0; */
+    /* left: 0; */
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #CBDEFB;
+}
+
+.separatorWrapper button {
+    padding: 10px;
+    flex-basis: 48%;
+    color: #545873;
+    background-color: #F1F4FB;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    transition: all ease-in-out 0.3s;
+    opacity: 0.5;
+}
+
+.separatorWrapper button.active {
+    color: #000;
+    opacity: 1;
+    background-color: #F1F4FB;
+    outline: none;
+}
+
+.unreadMessages {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 6px;
+    height: 6px;
+    background-color: red;
+    border-radius: 50px;
+}
+
+
+/* Пагинация */
+.pagination {
+    position: absolute;
+    bottom: 0;
+    right: 4px;
+    width: 472px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    background-color: #fff;
+}
+
+.paginationNumber {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--menu-bg);
+    border-radius: 10px;
+    color: var(--menu-bg);
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    text-decoration: none;
+}
+
+.paginationNumber:hover {
+    background-color: #e0e0e0;
+    color: var(--menu-bg);
+}
+
+.pagination .activePaginationNumber,
+.pagination .activePaginationNumber a {
+    background-color: var(--menu-bg) !important;
+    color: #fff !important;
+    border-radius: 10px;
+}
+
+.staffWrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.addStaff {
+    padding: 4px;
+    width: 17px !important;
+    height: 17px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0057C3;
+    border-radius: 50%;
+    transition: all ease-in-out 0.3s;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.addStaff img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .pagination {
+        width: 432px;
+    }
+}
+
+/* .requestTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 20px 30px;
+}
+
+.requestButton {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 20px 30px;
+    border-top: 1px solid #54587380;
+}
+
+.requestTitle_name {
+    font-family: Inter;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 38.73px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.requestTitle_close {
+    display: flex;
+    gap: 15px;
+}
+
+.requestTitle_close svg {
+    cursor: pointer;
+}
+
+.requestTitle_close img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.tabs {
+    position: relative;
+    display: flex;
+    padding: 0;
+    list-style-type: none;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.tabs::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--no-active);
+    z-index: 1;
+}
+
+.tab {
+    position: relative;
+    font-size: 16px;
+    padding: 10px;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--no-active);
+    transition: all 0.3s ease-in-out;
+    outline: none;
+    border: none;
+}
+
+.tab:hover {
+    color: var(--text);
+}
+
+.activeTab {
+    color: var(--text) !important;
+    background-color: transparent !important;
+}
+
+.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--dark-blue);
+    z-index: 2;
+}
+
+.activeTab {
+    border-bottom: 5px solid #54587380;
+}
+
+.shahmatka_icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.shahmatka_icon a img {
+    width: 18px;
+    height: auto;
+    object-fit: contain;
+}
+
+.requestData {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 30px;
+    gap: 10px;
+}
+
+.requestData label {
+    display: flex;
+    gap: 15px;
+}
+
+.requestData input,
+select {
+    height: 40px;
+    outline: none;
+    padding: 0 10px;
+}
+
+.requestData select {
+    cursor: pointer;
+}
+
+.requestMiddle {
+    height: calc(100vh - 65px - 81px);
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+.reis_info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.reis_info input {
+    width: 50%;
+}
+
+.checks {
+    display: flex;
+    justify-content: space-between;
+}
+
+.checks label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+}
+
+.requestButton {
+    position: fixed;
+    bottom: 0;
+    background-color: #fff;
+    width: 100%;
+    gap: 5px;
+}
+
+.canceledButton {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--red);
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 12px;
+    font-weight: 400;
+    padding: 8px 10px;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    border: none;
+    cursor: pointer;
+}
+
+.requestButton button {
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--red);
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    padding: 0 30px;
+    transition: all 0.3s ease-in-out;
+    gap: 10px;
+    opacity: 0.8;
+    border: none;
+    cursor: pointer;
+}
+
+.requestButton button:hover {
+    opacity: 1;
+}
+
+.requestButton a,
+.requestButton button {
+    width: 49%;
+}
+
+.requestDataTitle {
+    font-family: Nunito Sans;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 24.2px;
+    color: var(--text);
     padding: 10px 0;
 }
 
@@ -362,7 +1013,6 @@ select {
 }
 
 .historyDate {
-    /* box-shadow: 0px 4px 16px 0px #00000026; */
     border-radius: 10px;
     width: 160px;
     height: 33px;
@@ -385,7 +1035,6 @@ select {
     height: auto;
     overflow: hidden;
     overflow-y: auto;
-    /* padding: 10px 0; */
 }
 
 .historyLog {
@@ -421,41 +1070,36 @@ select {
 }
 
 .mealRow {
-  display: grid;
-  grid-template-columns: 160px repeat(3, 72px); /* дата + 3 поля */
-  column-gap: 12px;
-  align-items: center;          /* выравнивание по центру ячеек */
+    display: grid;
+    grid-template-columns: 160px repeat(3, 72px);
+    column-gap: 12px;
+    align-items: center;
 }
 
 .mealHeader {
-  font-weight: 600;
-  opacity: .7;
-  text-align: center;           /* «З О У» по центру ячеек */
+    font-weight: 600;
+    opacity: .7;
+    text-align: center;
 }
 
-.mealInfoDate {                 /* колонка с датой */
-  font-weight: 600;
+.mealInfoDate {
+    font-weight: 600;
 }
 
 .mealRow input {
-  width: 100%;
-  padding: 6px 10px;
-  text-align: center;
+    width: 100%;
+    padding: 6px 10px;
+    text-align: center;
 }
 
 .mealInfoDate {
     font-family: Nunito Sans;
     font-size: 16px;
     font-weight: 700;
-    /* line-height: 24.2px; */
     color: var(--main-gray);
-    /* padding: 10px 0; */
 }
 
 .separatorWrapper {
-    /* position: absolute; */
-    /* top: 0; */
-    /* left: 0; */
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -484,7 +1128,7 @@ select {
 
 .unreadMessages {
     position: absolute;
-    top: -5px;
+    top: 0;
     right: 0;
     width: 6px;
     height: 6px;
@@ -493,7 +1137,6 @@ select {
 }
 
 
-/* Пагинация */
 .pagination {
     position: absolute;
     bottom: 0;
@@ -565,4 +1208,4 @@ select {
     .pagination {
         width: 432px;
     }
-}
+} */

@@ -1624,6 +1624,7 @@ export const GET_REQUEST = gql`
         images
       }
       requestNumber
+      reserve
       hotel {
         id
         name

@@ -56,6 +56,8 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
     }
   );
 
+  // console.log(data)
+
   // Показ «большого» лоадера только до первой отрисовки данных
   const isInitialLoading =
     networkStatus === NetworkStatus.loading && items.length === 0;

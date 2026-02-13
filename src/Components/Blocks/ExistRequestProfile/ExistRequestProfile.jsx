@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import { getCookie, server, UPDATE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function ExistRequestProfile({
   show,
@@ -203,7 +204,7 @@ function ExistRequestProfile({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="Close" />
+          <CloseIcon />
         </div>
       </div>
       {isLoading ? (

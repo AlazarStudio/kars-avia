@@ -5,7 +5,8 @@
     padding: 0;
     box-sizing: border-box;
     /* font-family: 'Montserrat', sans-serif !important; */
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Open Sans', sans-serif !important;
+    /* font-family: 'Inter', sans-serif !important; */
     /* font-family: 'Roboto', sans-serif !important; */
     /* font-family: 'Nunito', sans-serif !important; */
     scroll-behavior: smooth;
@@ -30,6 +31,7 @@ a {
     --text-gray: #9E9E9E;
     --hover-gray: #EDF0F7;
     /* --hover-gray: #F5F6F8; */
+    --light-blue: #2196F3;
     --blue: #007AFF;
     --dark-blue: #0057C3;
     --black: #000;
@@ -79,10 +81,10 @@ input[type="checkbox"] {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
-    width: 18px !important;
-    height: 18px !important;
+    width: 20px !important;
+    height: 20px !important;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 7px;
     background-color: #fff;
     position: relative;
     cursor: pointer;
@@ -92,8 +94,10 @@ input[type="checkbox"] {
 
 /* 2. Состояние checked — фон и бордер */
 input[type="checkbox"]:checked {
-    background-color: #B0B0B0;
-    border-color: #B0B0B0;
+    /* background-color: #B0B0B0;
+    border-color: #B0B0B0; */
+    background-color: var(--light-blue);
+    border-color: var(--light-blue);
 }
 
 /* 3. Галочка через ::after */

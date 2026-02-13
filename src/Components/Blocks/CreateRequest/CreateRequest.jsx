@@ -670,7 +670,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
           </div>
         </div>
 
-        <div className={classes.tabs}>
+        {/* <div className={classes.tabs}>
           <div
             className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
               }`}
@@ -678,8 +678,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
           >
             Общая
           </div>
-          {/* <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div> */}
-        </div>
+          <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
+        </div> */}
 
         {isLoading ? (
           <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
@@ -711,7 +711,8 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                   ) : null}
                   <MUIAutocomplete
                     dropdownWidth={"100%"}
-                    label={"Выберите тип"}
+                    label={"Тип заявки"}
+                    hideLabelOnFocus={false}
                     options={["Квота", "Резерв"]}
                     value={formData.reserve ? "Резерв" : "Квота"}
                     onChange={(event, newValue) => {

@@ -179,38 +179,40 @@ function Filter({
           {user?.role === roles.airlineAdmin
             ? null
             : !transfer && (
-                <MUIAutocomplete
-                  dropdownWidth={dropdownWidth}
-                  label={"Авиакомпания"}
-                  options={[
-                    "Все авиакомпании",
-                    ...airlines.map((airline) => airline.name),
-                  ]}
-                  value={selectedAirline ? selectedAirline.name : ""}
-                  onChange={(event, newValue) => {
-                    if (newValue === "Все авиакомпании" || !newValue) {
-                      setSelectedAirline(null);
-                      handleChange({ target: { name: "airline", value: "" } });
-                    } else {
-                      const selectedOption = airlines.find(
-                        (airline) => airline.name === newValue
-                      );
-                      setSelectedAirline(selectedOption);
-                      handleChange({
-                        target: {
-                          name: "airline",
-                          value: selectedOption?.id || "",
-                        },
-                      });
-                    }
-                  }}
-                />
-              )}
+              <MUIAutocomplete
+                dropdownWidth={dropdownWidth}
+                label={"Авиакомпания"}
+                hideLabelOnFocus={false}
+                options={[
+                  "Все авиакомпании",
+                  ...airlines.map((airline) => airline.name),
+                ]}
+                value={selectedAirline ? selectedAirline.name : ""}
+                onChange={(event, newValue) => {
+                  if (newValue === "Все авиакомпании" || !newValue) {
+                    setSelectedAirline(null);
+                    handleChange({ target: { name: "airline", value: "" } });
+                  } else {
+                    const selectedOption = airlines.find(
+                      (airline) => airline.name === newValue
+                    );
+                    setSelectedAirline(selectedOption);
+                    handleChange({
+                      target: {
+                        name: "airline",
+                        value: selectedOption?.id || "",
+                      },
+                    });
+                  }
+                }}
+              />
+            )}
 
           {!transfer && (
             <MUIAutocompleteColor
               dropdownWidth={dropdownWidth}
               label={"Аэропорт"}
+              hideLabelOnFocus={false}
               options={[
                 { id: null, name: "Все аэропорты", code: "" },
                 ...airports,
@@ -313,15 +315,16 @@ function Filter({
         <>
           {/* <div className={classes.filter_title}>Статус:</div> */}
           <MUIAutocomplete
-            dropdownWidth={ transfer ? "200px" : dropdownWidth}
+            dropdownWidth={transfer ? "200px" : dropdownWidth}
             label={"Статус"}
+            hideLabelOnFocus={false}
             options={statusOptions?.map((option) => option.label)}
             value={
               statusOptions?.find((option) => option.value === filter)
                 ?.label === "Все заявки"
                 ? ""
                 : statusOptions?.find((option) => option.value === filter)
-                    ?.label || ""
+                  ?.label || ""
             }
             onChange={(event, newValue) => {
               const selectedOption = statusOptions.find(

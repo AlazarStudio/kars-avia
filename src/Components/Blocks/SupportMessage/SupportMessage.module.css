@@ -346,10 +346,13 @@ select {
 }
 
 .sendBlock {
+    padding: 5px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    /* gap: 10px; */
+    border: 1px solid var(--no-active);
+    border-radius: 100px;
 }
 
 .sendBlock_message {
@@ -386,7 +389,8 @@ select {
     padding: 10px;
     cursor: pointer;
     resize: none;
-    border-radius: 10px;
+    /* border-radius: 10px; */
+    border: none;
 }
 
 .historyDate {
@@ -439,6 +443,8 @@ select {
 
 .smiles .smilesBlock {
     cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .scrollButton {

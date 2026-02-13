@@ -15,6 +15,7 @@ import {
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
+import SmileIcon from "../../../shared/icons/SmileIcon";
 
 function SupportMessage({
   children,
@@ -191,7 +192,7 @@ function SupportMessage({
   }, [chatState?.unreadMessagesCount]);
 
   // console.log(messages);
-  
+
 
   useEffect(() => {
     if (isInitialLoad && chatMessages.length) {
@@ -401,17 +402,17 @@ function SupportMessage({
           //   refetch();
           //   scrollToBottom();
           // });
-        if (chatState?.id) {
-          await markAllMessagesAsReadMutation({
-            variables: { chatId: chatState.id, userId: user.id },
-          });
-        }
-        await refetch();
-        // После refetch данные обновлены, но возможно, DOM еще не обновился.
-        // Поэтому используем setTimeout для прокрутки после обновления DOM.
-        setTimeout(() => {
-          scrollToBottom();
-        }, 0);
+          if (chatState?.id) {
+            await markAllMessagesAsReadMutation({
+              variables: { chatId: chatState.id, userId: user.id },
+            });
+          }
+          await refetch();
+          // После refetch данные обновлены, но возможно, DOM еще не обновился.
+          // Поэтому используем setTimeout для прокрутки после обновления DOM.
+          setTimeout(() => {
+            scrollToBottom();
+          }, 0);
           setMessageText({
             text: "",
             chatId: "",
@@ -518,9 +519,8 @@ function SupportMessage({
               }
               return (
                 <div
-                  className={`${classes.requestData_message_full} ${
-                    message.sender.id === user.id && classes.myMes
-                  }`}
+                  className={`${classes.requestData_message_full} ${message.sender.id === user.id && classes.myMes
+                    }`}
                   key={message.id}
                   ref={messageRefs.current[message.id]}
                 >
@@ -543,11 +543,10 @@ function SupportMessage({
                       <div
                         className={`
                             ${classes.requestData_message__message}
-                            ${
-                              message.sender.id === user.id
-                                ? classes.myMesBorderRadius
-                                : ""
-                            }
+                            ${message.sender.id === user.id
+                            ? classes.myMesBorderRadius
+                            : ""
+                          }
                         `}
                         style={
                           message?.separator
@@ -610,7 +609,8 @@ function SupportMessage({
                 className={classes.smilesBlock}
                 onClick={handleEmojiPickerShow}
               >
-                😀
+                {/* 😀 */}
+                <SmileIcon />
               </div>
               {showEmojiPicker && (
                 <Smiles handleSmileChange={handleSmileChange} />
@@ -621,7 +621,7 @@ function SupportMessage({
               value={messageText.text}
               onChange={handleTextareaChange}
               disabled={!canSendMessage}
-              placeholder="Введите сообщение"
+              placeholder="Сообщение..."
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -631,11 +631,15 @@ function SupportMessage({
               style={{ borderRadius: "20px" }}
             />
             <div
-              className={classes.sendBlock_message}
+              // className={classes.sendBlock_message}
               onClick={handleSubmitMessage}
-              style={{ opacity: canSendMessage ? 0.8 : 0.4, cursor: canSendMessage ? "pointer" : "not-allowed" }}
+              style={{ opacity: canSendMessage ? 0.8 : 0.4, cursor: canSendMessage ? "pointer" : "not-allowed", display: "flex", alignItems: 'center' }}
             >
-              <img src="/message.png" alt="Отправить" />
+              {/* <img src="/message.png" alt="Отправить" /> */}
+              <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path opacity="0.4" d="M14.2649 6.34496L27.1049 12.765C32.8649 15.645 32.8649 20.355 27.1049 23.235L14.2649 29.655C5.62491 33.975 2.09991 30.435 6.41991 21.81L7.72491 19.215C8.09991 18.45 8.09991 17.565 7.72491 16.8L6.41991 14.19C2.09991 5.56496 5.63991 2.02496 14.2649 6.34496Z" fill="#0057C3" />
+                <path d="M22.2599 19.125H14.1599C13.5449 19.125 13.0349 18.615 13.0349 18C13.0349 17.385 13.5449 16.875 14.1599 16.875H22.2599C22.8749 16.875 23.3849 17.385 23.3849 18C23.3849 18.615 22.8749 19.125 22.2599 19.125Z" fill="#0057C3" />
+              </svg>
             </div>
           </div>
         </div>

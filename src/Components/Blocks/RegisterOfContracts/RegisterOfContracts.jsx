@@ -466,6 +466,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             <MUIAutocomplete
               dropdownWidth={"170px"}
               label={"Авиакомпания"}
+              hideLabelOnFocus={false}
               options={[
                 "Все авиакомпании",
                 ...airlines.map((airline) => airline.name),
@@ -485,6 +486,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             <MUIAutocomplete
               dropdownWidth={"170px"}
               label={"Вид приложения"}
+              hideLabelOnFocus={false}
               options={["Все", ...action]}
               value={selectedType ? selectedType : ""}
               onChange={(event, newValue) => {
@@ -502,6 +504,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             <MUIAutocompleteColor
               dropdownWidth={"170px"}
               label={"Гостиница"}
+              hideLabelOnFocus={false}
               options={[
                 {
                   id: null,
@@ -561,6 +564,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             <MUIAutocompleteColor
               dropdownWidth={"170px"}
               label={"Город"}
+              hideLabelOnFocus={false}
               options={[
                 {
                   id: null,
@@ -630,6 +634,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             <MUIAutocomplete
               dropdownWidth={"170px"}
               label={"Организация"}
+              hideLabelOnFocus={false}
               options={["Все организации", ...orgs.map((org) => org.name)]}
               value={selectedOrganization ? selectedOrganization.name : ""}
               onChange={(event, newValue) => {
@@ -647,6 +652,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             <MUIAutocompleteColor
               dropdownWidth={"170px"}
               label={"Город"}
+              hideLabelOnFocus={false}
               options={[
                 {
                   id: null,
@@ -714,6 +720,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
         <MUIAutocomplete
           dropdownWidth={"170px"}
           label={"ГК Карс"}
+          hideLabelOnFocus={false}
           options={["Все компании", ...companies?.map((item) => item.name)]}
           value={selectedCompany ? selectedCompany?.name : ""}
           onChange={(event, newValue) => {
@@ -852,10 +859,10 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           }}
           close={closeDeleteComponent}
           title={`Вы действительно хотите удалить ${deleteIndex.type === "deleteTarif"
-              ? "тариф"
-              : deleteIndex.type === "deleteCategory"
-                ? "категорию"
-                : "договор"
+            ? "тариф"
+            : deleteIndex.type === "deleteCategory"
+              ? "категорию"
+              : "договор"
             }?`}
         />
       )}

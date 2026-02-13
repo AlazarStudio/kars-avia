@@ -19,6 +19,7 @@ import {
   DELETE_PERSON_FROM_HOTEL,
   GET_AIRLINE_DEPARTMENT,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  GET_DISPATCHER_DEPARTMENTS,
   GET_HOTELS_RELAY,
   GET_RESERVE_REQUEST,
   GET_RESERVE_REQUEST_HOTELS,
@@ -28,6 +29,10 @@ import {
   REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
   server,
 } from "../../../../graphQL_requests";
+import {
+  isAirlineRole as isAirlineRoleCheck,
+  isDispatcherRole as isDispatcherRoleCheck,
+} from "../../../utils/access";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
@@ -90,39 +95,79 @@ function ReservePlacement({ children, user, ...props }) {
     }
   );
 
-    const [accessMenu, setAccessMenu] = useState({})
-    // console.log(user);
-    const { data: departmentData, refetch: departmentRefetch } = useQuery(GET_AIRLINE_DEPARTMENT, {
+  const [accessMenu, setAccessMenu] = useState({});
+
+  const isDispatcherRole = isDispatcherRoleCheck(user);
+  const isAirlineRole = isAirlineRoleCheck(user);
+  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
+
+  const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
+    useQuery(GET_AIRLINE_DEPARTMENT, {
       context: {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
       variables: {
-        airlineDepartmentId: user?.departmentId
+        airlineDepartmentId: user?.airlineDepartmentId,
       },
-      skip: !user?.departmentId
+      skip: !isAirlineRole || !user?.airlineDepartmentId,
     });
-  
-    const { data: dataSubscriptionUpd } = useSubscription(
-      GET_AIRLINES_UPDATE_SUBSCRIPTION,
-      {
-        context: {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+
+  const { data: dispatcherDepartmentsData } = useQuery(
+    GET_DISPATCHER_DEPARTMENTS,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-        onData: () => {
-          departmentRefetch();
-        },
-      }
-    );
-  
-    useEffect(() => {
-      if (departmentData && departmentData.airlineDepartment.accessMenu) {
-        setAccessMenu(departmentData?.airlineDepartment?.accessMenu)
-      }
-    }, [departmentData, dataSubscriptionUpd])
+      },
+      variables: {
+        pagination: { all: true },
+      },
+      // skip: !isDispatcherRole || !dispatcherDepartmentId,
+    }
+  );
+
+  //   console.log(user);
+  //   console.log(isDispatcherRole)
+  // console.log(isAirlineRole)
+  // console.log(dispatcherDepartmentId)
+  useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    skip: !isAirlineRole || !user?.airlineDepartmentId,
+    onData: () => {
+      refetchAirlineDepartment();
+    },
+  });
+
+  useEffect(() => {
+    if (isDispatcherRole) {
+      const department =
+        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
+          (item) => item.id === dispatcherDepartmentId
+        );
+      setAccessMenu(department?.accessMenu || {});
+      return;
+    }
+
+    if (isAirlineRole) {
+      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
+      return;
+    }
+
+    setAccessMenu({});
+  }, [
+    isDispatcherRole,
+    isAirlineRole,
+    dispatcherDepartmentId,
+    dispatcherDepartmentsData,
+    airlineDepartmentData,
+  ]);
 
   // console.log(subscriptionDataUpdate);
   // console.log(subscriptionData);
@@ -563,7 +608,7 @@ function ReservePlacement({ children, user, ...props }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id={"reserve"} accessMenu={accessMenu}/>
+      <MenuDispetcher id={"reserve"} accessMenu={accessMenu} />
 
       <div className={classes.section}>
         <Header>
@@ -696,7 +741,7 @@ function ReservePlacement({ children, user, ...props }) {
                 </Button>
               )} */}
                 {exists &&
-                request.passengerCount === showChooseHotels ? null : (
+                  request.passengerCount === showChooseHotels ? null : (
                   <Button onClick={toggleCreateSidebar}>
                     {user.role == "HOTELADMIN"
                       ? "Выбрать количество пассажиров"

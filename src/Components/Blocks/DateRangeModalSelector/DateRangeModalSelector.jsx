@@ -191,9 +191,11 @@ export default function DateRangeModalSelector({
             transition: "all 0.3s ease-in-out",
             "& .MuiOutlinedInput-notchedOutline": {
               borderColor: "rgba(0, 0, 0, 0.23)",
+
             },
             "&:hover .MuiOutlinedInput-notchedOutline": {
               borderColor: "rgba(0, 0, 0, 0.23)",
+              // borderColor: "#fff",
             },
             "&:hover": {
               backgroundColor: "white",

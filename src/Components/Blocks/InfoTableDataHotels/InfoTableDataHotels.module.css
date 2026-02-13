@@ -195,6 +195,7 @@
     width: 50px;
     height: 50px;
     border-radius: 50px;
+    border: 1px solid var(--no-active);
     overflow: hidden;
 }
 

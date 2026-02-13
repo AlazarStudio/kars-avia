@@ -35,6 +35,7 @@ function MUITextField({
             },
             "&:hover .MuiOutlinedInput-notchedOutline": {
               borderColor: "rgba(0, 0, 0, 0.23)",
+              // borderColor: "#fff",
             },
             "&:hover": {
               backgroundColor: "white",

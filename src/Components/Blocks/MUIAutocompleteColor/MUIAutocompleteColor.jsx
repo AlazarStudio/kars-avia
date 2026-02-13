@@ -5,6 +5,7 @@ import { Autocomplete, TextField } from "@mui/material";
 function MUIAutocompleteColor({
   label,
   labelOnFocus,
+  hideLabelOnFocus = true,
   options,
   value,
   onChange,
@@ -62,12 +63,18 @@ function MUIAutocompleteColor({
       renderInput={(params) => (
         <TextField
           {...params}
-          label={labelOnFocus ? (focused || value ? labelOnFocus : label) : label}
+          label={
+            hideLabelOnFocus && (focused || value)
+              ? ""
+              : labelOnFocus
+                ? (focused || value ? labelOnFocus : label)
+                : label
+          }
           onFocus={() => {
-            labelOnFocus ? setFocused(true) : null;
+            (labelOnFocus || hideLabelOnFocus) ? setFocused(true) : null;
           }}
           onBlur={() => {
-            labelOnFocus ? setFocused(false) : null;
+            (labelOnFocus || hideLabelOnFocus) ? setFocused(false) : null;
           }}
           variant="outlined"
           sx={{
@@ -109,9 +116,11 @@ function MUIAutocompleteColor({
           transition: "all 0.3s ease-in-out",
           "& .MuiOutlinedInput-notchedOutline": {
             borderColor: "rgba(0, 0, 0, 0.23)",
+            // transition: "all 0.3s ease-in-out",
           },
           "&:hover .MuiOutlinedInput-notchedOutline": {
             borderColor: "rgba(0, 0, 0, 0.23)",
+            // borderColor: "#fff",
           },
           "&:hover": {
             backgroundColor: "white",

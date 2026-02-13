@@ -812,8 +812,8 @@ function InfoTableDataReservePassengers({
               chatHeight={
                 user.role !== roles.hotelAdmin &&
                 user.role !== roles.airlineAdmin
-                  ? "calc(100vh - 360px)"
-                  : "calc(100vh - 280px)"
+                  ? "calc(100vh - 369px)"
+                  : "calc(100vh - 292px)"
               }
               separator={separator}
               hotelChatId={selectedHotelChatId}
