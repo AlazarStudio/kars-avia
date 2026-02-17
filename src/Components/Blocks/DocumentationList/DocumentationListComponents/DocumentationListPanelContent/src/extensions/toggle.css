@@ -1,0 +1,118 @@
+/* src/extensions/toggle.css */
+
+.toggle-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #ffffff;
+  margin: 12px 0;
+  position: relative;
+}
+
+.toggle-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  min-width: 0;
+}
+
+.toggle-header:hover {
+  background: #f3f4f6;
+}
+
+.toggle-chevron {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toggle-chevron:hover {
+  background: #e5e7eb;
+}
+
+.toggle-chevron::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 6px solid #111827;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  transform: rotate(0deg); /* collapsed -> right */
+  transition: transform 140ms ease;
+}
+
+.toggle-block:not(.is-collapsed) .toggle-chevron::before {
+  transform: rotate(90deg); /* expanded -> down */
+}
+
+.toggle-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  padding: 2px 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.toggle-title:hover {
+  text-decoration: underline;
+}
+
+.toggle-title-input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border: 1px solid #6366f1;
+  border-radius: 8px;
+  outline: none;
+  background: #ffffff;
+}
+
+/* плавное раскрытие */
+.toggle-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 180ms ease;
+}
+
+.toggle-block.is-collapsed .toggle-body {
+  grid-template-rows: 0fr;
+  pointer-events: none; /* клики внутрь закрытого контента не проходят */
+}
+
+.toggle-body-inner {
+  overflow: hidden;
+}
+
+.toggle-content {
+  padding: 6px 10px 10px 32px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* лёгкое затухание при закрытии */
+.toggle-body-inner {
+  opacity: 1;
+  transition: opacity 140ms ease;
+}
+
+.toggle-block.is-collapsed .toggle-body-inner {
+  opacity: 0;
+}

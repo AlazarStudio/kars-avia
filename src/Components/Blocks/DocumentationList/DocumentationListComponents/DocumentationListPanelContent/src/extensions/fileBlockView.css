@@ -1,0 +1,795 @@
+/* ================= FILE BLOCK WRAPPER ================= */
+
+.file-block-wrapper {
+  margin: 16px 0;
+  container-type: inline-size;
+}
+
+/* ================= FILE BLOCK ================= */
+
+.file-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.file-block-wrapper .file-block {
+  display: grid;
+  grid-template-columns: minmax(180px, 40%) 1fr;
+  gap: 16px;
+  padding: 16px;
+  align-items: stretch;
+  height: 100%;
+  margin: 0;
+}
+
+.file-block:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: #d1d5db;
+}
+
+/* ================= FILE PREVIEW ================= */
+
+.file-image-preview,
+.file-pdf-preview,
+.file-text-preview,
+.file-audio-preview,
+.file-video-preview,
+.file-generic-preview {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px;
+}
+
+.file-block-wrapper .file-image-preview,
+.file-block-wrapper .file-pdf-preview,
+.file-block-wrapper .file-text-preview,
+.file-block-wrapper .file-audio-preview,
+.file-block-wrapper .file-video-preview,
+.file-block-wrapper .file-generic-preview {
+  height: 100%;
+  border-bottom: none;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-image-preview img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  border-radius: 6px;
+}
+
+.file-block-wrapper .file-image-preview img {
+  max-height: 100%;
+}
+
+.file-preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: white;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.file-image-preview:hover .file-preview-overlay,
+.file-pdf-preview:hover .file-preview-overlay,
+.file-text-preview:hover .file-preview-overlay {
+  opacity: 1;
+}
+
+.file-audio-preview audio,
+.file-video-preview video {
+  width: 100%;
+  border-radius: 6px;
+}
+
+/* ================= PDF PREVIEW ================= */
+
+.pdf-preview-simple {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.pdf-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pdf-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #111827;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.pdf-size {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ================= GENERIC PREVIEW ================= */
+
+.file-generic-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.generic-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.generic-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.generic-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #111827;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.generic-type {
+  font-size: 14px;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+/* ================= TEXT PREVIEW ================= */
+
+.text-preview {
+  max-height: 200px;
+  overflow: auto;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: 1px solid #e5e7eb;
+}
+
+.file-block-wrapper .file-text-preview {
+  align-items: stretch;
+}
+
+.file-block-wrapper .file-text-preview .text-preview {
+  flex: 1;
+  max-height: none;
+  height: 100%;
+}
+
+.text-loading,
+.text-error {
+  text-align: center;
+  color: #6b7280;
+  padding: 20px;
+  font-size: 14px;
+}
+
+.text-error {
+  color: #dc2626;
+}
+
+.text-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+}
+
+/* ================= FILE INFO ================= */
+
+.file-info {
+  padding: 16px;
+}
+
+.file-block-wrapper .file-info {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: auto;
+}
+
+.file-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.file-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  border-radius: 8px;
+}
+
+.file-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-weight: 600;
+  font-size: 16px;
+  color: #111827;
+  margin-bottom: 6px;
+  word-break: break-word;
+  line-height: 1.4;
+}
+
+.file-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.file-type {
+  text-transform: uppercase;
+}
+
+/* ================= FILE ACTIONS ================= */
+
+.file-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.file-action-btn {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.file-action-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.file-action-btn:active:not(:disabled) {
+  background: #eef2f7;
+}
+
+.file-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.download-btn {
+  color: #111827;
+}
+
+/* ================= FILE EXTRA INFO ================= */
+
+.file-extra-info {
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.file-block-wrapper .file-extra-info {
+  margin-top: auto;
+}
+
+.file-block-wrapper .file-notes {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.file-block-wrapper .file-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #374151;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f9fafb;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  border: 1px solid #e5e7eb;
+}
+
+.file-link:hover {
+  background: #f3f4f6;
+  text-decoration: none;
+  color: #111827;
+}
+
+.file-compact-row {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.file-compact-btn,
+.file-compact-name {
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fafafa;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.file-compact-btn {
+  width: 32px;
+  padding: 0;
+}
+
+.file-compact-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  justify-content: flex-start;
+}
+
+.file-compact-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.file-compact-btn:hover:not(:disabled),
+.file-compact-name:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.file-notes {
+  position: relative;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  min-height: 90px;
+  background: #fff;
+  margin-top: 12px;
+}
+
+.file-notes-input {
+  width: 100%;
+  height: 100%;
+  min-height: 90px;
+  resize: none;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #111827;
+  background: transparent;
+  line-height: 1.5;
+}
+
+
+/* ================= FILE PREVIEW MODAL ================= */
+
+.file-preview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.file-preview-content {
+  background: white;
+  border-radius: 12px;
+  width: 90vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.file-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.file-preview-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  word-break: break-word;
+}
+
+.file-preview-header .close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #6b7280;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.file-preview-header .close-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #f3f4f6;
+}
+
+.file-preview-body {
+  flex: 1;
+  /* overflow: auto; */
+  background: #f9fafb;
+}
+
+.pdf-full-preview {
+  width: 100%;
+  height: 70vh;
+}
+
+.pdf-full-preview iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.text-full-preview {
+  background: white;
+  border-radius: 8px;
+  margin: 20px;
+  padding: 20px;
+  max-height: 70vh;
+  overflow: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.text-full-preview pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.image-full-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.image-full-preview img {
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.file-preview-footer {
+  padding: 16px 20px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.file-preview-footer .download-btn {
+  padding: 10px 16px;
+  background: #111827;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-preview-footer .download-btn:hover {
+  background: #4f46e5;
+}
+
+.file-preview-footer .close-btn {
+  padding: 10px 16px;
+  background: #f9fafb;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.file-preview-footer .close-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  .file-block {
+    margin: 12px 0;
+  }
+  
+  .file-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .file-actions {
+    flex-direction: column;
+  }
+  
+  .file-action-btn {
+    width: 100%;
+  }
+  
+  .file-preview-modal {
+    padding: 10px;
+  }
+  
+  .file-preview-content {
+    width: 95vw;
+    max-height: 95vh;
+  }
+  
+  .pdf-full-preview {
+    height: 60vh;
+  }
+}
+
+/* ================= ANIMATIONS ================= */
+
+.file-image-preview,
+.file-pdf-preview,
+.file-text-preview {
+  animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.image-upload-btn{
+    height: 30px;
+}
+
+.file-type-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.pdf-icon .file-type-icon,
+.generic-icon .file-type-icon {
+  width: 42px;
+  height: 42px;
+}
+
+.file-btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.file-link-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@container (max-width: 520px) {
+  .file-image-preview,
+  .file-pdf-preview,
+  .file-text-preview,
+  .file-audio-preview,
+  .file-video-preview,
+  .file-generic-preview {
+    padding: 14px;
+  }
+
+  .file-info {
+    padding: 14px;
+  }
+
+  .file-header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .file-name {
+    font-size: 14px;
+  }
+
+  .file-meta {
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .file-actions {
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
+  .file-link {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@container (max-width: 400px) {
+  .file-compact-row {
+    display: flex;
+  }
+
+  .file-header,
+  .file-actions,
+  .file-extra-info {
+    display: none;
+  }
+
+  .file-block-wrapper .file-block {
+    grid-template-columns: 1fr;
+  }
+
+  .file-block-wrapper .file-image-preview,
+  .file-block-wrapper .file-pdf-preview,
+  .file-block-wrapper .file-text-preview,
+  .file-block-wrapper .file-audio-preview,
+  .file-block-wrapper .file-video-preview,
+  .file-block-wrapper .file-generic-preview {
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .file-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .file-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .file-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .file-action-btn {
+    width: 100%;
+  }
+}
+

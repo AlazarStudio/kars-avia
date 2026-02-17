@@ -1578,6 +1578,9 @@ export const GET_REQUEST = gql`
         breakfast
         lunch
         dinner
+        breakfastEnabled
+        lunchEnabled
+        dinnerEnabled
         dailyMeals {
           breakfast
           date
@@ -4510,6 +4513,153 @@ export const UPDATE_DOCUMENTATION = gql`
     updateDocumentation(id: $updateDocumentationId, data: $data, imageGroupsByKey: $imageGroupsByKey, pruneMissingChildren: $pruneMissingChildren) {
       id
     }
+  }
+`;
+
+
+// Документация (новый API для Documentation)
+
+// Queries для Section
+export const GET_SECTIONS_WITH_HIERARCHY = gql`
+  query SectionsWithHierarhy {
+    sectionsWithHierarhy
+  }
+`;
+
+export const GET_SECTIONS = gql`
+  query Sections {
+    sections {
+      id
+      title
+      createdAt
+      updatedAt
+      parentId
+    }
+  }
+`;
+
+export const GET_SECTION = gql`
+  query Section($id: ID!) {
+    section(id: $id) {
+      id
+      title
+      createdAt
+      updatedAt
+      parentId
+      children {
+        id
+        title
+      }
+      articles {
+        id
+        title
+      }
+    }
+  }
+`;
+
+// Queries для Article
+export const GET_ARTICLES = gql`
+  query Articles {
+    articles {
+      id
+      title
+      content
+      createdAt
+      updatedAt
+      sectionId
+    }
+  }
+`;
+
+export const GET_ARTICLE = gql`
+  query Article($id: ID!) {
+    article(id: $id) {
+      id
+      title
+      content
+      createdAt
+      updatedAt
+      sectionId
+      section {
+        id
+        title
+      }
+    }
+  }
+`;
+
+// Mutations для Section
+export const CREATE_SECTION = gql`
+  mutation CreateSection($input: createSectionInput!) {
+    createSection(input: $input) {
+      id
+      title
+      createdAt
+      updatedAt
+      parentId
+    }
+  }
+`;
+
+export const UPDATE_SECTION = gql`
+  mutation UpdateSection($id: ID!, $input: updateSectionInput!) {
+    updateSection(id: $id, input: $input) {
+      id
+      title
+      updatedAt
+      parentId
+    }
+  }
+`;
+
+export const DELETE_SECTION = gql`
+  mutation DeleteSection($id: ID!) {
+    deleteSection(id: $id)
+  }
+`;
+
+// Mutations для Article
+export const CREATE_ARTICLE = gql`
+  mutation CreateArticle($input: createArticleInput!) {
+    createArticle(input: $input) {
+      id
+      title
+      content
+      createdAt
+      updatedAt
+      sectionId
+    }
+  }
+`;
+
+export const UPDATE_ARTICLE = gql`
+  mutation UpdateArticle($id: ID!, $input: updateArticleInput!) {
+    updateArticle(id: $id, input: $input) {
+      id
+      title
+      content
+      updatedAt
+      sectionId
+    }
+  }
+`;
+
+export const DELETE_ARTICLE = gql`
+  mutation DeleteArticle($id: ID!) {
+    deleteArticle(id: $id)
+  }
+`;
+
+export const UPLOAD_DOCUMENTATION_IMAGE = gql`
+  mutation UploadDocumentationImage($file: Upload!) {
+    uploadDocumentationImage(file: $file)
+  }
+`;
+
+export const UPLOAD_DOCUMENTATION_FILE = gql`
+  mutation UploadDocumentationFile($file: Upload!) {
+    uploadDocumentationFile(file: $file)
   }
 `;
 

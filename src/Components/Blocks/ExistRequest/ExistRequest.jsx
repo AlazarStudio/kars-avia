@@ -953,7 +953,7 @@ function ExistRequest({
     setSeparator("airline");
   }, [show]);
 
-  console.log(formData);
+  // console.log(formData);
 
   return (
     <>
@@ -1056,32 +1056,30 @@ function ExistRequest({
               <div
                 className={classes.requestMiddle}
                 style={{
-                  height:
-                    (activeTab !== "Комментарии" &&
-                      activeTab !== "История" &&
-                      formData.status !== "created" &&
-                      formData.status !== "canceled" &&
-                      // formData.status !== "archiving" &&
-                      formData.status !== "archived" &&
-                      (accessMenu
-                        ? user?.airlineId &&
-                        hasAccessMenu(accessMenu, "requestUpdate")
-                        : true))
-                      ? "calc(100vh - 120px)"
-                      :
-                      (activeTab !== "Комментарии" &&
-                        activeTab !== "История" &&
-                        formData.status !== "created" &&
-                        formData.status !== "canceled" &&
-                        // formData.status !== "archiving" &&
-                        formData.status !== "archived" &&
-                        (accessMenu
-                          ? !user?.airlineId &&
-                          (dispatcherCanUpdate ??
-                            hasAccessMenu(accessMenu, "requestUpdate"))
-                          : true))
-                        ? "calc(100vh - 120px)"
-                        : null,
+                  height: (isEditing) ? "calc(100vh - 198px)" : "calc(100vh - 120px)"
+                    // (activeTab !== "Комментарии" &&
+                    //   activeTab !== "История" &&
+                    //   formData.status !== "created" &&
+                    //   formData.status !== "canceled" &&
+                    //   formData.status !== "archived" &&
+                    //   (accessMenu
+                    //     ? user?.airlineId &&
+                    //     hasAccessMenu(accessMenu, "requestUpdate")
+                    //     : true))
+                    //   ? "calc(100vh - 120px)"
+                    //   :
+                    //   (activeTab !== "Комментарии" &&
+                    //     activeTab !== "История" &&
+                    //     formData.status !== "created" &&
+                    //     formData.status !== "canceled" &&
+                    //     formData.status !== "archived" &&
+                    //     (accessMenu
+                    //       ? !user?.airlineId &&
+                    //       (dispatcherCanUpdate ??
+                    //         hasAccessMenu(accessMenu, "requestUpdate"))
+                    //       : true))
+                    //     ? "calc(100vh - 120px)"
+                    //     : null,
                 }}
               >
                 {/* Вкладка "Общая" */}
@@ -1786,17 +1784,11 @@ function ExistRequest({
                 )}
               </div>
 
-              {/* Кнопка для размещения заявки — скрыто, т.к. при !isEditing кнопок снизу не должно быть */}
-              {false &&
-                formData.status !== "archived" &&
-                formData.status !== "done" &&
-                formData.status !== "archiving" &&
-                formData.status !== "extended" &&
-                formData.status !== "reduced" &&
-                formData.status !== "transferred" &&
-                formData.status !== "earlyStart" &&
-                formData.status !== "canceled" &&
-                activeTab === "Общая" && (
+              {/* Кнопки для неразмещённой заявки: отмена и размещение */}
+              {(formData.status === "created" ||
+                formData.status === "opened") &&
+                activeTab === "Общая" &&
+                canUpdateActions && (
                   <div className={classes.requestButton}>
                     <button
                       onClick={() => {
@@ -1845,8 +1837,8 @@ function ExistRequest({
                   <div className={classes.requestButton}>
                     <Button
                       onClick={() => setIsEditing(false)}
-                      backgroundcolor="#6c757d"
-                      color="#fff"
+                      backgroundcolor="var(--hover-gray)"
+                      color="#000"
                     >
                       Отмена
                     </Button>

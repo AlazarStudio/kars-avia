@@ -1,0 +1,154 @@
+/* src/extensions/videoBlock.css */
+
+/* ================= VIDEO BLOCK WRAPPER ================= */
+
+.video-block-wrapper {
+  position: relative;
+  margin: 16px 0;
+}
+
+.ProseMirror .video-block-wrapper.video-block-wrapper {
+  max-width: 100%;
+}
+
+/* ================= VIDEO PREVIEW ================= */
+
+.video-preview {
+  position: relative;
+  max-width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #000;
+}
+
+/* ================= RESIZE HANDLES ================= */
+
+.video-resize {
+  position: absolute;
+  z-index: 5;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.video-resize:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+/* left / right */
+.video-resize.left,
+.video-resize.right {
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.video-resize.left {
+  left: -4px;
+}
+
+.video-resize.right {
+  right: -4px;
+}
+
+/* top / bottom */
+.video-resize.top,
+.video-resize.bottom {
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.video-resize.top {
+  top: -4px;
+}
+
+.video-resize.bottom {
+  bottom: -4px;
+}
+
+/* ================= VIDEO SETTINGS BUTTON ================= */
+
+.video-settings-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  /* border-radius: 10px; */
+  /* border: 1px solid rgba(255, 255, 255, 0.3); */
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  z-index: 9;
+}
+
+.video-preview:hover .video-settings-btn {
+  opacity: 1;
+}
+
+.video-settings-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translateY(-1px);
+}
+
+/* ================= VIDEO CAPTION ================= */
+
+.video-caption {
+  margin-top: 6px;
+  width: 100%;
+  border: none;
+  border-bottom: 1px dashed #d1d5db;
+  background: transparent;
+  font-size: 14px;
+  text-align: center;
+  outline: none;
+  padding: 4px;
+}
+
+.video-caption:focus {
+  border-bottom-color: #111;
+}
+
+/* ================= SHIFT RESIZE INDICATOR ================= */
+
+.shift-resize-indicator {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 9;
+  pointer-events: none;
+  animation: fadeInOut 0.3s ease;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  .video-settings-btn {
+    opacity: 1;
+  }
+}
+

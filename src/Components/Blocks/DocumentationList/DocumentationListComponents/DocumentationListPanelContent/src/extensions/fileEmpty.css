@@ -1,0 +1,22 @@
+.file-empty {
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  background: #f9fafb;
+  width: 100%;
+  min-width: 0;
+}
+
+.file-empty:hover {
+  background: #f3f4f6;
+}
+
+.file-empty.drag-over {
+  background: #eef2ff;
+  border-color: #6366f1;
+  color: #4338ca;
+}

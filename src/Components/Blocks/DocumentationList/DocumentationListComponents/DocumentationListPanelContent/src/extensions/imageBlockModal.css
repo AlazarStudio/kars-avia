@@ -1,0 +1,498 @@
+/* ================= WRAPPER ================= */
+
+.image-block-wrapper {
+  position: relative;
+  margin: 16px 0;
+}
+
+/* ================= EMPTY ================= */
+
+.image-empty {
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  background: #f9fafb;
+}
+
+.image-empty:hover {
+  background: #f3f4f6;
+}
+
+/* drag over */
+.image-empty.drag-over {
+  background: #eef2ff;
+  border-color: #6366f1;
+  color: #4338ca;
+}
+
+/* ================= IMAGE ================= */
+
+.image-preview {
+  position: relative;
+  max-width: 100%;
+}
+
+.image-preview img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  display: block;
+  user-select: none;
+  /* pointer-events: none; */
+}
+
+/* ================= REMOVE (X) ================= */
+
+.image-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 44px;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+
+  font-size: 16px;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, border-color 0.15s;
+  z-index: 6;
+}
+
+.image-preview:hover .image-remove-btn {
+  opacity: 1;
+}
+
+.image-remove-btn:hover {
+  border-color: #111;
+}
+
+/* ================= RESIZE (ALL SIDES) ================= */
+
+.image-resize {
+  position: absolute;
+  z-index: 5;
+}
+
+/* left / right */
+.image-resize.left,
+.image-resize.right {
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.image-resize.left {
+  left: -4px;
+}
+
+.image-resize.right {
+  right: -4px;
+}
+
+/* top / bottom */
+.image-resize.top,
+.image-resize.bottom {
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.image-resize.top {
+  top: -4px;
+}
+
+.image-resize.bottom {
+  bottom: -4px;
+}
+
+/* hover feedback */
+.image-preview:hover .image-resize {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.image-resize:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ================= MORE ================= */
+
+.image-more-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+
+  width: 28px;
+  height: 28px;
+
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+
+  font-size: 18px;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, border-color 0.15s;
+  z-index: 6;
+}
+
+.image-preview:hover .image-more-btn {
+  opacity: 1;
+}
+
+.image-more-btn:hover {
+  border-color: #111;
+}
+
+/* ================= CAPTION ================= */
+
+.image-caption {
+  margin-top: 6px;
+  width: 100%;
+  border: none;
+  border-bottom: 1px dashed #d1d5db;
+  background: transparent;
+  font-size: 14px;
+  text-align: center;
+  outline: none;
+}
+
+.image-caption:focus {
+  border-bottom-color: #111;
+}
+
+/* ================= MODAL ================= */
+
+.image-modal {
+  position: fixed;
+  z-index: 9;
+  width: 360px;
+  background: white;
+  border-radius: 12px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 15px 40px rgba(0,0,0,.12);
+}
+
+/* ================= MODAL HEADER ================= */
+
+.image-modal-header {
+  background-color: #ededed;
+  border: 2px dashed rgb(195, 195, 195);
+  border-radius: 5px;
+  cursor: grab;
+  font-weight: 600;
+  padding: 6px 8px;
+  margin-bottom: 8px;
+  user-select: none;
+}
+
+.image-modal-header:active {
+  cursor: grabbing;
+}
+
+/* ================= TABS ================= */
+
+.image-modal-tabs {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 2px;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.image-modal-tabs button {
+  flex: 1;
+  padding: 6px 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.image-modal-tabs button:hover {
+  color: #111;
+}
+
+.image-modal-tabs button.active {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+
+/* ================= CONTENT ================= */
+
+.image-modal-content input {
+  width: 100%;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+.image-modal-content input:focus {
+  outline: none;
+  border-color: #111;
+}
+
+/* ================= UNIFIED BUTTON STYLE ================= */
+
+.image-delete-btn {
+  margin-top: 10px;
+}
+
+.image-modal button,
+.image-upload-btn,
+.image-delete-btn,
+.caption-toggle-btn {
+  width: 100%;
+  padding: 8px 10px;
+  background: transparent;
+  color: #111;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.image-modal button:hover,
+.image-upload-btn:hover,
+.image-delete-btn:hover,
+.caption-toggle-btn:hover {
+  border-color: #111;
+}
+
+/* ================= UPLOAD LABEL ================= */
+
+.image-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================= ACTIONS ================= */
+
+.image-modal-actions {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* подпись — компактнее */
+.caption-toggle-btn {
+  width: auto;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.modal-pages {
+  padding: 6px;
+  border-radius: 8px;
+  background: #f1f1f1;
+  margin-bottom: 8px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ================= AUDIO MODAL (использует те же стили, что и image modal) ================= */
+/* .image-block-modal-tabs {
+  display: flex;
+  background: #f3f4f6;
+  border-radius: 8px;
+  padding: 2px;
+  margin-bottom: 16px;
+}
+
+.image-block-modal-tabs button {
+  flex: 1;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.image-block-modal-tabs button:hover {
+  color: #111;
+}
+
+.image-block-modal-tabs button.active {
+  background: #fff;
+  color: #111;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.image-block-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.image-block-modal-content input[type="text"],
+.image-block-modal-content input[type="file"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  transition: border-color 0.15s;
+}
+
+.image-block-modal-content input[type="file"] {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.image-block-modal-content input[type="text"]:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.image-block-modal-content button {
+  width: 100%;
+  padding: 10px 12px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.image-block-modal-content button:hover {
+  background: #4f46e5;
+}
+
+.image-block-modal-content button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.image-block-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #6b7280;
+}
+
+.image-block-modal-close:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: #f3f4f6;
+} */
+
+/* Стили для загрузки файлов аудио */
+/* .image-block-modal-content .file-input-wrapper {
+  position: relative;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.image-block-modal-content .file-input-wrapper:hover {
+  border-color: #6366f1;
+  background: #f8fafc;
+}
+
+.image-block-modal-content .file-input-wrapper.drag-over {
+  border-color: #6366f1;
+  background: #eef2ff;
+}
+
+.image-block-modal-content .file-input-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.image-block-modal-content .file-input-icon {
+  font-size: 32px;
+  color: #9ca3af;
+}
+
+.image-block-modal-content .file-input-text {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.image-block-modal-content .file-input-text strong {
+  color: #6366f1;
+}
+
+.image-block-modal-content .file-input-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+} */
+
+/* Подсветка для валидного URL */
+/* .image-block-modal-content input.valid {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.image-block-modal-content input.invalid {
+  border-color: #ef4444;
+  background: #fef2f2;
+} */

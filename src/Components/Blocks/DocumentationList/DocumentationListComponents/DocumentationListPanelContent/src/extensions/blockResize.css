@@ -1,0 +1,68 @@
+.block-resizable {
+  position: relative;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ================= RESIZE HANDLES (ALL SIDES) ================= */
+
+.block-resize {
+  position: absolute;
+  z-index: 6;
+  background: transparent;
+  transition: background 0.15s ease;
+  pointer-events: none;
+}
+
+/* left / right */
+.block-resize.left,
+.block-resize.right {
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+}
+
+.block-resize.left {
+  left: -4px;
+}
+
+.block-resize.right {
+  right: -4px;
+}
+
+/* top / bottom */
+.block-resize.top,
+.block-resize.bottom {
+  left: 0;
+  right: 0;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.block-resize.top {
+  top: -4px;
+}
+
+.block-resize.bottom {
+  bottom: -4px;
+}
+
+/* hover feedback */
+.block-resizable:hover .block-resize {
+  background: rgba(99, 102, 241, 0.12);
+  pointer-events: auto;
+}
+
+.block-resize:hover {
+  background: rgba(99, 102, 241, 0.25);
+}
+
+/* ================= TOUCH DEVICES ================= */
+/* На тач-устройствах hover нет — делаем хэндлы кликабельными всегда */
+
+@media (hover: none) and (pointer: coarse) {
+  .block-resize {
+    pointer-events: auto;
+  }
+}

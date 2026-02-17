@@ -3,6 +3,7 @@
      width: 100%;
      min-width: 1000px;
      height: 100vh;
+     min-height: 0;
      display: flex;
      flex-direction: column;
      gap: 30px;
@@ -26,6 +27,17 @@
 
  .mainSearch {
     width: 500px;
+ }
+
+ .hideAddArticleButton {
+    display: none;
+ }
+
+ .documentationBlock {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
  }
 
  /* Пагинация */

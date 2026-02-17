@@ -1,0 +1,1491 @@
+.ProseMirror {
+  width: 100%;
+  /* leave a small gutter so the "+" button fits */
+  max-width: 100%;
+  margin: 5px 0;
+  font-size: 16px;
+  line-height: 1.6;
+  outline: none;
+  position: relative;
+  padding:
+    var(--article-pad-top, 14px)
+    var(--article-pad-right, 16px)
+    var(--article-pad-bottom, 14px)
+    var(--article-pad-left, 16px);
+  box-sizing: border-box;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+
+  /* ?? ВАЖНО: фикс белого текста */
+  color: #111;
+  background: #fff;
+}
+
+@media (max-width: 720px) {
+  .ProseMirror {
+    max-width: 100%;
+  }
+}
+
+/* ================= OVERFLOW GUARD ================= */
+
+.ProseMirror [data-node-view-wrapper] {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ProseMirror img,
+.ProseMirror video,
+.ProseMirror iframe,
+.ProseMirror canvas {
+  max-width: 100%;
+}
+
+.ProseMirror pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.ProseMirror p {
+  margin: 0.6em 0;
+}
+
+.ProseMirror [data-columns-layout] {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.ProseMirror [data-columns-layout] > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ProseMirror [data-columns-layout] > [data-node-view-wrapper] {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.ProseMirror h1 {
+  font-size: 2em;
+  margin: 1em 0 0.5em;
+}
+
+.ProseMirror h2 {
+  font-size: 1.6em;
+  margin: 1em 0 0.5em;
+}
+
+.ProseMirror h3 {
+  font-size: 1.3em;
+  margin: 1em 0 0.5em;
+}
+.ProseMirror h4 {
+  font-size: 1.1em;
+  margin: 1em 0 0.5em;
+  font-weight: 600;
+}
+
+.ProseMirror h5 {
+  font-size: 1em;
+  margin: 1em 0 0.5em;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.ProseMirror h6 {
+  font-size: 0.9em;
+  margin: 1em 0 0.5em;
+  font-weight: 600;
+  opacity: 0.8;
+  letter-spacing: 0.5px;
+}
+
+/* ================= SLASH MENU ================= */
+
+.slash-menu-wrapper {
+  position: fixed;
+  z-index: 9;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  min-width: 260px;
+  max-height: 280px;
+  overflow-y: auto;
+  animation: slideIn 0.15s ease-out;
+}
+
+/* ?? если нужно скрыть меню — делай ТОЛЬКО так */
+.slash-menu-wrapper.hidden {
+  opacity: 0;
+  pointer-events: none;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slash-menu {
+  padding: 6px;
+  user-select: none;
+}
+
+.slash-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.3;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.15s ease;
+  outline: none;
+}
+
+.slash-item:hover {
+  background: #f3f4f6;
+}
+
+.slash-item.active,
+.slash-item:focus {
+  background: #eef2ff;
+  outline: 2px solid #6366f1;
+  outline-offset: -2px;
+}
+
+.slash-icon {
+  width: 22px;
+  text-align: center;
+  opacity: 0.7;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ================= PLUS BUTTON ================= */
+.position-plus-button{
+  position: relative;
+  --article-button-distance: 20px;
+  --article-button-gap: 8px;
+  --article-button-shift-right: 0px;
+  --article-button-cluster-width: calc(48px + var(--article-button-gap, 8px));
+  left: calc(var(--overlay-left-shift, 0px) * -1);
+  width: calc(100% + var(--overlay-left-shift, 0px));
+}
+
+.plus-overlay {
+  position: absolute;
+  left: max(
+    0px,
+    calc(
+      (
+        var(--overlay-left-shift, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2 +
+      var(--article-button-shift-right, 0px)
+    )
+  );
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  will-change: transform;
+  transition: transform 160ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 120ms ease;
+}
+
+.plus-overlay:hover {
+  background: #f3f4f6;
+  transform: scale(1.1);
+  border-color: #9ca3af;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ================= BLOCK DRAG HANDLE ================= */
+
+.block-dnd-handle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+  cursor: grab;
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9;
+  top: 0;
+  left: max(
+    0px,
+    calc(
+      (
+        var(--overlay-left-shift, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2 +
+      24px +
+      var(--article-button-gap, 8px) +
+      var(--article-button-shift-right, 0px)
+    )
+  );
+
+  will-change: transform;
+  transition: transform 160ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 120ms ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  user-select: none;
+  touch-action: none;
+}
+
+.block-dnd-column-handle {
+  left: 0;
+}
+
+.block-dnd-gutter-indicator {
+  position: absolute;
+  top: 0;
+  left: max(
+    0px,
+    calc(
+      var(--overlay-left-shift, 0px) -
+      var(--article-button-distance, 20px) -
+      56px -
+      var(--article-button-gap, 8px)
+    )
+  );
+  width: calc(56px + var(--article-button-gap, 8px));
+  pointer-events: none;
+  z-index: 9;
+}
+
+.block-dnd-gutter-indicator::before,
+.block-dnd-gutter-indicator::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 6px;
+  height: 2px;
+  background: rgba(59, 130, 246, 0.22);
+  border-radius: 999px;
+}
+
+.block-dnd-gutter-indicator::before {
+  top: 0;
+}
+
+.block-dnd-gutter-indicator::after {
+  bottom: 0;
+}
+
+.block-dnd-gutter-indicator.is-top::before,
+.block-dnd-gutter-indicator.is-bottom::after {
+  height: 3px;
+  background: rgba(59, 130, 246, 0.78);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.92),
+    0 0 0 3px rgba(59, 130, 246, 0.42);
+}
+
+.block-dnd-side-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+
+.block-dnd-side-indicator::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.78);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.92),
+    0 0 0 3px rgba(59, 130, 246, 0.42);
+}
+
+.block-dnd-side-indicator.is-left::before {
+  left: 0;
+}
+
+.block-dnd-side-indicator.is-right::before {
+  right: 0;
+}
+
+/* disabled handle style when drag is unavailable */
+.block-dnd-handle.is-disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.block-dnd-handle:hover {
+  background: #f3f4f6;
+  transform: scale(1.1);
+  border-color: #9ca3af;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.block-dnd-handle:active {
+  cursor: grabbing;
+}
+
+.block-dnd-drag-overlay {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  cursor: grabbing;
+  user-select: none;
+  z-index: 9;
+}
+
+body.dragging-blocks {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+body.dragging-blocks .plus-overlay {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ghost блока в DragOverlay (dnd-kit) */
+.block-dnd-ghost-scope {
+  pointer-events: none;
+}
+
+.block-dnd-ghost-scope.ProseMirror {
+  max-width: none;
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  cursor: grabbing;
+}
+
+.block-dnd-ghost-scope.ProseMirror:focus {
+  outline: none;
+}
+
+/* ================= TOGGLE ================= */
+
+details {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 6px 10px;
+  margin: 8px 0;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 500;
+  list-style: none;
+  padding: 4px 0;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::before {
+  content: '?';
+  display: inline-block;
+  margin-right: 8px;
+  transition: transform 0.2s;
+}
+
+details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.toggle-content {
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+/* ================= CALLOUT ================= */
+
+.callout {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #f9fafb;
+  margin: 12px 0;
+}
+
+.callout-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.callout-content {
+  flex: 1;
+}
+
+/* ================= IMAGE BLOCK ================= */
+
+.image-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.image-block img {
+  max-width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.image-caption {
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #6b7280;
+  text-align: center;
+  background: transparent;
+  padding: 4px;
+  border-bottom: 1px dashed #d1d5db;
+}
+
+.image-caption:focus {
+  border-bottom: 1px solid #6366f1;
+}
+
+/* ================= FILE BLOCK ================= */
+
+.file-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  margin: 12px 0;
+}
+
+.file-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.file-name:hover {
+  text-decoration: underline;
+}
+
+.file-size {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ================= VIDEO BLOCK ================= */
+
+.video-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ================= AUDIO BLOCK ================= */
+
+.audio-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.audio-block audio {
+  width: 100%;
+}
+
+/* ================= SELECTION ================= */
+
+.ProseMirror-selectednode {
+  outline: 2px solid #6366f1;
+}
+
+.ProseMirror-focused {
+  border-color: #6366f1;
+}
+
+/* ================= BLOCK LASSO ================= */
+
+.block-lasso-rect {
+  position: fixed;
+  z-index: 9;
+  border: 1px solid rgba(99, 102, 241, 0.9);
+  background: rgba(99, 102, 241, 0.16);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+}
+
+.block-lasso-marker {
+  position: absolute;
+  z-index: 9;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(99, 102, 241, 0.95);
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.95),
+    0 0 0 3px rgba(99, 102, 241, 0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.ProseMirror > *.block-lasso-selected {
+  border-radius: 10px;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.85);
+}
+
+/* ================= BLOCK DND ================= */
+
+.ProseMirror.block-dnd-native-active > :not(.ProseMirror-gapcursor) {
+  position: relative;
+}
+
+.ProseMirror.block-dnd-native-active > :not(.ProseMirror-gapcursor)::before,
+.ProseMirror.block-dnd-native-active > :not(.ProseMirror-gapcursor)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.ProseMirror.block-dnd-native-active > :not(.ProseMirror-gapcursor)::before {
+  top: 0;
+}
+
+.ProseMirror.block-dnd-native-active > :not(.ProseMirror-gapcursor)::after {
+  bottom: 0;
+}
+
+.ProseMirror.block-dnd-native-active > *.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > *.block-dnd-over-bottom::after {
+  background: transparent;
+  box-shadow: none;
+}
+
+.ProseMirror.block-dnd-native-active > :not(.ProseMirror-gapcursor):not(.block-dnd-dragging) {
+  transition: none !important;
+  will-change: auto;
+}
+
+.ProseMirror > *.block-dnd-animate {
+  transition: none !important;
+  will-change: auto;
+}
+
+.ProseMirror > *.block-dnd-dragging {
+  opacity: 0.92;
+  pointer-events: none;
+  position: relative;
+  z-index: 7;
+  transform: translate3d(0px, var(--block-dnd-dy, 0px), 0px) !important;
+  transition: none !important;
+  will-change: transform;
+}
+
+.ProseMirror > *.block-dnd-active {
+  border-radius: 10px;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
+}
+
+.ProseMirror > *.block-dnd-over {
+  border-radius: 10px;
+}
+
+.ProseMirror > *.block-dnd-over-left {
+  box-shadow:
+    inset 3px 0 0 rgba(59, 130, 246, 0.82),
+    0 0 0 2px rgba(59, 130, 246, 0.26);
+}
+
+.ProseMirror > *.block-dnd-over-right {
+  box-shadow:
+    inset -3px 0 0 rgba(59, 130, 246, 0.82),
+    0 0 0 2px rgba(59, 130, 246, 0.26);
+}
+
+.ProseMirror.block-dnd-native-active > p.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > h1.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > h2.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > h3.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > h4.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > h5.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > h6.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > blockquote.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > pre.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > ul.block-dnd-over-top::before,
+.ProseMirror.block-dnd-native-active > ol.block-dnd-over-top::before {
+  background: transparent;
+  box-shadow: none;
+}
+
+.ProseMirror.block-dnd-native-active > p.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > h1.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > h2.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > h3.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > h4.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > h5.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > h6.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > blockquote.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > pre.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > ul.block-dnd-over-bottom::after,
+.ProseMirror.block-dnd-native-active > ol.block-dnd-over-bottom::after {
+  background: transparent;
+  box-shadow: none;
+}
+
+.block-dnd-drop-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.block-dnd-dropzone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+}
+
+.block-dnd-drop-indicator {
+  position: absolute;
+  height: 2px;
+  background: rgba(59, 130, 246, 0.78);
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: 9;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.92),
+    0 0 0 3px rgba(59, 130, 246, 0.42);
+}
+
+/* ================= HIDDEN SLASH ================= */
+
+.hidden-slash {
+  opacity: 0 !important;
+  display: inline-block !important;
+  width: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ================= GALLERY ADD BUTTON ================= */
+
+.gallery-add {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.gallery-add:hover {
+  background: #e5e7eb;
+}
+
+/* ================= JSON PANEL ================= */
+
+.json-panel {
+  background: #f8f9fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  height: 600px;
+  max-height: calc(100vh - 160px);
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.json-panel-textarea {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 12px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  line-height: 1.4;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  resize: none;
+  overflow: auto;
+  background: #fff;
+  white-space: pre;
+}
+
+.json-panel-error {
+  color: #dc2626;
+  font-size: 12px;
+}
+
+.json-panel-apply-btn {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #6366f1;
+  background: #6366f1;
+  color: white;
+  cursor: pointer;
+}
+
+.json-panel-apply-btn:hover {
+  filter: brightness(0.98);
+}
+
+/* ================= PLACEHOLDER ================= */
+
+.ProseMirror p.is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+/* ================= TABLE ================= */
+
+.ProseMirror table {
+  border-collapse: collapse;
+  margin: 0;
+  overflow: hidden;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  border: 2px solid #ced4da;
+  box-sizing: border-box;
+  min-width: 1em;
+  padding: 0px 5px;
+  position: relative;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.ProseMirror th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  text-align: left;
+}
+
+/* Убираем "лишнюю строку" от margin у абзацев внутри ячеек */
+.ProseMirror td p,
+.ProseMirror th p {
+  margin: 0;
+}
+
+.ProseMirror .selectedCell:after {
+  background: rgba(200, 200, 255, 0.4);
+  content: "";
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 2;
+}
+
+.ProseMirror .column-resize-handle {
+  background-color: #3b82f6;
+  bottom: -2px;
+  position: absolute;
+  right: -2px;
+  pointer-events: none;
+  top: 0;
+  width: 4px;
+}
+
+.ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+.ProseMirror.row-resize-cursor {
+  cursor: ns-resize;
+}
+
+.ProseMirror.corner-resize-cursor {
+  cursor: nwse-resize;
+}
+
+.ProseMirror .row-resize-handle {
+  background-color: #3b82f6;
+  bottom: -2px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.ProseMirror .corner-resize-handle {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 12px;
+  height: 12px;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.ProseMirror .corner-resize-handle .corner-row-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background-color: rgba(59, 130, 246, 0.7);
+}
+
+.ProseMirror .corner-resize-handle .corner-col-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 4px;
+  background-color: rgba(59, 130, 246, 0.7);
+}
+
+.ProseMirror .corner-resize-handle .corner-dot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 8px;
+  height: 8px;
+  background-color: #3b82f6;
+  border-radius: 2px;
+}
+
+.ProseMirror.corner-resize-cursor .corner-resize-handle .corner-row-line,
+.ProseMirror.corner-resize-cursor .corner-resize-handle .corner-col-line {
+  background-color: #3b82f6;
+}
+
+.ProseMirror .corner-resize-handle.active .corner-row-line,
+.ProseMirror .corner-resize-handle.active .corner-col-line {
+  background-color: #2563eb;
+}
+
+/* ================= BULLET LIST ================= */
+
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.ProseMirror ul li {
+  list-style-type: disc;
+}
+
+.ProseMirror ol li {
+  list-style-type: decimal;
+}
+
+/* ================= BLOCKQUOTE ================= */
+
+.ProseMirror blockquote {
+  border-left: 3px solid #e5e7eb;
+  margin: 1em 0;
+  padding-left: 1em;
+  color: #6b7280;
+}
+
+/* ================= HORIZONTAL RULE ================= */
+
+.ProseMirror hr {
+  border: none;
+  border-top: 2px solid #e5e7eb;
+  margin: 2em 0;
+}
+
+/* ================= CODE ================= */
+
+.ProseMirror code {
+  background: rgba(97, 97, 97, 0.1);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 0.85em;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 768px) {
+  .ProseMirror {
+    max-width: 100%;
+    padding: 12px;
+  }
+
+  .ProseMirror [data-columns-layout] {
+    flex-direction: column;
+  }
+  
+  .json-panel {
+    display: none;
+  }
+  
+  .gallery-grid {
+    grid-template-columns: repeat(auto-fill, minmax(12px, 1fr));
+  }
+}
+/* Обновите раздел TOGGLE в src\main.css */
+
+/* ================= TOGGLE ================= */
+
+details {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 12px 0;
+  background: #f9fafb;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: 500;
+  list-style: none;
+  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+
+summary::-webkit-details-marker {
+  display: none;
+}
+
+summary::before {
+  content: '?';
+  display: inline-block;
+  margin-right: 0;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.toggle-content {
+  margin-top: 12px;
+  padding-left: 24px;
+  border-left: 2px solid #e5e7eb;
+  margin-left: 6px;
+}
+
+/* Стили для вложенных toggle */
+.toggle-content details {
+  margin: 8px 0;
+  background: white;
+}
+
+/* Стили для других элементов внутри toggle */
+.toggle-content p {
+  margin: 6px 0;
+}
+
+.toggle-content ul,
+.toggle-content ol {
+  margin-left: 16px;
+}
+
+.toggle-content .callout {
+  margin: 8px 0;
+}
+
+.toggle-content .image-block {
+  margin: 12px 0;
+}
+
+.toggle-content .file-block {
+  margin: 8px 0;
+}
+.suggestion{
+  color: rgb(182, 182, 182);
+  font-weight: 500px;
+}
+/* Добавьте в конец src\main.css */
+
+/* ================= ФИКСЫ ДЛЯ ПЕРЕТАСКИВАЕМОЙ МОДАЛКИ ================= */
+
+/* Гарантируем, что модалка поверх всего */
+.table-controls-modal {
+  position: fixed !important;
+  z-index: 9 !important; /* Максимальный z-index */
+}
+
+/* Убираем все ограничения для модалки */
+body > .table-controls-modal {
+  pointer-events: auto !important;
+}
+
+/* Фикс для Firefox */
+@-moz-document url-prefix() {
+  .table-controls-modal {
+    filter: none !important;
+  }
+}
+
+/* Убираем outline при фокусе */
+.table-controls-modal:focus {
+  outline: none !important;
+}
+
+/* Эффект при активной модалке */
+body.modal-open {
+  overflow: auto !important;
+}
+
+/* Анимация закрытия */
+@keyframes modalClose {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+}
+
+.table-controls-modal.closing {
+  animation: modalClose 0.2s ease forwards !important;
+}
+
+/* Фикс для мобильных */
+@media (hover: none) and (pointer: coarse) {
+  .table-controls-modal {
+    min-width: 320px !important;
+  }
+  
+  .dimension-input,
+  .decrement-btn,
+  .increment-btn,
+  .delete-btn {
+    min-height: 52px !important;
+    font-size: 16px !important;
+  }
+  
+  .modal-header {
+    padding: 20px !important;
+  }
+}
+
+/* Скрываем стандартный скроллбар при перетаскивании */
+body.dragging-modal {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+/* Эффект для всей страницы при перетаскивании */
+body.dragging-modal * {
+  pointer-events: none !important;
+}
+
+body.dragging-modal .table-controls-modal {
+  pointer-events: auto !important;
+}
+/* Добавить в main.css */
+.table-operation-indicator {
+  /* для анимаций из tableAnimations.js */
+}
+
+.new-cell {
+  animation: highlight 0.3s ease;
+}
+
+@keyframes highlight {
+  from { background: rgba(72, 187, 120, 0.3); }
+  to { background: transparent; }
+}
+
+.table-wrapper,
+.table-container {
+  max-width: 100%;
+}
+.block-duplicate-plus {
+  position: absolute;
+
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #111;
+
+  font-size: 12px;
+  line-height: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+  z-index: 9;
+
+  transition: border-color 0.15s;
+}
+
+.block-duplicate-plus:hover {
+  border-color: #111;
+}
+/* Добавьте в конец main.css */
+
+/* Курсор для кликабельных изображений */
+.image-block-wrapper .image-preview img {
+  cursor: pointer;
+}
+
+.gallery-block .gallery-item img {
+  cursor: pointer;
+}
+
+/* Эффект при наведении на изображение */
+.image-block-wrapper .image-preview img:hover,
+.gallery-block .gallery-item img:hover {
+  opacity: 0.95;
+  transition: opacity 0.2s;
+}
+.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+.position-plus-button .plus-overlay {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-4px);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.position-plus-button.plus-visible .plus-overlay {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.position-plus-button .block-dnd-handle {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.position-plus-button.plus-visible .block-dnd-handle {
+  opacity: 1;
+  pointer-events: auto;
+}
+.editor-hover-scope {
+  --overlay-left-shift: 72px;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-left: auto;
+  margin-right: 0;
+  box-sizing: border-box;
+}
+
+.editor-content-frame {
+  position: relative;
+}
+
+.article-width-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.article-width-edge {
+  position: absolute;
+  width: 10px;
+  background:
+    linear-gradient(
+      to right,
+      transparent 0,
+      transparent calc(50% - 1px),
+      rgba(59, 130, 246, 0.84) calc(50% - 1px),
+      rgba(59, 130, 246, 0.84) calc(50% + 1px),
+      transparent calc(50% + 1px),
+      transparent 100%
+    );
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.22);
+  border-radius: 999px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  cursor: ew-resize;
+}
+
+.article-width-handle {
+  position: absolute;
+  width: 14px;
+  height: 28px;
+  border: 2px solid rgba(37, 99, 235, 0.95);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  pointer-events: auto;
+  cursor: ew-resize;
+  transform: translate(-50%, -50%);
+  padding: 0;
+}
+
+.article-padding-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.article-padding-frame {
+  position: absolute;
+  border: 2px solid rgba(59, 130, 246, 0.72);
+  border-radius: 8px;
+  background: rgba(59, 130, 246, 0.06);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.88);
+  pointer-events: none;
+}
+
+.article-padding-overlay.is-shared .article-padding-frame {
+  border-style: solid;
+}
+
+.article-padding-overlay.is-manual .article-padding-frame {
+  border-style: dashed;
+}
+
+.article-padding-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(37, 99, 235, 0.95);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.18);
+  pointer-events: auto;
+  cursor: pointer;
+  padding: 0;
+}
+
+.article-padding-handle-top,
+.article-padding-handle-bottom {
+  transform: translate(-50%, -50%);
+  cursor: ns-resize;
+}
+
+.article-padding-handle-left,
+.article-padding-handle-right {
+  transform: translate(-50%, -50%);
+  cursor: ew-resize;
+}
+
+@media (max-width: 720px) {
+  .editor-hover-scope {
+    --overlay-left-shift: 44px;
+  }
+}
+
+/* Левый "gutter" для hover: чтобы "+" и "??" не исчезали,
+   когда курсор чуть уходит левее редактора (например, после drag). */
+.editor-hover-scope::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc((var(--overlay-left-shift, 72px) + 40px) * -1);
+  width: calc(var(--overlay-left-shift, 72px) + 40px);
+  background: rgba(0, 0, 0, 0);
+}
+
+.editor-hover-scope::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -56px;
+  width: 56px;
+  background: rgba(0, 0, 0, 0);
+}
+
+.editor-hover-scope.alt-lasso-cursor,
+.editor-hover-scope.alt-lasso-cursor * {
+  cursor: crosshair !important;
+}
+
+.editor-hover-scope.alt-lasso-cursor .plus-overlay {
+  cursor: pointer !important;
+}
+
+.editor-hover-scope.alt-lasso-cursor .block-dnd-handle {
+  cursor: grab !important;
+}
+
+.editor-hover-scope.alt-lasso-cursor .block-dnd-handle:active {
+  cursor: grabbing !important;
+}
+
+.anchor-hash-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.anchor-hash-btn {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #64748b;
+  opacity: 0.35;
+  pointer-events: auto;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+}
+
+.anchor-hash-btn:hover {
+  opacity: 0.75;
+  background: rgba(148, 163, 184, 0.15);
+}
+
+.anchor-hash-btn.active {
+  color: #2563eb;
+  opacity: 1;
+}
+
+/* Индикатор вставки при drag&drop */
+.block-dnd-drop-indicator {
+  position: fixed;
+  height: 4px;
+  background-color: rgba(59, 130, 246, 0.78);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.9), 0 0 0 3px rgba(59,130,246,0.42);
+  z-index: 9;
+  pointer-events: none;
+  transition: none;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Курсор во время перетаскивания */
+body.dragging-blocks {
+  cursor: grabbing !important;
+  user-select: none !important;
+}
+
+body.dragging-blocks .plus-overlay,
+body.dragging-blocks .block-dnd-handle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
