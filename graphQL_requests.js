@@ -2894,8 +2894,8 @@ export const CREATE_HOTEL = gql`
 `;
 
 export const GET_HOTELS = gql`
-  query Hotels($pagination: HotelPaginationInput) {
-    hotels(pagination: $pagination) {
+  query Hotels($pagination: HotelPaginationInput, $filter: HotelFilter) {
+    hotels(pagination: $pagination, filter: $filter) {
       totalCount
       totalPages
       hotels {

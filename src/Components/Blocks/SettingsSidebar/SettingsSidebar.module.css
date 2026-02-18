@@ -138,6 +138,7 @@
 }
 
 .cancelButton {
+    flex-basis: 50%;
     padding: 10px 20px;
     border: 1px solid #E4E4EF;
     border-radius: 10px;
@@ -152,7 +153,7 @@
     background: #F6F7FB;
 }
 
-.saveButton {
+/* .footer button:last-child {
     padding: 10px 20px;
     border: none;
     border-radius: 10px;
@@ -166,32 +167,22 @@
     transition: all 0.3s ease;
 }
 
-.saveButton:hover {
+.footer button:last-child:hover {
     background: #004499;
 }
 
-.saveButton:disabled {
+.footer button:last-child:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-}
+} */
 
-.editButton {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    background: #3CBC6726;
-    color: #3B6C54;
-    font-size: 16px;
-    cursor: pointer;
+.footer button:last-child {
+    flex-basis: 50%;
     display: flex;
     align-items: center;
     gap: 8px;
-    transition: all 0.3s ease;
 }
 
-.editButton:hover {
-    background: #3CBC673a;
-}
 
 /* Панель доступа */
 .accessPanel {
@@ -280,7 +271,7 @@
 
 .notificationChannels {
     display: flex;
-    gap: 20px;
+    /* gap: 20px; */
     font-size: 14px;
     font-weight: 500;
     color: #545873;
@@ -295,6 +286,7 @@
     background: #fff;
     display: flex;
     align-items: center;
+    gap: 20px;
     /* min-height: 38px; */
     /* padding: 10px 20px; */
     /* border-radius: 10px; */
@@ -309,11 +301,22 @@
     flex: 1;
 }
 
+.switchColumn {
+    width: 30px;
+    display: flex;
+    justify-content: center;
+}
+
 .notificationRowControl {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 40px;
+    /* gap: 20px; */
+}
+
+.checkboxColumn {
+    width: 80px;
+    display: flex;
+    justify-content: center;
 }
 
 .loaderContainer {

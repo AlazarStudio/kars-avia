@@ -128,15 +128,21 @@ function NotificationRow({ label, checked, onChange, disabled }) {
       className={`${classes.notificationRow} ${disabled ? classes.rowDisabled : ""}`}
     >
       <div className={classes.notificationRowLabel}>{label}</div>
-      <div className={classes.notificationRowControl}>
+      <div className={classes.switchColumn}>
         <MUISwitch
           label=""
           checked={!!checked}
           onChange={(e) => onChange(e.target.checked)}
           disabled={!!disabled}
         />
-        <input type="checkbox" disabled={!!disabled} />
-        <input type="checkbox" disabled={!!disabled} />
+      </div>
+      <div className={classes.notificationRowControl}>
+        <div className={classes.checkboxColumn}>
+          <input type="checkbox" disabled={!!disabled} />
+        </div>
+        <div className={classes.checkboxColumn}>
+          <input type="checkbox" disabled={!!disabled} />
+        </div>
       </div>
     </div>
   );

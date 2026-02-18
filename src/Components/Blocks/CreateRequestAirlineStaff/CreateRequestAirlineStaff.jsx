@@ -147,6 +147,8 @@ function CreateRequestAirlineStaff({
           )
           : null;
 
+        airlineRefetch ? airlineRefetch() : null;
+
         setAddTarif
           ? setAddTarif(
             request.data.updateAirline.staff.sort((a, b) =>
