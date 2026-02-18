@@ -16,15 +16,14 @@
 
 .requestTitle_name {
     font-family: Inter;
-    font-size: 24px;
+    /* font-size: 24px; */
+    font-size: 22px;
     font-weight: 600;
     line-height: 38.73px;
     color: var(--main-gray);
 }
 
 .requestTitle_close {
-    width: 25px;
-    height: 25px;
     cursor: pointer;
 }
 
@@ -57,6 +56,12 @@
     display: flex;
     flex-direction: column;
     padding: 20px 20px 20px 30px;
+    gap: 30px;
+}
+
+.requestDataInputs {
+    display: flex;
+    flex-direction: column;
     gap: 15px;
 }
 
@@ -67,16 +72,20 @@
 
 .requestData input,
 select {
-    height: 38px;
+    height: 40px;
     outline: none;
     padding: 0 10px;
+}
+
+.requestData select {
     cursor: pointer;
 }
 
 .requestMiddle {
-    height: calc(96% - 90px - 71px);
+    /* height: calc(96% - 90px - 71px); */
+    height: calc(96% - 90px - 32px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -107,6 +116,10 @@ select {
     justify-content: flex-end;
 }
 
+.requestButton button {
+    width: 49%;
+}
+
 .titleLabel {
     display: flex;
     justify-content: center;
@@ -115,4 +128,22 @@ select {
     line-height: 19.36px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+.inputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.inputWrapper label {
+    flex: 1;
+}
+
+.inputWrapper input {
+    flex: 4;
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .requestTitle_name {
+        font-size: 20px;
+    }
+}

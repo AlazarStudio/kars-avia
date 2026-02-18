@@ -1,0 +1,105 @@
+/* ================= TABLE WRAPPER ================= */
+
+.table-wrapper {
+  margin: 12px 0;
+  max-width: 100%;
+}
+
+.table-container {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Таблица не должна растягиваться на всю ширину редактора */
+.ProseMirror .table-container table {
+  display: inline-table;
+  width: max-content;
+}
+
+/* ================= TABLE CELLS ================= */
+
+/* Минимальная ширина для всех ячеек таблицы */
+.table-container table td,
+.table-container table th {
+  min-width: 25px; /* Минимальная ширина ячеек */
+  box-sizing: border-box; /* Для корректного расчета размеров */
+}
+
+/* ================= TABLE PLUS BUTTONS ================= */
+
+.table-plus {
+  position: fixed;
+  z-index: 9;
+
+  width: 20px;
+  height: 20px;
+
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+
+  cursor: pointer;
+  user-select: none;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 14px;
+  line-height: 1;
+
+  /* ⛔ скрыты по умолчанию */
+  opacity: 0;
+
+  transition:
+    opacity 0.12s ease,
+    background-color 0.12s ease,
+    box-shadow 0.12s ease,
+    border-color 0.12s ease;
+}
+
+/* ================= HOVER ================= */
+/* появляется ТОЛЬКО при наведении на саму кнопку */
+
+.table-plus:hover {
+  opacity: 1;
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+/* ================= ACTIVE ================= */
+/* остаётся видимой, пока зажата ЛКМ */
+
+.table-plus:active {
+  opacity: 1;
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.25);
+}
+
+/* ================= ORIENTATION ================= */
+
+.table-plus.vertical {
+  width: 20px;
+}
+
+.table-plus.horizontal {
+  height: 20px;
+}
+
+.table-plus.corner {
+  width: 20px;
+  height: 20px;
+}
+
+/* ================= TOUCH DEVICES ================= */
+/* на тач-устройствах всегда видимы */
+
+@media (hover: none) and (pointer: coarse) {
+  .table-plus {
+    opacity: 1;
+  }
+}
+

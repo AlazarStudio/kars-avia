@@ -1,0 +1,52 @@
+.serviceFooter {
+  height: 65px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-top: 1px solid #E8EDF4;
+  background: #fff;
+  border-radius: 0 0 10px 10px;
+  overflow: hidden;
+}
+
+.statusLine {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #5C6470;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #8C9AAA;
+}
+
+.historyBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5C6470;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.historyPopup {
+  position: absolute;
+  top: -172px;
+  width: 270px;
+  height: fit-content;
+  font-size: 14px;
+  border: 1px solid #E4E4EF;
+  border-radius: 10px 10px 0 0;
+  background: #fff;
+  transition: all ease-in-out 0.3s;
+  transform: translateY(237px);
+}
+
+.show {
+  transform: translateY(0);
+}

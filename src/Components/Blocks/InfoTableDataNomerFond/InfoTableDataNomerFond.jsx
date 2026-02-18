@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import classes from './InfoTableDataNomerFond.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, setFilter, ...props }) {
+function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, setFilter, ...props }) {
     const quotaRequests = [];
     const reserveRequests = [];
+
+    // console.log(requests);
+    
 
     requests.forEach(item => {
         item.rooms.forEach(room => {
@@ -61,12 +64,14 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
 
     return (
         <>
+        {type !== "apartment" ? (
             <div className={classes.filter_wrapper}>
                 <button onClick={() => setFilter('quote')} className={filter === 'quote' ? classes.activeButton : null}>Квота</button>
                 <button onClick={() => setFilter('reserve')} className={filter === 'reserve' ? classes.activeButton : null}>Резерв</button>
             </div>
+        ) : null}
             <InfoTable>
-                <div className={classes.bottom}>
+                <div className={classes.bottom} style={user?.hotelId ? {height: 'calc(100vh - 290px)'} : {}}>
                     {filteredRequests.map((item, index) => (
                         <div key={index}>
                             <div
@@ -86,7 +91,8 @@ function InfoTableDataNomerFond({ children, toggleRequestSidebar, requests, open
                                 <div className={`${classes.InfoTable_BottomInfo__item}`}>
                                     {item.rooms.map((elem, index) => (
                                         <div className={`${classes.InfoTable_BottomInfo__item___elem}`} key={index}>
-                                            {elem.name} {!elem.active && '(не работает)'}
+                                            {elem.type !== 'apartment' ? "№" : ""} {elem.name} {!elem.active && '(не работает)'} {elem?.roomKind?.name}
+                                            {/* {console.log(elem)} */}
                                             <div className={classes.infoTable_buttons}>
                                                 <img src="/editPassenger.png" alt="" onClick={() => toggleRequestEditNumber(elem, item)} />
                                                 <img src="/deletePassenger.png" alt="" onClick={() => openDeleteNomerComponent(elem, item.name)} />

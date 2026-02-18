@@ -1,0 +1,68 @@
+.doc-right {
+  height: 100%;
+  padding: 24px 16px;
+  font-size: 13px;
+  color: #374151;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Заголовок */
+.doc-right-title {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* Пустое состояние */
+.doc-right-empty {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+/* Список */
+.doc-right-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-left: 2px solid #e5e7eb;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* Пункт */
+.doc-right-item {
+  padding: 6px 12px;
+  cursor: pointer;
+  color: #6b7280;
+  position: relative;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.doc-right-item:hover {
+  color: #111827;
+}
+
+/* Активный пункт */
+.doc-right-item.active {
+  color: #1d4ed8;
+  font-weight: 500;
+}
+
+.doc-right-item.active::before {
+  content: '';
+  position: absolute;
+  left: -2px;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background: #1d4ed8;
+}

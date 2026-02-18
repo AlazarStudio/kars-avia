@@ -1,3 +1,20 @@
+.tarifsWrapper {
+    width: 100%;
+    padding-right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    height: calc(100vh - 211px);
+    overflow-y: auto;
+    /* Вертикальная прокрутка */
+}
+
+.tarifsHeader {
+    display: flex;
+    align-items: center;
+    /* justify-content: space-between; */
+}
+
 .InfoTable_title,
 .InfoTable_data {
     display: flex;
@@ -6,7 +23,7 @@
     font-weight: 400;
     line-height: 19.36px;
     text-align: center;
-    margin-left: 8px;
+    padding-left: 8px;
     transition: all 0.2s ease-in-out;
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
 }
@@ -20,17 +37,18 @@
 } */
 
 .InfoTable_title {
-    color: var(--text-gray);
+    color: var(--no-active);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
-    margin-right: 8px;
+    padding-right: 8px;
 }
 
 .InfoTable_title_elem,
 .InfoTable_data_elem {
     padding: 20px;
     display: flex;
-    align-items: center;
-    /* justify-content: center; */
+    flex-direction: column;
+    /* align-items: center; */
+    justify-content: center;
     gap: 10px;
     border-right: 1px solid #E4E4EF;
 }
@@ -51,7 +69,7 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 20px;
-    color: var(--main-gray);
+    color: var(--text);
     width: 100%;
 }
 
@@ -79,8 +97,20 @@
     width: 20%;
 }
 
+.w25 {
+    width: 25%;
+}
+
 .w30 {
     width: 30%;
+}
+
+.w40 {
+    width: 40%;
+}
+
+.w45 {
+    width: 45%;
 }
 
 .w12:last-child {
@@ -122,10 +152,10 @@
 }
 
 .bottom {
-    max-height: calc(100vh - 296px);
-    height: fit-content;
-    overflow: hidden;
-    overflow-y: scroll;
+    /* max-height: calc(100vh - 296px); */
+    /* height: fit-content; */
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .InfoTable_data_elem_userInfo {
@@ -151,7 +181,7 @@
 .InfoTable_data_elem_avatar img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 
 .InfoTable_BottomInfo {
@@ -166,7 +196,7 @@
     align-items: center;
     transition: all 0.3s ease-in-out;
     position: relative;
-    margin-left: 8px;
+    padding-left: 8px;
 }
 
 .InfoTable_BottomInfo__item___elem {
@@ -223,4 +253,14 @@
     cursor: pointer;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+    .InfoTable_data_elem {
+        font-size: 14px;
+        line-height: 18px;
+    }
+
+    .InfoTable_data_elem_title {
+        padding: 0;
+    }
+
+}

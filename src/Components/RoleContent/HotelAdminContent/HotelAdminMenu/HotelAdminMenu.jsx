@@ -1,15 +1,23 @@
 import { Link } from "react-router-dom";
 
 import classes from "./HotelAdminMenu.module.css";
+import { useState } from "react";
+import DelayedText from "../../../Blocks/DelayedText/DelayedText";
 
 const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
+  const [hovered, setHovered] = useState(false);
+
+  const strokeVal = hovered || id == "updates" ? "unset" : "unset";
+  const fillVal =
+    hovered || id == "updates"
+      ? "var(--white)" /* цвет hover */
+      : "var(--menu-gray)";
   return (
     <>
       <Link
         to={"/reserveRequests"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "reserveRequests" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "reserveRequests" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -31,19 +39,24 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "Заявки с резерва" : ""}
+        {/* {menuOpen ? "Пассажиры" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Пассажиры</DelayedText>
         {allCreatedReserves > 0 && (
-          <div className={classes.countRequests}>{allCreatedReserves}</div>
+          <div
+            className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""
+              }`}
+          >
+            {allCreatedReserves}
+          </div>
         )}
+        {!menuOpen && <span className={classes.tooltip}>Пассажиры</span>}
       </Link>
       <Link
         to={"/hotelChess"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${
-          (id == "hotelChess" || id == undefined || !id) &&
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${(id == "hotelChess" || id == undefined || !id) &&
           classes.menu_items__activeElem
-        }`}
+          }`}
       >
         <svg
           width="22"
@@ -52,30 +65,30 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          <g clip-path="url(#clip0_777_5618)">
+          <g clipPath="url(#clip0_777_5618)">
             <path
               d="M3.78446 20.378C2.61342 20.2826 1.71738 19.3866 1.62204 18.2155C1.50196 16.736 1.375 14.3752 1.375 11C1.375 7.62483 1.50196 5.26396 1.62204 3.78446C1.71738 2.61342 2.61342 1.71738 3.78446 1.62204C5.26396 1.50196 7.62483 1.375 11 1.375C14.3752 1.375 16.736 1.50196 18.2155 1.62204C19.3866 1.71738 20.2826 2.61342 20.378 3.78446C20.498 5.26396 20.625 7.62483 20.625 11C20.625 14.3752 20.498 16.736 20.378 18.2155C20.2826 19.3866 19.3866 20.2826 18.2155 20.378C16.736 20.498 14.3752 20.625 11 20.625C7.62483 20.625 5.26396 20.498 3.78446 20.378Z"
               stroke="var(--menu-gray)"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
             <path
               d="M6.875 20.5535V1.44556"
               stroke="var(--menu-gray)"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
             <path
               d="M1.4895 7.79175H20.5103"
               stroke="var(--menu-gray)"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
             <path
               d="M1.4895 14.2083H20.5103"
               stroke="var(--menu-gray)"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </g>
           <defs>
@@ -84,13 +97,14 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </clipPath>
           </defs>
         </svg>
-        {menuOpen ? "Шахматка" : ""}
+        {/* {menuOpen ? "Шахматка" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Шахматка</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Шахматка</span>}
       </Link>
-      {/* <Link
+      <Link
         to={"/hotelTarifs"}
-        className={`${classes.menu_items__elem} ${
-          id == "hotelTarifs" && classes.menu_items__activeElem
-        }`}
+        className={`${classes.menu_items__elem} ${id == "hotelTarifs" && classes.menu_items__activeElem
+          }`}
       >
         <svg
           width="22"
@@ -102,29 +116,30 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           <path
             d="M18.6923 14.0769V17.1538C18.6923 17.5619 18.5301 17.9532 18.2418 18.2418C17.9534 18.5303 17.5619 18.6923 17.1538 18.6923H2.53846C2.13046 18.6923 1.73909 18.5301 1.45055 18.2418C1.16217 17.9532 1 17.5619 1 17.1538V5.61538C1 3.0664 3.06641 1 5.61538 1H15.6154V4.84615"
             stroke="var(--menu-gray)"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
           <path
             d="M20.231 9.46143H14.8464C14.4216 9.46143 14.0771 9.80585 14.0771 10.2307V13.3076C14.0771 13.7324 14.4216 14.0768 14.8464 14.0768H20.231C20.6558 14.0768 21.0002 13.7324 21.0002 13.3076V10.2307C21.0002 9.80585 20.6558 9.46143 20.231 9.46143Z"
             stroke="var(--menu-gray)"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
           <path
             d="M18.6922 9.46158V6.38465C18.6922 5.97665 18.53 5.58528 18.2416 5.29674C17.9531 5.00836 17.5617 4.84619 17.1537 4.84619H5.61523"
             stroke="var(--menu-gray)"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
-        Цены
-      </Link> */}
+        {/* {menuOpen ? "Тарифы" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Тарифы</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Тарифы</span>}
+      </Link>
       <Link
         to={"/hotelRooms"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "hotelRooms" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelRooms" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -136,29 +151,30 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           <path
             d="M3.81348 10.0416C3.81091 11.8857 5.80562 13.041 7.40392 12.1212C8.14775 11.6931 8.60577 10.8998 8.60458 10.0416C8.60714 8.19751 6.61243 7.04219 5.01413 7.96202C4.2703 8.39011 3.81229 9.18339 3.81348 10.0416Z"
             stroke="var(--menu-gray)"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
           <path
             d="M8.71472 6.93344C8.77985 6.27899 9.31839 5.78981 9.97523 5.76295C12.4805 5.65946 14.7951 5.80993 16.6536 6.02406C19.2676 6.32496 21.0614 8.61369 21.0614 11.2449V11.4788C21.0614 12.008 20.6324 12.437 20.1032 12.437H9.66049C9.1962 12.437 8.80144 12.1045 8.74823 11.6441C8.65303 10.8098 8.60504 9.97082 8.60449 9.1311C8.60449 8.27113 8.6572 7.50838 8.71472 6.93344Z"
             stroke="var(--menu-gray)"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
           <path
             d="M2.84511 3.3498C3.38411 3.38908 3.70082 3.83036 3.72429 4.37028C3.76499 5.30697 3.81339 7.21621 3.81339 10.9997C3.81339 11.5431 3.81242 12.048 3.8105 12.5166C4.94552 12.4783 7.07759 12.4371 11.0001 12.4371H20.0945C20.6254 12.4371 21.0552 12.8692 21.0513 13.4001C21.036 15.6385 21.0005 16.9158 20.9699 17.6288C20.9459 18.1687 20.6297 18.6104 20.0907 18.6492C19.7784 18.6715 19.4649 18.6717 19.1526 18.6497C18.6136 18.6104 18.2969 18.1687 18.2734 17.6288C18.2519 17.1391 18.2289 16.3831 18.2111 15.2318C17.0819 15.2701 14.9475 15.3117 11.0001 15.3117C7.04977 15.3117 4.91536 15.2701 3.78657 15.2318C3.77672 16.0311 3.75596 16.8304 3.72429 17.6292C3.70077 18.1692 3.38411 18.6104 2.84511 18.6497C2.70949 18.6593 2.5543 18.6656 2.37605 18.6656C2.19781 18.6656 2.04262 18.6593 1.907 18.6497C1.368 18.6104 1.05129 18.1692 1.02782 17.6292C0.987121 16.6926 0.938721 14.7833 0.938721 10.9997C0.938721 7.21671 0.987121 5.30697 1.02782 4.37028C1.05133 3.83036 1.368 3.38908 1.907 3.3498C2.04262 3.34022 2.19781 3.33398 2.37605 3.33398C2.5543 3.33398 2.70954 3.33971 2.84511 3.3498Z"
             stroke="var(--menu-gray)"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "Номерной фонд" : ""}
+        {/* {menuOpen ? "Номерной фонд" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Номерной фонд</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Номерной фонд</span>}
       </Link>
       <Link
         to={"/hotelCompany"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "hotelCompany" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelCompany" && classes.menu_items__activeElem}`}
       >
         <svg
           width="24"
@@ -174,23 +190,24 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           <path
             d="M18.25 10.3854C18.2438 7.48837 18.1336 5.45 18.0286 4.15912C17.9433 3.10975 17.1402 2.30667 16.0909 2.22137C14.765 2.11356 12.6495 2 9.625 2C6.6005 2 4.48498 2.11356 3.15912 2.22137C2.10975 2.30667 1.30667 3.10975 1.22137 4.15912C1.11356 5.48498 1 7.6005 1 10.625C1 13.6495 1.11356 15.765 1.22137 17.0909C1.30667 18.1402 2.10975 18.9433 3.15912 19.0286C4.45 19.1336 6.48837 19.2442 9.38542 19.25"
             stroke="var(--menu-gray)"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
           <path
             d="M9.62503 15.9644C7.96711 15.9644 6.68917 15.9184 5.75192 15.8628C5.7385 15.8619 5.72508 15.861 5.71167 15.8599C4.98957 15.8058 4.61294 15.0309 4.8554 14.3486C5.34798 12.9619 6.45678 11.8565 7.86217 11.3447C7.26194 10.9631 6.80176 10.397 6.55076 9.73149C6.29976 9.06598 6.2715 8.33699 6.47022 7.65404C6.66895 6.97109 7.08392 6.37107 7.65281 5.94413C8.22169 5.51719 8.91375 5.28638 9.62503 5.28638C10.3363 5.28638 11.0284 5.51719 11.5972 5.94413C12.1661 6.37107 12.5811 6.97109 12.7798 7.65404C12.9786 8.33699 12.9503 9.06598 12.6993 9.73149C12.4483 10.397 11.9881 10.9631 11.3879 11.3447C12.1855 11.6348 12.8975 12.1207 13.4584 12.7578"
             stroke="var(--menu-gray)"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "Компания" : ""}
+        {/* {menuOpen ? "Пользователи" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Пользователи</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Пользователи</span>}
       </Link>
       <Link
         to={"/hotelAbout"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "hotelAbout" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelAbout" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -212,13 +229,57 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             stroke="var(--menu-gray)"
           />
         </svg>
-        {menuOpen ? "О гостинице" : ""}
+        {/* {menuOpen ? "О гостинице" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >О гостинице</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>О гостинице</span>}
+      </Link>
+      <Link
+        to={"/hotelSettings"}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelSettings" && classes.menu_items__activeElem}`}
+      >
+        <svg
+          width="22"
+          height="19"
+          viewBox="0 0 22 19"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M2.33306 6.99878V2.99959C2.33306 2.33306 2.79963 1 4.66592 1C6.53221 1 13.8863 1 17.33 1C18.2187 1.11109 19.6629 1.66653 19.6629 3.66613C19.6629 5.55136 19.6629 6.99878 19.6629 6.99878M5.33245 6.66552C5.33245 6.13964 5.33245 5.33245 5.33245 4.99919C5.33245 4.42239 5.82674 3.99939 6.33225 3.99939C7.3987 3.99939 9.33164 3.99939 9.99817 3.99939C10.5666 3.99939 10.998 4.24151 10.998 4.99919C10.998 6.06564 10.998 6.55443 10.998 6.66552M11.3312 6.66552C11.3312 6.13964 11.3312 5.33245 11.3312 4.99919C11.3312 4.42239 11.8255 3.99939 12.331 3.99939C13.3975 3.99939 15.3304 3.99939 15.997 3.99939C16.5654 3.99939 16.9968 4.24151 16.9968 4.99919C16.9968 6.06564 16.9968 6.55443 16.9968 6.66552M1 14.6639H20.9959V10.6647C20.9959 9.66491 20.3294 8.33185 18.6631 8.33185C16.7968 8.33185 7.66531 8.33185 2.99959 8.33185C2.33306 8.44293 1 8.99838 1 10.3314C1 11.6645 1 13.7752 1 14.6639Z"
+            stroke="var(--menu-gray)"
+          />
+          <path
+            d="M3.99939 14.9971C3.99939 15.9969 4.11223 17.6632 2.33306 17.6632C1 17.6632 1 15.8858 1 14.9971"
+            stroke="var(--menu-gray)"
+          />
+          <path
+            d="M17.9966 14.9971C17.9966 15.9969 17.8837 17.6632 19.6629 17.6632C21.1432 17.6632 20.9959 15.8858 20.9959 14.9971"
+            stroke="var(--menu-gray)"
+          />
+        </svg>
+        {/* {menuOpen ? "Настройки" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Настройки</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Настройки</span>}
+      </Link>
+      <Link
+        to={"/hotelRegisterOfContracts"}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "hotelRegisterOfContracts" && classes.menu_items__activeElem
+          }`}
+      >
+        <svg width="15" height="19" viewBox="0 0 15 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4.5 14.5H10.5M4.5 11.5H10.5M8.50038 0.500872C8.40484 0.5 8.29738 0.5 8.17471 0.5H3.7002C2.58009 0.5 2.01962 0.5 1.5918 0.717988C1.21547 0.909735 0.909734 1.21547 0.717987 1.5918C0.5 2.01962 0.5 2.58009 0.5 3.7002V15.3002C0.5 16.4203 0.5 16.9801 0.717988 17.4079C0.909735 17.7842 1.21547 18.0905 1.5918 18.2822C2.01921 18.5 2.579 18.5 3.69694 18.5L11.3031 18.5C12.421 18.5 12.98 18.5 13.4074 18.2822C13.7837 18.0905 14.0905 17.7842 14.2822 17.4079C14.5 16.9805 14.5 16.4215 14.5 15.3036V6.82568C14.5 6.70302 14.4999 6.59553 14.499 6.5M8.50038 0.500872C8.78583 0.503475 8.96572 0.514066 9.13818 0.55547C9.34225 0.604464 9.53785 0.685265 9.7168 0.794922C9.91857 0.918567 10.0918 1.09181 10.4375 1.4375L13.563 4.56298C13.9089 4.90889 14.0809 5.08136 14.2046 5.28319C14.3142 5.46214 14.3953 5.65726 14.4443 5.86133C14.4857 6.03379 14.4964 6.21454 14.499 6.5M8.50038 0.500872L8.5 3.30021C8.5 4.42031 8.5 4.98015 8.71799 5.40797C8.90973 5.7843 9.21547 6.09048 9.5918 6.28223C10.0192 6.5 10.579 6.5 11.6969 6.5H14.499" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+
+        {/* {menuOpen ? "Реестр договоров" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Реестр договоров</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Реестр договоров</span>}
       </Link>
       <Link
         to={"/reports"}
-        className={`${classes.menu_items__elem} ${
-          !menuOpen ? classes.jcc : ""
-        } ${id == "reports" && classes.menu_items__activeElem}`}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "reports" && classes.menu_items__activeElem}`}
       >
         <svg
           width="22"
@@ -264,7 +325,50 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             strokeLinejoin="round"
           />
         </svg>
-        {menuOpen ? "Отчеты" : ""}
+        {/* {menuOpen ? "Отчеты" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Отчеты</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
+      </Link>
+      <Link
+        to={"/updates"}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "updates" && classes.menu_items__activeElem}`}
+        onMouseEnter={() => {
+          setHovered(true);
+        }}
+        onMouseLeave={() => {
+          setHovered(false);
+        }}
+      >
+        <svg
+          width="18"
+          height="21"
+          viewBox="0 0 18 21"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M2.60844 6.9669V13.8959C2.51159 14.2027 -0.280858 14.7722 0.0231179 17.7693C0.432636 21.8073 6.39338 21.8813 6.92277 17.8484C7.05595 16.834 6.76003 15.9923 6.25502 15.3194C5.5854 14.427 5.37551 14.5443 4.34683 13.9949L4.34781 11.2786C4.89583 11.5342 5.22875 12.2174 6.79992 12.7347C7.93596 13.1088 9.17809 13.0401 10.4274 13.0401C10.6891 13.1302 11.3732 15.9316 14.2987 15.624C18.3311 15.2002 18.3828 9.23037 14.3852 8.72603C13.332 8.59313 12.5274 8.89275 11.8296 9.38843C10.9533 10.011 11.0753 10.3736 10.5014 11.3012C8.72987 11.3012 7.2534 11.3547 6.05232 10.4227C5.3173 9.85228 4.13465 8.3116 4.38501 6.83453C8.71473 5.15769 7.02366 0.0244779 3.49853 9.97669e-05C-0.117432 -0.0249138 -1.17424 4.66046 1.55787 6.3604C1.83062 6.53012 2.39329 6.65504 2.60844 6.9669ZM3.12079 15.7062C0.768355 16.3064 1.69874 19.651 3.97399 19.0613C4.77795 18.853 5.40292 17.9133 5.15639 16.9254C4.96261 16.1488 4.10189 15.4559 3.12079 15.7062ZM13.4925 10.4996C11.2571 11.1323 12.0912 14.3769 14.3592 13.8512C15.178 13.6614 15.8495 12.7268 15.5899 11.6907C15.397 10.9207 14.4552 10.2271 13.4925 10.4996ZM2.96389 1.82364C0.80836 2.52812 1.75431 5.79811 4.00837 5.13129C6.16436 4.49345 5.15217 1.10844 2.96389 1.82364Z"
+            fill={fillVal}
+            strokeWidth={0}
+          />
+        </svg>
+        {/* {menuOpen ? "Обновления" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Обновления</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
+      </Link>
+      <Link
+        to={"/documentation"}
+        className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+          } ${id == "documentation" && classes.menu_items__activeElem}`}
+      >
+        <img src="/instruction.png" alt="" />
+
+        {/* {menuOpen ? "Помощь" : ""} */}
+        <DelayedText show={menuOpen} delay={200} >Помощь</DelayedText>
+        {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
       </Link>
     </>
   );

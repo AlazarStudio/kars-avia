@@ -6,10 +6,10 @@
     font-weight: 400;
     line-height: 19.36px;
     text-align: center;
-    margin-left: 8px;
+    padding-left: 8px;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
-    box-shadow: 0px -1px 0px 0px #E4E4EF inset;
+    /* box-shadow: 0px -1px 0px 0px #E4E4EF inset; */
 }
 
 .InfoTable_data:hover {
@@ -17,19 +17,20 @@
 }
 
 .InfoTable_title {
-    color: var(--text-gray);
+    color: var(--no-active);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
-    margin-right: 8px;
+    padding-right: 8px;
+    height: 70px;
 }
 
 .InfoTable_title_elem,
 .InfoTable_data_elem {
-    padding: 20px 0px;
+    padding: 20px 10px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 10px;
-    border-right: 1px solid #E4E4EF;
+    /* border-right: 1px solid #E4E4EF; */
 }
 
 .InfoTable_data_elem_img {
@@ -48,7 +49,8 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 20px;
-    color: var(--main-gray);
+    text-align: left;
+    color: var(--text);
     width: 100%;
 }
 
@@ -74,6 +76,10 @@
 
 .w20 {
     width: 20%;
+}
+
+.w25 {
+    width: 25%;
 }
 
 .w30 {
@@ -119,9 +125,9 @@
 }
 
 .bottom {
-    height: calc(100vh - 296px);
+    height: calc(100vh - 340px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .InfoTable_data_elem_userInfo {
@@ -135,20 +141,52 @@
 
 .InfoTable_data_elem_title {
     text-align: left;
-    padding: 0 10px;
+    /* padding: 0 10px; */
 }
 
 .InfoTable_data_elem_avatar {
-    width: 40px;
-    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 40px;
+    max-height: 40px;
     border-radius: 50px;
+    border: 1px solid var(--no-active);
     overflow: hidden;
 }
 
 .InfoTable_data_elem_avatar img {
-    width: 100%;
-    height: 100%;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 40px;
+    max-height: 40px;
     object-fit: cover;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (max-width: 1580px) {
+    .bottom {
+        height: calc(100vh - 350px);
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1499px) {
+    .InfoTable_title_elem {
+        font-size: 14px;
+    }
+
+    .InfoTable_data_elem {
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .bottom {
+        height: calc(100vh - 350px);
+    }
+
+    .star {
+        width: 16px;
+        height: 14px;
+        margin-right: 3px;
+        object-fit: contain;
+    }
+}

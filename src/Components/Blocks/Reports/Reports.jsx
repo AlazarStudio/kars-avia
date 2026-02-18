@@ -10,18 +10,24 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import InfoTableDataReports from "../InfoTableDataReports/InfoTableDataReports";
 import CreateRequestReport from "../CreateRequestReport/CreateRequestReport";
 import ExistRequestReport from "../ExistRequestReport/ExistRequestReport";
-import { useQuery, useSubscription } from "@apollo/client";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
   convertToDate,
   decodeJWT,
+  DELETE_REPORT,
+  GET_AIRLINE_POSITIONS,
   GET_AIRLINE_REPORT,
+  GET_AIRPORTS_RELAY,
   GET_HOTEL_REPORT,
-  GET_REPORTS_SUBSCRIOPTION,
+  GET_REPORTS_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
-import { roles } from "../../../roles";
+import { fullNotifyTime, menuAccess, notifyTime, roles } from "../../../roles";
+import MUILoader from "../MUILoader/MUILoader";
+import Notification from "../../Notification/Notification";
+import MUITextField from "../MUITextField/MUITextField";
 
-function Reports({ children, ...props }) {
+function Reports({ children, accessMenu, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
 
@@ -32,6 +38,9 @@ function Reports({ children, ...props }) {
   const [deleteIndex, setDeleteIndex] = useState(null);
 
   const [reports, setReports] = useState([]);
+
+  const [airports, setAirports] = useState([]); // Список аэропортов
+  const [positions, setPositions] = useState([]);
 
   // Получаем значение isAirline из localStorage, если оно существует
   const savedIsAirline = localStorage.getItem("isAirline");
@@ -74,43 +83,80 @@ function Reports({ children, ...props }) {
   // Устанавливаем endDate как последний день текущего года
   const endDate1 = new Date(currentYear, 11, 31).toISOString().split("T")[0];
 
-  const { data: companyData, refetch } = useQuery(
-    isAirline ? GET_AIRLINE_REPORT : GET_HOTEL_REPORT,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const {
+    data: companyData,
+    loading,
+    error,
+    refetch,
+  } = useQuery(isAirline ? GET_AIRLINE_REPORT : GET_HOTEL_REPORT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      variables: {
-        filter: {
-          startDate: "0000-00-00T12:00:00.000Z",
-          endDate: endDate1,
-          airlineId: null,
-          hotelId: null,
-          personId: null,
-        },
+    },
+    variables: {
+      filter: {
+        // startDate: "0000-00-00T12:00:00.000Z",
+        // endDate: endDate1,
+        // airlineId: null,
+        // hotelId: null,
+        // personId: null,
       },
+    },
+  });
+
+  const {
+    loading: positionsLoading,
+    error: positionsError,
+    data: positionsData,
+  } = useQuery(GET_AIRLINE_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    onData: () => {
+      refetch();
+    },
+  });
+
+  const [deleteReport] = useMutation(DELETE_REPORT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const deleteDispatcher = async (index) => {
+    try {
+      await deleteReport({
+        variables: {
+          deleteReportId: index,
+        },
+      });
+      setShowDelete(false);
+      setShowRequestSidebar(false);
+    } catch (error) {
+      console.error("Delete Report error: ", error);
     }
-  );
-
-  const { data: dataSubscription } = useSubscription(GET_REPORTS_SUBSCRIOPTION);
-
-  // const addDispatcher = (newDispatcher) => {
-  //     setCompanyData([...companyData, newDispatcher]);
-  // };
-
-  // const updateDispatcher = (updatedDispatcher, index) => {
-  //     const newData = [...companyData];
-  //     newData[index] = updatedDispatcher;
-  //     setCompanyData(newData);
-  // };
-
-  // const deleteDispatcher = (index) => {
-  //     setCompanyData(companyData.filter((_, i) => i !== index));
-  //     setShowDelete(false);
-  //     setShowRequestSidebar(false);
-  // };
+  };
 
   const toggleCreateSidebar = () => {
     setShowCreateSidebar(!showCreateSidebar);
@@ -131,11 +177,33 @@ function Reports({ children, ...props }) {
     setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
   };
 
+  useEffect(() => {
+    if (infoAirports.data) {
+      setAirports(infoAirports.data.airports || []);
+    }
+  }, [infoAirports.data]);
+
+  useEffect(() => {
+    if (positionsData) {
+      setPositions(positionsData?.getAirlinePositions);
+    }
+  }, [positionsData]);
+
   const [filterData, setFilterData] = useState({
     filterSelect: "",
   });
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, fullNotifyTime);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -157,10 +225,7 @@ function Reports({ children, ...props }) {
           : companyData.getHotelReport[0].reports
       );
     }
-
-    // Подписка
-    refetch()
-  }, [companyData, refetch, dataSubscription]);
+  }, [companyData]);
 
   const filteredRequests = reports.filter((request) => {
     const name = isAirline ? request?.airline?.name : request?.hotel?.name;
@@ -183,40 +248,74 @@ function Reports({ children, ...props }) {
     <>
       <div className={classes.section}>
         <Header>Отчеты</Header>
-
+        {user.role === roles.superAdmin ||
+        user.role === roles.dispatcerAdmin ? (
+          <div className={classes.filter_wrapper}>
+            <button
+              onClick={() => setIsAirline(true)}
+              className={isAirline === true ? classes.activeButton : null}
+            >
+              Авиакомпании
+            </button>
+            <button
+              onClick={() => setIsAirline(false)}
+              className={isAirline === false ? classes.activeButton : null}
+            >
+              Гостиницы
+            </button>
+          </div>
+        ) : null}
         <div className={classes.section_searchAndFilter}>
-          <input
+          {/* <input
             type="text"
             placeholder="Поиск"
             style={{ width: "500px" }}
             value={searchQuery}
             onChange={handleSearch}
+          /> */}
+
+          <MUITextField
+            label={"Поиск по отчетам"}
+            className={classes.mainSearch}
+            value={searchQuery}
+            onChange={handleSearch}
           />
-          <Filter
-            toggleSidebar={toggleCreateSidebar}
-            handleChange={handleChange}
-            filterData={filterData}
-            buttonTitle={"Создать отчет"}
-            filterList={filterList}
-            needDate={false}
-          />
+          {(!user?.airlineId || accessMenu?.reportCreate) && (
+            <Filter
+              toggleSidebar={toggleCreateSidebar}
+              handleChange={handleChange}
+              filterData={filterData}
+              buttonTitle={"Создать отчет"}
+              filterList={filterList}
+              needDate={false}
+            />
+          )}
         </div>
+        {loading ? (
+          <MUILoader fullHeight={"70vh"} />
+        ) : (
+          <InfoTableDataReports
+            user={user}
+            toggleRequestSidebar={toggleRequestSidebar}
+            requests={filteredRequests}
+            isAirline={isAirline}
+            setIsAirline={setIsAirline}
+            setChooseObject={setChooseObject}
+            openDeleteComponent={openDeleteComponent}
+          />
+        )}
 
-        <InfoTableDataReports
-          user={user}
-          toggleRequestSidebar={toggleRequestSidebar}
-          requests={filteredRequests}
-          isAirline={isAirline}
-          setIsAirline={setIsAirline}
-          setChooseObject={setChooseObject}
-          openDeleteComponent={openDeleteComponent}
-        />
-
-        <CreateRequestReport
-          show={showCreateSidebar}
-          onClose={toggleCreateSidebar}
-        //   addDispatcher={addDispatcher}
-        />
+        {(!user?.airlineId || accessMenu?.reportCreate) && (
+          <CreateRequestReport
+            show={showCreateSidebar}
+            onClose={toggleCreateSidebar}
+            isAirline={isAirline}
+            //   addDispatcher={addDispatcher}
+            positions={positions}
+            airports={airports}
+            addNotification={addNotification}
+          />
+        )}
         {/* 
                 <ExistRequestReport 
                     show={showRequestSidebar} 
@@ -236,6 +335,21 @@ function Reports({ children, ...props }) {
             title={`Вы действительно хотите удалить отчет?`}
           />
         )}
+
+        {notifications.map((n, index) => (
+          <Notification
+            key={n.id}
+            text={n.text}
+            status={n.status}
+            index={index}
+            time={notifyTime}
+            onClose={() => {
+              setNotifications((prev) =>
+                prev.filter((notif) => notif.id !== n.id)
+              );
+            }}
+          />
+        ))}
       </div>
     </>
   );

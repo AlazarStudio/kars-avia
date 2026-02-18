@@ -1,18 +1,31 @@
-import React, { memo, useEffect, useRef, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box } from "@mui/material";
 import { eachDayOfInterval, startOfMonth, endOfMonth, isWeekend, isToday, format, startOfDay } from "date-fns";
 import { useDroppable } from "@dnd-kit/core";
 import DraggableRequest from "../DraggableRequest/DraggableRequest";
 
-const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, userRole, toggleRequestSidebar }) => {
-    const { setNodeRef } = useDroppable({
-        id: room.id,
-    });
+const RoomRow = memo(({ requestId, checkRoomsType, hotelAccess, isClick, setIsClick, containerRef, activeDragItem, highlightedDatesOld, setHoveredDayInMonth, setHoveredRoom, dayWidth, weekendColor, borderBottomDraw, room, requests, currentMonth, onUpdateRequest, onOpenModal, allRequests, isDraggingGlobal, user, toggleRequestSidebar }) => {
+    // const { setNodeRef } = useDroppable({
+    //     id: room.roomId,  // Влияет на значение over в handleDragEnd
+    //     data: {
+    //         position: room?.type // room?.type это просто ОБЩЕЕ количество комнат, а не позиция конкретной комнаты
+    //     }
+    // });
+    
 
-    const daysInMonth = eachDayOfInterval({
-        start: startOfMonth(currentMonth),
-        end: endOfMonth(currentMonth),
-    });
+    // console.log(room);
+
+    // const daysInMonth = eachDayOfInterval({
+    //     start: startOfMonth(currentMonth),
+    //     end: endOfMonth(currentMonth),
+    // });
+
+    const daysInMonth = useMemo(() => 
+        eachDayOfInterval({
+          start: startOfMonth(currentMonth),
+          end: endOfMonth(currentMonth),
+        }), [currentMonth]
+    );      
 
     const isDouble = room.type === "double";
 
@@ -20,9 +33,10 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDr
     const [highlightedDates, setHighlightedDates] = useState([]);
 
     const handleMouseEnter = (index, day) => {
-        setHoveredPoint(index);
-        setHoveredDayInMonth(format(day, 'd'))
-        setHoveredRoom(room.id)
+        // setHoveredPoint(index);
+        // setHoveredDayInMonth(format(day, 'd'))
+        // setHoveredRoom(room.id)
+        // setHoveredRoom(room.roomId)
     };
 
     const handleMouseLeave = () => {
@@ -31,28 +45,44 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDr
         setHoveredRoom(null)
     };
 
-    const containerRef = useRef(null);
-    const [dayWidthLength, setDayWidthLength] = useState(dayWidth);
+    // const handleMouseEnter = useCallback((index, day) => {
+    //     setHoveredPoint(index);
+    //     setHoveredDayInMonth(format(day, 'd'));
+    //     setHoveredRoom(room.roomId);
+    // }, [room.id, setHoveredDayInMonth, setHoveredRoom]);
+    
+    // const handleMouseLeave = useCallback(() => {
+    //     setHoveredPoint(null);
+    //     setHoveredDayInMonth(null);
+    //     setHoveredRoom(null);
+    // }, [setHoveredDayInMonth, setHoveredRoom]);
+    
+
+    // const containerRef = useRef(null);
+    const dayWidthLength = dayWidth;
 
     // Update dayWidth dynamically based on container size
-    useEffect(() => {
-        const updateDayWidth = () => {
-            if (containerRef.current) {
-                const containerWidth = containerRef.current.offsetWidth; // Get container width
-                const newDayWidth = containerWidth / daysInMonth.length; // Calculate day width
-                setDayWidthLength(newDayWidth);
-            }
-        };
+    // useEffect(() => {
+    //     const updateDayWidth = () => {
+    //         if (containerRef.current) {
+    //             const containerWidth = containerRef.current.offsetWidth; // Get container width
+    //             const newDayWidth = containerWidth / daysInMonth.length; // Calculate day width
+    //             setDayWidthLength(newDayWidth);
+    //         }
+    //     };
 
-        updateDayWidth();
+    //     updateDayWidth();
 
-        const observer = new ResizeObserver(updateDayWidth);
-        if (containerRef.current) observer.observe(containerRef.current);
+    //     const observer = new ResizeObserver(updateDayWidth);
+    //     if (containerRef.current) observer.observe(containerRef.current);
 
-        return () => {
-            if (containerRef.current) observer.unobserve(containerRef.current);
-        };
-    }, [daysInMonth]);
+    //     return () => {
+    //         if (containerRef.current) observer.unobserve(containerRef.current);
+    //     };
+    // }, [daysInMonth]);
+
+    // console.log(dayWidthLength);
+    
 
     const handleDragOver = (event) => {
         if (activeDragItem) {
@@ -68,17 +98,30 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDr
         }
     };
 
+    // const handleDragOver = useCallback(() => {
+    //     if (activeDragItem) {
+    //         const dragStart = startOfDay(new Date(activeDragItem.checkInDate));
+    //         const dragEnd = startOfDay(new Date(activeDragItem.checkOutDate));
+    //         const datesToHighlight = daysInMonth.filter(
+    //             (date) => date.getTime() >= dragStart.getTime() && date.getTime() <= dragEnd.getTime()
+    //         );
+    //         setHighlightedDates(datesToHighlight);
+    //     }
+    // }, [activeDragItem, daysInMonth]);
+    
+
     return (
         <Box
             ref={(node) => {
-                setNodeRef(node); // Connect to dnd-kit
+                // setNodeRef(node); // Connect to dnd-kit
                 containerRef.current = node; // Save reference for resizing
             }}
             sx={{
                 display: "flex",
                 position: "relative",
+                // borderBottom: '1px solid #ddd',
                 borderBottom: borderBottomDraw ? "1px solid #dddddd00" : "1px solid #ddd",
-                height: isDouble ? "100px" : "50px",
+                height: `${50 * room.type}px`,
             }}
 
             onMouseEnter={(e) => {
@@ -92,7 +135,7 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDr
                     ref={containerRef}
                     key={index}
                     sx={{
-                        width: `${dayWidth}px`,
+                        width: `${dayWidthLength}px`,
                         borderLeft: !isClick && highlightedDatesOld[0]?.getTime() === day.getTime() ? "1px solid #75757540" : highlightedDates[0]?.getTime() === day.getTime() ? "1px solid #75757540" : "1px solid #dddddd00",
                         borderBottom: !isClick && highlightedDatesOld.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : "1px solid #dddddd00",
                         borderTop: !isClick && highlightedDatesOld.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : highlightedDates.some(d => d.getTime() === day.getTime()) ? "1px solid #75757540" : "1px solid #dddddd00",
@@ -109,9 +152,10 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDr
                 .sort((a, b) => a.position - b.position)
                 .map((request) => (
                     <DraggableRequest
+                        hotelAccess={hotelAccess}
                         requestId={requestId}
                         checkRoomsType={checkRoomsType}
-                        userRole={userRole}
+                        user={user}
                         key={request.id}
                         request={request}
                         dayWidth={dayWidthLength}
@@ -126,6 +170,29 @@ const RoomRow = memo(({ requestId, checkRoomsType, isClick, setIsClick, activeDr
                         setIsClick={setIsClick}
                     />
                 ))}
+
+            {Array.from({ length: room.type }).map((_, position) => {
+                const droppableId = `${room.roomId}-${position}`;
+                const { setNodeRef } = useDroppable({
+                    id: droppableId,
+                    data: { roomId: room.roomId, position },
+                });
+
+                return (
+                    <div
+                        key={droppableId}
+                        ref={setNodeRef}
+                        style={{
+                        position: 'absolute',
+                        top: `${position * 50}px`,
+                        left: 0,
+                        width: '100%',
+                        height: '50px',
+                        zIndex: 1,
+                        }}
+                    />
+                );
+            })}
 
         </Box>
     );

@@ -1,0 +1,1237 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useQuery } from '@apollo/client'
+import { EditorContent, useEditor } from '@tiptap/react'
+import { editorExtensions } from './src/editorExtensions'
+import { DocumentationUploadProvider } from './src/DocumentationUploadContext'
+import Toolbar from './src/components/Toolbar'
+import PlusButtonOverlay from './src/PlusButtonOverlay'
+import BlockDragOverlay from './src/components/BlockDragOverlay'
+import BlockSelectionOverlay from './src/components/BlockSelectionOverlay'
+import AnchorHashOverlay from './src/components/AnchorHashOverlay'
+import ImageViewer from './src/ImageViewer'
+import { GET_ARTICLE, getCookie } from '../../../../../../graphQL_requests'
+import { saveDocLayout } from './docDraftStore'
+
+import './src/main.css'
+import './DocumentListTiptapPanelContent.css'
+
+const EMPTY_DOC = {
+  type: 'doc',
+  content: [{ type: 'paragraph' }],
+}
+
+const DEFAULT_ARTICLE_PADDING = Object.freeze({
+  top: 14,
+  right: 16,
+  bottom: 14,
+  left: 16,
+})
+
+const ARTICLE_WIDTH_PRESET_MAX = Object.freeze({
+  level4: null,
+  level3: 1080,
+  level2: 860,
+  level1: 720,
+})
+
+const DEFAULT_ARTICLE_WIDTH_MODE = 'preset'
+const DEFAULT_ARTICLE_WIDTH_PRESET = 'level4'
+const DEFAULT_ARTICLE_MANUAL_WIDTH = 1080
+const DEFAULT_ARTICLE_PADDING_MODE = 'shared'
+
+const MIN_ARTICLE_CONTENT_SIZE = 120
+const MAX_ARTICLE_PADDING = 260
+const MIN_ARTICLE_WIDTH = 320
+const MAX_ARTICLE_WIDTH = 2400
+
+function isDocJson(value) {
+  return Boolean(value && typeof value === 'object' && value.type === 'doc')
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value))
+}
+
+function normalizePadding(padding) {
+  const source = padding || DEFAULT_ARTICLE_PADDING
+  return {
+    top: clamp(Math.round(Number(source.top) || 0), 0, MAX_ARTICLE_PADDING),
+    right: clamp(Math.round(Number(source.right) || 0), 0, MAX_ARTICLE_PADDING),
+    bottom: clamp(Math.round(Number(source.bottom) || 0), 0, MAX_ARTICLE_PADDING),
+    left: clamp(Math.round(Number(source.left) || 0), 0, MAX_ARTICLE_PADDING),
+  }
+}
+
+function isSamePadding(a, b) {
+  return (
+    a.top === b.top &&
+    a.right === b.right &&
+    a.bottom === b.bottom &&
+    a.left === b.left
+  )
+}
+
+function clampPairToLimit(first, second, limit) {
+  const safeFirst = clamp(Math.round(first), 0, MAX_ARTICLE_PADDING)
+  const safeSecond = clamp(Math.round(second), 0, MAX_ARTICLE_PADDING)
+  const safeLimit = Math.max(0, Math.round(limit))
+
+  if (safeFirst + safeSecond <= safeLimit) {
+    return [safeFirst, safeSecond]
+  }
+
+  if (safeLimit <= 0) return [0, 0]
+
+  const total = safeFirst + safeSecond
+  if (total <= 0) return [0, 0]
+
+  let nextFirst = Math.round((safeFirst / total) * safeLimit)
+  nextFirst = clamp(nextFirst, 0, safeLimit)
+  const nextSecond = safeLimit - nextFirst
+  return [nextFirst, nextSecond]
+}
+
+function clampPaddingByRect(mode, padding, rect) {
+  const safe = normalizePadding(padding)
+  const safeWidth = Math.max(0, Math.round(Number(rect?.width) || 0))
+  const safeHeight = Math.max(0, Math.round(Number(rect?.height) || 0))
+  const horizontalLimit = Math.max(0, safeWidth - MIN_ARTICLE_CONTENT_SIZE)
+  const verticalLimit = Math.max(0, safeHeight - MIN_ARTICLE_CONTENT_SIZE)
+
+  if (mode === 'shared') {
+    const sharedCurrent = Math.round((safe.top + safe.right + safe.bottom + safe.left) / 4)
+    const sharedMax = Math.max(
+      0,
+      Math.min(
+        MAX_ARTICLE_PADDING,
+        Math.floor(horizontalLimit / 2),
+        Math.floor(verticalLimit / 2)
+      )
+    )
+    const shared = clamp(sharedCurrent, 0, sharedMax)
+    return {
+      top: shared,
+      right: shared,
+      bottom: shared,
+      left: shared,
+    }
+  }
+
+  const [left, right] = clampPairToLimit(safe.left, safe.right, horizontalLimit)
+  const [top, bottom] = clampPairToLimit(safe.top, safe.bottom, verticalLimit)
+  return { top, right, bottom, left }
+}
+
+function normalizeArticleWidth(width) {
+  return clamp(Math.round(Number(width) || 0), MIN_ARTICLE_WIDTH, MAX_ARTICLE_WIDTH)
+}
+
+function normalizeSharedPaddingValue(padding) {
+  const safe = normalizePadding(padding)
+  return clamp(
+    Math.round((safe.top + safe.right + safe.bottom + safe.left) / 4),
+    0,
+    MAX_ARTICLE_PADDING
+  )
+}
+
+function toSharedPadding(padding) {
+  const shared = normalizeSharedPaddingValue(padding)
+  return {
+    top: shared,
+    right: shared,
+    bottom: shared,
+    left: shared,
+  }
+}
+
+function normalizeArticleLayout(layout) {
+  const source = layout && typeof layout === 'object' ? layout : {}
+  const widthMode = source.articleWidthMode === 'manual' ? 'manual' : DEFAULT_ARTICLE_WIDTH_MODE
+  const widthPreset = Object.prototype.hasOwnProperty.call(
+    ARTICLE_WIDTH_PRESET_MAX,
+    source.articleWidthPreset
+  )
+    ? source.articleWidthPreset
+    : DEFAULT_ARTICLE_WIDTH_PRESET
+  const manualWidth = normalizeArticleWidth(
+    source.articleManualWidth ?? DEFAULT_ARTICLE_MANUAL_WIDTH
+  )
+  const paddingMode =
+    source.articlePaddingMode === 'manual' ? 'manual' : DEFAULT_ARTICLE_PADDING_MODE
+  const normalizedPadding = normalizePadding(source.articlePadding)
+
+  return {
+    articleWidthMode: widthMode,
+    articleWidthPreset: widthPreset,
+    articleManualWidth: manualWidth,
+    articlePaddingMode: paddingMode,
+    articlePadding: paddingMode === 'shared' ? toSharedPadding(normalizedPadding) : normalizedPadding,
+  }
+}
+
+function ArticleWidthFrameOverlay({ editor, enabled, width, onChange }) {
+  const [editorRect, setEditorRect] = useState(null)
+  const rafRef = useRef(0)
+  const dragRafRef = useRef(0)
+  const pendingWidthRef = useRef(null)
+  const appliedWidthRef = useRef(normalizeArticleWidth(width))
+  const editorRectRef = useRef(null)
+
+  const updateEditorRect = useCallback(() => {
+    if (!enabled || !editor) {
+      setEditorRect(null)
+      editorRectRef.current = null
+      return
+    }
+
+    let view
+    try {
+      view = editor.view
+    } catch {
+      return
+    }
+
+    const editorDom = view.dom
+    if (!(editorDom instanceof HTMLElement)) return
+
+    const frameEl = editorDom.closest('.editor-content-frame') || editorDom.parentElement
+    if (!(frameEl instanceof HTMLElement)) return
+
+    const frameRect = frameEl.getBoundingClientRect()
+    const proseRect = editorDom.getBoundingClientRect()
+    const contentHeight = Math.max(
+      Math.round(proseRect.height),
+      Math.round(editorDom.scrollHeight || 0),
+      Math.round(editorDom.clientHeight || 0),
+      Math.round(editorDom.offsetHeight || 0)
+    )
+
+    const nextRect = {
+      top: Math.max(0, Math.round(proseRect.top - frameRect.top)),
+      left: Math.max(0, Math.round(proseRect.left - frameRect.left)),
+      width: Math.max(0, Math.round(proseRect.width)),
+      height: contentHeight,
+    }
+
+    editorRectRef.current = nextRect
+    setEditorRect(nextRect)
+    return nextRect
+  }, [editor, enabled])
+
+  useEffect(() => {
+    if (!enabled || !editor) {
+      return
+    }
+
+    let view
+    try {
+      view = editor.view
+    } catch {
+      return
+    }
+
+    const editorDom = view.dom
+    if (!(editorDom instanceof HTMLElement)) return
+
+    const frameEl = editorDom.closest('.editor-content-frame') || editorDom.parentElement
+    const scopeEl = editorDom.closest('.editor-hover-scope') || editorDom.parentElement
+    const panelScroller = editorDom.closest('.panel-content')
+    const rightPanel = document.querySelector('.right-panel')
+
+    const schedule = () => {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(updateEditorRect)
+    }
+
+    schedule()
+
+    editor.on('update', schedule)
+    editor.on('transaction', schedule)
+    editor.on('selectionUpdate', schedule)
+
+    window.addEventListener('resize', schedule)
+    window.addEventListener('scroll', schedule, true)
+    editorDom.addEventListener('scroll', schedule)
+    if (scopeEl instanceof HTMLElement) {
+      scopeEl.addEventListener('scroll', schedule)
+    }
+    if (panelScroller instanceof HTMLElement) {
+      panelScroller.addEventListener('scroll', schedule)
+    }
+    if (rightPanel instanceof HTMLElement) {
+      rightPanel.addEventListener('transitionrun', schedule)
+      rightPanel.addEventListener('transitionstart', schedule)
+      rightPanel.addEventListener('transitionend', schedule)
+      rightPanel.addEventListener('transitioncancel', schedule)
+    }
+
+    editorDom.addEventListener('input', schedule)
+
+    const mutationObserver =
+      typeof MutationObserver !== 'undefined'
+        ? new MutationObserver(schedule)
+        : null
+    if (mutationObserver) {
+      mutationObserver.observe(editorDom, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+      })
+    }
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null
+    if (resizeObserver) {
+      resizeObserver.observe(editorDom)
+      if (frameEl instanceof HTMLElement) {
+        resizeObserver.observe(frameEl)
+      }
+      if (scopeEl instanceof HTMLElement) {
+        resizeObserver.observe(scopeEl)
+      }
+      if (panelScroller instanceof HTMLElement) {
+        resizeObserver.observe(panelScroller)
+      }
+    }
+
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      editor.off('update', schedule)
+      editor.off('transaction', schedule)
+      editor.off('selectionUpdate', schedule)
+      window.removeEventListener('resize', schedule)
+      window.removeEventListener('scroll', schedule, true)
+      editorDom.removeEventListener('scroll', schedule)
+      if (scopeEl instanceof HTMLElement) {
+        scopeEl.removeEventListener('scroll', schedule)
+      }
+      if (panelScroller instanceof HTMLElement) {
+        panelScroller.removeEventListener('scroll', schedule)
+      }
+      if (rightPanel instanceof HTMLElement) {
+        rightPanel.removeEventListener('transitionrun', schedule)
+        rightPanel.removeEventListener('transitionstart', schedule)
+        rightPanel.removeEventListener('transitionend', schedule)
+        rightPanel.removeEventListener('transitioncancel', schedule)
+      }
+      editorDom.removeEventListener('input', schedule)
+      if (mutationObserver) {
+        mutationObserver.disconnect()
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [editor, enabled, updateEditorRect])
+
+  useEffect(() => {
+    appliedWidthRef.current = normalizeArticleWidth(width)
+  }, [width])
+
+  const handleDragStart = useCallback(
+    (side, event) => {
+      if (!editorRect || typeof onChange !== 'function') return
+      if (event.button !== 0) return
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      const startX = event.clientX
+      const visibleWidth = clamp(Math.round(editorRect.width), MIN_ARTICLE_WIDTH, MAX_ARTICLE_WIDTH)
+      const stateWidth = normalizeArticleWidth(width)
+      const startWidth = Math.min(stateWidth, visibleWidth)
+
+      if (
+        typeof event.pointerId === 'number' &&
+        event.currentTarget &&
+        typeof event.currentTarget.setPointerCapture === 'function'
+      ) {
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId)
+        } catch {
+          // ignore
+        }
+      }
+
+      const scheduleWidthApply = () => {
+        cancelAnimationFrame(dragRafRef.current)
+        dragRafRef.current = requestAnimationFrame(() => {
+          const nextWidth = pendingWidthRef.current
+          pendingWidthRef.current = null
+          if (typeof nextWidth !== 'number') return
+          if (nextWidth === appliedWidthRef.current) return
+          appliedWidthRef.current = nextWidth
+          onChange(nextWidth)
+        })
+      }
+
+      const handleMove = moveEvent => {
+        const dx = moveEvent.clientX - startX
+        const delta = side === 'right' ? dx * 2 : -dx * 2
+        const nextWidth = normalizeArticleWidth(startWidth + delta)
+        pendingWidthRef.current = nextWidth
+        scheduleWidthApply()
+      }
+
+      const stopMove = () => {
+        window.removeEventListener('pointermove', handleMove)
+        window.removeEventListener('pointerup', stopMove)
+        window.removeEventListener('pointercancel', stopMove)
+        cancelAnimationFrame(dragRafRef.current)
+        const finalWidth = pendingWidthRef.current
+        pendingWidthRef.current = null
+        if (typeof finalWidth === 'number' && finalWidth !== appliedWidthRef.current) {
+          appliedWidthRef.current = finalWidth
+          onChange(finalWidth)
+        }
+        updateEditorRect()
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+      }
+
+      document.body.style.userSelect = 'none'
+      document.body.style.cursor = 'ew-resize'
+      window.addEventListener('pointermove', handleMove)
+      window.addEventListener('pointerup', stopMove)
+      window.addEventListener('pointercancel', stopMove)
+    },
+    [editorRect, onChange, updateEditorRect, width]
+  )
+
+  if (!enabled || !editorRect) return null
+
+  const frameTop = editorRect.top
+  const frameLeft = editorRect.left
+  const frameWidth = editorRect.width
+  const frameHeight = editorRect.height
+  if (frameWidth <= 24 || frameHeight <= 24) return null
+
+  return (
+    <div className="article-width-overlay">
+      <div
+        className="article-width-edge article-width-edge-left"
+        style={{
+          left: `${frameLeft}px`,
+          top: `${frameTop}px`,
+          height: `${frameHeight}px`,
+        }}
+        onPointerDown={event => handleDragStart('left', event)}
+      />
+      <div
+        className="article-width-edge article-width-edge-right"
+        style={{
+          left: `${frameLeft + frameWidth}px`,
+          top: `${frameTop}px`,
+          height: `${frameHeight}px`,
+        }}
+        onPointerDown={event => handleDragStart('right', event)}
+      />
+
+      <button
+        type="button"
+        className="article-width-handle article-width-handle-left"
+        style={{
+          left: `${frameLeft}px`,
+          top: `${frameTop + frameHeight / 2}px`,
+        }}
+        onPointerDown={event => handleDragStart('left', event)}
+      />
+      <button
+        type="button"
+        className="article-width-handle article-width-handle-right"
+        style={{
+          left: `${frameLeft + frameWidth}px`,
+          top: `${frameTop + frameHeight / 2}px`,
+        }}
+        onPointerDown={event => handleDragStart('right', event)}
+      />
+    </div>
+  )
+}
+
+function ArticlePaddingFrameOverlay({ editor, enabled, mode, padding, onChange }) {
+  const [editorRect, setEditorRect] = useState(null)
+  const rafRef = useRef(0)
+  const dragRafRef = useRef(0)
+  const editorRectRef = useRef(null)
+
+  const updateEditorRect = useCallback(() => {
+    if (!enabled || !editor) {
+      setEditorRect(null)
+      editorRectRef.current = null
+      return
+    }
+
+    let view
+    try {
+      view = editor.view
+    } catch {
+      return
+    }
+
+    const editorDom = view.dom
+    if (!(editorDom instanceof HTMLElement)) return
+
+    const frameEl = editorDom.closest('.editor-content-frame') || editorDom.parentElement
+    if (!(frameEl instanceof HTMLElement)) return
+
+    const frameRect = frameEl.getBoundingClientRect()
+    const proseRect = editorDom.getBoundingClientRect()
+    const contentHeight = Math.max(
+      Math.round(proseRect.height),
+      Math.round(editorDom.scrollHeight || 0),
+      Math.round(editorDom.clientHeight || 0),
+      Math.round(editorDom.offsetHeight || 0)
+    )
+
+    const nextRect = {
+      top: Math.max(0, Math.round(proseRect.top - frameRect.top)),
+      left: Math.max(0, Math.round(proseRect.left - frameRect.left)),
+      width: Math.max(0, Math.round(proseRect.width)),
+      height: contentHeight,
+    }
+
+    editorRectRef.current = nextRect
+    setEditorRect(nextRect)
+    return nextRect
+  }, [editor, enabled])
+
+  useEffect(() => {
+    if (!enabled || !editor) {
+      return
+    }
+
+    let view
+    try {
+      view = editor.view
+    } catch {
+      return
+    }
+
+    const editorDom = view.dom
+    if (!(editorDom instanceof HTMLElement)) return
+
+    const frameEl = editorDom.closest('.editor-content-frame') || editorDom.parentElement
+    const scopeEl = editorDom.closest('.editor-hover-scope') || editorDom.parentElement
+    const panelScroller = editorDom.closest('.panel-content')
+    const rightPanel = document.querySelector('.right-panel')
+
+    const schedule = () => {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(updateEditorRect)
+    }
+
+    schedule()
+
+    editor.on('update', schedule)
+    editor.on('transaction', schedule)
+    editor.on('selectionUpdate', schedule)
+
+    window.addEventListener('resize', schedule)
+    window.addEventListener('scroll', schedule, true)
+    editorDom.addEventListener('scroll', schedule)
+    if (scopeEl instanceof HTMLElement) {
+      scopeEl.addEventListener('scroll', schedule)
+    }
+    if (panelScroller instanceof HTMLElement) {
+      panelScroller.addEventListener('scroll', schedule)
+    }
+    if (rightPanel instanceof HTMLElement) {
+      rightPanel.addEventListener('transitionrun', schedule)
+      rightPanel.addEventListener('transitionstart', schedule)
+      rightPanel.addEventListener('transitionend', schedule)
+      rightPanel.addEventListener('transitioncancel', schedule)
+    }
+
+    editorDom.addEventListener('input', schedule)
+
+    const mutationObserver =
+      typeof MutationObserver !== 'undefined'
+        ? new MutationObserver(schedule)
+        : null
+    if (mutationObserver) {
+      mutationObserver.observe(editorDom, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+      })
+    }
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null
+    if (resizeObserver) {
+      resizeObserver.observe(editorDom)
+      if (frameEl instanceof HTMLElement) {
+        resizeObserver.observe(frameEl)
+      }
+      if (scopeEl instanceof HTMLElement) {
+        resizeObserver.observe(scopeEl)
+      }
+      if (panelScroller instanceof HTMLElement) {
+        resizeObserver.observe(panelScroller)
+      }
+    }
+
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      editor.off('update', schedule)
+      editor.off('transaction', schedule)
+      editor.off('selectionUpdate', schedule)
+      window.removeEventListener('resize', schedule)
+      window.removeEventListener('scroll', schedule, true)
+      editorDom.removeEventListener('scroll', schedule)
+      if (scopeEl instanceof HTMLElement) {
+        scopeEl.removeEventListener('scroll', schedule)
+      }
+      if (panelScroller instanceof HTMLElement) {
+        panelScroller.removeEventListener('scroll', schedule)
+      }
+      if (rightPanel instanceof HTMLElement) {
+        rightPanel.removeEventListener('transitionrun', schedule)
+        rightPanel.removeEventListener('transitionstart', schedule)
+        rightPanel.removeEventListener('transitionend', schedule)
+        rightPanel.removeEventListener('transitioncancel', schedule)
+      }
+      editorDom.removeEventListener('input', schedule)
+      if (mutationObserver) {
+        mutationObserver.disconnect()
+      }
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [editor, enabled, updateEditorRect])
+
+  useEffect(() => {
+    if (!enabled || !editorRect || typeof onChange !== 'function') return
+
+    const current = normalizePadding(padding)
+    const next = clampPaddingByRect(mode === 'manual' ? 'manual' : 'shared', current, editorRect)
+    if (!isSamePadding(current, next)) {
+      onChange(next)
+    }
+  }, [editorRect, enabled, mode, onChange, padding])
+
+  useEffect(() => {
+    if (!enabled) return
+
+    const raf = requestAnimationFrame(updateEditorRect)
+    return () => cancelAnimationFrame(raf)
+  }, [enabled, mode, padding, updateEditorRect])
+
+  const handleDragStart = useCallback(
+    (side, event) => {
+      if (!editorRect || typeof onChange !== 'function') return
+      if (event.button !== 0) return
+
+      event.preventDefault()
+      event.stopPropagation()
+
+      const startX = event.clientX
+      const startY = event.clientY
+      const startPadding = normalizePadding(padding)
+      const startMode = mode === 'manual' ? 'manual' : 'shared'
+      const rectSnapshot = { ...(editorRectRef.current || editorRect) }
+
+      const handleMove = moveEvent => {
+        const dx = moveEvent.clientX - startX
+        const dy = moveEvent.clientY - startY
+        const liveRect = updateEditorRect() || editorRectRef.current || rectSnapshot
+        const safeRect = liveRect || rectSnapshot
+        const safeWidth = Math.max(0, Math.round(Number(safeRect?.width) || 0))
+        const safeHeight = Math.max(0, Math.round(Number(safeRect?.height) || 0))
+
+        if (startMode === 'shared') {
+          let sharedValue = startPadding.top
+          if (side === 'top') sharedValue = startPadding.top + dy
+          if (side === 'right') sharedValue = startPadding.right - dx
+          if (side === 'bottom') sharedValue = startPadding.bottom - dy
+          if (side === 'left') sharedValue = startPadding.left + dx
+
+          const sharedMax = Math.max(
+            0,
+            Math.min(
+              MAX_ARTICLE_PADDING,
+              Math.floor((safeWidth - MIN_ARTICLE_CONTENT_SIZE) / 2),
+              Math.floor((safeHeight - MIN_ARTICLE_CONTENT_SIZE) / 2)
+            )
+          )
+          const nextShared = clamp(Math.round(sharedValue), 0, sharedMax)
+          onChange(clampPaddingByRect('shared', {
+            top: nextShared,
+            right: nextShared,
+            bottom: nextShared,
+            left: nextShared,
+          }, safeRect))
+          cancelAnimationFrame(dragRafRef.current)
+          dragRafRef.current = requestAnimationFrame(updateEditorRect)
+          return
+        }
+
+        const next = { ...startPadding }
+        if (side === 'top') {
+          const maxTop = Math.max(
+            0,
+            Math.min(
+              MAX_ARTICLE_PADDING,
+              safeHeight - MIN_ARTICLE_CONTENT_SIZE - startPadding.bottom
+            )
+          )
+          next.top = clamp(Math.round(startPadding.top + dy), 0, maxTop)
+        } else if (side === 'right') {
+          const maxRight = Math.max(
+            0,
+            Math.min(
+              MAX_ARTICLE_PADDING,
+              safeWidth - MIN_ARTICLE_CONTENT_SIZE - startPadding.left
+            )
+          )
+          next.right = clamp(Math.round(startPadding.right - dx), 0, maxRight)
+        } else if (side === 'bottom') {
+          const maxBottom = Math.max(
+            0,
+            Math.min(
+              MAX_ARTICLE_PADDING,
+              safeHeight - MIN_ARTICLE_CONTENT_SIZE - startPadding.top
+            )
+          )
+          next.bottom = clamp(Math.round(startPadding.bottom - dy), 0, maxBottom)
+        } else if (side === 'left') {
+          const maxLeft = Math.max(
+            0,
+            Math.min(
+              MAX_ARTICLE_PADDING,
+              safeWidth - MIN_ARTICLE_CONTENT_SIZE - startPadding.right
+            )
+          )
+          next.left = clamp(Math.round(startPadding.left + dx), 0, maxLeft)
+        }
+
+        onChange(clampPaddingByRect('manual', next, safeRect))
+        cancelAnimationFrame(dragRafRef.current)
+        dragRafRef.current = requestAnimationFrame(updateEditorRect)
+      }
+
+      const stopMove = () => {
+        window.removeEventListener('pointermove', handleMove)
+        window.removeEventListener('pointerup', stopMove)
+        window.removeEventListener('pointercancel', stopMove)
+        cancelAnimationFrame(dragRafRef.current)
+        updateEditorRect()
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+      }
+
+      document.body.style.userSelect = 'none'
+      document.body.style.cursor = side === 'left' || side === 'right' ? 'ew-resize' : 'ns-resize'
+      window.addEventListener('pointermove', handleMove)
+      window.addEventListener('pointerup', stopMove)
+      window.addEventListener('pointercancel', stopMove)
+    },
+    [editorRect, mode, onChange, padding, updateEditorRect]
+  )
+
+  if (!enabled || !editorRect) return null
+
+  const safePadding = clampPaddingByRect(mode === 'manual' ? 'manual' : 'shared', padding, editorRect)
+  const frameTop = editorRect.top + safePadding.top
+  const frameLeft = editorRect.left + safePadding.left
+  const frameWidth = editorRect.width - safePadding.left - safePadding.right
+  const frameHeight = editorRect.height - safePadding.top - safePadding.bottom
+
+  if (frameWidth <= 24 || frameHeight <= 24) return null
+
+  return (
+    <div className={`article-padding-overlay ${mode === 'manual' ? 'is-manual' : 'is-shared'}`}>
+      <div
+        className="article-padding-frame"
+        style={{
+          left: `${frameLeft}px`,
+          top: `${frameTop}px`,
+          width: `${frameWidth}px`,
+          height: `${frameHeight}px`,
+        }}
+      />
+
+      <button
+        type="button"
+        className="article-padding-handle article-padding-handle-top"
+        style={{
+          left: `${frameLeft + frameWidth / 2}px`,
+          top: `${frameTop}px`,
+        }}
+        onPointerDown={event => handleDragStart('top', event)}
+      />
+      <button
+        type="button"
+        className="article-padding-handle article-padding-handle-right"
+        style={{
+          left: `${frameLeft + frameWidth}px`,
+          top: `${frameTop + frameHeight / 2}px`,
+        }}
+        onPointerDown={event => handleDragStart('right', event)}
+      />
+      <button
+        type="button"
+        className="article-padding-handle article-padding-handle-bottom"
+        style={{
+          left: `${frameLeft + frameWidth / 2}px`,
+          top: `${frameTop + frameHeight}px`,
+        }}
+        onPointerDown={event => handleDragStart('bottom', event)}
+      />
+      <button
+        type="button"
+        className="article-padding-handle article-padding-handle-left"
+        style={{
+          left: `${frameLeft}px`,
+          top: `${frameTop + frameHeight / 2}px`,
+        }}
+        onPointerDown={event => handleDragStart('left', event)}
+      />
+    </div>
+  )
+}
+
+export default function DocumentListTiptapPanelContent({
+  activeDocId,
+  docTitle,
+  setActiveDocId,
+  onAnchorsChange,
+  onDraftPersist,
+  onForceSync,
+  draftHydrationVersion = 0,
+  canEdit = false,
+}) {
+  const [viewer, setViewer] = useState(null)
+  const [isAnchorModeEnabled, setIsAnchorModeEnabled] = useState(false)
+  const [articleWidthMode, setArticleWidthMode] = useState(DEFAULT_ARTICLE_WIDTH_MODE)
+  const [articleWidthPreset, setArticleWidthPreset] = useState(DEFAULT_ARTICLE_WIDTH_PRESET)
+  const [articleManualWidth, setArticleManualWidth] = useState(DEFAULT_ARTICLE_MANUAL_WIDTH)
+  const [articleWidthFrameVisible, setArticleWidthFrameVisible] = useState(true)
+  const [articlePaddingMode, setArticlePaddingMode] = useState(DEFAULT_ARTICLE_PADDING_MODE)
+  const [articlePaddingFrameVisible, setArticlePaddingFrameVisible] = useState(false)
+  const [articlePadding, setArticlePadding] = useState({ ...DEFAULT_ARTICLE_PADDING })
+  const [overlayLeftShift, setOverlayLeftShift] = useState(72)
+  const [isManualSaving, setIsManualSaving] = useState(false)
+
+  const token = getCookie('token')
+  const requestContext = useMemo(
+    () => ({
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }),
+    [token]
+  )
+
+  const { data: articleData } = useQuery(GET_ARTICLE, {
+    variables: { id: activeDocId },
+    skip: !activeDocId || !token,
+    fetchPolicy: 'network-only',
+    context: requestContext,
+  })
+
+  const skipAutosaveRef = useRef(true)
+  const skipLayoutSaveRef = useRef(true)
+  const autosaveTimerRef = useRef(null)
+  const layoutSaveTimerRef = useRef(null)
+  const editorHoverScopeRef = useRef(null)
+
+  const handleArticleWidthPresetChange = useCallback((nextPreset) => {
+    if (!Object.prototype.hasOwnProperty.call(ARTICLE_WIDTH_PRESET_MAX, nextPreset)) return
+    setArticleWidthPreset(nextPreset)
+  }, [])
+
+  const handleArticleWidthModeChange = useCallback((nextMode) => {
+    const normalizedMode = nextMode === 'manual' ? 'manual' : 'preset'
+    setArticleWidthMode(normalizedMode)
+    if (normalizedMode === 'manual') {
+      setArticleWidthFrameVisible(true)
+    }
+  }, [])
+
+  const handleArticleManualWidthChange = useCallback((nextWidth) => {
+    const numericWidth = Number(nextWidth)
+    if (!Number.isFinite(numericWidth)) return
+    const clampedWidth = clamp(Math.round(numericWidth), MIN_ARTICLE_WIDTH, MAX_ARTICLE_WIDTH)
+    setArticleManualWidth(clampedWidth)
+  }, [])
+
+  const handleArticlePaddingModeChange = useCallback((nextMode) => {
+    const normalizedMode = nextMode === 'manual' ? 'manual' : 'shared'
+    setArticlePaddingMode(normalizedMode)
+    if (normalizedMode === 'shared') {
+      setArticlePadding(prev => {
+        const shared = normalizeSharedPaddingValue(prev)
+        return {
+          top: shared,
+          right: shared,
+          bottom: shared,
+          left: shared,
+        }
+      })
+    }
+  }, [])
+
+  const handleArticlePaddingReset = useCallback(() => {
+    setArticlePadding({ ...DEFAULT_ARTICLE_PADDING })
+  }, [])
+
+  const buildLayoutPayload = useCallback(() => {
+    return {
+      articleWidthMode: articleWidthMode === 'manual' ? 'manual' : 'preset',
+      articleWidthPreset: Object.prototype.hasOwnProperty.call(
+        ARTICLE_WIDTH_PRESET_MAX,
+        articleWidthPreset
+      )
+        ? articleWidthPreset
+        : DEFAULT_ARTICLE_WIDTH_PRESET,
+      articleManualWidth: normalizeArticleWidth(articleManualWidth),
+      articlePaddingMode: articlePaddingMode === 'manual' ? 'manual' : 'shared',
+      articlePadding: articlePaddingMode === 'manual'
+        ? normalizePadding(articlePadding)
+        : toSharedPadding(articlePadding),
+    }
+  }, [
+    articleManualWidth,
+    articlePadding,
+    articlePaddingMode,
+    articleWidthMode,
+    articleWidthPreset,
+  ])
+
+  const editor = useEditor(
+    {
+      extensions: editorExtensions,
+      content: EMPTY_DOC,
+      autofocus: true,
+      editable: canEdit,
+      injectCSS: false,
+
+      onUpdate: ({ editor }) => {
+        if (!canEdit) return
+        if (!activeDocId) return
+        if (skipAutosaveRef.current) return
+
+        if (autosaveTimerRef.current) {
+          clearTimeout(autosaveTimerRef.current)
+        }
+
+        autosaveTimerRef.current = setTimeout(async () => {
+          try {
+            const contentJson = editor.getJSON()
+            if (!isDocJson(contentJson)) return
+            if (typeof onDraftPersist === 'function') {
+              onDraftPersist(activeDocId, 'content', contentJson)
+            }
+          } catch {
+            // ignore
+          }
+        }, 500)
+      },
+    },
+    [activeDocId, canEdit, onDraftPersist]
+  )
+
+  const handleBack = useCallback(() => {
+    if (typeof setActiveDocId === 'function') {
+      setActiveDocId(null)
+    }
+  }, [setActiveDocId])
+
+  const handleManualSave = useCallback(async () => {
+    if (!canEdit || !activeDocId || !editor || isManualSaving) return
+
+    setIsManualSaving(true)
+    try {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current)
+      }
+      if (layoutSaveTimerRef.current) {
+        clearTimeout(layoutSaveTimerRef.current)
+      }
+
+      const contentJson = editor.getJSON()
+      if (isDocJson(contentJson) && typeof onDraftPersist === 'function') {
+        onDraftPersist(activeDocId, 'content', contentJson)
+      }
+      await saveDocLayout(activeDocId, buildLayoutPayload())
+
+      if (typeof onDraftPersist === 'function') {
+        onDraftPersist(activeDocId, 'layout')
+      }
+      if (typeof onForceSync === 'function') {
+        await onForceSync()
+      }
+    } catch {
+      // ignore
+    } finally {
+      setIsManualSaving(false)
+    }
+  }, [
+    activeDocId,
+    buildLayoutPayload,
+    canEdit,
+    editor,
+    isManualSaving,
+    onDraftPersist,
+    onForceSync,
+  ])
+
+  useEffect(() => {
+    const openViewer = (e) => setViewer(e.detail)
+    window.addEventListener('open-viewer', openViewer)
+    return () => window.removeEventListener('open-viewer', openViewer)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current)
+      }
+      if (layoutSaveTimerRef.current) {
+        clearTimeout(layoutSaveTimerRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!editor) return
+    editor.setEditable(Boolean(canEdit))
+    if (!canEdit) {
+      setIsAnchorModeEnabled(false)
+      setArticleWidthFrameVisible(false)
+      setArticlePaddingFrameVisible(false)
+      if (autosaveTimerRef.current) {
+        clearTimeout(autosaveTimerRef.current)
+      }
+      if (layoutSaveTimerRef.current) {
+        clearTimeout(layoutSaveTimerRef.current)
+      }
+    }
+  }, [canEdit, editor])
+
+  useEffect(() => {
+    if (!editor) return
+    if (!activeDocId) return
+    if (!token) return
+
+    skipAutosaveRef.current = true
+    skipLayoutSaveRef.current = true
+
+    if (articleData === undefined) {
+      skipAutosaveRef.current = false
+      skipLayoutSaveRef.current = false
+      return
+    }
+
+    const article = articleData?.article
+    if (article && article.id !== activeDocId) {
+      skipAutosaveRef.current = false
+      skipLayoutSaveRef.current = false
+      return
+    }
+    const content = isDocJson(article?.content) ? article.content : EMPTY_DOC
+    queueMicrotask(() => {
+      editor.commands.setContent(content, false)
+    })
+
+    setArticleWidthMode(DEFAULT_ARTICLE_WIDTH_MODE)
+    setArticleWidthPreset(DEFAULT_ARTICLE_WIDTH_PRESET)
+    setArticleManualWidth(DEFAULT_ARTICLE_MANUAL_WIDTH)
+    setArticlePaddingMode(DEFAULT_ARTICLE_PADDING_MODE)
+    setArticlePadding({ ...DEFAULT_ARTICLE_PADDING })
+    setArticleWidthFrameVisible(false)
+    setArticlePaddingFrameVisible(false)
+
+    skipAutosaveRef.current = false
+    skipLayoutSaveRef.current = false
+  }, [editor, activeDocId, draftHydrationVersion, articleData, token])
+
+  useEffect(() => {
+    if (!canEdit) return
+    if (!activeDocId) return
+    if (skipLayoutSaveRef.current) return
+
+    if (layoutSaveTimerRef.current) {
+      clearTimeout(layoutSaveTimerRef.current)
+    }
+
+    const layoutPayload = buildLayoutPayload()
+
+    layoutSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await saveDocLayout(activeDocId, layoutPayload)
+        if (typeof onDraftPersist === 'function') {
+          onDraftPersist(activeDocId, 'layout')
+        }
+      } catch {
+        // ignore
+      }
+    }, 250)
+
+    return () => {
+      if (layoutSaveTimerRef.current) {
+        clearTimeout(layoutSaveTimerRef.current)
+      }
+    }
+  }, [
+    activeDocId,
+    buildLayoutPayload,
+    canEdit,
+    onDraftPersist,
+  ])
+
+  useEffect(() => {
+    if (typeof onAnchorsChange === 'function') {
+      onAnchorsChange([])
+    }
+  }, [activeDocId, onAnchorsChange])
+
+  useEffect(() => {
+    const scopeEl = editorHoverScopeRef.current
+    if (!(scopeEl instanceof HTMLElement)) return
+    const panelContentEl = scopeEl.closest('.panel-content')
+    if (!(panelContentEl instanceof HTMLElement)) return
+
+    let raf = 0
+    const syncShift = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const scopeRect = scopeEl.getBoundingClientRect()
+        const panelRect = panelContentEl.getBoundingClientRect()
+        if (!scopeRect || !panelRect) return
+
+        const nextShift = Math.max(0, Math.round(scopeRect.left - panelRect.left))
+        setOverlayLeftShift(prev => (prev === nextShift ? prev : nextShift))
+      })
+    }
+
+    syncShift()
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(syncShift) : null
+    if (resizeObserver) {
+      resizeObserver.observe(scopeEl)
+      resizeObserver.observe(panelContentEl)
+    }
+
+    window.addEventListener('resize', syncShift)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', syncShift)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [articleWidthMode, articleWidthPreset, articleManualWidth])
+
+  const articleMaxWidth =
+    articleWidthMode === 'manual'
+      ? articleManualWidth
+      : articleWidthPreset === 'level4'
+        ? null
+        : ARTICLE_WIDTH_PRESET_MAX[articleWidthPreset]
+  const editorScopeStyle = {
+    '--article-pad-top': `${articlePadding.top}px`,
+    '--article-pad-right': `${articlePadding.right}px`,
+    '--article-pad-bottom': `${articlePadding.bottom}px`,
+    '--article-pad-left': `${articlePadding.left}px`,
+    '--overlay-left-shift': `${overlayLeftShift}px`,
+    marginLeft: 'auto',
+    marginRight: 'auto',
+    ...(articleMaxWidth ? { maxWidth: `${articleMaxWidth}px` } : {}),
+  }
+
+  if (!activeDocId) {
+    return <div className="tiptap-panel tiptap-panel-empty">Выберите документ</div>
+  }
+
+  if (!editor) {
+    return <div className="tiptap-panel">Загрузка редактора...</div>
+  }
+
+  return (
+    <DocumentationUploadProvider>
+    <div className="tiptap-panel">
+      <div className="tiptap-panel-header">
+        <button className="tiptap-panel-back-btn" onClick={handleBack}>
+          ← Назад
+        </button>
+        <div className="tiptap-panel-title">{docTitle || 'Без названия'}</div>
+        {canEdit && (
+          <div className="tiptap-panel-header-actions">
+            <button
+              type="button"
+              className="tiptap-panel-save-btn"
+              onClick={handleManualSave}
+              disabled={isManualSaving}
+            >
+              {isManualSaving ? 'Сохранение...' : 'Сохранить изменения'}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {canEdit && (
+        <Toolbar
+          editor={editor}
+          anchorModeEnabled={isAnchorModeEnabled}
+          onToggleAnchorMode={() => setIsAnchorModeEnabled(prev => !prev)}
+          articleWidthMode={articleWidthMode}
+          articleWidthPreset={articleWidthPreset}
+          articleManualWidth={articleManualWidth}
+          articleWidthFrameVisible={articleWidthFrameVisible}
+          onArticleWidthModeChange={handleArticleWidthModeChange}
+          onArticleWidthPresetChange={handleArticleWidthPresetChange}
+          onArticleManualWidthChange={handleArticleManualWidthChange}
+          onArticleWidthFrameVisibleChange={setArticleWidthFrameVisible}
+          articlePaddingMode={articlePaddingMode}
+          onArticlePaddingModeChange={handleArticlePaddingModeChange}
+          articlePaddingFrameVisible={articlePaddingFrameVisible}
+          onArticlePaddingFrameVisibleChange={setArticlePaddingFrameVisible}
+          onArticlePaddingReset={handleArticlePaddingReset}
+        />
+      )}
+
+      <div className="editor-hover-scope" style={editorScopeStyle} ref={editorHoverScopeRef}>
+        {canEdit && <PlusButtonOverlay editor={editor} />}
+        {canEdit && <BlockDragOverlay editor={editor} />}
+        {canEdit && <BlockSelectionOverlay editor={editor} />}
+        <AnchorHashOverlay
+          editor={editor}
+          enabled={canEdit && isAnchorModeEnabled}
+          onAnchorsChange={onAnchorsChange}
+        />
+        <div className="editor-content-frame">
+          <EditorContent editor={editor} />
+          <ArticleWidthFrameOverlay
+            editor={editor}
+            enabled={canEdit && articleWidthMode === 'manual' && articleWidthFrameVisible}
+            width={articleManualWidth}
+            onChange={handleArticleManualWidthChange}
+          />
+          <ArticlePaddingFrameOverlay
+            editor={editor}
+            enabled={canEdit && articlePaddingFrameVisible}
+            mode={articlePaddingMode}
+            padding={articlePadding}
+            onChange={setArticlePadding}
+          />
+        </div>
+      </div>
+
+      {viewer && (
+        <ImageViewer
+          images={viewer.images}
+          index={viewer.index}
+          onClose={() => setViewer(null)}
+        />
+      )}
+    </div>
+    </DocumentationUploadProvider>
+  )
+}

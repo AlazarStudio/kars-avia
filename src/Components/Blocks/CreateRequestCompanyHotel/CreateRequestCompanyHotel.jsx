@@ -1,226 +1,355 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import classes from './CreateRequestCompanyHotel.module.css';
+import classes from "./CreateRequestCompanyHotel.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { getCookie, server, CREATE_HOTEL_USER } from '../../../../graphQL_requests.js';
+import {
+  getCookie,
+  server,
+  CREATE_HOTEL_USER,
+} from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList.jsx";
+import MUILoader from "../MUILoader/MUILoader.jsx";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import { rolesObject } from "../../../roles.js";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
-function CreateRequestCompanyHotel({ show, onClose, addDispatcher, id }) {
-    const token = getCookie('token');
+function CreateRequestCompanyHotel({
+  show,
+  onClose,
+  addDispatcher,
+  addNotification,
+  positions,
+  id,
+}) {
+  const token = getCookie("token");
 
-    const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
-    const [formData, setFormData] = useState({
-        images: '',
-        name: '',
-        email: '',
-        role: '',
-        position: '',
-        login: '',
-        password: ''
+  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [formData, setFormData] = useState({
+    images: null,
+    name: "",
+    email: "",
+    role: "",
+    position: "",
+    login: "",
+    password: "",
+  });
+
+  const sidebarRef = useRef();
+
+  const resetForm = useCallback(() => {
+    setFormData({
+      images: null,
+      name: "",
+      email: "",
+      role: "",
+      position: "",
+      login: "",
+      password: "",
     });
+    setIsEdited(false); // Сброс флага изменений
+  }, []);
 
-    const sidebarRef = useRef();
+  const closeButton = useCallback(() => {
+    if (!isEdited) {
+      resetForm();
+      onClose();
+      return;
+    }
 
-    const resetForm = useCallback(() => {
-        setFormData({
-            images: '',
-            name: '',
-            email: '',
-            role: '',
-            position: '',
-            login: '',
-            password: ''
-        });
-        setIsEdited(false); // Сброс флага изменений
-    }, []);
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      resetForm();
+      onClose();
+    }
+  }, [isEdited, resetForm, onClose]);
 
-    const closeButton = useCallback(() => {
-        if (!isEdited) {
-            resetForm();
-            onClose();
-            return;
-        }
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  }, []);
 
+  const fileInputRef = useRef(null);
 
-        if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
-            resetForm();
-            onClose();
-        }
-    }, [isEdited, resetForm, onClose]);
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
+    if (file.size > maxSizeInBytes) {
+      alert("Размер файла не должен превышать 8 МБ!");
+      setFormData((prevState) => ({
+        ...prevState,
+        images: "",
+      }));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
+      }
+      return;
+    }
 
-    const handleChange = useCallback((e) => {
-        const { name, value } = e.target;
-        setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    }, []);
+    if (file) {
+      setFormData((prevState) => ({
+        ...prevState,
+        images: file, // Сохраняем файл напрямую
+      }));
+    }
+  };
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setFormData(prevState => ({
-                ...prevState,
-                images: file // Сохраняем файл напрямую
-            }));
-        }
-    };
-
-    const [uploadFile, { data, loading, error }] = useMutation(CREATE_HOTEL_USER, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
-            },
+  const [uploadFile, { data, loading, error }] = useMutation(
+    CREATE_HOTEL_USER,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Apollo-Require-Preflight": "true",
         },
-    });
+      },
+    }
+  );
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const [isLoading, setIsLoading] = useState(false);
 
-        // Проверяем обязательные поля
-        const requiredFields = ['name', 'email', 'role', 'position', 'login', 'password'];
-        const emptyFields = requiredFields.filter((field) => !formData[field]?.trim());
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-        if (emptyFields.length > 0) {
-            alert('Пожалуйста, заполните все обязательные поля.');
-            return;
-        }
+    // Проверяем обязательные поля
+    const requiredFields = [
+      "name",
+      "email",
+      "role",
+      "position",
+      "login",
+      "password",
+    ];
+    const emptyFields = requiredFields.filter(
+      (field) => !formData[field]?.trim()
+    );
 
-        if (!formData.images) {
-            alert('Пожалуйста, выберите файл для загрузки.');
-            return;
-        }
-        // if (!formData.images) {
-        //     alert('Пожалуйста, выберите файл для загрузки');
-        //     return;
-        // }
+    if (emptyFields.length > 0) {
+      alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
+      return;
+    }
 
-        try {
-            let response_create_user = await uploadFile({
-                variables: {
-                    input: {
-                        name: formData.name,
-                        email: formData.email,
-                        role: formData.role,
-                        position: formData.position,
-                        login: formData.login,
-                        password: formData.password,
-                        hotelId: id
-                    },
-                    images: formData.images
-                }
-            });
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Введите корректный email.");
+      setIsLoading(false);
+      return;
+    }
 
-            if (response_create_user) {
-                addDispatcher(response_create_user.data.registerUser);
-                resetForm();
-                onClose();
-            }
-        } catch (e) {
-            console.error('Ошибка при загрузке файла:', e);
-        }
+    if (formData.password.length < 8) {
+      alert("Пароль должен содержать минимум 8 символов.");
+      setIsLoading(false);
+      return;
+    }
+
+    // if (!formData.images) {
+    //     alert('Пожалуйста, выберите файл для загрузки.');
+    //     return;
+    // }
+
+    try {
+      const selectedPosition = positions.find(
+        (position) => position.name === formData.position
+      );
+
+      let response_create_user = await uploadFile({
+        variables: {
+          input: {
+            name: formData.name,
+            email: formData.email,
+            role: formData.role,
+            positionId: selectedPosition?.id,
+            login: formData.login,
+            password: formData.password,
+            hotelId: id,
+          },
+          images: formData.images,
+        },
+      });
+
+      if (response_create_user) {
+        addDispatcher(response_create_user.data.registerUser);
+        resetForm();
+        onClose();
+        addNotification("Создание аккаунта прошло успешно.", "success");
+      }
+    } catch (e) {
+      console.error("Ошибка при загрузке файла:", e);
+      if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким логином уже существует"
+        )
+      ) {
+        alert("Пользователь с таким логином уже существует");
+      } else if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким email уже существует"
+        )
+      ) {
+        alert("Пользователь с такой почтой уже существует");
+      } else if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким email и логином уже существует"
+        )
+      ) {
+        alert("Пользователь с такой почтой и логином уже существует");
+      }
+    } finally {
+      // onClose();
+      // resetForm();
+      setIsLoading(false);
+      // addNotification("Создание аккаунта прошло успешно.", "success");
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        sidebarRef.current?.contains(event.target) // Клик в боковой панели
+      ) {
+        return; // Если клик внутри, ничего не делаем
+      }
+
+      closeButton();
     };
 
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                sidebarRef.current?.contains(event.target) // Клик в боковой панели
-            ) {
-                return; // Если клик внутри, ничего не делаем
-            }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, closeButton]);
 
-            closeButton();
-        };
+  return (
+    <Sidebar show={show} sidebarRef={sidebarRef}>
+      <div className={classes.requestTitle}>
+        <div className={classes.requestTitle_name}>Добавить учетку</div>
+        <div className={classes.requestTitle_close} onClick={closeButton}>
+          <CloseIcon />
+        </div>
+      </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>ФИО</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Иванов Иван Иванович"
+                value={formData.name}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
 
-        if (show) {
-            document.addEventListener('mousedown', handleClickOutside);
-        } else {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
+              <label>Почта</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="example@mail.ru"
+                value={formData.email}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
 
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [show, closeButton]);
+              <label>Роль</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите роль"}
+                options={rolesObject.hotel}
+                value={
+                  rolesObject.hotel.find(
+                    (option) => option.value === formData.role
+                  ) || null
+                }
+                onChange={(event, newValue) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    role: newValue ? newValue.value : "",
+                  }));
+                }}
+              />
+              {/* <DropDownList
+                placeholder="Выберите роль"
+                searchable={false}
+                options={["HOTELADMIN"]} // Роли
+                initialValue={formData.role}
+                onSelect={(value) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    role: value,
+                  }));
+                }}
+              /> */}
 
-    return (
-        <Sidebar show={show} sidebarRef={sidebarRef}>
-            <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Добавить учетку</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
+              <label>Должность</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите должность"}
+                options={positions?.map((position) => position.name)}
+                value={formData.position}
+                onChange={(event, newValue) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    position: newValue,
+                  }));
+                }}
+              />
+
+              <label>Логин</label>
+              <input
+                type="text"
+                name="login"
+                placeholder="Логин"
+                value={formData.login}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
+
+              <label>Пароль</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Пароль"
+                value={formData.password}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
+
+              <label>Аватар</label>
+              <input
+                type="file"
+                name="images"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
             </div>
+          </div>
 
-            <div className={classes.requestMiddle}>
-                <div className={classes.requestData}>
-                    <label>ФИО</label>
-                    <input type="text" name="name" placeholder="Иванов Иван Иванович" value={formData.name} onChange={handleChange} />
-
-                    <label>Почта</label>
-                    <input type="email" name="email" placeholder="example@mail.ru" value={formData.email} onChange={handleChange} />
-
-                    <label>Роль</label>
-                    <DropDownList
-                        placeholder="Выберите роль"
-                        searchable={false}
-                        options={['HOTELADMIN']} // Роли
-                        initialValue={formData.role}
-                        onSelect={(value) => {
-                            setIsEdited(true);
-                            setFormData((prevData) => ({
-                                ...prevData,
-                                role: value,
-                            }));
-                        }}
-                    />
-                    {/* <select name="role" value={formData.role} onChange={handleChange}>
-                        <option value="" disabled>Выберите роль</option>
-                        <option value="HOTELMODERATOR">Модератор</option>
-                        <option value="HOTELADMIN">HOTELADMIN</option>
-                        <option value="HOTELUSER">Пользователь</option>
-                    </select> */}
-
-                    <label>Должность</label>
-                    <DropDownList
-                        placeholder="Выберите должность"
-                        searchable={false}
-                        options={['Модератор', 'Администратор']} // Должности
-                        initialValue={formData.position}
-                        onSelect={(value) => {
-                            setIsEdited(true);
-                            setFormData((prevData) => ({
-                                ...prevData,
-                                position: value,
-                            }));
-                        }}
-                    />
-                    {/* <select name="position" value={formData.position} onChange={handleChange}>
-                        <option value="" disabled>Выберите должность</option>
-                        <option value="Модератор">Модератор</option>
-                        <option value="Администратор">Администратор</option>
-                    </select> */}
-
-                    <label>Логин</label>
-                    <input type="text" name="login" placeholder="Логин" value={formData.login} onChange={handleChange} />
-
-                    <label>Пароль</label>
-                    <input type="password" name="password" placeholder="Пароль" value={formData.password} onChange={handleChange} />
-
-                    <label>Аватар</label>
-                    <input type="file" name="images" onChange={handleFileChange} />
-                </div>
-
-            </div>
-
-            <div className={classes.requestButton}>
-                <Button type="submit" onClick={handleSubmit}>Добавить</Button>
-            </div>
-        </Sidebar>
-    );
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
+    </Sidebar>
+  );
 }
 
 export default CreateRequestCompanyHotel;

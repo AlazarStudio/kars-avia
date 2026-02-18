@@ -18,10 +18,20 @@ const AddPassengersModal = ({ isOpen, onClose, isPerson, airlineId, reserveId, t
     const [requestsHotelReserveOne, setRequestsHotelReserveOne] = useState([]);
 
     const { loading, error, data } = useQuery(GET_AIRLINE_USERS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { airlineId },
     });
 
     const { loading: loadingHotelReserveOne, error: errorHotelReserveOne, data: dataHotelReserveOne, refetch: refetchHotelReserveOne } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { reservationHotelsId: openReserveId },
     });
 

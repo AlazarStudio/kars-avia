@@ -1,180 +1,449 @@
-import React, { useState, useRef, useEffect } from "react";
-import classes from './Сompany.module.css';
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import classes from "./Сompany.module.css";
 import Filter from "../Filter/Filter";
-import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
-import { requestsCompany } from "../../../requests";
 import Header from "../Header/Header";
-import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
-import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
-import { DELETE_DISPATCHER_USER, GET_DISPATCHERS, GET_DISPATCHERS_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests";
+import {
+  DELETE_DISPATCHER_DEPARTMENT,
+  DELETE_DISPATCHER_USER,
+  GET_ALL_DISPATCHERS,
+  GET_DISPATCHER_DEPARTMENTS,
+  GET_DISPATCHER_POSITIONS,
+  GET_DISPATCHERS_SUBSCRIPTION,
+  getCookie,
+} from "../../../../graphQL_requests";
+import MUILoader from "../MUILoader/MUILoader";
+import MUITextField from "../MUITextField/MUITextField";
+import Notification from "../../Notification/Notification";
+import { fullNotifyTime, notifyTime } from "../../../roles";
+import { canAccessMenu } from "../../../utils/access";
+import { useNavigate } from "react-router-dom";
+import InfoTableDataDispatcherCompany from "../InfoTableDataDispatcherCompany/InfoTableDataDispatcherCompany";
+import CreateRequestDispatcherCompany from "../CreateRequestDispatcherCompany/CreateRequestDispatcherCompany";
+import ExistRequestDispatcherCompany from "../ExistRequestDispatcherCompany/ExistRequestDispatcherCompany";
+import CreateRequestDispatcherDepartment from "../CreateRequestDispatcherDepartment/CreateRequestDispatcherDepartment";
+import EditRequestDispatcherDepartment from "../EditRequestDispatcherDepartment/EditRequestDispatcherDepartment";
+import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
+import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
 
-function Company({ children, user, ...props }) {
-    const token = getCookie('token');
+function Company({ user, accessMenu }) {
+  const token = getCookie("token");
+  const navigate = useNavigate();
+  const canCreate = canAccessMenu(accessMenu, "userCreate", user);
+  const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
 
-    const { loading, error, data, refetch } = useQuery(GET_DISPATCHERS);
-    const { data: dataSubscription } = useSubscription(GET_DISPATCHERS_SUBSCRIPTION);
+  const {
+    loading: dispatchersLoading,
+    error: dispatchersError,
+    data: dispatchersData,
+    refetch: refetchDispatchers,
+  } = useQuery(GET_ALL_DISPATCHERS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
-    const [showCreateSidebar, setShowCreateSidebar] = useState(false);
-    const [showRequestSidebar, setShowRequestSidebar] = useState(false);
-    const [chooseObject, setChooseObject] = useState(null);
-    const [showDelete, setShowDelete] = useState(false);
-    const [deleteIndex, setDeleteIndex] = useState(null);
+  const {
+    loading: departmentsLoading,
+    error: departmentsError,
+    data: departmentsData,
+    refetch: refetchDepartments,
+  } = useQuery(GET_DISPATCHER_DEPARTMENTS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      pagination: { all: true },
+    },
+  });
 
-    const deleteComponentRef = useRef();
+  // console.log(dispatchersData)
+  // console.log(departmentsData)
 
-    const [companyData, setCompanyData] = useState([]);
-
-    useEffect(() => {
-        if (data) {
-            const sortedDispatchers = [...data.dispatcherUsers].sort((a, b) => a.name.localeCompare(b.name));
-            setCompanyData(sortedDispatchers)
-        }
-        refetch()
-    }, [data, dataSubscription, refetch]);
-
-    const addDispatcher = (newDispatcher) => {
-        setCompanyData([...companyData, newDispatcher].sort((a, b) => a.name.localeCompare(b.name)));
-    };
-
-    const updateDispatcher = (updatedDispatcher, index) => {
-        const newData = [...companyData];
-        newData[index] = updatedDispatcher;
-        setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
-    };
-
-    const [deleteDispatcherUser] = useMutation(DELETE_DISPATCHER_USER, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                // 'Apollo-Require-Preflight': 'true',
-            },
+  const { data: dataSubscription } = useSubscription(
+    GET_DISPATCHERS_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-    });
+      },
+    }
+  );
 
-    const deleteDispatcher = async (index, userID) => {
-        let response_delete_user = await deleteDispatcherUser({
-            variables: {
-                "deleteUserId": userID
-            }
+  const {
+    loading: positionsLoading,
+    error: positionsError,
+    data: positionsData,
+  } = useQuery(GET_DISPATCHER_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, fullNotifyTime);
+  };
+
+  const [departments, setDepartments] = useState([]);
+  const [dispatchers, setDispatchers] = useState([]);
+  const [positions, setPositions] = useState([]);
+
+  useEffect(() => {
+    if (dispatchersData?.dispatcherUsers?.users) {
+      const sortedDispatchers = [...dispatchersData.dispatcherUsers.users].sort(
+        (a, b) => a.name.localeCompare(b.name)
+      );
+      setDispatchers(sortedDispatchers);
+    }
+  }, [dispatchersData]);
+
+  useEffect(() => {
+    if (departmentsData?.dispatcherDepartments?.departments) {
+      const sortedDepartments = [
+        ...departmentsData.dispatcherDepartments.departments,
+      ].sort((a, b) => a.name.localeCompare(b.name));
+      setDepartments(sortedDepartments);
+    }
+  }, [departmentsData]);
+
+  useEffect(() => {
+    if (positionsData) {
+      setPositions(positionsData?.getDispatcherPositions);
+    }
+  }, [positionsData]);
+
+  useEffect(() => {
+    if (dataSubscription) {
+      refetchDispatchers();
+      refetchDepartments();
+    }
+  }, [dataSubscription, refetchDispatchers, refetchDepartments]);
+
+  const [showCreateDispatcher, setShowCreateDispatcher] = useState(false);
+  const [showEditDispatcher, setShowEditDispatcher] = useState(false);
+  const [selectedDispatcher, setSelectedDispatcher] = useState(null);
+
+  const [showCreateDepartment, setShowCreateDepartment] = useState(false);
+  const [showEditDepartment, setShowEditDepartment] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState(null);
+
+  const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
+  const [selectedDepartmentForSettings, setSelectedDepartmentForSettings] = useState(null);
+  const settingsSidebarRef = useRef(null);
+
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const deleteComponentRef = useRef();
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const [deleteDispatcherUser] = useMutation(DELETE_DISPATCHER_USER, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const [deleteDispatcherDepartment] = useMutation(DELETE_DISPATCHER_DEPARTMENT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const openEditDepartment = (department) => {
+    if (!canEdit) return;
+    setSelectedDepartment(department);
+    setShowEditDepartment(true);
+  };
+
+  const openEditDispatcher = (dispatcher) => {
+    if (!canEdit) return;
+    const index = dispatchers.findIndex((item) => item.id === dispatcher.id);
+    setSelectedDispatcher({ ...dispatcher, index });
+    setShowEditDispatcher(true);
+  };
+
+  const openAccessDepartment = (department) => {
+    if (!canEdit) return;
+    setSelectedDepartmentForSettings(department);
+    setShowSettingsSidebar(true);
+  };
+
+  const openDeleteDepartment = (department) => {
+    if (!canEdit) return;
+    setDeleteTarget({ type: "department", department });
+    setShowDelete(true);
+    setShowEditDepartment(false);
+  };
+
+  const openDeleteDispatcher = (dispatcher) => {
+    if (!canEdit) return;
+    setDeleteTarget({ type: "dispatcher", dispatcher });
+    setShowDelete(true);
+    setShowEditDispatcher(false);
+  };
+
+  const closeDeleteComponent = () => {
+    setShowDelete(false);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      if (deleteTarget.type === "department") {
+        await deleteDispatcherDepartment({
+          variables: {
+            deleteDispatcherDepartmentId: deleteTarget.department.id,
+          },
         });
-        if (response_delete_user) {
-            setCompanyData(companyData.filter((_, i) => i !== index));
-            setShowDelete(false);
-            setShowRequestSidebar(false);
-        }
-    };
+        addNotification("Удаление отдела прошло успешно.", "success");
+        refetchDepartments();
+      }
 
-    const toggleCreateSidebar = () => {
-        setShowCreateSidebar(!showCreateSidebar);
-    };
-
-    const toggleRequestSidebar = () => {
-        setShowRequestSidebar(!showRequestSidebar);
-    };
-
-    const openDeleteComponent = (index, userID) => {
-        setShowDelete(true);
-        setDeleteIndex({ index, userID });
-        setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
-    };
-
-    const closeDeleteComponent = () => {
-        setShowDelete(false);
-        setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
-    };
-
-    const [filterData, setFilterData] = useState({
-        filterSelect: '',
-    });
-
-    const [searchQuery, setSearchQuery] = useState('');
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFilterData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
+      if (deleteTarget.type === "dispatcher") {
+        await deleteDispatcherUser({
+          variables: {
+            deleteUserId: deleteTarget.dispatcher.id,
+          },
+        });
+        addNotification("Удаление диспетчера прошло успешно.", "success");
+        refetchDispatchers();
+        refetchDepartments();
+      }
+    } catch (error) {
+      console.error("Ошибка при удалении", error);
+      addNotification("Ошибка при удалении.", "error");
+    } finally {
+      setShowDelete(false);
     }
+  };
 
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
-    }
+  const openDeleteDispatcherFromSidebar = (index, userId) => {
+    const dispatcher = dispatchers.find((item) => item.id === userId) || {
+      id: userId,
+    };
+    openDeleteDispatcher(dispatcher);
+  };
 
-    const filteredRequests = companyData.filter(request => {
-        return (
-            (filterData.filterSelect === '' || request.role.includes(filterData.filterSelect)) &&
-            (
-                request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                request.role.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-        );
+  const filteredDispatchers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return dispatchers;
+
+    return dispatchers.filter((dispatcher) => {
+      return (
+        dispatcher.name?.toLowerCase().includes(query) ||
+        dispatcher.role?.toLowerCase().includes(query) ||
+        dispatcher.position?.name?.toLowerCase().includes(query)
+      );
     });
+  }, [dispatchers, searchQuery]);
 
-    let filterList = ['Модератор', 'Администратор'];
+  const groups = useMemo(() => {
+    const groupsList = departments.map((department) => ({
+      ...department,
+      dispatchers: [],
+    }));
 
-    return (
-        <>
-            <div className={classes.section}>
-                <Header>Компания</Header>
-
-                <div className={classes.section_searchAndFilter}>
-                    <input
-                        type="text"
-                        placeholder="Поиск"
-                        style={{ width: '500px' }}
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    />
-                    <Filter
-                        toggleSidebar={toggleCreateSidebar}
-                        handleChange={handleChange}
-                        filterData={filterData}
-                        buttonTitle={'Добавить аккаунт диспетчера'}
-                        filterList={filterList}
-                        needDate={false}
-                    />
-                </div>
-                {loading && <p>Loading...</p>}
-                {error && <p>Error: {error.message}</p>}
-
-                {!loading && !error && (
-                    <InfoTableDataCompany
-                        toggleRequestSidebar={toggleRequestSidebar}
-                        requests={filteredRequests}
-                        setChooseObject={setChooseObject}
-                    />
-                )}
-
-                <CreateRequestCompany
-                    show={showCreateSidebar}
-                    onClose={toggleCreateSidebar}
-                    addDispatcher={addDispatcher}
-                />
-
-                <ExistRequestCompany
-                    show={showRequestSidebar}
-                    onClose={toggleRequestSidebar}
-                    chooseObject={chooseObject}
-                    updateDispatcher={updateDispatcher}
-                    openDeleteComponent={openDeleteComponent}
-                    deleteComponentRef={deleteComponentRef}
-                    filterList={filterList}
-                />
-
-                {showDelete && (
-                    <DeleteComponent
-                        ref={deleteComponentRef}
-                        remove={() => deleteDispatcher(deleteIndex.index, deleteIndex.userID)}
-                        close={closeDeleteComponent}
-                        title={`Вы действительно хотите удалить диспетчера?`}
-                    />
-                )}
-            </div>
-        </>
+    const departmentMap = new Map(
+      groupsList.map((department) => [department.id, department])
     );
+
+    const noDepartment = {
+      id: "no-department",
+      name: "Без отдела",
+      isNoDepartment: true,
+      dispatchers: [],
+    };
+
+    filteredDispatchers.forEach((dispatcher) => {
+      const department = departmentMap.get(dispatcher.dispatcherDepartmentId);
+      if (department) {
+        department.dispatchers.push(dispatcher);
+      } else {
+        noDepartment.dispatchers.push(dispatcher);
+      }
+    });
+
+    const sorted = [...departmentMap.values()].map((department) => ({
+      ...department,
+      dispatchers: [...department.dispatchers].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      ),
+    }));
+
+    if (noDepartment.dispatchers.length > 0) {
+      sorted.push({
+        ...noDepartment,
+        dispatchers: [...noDepartment.dispatchers].sort((a, b) =>
+          a.name.localeCompare(b.name)
+        ),
+      });
+    }
+
+    return sorted;
+  }, [departments, filteredDispatchers]);
+
+  const isLoading = dispatchersLoading || departmentsLoading || positionsLoading;
+  const hasError = dispatchersError || departmentsError || positionsError;
+
+  return (
+    <>
+      <div className={classes.section}>
+        <Header>Пользователи</Header>
+
+        <div className={classes.section_searchAndFilter}>
+          <MUITextField
+            label={"Поиск по аккаунтам"}
+            className={classes.mainSearch}
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+          {canCreate && (
+            <div className={classes.section_searchAndFilter_filter}>
+              <Filter
+                toggleSidebar={() => setShowCreateDepartment(true)}
+                handleChange={""}
+                buttonTitle={"Добавить отдел"}
+              />
+              <Filter
+                toggleSidebar={() => setShowCreateDispatcher(true)}
+                handleChange={""}
+                buttonTitle={"Добавить аккаунт диспетчера"}
+              />
+            </div>
+          )}
+        </div>
+
+        {isLoading && <MUILoader />}
+        {hasError && <p>Error: {hasError.message}</p>}
+
+        {!isLoading && !hasError && (
+          <InfoTableDataDispatcherCompany
+            user={user}
+            groups={groups}
+            onEditDepartment={openEditDepartment}
+            onDeleteDepartment={openDeleteDepartment}
+            onOpenAccess={openAccessDepartment}
+            onEditDispatcher={openEditDispatcher}
+            onDeleteDispatcher={openDeleteDispatcher}
+            accessMenu={accessMenu}
+          />
+        )}
+
+        {canCreate && (
+          <CreateRequestDispatcherCompany
+            show={showCreateDispatcher}
+            onClose={() => setShowCreateDispatcher(false)}
+            onCreated={() => {
+              refetchDispatchers();
+              refetchDepartments();
+            }}
+            positions={positions}
+            departments={departments}
+            addNotification={addNotification}
+          />
+        )}
+
+        {canEdit && (
+          <ExistRequestCompany
+            show={showEditDispatcher}
+            onClose={() => setShowEditDispatcher(false)}
+            chooseObject={selectedDispatcher}
+            updateDispatcher={() => {}}
+            openDeleteComponent={openDeleteDispatcherFromSidebar}
+            positions={positions}
+            departments={departments}
+            addNotification={addNotification}
+            onUpdated={() => {
+              refetchDispatchers();
+              refetchDepartments();
+            }}
+          />
+        )}
+
+        {canCreate && (
+          <CreateRequestDispatcherDepartment
+            show={showCreateDepartment}
+            onClose={() => setShowCreateDepartment(false)}
+            onCreated={() => refetchDepartments()}
+            addNotification={addNotification}
+          />
+        )}
+
+        {canEdit && (
+          <EditRequestDispatcherDepartment
+            show={showEditDepartment}
+            onClose={() => setShowEditDepartment(false)}
+            department={selectedDepartment}
+            onUpdated={() => refetchDepartments()}
+            addNotification={addNotification}
+          />
+        )}
+
+        {showDelete && (
+          <DeleteComponent
+            ref={deleteComponentRef}
+            remove={handleDelete}
+            close={closeDeleteComponent}
+            title={`Вы действительно хотите удалить ${
+              deleteTarget?.type === "dispatcher" ? "диспетчера" : "отдел"
+            }?`}
+          />
+        )}
+
+        <SettingsSidebar
+          show={showSettingsSidebar}
+          sidebarRef={settingsSidebarRef}
+          onClose={() => {
+            setShowSettingsSidebar(false);
+            setSelectedDepartmentForSettings(null);
+          }}
+          user={user}
+          departmentId={selectedDepartmentForSettings?.id}
+          departmentItem={selectedDepartmentForSettings}
+          type="dispatcher"
+        />
+
+        {notifications.map((n, index) => (
+          <Notification
+            key={n.id}
+            text={n.text}
+            status={n.status}
+            index={index}
+            time={notifyTime}
+            onClose={() => {
+              setNotifications((prev) =>
+                prev.filter((notif) => notif.id !== n.id)
+              );
+            }}
+          />
+        ))}
+      </div>
+    </>
+  );
 }
 
 export default Company;

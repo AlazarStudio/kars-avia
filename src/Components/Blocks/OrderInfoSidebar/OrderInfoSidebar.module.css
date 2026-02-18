@@ -1,0 +1,173 @@
+.sidebar {
+  width: 100%;
+}
+
+.card {
+  /* height: calc(100vh - 210px); */
+  height: calc(100vh - 152px);
+  background-color: #ffffff;
+  border-radius: 16px;
+  /* box-shadow: 0 0 0 1px #e4e4ef; */
+  padding: 20px 30px;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+.cardContent {
+  padding: 0 0 20px 0;
+  height: calc(100vh - 234px);
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  gap: 20px;
+  scrollbar-width: none;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--main-gray);
+}
+
+/* аватар + имя + рейтинг */
+
+.clientBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.clientAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.clientName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.clientRating {
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+/* маршрут */
+
+.routeCard {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid #e4e4ef;
+  background-color: #ffffff;
+  display: flex;
+  /* flex-direction: column; */
+  gap: 10px;
+}
+
+/* левая колонка с линией и точками */
+.routeMarkers {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* вертикальная линия по высоте контента справа */
+.routeLine {
+  flex: 1;
+  width: 2px;
+  background-color: #d4dce5;
+}
+
+/* точки */
+.routeDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #c4ceda;
+  background-color: #ffffff;
+}
+
+.routeDotEmpty {
+  /* margin-bottom: 4px; */
+}
+
+.routeDotFilled {
+  /* margin-top: 4px; */
+  border-color: #0057c3;
+  background-color: #0057c3;
+}
+
+/* правая колонка */
+.routeContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* отдельная строка адреса */
+.routeRow {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #1b2733;
+}
+
+/* разделитель между адресами */
+.routeDivider {
+  height: 1px;
+  background-color: #e8edf1;
+}
+
+/* текст адреса (многострочный) */
+.routeText {
+  white-space: normal;
+  word-break: break-word;
+}
+/* мета и поля */
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.metaLabel {
+  color: #c4c7d4;
+  font-size: 14px;
+}
+
+.metaValue {
+  color: #111827;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fakeInput {
+  height: 56px;
+  border-radius: 12px;
+  padding: 12px;
+  background-color: #f5f5fb;
+}
+
+
+@media (max-width: 1499px) {
+  .routeText {
+    font-size: 12px;
+  }
+
+  .card {
+    padding: 15px 20px;
+  }
+}

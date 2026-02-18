@@ -1,18 +1,40 @@
-.Button {
+/* .Button {
     height: 40px;
+    background-color: #0057C3;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-family: Nunito Sans;
+    font-size: 15px;
+    font-weight: 400;
+    padding: 0 30px;
+    transition: all 0.3s ease-in-out;
+    gap: 5px;
+    opacity: 0.8;
+    cursor: pointer;
+} */
+
+.Button {
+    padding: var(--button-padding, initial) !important;
+    min-width: var(--button-min-width, initial) !important;
+    max-width: var(--button-max-width, initial) !important;
+    /* width: var(--button-width, initial) !important; */
+    height: var(--button-height, initial) !important;
+    cursor: var(--button-cursor, pointer) !important;
+    background-color: var(--button-bg-color, initial) !important;
+    color: var(--button-color, initial) !important;
+    border: var(--button-border, none) !important;
+    user-select: var(--button-user-select, initial) !important;
+    /* flex: var(--button-flex, none) !important; */
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #0057C3;
-    border-radius: 5px;
-    color: #FFFFFF;
-    font-family: Nunito Sans;
-    font-size: 16px;
+    gap: 5px;
+    border-radius: 10px;
+    font-size: 15px;
     font-weight: 400;
-    padding: 0 35px;
-    transition: all 0.3s ease-in-out;
-    gap: 10px;
     opacity: 0.8;
+    transition: all 0.3s ease-in-out;
 }
 
 .Button:hover {
@@ -21,4 +43,24 @@
 
 .Button svg path {
     transition: all 0.3s ease-in-out;
+}
+
+/* @media (min-width: 0px) and (max-width: 1650px) {
+    .Button {
+        height: 40px;
+        font-size: 14px;
+        padding: 0 15px;
+        gap: 10px;
+        opacity: 0.8;
+    }
+} */
+
+@media (min-width: 0px) and (max-width: 1499px) {
+    .Button {
+        height: 40px;
+        font-size: 14px !important;
+        padding: 0 15px !important;
+        gap: 5px;
+        opacity: 0.8;
+    }
 }

@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 
 import { getCookie, UPDATE_HOTEL_TARIF } from '../../../../graphQL_requests.js';
 import { useMutation, useQuery } from "@apollo/client";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function CreateRequestTarif({ show, onClose, id, addTarif, setAddTarif }) {
     const token = getCookie('token');
@@ -89,7 +90,7 @@ function CreateRequestTarif({ show, onClose, id, addTarif, setAddTarif }) {
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
                 <div className={classes.requestTitle_name}>Добавить тариф</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
+                <div className={classes.requestTitle_close} onClick={closeButton}><CloseIcon /></div>
             </div>
 
             <div className={classes.requestMiddle}>

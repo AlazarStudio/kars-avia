@@ -1,0 +1,15 @@
+.smileBlock{
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+}
+ul, ol {
+  /* padding-left: 30px;   */
+}
+
+li {
+  /* margin-bottom: 5px;  Отступ между элементами списка */
+}
+
+
+@media (min-width: 0px) and (max-width: 1299px) {}

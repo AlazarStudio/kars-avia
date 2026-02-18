@@ -98,6 +98,11 @@ const HotelTable = ({ allRooms, data, idHotel, dataObject, id }) => {
 
     const [bronDataInfo, setBronDataInfo] = useState();
     const { data: bronData } = useQuery(GET_REQUEST, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
         variables: { requestId: state.newBookings[0].requestId },
     });
 

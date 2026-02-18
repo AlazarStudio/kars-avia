@@ -19,12 +19,10 @@
     font-size: 24px;
     font-weight: 600;
     line-height: 38.73px;
-    color: var(--main-gray);
+    color: var(--text);
 }
 
 .requestTitle_close {
-    width: 25px;
-    height: 25px;
     cursor: pointer;
 }
 
@@ -67,7 +65,7 @@
 
 .requestData input,
 select {
-    height: 38px;
+    height: 40px;
     outline: none;
     padding: 0 10px;
     cursor: pointer;
@@ -76,7 +74,7 @@ select {
 .requestMiddle {
     height: calc(100% - 90px - 71px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -107,6 +105,14 @@ select {
     justify-content: flex-end;
 }
 
+.requestButton a {
+    width: 49%;
+}
+
+.requestButton button {
+    width: 49%;
+}
+
 .titleLabel {
     display: flex;
     justify-content: center;
@@ -115,4 +121,64 @@ select {
     line-height: 19.36px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo input {
+    width: 60%;
+}
+
+.requestDataInfo .dropdown {
+    width: 60%;
+    height: 40px;
+    outline: none;
+    cursor: pointer;
+}
+
+.requestDataInfo .dropdown input {
+    width: 100%;
+}
+
+.requestDataInfo_img {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.requestDataInfo_img_imgBlock {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.requestDataInfo_img_imgBlock img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.requestData label {
+    font-size: 14px;
+}
+
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .requestTitle_name {
+        font-size: 20px;
+        line-height: 34.73px;
+    }
+
+    .requestTitle_close {
+        width: 20px;
+        height: 20px;
+    }
+
+    .requestData input {
+        font-size: 14px;
+    }
+}

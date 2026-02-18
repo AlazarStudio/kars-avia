@@ -19,12 +19,10 @@
     font-size: 24px;
     font-weight: 600;
     line-height: 38.73px;
-    color: var(--main-gray);
+    color: var(--text);
 }
 
 .requestTitle_close {
-    width: 25px;
-    height: 25px;
     cursor: pointer;
 }
 
@@ -67,9 +65,12 @@
 
 .requestData input,
 .requestData select {
-    height: 38px;
+    height: 40px;
     outline: none;
     padding: 0 10px;
+}
+
+.requestData select {
     cursor: pointer;
 }
 
@@ -77,7 +78,7 @@
     /* height: calc(100% - 90px - 71px); */
     height: calc(100% - 90px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -129,7 +130,7 @@
     line-height: 21.82px;
     width: 60%;
     padding: 10px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 .requestDataInfo input {

@@ -1,8 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800&display=swap');
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Montserrat', sans-serif !important;
+    /* font-family: 'Montserrat', sans-serif !important; */
+    font-family: 'Open Sans', sans-serif !important;
+    /* font-family: 'Inter', sans-serif !important; */
+    /* font-family: 'Roboto', sans-serif !important; */
+    /* font-family: 'Nunito', sans-serif !important; */
     scroll-behavior: smooth;
 }
 
@@ -14,13 +20,31 @@ a {
     --menu-width: 345px;
     --blockWidth: 1300px;
     --menu-gray: #7f808a;
+    --no-active: #AFB4BA;
+    --text: #191919;
+    --gray: #F1F4FB;
     --menu-bg: #353B55;
     --menu-item-bg: #303552;
     --white: #fff;
     --red: #C03B28;
     --main-gray: #545873;
     --text-gray: #9E9E9E;
-    --hover-gray: #F5F6F8;
+    --hover-gray: #EDF0F7;
+    /* --hover-gray: #F5F6F8; */
+    --light-blue: #2196F3;
+    --blue: #007AFF;
+    --dark-blue: #0057C3;
+    --black: #000;
+}
+
+.blueText {
+    color: var(--blue);
+}
+
+button {
+    border: none;
+    outline: none;
+    cursor: pointer;
 }
 
 body {
@@ -30,7 +54,7 @@ body {
 main {
     display: flex;
     flex-direction: column;
-    gap: 80px;
+    gap: 40px;
     padding-bottom: 80px;
 }
 
@@ -39,7 +63,7 @@ select {
     height: 40px;
     border: 1px solid var(--text-gray);
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-family: Inter;
     padding: 0 10px;
 }
@@ -51,103 +75,229 @@ input[type="file"] {
     height: auto;
 }
 
+/* 1. Убираем нативный вид */
+input[type="checkbox"] {
+    padding: 0 !important;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 20px !important;
+    height: 20px !important;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    background-color: #fff;
+    position: relative;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background-color .15s, border-color .15s;
+}
+
+/* 2. Состояние checked — фон и бордер */
+input[type="checkbox"]:checked {
+    /* background-color: #B0B0B0;
+    border-color: #B0B0B0; */
+    background-color: var(--light-blue);
+    border-color: var(--light-blue);
+}
+
+/* 3. Галочка через ::after */
+input[type="checkbox"]::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 4px;
+    height: 8px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: translate(-50%, -60%) rotate(45deg);
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+/* 4. Показываем галочку, когда checked */
+input[type="checkbox"]:checked::after {
+    opacity: 1;
+}
+
+
 textarea {
     resize: vertical;
     border: 1px solid var(--text-gray);
     outline: none;
-    border-radius: 5px;
+    border-radius: 10px;
     font-family: Inter;
     padding: 10px;
 }
 
 ::-webkit-scrollbar {
+    /* width: 6px; */
     width: 8px;
     height: 8px;
-    background-color: #fff;
+    /* background-color: #fff; */
+    background-color: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background-color: #0057C3;
-    border-radius: 10px;
+    background-color: var(--hover-gray);
+    /* border-radius: 10px; */
 }
 
-::-webkit-scrollbar-thumb:hover {
+/* ::-webkit-scrollbar-thumb:hover {
     background-color: #0063DE;
+} */
+
+/* DateRangePicker внутри элемента с классом no-sidebar */
+.no-sidebar .rdrDefinedRangesWrapper {
+    display: none;
+}
+
+.no-sidebar .rdrCalendarWrapper {
+    grid-template-columns: 1fr auto;
+}
+
+.ql-snow {
+    padding-top: 15px;
+}
+
+.ql-editor p {
+    line-height: 150% !important;
+    padding-bottom: 12px !important;
 }
 
 
-
+*:focus {
+    outline: none;
+}
 
 .opened {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #ffbd97;
 }
 
 .canceled {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #ff6a6a;
 }
 
 .done {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #7cffc0;
 }
 
 .created {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: var(--text-gray);
 }
 
 .extended {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #2196f3;
 }
 
 .reduced {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #f44336;
 }
 
 .transferred {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #ff9800;
 }
 
 .earlyStart {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #9575cd;
 }
 
 .archiving {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #d6a570;
     /* мягкий оттенок коричневого */
 }
 
 .archived {
-    width: 10px;
-    height: 10px;
+    min-width: 10px;
+    min-height: 10px;
     border-radius: 50%;
     background-color: #a0a0a0;
     /* тёмно-серый для архивных */
+}
+
+
+/* transfer */
+.pending {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #FED806;
+}
+
+.assigned {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #285FE5;
+}
+
+.accepted {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #ffbd97;
+}
+
+.arrived {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #ffbd97;
+}
+
+.in_progress_to_client {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #ffbd97;
+}
+
+.in_progress_to_hotel {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #ffbd97;
+}
+
+.completed {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #56BA53;
+}
+
+.cancelled {
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background-color: #C03B28;
 }
 
 
@@ -182,4 +332,44 @@ textarea {
 .disabled {
     opacity: 0.5;
     pointer-events: none;
+}
+
+.swiper {
+    position: static;
+    /* max-width: 65vw;
+    max-height: 65vh;
+    min-width: 65vw;
+    min-height: 65vh; */
+}
+
+/* Стиль для контейнера пагинации */
+.swiper-pagination {
+    position: absolute !important;
+    /* bottom: 20% !important; */
+    bottom: 5% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 10 !important;
+}
+
+/* Стиль для точек пагинации */
+.swiper-pagination-bullet {
+    background-color: rgb(255, 255, 255) !important;
+    width: 7px !important;
+    height: 7px !important;
+    margin: 0 3px !important;
+    border-radius: 50% !important;
+    opacity: 0.5;
+    transition: background-color 0.3s ease !important;
+}
+
+/* Стиль для активной точки пагинации */
+.swiper-pagination-bullet-active {
+    background-color: var(--blue) !important;
+    opacity: 1;
+}
+
+.historyLogTime {
+    color: #54587380;
+    padding-right: 8px;
 }

@@ -23,23 +23,6 @@ function InfoTableDataReports({
 
   return (
     <>
-      {user.role === roles.superAdmin || user.role === roles.dispatcerAdmin ? (
-        <div className={classes.filter_wrapper}>
-          <button
-            onClick={() => setIsAirline(true)}
-            className={isAirline === true ? classes.activeButton : null}
-          >
-            Авиакомпании
-          </button>
-          <button
-            onClick={() => setIsAirline(false)}
-            className={isAirline === false ? classes.activeButton : null}
-          >
-            Гостиницы
-          </button>
-        </div>
-      ) : null}
-
       <InfoTable>
         <div className={classes.InfoTable_title}>
           <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>
@@ -56,7 +39,7 @@ function InfoTableDataReports({
           </div>
         </div>
 
-        <div className={classes.bottom}>
+        <div className={classes.bottom} style={(user?.airlineId || user?.hotelId) && {height:"calc(100vh - 270px)"}}>
           {requests?.map((item, index) => {
             const image = isAirline
               ? item?.airline?.images[0]
@@ -79,7 +62,7 @@ function InfoTableDataReports({
                       <img
                         src={image ? `${server}${image}` : "/no-avatar.png"}
                         alt=""
-                        style={{ borderRadius: "50%" }}
+                        style={{ borderRadius: "50%", userSelect: "none" }}
                       />
                     </div>
                     <div className={classes.InfoTable_data_elem_title}>
@@ -91,7 +74,8 @@ function InfoTableDataReports({
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >
                   <div className={classes.InfoTable_data_elem_title}>
-                    {convertToDate(item?.createdAt)}
+                    {convertToDate(item?.createdAt)} {' '}
+                    {convertToDate(item?.createdAt, true)}
                   </div>
                 </div>
                 <div
@@ -107,7 +91,11 @@ function InfoTableDataReports({
                     {" "}
                     <img src="/download.png" alt="" />{" "}
                   </a>
-                  {/* <img src="/deleteReport.png" alt=""  onClick={() => openDeleteComponent(index)}/> */}
+                  <img
+                    src="/deleteReport.png"
+                    alt=""
+                    onClick={() => openDeleteComponent(item.id)}
+                  />
                 </div>
               </div>
             );

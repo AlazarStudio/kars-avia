@@ -1,0 +1,53 @@
+.trigger {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.paper {
+  border-radius: 10px !important;
+  box-shadow: 0px 0px 8px 1px rgba(0, 0, 0, 0.15) !important;
+  min-width: 200px;
+  padding: 0 !important;
+  margin-top: 4px;
+}
+
+.title {
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(84, 88, 115, 0.2);
+}
+
+.item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 18px !important;
+  font-size: 14px !important;
+  color: var(--text) !important;
+}
+
+.item:hover {
+  background-color: var(--hover-gray) !important;
+}
+
+.item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.itemDanger {
+  color: var(--red) !important;
+}
+
+.itemDanger svg {
+  color: var(--red) !important;
+}
+
+.itemDanger:hover {
+  background-color: rgba(229, 57, 53, 0.08) !important;
+}

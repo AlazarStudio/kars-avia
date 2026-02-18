@@ -13,18 +13,27 @@ import {
 } from "date-fns";
 import { ru } from "date-fns/locale";
 
-const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth, setShowReserveInfo, setshowModalForAddHotelInReserve }) => {
+const Timeline = memo(({ user, handleCheckRoomsType, hoveredDayInMonth, currentMonth, setCurrentMonth, dayWidth, weekendColor, monthColor, leftWidth, setShowReserveInfo, setshowModalForAddHotelInReserve }) => {
+    // Убеждаемся, что currentMonth - это Date объект
+    const safeCurrentMonth = currentMonth instanceof Date ? currentMonth : new Date(currentMonth);
+    
     const daysInMonth = eachDayOfInterval({
-        start: startOfMonth(currentMonth),
-        end: endOfMonth(currentMonth),
+        start: startOfMonth(safeCurrentMonth),
+        end: endOfMonth(safeCurrentMonth),
     });
 
     const handlePreviousMonth = () => {
-        setCurrentMonth((prev) => addMonths(prev, -1));
+        setCurrentMonth((prev) => {
+            const prevDate = prev instanceof Date ? prev : new Date(prev);
+            return addMonths(prevDate, -1);
+        });
     };
 
     const handleNextMonth = () => {
-        setCurrentMonth((prev) => addMonths(prev, 1));
+        setCurrentMonth((prev) => {
+            const prevDate = prev instanceof Date ? prev : new Date(prev);
+            return addMonths(prevDate, 1);
+        });
     };
 
     const capitalizeFirstLetter = (string) => string.charAt(0).toUpperCase() + string.slice(1);
@@ -41,15 +50,21 @@ const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, 
             display: "flex", position: "sticky",
             top: 0,
             zIndex: 3,
-            boxShadow: '0 0 10px #00000030'
+            // borderRight: '1px solid #ddd',
+            // borderTop: '1px solid #ddd'
+            // boxShadow: '0 0 10px #00000030'
         }}>
             <Box
                 sx={{
                     width: `${leftWidth}px`,
+                    borderRadius: '10px 0px 0px 0px',
+                    borderTop: '1px solid #ddd',
                     borderLeft: '1px solid #ddd',
                     borderRight: '1px solid #ddd',
                     borderBottom: '1px solid #ddd',
-                    backgroundColor: '#f5f5f5',
+                    boxShadow:'0px 8px 10px -5px #00000030',
+                    // backgroundColor: '#f5f5f5',
+                    backgroundColor: '#fff',
                     display: 'flex',
                     justifyContent: "center",
                     alignItems: 'center',
@@ -77,17 +92,19 @@ const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, 
                 </button>
             </Box>
 
-            <Box sx={{ display: "flex", flexDirection: "column", borderBottom: "1px solid #ddd", width: `calc(100% - ${leftWidth}px)` }}>
+            <Box sx={{ display: "flex", flexDirection: "column", borderBottom: "1px solid #ddd", width: `calc(100% - 228px)`, boxShadow:'0px 8px 10px -5px #00000030' }}>
                 {/* Месяц и кнопки */}
                 <Box
                     sx={{
+                        borderRadius: '0px 10px 0px 0px',
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "space-between",
                         height: "50px",
-                        backgroundColor: "#f5f5f5",
+                        backgroundColor: "#fff",
+                        // backgroundColor: "#f5f5f5",
                         borderBottom: "1px solid #ddd",
-                        // borderTop: "1px solid #ddd",
+                        borderTop: "1px solid #ddd",
                         borderRight: '1px solid #ddd',
                         padding: "0 10px",
                     }}
@@ -96,7 +113,7 @@ const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, 
                         <ArrowBackIcon />
                     </IconButton>
                     <Typography variant="subtitle2" sx={{ fontWeight: "bold", margin: "0 8px" }}>
-                        {capitalizeFirstLetter(format(currentMonth, "LLLL yyyy", { locale: ru }))}
+                        {capitalizeFirstLetter(format(safeCurrentMonth, "LLLL yyyy", { locale: ru }))}
                     </Typography>
                     <IconButton onClick={handleNextMonth} size="small">
                         <ArrowForwardIcon />
@@ -104,7 +121,7 @@ const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, 
                 </Box>
 
                 {/* Дни месяца */}
-                <Box sx={{ display: "flex", height: "30px" }}>
+                <Box sx={{ display: "flex", height: "30px"}}>
                     {daysInMonth.map((day, index) => {
                         const isWeekend = day.getDay() === 0 || day.getDay() === 6;
                         const isCurrentDay = isToday(day);
@@ -127,7 +144,7 @@ const Timeline = memo(({ handleCheckRoomsType, hoveredDayInMonth, currentMonth, 
                             >
                                 <Typography
                                     variant="caption"
-                                    sx={{ fontWeight: isCurrentDay ? "bold" : "normal" }}
+                                    sx={{ fontWeight: isCurrentDay ? "bold" : "normal", letterSpacing: 0 }}
                                 >
                                     {format(day, "d", { locale: ru })}
                                 </Typography>

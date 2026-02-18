@@ -1,0 +1,381 @@
+import React, { useState, useRef, useEffect } from "react";
+import classes from "./DriversCompany_tabComponent.module.css";
+import Filter from "../Filter/Filter";
+import CreateRequestCompany from "../CreateRequestCompany/CreateRequestCompany";
+import { requestsCompany } from "../../../requests";
+import Header from "../Header/Header";
+import InfoTableDataCompany from "../InfoTableDataCompany/InfoTableDataCompany";
+import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
+import DeleteComponent from "../DeleteComponent/DeleteComponent";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import {
+  DELETE_DISPATCHER_USER,
+  DRIVER_UPDATED_SUBSCRIPTION,
+  DRIVERS_QUERY,
+  GET_ALL_DISPATCHERS,
+  GET_DISPATCHER_POSITIONS,
+  GET_DISPATCHERS,
+  GET_DISPATCHERS_SUBSCRIPTION,
+  GET_ORGANIZATION,
+  getCookie,
+  ORGANIZATION_CREATED_SUBSCRIPTION,
+} from "../../../../graphQL_requests";
+import MUILoader from "../MUILoader/MUILoader";
+import MUITextField from "../MUITextField/MUITextField";
+import Notification from "../../Notification/Notification";
+import { fullNotifyTime, notifyTime } from "../../../roles";
+import { useLocation, useNavigate } from "react-router-dom";
+import ReactPaginate from "react-paginate";
+import InfoTableDataDriversCompany from "../InfoTableDataDriversCompany/InfoTableDataDriversCompany";
+import AddDriverToOrganization from "../AddDriverToOrganization/AddDriverToOrganization";
+import ConfirmDriver from "../ConfirmDriver/ConfirmDriver";
+
+function DriversCompany_tabComponent({ children, id, user, ...props }) {
+  const token = getCookie("token");
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Инициализация текущей страницы на основе параметров URL или по умолчанию
+  // const pageNumberRelay = new URLSearchParams(location.search).get("page");
+  // const currentPageRelay = pageNumberRelay ? parseInt(pageNumberRelay) - 1 : 0;
+
+  // const [pageInfo, setPageInfo] = useState({
+  //   skip: currentPageRelay,
+  //   take: 20,
+  // });
+
+  const { loading, error, data } = useQuery(DRIVERS_QUERY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      pagination: {
+        all: true,
+      },
+    },
+  });
+
+  const {
+    loading: ordLoading,
+    data: orgData,
+    refetch,
+  } = useQuery(GET_ORGANIZATION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      organizationId: id,
+    },
+  });
+
+  const { data: subscriptionData, error: subCreateError } = useSubscription(
+    ORGANIZATION_CREATED_SUBSCRIPTION,
+    {
+      onData: ({ data }) => {
+        // console.log("Новая заявка создана:", data.data?.transferCreated);
+        refetch(); // Обновляем данные
+      },
+      onError: (error) => {
+        console.error("Ошибка подписки на создание:", error);
+      },
+    }
+  );
+
+  const { data: subscriptionDataDriver } = useSubscription(
+    DRIVER_UPDATED_SUBSCRIPTION,
+    {
+      onData: ({ data }) => {
+        // console.log("Новая заявка создана:", data.data?.transferCreated);
+        refetch(); // Обновляем данные
+      },
+    }
+  );
+
+  const {
+    loading: positionsLoading,
+    error: positionsError,
+    data: positionsData,
+  } = useQuery(GET_DISPATCHER_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const [showCreateSidebar, setShowCreateSidebar] = useState(false);
+  const [showRequestSidebar, setShowRequestSidebar] = useState(false);
+  const [chooseObject, setChooseObject] = useState(null);
+  const [showDelete, setShowDelete] = useState(false);
+  const [deleteIndex, setDeleteIndex] = useState(null);
+
+  const [totalPages, setTotalPages] = useState(1);
+
+  const deleteComponentRef = useRef();
+
+  const [companyData, setCompanyData] = useState([]);
+
+  const [positions, setPositions] = useState([]);
+
+  useEffect(() => {
+    if (orgData) {
+      const sortedDispatchers = [...orgData.organization.drivers].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      );
+      setCompanyData(sortedDispatchers);
+      // setTotalPages(data.dispatcherUsers.totalPages);
+    }
+    refetch();
+  }, [orgData, subscriptionData, refetch]);
+
+  useEffect(() => {
+    if (positionsData) {
+      setPositions(positionsData?.getDispatcherPositions);
+    }
+  }, [positionsData]);
+
+  const addDispatcher = (newDispatcher) => {
+    setCompanyData(
+      [...companyData, newDispatcher].sort((a, b) =>
+        a.name.localeCompare(b.name)
+      )
+    );
+  };
+
+  const updateDispatcher = (updatedDispatcher, index) => {
+    const newData = [...companyData];
+    newData[index] = updatedDispatcher;
+    setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
+  };
+
+  const updateDriver = (updatedDriver, index) => {
+    const newData = [...companyData];
+    const driverIndex = newData.findIndex((d) => d.id === updatedDriver.id);
+    if (driverIndex !== -1) {
+      newData[driverIndex] = updatedDriver;
+      setCompanyData(newData.sort((a, b) => a.name.localeCompare(b.name)));
+    } else {
+      // Если водитель не найден, обновляем весь список
+      refetch();
+    }
+  };
+
+  const [deleteDispatcherUser] = useMutation(DELETE_DISPATCHER_USER, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // 'Apollo-Require-Preflight': 'true',
+      },
+    },
+  });
+
+  const deleteDispatcher = async (index, userID) => {
+    try {
+      let response_delete_user = await deleteDispatcherUser({
+        variables: {
+          deleteUserId: userID,
+        },
+      });
+      if (response_delete_user) {
+        setCompanyData(companyData.filter((_, i) => i !== index));
+        setShowDelete(false);
+        setShowRequestSidebar(false);
+        addNotification("Удаление диспетчера прошло успешно.", "success");
+      }
+    } catch (error) {
+      console.error("Ошибка при удалении пользователя", error);
+      // addNotification(
+      //   "Ошибка, у вас недостаточно прав для удаления диспетчера.",
+      //   "error"
+      // );
+      alert("Ошибка при удалении пользователя");
+    }
+  };
+
+  const toggleCreateSidebar = () => {
+    setShowCreateSidebar(!showCreateSidebar);
+  };
+
+  const toggleRequestSidebar = () => {
+    setShowRequestSidebar(!showRequestSidebar);
+  };
+
+  const openDeleteComponent = (index, userID) => {
+    setShowDelete(true);
+    setDeleteIndex({ index, userID });
+    setShowRequestSidebar(false); // Закрываем боковую панель при открытии компонента удаления
+  };
+
+  const closeDeleteComponent = () => {
+    setShowDelete(false);
+    setShowRequestSidebar(true); // Открываем боковую панель при закрытии компонента удаления
+  };
+
+  const [filterData, setFilterData] = useState({
+    filterSelect: "",
+  });
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [notifications, setNotifications] = useState([]);
+
+  const addNotification = (text, status) => {
+    const id = Date.now(); // Уникальный ID
+    setNotifications((prev) => [...prev, { id, text, status }]);
+
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, fullNotifyTime);
+  };
+  // Обработчик для изменения текущей страницы при клике на элементы пагинации
+  // const handlePageClick = (event) => {
+  //   const selectedPage = event.selected;
+  //   setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
+  //   navigate(`?page=${selectedPage + 1}`);
+  // };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFilterData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
+
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredRequests = companyData.filter((request) => {
+    return (
+      request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.car.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.driverLicenseNumber
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
+    );
+  });
+
+  // Фильтруем водителей с подтвержденным статусом для добавления в организацию
+  const approvedDrivers = data?.drivers?.drivers?.filter(
+    (driver) => driver.registrationStatus === "APPROVED"
+  ) || [];
+
+  // console.log(companyData);
+
+  let filterList = ["Модератор", "Администратор"];
+  // const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
+
+  return (
+    <>
+      <div className={classes.section}>
+        {/* <Header>Водители</Header> */}
+
+        <div className={classes.section_searchAndFilter}>
+          <MUITextField
+            label={"Поиск"}
+            className={classes.mainSearch}
+            value={searchQuery}
+            onChange={handleSearch}
+          />
+          <Filter
+            toggleSidebar={toggleCreateSidebar}
+            handleChange={handleChange}
+            buttonTitle={"Добавить водителей"}
+            filterData={filterData}
+            filterList={filterList}
+            needDate={false}
+          />
+        </div>
+        {loading && <MUILoader />}
+        {error && <p>Error: {error.message}</p>}
+
+        {!loading && !error && (
+          <>
+            <InfoTableDataDriversCompany
+              user={user}
+              toggleRequestSidebar={toggleRequestSidebar}
+              requests={filteredRequests.map((request, index) => ({
+                ...request,
+                // order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
+              }))}
+              setChooseObject={setChooseObject}
+              choosePersonId={chooseObject?.id}
+            />
+            {/* {totalPages > 0 && (
+              <div className={classes.pagination}>
+                <ReactPaginate
+                  previousLabel={"←"}
+                  nextLabel={"→"}
+                  breakLabel={"..."}
+                  pageCount={totalPages}
+                  marginPagesDisplayed={2}
+                  pageRangeDisplayed={5}
+                  onPageChange={handlePageClick}
+                  forcePage={validCurrentPage}
+                  containerClassName={classes.pagination}
+                  activeClassName={classes.activePaginationNumber}
+                  pageLinkClassName={classes.paginationNumber}
+                />
+              </div>
+            )} */}
+          </>
+        )}
+
+        <AddDriverToOrganization
+          show={showCreateSidebar}
+          orgId={id}
+          onClose={toggleCreateSidebar}
+          addDispatcher={addDispatcher}
+          positions={positions}
+          drivers={approvedDrivers}
+          addNotification={addNotification}
+        />
+
+        <ConfirmDriver
+          show={showRequestSidebar}
+          onClose={toggleRequestSidebar}
+          chooseObject={chooseObject}
+          updateDispatcher={updateDispatcher}
+          updateDriver={updateDriver}
+          openDeleteComponent={openDeleteComponent}
+          deleteComponentRef={deleteComponentRef}
+          filterList={filterList}
+          positions={positions}
+          addNotification={addNotification}
+          organizationId={id}
+        />
+
+        {showDelete && (
+          <DeleteComponent
+            ref={deleteComponentRef}
+            remove={() =>
+              deleteDispatcher(deleteIndex.index, deleteIndex.userID)
+            }
+            close={closeDeleteComponent}
+            title={`Вы действительно хотите удалить диспетчера?`}
+          />
+        )}
+        {notifications.map((n, index) => (
+          <Notification
+            key={n.id}
+            text={n.text}
+            status={n.status}
+            index={index}
+            time={notifyTime}
+            onClose={() => {
+              setNotifications((prev) =>
+                prev.filter((notif) => notif.id !== n.id)
+              );
+            }}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+export default DriversCompany_tabComponent;

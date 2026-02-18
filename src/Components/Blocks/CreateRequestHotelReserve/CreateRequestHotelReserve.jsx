@@ -1,168 +1,207 @@
 import React, { useState, useRef, useEffect } from "react";
-import classes from './CreateRequestHotelReserve.module.css';
+import classes from "./CreateRequestHotelReserve.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { CREATE_HOTEL, GET_AIRPORTS_RELAY, getCookie } from "../../../../graphQL_requests";
+import {
+  CREATE_HOTEL,
+  GET_AIRPORTS_RELAY,
+  GET_HOTELS_RELAY,
+  getCookie,
+} from "../../../../graphQL_requests";
 import { useMutation, useQuery } from "@apollo/client";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function CreateRequestHotelReserve({ show, onClose }) {
-    const token = getCookie('token');
+  const token = getCookie("token");
 
-    const [formData, setFormData] = useState({
-        name: '',
-        city: '',
-        address: '',
-        quote: '',
-        images: ''
+  const [formData, setFormData] = useState({
+    name: "",
+    city: "",
+    address: "",
+    quote: "",
+    images: "",
+  });
+
+  const sidebarRef = useRef();
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      city: "",
+      address: "",
+      quote: "",
+      images: "",
     });
+  };
 
-    const sidebarRef = useRef();
+  const closeButton = () => {
+    let success = confirm("Вы уверены, все несохраненные данные будут удалены");
+    if (success) {
+      resetForm();
+      onClose();
+    }
+  };
 
-    const resetForm = () => {
-        setFormData({
-            name: '',
-            city: '',
-            address: '',
-            quote: '',
-            images: ''
-        });
-    };
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
+  };
 
-    const closeButton = () => {
-        let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-        if (success) {
-            resetForm();
-            onClose();
-        }
-    };
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData((prevState) => ({
+        ...prevState,
+        images: file, // Сохраняем файл напрямую
+      }));
+    }
+  };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prevState => ({
-            ...prevState,
-            [name]: value
-        }));
-    };
+  const [uploadFile, { data, loading, error }] = useMutation(CREATE_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+    refetchQueries: [{ query: GET_HOTELS_RELAY }],
+  });
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setFormData(prevState => ({
-                ...prevState,
-                images: file // Сохраняем файл напрямую
-            }));
-        }
-    };
-
-    const [uploadFile, { data, loading, error }] = useMutation(CREATE_HOTEL, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                'Apollo-Require-Preflight': 'true',
-            },
-        },
-    });
-
-    const isFormValid = () => {
-        return (
-            formData.name &&
-            formData.city
-            // Если понадобятся другие поля, можно добавить их сюда:
-            // formData.address &&
-            // formData.quote &&
-            // formData.images
-        );
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        if (!isFormValid()) {
-            alert("Пожалуйста, заполните все обязательные поля.");
-            return;
-        }
-        // if (!formData.images) {
-        //     alert('Пожалуйста, выберите файл для загрузки');
-        //     return;
-        // }
-
-        try {
-            let response_create_hotel = await uploadFile({
-                variables: {
-                    input: {
-                        name: formData.name,
-                        city: formData.city,
-                        // address: formData.address,
-                        // quote: formData.quote
-                    },
-                    // images: formData.images
-                }
-            });
-
-            if (response_create_hotel) {
-                alert('Гостиница добавлена успешно');
-                resetForm();
-                onClose();
-                location.reload();
-            }
-        } catch (e) {
-            console.error('Ошибка при загрузке файла:', e);
-        }
-    };
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-                closeButton();
-            }
-        };
-
-        if (show) {
-            document.addEventListener('mousedown', handleClickOutside);
-        } else {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [show, onClose]);
-
-
-    let infoAirports = useQuery(GET_AIRPORTS_RELAY);
-    const [airports, setAirports] = useState([]);
-
-    useEffect(() => {
-        if (infoAirports.data) {
-            setAirports(infoAirports.data?.airports || []);
-        }
-    }, [infoAirports]);
-
-    const uniqueCities = [...new Set(airports.map(airport => airport.city.trim()))].sort((a, b) => a.localeCompare(b));
-
+  const isFormValid = () => {
     return (
-        <Sidebar show={show} sidebarRef={sidebarRef}>
-            <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>Добавить гостиницу</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
-            </div>
+      formData.name && formData.city
+      // Если понадобятся другие поля, можно добавить их сюда:
+      // formData.address &&
+      // formData.quote &&
+      // formData.images
+    );
+  };
 
-            <div className={classes.requestMiddle}>
-                <div className={classes.requestData}>
-                    <label>Название</label>
-                    <input type="text" name="name" placeholder="Гостиница Славянка" onChange={handleChange} />
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-                    <label>Город</label>
-                    <select name="city" value={formData.city} onChange={handleChange}>
-                        <option value="" disabled>Выберите город</option>
-                        {uniqueCities.map(city => (
-                            <option key={city} value={city}>
-                                {city}
-                            </option>
-                        ))}
-                    </select>
+    if (!isFormValid()) {
+      alert("Пожалуйста, заполните все обязательные поля.");
+      return;
+    }
+    // if (!formData.images) {
+    //     alert('Пожалуйста, выберите файл для загрузки');
+    //     return;
+    // }
 
-                    {/* <label>Адрес</label>
+    try {
+      let response_create_hotel = await uploadFile({
+        variables: {
+          input: {
+            name: formData.name,
+            information: {
+              city: formData.city,
+            },
+            // address: formData.address,
+            // quote: formData.quote
+          },
+          // images: formData.images
+        },
+      });
+
+      if (response_create_hotel) {
+        alert("Гостиница создана успешно");
+        resetForm();
+        onClose();
+        // location.reload();
+      }
+    } catch (e) {
+      console.error("Ошибка при загрузке файла:", e);
+    }
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        closeButton();
+      }
+    };
+
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, onClose]);
+
+  let infoAirports = useQuery(GET_AIRPORTS_RELAY, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+  const [airports, setAirports] = useState([]);
+
+  useEffect(() => {
+    if (infoAirports.data) {
+      setAirports(infoAirports.data?.airports || []);
+    }
+  }, [infoAirports]);
+
+  const uniqueCities = [
+    ...new Set(airports.map((airport) => airport.city.trim())),
+  ].sort((a, b) => a.localeCompare(b));
+
+  //   console.log(uniqueCities);
+
+  return (
+    <Sidebar show={show} sidebarRef={sidebarRef}>
+      <div className={classes.requestTitle}>
+        <div className={classes.requestTitle_name}>Добавить гостиницу</div>
+        <div className={classes.requestTitle_close} onClick={closeButton}>
+          <CloseIcon />
+        </div>
+      </div>
+
+      <div className={classes.requestMiddle}>
+        <div className={classes.requestData}>
+          <label>Название</label>
+          <input
+            type="text"
+            name="name"
+            placeholder="Гостиница Славянка"
+            onChange={handleChange}
+          />
+
+          <label>Город</label>
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            label={"Выберите город"}
+            options={uniqueCities.map((city) => city)}
+            value={formData.city}
+            onChange={(event, newValue) =>
+              setFormData({
+                ...formData,
+                city: newValue,
+              })
+            }
+          />
+          {/* <select name="city" value={formData.city} onChange={handleChange}>
+            <option value="" disabled>
+              Выберите город
+            </option>
+            {uniqueCities.map((city) => (
+              <option key={city} value={city}>
+                {city}
+              </option>
+            ))}
+          </select> */}
+
+          {/* <label>Адрес</label>
                     <input type="text" name="address" placeholder="ул. Лесная  147" onChange={handleChange} />
 
                     <label>Квота</label>
@@ -170,15 +209,16 @@ function CreateRequestHotelReserve({ show, onClose }) {
 
                     <label>Картинка</label>
                     <input type="file" name="images" onChange={handleFileChange} /> */}
-                </div>
+        </div>
+      </div>
 
-            </div>
-
-            <div className={classes.requestButton}>
-                <Button type="submit" onClick={handleSubmit}>Добавить</Button>
-            </div>
-        </Sidebar>
-    );
+      <div className={classes.requestButton}>
+        <Button type="submit" onClick={handleSubmit}>
+          Добавить
+        </Button>
+      </div>
+    </Sidebar>
+  );
 }
 
 export default CreateRequestHotelReserve;

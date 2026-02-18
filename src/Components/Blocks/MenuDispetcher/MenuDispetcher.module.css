@@ -4,12 +4,19 @@
     height: 100vh;
     background-color: var(--menu-bg);
     color: var(--white);
-    padding: 25px 25px;
+    padding: 40px 25px 25px 25px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 55px;
     transition: all ease-in-out 0.3s;
     position: relative;
+}
+
+.logoWrapper {
+    display: flex;
+    gap: 20px;
+    align-items: center;
 }
 
 /* .menuClosed {
@@ -17,81 +24,126 @@
 } */
 
 .w_closed {
-    width: 130px;
-    min-width: 130px;
+    width: 90px;
+    min-width: 90px;
     height: 100vh;
     background-color: var(--menu-bg);
     color: var(--white);
-    padding: 30px 15px 15px 15px;
+    padding: 50px 15px 15px 15px;
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 25px;
     transition: all ease-in-out 0.3s;
     position: relative;
 }
 
 /* Скрываем кнопку menuToggle по умолчанию */
-.menuToggle,
+/* .menuToggle,
 .w_closed .menuToggle {
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
-}
+} */
 
 /* Показываем кнопку при наведении на menu или w_closed */
-.menu:hover .menuToggle,
+/* .menu:hover .menuToggle,
 .w_closed:hover .menuToggle {
     opacity: 1;
     visibility: visible;
-    transition: opacity 0.3s ease-in-out, visibility 0s 0s; /* убираем задержку для visibility */
-}
+    transition: opacity 0.3s ease-in-out, visibility 0s 0s;
+} */
 
 .menuHeader {
     width: 100%;
     display: flex;
     justify-content: flex-end;
     position: absolute;
-    right: 10px;
-    top: 5px;
+    right: 5px;
+    top: 0;
     transition: all ease-in-out 0.3s;
 }
 
 .menuToggle {
+    position: absolute;
+    top: 44px;
+    right: 20px;
     background: none;
     border: none;
-    color: var(--white);
-    font-size: 25px;
+    /* color: var(--white); */
+    /* font-size: 25px; */
     cursor: pointer;
-    opacity: 0; /* по умолчанию скрыто */
-    visibility: hidden; /* по умолчанию скрыто */
+    opacity: 1;
+    /* по умолчанию скрыто */
+    /* visibility: hidden; */
+    /* по умолчанию скрыто */
     transition: opacity 0.3s ease-in-out, visibility 0s 0.3s;
 }
 
-.menuToggle span img {
+.menuToggleClose {
+    position: absolute;
+    top: 10px;
+    right: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+/* .menuToggle span img {
     height: 15px;
     transition: all ease-in-out 0.3s;
-}
+} */
 
 .menu_logo {
     width: 100%;
     padding-left: 20px;
 }
 
+.logoText {
+    display: flex;
+    flex-direction: column;
+    color: var(--white);
+    font-weight: 800;
+    font-size: 48px;
+    line-height: 0.95;
+    letter-spacing: 1px;
+    gap: 4px;
+    text-transform: uppercase;
+}
+
 .side_menu_logo {
-    padding: 0;
+    /* padding-left: 10px; */
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all ease-in-out 0.3s;
 }
 
 .menu_logo img {
-    width: 278px;
+    /* width: 278px; */
     height: 93px;
     transition: all ease-in-out 0.3s;
+    object-fit: contain;
+}
+
+.logoTextMini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--white);
+    font-weight: 800;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: 1px;
+    gap: 2px;
+    text-transform: uppercase;
 }
 
 .side_menu_logo img {
-    width: 101px;
-    height: 33px;
+    width: 73px;
+    height: 71px;
     transition: all ease-in-out 0.3s;
+    object-fit: contain;
 }
 
 .menu_items__elem {
@@ -137,12 +189,13 @@
 }
 
 .menu_items__elem .countRequests {
+    width: 30px;
+    height: 30px;
     position: absolute;
     right: 20px;
     background-color: red;
     color: var(--white);
-    padding: 0px 8px;
-    border-radius: 5px;
+    border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -160,4 +213,29 @@
     display: none;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1450px) {
+    .menu {
+        min-width: 280px;
+        padding: 40px 20px 20px 20px;
+    }
+
+    .menu_logo {
+        width: 100%;
+        padding-left: 10px;
+    }
+
+    .menu_logo img {
+        /* width: 220px; */
+        height: 93px;
+    }
+
+    .logoWrapper {
+        gap: 10px;
+    }
+}
+
+@media (max-height: 750px) {
+    .menu {
+        gap: 30px;
+    }
+}

@@ -19,12 +19,10 @@
     font-size: 24px;
     font-weight: 600;
     line-height: 38.73px;
-    color: var(--main-gray);
+    color: var(--text);
 }
 
 .requestTitle_close {
-    width: 25px;
-    height: 25px;
     cursor: pointer;
 }
 
@@ -67,16 +65,19 @@
 
 .requestData input,
 select {
-    height: 38px;
+    height: 40px;
     outline: none;
     padding: 0 10px;
+}
+
+.requestData select {
     cursor: pointer;
 }
 
 .requestMiddle {
     height: calc(100% - 90px - 71px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -107,12 +108,29 @@ select {
     justify-content: flex-end;
 }
 
+.requestButton button {
+    width: 49%;
+}
+
 .titleLabel {
     display: flex;
     justify-content: center;
     font-size: 16px;
     font-weight: 400;
     line-height: 19.36px;
+}
+
+.positionsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+}
+
+.checkboxItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

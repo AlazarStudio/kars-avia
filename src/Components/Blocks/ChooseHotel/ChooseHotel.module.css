@@ -19,12 +19,10 @@
     font-size: 24px;
     font-weight: 600;
     line-height: 38.73px;
-    color: var(--main-gray);
+    color: var(--text);
 }
 
 .requestTitle_close {
-    width: 25px;
-    height: 25px;
     cursor: pointer;
 }
 
@@ -67,16 +65,19 @@
 
 .requestData input,
 select {
-    height: 38px;
+    height: 40px;
     outline: none;
     padding: 0 10px;
+}
+
+.requestData select {
     cursor: pointer;
 }
 
 .requestMiddle {
     height: calc(100% - 90px - 71px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -108,9 +109,9 @@ select {
     gap: 10px;
 }
 
-.requestButton a {
+/* .requestButton a {
     width: 50%;
-}
+} */
 
 .requestDataTitle {
     font-family: Nunito Sans;
@@ -141,7 +142,7 @@ select {
     font-weight: 400;
     width: 60%;
     padding: 10px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 .requestDataInfo input {
@@ -151,7 +152,7 @@ select {
 .requestData_messages {
     height: 590px;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 30px;
@@ -165,7 +166,7 @@ select {
 .requestData_date_info {
     background-color: #F3F3F3;
     padding: 5px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
     font-family: Nunito Sans;
     font-size: 14px;
     font-weight: 400;
@@ -199,7 +200,7 @@ select {
 .requestData_message_text {
     background-color: #F6F6FC;
     padding: 20px;
-    border-radius: 5px;
+    border-radius: 10px;
     font-family: Nunito Sans;
     font-size: 14px;
     font-weight: 400;
@@ -265,7 +266,7 @@ select {
     align-items: center;
     height: 600px;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 10px 0;
 }
 

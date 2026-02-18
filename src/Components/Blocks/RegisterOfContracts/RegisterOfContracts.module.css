@@ -1,0 +1,162 @@
+.tariffsWrapper {
+    padding: 30px;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    /* justify-content: center; */
+    gap: 30px;
+}
+
+
+.section_searchAndFilter {
+    display: flex;
+    align-items: center;
+    /* justify-content: space-between; */
+    gap: 20px;
+}
+
+.section_searchAndFilter_filter {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 20px;
+}
+
+.mainSearch {
+    /* width: 300px; */
+    flex: 1;
+}
+
+
+.segmented {
+    position: relative;
+    display: flex;
+    padding: 0;
+    list-style-type: none;
+    gap: 10px;
+    align-items: center;
+}
+
+.segmented::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--no-active);
+    z-index: 1;
+}
+
+.segment {
+    position: relative;
+    font-size: 16px;
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--no-active);
+    transition: all 0.3s ease-in-out;
+    outline: none;
+    border: none;
+}
+
+.segment:hover {
+    color: var(--text);
+}
+
+.segmentActive {
+    color: var(--text);
+    background-color: transparent;
+}
+
+.segmentActive::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--dark-blue);
+    z-index: 2;
+}
+
+/* .tabPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+} */
+
+
+/* segmented control (Договоры/Реестры) */
+/* .segmented {
+    display: inline-flex;
+    gap: 10px;
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.segment {
+    font-size: 16px;
+    padding: 10px 20px;
+    margin-right: 5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 0.5;
+    transition: all 0.3s ease-in-out;
+    outline: none;
+}
+
+.segmentActive {
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 1;
+}
+
+.segment:hover {
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 1;
+} */
+
+/* Пагинация */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+}
+
+.paginationNumber {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid var(--menu-bg);
+    border-radius: 10px;
+    color: var(--menu-bg);
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    text-decoration: none;
+}
+
+.paginationNumber:hover {
+    background-color: #e0e0e0;
+    color: var(--menu-bg);
+}
+
+.pagination .activePaginationNumber,
+.pagination .activePaginationNumber a {
+    background-color: var(--menu-bg) !important;
+    color: #fff !important;
+    border-radius: 10px;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}

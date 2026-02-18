@@ -1,0 +1,236 @@
+.main {
+    display: flex;
+}
+
+.mainSearch {
+    width: 350px;
+}
+
+.title {
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--main-gray);
+}
+
+.section {
+    /* width: calc(100% - var(--menu-width)); */
+    width: 100%;
+    min-width: 1000px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    padding: 30px;
+    overflow: hidden;
+    position: relative;
+}
+
+.section_top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.titleHeader {
+    display: flex;
+    gap: 10px;
+}
+
+.backButton {
+    width: 35px;
+    height: 35px;
+    border: 1px dotted #545873;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px;
+    cursor: pointer;
+}
+
+.backButton img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+
+.section_searchAndFilter {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter_wrapper {
+    display: inline-flex;
+    gap: 10px;
+    border-radius: 10px;
+}
+
+.filter_wrapper button {
+    font-size: 16px;
+    padding: 10px 20px;
+    margin-right: 5px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 0.5;
+    transition: all 0.3s ease-in-out;
+    outline: none;
+}
+
+.filter_wrapper button:hover {
+    background-color: #E4E4EF;
+    color: #545873;
+    opacity: 1;
+}
+
+.activeButton {
+    background-color: #E4E4EF !important;
+    color: #545873 !important;
+    opacity: 1 !important;
+}
+
+.filterCityAndHotel {
+    display: flex;
+    gap: 10px;
+}
+
+.filterCityAndHotel select {
+    width: 200px;
+}
+
+.btnsReserve {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.downloadsButtonsWrapper {
+    display: flex;
+    gap: 15px;
+}
+
+/* .downloadsButton {
+    height: 40px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 16px;
+    border: 1px solid #5458739e;
+    border-radius: 10px;
+    color: #545873;
+    cursor: pointer;
+} */
+
+.downloadsButton {
+    width: 160px;
+    min-height: 40px;
+    text-transform: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #545873;
+    /* border: 1px solid rgba(84, 88, 115, 0.62); */
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.chatWrapper {
+    /* width: 500px; */
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+}
+
+.contentWithChat {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+}
+
+.tabContent {
+    height: 100%;
+}
+
+.tableCard {
+    background: #fff;
+    border: 1px solid #E8EDF4;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.tableHead,
+.tableRow {
+    display: grid;
+    grid-template-columns: 80px 1fr 140px;
+    padding: 12px 16px;
+}
+
+.tableHead {
+    background: #F6F8FC;
+    color: #788190;
+}
+
+.tableRow {
+    border-top: 1px solid #EEF2F7;
+}
+
+.actionBtn {
+    background: #005EFF;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+}
+
+.actionBtn:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+/* ReservePlacementRepresentative.module.css — добавьте */
+.cardWrap {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-height: 420px
+}
+
+.countChip {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    color: #545873;
+    font-weight: 600
+}
+
+
+@media (min-width: 0px) and (max-width: 1599px) {
+    .downloadsButton {
+        font-size: 14px;
+    }
+
+    .mainSearch {
+        width: 300px;
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+
+    .titleHeader {
+        font-size: 28px;
+        line-height: 34.73px;
+    }
+}

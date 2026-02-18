@@ -20,10 +20,12 @@
 .topDayBlock {
     width: 100%;
     height: 45px;
-    border-left: 1px solid #E4E4EF;
+    border-right: 1px solid #E4E4EF;
+    /* border-left: 1px solid #E4E4EF; */
     border-top: 1px solid #E4E4EF;
     border-bottom: 1px solid #E4E4EF;
     font-family: Nunito Sans;
+    font-weight: 400;
     font-size: 14px;
     line-height: 20px;
     display: flex;
@@ -63,15 +65,20 @@
     line-height: 20px;
 }
 
+.hotelTable tbody tr>td {
+    overflow: hidden;
+}
+
 .hotelTable tbody tr>td:nth-child(1) {
     border: none;
     border-bottom: 1px solid #E4E4EF;
-    padding-left: 10px;
+    /* padding: 0 10px; */
 }
 
 .hotelTable tbody tr>td td {
     border-right: 1px solid #E4E4EF;
-    width: 45px;
+    /* width: 35px; */
+    width: 55px;
     height: 45px;
 }
 
@@ -97,6 +104,7 @@
     justify-content: center;
     opacity: 0.9;
     cursor: pointer;
+    overflow: hidden;
 }
 
 .booking:hover {
@@ -127,6 +135,7 @@
 }
 
 .controls {
+    /* margin-left: 1px; */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -134,7 +143,7 @@
     height: 45px;
     font-family: Nunito Sans;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 400;
     text-transform: uppercase;
     gap: 20px;
     border: 1px solid #E4E4EF;
@@ -154,6 +163,15 @@
     background-color: #F5F6F8 !important;
     /* Цвет выделения для наведения */
 }
+
+.highlightedRow {
+    background-color: #F5F6F8 !important;
+}
+
+/* Если хотите, чтобы в месте пересечения цвет был особым */
+/* .highlightedDay.highlightedRow {
+    background-color: rgba(255, 100, 100, 0.4);
+} */
 
 
 .formContainer {
@@ -180,7 +198,7 @@
     color: white;
     border: none;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 10px;
     opacity: 0.8;
     display: flex;
     justify-content: center;
@@ -196,7 +214,7 @@
     background-color: #fff;
     color: #545873;
     cursor: pointer;
-    border-radius: 5px;
+    border-radius: 10px;
     opacity: 1;
     border: 1px solid #545873;
 }
@@ -207,7 +225,7 @@
 
 .conflictBlock {
     border: 2px solid red;
-    border-radius: 5px;
+    border-radius: 10px;
     color: red;
     padding: 10px;
     text-align: center;
@@ -228,7 +246,7 @@
 .formContainer_title {
     font-family: Nunito Sans;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 400;
     line-height: 20px;
     text-align: left;
     padding-bottom: 20px;
@@ -238,7 +256,7 @@
 .formContainer_title_success {
     font-family: Nunito Sans;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 400;
     line-height: 20px;
     text-align: center;
     margin-bottom: 20px;
@@ -289,7 +307,7 @@
 .formContainer_items_item_data_client {
     font-family: Nunito Sans;
     font-size: 14px;
-    font-weight: 600;
+    font-weight: 400;
     width: 100%;
     margin-bottom: 10px;
 }
@@ -354,8 +372,68 @@
     align-items: center;
 }
 
-.staffInfo {
-    cursor: pointer;
+.staffWrapper {
+    height: 100%;
+    /* padding: 0 10px; */
+    display: flex;
+    /* align-items: center; */
+    /* gap: 10px; */
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+.staffIndex {
+    flex-basis: 20%;
+    border-right: 1px solid #E4E4EF;
+    border-left: 1px solid #E4E4EF;
+    padding: 0 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.staffInfo {
+    padding: 0 10px;
+    flex-basis: 80%;
+    cursor: pointer;
+    display: flex;
+    /* gap: 15px; */
+    /* justify-content: center; */
+    align-items: center;
+}
+
+.staffInfoPosition {
+    display: inline;
+    font-size: 12px;
+    color: var(--main-gray);
+}
+
+
+@media (min-width: 0px) and (max-width: 1599px) {
+    .staffIndex {
+        flex-basis: 30%;
+    }
+
+    .staffInfo {
+        flex-basis: 70%;
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1600px) {
+    .staffInfo {
+        font-size: 12px;
+    }
+
+    .hotelTable tbody th,
+    .hotelTable tbody tr>td {
+        width: 45px;
+        height: 45px;
+        font-size: 12px;
+        line-height: 16px;
+    }
+
+
+    .topDayBlock {
+        font-size: 12px;
+        line-height: 16px;
+    }
+}

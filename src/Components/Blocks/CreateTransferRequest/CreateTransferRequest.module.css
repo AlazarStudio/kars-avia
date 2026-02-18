@@ -1,0 +1,247 @@
+.requestTitle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 20px 30px;
+}
+
+.requestButton {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 20px 30px;
+    border-top: 1px solid #54587380;
+}
+
+.requestTitle_name {
+    font-family: Inter;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 38.73px;
+    color: var(--text);
+}
+
+.requestTitle_close {
+    cursor: pointer;
+}
+
+.requestTitle_close img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.tabs {
+    width: 100%;
+    display: flex;
+    gap: 20px;
+    padding: 20px 20px 20px 30px;
+    background-color: #fff;
+    box-shadow: 0 0 1px #545873c5;
+}
+
+.tab {
+    cursor: pointer;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    border-bottom: 5px solid transparent
+}
+
+.activeTab {
+    border-bottom: 5px solid #54587380;
+}
+
+.requestData {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 30px;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.requestData label {
+    display: flex;
+    gap: 15px;
+}
+
+.requestData input,
+select {
+    height: 40px;
+    outline: none;
+    padding: 0 10px;
+}
+
+.requestData select {
+    cursor: pointer;
+}
+
+.requestMiddle {
+    height: calc(100vh - 79px - 67px - 81px);
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+.reis_info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.reis_info input {
+    width: 50%;
+}
+
+.checks {
+    display: flex;
+    justify-content: space-between;
+}
+
+.checks label {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    cursor: pointer;
+}
+
+.requestButton {
+    position: fixed;
+    bottom: 0;
+    background-color: #fff;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.requestButton button {
+    width: 49%;
+}
+
+.dropdownInputList {
+    position: relative;
+    width: 100%;
+}
+
+.dropdownInputList input {
+    width: 100%;
+}
+
+.dropdown {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    /* Максимальная высота для 5 элементов */
+    overflow-y: auto;
+    position: absolute;
+    top: 38px;
+    width: 100%;
+    z-index: 1000;
+}
+
+.dropdown li {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.dropdown li:hover {
+    background-color: #f0f0f0;
+}
+
+.warningMessage {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin: 10px 0;
+    text-align: center;
+}
+
+.warningMessage strong {
+    font-weight: bold;
+}
+
+.matchingRequest {
+    padding: 15px;
+    font-size: 14px;
+    color: #721c24;
+    background-color: #f8d7da;
+    border-radius: 10px;
+    transition: all ease-in-out 0.3s;
+}
+
+.matchingRequest span {
+    color: #721c24;
+    border-bottom: 1px solid #721c24;
+    cursor: pointer;
+}
+
+.staffWrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.addStaff {
+    padding: 4px;
+    width: 17px !important;
+    height: 17px !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0057C3;
+    border-radius: 50%;
+    transition: all ease-in-out 0.3s;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.addStaff img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.noPersonLabel {
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    user-select: none;
+    cursor: pointer;
+}
+
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .requestTitle_name {
+        font-size: 20px;
+        line-height: 34.73px;
+    }
+
+    .requestTitle_close {
+        width: 20px;
+        height: 20px;
+    }
+
+    .requestData label,
+    .requestData input {
+        font-size: 14px;
+    }
+
+    .tab {
+        font-size: 14px;
+        line-height: 18px;
+        border-bottom: 3px solid transparent
+    }
+
+    .activeTab {
+        border-bottom: 3px solid #54587380;
+    }
+}

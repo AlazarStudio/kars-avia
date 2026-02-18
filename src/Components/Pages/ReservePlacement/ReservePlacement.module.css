@@ -1,5 +1,10 @@
 .main {
     display: flex;
+    font-weight: 500;
+}
+
+.mainSearch {
+    width: 350px;
 }
 
 .section {
@@ -30,7 +35,7 @@
     width: 35px;
     height: 35px;
     border: 1px dotted #545873;
-    border-radius: 5px;
+    border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -63,7 +68,59 @@
 .btnsReserve {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+.downloadsButtonsWrapper {
+    display: flex;
+    gap: 15px;
+}
+
+/* .downloadsButton {
+    height: 40px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 16px;
+    border: 1px solid #5458739e;
+    border-radius: 10px;
+    color: #545873;
+    cursor: pointer;
+} */
+
+.downloadsButton {
+    width: 160px;
+    min-height: 40px;
+    text-transform: none;
+    font-size: 14px;
+    font-weight: 600;
+    color: #545873;
+    /* border: 1px solid rgba(84, 88, 115, 0.62); */
+    background-color: var(--white);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+@media (min-width: 0px) and (max-width: 1599px) {
+    .downloadsButton {
+        font-size: 14px;
+    }
+
+    .mainSearch {
+        width: 300px;
+    }
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+
+    .titleHeader {
+        font-size: 28px;
+        line-height: 34.73px;
+    }
+}

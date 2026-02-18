@@ -4,21 +4,43 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { CREATE_AIRLINE, getCookie } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
-function CreateRequestAirline({ show, onClose, addHotel }) {
+function CreateRequestAirline({
+  show,
+  onClose,
+  representative,
+  airlines,
+  airports,
+  cities,
+  addHotel,
+  addNotification,
+}) {
   const token = getCookie("token");
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     name: "",
+    nameFull: "",
+    airlineId: "",
+    airportId: "",
+    cityId: "",
     images: "",
   });
+  const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
 
   const sidebarRef = useRef();
 
   const resetForm = useCallback(() => {
     setFormData({
       name: "",
+      nameFull: "",
+      airlineId: "",
+      airportId: "",
+      cityId: "",
       images: "",
     });
     setIsEdited(false); // Сброс флага изменений
@@ -46,8 +68,23 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
     }));
   }, []);
 
+  const fileInputRef = useRef(null);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
+    if (file.size > maxSizeInBytes) {
+      alert("Размер файла не должен превышать 8 МБ!");
+      setFormData((prevState) => ({
+        ...prevState,
+        images: "",
+      }));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
+      }
+      return;
+    }
+
     if (file) {
       setFormData((prevState) => ({
         ...prevState,
@@ -69,35 +106,24 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
     return formData.name && formData.images;
   };
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     if (!isFormValid()) {
-      alert('Пожалуйста, заполните все обязательные поля.')
+      alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
       return;
     }
-
-    // // Проверка на заполненность полей
-    // if (!formData.name.trim()) {
-    //     alert('Пожалуйста, введите название авиакомпании.');
-    //     return;
-    // }
-
-    // if (!formData.images) {
-    //     alert('Пожалуйста, выберите файл для загрузки.');
-    //     return;
-    // }
-
-    // if (!formData.images) {
-    //     alert('Пожалуйста, выберите файл для загрузки');
-    //     return;
-    // }
 
     try {
       let response_create_airline = await uploadFile({
         variables: {
           input: {
             name: formData.name,
+            // nameFull: formData.nameFull,
           },
           images: formData.images,
         },
@@ -107,9 +133,15 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
         addHotel(response_create_airline.data.createAirline);
         resetForm();
         onClose();
+        addNotification("Авиакомпания создана успешно.", "success");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
+    } finally {
+      // resetForm();
+      onClose();
+      setIsLoading(false);
+      // addNotification("Авиакомпания создана успешно.", "success");
     }
   };
 
@@ -140,31 +172,169 @@ function CreateRequestAirline({ show, onClose, addHotel }) {
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить авиакомпанию</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название</label>
-          <input
-            type="text"
-            name="name"
-            placeholder="Авиакомпания Азимут"
-            value={formData.name}
-            onChange={handleChange}
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              {representative ? (
+                <>
+                  <label>Авиакомпания</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Введите авиакомпанию"}
+                    options={airlines?.map((airline) => airline.name)}
+                    value={selectedAirline ? selectedAirline?.name : ""}
+                    onChange={(event, newValue) => {
+                      const selectedAirline = airlines.find(
+                        (airline) => airline.name === newValue
+                      );
+                      setSelectedAirline(selectedAirline);
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        airlineId: selectedAirline?.id || "",
+                      }));
+                    }}
+                  />
+                  <label>Аэропорт</label>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label={"Выберите аэропорт"}
+                    options={airports}
+                    getOptionLabel={(option) => {
+                      if (!option) return "";
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      return `${option.code} ${option.name}${cityPart}`.trim();
+                    }}
+                    renderOption={(optionProps, option) => {
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, город: ${option.city}`
+                          : "";
+                      const labelText =
+                        `${option.code} ${option.name}${cityPart}`.trim();
+                      const words = labelText.split(" ");
 
-          <label>Картинка</label>
-          <input type="file" name="images" onChange={handleFileChange} />
-        </div>
-      </div>
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: 4,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={
+                      airports.find((o) => o.id === formData.airportId) || null
+                    }
+                    onChange={(e, newValue) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        airportId: newValue?.id || "",
+                        // city: newValue?.city,
+                      }));
+                    }}
+                  />
+                  <label>Город</label>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label={"Выберите город"}
+                    options={cities}
+                    getOptionLabel={(option) => {
+                      if (!option) return "";
+                      const cityPart =
+                        option.city && option.city !== option.region
+                          ? `, регион: ${option.region}`
+                          : "";
+                      return `${option.city}${cityPart}`.trim();
+                    }}
+                    renderOption={(optionProps, option) => {
+                      const cityPart =
+                        option.city && option.city !== option.name
+                          ? `, регион: ${option.region}`
+                          : "";
+                      const labelText = `${option.city}${cityPart}`.trim();
+                      const words = labelText.split(" ");
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: 4,
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={cities.find((o) => o.id === formData.cityId) || null}
+                    onChange={(e, newValue) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        cityId: newValue?.id,
+                      }));
+                    }}
+                  />
+                </>
+              ) : (
+                <>
+                  <label>Название</label>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Авиакомпания Азимут"
+                    value={formData.name}
+                    onChange={handleChange}
+                  />
+
+                  {/* <label>Наименование</label>
+              <input
+                type="text"
+                name="nameFull"
+                placeholder="Азимут"
+                value={formData.nameFull}
+                onChange={handleChange}
+              /> */}
+
+                  <label>Картинка</label>
+                  <input
+                    type="file"
+                    name="images"
+                    onChange={handleFileChange}
+                    ref={fileInputRef}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

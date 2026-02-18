@@ -1,0 +1,86 @@
+.tiptap-panel {
+  padding: 24px 32px 24px 8px;
+  min-height: 100%;
+  background: #ffffff;
+}
+
+.tiptap-panel.tiptap-panel-empty {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.tiptap-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: var(--panel-top-controls-left-offset, 56px);
+  margin-right: var(--panel-top-controls-right-offset, 72px);
+  margin-top: -14px;
+  margin-bottom: 12px;
+  transition: margin-left 0.2s ease, margin-right 0.2s ease;
+}
+
+.tiptap-panel .toolbar {
+  margin-left: var(--panel-top-controls-left-offset, 56px);
+  margin-right: var(--panel-top-controls-right-offset, 72px);
+  transition: margin-left 0.2s ease, margin-right 0.2s ease;
+}
+
+.tiptap-panel .editor-hover-scope {
+  width: calc(100% - 128px);
+  max-width: 100%;
+  min-width: 0;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tiptap-panel-title {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.tiptap-panel-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.tiptap-panel-save-btn {
+  border: 1px solid #2f6dd5;
+  background: #2f6dd5;
+  color: #ffffff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+
+.tiptap-panel-save-btn:hover:not(:disabled) {
+  background: #2558ac;
+  border-color: #2558ac;
+}
+
+.tiptap-panel-save-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.tiptap-panel-back-btn {
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #111827;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.tiptap-panel-back-btn:hover {
+  background: #f9fafb;
+}

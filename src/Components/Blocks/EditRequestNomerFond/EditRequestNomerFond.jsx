@@ -3,10 +3,21 @@ import classes from "./EditRequestNomerFond.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { getCookie, UPDATE_HOTEL } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import {
+  GET_HOTEL_TARIFS,
+  GET_HOTELS_UPDATE_SUBSCRIPTION,
+  getCookie,
+  REORDER_ROOM_KIND_IMAGES,
+  server,
+  UPDATE_HOTEL,
+} from "../../../../graphQL_requests.js";
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader.jsx";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function EditRequestNomerFond({
+  type,
   show,
   id,
   onClose,
@@ -16,54 +27,119 @@ function EditRequestNomerFond({
   reserve,
   active,
   onSubmit,
+  roomId,
+  roomsRefetch,
   uniqueCategories,
   tarifs,
   addTarif,
   setAddTarif,
   selectedNomer,
-  filter
+  filter,
+  addNotification,
 }) {
   const token = getCookie("token");
-  // console.log(category);
+  // console.log(nomer);
+  const [selectedRoomKind, setSelectedRoomKind] = useState(null);
+  const [hotelTariff, setHotelTariff] = useState([]);
+
+  const [coverImage, setCoverImage] = useState(nomer && nomer?.images?.[0]);
+  const [coverImage2, setCoverImage2] = useState(null);
+
+  const [deletedImages, setDeletedImages] = useState([]);
+
+  const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: { hotelId: id },
+  });
+
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_HOTELS_UPDATE_SUBSCRIPTION,
+    {
+      onData: () => {
+        refetch();
+      },
+    }
+  );
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
     nomerName: (nomer && nomer.name) || "",
-    category: category?.origName || "",
+    category: type === "apartment" ? category?.origName : null,
+    beds: nomer?.beds || "",
     reserve: nomer?.reserve || "",
     active: nomer?.active || "",
     description: nomer?.description || "",
+    descriptionSecond: nomer?.descriptionSecond || "",
+    price: nomer?.price || null,
     roomImages: null,
   });
+
+  // console.log(selectedRoomKind);
 
   const sidebarRef = useRef();
 
   const resetForm = useCallback(() => {
     setIsEdited(false); // Сброс флага изменений
+    setSelectedRoomKind(null);
   }, []);
 
   useEffect(() => {
     if (show) {
       setFormData({
-        nomerName: nomer?.name || "",
-        category: category.origName || nomer?.category || "",
+        nomerName: nomer?.name || nomer?.id || "",
+        category: type === "apartment" ? category?.origName : null,
+        beds: nomer?.beds || "",
         reserve: typeof nomer?.reserve === "boolean" ? nomer?.reserve : false, // Установить false, если undefined
         active: typeof nomer?.active === "boolean" ? nomer?.active : false, // Установить false, если undefined
         description: nomer?.description || "",
+        descriptionSecond: nomer?.descriptionSecond || "",
+        price: nomer?.price || null,
         roomImages: null,
       });
     }
   }, [show, nomer, category, reserve, active]);
 
+  useEffect(() => {
+    if (data && show) {
+      setHotelTariff(data.hotel?.roomKind);
+    }
+  }, [data, show]);
+
+  // Если в номере задан тариф (roomKind.id), ищем его в загруженных тарифах и устанавливаем selectedRoomKind
+  useEffect(() => {
+    if (
+      show &&
+      nomer &&
+      nomer.roomKind &&
+      nomer.roomKind.id &&
+      hotelTariff.length > 0
+    ) {
+      const preselectedTariff = hotelTariff.find(
+        (tariff) => tariff.id === nomer.roomKind.id
+      );
+      if (preselectedTariff) {
+        setSelectedRoomKind(preselectedTariff);
+      }
+    }
+  }, [show, nomer, hotelTariff]);
+
+  const [isEditing, setIsEditing] = useState(false);
+
   const closeButton = useCallback(() => {
     if (!isEdited) {
       resetForm();
+      setIsEditing(false);
       onClose();
       return;
     }
 
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
+      setIsEditing(false);
       onClose();
     }
   }, [isEdited, resetForm, onClose]);
@@ -77,14 +153,57 @@ function EditRequestNomerFond({
     }));
   }, []);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        roomImages: file, // Сохраняем файл напрямую
-      }));
+  // переключает пометку удаления для серверного изображения (по его пути)
+  const toggleDeleteServerImage = (imagePath) => {
+    setDeletedImages((prev) => {
+      if (prev.includes(imagePath)) {
+        return prev.filter((p) => p !== imagePath);
+      } else {
+        return [...prev, imagePath];
+      }
+    });
+
+    // Если удаляем текущую обложку — сбросим её
+    if (coverImage === imagePath) {
+      setCoverImage(null);
     }
+  };
+
+  // удаление нового выбранного файла из formData.images (File)
+  const removeNewFile = (index) => {
+    setFormData((prev) => {
+      const newFiles = Array.from(prev.images || []);
+      newFiles.splice(index, 1);
+      return { ...prev, images: newFiles };
+    });
+
+    // если удаляли coverImage2 (File), сбрасываем его
+    const file = formData.images?.[index];
+    if (coverImage2 === file) setCoverImage2(null);
+  };
+
+  const handleFileChange = (e) => {
+    const files = e.target.files;
+    if (files.length > 8) {
+      alert("Вы можете загрузить не более 8 изображений.");
+      e.target.value = null;
+      return;
+    }
+
+    // Преобразуем файлы в массив
+    const fileArray = Array.from(files);
+
+    setFormData((prevState) => ({
+      ...prevState,
+      roomImages: fileArray, // Сохраняем массив файлов
+    }));
+  };
+
+  const handleCoverImageChange = (image) => {
+    if (isEditing) {
+      setCoverImage(image);
+    }
+    // setIsEditing(!isEditing);
   };
 
   const [updateHotel] = useMutation(UPDATE_HOTEL, {
@@ -96,64 +215,249 @@ function EditRequestNomerFond({
     },
   });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const [isLoading, setIsLoading] = useState(false);
 
-    const nomerName =
-      filter == 'quote' ? formData.nomerName :
-        filter == 'reserve' && formData.nomerName.includes('резерв') ? formData.nomerName : `${formData.nomerName} (резерв)`;
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   setIsLoading(true);
 
-    let response_update_room = await updateHotel({
-      variables: {
-        updateHotelId: id,
-        input: {
-          rooms: [
-            {
-              id: nomer.id,
-              name: nomerName,
-              category: formData.category,
-              reserve: formData.reserve,
-              active: formData.active,
-              description: formData.description,
-            },
-          ],
-        },
-        roomImages: formData.roomImages,
+  //   try {
+  //     // const nomerName =
+  //     //   filter == "quote" && !formData.reserve
+  //     //     ? formData.nomerName
+  //     //     : filter == "reserve" &&
+  //     //       formData.nomerName.includes("резерв") &&
+  //     //       !formData.reserve
+  //     //     ? formData.nomerName.replace(/\s*\(?\s*резерв\s*\)?\s*/i, "")
+  //     //     : `${formData.nomerName} (резерв)`;
+  //     // Если filter не передан, effectiveFilter будет "quote"
+  //     const effectiveFilter = filter || "quote";
+
+  //     const nomerName =
+  //       formData.reserve && nomer.reserve
+  //         ? formData.nomerName
+  //         : effectiveFilter === "quote" && !formData.reserve
+  //         ? formData.nomerName
+  //         : effectiveFilter === "reserve" &&
+  //           formData.nomerName.includes("резерв") &&
+  //           !formData.reserve
+  //         ? formData.nomerName.replace(/\s*\(?\s*резерв\s*\)?\s*/i, "")
+  //         : `${formData.nomerName} (резерв)`;
+
+  //     let response_update_room = await updateHotel({
+  //       variables: {
+  //         updateHotelId: id,
+  //         input: {
+  //           rooms: [
+  //             {
+  //               id: roomId ? roomId : nomer.id,
+  //               name: nomerName,
+  //               category: formData.category,
+  //               beds: parseFloat(formData.beds),
+  //               reserve: formData.reserve,
+  //               active: formData.active,
+  //               description: formData.description,
+  //               descriptionSecond: formData.descriptionSecond,
+  //             },
+  //           ],
+  //         },
+  //         roomImages: formData.roomImages,
+  //       },
+  //     });
+  //     if (response_update_room) {
+  //       const sortedTarifs = Object.values(
+  //         response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
+  //           if (!acc[room.category]) {
+  //             acc[room.category] = {
+  //               name:
+  //                 room.category === "onePlace"
+  //                   ? "Одноместный"
+  //                   : room.category === "twoPlace"
+  //                   ? "Двухместный"
+  //                   : room.category === "threePlace"
+  //                   ? "Трехместный"
+  //                   : room.category === "fourPlace"
+  //                   ? "Четырехместный"
+  //                   : room.category === "fivePlace"
+  //                   ? "Пятиместный"
+  //                   : room.category === "sixPlace"
+  //                   ? "Шестиместный"
+  //                   : room.category === "sevenPlace"
+  //                   ? "Семиместный"
+  //                   : room.category === "eightPlace"
+  //                   ? "Восьмиместный"
+  //                   : "",
+  //               origName: room.category,
+  //               rooms: [],
+  //             };
+  //           }
+  //           acc[room.category].rooms.push(room);
+  //           return acc;
+  //         }, {})
+  //       );
+
+  //       sortedTarifs.forEach((category) => {
+  //         category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+  //       });
+
+  //       setAddTarif ? setAddTarif(sortedTarifs) : null;
+  //       onSubmit ? onSubmit(nomerName, nomer, formData.category) : null;
+  //     }
+  //     resetForm();
+  //     onClose();
+  //     setIsLoading(false);
+  //     addNotification ? addNotification("Редактирование номера прошло успешно.", "success") : null;
+  //   } catch (error) {
+  //     console.error("Ошибка при обновлении номера", error);
+  //   } finally {
+  //     // resetForm();
+  //     // onClose();
+  //     setIsLoading(false);
+  //     // addNotification("Редактирование номера прошло успешно.", "success");
+  //   }
+  // };
+
+  const [reorderRoomKindImages] = useMutation(REORDER_ROOM_KIND_IMAGES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
       },
-    });
-    if (response_update_room) {
-      const sortedTarifs = Object.values(
-        response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
-          if (!acc[room.category]) {
-            acc[room.category] = {
-              name:
-                room.category === "onePlace"
-                  ? "Одноместный"
-                  : room.category === "twoPlace"
-                    ? "Двухместный"
-                    : room.category === "threePlace"
-                      ? "Трехместный"
-                      : room.category === "fourPlace"
-                        ? "Четырехместный"
-                        : "",
-              origName: room.category,
-              rooms: [],
-            };
+    },
+  });
+  const imagesArray = coverImage
+    ? [
+      coverImage,
+      ...nomer?.images.filter(
+        (img) => img !== coverImage && !deletedImages.includes(img)
+      ),
+    ]
+    : nomer?.images?.filter((img) => !deletedImages.includes(img));
+
+  const imagesArray2 = coverImage2
+    ? [
+      coverImage2,
+      ...(formData?.roomImages?.filter((f) => f !== coverImage2) || []),
+    ]
+    : formData?.roomImages || [];
+
+  const handleSubmit = async (e) => {
+    if (isEditing) {
+      e.preventDefault();
+      setIsLoading(true);
+
+      try {
+        // const finalImagesOrder = imagesArray; // Задаем порядок изображений
+        // if (finalImagesOrder && finalImagesOrder.length && imagesArray2.length === 0) {
+        // await reorderRoomKindImages({
+        //   variables: {
+        //     reorderRoomKindImagesId: roomId ? roomId : nomer.id,
+        //     imagesArray: finalImagesOrder, // Порядок изображений
+        //     imagesToDeleteArray: deletedImages, // Массив путей изображений на удаление
+        //   },
+        // });
+
+        // Определяем имя номера в зависимости от режима (резерв/квота)
+        let nomerName;
+        if (formData.reserve) {
+          // Если включен режим "резерв" – добавляем суффикс, если его там ещё нет
+          if (!formData.nomerName.includes("(резерв)")) {
+            nomerName = `${formData.nomerName} (резерв)`;
+          } else {
+            nomerName = formData.nomerName;
           }
-          acc[room.category].rooms.push(room);
-          return acc;
-        }, {})
-      );
+        } else {
+          // Если режим "квота" – удаляем суффикс "(резерв)", если он присутствует
+          nomerName = formData.nomerName
+            .replace(/\s*\(?\s*резерв\s*\)?/i, "")
+            .trim();
+        }
 
-      sortedTarifs.forEach((category) => {
-        category.rooms.sort((a, b) => a.name.localeCompare(b.name));
-      });
+        const roomInput = {
+          id: roomId ? roomId : nomer.id,
+          name: nomerName,
+          roomKindId: selectedRoomKind ? selectedRoomKind.id : undefined,
+          category: formData.category,
+          beds: parseFloat(formData.beds),
+          reserve: formData.reserve,
+          description: formData.description,
+          descriptionSecond: formData.descriptionSecond,
+          price: parseFloat(formData.price),
+        };
 
-      setAddTarif(sortedTarifs);
-      onSubmit(nomerName, nomer, formData.category);
-      resetForm();
-      onClose();
+        let response_update_room = await updateHotel({
+          variables: {
+            updateHotelId: id,
+            input: {
+              rooms: [roomInput],
+            },
+            roomImages: formData.roomImages,
+          },
+        });
+
+        if (response_update_room) {
+          const sortedTarifs = Object.values(
+            response_update_room.data.updateHotel.rooms.reduce((acc, room) => {
+              if (!acc[room.category]) {
+                acc[room.category] = {
+                  name:
+                    room.category === "onePlace"
+                      ? "Одноместный"
+                      : room.category === "twoPlace"
+                        ? "Двухместный"
+                        : room.category === "threePlace"
+                          ? "Трехместный"
+                          : room.category === "fourPlace"
+                            ? "Четырехместный"
+                            : room.category === "fivePlace"
+                              ? "Пятиместный"
+                              : room.category === "sixPlace"
+                                ? "Шестиместный"
+                                : room.category === "sevenPlace"
+                                  ? "Семиместный"
+                                  : room.category === "eightPlace"
+                                    ? "Восьмиместный"
+                                    : room.category === "apartment"
+                                      ? "Апартаменты"
+                                      : room.category === "studio"
+                                        ? "Студия"
+                                        : "",
+                  origName: room.category,
+                  rooms: [],
+                };
+              }
+              acc[room.category].rooms.push(room);
+              return acc;
+            }, {})
+          );
+
+          sortedTarifs.forEach((category) => {
+            category.rooms.sort((a, b) => a.name.localeCompare(b.name));
+          });
+
+          if (setAddTarif) {
+            setAddTarif(sortedTarifs);
+          }
+          if (onSubmit) {
+            onSubmit(nomerName, nomer, formData.category);
+          }
+          if (roomsRefetch) {
+            roomsRefetch();
+          }
+        }
+        resetForm();
+        onClose();
+        setIsLoading(false);
+        if (addNotification) {
+          addNotification("Редактирование номера прошло успешно.", "success");
+        }
+      } catch (error) {
+        console.error("Ошибка при обновлении номера", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
@@ -178,111 +482,359 @@ function EditRequestNomerFond({
     };
   }, [show, closeButton]);
 
+  const categories = [
+    {
+      value: "onePlace",
+      label: "Одноместный",
+    },
+    {
+      value: "twoPlace",
+      label: "Двухместный",
+    },
+    {
+      value: "threePlace",
+      label: "Трехместный",
+    },
+    {
+      value: "fourPlace",
+      label: "Четырехместный",
+    },
+    {
+      value: "fivePlace",
+      label: "Пятиместный",
+    },
+    {
+      value: "sixPlace",
+      label: "Шестиместный",
+    },
+    {
+      value: "sevenPlace",
+      label: "Семиместный",
+    },
+    {
+      value: "eightPlace",
+      label: "Восьмиместный",
+    },
+  ];
+
+  const apartmentCategories = [
+    {
+      value: "apartment",
+      label: "Апартаменты",
+    },
+    {
+      value: "studio",
+      label: "Студия",
+    },
+  ];
+
+  const bedsCategories = [
+    {
+      value: 1.0,
+      label: "Одна кровать",
+    },
+    {
+      value: 2.0,
+      label: "Две кровати",
+    },
+    {
+      value: 3.0,
+      label: "Три кровати",
+    },
+    {
+      value: 4.0,
+      label: "Четыре кровати",
+    },
+    {
+      value: 5.0,
+      label: "Пять кроватей",
+    },
+    {
+      value: 6.0,
+      label: "Шесть кроватей",
+    },
+    {
+      value: 7.0,
+      label: "Семь кроватей",
+    },
+    {
+      value: 8.0,
+      label: "Восемь кроватей",
+    },
+  ];
+
+  const useCategories = type === "apartment" ? apartmentCategories : categories;
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать номер</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              {type === "apartment" ? null : (
+                <>
+                  <label>Квота или резерв</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите тип"}
+                    options={["Квота", "Резерв"]}
+                    value={formData.reserve === true ? "Резерв" : "Квота"}
+                    onChange={(event, newValue) => {
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        reserve: newValue === "Резерв",
+                      }));
+                      setIsEdited(true);
+                    }}
+                    isDisabled={!isEditing}
+                  />
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название номера</label>
-          <input
-            type="text"
-            name="nomerName"
-            value={formData.nomerName.includes('резерв') ? formData.nomerName.split(' (резерв)')[0] : `${formData.nomerName}`}
-            onChange={handleChange}
-            placeholder="Пример: № 151"
-          />
+                  <label>Тариф</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите тариф"}
+                    options={hotelTariff.map((tariff) => tariff.name)}
+                    value={
+                      selectedRoomKind &&
+                      hotelTariff.find(
+                        (tariff) =>
+                          tariff && tariff.name === selectedRoomKind.name
+                      )?.name
+                    }
+                    onChange={(event, newValue) => {
+                      const tariff = hotelTariff.find(
+                        (tariff) => tariff && tariff.name === newValue
+                      );
+                      setSelectedRoomKind(tariff);
+                    }}
+                    isDisabled={!isEditing}
+                  />
+                </>
+              )}
+              <label>Название номера</label>
+              <input
+                type="text"
+                name="nomerName"
+                value={
+                  formData.nomerName.includes("резерв")
+                    ? formData.nomerName.split(" (резерв)")[0]
+                    : `${formData.nomerName}`
+                }
+                onChange={handleChange}
+                placeholder="Пример: № 151"
+                disabled={!isEditing}
+              />
 
-          <label>Категория</label>
-          <select
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-          >
-            <option value={"onePlace"}>Одноместный</option>
-            <option value={"twoPlace"}>Двухместный</option>
-            <option value={"threePlace"}>Трехместный</option>
-            <option value={"fourPlace"}>Четырехместный</option>
-            {/* {uniqueCategories.map(category => (
-                            <option key={category} value={category}>{category == 'onePlace' ? 'Одноместный' : category == 'twoPlace' ? 'Двухместный' : ''}</option>
-                        ))} */}
-          </select>
+              <label>Дополнительная информация</label>
+              <input
+                type="text"
+                name="descriptionSecond"
+                value={formData.descriptionSecond}
+                onChange={handleChange}
+                placeholder="Пример: Снимает Сам Иванов"
+                disabled={!isEditing}
+              />
 
-          <label>Тип</label>
-          <select
-            name="reserve"
-            value={
-              formData.reserve === true
-                ? "true"
-                : formData.reserve === false
-                  ? "false"
-                  : ""
-            }
-            onChange={(e) => {
-              const value = e.target.value === "true"; // Преобразование строки в булевое значение
-              setIsEdited(true);
-              setFormData((prevState) => ({
-                ...prevState,
-                reserve: value,
-              }));
-            }}
-          >
-            <option value="" disabled>
-              Выберите тип
-            </option>
-            <option value="false">Квота</option>
-            <option value="true">Резерв</option>
-          </select>
+              <label>Количество кроватей</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите категорию"}
+                options={bedsCategories.map((category) => category.label)}
+                value={
+                  bedsCategories.find(
+                    (category) => category.value === formData.beds
+                  ) || ""
+                }
+                onChange={(event, newValue) => {
+                  const selectedCategory = bedsCategories.find(
+                    (category) => category.label === newValue
+                  );
+                  setFormData((prevFormData) => ({
+                    ...prevFormData,
+                    beds: selectedCategory?.value,
+                  }));
+                  setIsEdited(true);
+                }}
+                isDisabled={!isEditing}
+              />
 
-          <label>Состояние</label>
-          <select
-            name="active"
-            value={
-              formData.active === true
-                ? "true"
-                : formData.active === false
-                  ? "false"
-                  : ""
-            }
-            onChange={(e) => {
-              const value = e.target.value === "true";
-              setIsEdited(true);
-              setFormData((prevState) => ({
-                ...prevState,
-                active: value,
-              }));
-            }}
-          >
-            <option value="" disabled>
-              Выберите состояние
-            </option>
-            <option value="false">Не работает</option>
-            <option value="true">Работает</option>
-          </select>
+              <label>Состояние</label>
+              <select
+                name="active"
+                value={
+                  formData.active === true
+                    ? "true"
+                    : formData.active === false
+                      ? "false"
+                      : ""
+                }
+                onChange={(e) => {
+                  const value = e.target.value === "true";
+                  setIsEdited(true);
+                  setFormData((prevState) => ({
+                    ...prevState,
+                    active: value,
+                  }));
+                }}
+                disabled={!isEditing}
+              >
+                <option value="" disabled>
+                  Выберите состояние
+                </option>
+                <option value="false">Не работает</option>
+                <option value="true">Работает</option>
+              </select>
 
-          <label>Описание</label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-          ></textarea>
+              {type === "apartment" ? (
+                <>
+                  <label>Категория</label>
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Выберите категорию"}
+                    options={useCategories.map((category) => category.label)}
+                    value={
+                      useCategories.find(
+                        (category) => category.value === formData.category
+                      ) || ""
+                    }
+                    onChange={(event, newValue) => {
+                      const selectedCategory = useCategories.find(
+                        (category) => category.label === newValue
+                      );
+                      setFormData((prevFormData) => ({
+                        ...prevFormData,
+                        category: selectedCategory?.value,
+                      }));
+                      setIsEdited(true);
+                    }}
+                    isDisabled={!isEditing}
+                  />
 
-          <label>Изображение</label>
-          <input type="file" name="roomImages" onChange={handleFileChange} />
-        </div>
-      </div>
+                  <label>Цена</label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price || 0}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                  />
+                  <label>Описание</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                  ></textarea>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Сохранить изменения
-        </Button>
-      </div>
+                  <label>Изображения</label>
+                  <input
+                    type="file"
+                    name="roomImages"
+                    onChange={handleFileChange}
+                    multiple
+                    disabled={!isEditing}
+                  />
+                  {/* список новых файлов (локальные файлы) */}
+                  <div className={classes.imageList}>
+                    {formData?.roomImages?.map((image, index) => (
+                      <div
+                        key={`${image.name}-${index}`}
+                        className={`${classes.imageItem} ${coverImage2 === image ? classes.selected : ""
+                          }`}
+                      >
+                        <img
+                          src={URL.createObjectURL(image)}
+                          alt={`Image ${index + 1}`}
+                        // onClick={() => handleCoverImageChange2(image)}
+                        />
+                        {/* кнопка удалить локальный файл */}
+                        {isEditing && (
+                          <button
+                            className={classes.deleteImageBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeNewFile(index);
+                            }}
+                            title="Удалить"
+                          >
+                            {/* ✕ */}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* список изображений с сервера */}
+                  <div className={classes.imageList}>
+                    {nomer?.images?.map((image, index) => {
+                      const isMarked = deletedImages.includes(image);
+                      return (
+                        <div
+                          key={`${image}-${index}`}
+                          className={`${classes.imageItem} 
+                          ${coverImage === image ? classes.selected : ""
+                            } ${!isEditing && classes.disImage} ${isMarked ? classes.toDelete : ""
+                            }
+                          `}
+                        // onClick={() => {
+                        //   if (!isMarked) {
+                        //     handleCoverImageChange(image);
+                        //   }
+                        // }}
+                        >
+                          <img
+                            src={`${server}${image}`}
+                            alt={`Image ${index + 1}`}
+                          />
+                          {/* {isEditing && (
+                            <button
+                              className={classes.deleteImageBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDeleteServerImage(image);
+                              }}
+                              title={isMarked ? "Отменить удаление" : "Удалить"}
+                            >
+                            </button>
+                          )} */}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              ) : null}
+            </div>
+          </div>
+
+          <div className={classes.requestButton}>
+            <Button
+              type="submit"
+              onClick={handleSubmit}
+              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+              color={!isEditing ? "#3B6C54" : "#fff"}
+            >
+              {isEditing ? (
+                <>
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </>
+              ) : (
+                <>
+                  Изменить <img src="/editDispetcher.png" alt="" />
+                </>
+              )}
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

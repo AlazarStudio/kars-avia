@@ -6,11 +6,12 @@
     font-weight: 400;
     line-height: 19.36px;
     text-align: center;
-    margin-left: 8px;
+    padding-left: 8px;
     transition: all 0.2s ease-in-out;
     cursor: pointer;
-    box-shadow: 0px -1px 0px 0px #E4E4EF inset;
+    /* box-shadow: 0px -1px 0px 0px #E4E4EF inset; */
     position: relative;
+    height: 70px;
 }
 
 .InfoTable_data:hover {
@@ -19,9 +20,9 @@
 }
 
 .InfoTable_title {
-    color: var(--text-gray);
+    color: var(--no-active);
     box-shadow: 0px -1px 0px 0px #E4E4EF inset;
-    margin-right: 8px;
+    padding-right: 8px;
 }
 
 .InfoTable_title_elem,
@@ -31,12 +32,15 @@
     align-items: center;
     justify-content: center;
     gap: 10px;
-    border-right: 1px solid #E4E4EF;
+    /* border-right: 1px solid #E4E4EF; */
 }
 
 .InfoTable_data_elem_img {
-    width: 30px;
+    min-width: 30px;
+    max-width: 30px;
     height: 30px;
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 .InfoTable_data_elem_img img {
@@ -50,7 +54,7 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 20px;
-    color: var(--main-gray);
+    color: var(--text);
     width: 100%;
 }
 
@@ -63,11 +67,15 @@
 }
 
 .w12 {
-    width: 12.5%;
+    width: 12%;
 }
 
 .w10 {
     width: 10%;
+}
+
+.w11 {
+    width: 11%;
 }
 
 .w8 {
@@ -96,9 +104,14 @@
     font-weight: 400;
     line-height: 20px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 10px;
     color: #0057C3;
+}
+
+.p0 {
+    padding: 0 !important;
 }
 
 .InfoTable_data_elem_moreInfo span {
@@ -118,9 +131,9 @@
 
 
 .bottom {
-    height: calc(100vh - 375px);
+    height: calc(100vh - 335px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .newRequest {
@@ -132,4 +145,22 @@
     top: 10px;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+.unreadMessages {
+    position: absolute;
+    top: 11px;
+    right: 0;
+    width: 6px;
+    height: 6px;
+    background-color: red;
+    /* border-radius: 50px; */
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+    .InfoTable_title_elem {
+        font-size: 14px;
+    }
+
+    .InfoTable_data_elem {
+        font-size: 14px;
+    }
+}

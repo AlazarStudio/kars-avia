@@ -1,0 +1,154 @@
+.addressField {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.addressFieldHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.addressLabel {
+  font-size: 16px;
+  /* font-weight: 500; */
+  /* color: #4f4f4f; */
+}
+
+.addressModeSwitch {
+  display: flex;
+  gap: 4px;
+}
+
+.modeBtn {
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #828282;
+}
+
+.modeBtnActive {
+  background: #e3f2ff;
+  color: #0065ff;
+}
+
+.addressSearch {
+  position: relative;
+}
+
+.addressInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  background: #fff;
+}
+
+.suggestionsList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  margin: 4px 0 0;
+  padding: 4px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.suggestionItem {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.suggestionItem:hover {
+  background: #f2f4f7;
+}
+
+.addressMapBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.mapBtn {
+  width: 100%;
+  height: 40px;
+  /* padding: 10px 12px; */
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background: #f2f4ff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.mapModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.mapModalContent {
+  width: 640px;
+  max-width: 95vw;
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mapModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+}
+
+.mapModalClose {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.mapPlaceholder {
+  height: 320px;
+  border-radius: 12px;
+  border: 1px dashed #bdbdbd;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.mapSelectFake {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: none;
+  background: #0065ff;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+@media (min-width: 0px) and (max-width: 1399px) {
+  .addressLabel {
+    font-size: 14px;
+  }
+}

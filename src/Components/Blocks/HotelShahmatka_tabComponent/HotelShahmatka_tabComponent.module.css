@@ -1,41 +1,40 @@
 .section_searchAndFilter {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 20px;
+    /* justify-content: space-between; */
 }
 
 .section_searchAndFilter_filter {
+    flex: 1;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-}
-
-.legend {
-    display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 10px;
 }
 
-.legendLine {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
+.searchInput {
+    width: 500px;
 }
 
-.legendInfo {
-    display: flex;
-    align-items: center;
-    gap: 5px;
+@media (min-width: 0px) and (max-width: 1499px) {
+    .searchInput {
+        width: 400px;
+    }
 }
 
-.legendInfoColor {
-    width: 20px;
-    height: 20px;
-}
+@media (min-width: 0px) and (max-width: 1299px) {
+    .legendInfoText {
+        font-size: 11px;
+    }
 
-.legendInfoText {
-    font-size: 12px;
-}
+    .legendInfoColor {
+        width: 15px;
+        height: 15px;
+    }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+    .searchInput {
+        width: 350px;
+        font-size: 14px;
+    }
+}

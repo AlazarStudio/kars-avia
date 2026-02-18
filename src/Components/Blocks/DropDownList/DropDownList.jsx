@@ -16,20 +16,39 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
         onSelect(option);
     };
 
-    const handleOutsideClick = (e) => {
-        if (searchRef.current && !searchRef.current.contains(e.target)) {
-            const exactMatch = options.some(option => option === searchTerm);
-            if (!exactMatch) {
-                setSearchTerm("");
-            }
-            setIsOpen(false);
-        }
-    };
+    // const handleOutsideClick = (e) => {
+    //     if (searchRef.current && !searchRef.current.contains(e.target)) {
+    //         const exactMatch = options.some(option => option === searchTerm);
+    //         if (!exactMatch) {
+    //             setSearchTerm("");
+    //         }
+    //         setIsOpen(false);
+    //     }
+    // };
 
+    const handleOutsideClick = (e) => {
+        if (searchRef.current && searchRef.current.contains(e.target)) {
+            return;
+        }
+        const exactMatch = options.some(option => option === searchTerm);
+        if (!exactMatch) {
+            setSearchTerm("");
+        }
+        setIsOpen(false);
+    };
+    
+
+    // useEffect(() => {
+    //     document.addEventListener("mousedown", handleOutsideClick);
+    //     return () => document.removeEventListener("mousedown", handleOutsideClick);
+    // }, [searchTerm, options]);
     useEffect(() => {
         document.addEventListener("mousedown", handleOutsideClick);
-        return () => document.removeEventListener("mousedown", handleOutsideClick);
+        return () => {
+            document.removeEventListener("mousedown", handleOutsideClick);
+        };
     }, [searchTerm, options]);
+    
 
     const handleInputChange = (e) => {
         setSearchTerm(e.target.value);
@@ -41,7 +60,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
     };
 
     const filteredOptions = searchable
-        ? options.filter(option => option?.toLowerCase().includes(searchTerm.toLowerCase()))
+        ? options?.filter(option => option?.toLowerCase().includes(searchTerm.toLowerCase()))
         : options;
 
     return (
@@ -55,6 +74,7 @@ function DropDownList({ options, initialValue = "", searchable = true, onSelect,
                     onFocus={handleFocus}
                     placeholder={placeholder}
                     onClick={() => setSearchTerm('')}
+                    autoComplete="new-password"
                 // disabled={!searchable}
                 />
                 <img src="/arrow-bottomx1,5.png" alt="" />

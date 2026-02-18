@@ -3,6 +3,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 20px 20px 30px;
+    border-bottom: 1px solid #E4E4EF;
 }
 
 .requestButton {
@@ -18,12 +19,10 @@
     font-size: 24px;
     font-weight: 600;
     line-height: 38.73px;
-    color: var(--main-gray);
+    color: var(--text);
 }
 
 .requestTitle_close {
-    width: 25px;
-    height: 25px;
     cursor: pointer;
 }
 
@@ -72,16 +71,19 @@
 
 .requestData input,
 select {
-    height: 38px;
+    height: 40px;
     outline: none;
     padding: 0 10px;
+}
+
+.requestData select {
     cursor: pointer;
 }
 
 .requestMiddle {
     height: calc(100vh - 79px - 67px - 81px);
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .reis_info {
@@ -123,7 +125,7 @@ select {
     justify-content: center;
     align-items: center;
     background-color: var(--red);
-    border-radius: 5px;
+    border-radius: 10px;
     color: #FFFFFF;
     font-family: Nunito Sans;
     font-size: 16px;
@@ -174,7 +176,7 @@ select {
     font-weight: 400;
     width: 60%;
     padding: 10px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 .requestDataInfo input {
@@ -184,7 +186,7 @@ select {
 .requestData_messages {
     height: 590px;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 30px;
@@ -198,7 +200,7 @@ select {
 .requestData_date_info {
     background-color: #F3F3F3;
     padding: 5px 15px;
-    border-radius: 5px;
+    border-radius: 10px;
     font-family: Nunito Sans;
     font-size: 14px;
     font-weight: 400;
@@ -322,7 +324,7 @@ select {
     padding: 10px;
     cursor: pointer;
     resize: none;
-    border-radius: 5px;
+    border-radius: 10px;
 }
 
 .historyDate {
@@ -347,7 +349,7 @@ select {
     align-items: center;
     height: auto;
     overflow: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
     padding: 10px 0;
 }
 
@@ -390,6 +392,36 @@ select {
     line-height: 24.2px;
     color: var(--main-gray);
     padding: 10px 0;
+}
+
+.separatorWrapper {
+    /* position: absolute; */
+    /* top: 0; */
+    /* left: 0; */
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #CBDEFB;
+}
+
+.separatorWrapper button {
+    padding: 10px;
+    flex-basis: 48%;
+    color: #545873;
+    background-color: #F1F4FB;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    transition: all ease-in-out 0.3s;
+    opacity: 0.5;
+}
+
+.separatorWrapper button.active {
+    color: #000;
+    opacity: 1;
+    background-color: #F1F4FB;
+    outline: none;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

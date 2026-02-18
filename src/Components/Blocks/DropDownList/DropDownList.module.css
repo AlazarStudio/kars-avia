@@ -11,8 +11,8 @@
     position: absolute;
     top: 45%;
     right: 10px;
-    width: 12px;
-    height: 5px;
+    width: 12px !important;
+    height: 5px !important;
     object-fit: contain;
 }
 
@@ -20,7 +20,7 @@
     width: 100%;
     padding: 8px 24px 8px 8px;
     border: 1px solid var(--text-gray);
-    border-radius: 5px;
+    border-radius: 10px;
     outline: none;
 }
 
@@ -37,7 +37,7 @@
     list-style: none;
     background-color: white;
     border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 10px;
     /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
     overflow-y: auto;
     z-index: 10;
@@ -54,4 +54,12 @@
     background-color: #f0f0f0;
 }
 
-@media (min-width: 0px) and (max-width: 1299px) {}
+@media (min-width: 0px) and (max-width: 1399px) {
+    .search {
+        font-size: 13px;
+    }
+
+    .dropdownItem {
+        font-size: 13px;
+    }
+}

@@ -1,0 +1,32 @@
+.container {
+  background: #fff;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid #AAB0DD5C;
+  display: flex;
+  flex-direction: column;
+  width: 49%;
+  gap: 30px;
+}
+
+
+@media (min-width: 0px) and (max-width: 1699px) {
+  .container {
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    width: 70%;
+    gap: 30px;
+  }
+}
+
+
+@media (min-width: 0px) and (max-width: 1499px) {
+  .container {
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 30px;
+  }
+}

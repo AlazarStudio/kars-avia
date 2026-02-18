@@ -8,34 +8,58 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
+import MUILoader from "../MUILoader/MUILoader";
 
-function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
-  const [userRole, setUserRole] = useState();
+function EditRequestAirlineOtdel({
+  show,
+  onClose,
+  id,
+  category,
+  positions, // Все доступные должности
+  onSubmit,
+  addNotification,
+}) {
+  // const [userRole, setUserRole] = useState();
   const token = getCookie("token");
 
-  useEffect(() => {
-    setUserRole(decodeJWT(token).role);
-  }, [token]);
+  // useEffect(() => {
+  //   setUserRole(decodeJWT(token).role);
+  // }, [token]);
 
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [isEdited, setIsEdited] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
   const [formData, setFormData] = useState({
     type: category?.name || "",
+    email: category?.email || "",
   });
+
+  // Инициализируем выбранные должности из category?.position (если они есть)
+  // const [selectedPositions, setSelectedPositions] = useState(
+  //   category && category.position ? category.position.map((pos) => pos.id) : []
+  // );
 
   const sidebarRef = useRef();
 
   useEffect(() => {
     if (show && category) {
-      setFormData({ type: category.name });
+      setFormData({ type: category.name, email: category.email || "" });
+      // setSelectedPositions(
+      //   category.position ? category.position.map((pos) => pos.id) : []
+      // );
     }
   }, [show, category]);
 
   const resetForm = useCallback(() => {
     setFormData({
       type: category?.name || "",
+      email: category?.email || "",
     });
-    setIsEdited(false); // Сброс флага изменений
-  }, []);
+    // setSelectedPositions(
+    //   category && category.position ? category.position.map((pos) => pos.id) : []
+    // );
+    setIsEdited(false);
+  }, [category]);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
@@ -43,7 +67,6 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
       onClose();
       return;
     }
-
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       onClose();
@@ -52,12 +75,24 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
   }, []);
+
+  // Обработка переключения чекбоксов для должностей
+  // const handlePositionToggle = (id) => {
+  //   setIsEdited(true);
+  //   setSelectedPositions((prevSelected) => {
+  //     if (prevSelected.includes(id)) {
+  //       return prevSelected.filter((posId) => posId !== id);
+  //     } else {
+  //       return [...prevSelected, id];
+  //     }
+  //   });
+  // };
 
   const [createAirlineDepartment] = useMutation(CREATE_AIRLINE_DEPARTMERT, {
     context: {
@@ -67,8 +102,29 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
     },
   });
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  // console.log(category?.id);
+  // console.log(formData.type);
+  // console.log(selectedPositions);
+
   const handleSubmit = async (e) => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
     e.preventDefault();
+    setIsLoading(true);
+
+    if (formData.email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        alert("Введите корректный email.");
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       let request = await createAirlineDepartment({
         variables: {
@@ -78,11 +134,15 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
               {
                 id: category.id,
                 name: formData.type,
+                email: formData.email || null,
+                // positionIds: selectedPositions, // Передаём выбранные id должностей
               },
             ],
           },
         },
       });
+
+      // console.log(request);
 
       if (request) {
         const sortedDepartments = request.data.updateAirline.department
@@ -96,20 +156,22 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
 
         onSubmit(sortedDepartments);
         resetForm();
+        addNotification("Редактирование отдела прошло успешно.", "success");
       }
     } catch (err) {
       alert("Произошла ошибка при сохранении данных");
+      console.error(err);
+    } finally {
+      setIsEditing(false);
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
-
       closeButton();
     };
 
@@ -129,28 +191,72 @@ function EditRequestAirlineOtdel({ show, onClose, id, category, onSubmit }) {
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Изменить отдел</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <img src="/close.png" alt="Закрыть" />
         </div>
       </div>
-
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Название отдела</label>
-          <input
-            type="text"
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            placeholder="Пример: 1"
-          />
-        </div>
-      </div>
-
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Изменить
-        </Button>
-      </div>
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>Название отдела</label>
+              <input
+                type="text"
+                name="type"
+                value={formData.type}
+                onChange={handleChange}
+                placeholder="Пример: Отдел продаж"
+                disabled={!isEditing}
+              />
+              <label>Почта</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="example@mail.ru"
+                disabled={!isEditing}
+              />
+              {/* <div className={classes.positionsContainer}>
+                <label>Должности:</label>
+                {positions &&
+                  positions?.map((position) => (
+                    <div key={position.id} className={classes.checkboxItem}>
+                      <input
+                        type="checkbox"
+                        id={`position-${position.id}`}
+                        value={position.id}
+                        checked={selectedPositions.includes(position.id)}
+                        onChange={() => handlePositionToggle(position.id)}
+                      />
+                      <label htmlFor={`position-${position.id}`}>
+                        {position.name}
+                      </label>
+                    </div>
+                  ))}
+              </div> */}
+            </div>
+          </div>
+          <div className={classes.requestButton}>
+            <Button
+              onClick={handleSubmit}
+              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
+              color={!isEditing ? "#3B6C54" : "#fff"}
+            >
+              {isEditing ? (
+                <>
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </>
+              ) : (
+                <>
+                  Изменить <img src="/editDispetcher.png" alt="" />
+                </>
+              )}
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }

@@ -1,0 +1,151 @@
+.notifyWrapper {
+  padding: 0 15px 40px 15px;
+  display: flex;
+  flex-direction: column;
+  /* position: relative; */
+  gap: 10px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.notify {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notifyMessageWrapper {
+  padding: 10px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid #E5E5E5;
+  border-radius: 10px;
+  transition: all ease-in-out 0.3s;
+}
+
+.notifyMessageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notifyMessageTime {
+  display: flex;
+  gap: 10px;
+}
+
+.notifyMessageTime p {
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #545873;
+  background-color: #F1F4FB;
+  border-radius: 5px;
+  transition: all ease-in-out 0.3s;
+}
+
+.toRequest {
+  padding: 7px 10px;
+  width: fit-content;
+  /* border-bottom: 1px solid #3232e7; */
+  border-radius: 5px;
+  background-color: #8286A6;
+  font-size: 13px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.notifyMessageWrapper:hover {
+  background-color: #EDEDF2;
+  border: 1px solid transparent;
+  .notifyMessageTime p {
+    background-color: #fff;
+  }
+}
+
+.notifyDescription {
+  font-size: 15px;
+  line-height: 21px;
+}
+
+.separatorWrapper {
+  padding: 15px 0 10px 0;
+  width: 100%;
+  position: sticky;
+  top: 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 5px;
+  background-color: #fff;
+  overflow: hidden;
+  /* border-bottom: 1px solid #E4E4EF; */
+  /* -webkit-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15);
+  -moz-box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15);
+  box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.15); */
+}
+
+.separatorWrapper button {
+  padding: 10px 0;
+  flex-basis: 50%;
+  border: none;
+  border: 1px solid transparent;
+  color: #545873;
+  background-color: #F1F4FB;
+  cursor: pointer;
+  transition: all ease-in-out 0.3s;
+  opacity: 0.5;
+  border-radius: 10px;
+}
+
+.separatorWrapper button.active {
+  color: #000;
+  opacity: 1;
+  background-color: #DAE5FF;
+  outline: none;
+}
+
+/* Пагинация */
+.pagination {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 440px;
+  background-color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+}
+
+.paginationNumber {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  border: 1px solid var(--menu-bg);
+  border-radius: 5px;
+  color: var(--menu-bg);
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+  text-decoration: none;
+}
+
+.paginationNumber:hover {
+  background-color: #e0e0e0;
+  color: var(--menu-bg);
+}
+
+.pagination .activePaginationNumber,
+.pagination .activePaginationNumber a {
+  background-color: var(--menu-bg) !important;
+  color: #fff !important;
+  border-radius: 5px;
+  font-size: 12px;
+}
+
+@media (min-width: 0px) and (max-width: 1299px) {}

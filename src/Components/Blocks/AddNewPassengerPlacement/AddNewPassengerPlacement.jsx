@@ -4,13 +4,17 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import { useMutation, useQuery } from "@apollo/client";
 import { ADD_HOTEL_TO_RESERVE, GET_HOTELS_RELAY, getCookie } from "../../../../graphQL_requests";
+import { roles } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacement, user, hotelInfo, showChooseHotels, setshowModalForAddHotelInReserve, setShowReserveInfo }) {
+    if (!request) return null;
+    
     const [city, setCity] = useState("");
     const [hotel, setHotel] = useState('');
 
     useEffect(() => {
-        setHotel(user.hotelId ? user.hotelId : hotelInfo?.id)
+        setHotel(user?.hotelId ? user?.hotelId : hotelInfo?.id)
     }, [user, hotelInfo]);
 
     const token = getCookie('token');
@@ -45,6 +49,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
     const [error, setError] = useState('');
     const handleChange = (e) => {
         const { name, value } = e.target;
+        if (!request) return;
         const maxCount = request.passengerCount;
         const maxCountChoose = request.passengerCount - showChooseHotels;
 
@@ -103,7 +108,8 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
                 setShowReserveInfo && setShowReserveInfo(true)
             }
         } catch (e) {
-            console.error(e);
+            // console.log(formData)
+            console.error(e.message);
         }
     };
 
@@ -125,11 +131,20 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
         };
     }, [show]);
 
-    const { data } = useQuery(GET_HOTELS_RELAY);
-    const hotels = data?.hotels || [];
+    const { data } = useQuery(GET_HOTELS_RELAY, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+        },
+    });
+    const hotels = data?.hotels.hotels || [];
     const uniqueCities = useMemo(() => {
-        return [...new Set(hotels.map(hotel => hotel.city.trim()))].sort();
+        return [...new Set(hotels.map(hotel => hotel.information?.city?.trim()))].sort();
     }, [data]);
+
+    // console.log(request);
+    
 
     useEffect(() => {
         if (request && request.airport && uniqueCities.length > 0) {  // Добавляем проверку request.airport
@@ -147,14 +162,14 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
 
     const addedHotelIds = placement.map((item) => item.hotel.name);
     const filteredHotels = formData.city
-        ? hotels.filter((hotel) => hotel.city.trim() === formData.city.trim())
+        ? hotels.filter((hotel) => hotel.information?.city?.trim() === formData.city?.trim())
         : [];
 
     return (
         <Sidebar show={show} sidebarRef={sidebarRef}>
             <div className={classes.requestTitle}>
-                <div className={classes.requestTitle_name}>{user.role == 'HOTELADMIN' ? 'Выбрать количество' : 'Добавить гостиницу'}</div>
-                <div className={classes.requestTitle_close} onClick={closeButton}><img src="/close.png" alt="" /></div>
+                <div className={classes.requestTitle_name}>{user?.role == roles.hotelAdmin ? 'Выбрать количество' : 'Добавить гостиницу'}</div>
+                <div className={classes.requestTitle_close} onClick={closeButton}><CloseIcon /></div>
             </div>
 
             <div className={classes.requestMiddle}>
@@ -197,7 +212,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
                         name="passengers"
                         placeholder="Пример: 30"
                         min="1"
-                        max={request.passengerCount - showChooseHotels}
+                        max={(request?.passengerCount - showChooseHotels) || 0}
                         value={formData.passengers}
                         onChange={handleChange}
                     />
@@ -206,7 +221,7 @@ function AddNewPassengerPlacement({ show, onClose, request, placement, setPlacem
             </div>
 
             <div className={classes.requestButton}>
-                <Button onClick={handleSubmit}>{user.role == 'HOTELADMIN' ? 'Добавить' : 'Добавить гостиницу'}</Button>
+                <Button onClick={handleSubmit}>{user?.role == roles.hotelAdmin ? 'Добавить' : 'Добавить гостиницу'}</Button>
             </div>
         </Sidebar>
     );

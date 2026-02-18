@@ -4,6 +4,9 @@ import { useParams } from "react-router-dom";
 import HotelPage from "../../Blocks/HotelPage/HotelPage";
 import Reserve from "../../Blocks/Reserve/Reserve";
 import Reports from "../../Blocks/Reports/Reports";
+import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
+import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
+// import HotelTarifs_tabComponent from "../../Blocks/HotelTarifs_tabComponent/HotelTarifs_tabComponent";
 
 const HotelAdminContent = ({ user }) => {
   const { id } = useParams();
@@ -12,6 +15,14 @@ const HotelAdminContent = ({ user }) => {
     <Reserve user={user} idHotel={user.hotelId} />
   ) : id === "reports" ? (
     <Reports user={user} />
+  ) : // :
+  // id === "hotelTarifs" ? (
+  //   <HotelTarifs_tabComponent id={user.hotelId} user={user} />
+  // )
+  id === "updates" ? (
+    <UpdatesList user={user} />
+  ) : id === "documentation" ? (
+    <DocumentationList user={user} />
   ) : (
     <HotelPage id={user.hotelId} user={user} />
   );

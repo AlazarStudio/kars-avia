@@ -1,10 +1,13 @@
 .InfoTable {
     width: 100%;
     background-color: var(--white);
-    border-radius: 8px;
-    max-height: calc(100vh - 200px);
+    border-radius: 10px;
+    /* max-height: calc(100vh - 200px); */
     overflow: hidden;
 }
 
+.isScroll {
+    overflow: visible !important;
+}
 
 @media (min-width: 0px) and (max-width: 1299px) {}

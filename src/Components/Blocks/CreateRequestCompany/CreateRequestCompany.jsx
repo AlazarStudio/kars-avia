@@ -8,13 +8,23 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
+import MUILoader from "../MUILoader/MUILoader";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import { rolesObject } from "../../../roles";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
-function CreateRequestCompany({ show, onClose, addDispatcher }) {
+function CreateRequestCompany({
+  show,
+  onClose,
+  addDispatcher,
+  addNotification,
+  positions,
+}) {
   const token = getCookie("token");
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
-    images: "",
+    images: null,
     name: "",
     email: "",
     role: "",
@@ -27,7 +37,7 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
 
   const resetForm = useCallback(() => {
     setFormData({
-      images: "",
+      images: null,
       name: "",
       email: "",
       role: "",
@@ -45,7 +55,6 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
       return;
     }
 
-
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       onClose();
@@ -61,8 +70,23 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
     }));
   }, []);
 
+  const fileInputRef = useRef(null);
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
+    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
+    if (file.size > maxSizeInBytes) {
+      alert("Размер файла не должен превышать 8 МБ!");
+      setFormData((prevState) => ({
+        ...prevState,
+        images: "",
+      }));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
+      }
+      return;
+    }
+
     if (file) {
       setFormData((prevState) => ({
         ...prevState,
@@ -83,8 +107,11 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
     }
   );
 
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Проверяем обязательные поля
     const requiredFields = [
@@ -100,23 +127,40 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
     );
 
     if (emptyFields.length > 0) {
-      alert('Пожалуйста, заполните все обязательные поля.')
+      alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
       return;
     }
 
-    if (!formData.images) {
-      alert("Пожалуйста, выберите файл для загрузки");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      alert("Введите корректный email.");
+      setIsLoading(false);
       return;
     }
+
+    if (formData.password.length < 8) {
+      alert("Пароль должен содержать минимум 8 символов.");
+      setIsLoading(false);
+      return;
+    }
+
+    // if (!formData.images) {
+    //   alert("Пожалуйста, выберите файл для загрузки");
+    //   return;
+    // }
 
     try {
+      const selectedPosition = positions.find(
+        (position) => position.name === formData.position
+      );
       let response_create_user = await uploadFile({
         variables: {
           input: {
             name: formData.name,
             email: formData.email,
             role: formData.role,
-            position: formData.position,
+            positionId: selectedPosition?.id,
             login: formData.login,
             password: formData.password,
             dispatcher: true,
@@ -129,9 +173,34 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
         addDispatcher(response_create_user.data.registerUser);
         resetForm();
         onClose();
+        addNotification("Аккаунт диспетчера создан успешно.", "success");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
+      if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким логином уже существует"
+        )
+      ) {
+        alert("Пользователь с таким логином уже существует");
+      } else if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким email уже существует"
+        )
+      ) {
+        alert("Пользователь с такой почтой уже существует");
+      } else if (
+        String(e).startsWith(
+          "ApolloError: Пользователь с таким email и логином уже существует"
+        )
+      ) {
+        alert("Пользователь с такой почтой и логином уже существует");
+      }
+    } finally {
+      // onClose();
+      // resetForm();
+      setIsLoading(false);
+      // addNotification("Аккаунт диспетчера создан успешно.", "success")
     }
     // addDispatcher({
     //     ...formData,
@@ -163,126 +232,125 @@ function CreateRequestCompany({ show, onClose, addDispatcher }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton]);
 
-  const positions = [
-    "Руководитель службы размещения",
-    "Суточный диспетчер",
-    "Дневной диспетчер",
-    "Коммерческий директор",
-    "Региональный руководитель",
-  ];
+  // const positions = [
+  //   "Руководитель службы размещения",
+  //   "Суточный диспетчер",
+  //   "Дневной диспетчер",
+  //   "Коммерческий директор",
+  //   "Региональный руководитель",
+  // ];
+
+  // const roles = [
+  //   { label: "Администратор", value: "DISPATCHERADMIN" }
+  // ];
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Добавить диспетчера</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="" />
+          <CloseIcon />
         </div>
       </div>
 
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>ФИО</label>
-          <input
-            type="text"
-            name="name"
-            placeholder="Иванов Иван Иванович"
-            value={formData.name}
-            onChange={handleChange}
-          />
+      {isLoading ? (
+        <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
+      ) : (
+        <>
+          <div className={classes.requestMiddle}>
+            <div className={classes.requestData}>
+              <label>ФИО</label>
+              <input
+                type="text"
+                name="name"
+                placeholder="Иванов Иван Иванович"
+                value={formData.name}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
 
-          <label>Почта</label>
-          <input
-            type="text"
-            name="email"
-            placeholder="example@mail.ru"
-            value={formData.email}
-            onChange={handleChange}
-          />
+              <label>Почта</label>
+              <input
+                type="email"
+                name="email"
+                placeholder="example@mail.ru"
+                value={formData.email}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
 
-          <label>Роль</label>
-          <DropDownList
-            placeholder="Выберите роль"
-            searchable={false}
-            options={["DISPATCHERADMIN"]}
-            initialValue={formData.role}
-            onSelect={(value) => {
-              setIsEdited(true);
-              setFormData((prevData) => ({
-                ...prevData,
-                role: value,
-              }));
-            }}
-          />
-          {/* <select name="role" value={formData.role} onChange={handleChange}>
-            <option value="" disabled>
-              Выберите роль
-            </option>
-            <option value="Модератор">Модератор</option>
-            <option value="DISPATCHERADMIN">DISPATCHERADMIN</option>
-          </select> */}
+              <label>Роль</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите роль"}
+                options={rolesObject.dispatcher}
+                value={
+                  rolesObject.dispatcher.find(
+                    (option) => option.value === formData.role
+                  ) || null
+                }
+                onChange={(event, newValue) => {
+                  setIsEdited(true);
+                  // Если выбрана опция, сохраняем её value, иначе очищаем поле
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    role: newValue ? newValue.value : "",
+                  }));
+                }}
+              />
 
-          <label>Должность</label>
-          <DropDownList
-            placeholder="Выберите должность"
-            searchable={false}
-            options={positions}
-            initialValue={formData.position}
-            onSelect={(value) => {
-              setIsEdited(true);
-              setFormData((prevData) => ({
-                ...prevData,
-                position: value,
-              }));
-            }}
-          />
-          {/* <select
-            name="position"
-            value={formData.position}
-            onChange={handleChange}
-          >
-            <option value="" disabled>
-              Выберите должность
-            </option>
-            <option value="Руководитель службы размещения">
-              Руководитель службы размещения{" "}
-            </option>
-            <option value="Суточный диспетчер">Суточный диспетчер</option>
-            <option value="Дневной диспетчер">Дневной диспетчер</option>
-            <option value="Коммерческий директор">Коммерческий директор</option>
-            <option value="Региональный руководитель">
-              Региональный руководитель
-            </option>
-          </select> */}
+              <label>Должность</label>
+              <MUIAutocomplete
+                dropdownWidth={"100%"}
+                label={"Выберите должность"}
+                options={positions.map((position) => position.name)}
+                value={formData.position}
+                onChange={(event, newValue) => {
+                  setIsEdited(true);
+                  setFormData((prevData) => ({
+                    ...prevData,
+                    position: newValue,
+                  }));
+                }}
+              />
 
-          <label>Логин</label>
-          <input
-            type="text"
-            name="login"
-            placeholder="Логин"
-            value={formData.login}
-            onChange={handleChange}
-          />
+              <label>Логин</label>
+              <input
+                type="text"
+                name="login"
+                placeholder="Логин"
+                value={formData.login}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
 
-          <label>Пароль</label>
-          <input
-            type="text"
-            name="password"
-            placeholder="Пароль"
-            value={formData.password}
-            onChange={handleChange}
-          />
+              <label>Пароль</label>
+              <input
+                type="password"
+                name="password"
+                placeholder="Пароль"
+                value={formData.password}
+                onChange={handleChange}
+                autoComplete="new-password"
+              />
 
-          <label>Аватар</label>
-          <input type="file" name="images" onChange={handleFileChange} />
-        </div>
-      </div>
+              <label>Аватар</label>
+              <input
+                type="file"
+                name="images"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
+            </div>
+          </div>
 
-      <div className={classes.requestButton}>
-        <Button type="submit" onClick={handleSubmit}>
-          Добавить
-        </Button>
-      </div>
+          <div className={classes.requestButton}>
+            <Button type="submit" onClick={handleSubmit}>
+              Добавить
+            </Button>
+          </div>
+        </>
+      )}
     </Sidebar>
   );
 }
