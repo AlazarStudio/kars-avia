@@ -315,7 +315,7 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
           </div>
         </div>
 
-        <div className={classes.tabs}>
+        {/* <div className={classes.tabs}>
           <div
             className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
               }`}
@@ -323,8 +323,8 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
           >
             Общая
           </div>
-          {/* <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div> */}
-        </div>
+          <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
+        </div> */}
 
         {isLoading ? (
           <MUILoader loadSize={"50px"} fullHeight={"75vh"} />

@@ -147,7 +147,7 @@ function DriversList({ children, user, disAdmin, ...props }) {
 
   return (
     <>
-      <div className={classes.section} style={disAdmin ? { padding: "0" } : {}}>
+      <div className={classes.section} style={disAdmin ? { padding: "0", overflow: "visible" } : {}}>
         {!disAdmin && <Header>Водители</Header>}
 
         <div className={classes.section_searchAndFilter}>

@@ -17,6 +17,7 @@ import Analytics from '../../Pages/AnalyticsForAvia/Analytics/Analytics'
 import RegisterOfContracts from '../../Blocks/RegisterOfContracts/RegisterOfContracts'
 import AccessSettings from '../../Blocks/AccessSettings/AccessSettings'
 import DisAdminTransferContent from '../DispatcherAdminContent/DisAdminTransferContent/DisAdminTransferContent'
+import DisAdminAutoparkContent from '../DispatcherAdminContent/DisAdminAutoparkContent/DisAdminAutoparkContent'
 import DispatcherAccessSettings from '../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings'
 import NotificationsSettings from '../../Blocks/NotificationsSettings/NotificationsSettings'
 import DispatcherNotificationsSettings from '../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings'
@@ -25,12 +26,12 @@ const SuperAdminContent = ({ user }) => {
   const { id, hotelID, airlineID, orderId, driversCompanyID } = useParams()
 
   const isTransfer =
-    id === 'orders' ||
+    id === 'orders' || !!orderId;
+
+  const isAutopark =
     id === 'driversCompany' ||
     id === 'driversList' ||
-    id === 'transerDispatchers' ||
-    !!orderId ||
-    (!!driversCompanyID && !id)
+    (!!driversCompanyID && !id);
 
   return (
     <>
@@ -56,6 +57,7 @@ const SuperAdminContent = ({ user }) => {
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
       {isTransfer && <DisAdminTransferContent user={user} />}
+      {isAutopark && <DisAdminAutoparkContent user={user} />}
     </>
   )
 }

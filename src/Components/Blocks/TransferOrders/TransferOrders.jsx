@@ -403,7 +403,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   const validCurrentPage = urlPage < totalPages ? urlPage : 0;
 
   return (
-    <div className={classes.section} style={disAdmin ? { padding: "0px" } : {}}>
+    <div className={classes.section} style={disAdmin ? { padding: "0px", overflow: "visible" } : {}}>
       {!disAdmin && <Header>Заказы</Header>}
       <div className={classes.section_searchAndFilter}>
         <Filter

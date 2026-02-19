@@ -1,5 +1,4 @@
 .section {
-  /* width: calc(100% - var(--menu-width)); */
   width: 100%;
   min-width: 1000px;
   height: 100vh;
@@ -15,6 +14,13 @@
   flex-shrink: 0;
 }
 
+.tabs {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
 .titleHeader {
   display: flex;
   gap: 10px;
@@ -23,52 +29,6 @@
   font-weight: 500;
   line-height: 38.73px;
 }
-
-.content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: visible;
-}
-
-/* .tabList {
-  display: flex;
-  padding: 0;
-  list-style-type: none;
-  margin-bottom: 40px;
-}
-
-.tab {
-  font-size: 16px;
-  padding: 10px 20px;
-  margin-right: 5px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  border-radius: 10px;
-  background-color: #E4E4EF;
-  color: #545873;
-  opacity: 0.5;
-  transition: all 0.3s ease-in-out;
-  outline: none;
-}
-
-.tab:hover {
-  background-color: #E4E4EF;
-  color: #545873;
-  opacity: 1;
-}
-
-.tabPanel {
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
-}
-
-@media (min-width: 0px) and (max-width: 1399px) {
-  .tab {
-    font-size: 14px;
-  }
-} */
 
 .tabList {
   position: relative;

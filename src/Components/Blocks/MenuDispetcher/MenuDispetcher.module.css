@@ -7,8 +7,8 @@
     padding: 40px 25px 25px 25px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 55px;
+    /* justify-content: space-between; */
+    gap: 35px;
     transition: all ease-in-out 0.3s;
     position: relative;
 }
@@ -32,8 +32,8 @@
     padding: 50px 15px 15px 15px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: 25px;
+    /* justify-content: space-between; */
+    gap: 35px;
     transition: all ease-in-out 0.3s;
     position: relative;
 }

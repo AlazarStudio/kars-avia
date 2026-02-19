@@ -17,6 +17,7 @@ import { roles, rolesObject } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 function ExistRequestMyCompany({
   show,
@@ -270,7 +271,7 @@ function ExistRequestMyCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать компанию</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="Close" />
+          <CloseIcon />
         </div>
       </div>
       {isLoading ? (

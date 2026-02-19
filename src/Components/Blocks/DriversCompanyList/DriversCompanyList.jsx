@@ -184,7 +184,7 @@ function DriversCompanyList({ children, representative, disAdmin, ...props }) {
 
   return (
     <>
-      <div className={classes.section} style={disAdmin ? { padding: "0" } : {}}>
+      <div className={classes.section} style={disAdmin ? { padding: "0", overflow: "visible" } : {}}>
         {!disAdmin && <Header>Организации</Header>}
 
         <div className={classes.section_searchAndFilter}>

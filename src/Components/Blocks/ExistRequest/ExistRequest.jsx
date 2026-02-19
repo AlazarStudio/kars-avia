@@ -1033,29 +1033,29 @@ function ExistRequest({
                 className={classes.requestMiddle}
                 style={{
                   height: (isEditing) ? "calc(100vh - 198px)" : "calc(100vh - 120px)"
-                    // (activeTab !== "Комментарии" &&
-                    //   activeTab !== "История" &&
-                    //   formData.status !== "created" &&
-                    //   formData.status !== "canceled" &&
-                    //   formData.status !== "archived" &&
-                    //   (accessMenu
-                    //     ? user?.airlineId &&
-                    //     hasAccessMenu(accessMenu, "requestUpdate")
-                    //     : true))
-                    //   ? "calc(100vh - 120px)"
-                    //   :
-                    //   (activeTab !== "Комментарии" &&
-                    //     activeTab !== "История" &&
-                    //     formData.status !== "created" &&
-                    //     formData.status !== "canceled" &&
-                    //     formData.status !== "archived" &&
-                    //     (accessMenu
-                    //       ? !user?.airlineId &&
-                    //       (dispatcherCanUpdate ??
-                    //         hasAccessMenu(accessMenu, "requestUpdate"))
-                    //       : true))
-                    //     ? "calc(100vh - 120px)"
-                    //     : null,
+                  // (activeTab !== "Комментарии" &&
+                  //   activeTab !== "История" &&
+                  //   formData.status !== "created" &&
+                  //   formData.status !== "canceled" &&
+                  //   formData.status !== "archived" &&
+                  //   (accessMenu
+                  //     ? user?.airlineId &&
+                  //     hasAccessMenu(accessMenu, "requestUpdate")
+                  //     : true))
+                  //   ? "calc(100vh - 120px)"
+                  //   :
+                  //   (activeTab !== "Комментарии" &&
+                  //     activeTab !== "История" &&
+                  //     formData.status !== "created" &&
+                  //     formData.status !== "canceled" &&
+                  //     formData.status !== "archived" &&
+                  //     (accessMenu
+                  //       ? !user?.airlineId &&
+                  //       (dispatcherCanUpdate ??
+                  //         hasAccessMenu(accessMenu, "requestUpdate"))
+                  //       : true))
+                  //     ? "calc(100vh - 120px)"
+                  //     : null,
                 }}
               >
                 {/* Вкладка "Общая" */}
@@ -1454,9 +1454,9 @@ function ExistRequest({
                             }
                           >
                             <div /> {/* под дату */}
-                            <div>З</div>
-                            <div>О</div>
-                            <div>У</div>
+                            <div style={{ color: "var(--text)" }}>З</div>
+                            <div style={{ color: "var(--text)" }}>О</div>
+                            <div style={{ color: "var(--text)" }}>У</div>
                           </div>
 
                           {/* Строки с данными */}

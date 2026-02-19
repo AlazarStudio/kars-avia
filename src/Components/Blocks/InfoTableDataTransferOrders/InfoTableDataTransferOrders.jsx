@@ -67,7 +67,7 @@ function InfoTableDataTransferOrders({
       <InfoTable>
         <div
           className={classes.list}
-          style={disAdmin ? { height: "calc(100vh - 352px)" } : { height: "calc(100vh - 281px)" }}
+          style={{ height: "calc(100vh - 268px)" }}
           ref={listContainerRef}
         >
           {requests.map((item, index) => {
@@ -111,7 +111,7 @@ function InfoTableDataTransferOrders({
                     state: { requestId: item.id },
                   });
                 }}
-                // data-id={item.id}
+              // data-id={item.id}
               >
                 {/* {console.log(item)} */}
                 {/* Колонка № + статус */}
@@ -119,16 +119,16 @@ function InfoTableDataTransferOrders({
                   <button
                     type="button"
                     className={classes.orderLink}
-                    // onClick={(e) => {
-                    //   e.stopPropagation();
-                    //   handleObject(
-                    //     item.id,
-                    //     item.arrival,
-                    //     item.departure,
-                    //     item.person,
-                    //     item.requestNumber
-                    //   );
-                    // }}
+                  // onClick={(e) => {
+                  //   e.stopPropagation();
+                  //   handleObject(
+                  //     item.id,
+                  //     item.arrival,
+                  //     item.departure,
+                  //     item.person,
+                  //     item.requestNumber
+                  //   );
+                  // }}
                   >
                     № {index + 1}
                   </button>
@@ -235,7 +235,7 @@ function InfoTableDataTransferOrders({
             token={token}
             user={user}
             // chatPadding={"0"}
-            chatHeight={ 
+            chatHeight={
               // "calc(100vh - 423px)"
               user.role !== roles.hotelAdmin && user.role !== roles.airlineAdmin
                 ? "calc(100vh - 352px)"

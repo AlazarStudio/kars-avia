@@ -26,6 +26,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
+    flex-shrink: 0;
 }
 
 /* Пагинация */

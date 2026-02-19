@@ -438,17 +438,17 @@ select {
     font-weight: 500;
     line-height: 24px;
     text-align: center;
-    color: #54587380;
+    color: var(--text);
 }
 
-.historyLog span {
+/* .historyLog span {
     font-family: Inter;
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
     text-align: center;
     color: #545873;
-}
+} */
 
 .smiles {
     position: relative;
@@ -496,7 +496,7 @@ select {
     font-size: 16px;
     font-weight: 700;
     /* line-height: 24.2px; */
-    color: var(--main-gray);
+    color: var(--text);
     /* padding: 10px 0; */
 }
 
