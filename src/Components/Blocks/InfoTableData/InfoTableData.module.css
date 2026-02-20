@@ -105,6 +105,13 @@
     gap: 5px;
 }
 
+.InfoTable_data_elem_title {
+    font-family: Nunito Sans;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text);
+}
+
 .InfoTable_data_elem_moreInfo {
     font-family: Nunito Sans;
     font-size: 14px;

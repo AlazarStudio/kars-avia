@@ -2,7 +2,7 @@ import React from "react";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import MUILoader from "../MUILoader/MUILoader";
-import { convertToDate } from "../../../../graphQL_requests";
+import { convertToDate, convertToDateNew } from "../../../../graphQL_requests";
 import classes from "./ExistRequest.module.css";
 
 function ExistRequestEditForm({
@@ -186,8 +186,8 @@ function ExistRequestEditForm({
           </div>
         ) : (
           <div className={classes.requestDataInfo_desc}>
-            {convertToDate(formData.arrival)} -{" "}
-            {convertToDate(formData.arrival, true)}
+            {convertToDateNew(formData.arrival)} -{" "}
+            {convertToDateNew(formData.arrival, true)}
           </div>
         )}
       </div>
@@ -212,8 +212,8 @@ function ExistRequestEditForm({
           </div>
         ) : (
           <div className={classes.requestDataInfo_desc}>
-            {convertToDate(formData.departure)} -{" "}
-            {convertToDate(formData.departure, true)}
+            {convertToDateNew(formData.departure)} -{" "}
+            {convertToDateNew(formData.departure, true)}
           </div>
         )}
       </div>

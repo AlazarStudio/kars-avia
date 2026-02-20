@@ -13,6 +13,7 @@ import {
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
+import SmileIcon from "../../../shared/icons/SmileIcon";
 
 // Типы чатов
 const CHAT_TYPES = {
@@ -131,7 +132,7 @@ function TransferMessage({
   useEffect(() => {
     if (chatsData?.transferChats) {
       let chats = chatsData.transferChats;
-      
+
       // Для диспетчера показываем только чаты с сотрудниками и водителем
       if (user?.role === roles.dispatcerAdmin || user?.role === roles.superAdmin) {
         chats = chats.filter(
@@ -140,7 +141,7 @@ function TransferMessage({
             chat.type === CHAT_TYPES.DISPATCHER_PERSONAL
         );
       }
-      
+
       setAvailableChats(chats);
 
       // Проверяем, доступен ли текущий выбранный чат после фильтрации
@@ -348,6 +349,10 @@ function TransferMessage({
   const [messageText, setMessageText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
+  const handleEmojiPickerShow = () => {
+    setShowEmojiPicker(!showEmojiPicker);
+  };
+
   const handleTextareaChange = (e) => {
     setMessageText(e.target.value);
   };
@@ -417,10 +422,10 @@ function TransferMessage({
     switch (type) {
       case CHAT_TYPES.DISPATCHER_DRIVER:
         return "Водитель";
-        // return "Диспетчер ↔ Водитель";
+      // return "Диспетчер ↔ Водитель";
       case CHAT_TYPES.DISPATCHER_PERSONAL:
         return "Сотрудники";
-        // return "Диспетчер ↔ Пассажир";
+      // return "Диспетчер ↔ Пассажир";
       case CHAT_TYPES.DRIVER_PERSONAL:
         return "Водитель ↔ Пассажир";
       default:
@@ -449,11 +454,10 @@ function TransferMessage({
                   setSelectedChat(chat);
                   setSelectedChatType(chat.type);
                 }}
-                className={`${classes.chatTypeButton} ${
-                  selectedChat?.id === chat.id ? classes.active : ""
-                }`}
+                className={`${classes.chatTypeButton} ${selectedChat?.id === chat.id ? classes.active : ""
+                  }`}
               >
-                 {getChatTypeLabel(chat.type)}
+                {getChatTypeLabel(chat.type)}
               </button>
             ))}
           </div>
@@ -461,7 +465,7 @@ function TransferMessage({
 
         <div
           className={classes.requestData_messages}
-          // style={{ height: height ? `calc(100vh - ${height}px)` : chatHeight }}
+        // style={{ height: height ? `calc(100vh - ${height}px)` : chatHeight }}
         >
           {messages.map((message) => {
             if (!messageRefs.current[message.id]) {
@@ -484,14 +488,13 @@ function TransferMessage({
                         {message.authorType === ACTOR_TYPES.USER
                           ? "Диспетчер"
                           : message.authorType === ACTOR_TYPES.DRIVER
-                          ? "Водитель"
-                          : "Пассажир"}
+                            ? "Водитель"
+                            : "Пассажир"}
                       </div>
                     </div>
                     <div
-                      className={`${classes.requestData_message__message} ${
-                        isMy ? classes.myMesBorderRadius : ""
-                      }`}
+                      className={`${classes.requestData_message__message} ${isMy ? classes.myMesBorderRadius : ""
+                        }`}
                     >
                       {message.text}
                     </div>
@@ -523,26 +526,34 @@ function TransferMessage({
 
         <div className={classes.sendBlock}>
           <div className={classes.smiles}>
-            <div className={classes.smilesBlock} onClick={() => setShowEmojiPicker(!showEmojiPicker)}>
-              😀
+            <div className={classes.smilesBlock} onClick={handleEmojiPickerShow}>
+              {/* 😀 */}
+              <SmileIcon />
             </div>
             {showEmojiPicker && <Smiles handleSmileChange={handleSmileChange} />}
           </div>
           <input
             type="text"
-            value={messageText}
+            value={messageText.text}
             onChange={handleTextareaChange}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === 'Enter') {
                 e.preventDefault();
                 handleSubmitMessage();
               }
             }}
-            placeholder="Введите сообщение"
-            style={{ borderRadius: "20px" }}
+            placeholder="Сообщение..."
+            style={{ borderRadius: '20px' }}
           />
-          <div className={classes.sendBlock_message} onClick={handleSubmitMessage}>
-            <img src="/message.png" alt="Отправить" />
+          <div
+            // className={classes.sendBlock_message} 
+            onClick={handleSubmitMessage}
+          >
+            {/* <img src="/message.png" alt="Отправить" /> */}
+            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path opacity="0.4" d="M14.2649 6.34496L27.1049 12.765C32.8649 15.645 32.8649 20.355 27.1049 23.235L14.2649 29.655C5.62491 33.975 2.09991 30.435 6.41991 21.81L7.72491 19.215C8.09991 18.45 8.09991 17.565 7.72491 16.8L6.41991 14.19C2.09991 5.56496 5.63991 2.02496 14.2649 6.34496Z" fill="#0057C3" />
+              <path d="M22.2599 19.125H14.1599C13.5449 19.125 13.0349 18.615 13.0349 18C13.0349 17.385 13.5449 16.875 14.1599 16.875H22.2599C22.8749 16.875 23.3849 17.385 23.3849 18C23.3849 18.615 22.8749 19.125 22.2599 19.125Z" fill="#0057C3" />
+            </svg>
           </div>
         </div>
       </div>

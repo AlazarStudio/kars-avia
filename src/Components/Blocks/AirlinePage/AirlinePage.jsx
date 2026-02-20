@@ -77,6 +77,7 @@ function AirlinePage({ children, id, user, accessMenu, ...props }) {
           <>
             <SuperAdminAirlineContent
               id={id}
+              user={user}
               selectedTab={selectedTab}
               handleTabSelect={handleTabSelect}
             />
@@ -88,6 +89,7 @@ function AirlinePage({ children, id, user, accessMenu, ...props }) {
             <DisAdminAirlineContent
               id={id}
               user={user}
+              accessMenu={accessMenu}
               selectedTab={selectedTab}
               handleTabSelect={handleTabSelect}
             />

@@ -16,7 +16,7 @@ const DriversCompanyPage = lazy(() =>
   import("../../../Blocks/DriversCompanyPage/DriversCompanyPage")
 );
 
-const DisAdminAutoparkContent = ({ user }) => {
+const DisAdminAutoparkContent = ({ user, accessMenu }) => {
   const navigate = useNavigate();
   const { id, driversCompanyID } = useParams();
 
@@ -41,7 +41,7 @@ const DisAdminAutoparkContent = ({ user }) => {
   if (isCompanyDetails) {
     return (
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <DriversCompanyPage id={driversCompanyID} user={user} />
+        <DriversCompanyPage id={driversCompanyID} user={user} accessMenu={accessMenu} />
       </Suspense>
     );
   }
@@ -68,13 +68,13 @@ const DisAdminAutoparkContent = ({ user }) => {
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
-            <DriversCompanyList user={user} disAdmin={true} />
+            <DriversCompanyList user={user} disAdmin={true} accessMenu={accessMenu} />
           </Suspense>
         </TabPanel>
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
-            <DriversList user={user} disAdmin={true} />
+            <DriversList user={user} disAdmin={true} accessMenu={accessMenu} />
           </Suspense>
         </TabPanel>
       </Tabs>

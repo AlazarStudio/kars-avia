@@ -77,6 +77,7 @@ function DriversCompanyPage({ children, id, user, accessMenu, ...props }) {
             <TransferAdminDriversContent
               id={id}
               user={user}
+              accessMenu={accessMenu}
               selectedTab={selectedTab}
               handleTabSelect={handleTabSelect}
             />
@@ -88,6 +89,7 @@ function DriversCompanyPage({ children, id, user, accessMenu, ...props }) {
             <TransferAdminDriversContent
               id={id}
               user={user}
+              accessMenu={accessMenu}
               selectedTab={selectedTab}
               handleTabSelect={handleTabSelect}
             />

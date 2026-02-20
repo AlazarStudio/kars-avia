@@ -66,7 +66,7 @@ const TransferAdminMenu = ({
             </svg>
           </div>
           <DelayedText show={menuOpen} delay={200}>
-            Заказы
+            Заявки
           </DelayedText>
           {/* {allCreatedRequests > 0 && (
             <div
@@ -77,7 +77,7 @@ const TransferAdminMenu = ({
               {allCreatedRequests}
             </div>
           )} */}
-          {!menuOpen && <span className={classes.tooltip}>Заказы</span>}
+          {!menuOpen && <span className={classes.tooltip}>Заявки</span>}
         </Link>
         <Link
           to={"/driversCompany"}

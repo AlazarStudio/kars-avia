@@ -69,22 +69,22 @@ export function convertToDate(dateString, includeTime = false) {
   return includeTime ? `${p.hour}:${p.minute}` : base;
 }
 
-// export function convertToDate(dateString, includeTime = false) {
-//   const date = new Date(dateString);
-//   const day = String(date.getUTCDate()).padStart(2, '0');
-//   const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-//   const year = date.getUTCFullYear();
+export function convertToDateNew(dateString, includeTime = false) {
+  const date = new Date(dateString);
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const year = date.getUTCFullYear();
 
-//   let formattedDate = `${day}.${month}.${year}`;
+  let formattedDate = `${day}.${month}.${year}`;
 
-//   if (includeTime) {
-//     const hours = String(date.getUTCHours()).padStart(2, '0');
-//     const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-//     formattedDate = ` ${hours}:${minutes}`;
-//   }
+  if (includeTime) {
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    formattedDate = ` ${hours}:${minutes}`;
+  }
 
-//   return formattedDate;
-// }
+  return formattedDate;
+}
 
 export function generateTimestampId(min = 1, max = 1000000) {
   return Date.now() + Math.floor(Math.random() * (max - min + 1)) + min; // Возвращает количество миллисекунд с 1 января 1970 года
@@ -559,6 +559,10 @@ export const GET_TRANSFER_REQUESTS = gql`
           name
         }
         airlineId
+        airline {
+          name
+          images
+        }
         status
         createdAt
         scheduledPickupAt
@@ -594,51 +598,54 @@ export const GET_TRANSFER_REQUESTS = gql`
 `;
 
 export const GET_TRANSFER_REQUEST = gql`
-query Transfer($transferId: ID!) {
-  transfer(id: $transferId) {
+  query Transfer($transferId: ID!) {
+    transfer(id: $transferId) {
+      id
+      fromAddress
+      baggage
+      toAddress
+      persons {
         id
-        fromAddress
-        baggage
-        toAddress
-        persons {
-          id
-          email
-          name
-          images
+        email
+        name
+        images
+      }
+      airlineId
+      status
+      createdAt
+      scheduledPickupAt
+      description
+      driverAssignmentAt
+      orderAcceptanceAt
+      arrivedToPassengerAt
+      departedAt
+      finishedAt
+      driver {
+        id
+        name
+        rating
+        car
+        vehicleNumber
+        location {
+          lat
+          lng
         }
-        airlineId
-        status
-        createdAt
-        scheduledPickupAt
-        description
-        driverAssignmentAt
-        orderAcceptanceAt
-        arrivedToPassengerAt
-        departedAt
-        finishedAt
-        driver {
-          id
+        organization {
           name
-          rating
-          car
-          vehicleNumber
-          location {
-            lat
-            lng
-          }
-          organization {
-            name
-          }
-          transfers {
-            id
-            fromAddress
-            toAddress
-            status
-          }
         }
-    
+        transfers {
+          id
+          fromAddress
+          toAddress
+          status
+        }
+      }
+      airline {
+        name
+        images
+      }
+    }
   }
-}
 `;
 
 export const CREATE_TRANSFER_REQUEST_MUTATION = gql`
@@ -3710,6 +3717,13 @@ export const GET_AIRLINE_COMPANY = gql`
           airlineMenu
           airlineUpdate
           contracts
+          contractCreate
+          contractUpdate
+          organizationMenu
+          organizationCreate
+          organizationUpdate
+          organizationAddDrivers
+          organizationAcceptDrivers
         }
         notificationMenu {
           requestCreate
@@ -3879,6 +3893,8 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         airlineMenu
         airlineUpdate
         contracts
+        contractCreate
+        contractUpdate
       }
     }
   }
@@ -4020,6 +4036,13 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           airlineMenu
           airlineUpdate
           contracts
+          contractCreate
+          contractUpdate
+          organizationMenu
+          organizationCreate
+          organizationUpdate
+          organizationAddDrivers
+          organizationAcceptDrivers
         }
         notificationMenu {
           requestCreate

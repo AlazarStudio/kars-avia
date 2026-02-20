@@ -18,14 +18,18 @@ function InfoTableDataDriversCompany({
   choosePersonId,
   setChooseRequestID,
   disAdmin,
+  canAcceptDrivers = true,
 }) {
   const handleObject = useCallback(
     (id, item) => {
+      const isPending = disAdmin
+        ? item?.registrationStatus === "PENDING"
+        : !item?.organizationConfirmed;
+      if (disAdmin && isPending && !canAcceptDrivers) return;
       setChooseObject({ ...item });
-      //   setChooseRequestID(id);
       toggleRequestSidebar();
     },
-    [setChooseObject, setChooseRequestID, toggleRequestSidebar]
+    [setChooseObject, toggleRequestSidebar, disAdmin, canAcceptDrivers]
   );
 
   const [separator, setSeparator] = useState("airline");

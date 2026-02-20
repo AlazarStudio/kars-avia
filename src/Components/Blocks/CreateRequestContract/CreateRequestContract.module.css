@@ -3,7 +3,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 20px 20px 30px;
-    border-bottom: 1px solid #54587380;
+    /* border-bottom: 1px solid #54587380; */
 }
 
 .requestButton {
@@ -33,23 +33,56 @@
 }
 
 .tabs {
+    position: relative;
     display: flex;
-    gap: 30px;
-    padding: 20px 20px 20px 30px;
-    border-bottom: 1px solid #54587380;
+    padding: 0 20px;
+    list-style-type: none;
+    gap: 20px;
+    align-items: center;
+    /* justify-content: space-evenly; */
+}
+
+.tabs::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--no-active);
+    z-index: 1;
 }
 
 .tab {
-    cursor: pointer;
-    font-family: Nunito Sans;
+    position: relative;
     font-size: 16px;
-    font-weight: 400;
-    line-height: 21.82px;
-    border-bottom: 5px solid transparent
+    padding: 10px;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--no-active);
+    transition: all 0.3s ease-in-out;
+    outline: none;
+    border: none;
+}
+
+.tab:hover {
+    color: var(--text);
 }
 
 .activeTab {
-    border-bottom: 5px solid #54587380;
+    color: var(--text) !important;
+    background-color: transparent !important;
+}
+
+.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--dark-blue);
+    z-index: 2;
 }
 
 .requestData {
@@ -84,7 +117,7 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100% - 157px - 71px);
+    height: calc(100% - 198px);
     overflow: hidden;
     overflow-y: auto;
 }

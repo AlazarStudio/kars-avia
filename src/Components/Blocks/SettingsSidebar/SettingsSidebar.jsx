@@ -163,6 +163,8 @@ export default function SettingsSidebar({
     personalUpdate: !!s?.employees?.edit,
 
     contracts: !!s?.contracts?.access,
+    contractCreate: !!s?.contracts?.create,
+    contractUpdate: !!s?.contracts?.edit,
 
     analyticsMenu: !!s?.analytics?.access,
     analyticsUpload: !!s?.analytics?.export,
@@ -172,6 +174,12 @@ export default function SettingsSidebar({
 
     reportMenu: !!s?.reports?.access,
     reportCreate: !!s?.reports?.create,
+
+    organizationMenu: !!s?.organization?.access,
+    organizationCreate: !!s?.organization?.create,
+    organizationUpdate: !!s?.organization?.edit,
+    organizationAddDrivers: !!s?.organization?.addDrivers,
+    organizationAcceptDrivers: !!s?.organization?.acceptDrivers,
   });
 
   const buildNotificationPayload = (s) => ({

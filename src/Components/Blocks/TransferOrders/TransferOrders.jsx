@@ -30,6 +30,7 @@ import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import InfoTableDataTransferOrders from "../InfoTableDataTransferOrders/InfoTableDataTransferOrders.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import CreateTransferRequest from "../CreateTransferRequest/CreateTransferRequest.jsx";
+import ExistRequestTransfer from "../ExistRequestTransfer/ExistRequestTransfer.jsx";
 import { hasAccessMenu } from "../../../utils/access";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
@@ -217,8 +218,15 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   // ]);
 
   const handleOpenExistRequest = (matchData) => {
-    setExistRequestData(matchData); // Сохраняем данные match
-    setShowRequestSidebar(true); // Открываем ExistRequest
+    const transferId = typeof matchData === "object" && matchData?.id ? matchData.id : matchData;
+    setExistRequestData(matchData);
+    setChooseRequestID(transferId);
+    setShowRequestSidebar(true);
+  };
+
+  const handleSelectTransfer = (transferId) => {
+    setChooseRequestID(transferId);
+    setShowRequestSidebar(true);
   };
 
   const [showDelete, setShowDelete] = useState(false);
@@ -404,7 +412,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
 
   return (
     <div className={classes.section} style={disAdmin ? { padding: "0px", overflow: "visible" } : {}}>
-      {!disAdmin && <Header>Заказы</Header>}
+      {!disAdmin && <Header>Трансфер</Header>}
       <div className={classes.section_searchAndFilter}>
         <Filter
           user={user}
@@ -443,6 +451,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
             token={token}
             canChat={canChatTransfer}
             toggleRequestSidebar={toggleRequestSidebar}
+            onSelectTransfer={handleSelectTransfer}
             requests={filteredRequests || []}
             chooseRequestID={chooseRequestID}
             setChooseObject={setChooseObject}
@@ -477,18 +486,15 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
         user={user}
         addNotification={addNotification}
       />
-      {/* <ExistRequest
-        setChooseCityRequest={setChooseCityRequest}
+      <ExistRequestTransfer
         show={showRequestSidebar}
         onClose={toggleRequestSidebar}
-        setChooseRequestID={setChooseRequestID}
-        setShowChooseHotel={setShowChooseHotel}
-        chooseRequestID={chooseRequestID ? chooseRequestID : existRequestData}
+        chooseRequestID={chooseRequestID}
         user={user}
         accessMenu={accessMenu}
-        openDeleteComponent={openDeleteComponent}
-        setRequestId={setChooseRequestId}
-      /> */}
+        setChooseRequestID={setChooseRequestID}
+        canChat={canChatTransfer}
+      />
       {/* <ChooseHotel
         chooseCityRequest={chooseCityRequest}
         show={showChooseHotel}

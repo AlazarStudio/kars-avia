@@ -13,6 +13,7 @@ import CreateRequest from "../CreateRequest/CreateRequest.jsx";
 import ExistRequest from "../ExistRequest/ExistRequest.jsx";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import StatusLegend from "../StatusLegend/StatusLegend.jsx";
+import { roles } from "../../../roles.js";
 
 function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
     const token = getCookie("token")
@@ -224,10 +225,11 @@ function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
 
             <div className={classes.section_searchAndFilter_filter}>
                 <StatusLegend/>
-                <Button onClick={toggleCreateRequest} minwidth={"160px"} maxWidth={"160px"} padding={"0 15px"}>
-                  {/* <img src="/plus.png" alt="" style={{width:"10px"}} /> */}
-                  Создать заявку
-                </Button>
+                {user?.role === roles.hotelAdmin ? null : (
+                  <Button onClick={toggleCreateRequest} minwidth={"160px"} maxWidth={"160px"} padding={"0 15px"}>
+                    Создать заявку
+                  </Button>
+                )}
             </div>
 
                 {/* <div className={classes.section_searchAndFilter_filter}>
@@ -247,7 +249,7 @@ function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
               <NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} />
             )} */}
 
-<NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} accessMenu={accessMenu} />
+            <NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} accessMenu={accessMenu} />
 
             {/* {(hotelBronsInfo.length === 0) &&
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={[]} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />
@@ -261,7 +263,6 @@ function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
         show={showCreateRequest}
         onClose={toggleCreateRequest}
         user={user}
-        // Если нужны дополнительные пропы, добавьте их:
         onMatchFound={handleOpenExistRequest}
         // addNotification={...}
       />

@@ -32,7 +32,7 @@ const OrganizationRegisterOfContracts = lazy(() =>
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
 import classes from "./TransferAdminDriversContent.module.css";
 
-const TransferAdminDriversContent = ({ id, user, selectedTab, handleTabSelect }) => (
+const TransferAdminDriversContent = ({ id, user, accessMenu, selectedTab, handleTabSelect }) => (
   <Tabs
     className={classes.tabs}
     selectedIndex={selectedTab}
@@ -48,18 +48,18 @@ const TransferAdminDriversContent = ({ id, user, selectedTab, handleTabSelect })
     {/* Wrap each lazy-loaded panel in Suspense for fallback */}
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <DriversCompanyTab id={id} user={user} />
+        <DriversCompanyTab id={id} user={user} accessMenu={accessMenu} />
       </Suspense>
     </TabPanel>
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <OrganizationRegisterOfContracts id={id} user={user} />
+        <OrganizationRegisterOfContracts id={id} user={user} accessMenu={accessMenu} />
       </Suspense>
     </TabPanel>
 
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <OrganizationAboutTab id={id} />
+        <OrganizationAboutTab id={id} accessMenu={accessMenu} />
       </Suspense>
     </TabPanel>
 

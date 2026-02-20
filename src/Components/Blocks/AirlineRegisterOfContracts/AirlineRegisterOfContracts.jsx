@@ -32,8 +32,9 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import { isSuperAdmin, isDispatcherAdmin, hasAccessMenu } from "../../../utils/access";
 
-function AirlineRegisterOfContracts({ children, id, user, ...props }) {
+function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
@@ -60,8 +61,12 @@ function AirlineRegisterOfContracts({ children, id, user, ...props }) {
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
 
-  // Проверка прав доступа: только dispatcherAdmin и superAdmin могут редактировать
-  const canEdit = user?.role === roles.dispatcerAdmin || user?.role === roles.superAdmin;
+  const canCreate =
+    isSuperAdmin(user) ||
+    (isDispatcherAdmin(user) && hasAccessMenu(accessMenu, "contractCreate"));
+  const canEdit =
+    isSuperAdmin(user) ||
+    (isDispatcherAdmin(user) && hasAccessMenu(accessMenu, "contractUpdate"));
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_CONTRACTS, {
     context: {
@@ -92,7 +97,7 @@ function AirlineRegisterOfContracts({ children, id, user, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    skip: !canEdit, // Загружаем только если есть права на редактирование
+    skip: !canCreate,
   });
 
   // const { data: hotelsData } = useQuery(GET_HOTELS_RELAY, {
@@ -316,12 +321,6 @@ function AirlineRegisterOfContracts({ children, id, user, ...props }) {
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
-        <MUITextField
-          className={classes.mainSearch}
-          label={"Поиск по договорам"}
-          value={searchTarif}
-          onChange={handleSearchTarif}
-        />
 
         <DateRangeModalSelector
           width={"170px"}
@@ -333,6 +332,7 @@ function AirlineRegisterOfContracts({ children, id, user, ...props }) {
 
         <MUIAutocomplete
           dropdownWidth={"170px"}
+          hideLabelOnFocus={false}
           label={"Вид приложения"}
           options={["Все", ...action]}
           value={selectedType ? selectedType : ""}
@@ -346,6 +346,7 @@ function AirlineRegisterOfContracts({ children, id, user, ...props }) {
 
         <MUIAutocomplete
           dropdownWidth={"170px"}
+          hideLabelOnFocus={false}
           label={"ГК Карс"}
           options={["Все компании", ...companies?.map((item) => item.name)]}
           value={selectedCompany ? selectedCompany?.name : ""}
@@ -360,7 +361,14 @@ function AirlineRegisterOfContracts({ children, id, user, ...props }) {
             }
           }}
         />
-        {canEdit && (
+        <MUITextField
+          className={classes.mainSearch}
+          label={"Поиск по договорам"}
+          value={searchTarif}
+          onChange={handleSearchTarif}
+        />
+
+        {canCreate && (
           <Filter
             toggleSidebar={toggleTarifsCategory}
             handleChange={""}
@@ -410,7 +418,7 @@ function AirlineRegisterOfContracts({ children, id, user, ...props }) {
 
       {activeTab === "airlines" ? (
         <>
-          {canEdit && (
+          {canCreate && (
             <CreateRequestContract
               user={user}
               id={id}
@@ -444,13 +452,12 @@ function AirlineRegisterOfContracts({ children, id, user, ...props }) {
             return deleteContract(deleteIndex.data.contract);
           }}
           close={closeDeleteComponent}
-          title={`Вы действительно хотите удалить ${
-            deleteIndex.type === "deleteTarif"
+          title={`Вы действительно хотите удалить ${deleteIndex.type === "deleteTarif"
               ? "тариф"
               : deleteIndex.type === "deleteCategory"
-              ? "категорию"
-              : "договор"
-          }?`}
+                ? "категорию"
+                : "договор"
+            }?`}
         />
       )}
       {notifications.map((n, index) => (

@@ -20,7 +20,7 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
-  padding: 15px 15px 10px 15px;
+  padding: 10px;
   border-bottom: 1px solid #CBDEFB;
 }
 
@@ -70,7 +70,7 @@
 }
 
 .requestData_messages {
-  padding: 0 10px;
+  padding: 0 20px;
   height: 100%;
   /* height: calc(100vh - 250px); */
   overflow: hidden;
@@ -173,11 +173,14 @@
 }
 
 .sendBlock {
-  padding: 0 15px 15px 15px;
+  margin: 0 20px 20px 20px;
+  padding: 5px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  /* gap: 10px; */
+  border: 1px solid var(--no-active);
+  border-radius: 100px;
 }
 
 .sendBlock_message {
@@ -214,7 +217,8 @@
   padding: 10px;
   cursor: pointer;
   resize: none;
-  border-radius: 10px;
+  /* border-radius: 10px; */
+  border: none;
 }
 
 .smiles {

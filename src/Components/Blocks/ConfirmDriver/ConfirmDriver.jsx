@@ -29,6 +29,7 @@ function ConfirmDriver({
   addNotification,
   disAdmin, // для определения контекста: true - страница водителей, false/undefined - страница организации
   organizationId, // ID организации для страницы организации
+  canAccept = true, // право принять/отклонить водителя
 }) {
   const token = getCookie("token");
 
@@ -540,7 +541,7 @@ function ConfirmDriver({
             </div>
           </div>
 
-          {(confirm || (organizationId && chooseObject?.organization)) && (
+          {canAccept && (confirm || (organizationId && chooseObject?.organization)) && (
             <div className={classes.requestButton}>
               <Button
                 onClick={handleReject}
@@ -550,7 +551,7 @@ function ConfirmDriver({
                 Отклонить
               </Button>
 
-              {confirm && localDriverStatus !== "APPROVED" && (
+              {confirm && canAccept && localDriverStatus !== "APPROVED" && (
                 <Button
                   onClick={handleApprove}
                   backgroundcolor={"#3CBC6726"}

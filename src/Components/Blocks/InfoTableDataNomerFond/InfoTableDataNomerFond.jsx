@@ -1,77 +1,31 @@
-import React, { useState } from "react";
+import React from "react";
 import classes from './InfoTableDataNomerFond.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 
-function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, setFilter, ...props }) {
-    const quotaRequests = [];
-    const reserveRequests = [];
-
-    // console.log(requests);
-    
-
-    requests.forEach(item => {
-        item.rooms.forEach(room => {
-            // Проверяем, является ли комната квотной
-            if (room.reserve === false) {
-                // Найдем, существует ли уже такой запрос с таким же category
-                const existingRequest = quotaRequests.find(r => r.rooms[0]?.category === room.category);
-
-                if (existingRequest) {
-                    // Если такой запрос уже есть, добавляем комнату в существующий запрос
-                    existingRequest.rooms.push(room);
-                } else {
-                    // Если запроса с таким origName еще нет, создаем новый
-                    quotaRequests.push({
-                        ...item, // Копируем все данные item
-                        rooms: [room] // В rooms добавляем только эту комнату
-                    });
-                }
-            }
-
-            // Проверяем, является ли комната резервной
-            if (room.reserve === true) {
-                // Найдем, существует ли уже такой запрос с таким же category
-                const existingRequest = reserveRequests.find(r => r.rooms[0]?.category === room.category);
-
-                if (existingRequest) {
-                    // Если такой запрос уже есть, добавляем комнату в существующий запрос
-                    existingRequest.rooms.push(room);
-                } else {
-                    // Если запроса с таким origName еще нет, создаем новый
-                    reserveRequests.push({
-                        ...item, // Копируем все данные item
-                        rooms: [room] // В rooms добавляем только эту комнату
-                    });
-                }
+function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, ...props }) {
+    const buildFilteredRequests = (reserveFilter) => {
+        const result = [];
+        requests.forEach((item) => {
+            const filteredRooms =
+                reserveFilter === "all"
+                    ? item.rooms
+                    : item.rooms.filter(
+                          (room) =>
+                              room.reserve === (reserveFilter === "reserve")
+                      );
+            if (filteredRooms.length > 0) {
+                result.push({ ...item, rooms: filteredRooms });
             }
         });
-    });
+        return result;
+    };
 
-    // // Фильтрация по полю "reserve" в каждом элементе "rooms"
-    // const filteredRequests = requests.filter(item => {
-    //     // Проверка на фильтрацию по "reserve" или "quote"
-    //     if (filter === 'reserve') {
-    //         // Если фильтр "reserve", показываем только те комнаты, у которых reserve === true
-    //         return item.rooms.some(room => room.reserve === true); // ищем хотя бы одну комнату с reserve: true
-    //     } else if (filter === 'quote') {
-    //         // Если фильтр "quote", показываем только те комнаты, у которых reserve === false
-    //         return item.rooms.some(room => room.reserve === false); // ищем хотя бы одну комнату с reserve: false
-    //     }
-    //     return true; // Если фильтр не задан, показываем все
-    // });
-
-    const filteredRequests = filter === 'quote' ? quotaRequests : reserveRequests;
+    const filteredRequests = buildFilteredRequests(filter || "all");
 
     return (
         <>
-        {type !== "apartment" ? (
-            <div className={classes.filter_wrapper}>
-                <button onClick={() => setFilter('quote')} className={filter === 'quote' ? classes.activeButton : null}>Квота</button>
-                <button onClick={() => setFilter('reserve')} className={filter === 'reserve' ? classes.activeButton : null}>Резерв</button>
-            </div>
-        ) : null}
             <InfoTable>
-                <div className={classes.bottom} style={user?.hotelId ? {height: 'calc(100vh - 290px)'} : {}}>
+                <div className={classes.bottom} style={user?.hotelId ? {height: 'calc(100vh - 210px)'} : {}}>
                     {filteredRequests.map((item, index) => (
                         <div key={index}>
                             <div

@@ -316,3 +316,14 @@
 - Добавлен пункт меню «Автопарк» с иконкой автобуса в `DisAdminMenu` и `SuperAdminMenu` (ссылка на `/driversCompany`).
 - Исправлено обрезание лейблов MUI TextField в фильтрах и поиске раздела «Трансфер» и «Автопарк»: для родительских контейнеров установлен `overflow: visible` в `DisAdminTransferContent`, `DisAdminAutoparkContent`, `TransferOrders`, `DriversCompanyList`, `DriversList`.
 - Обновлён `SuperAdminMenu` по аналогии с `DisAdminMenu`: синхронизированы структура, стили и порядок пунктов, добавлены `svgWrapper`, разделитель и нижний блок с версией и ссылкой на Alazar studio.
+
+### v11.3 (20.02.2026)
+- Реализована логика заявок трансфера по аналогии с эскадрильей: при клике на заявку открывается боковая панель `ExistRequestTransfer` вместо перехода на карту.
+- Создан компонент `ExistRequestTransfer` с вкладками «Общая» и «Комментарии», отображением данных заявки, блока «Информация о водителе» (организация, ФИО, машина, гос. номер, рейтинг); кнопка «Перейти на карту»; закрытие панели по клику вне неё (без overlay).
+- Приведён к единому виду таблица заявок трансфера (`InfoTableDataTransferOrders`): используются стили из `InfoTableData.module.css`, структура соответствует `InfoTableData`.
+- Структура таблицы трансферов: 7 колонок — № (с индикатором ReportTimer), Пассажиры, Дата и время, Авиакомпания, Подача, Пункт назначения, Статус; убрана иконка чата из таблицы.
+- В номерном фонде гостиницы (`HotelNomerFond_tabComponent`) фильтры «Квота» и «Резерв» реализованы через `MUIAutocomplete` на уровне компонента.
+- В `InfoTableDataNomerFond` удалены кнопки «Квота»/«Резерв», логика фильтрации перенесена на родительский компонент.
+- Реализован отдельный доступ к автопарку (организациям) для диспетчеров: добавлены права `organizationMenu`, `organizationCreate`, `organizationUpdate`, `organizationAddDrivers`, `organizationAcceptDrivers`. Настройки доступны в `DispatcherAccessSettings`; видимость раздела, создание организаций, редактирование, добавление и приём водителей управляются по правам. Пункт меню «Автопарк» и роутинг проверяют `organizationMenu`.
+- Расширены права для реестра договоров: добавлены `contractCreate` и `contractUpdate`. В настройках доступа диспетчеров можно включать/отключать создание и редактирование договоров (включая удаление и доп. соглашения). Права применяются в `RegisterOfContracts`, `HotelRegisterOfContracts`, `AirlineRegisterOfContracts`, `OrganizationRegisterOfContracts`.
+- Унифицирована структура меню: `HotelAdminMenu` и `AirlineAdminMenu` приведены к структуре `DisAdminMenu`.

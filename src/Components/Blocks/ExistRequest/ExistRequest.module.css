@@ -42,11 +42,11 @@
 .tabs {
     position: relative;
     display: flex;
-    padding: 0;
+    padding: 0 30px;
     list-style-type: none;
-    gap: 10px;
+    gap: 20px;
     align-items: center;
-    justify-content: space-evenly;
+    /* justify-content: space-evenly; */
 }
 
 .tabs::after {

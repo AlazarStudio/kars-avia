@@ -8,13 +8,14 @@
 .requestButton {
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
     align-items: center;
     padding: 20px 20px 20px 30px;
     border-top: 1px solid #54587380;
 }
 
 .requestButton button {
-    flex-basis: 49%;
+    flex-basis: 50%;
 }
 
 .requestTitle_name {
@@ -190,6 +191,30 @@ select {
 
 .notes {
     font-size: 14px;
+}
+
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 40%;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-height: 37px;
 }
 
 .downloadsButton {

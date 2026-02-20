@@ -75,7 +75,7 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
       { ids: ["airlineRegisterOfContracts"],
         guardKey: "contracts",
         Comp: AirlinePage,
-        props: () => ({ id: user.airlineId, user })
+        props: () => ({ id: user.airlineId, user, accessMenu: safeAccessMenu })
       },
     ]),
     [user, safeAccessMenu]

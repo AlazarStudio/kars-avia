@@ -487,7 +487,8 @@ function EditRequestHotelContract({
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>
-            {canEdit ? "Изменить договор" : formData?.contractNumber}
+            {formData?.contractNumber}
+            {/* {canEdit ? "Изменить договор" : formData?.contractNumber} */}
           </div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
             <CloseIcon />
@@ -529,274 +530,336 @@ function EditRequestHotelContract({
               >
                 <div className={classes.requestData}>
                   {/* Договор: основные поля */}
-                  <div className={classes.requestDataItem}>
-                    <label>№ Договора</label>
-                    <input
-                      type="text"
-                      name="contractNumber"
-                      value={formData.contractNumber}
-                      onChange={handleChange}
-                      placeholder="Например: Договор №1"
-                      disabled={!isEditing}
-                    />
+                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        <label>№ Договора</label>
+                        <input
+                          type="text"
+                          name="contractNumber"
+                          value={formData.contractNumber}
+                          onChange={handleChange}
+                          placeholder="Например: Договор №1"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>№ Договора</div>
+                        <div className={classes.requestDataInfo_desc}>{formData.contractNumber || "—"}</div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Дата заключения</label>
-                    <input
-                      type="date"
-                      name="date"
-                      value={formData.date ? formData.date.slice(0, 10) : ""}
-                      onChange={handleChange}
-                      placeholder="Дата"
-                      disabled={!isEditing}
-                    />
+                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        <label>Дата заключения</label>
+                        <input
+                          type="date"
+                          name="date"
+                          value={formData.date ? formData.date.slice(0, 10) : ""}
+                          onChange={handleChange}
+                          placeholder="Дата"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>Дата заключения</div>
+                        <div className={classes.requestDataInfo_desc}>{formData.date ? convertToDate(formData.date) : "—"}</div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>ГК КАРС</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"59%"}
-                      label={"Введите компанию"}
-                      options={companies?.map((item) => item.name) || []}
-                      value={
-                        companies?.find((item) => item.id === formData.companyId)
-                          ?.name || null
-                      }
-                      onChange={(event, newValue) => {
-                        const selectedCompany = companies?.find(
-                          (item) => item.name === newValue
-                        );
-                        // setSelectedCompany(selectedCompany);
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          companyId: selectedCompany?.id || "",
-                        }));
-                        // setIsEdited(true);
-                      }}
-                      isDisabled={!isEditing}
-                    />
+                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        <label>ГК КАРС</label>
+                        <MUIAutocomplete
+                          dropdownWidth={"59%"}
+                          label={"Введите компанию"}
+                          options={companies?.map((item) => item.name) || []}
+                          value={
+                            companies?.find((item) => item.id === formData.companyId)
+                              ?.name || null
+                          }
+                          onChange={(event, newValue) => {
+                            const selectedCompany = companies?.find(
+                              (item) => item.name === newValue
+                            );
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              companyId: selectedCompany?.id || "",
+                            }));
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>ГК КАРС</div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {companies?.find((item) => item.id === formData.companyId)?.name || "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>
-                      {activeFilterTab === "hotels"
-                        ? "Гостиница"
-                        : "Организация"}
-                    </label>
-                    <MUIAutocompleteColor
-                      dropdownWidth={"59%"}
-                      label={
-                        activeFilterTab === "hotels"
-                          ? "Выберите гостиницу"
-                          : "Выберите организацию"
-                      }
-                      isDisabled={!isEditing}
-                      options={hotels}
-                      getOptionLabel={(option) => {
-                        if (!option) return "";
-                        if (activeFilterTab === "transfer") {
-                          // Для организаций
-                          return `${option.name}${option?.information?.city ? `, город: ${option.information.city}` : ""}`.trim();
-                        } else {
-                          // Для гостиниц
-                          return `${option.name}, город: ${option?.information?.city || ""}`.trim();
-                        }
-                      }}
-                      renderOption={(optionProps, option) => {
-                        const cityPart = option?.information?.city
-                          ? `, город: ${option.information.city}`
-                          : "";
-                        const labelText = `${option.name}${cityPart}`.trim();
-                        const words = labelText.split(", ");
+                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        <label>
+                          {activeFilterTab === "hotels"
+                            ? "Гостиница"
+                            : "Организация"}
+                        </label>
+                        <MUIAutocompleteColor
+                          dropdownWidth={"59%"}
+                          label={
+                            activeFilterTab === "hotels"
+                              ? "Выберите гостиницу"
+                              : "Выберите организацию"
+                          }
+                          options={hotels}
+                          getOptionLabel={(option) => {
+                            if (!option) return "";
+                            if (activeFilterTab === "transfer") {
+                              return `${option.name}${option?.information?.city ? `, город: ${option.information.city}` : ""}`.trim();
+                            } else {
+                              return `${option.name}, город: ${option?.information?.city || ""}`.trim();
+                            }
+                          }}
+                          renderOption={(optionProps, option) => {
+                            const cityPart = option?.information?.city
+                              ? `, город: ${option.information.city}`
+                              : "";
+                            const labelText = `${option.name}${cityPart}`.trim();
+                            const words = labelText.split(", ");
 
-                        return (
-                          <li {...optionProps} key={option.id}>
-                            {words.map((word, index) => (
-                              <span
-                                key={index}
-                                style={{
-                                  color: index === 0 ? "black" : "gray",
-                                  marginRight: 4,
-                                }}
-                              >
-                                {word}
-                              </span>
-                            ))}
-                          </li>
-                        );
-                      }}
-                      value={
-                        hotels?.find(
-                          (item) => item.id === formData.hotelId
-                        ) || null
-                      }
-                      onChange={(event, newValue) => {
-                        if (!newValue) return;
+                            return (
+                              <li {...optionProps} key={option.id}>
+                                {words.map((word, index) => (
+                                  <span
+                                    key={index}
+                                    style={{
+                                      color: index === 0 ? "black" : "gray",
+                                      marginRight: 4,
+                                    }}
+                                  >
+                                    {word}
+                                  </span>
+                                ))}
+                              </li>
+                            );
+                          }}
+                          value={
+                            hotels?.find(
+                              (item) => item.id === formData.hotelId
+                            ) || null
+                          }
+                          onChange={(event, newValue) => {
+                            if (!newValue) return;
 
-                        const selectedItem = hotels?.find(
-                          (item) => item.id === newValue.id
-                        );
-                        setSelectedAirline(selectedItem);
+                            const selectedItem = hotels?.find(
+                              (item) => item.id === newValue.id
+                            );
+                            setSelectedAirline(selectedItem);
 
-                        // автоматически подставляем город
-                        const itemCity = selectedItem?.information?.city;
-                        const matchedCity =
-                          cities.find(
-                            (c) =>
-                              normalize(c.city) === normalize(itemCity) ||
-                              normalize(c.name) === normalize(itemCity) // на случай, если в объекте город лежит в name
-                          ) || null;
+                            const itemCity = selectedItem?.information?.city;
+                            const matchedCity =
+                              cities.find(
+                                (c) =>
+                                  normalize(c.city) === normalize(itemCity) ||
+                                  normalize(c.name) === normalize(itemCity)
+                              ) || null;
 
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          hotelId: selectedItem?.id || "",
-                          cityId: matchedCity?.id || "", // <-- вот это и выбирает город
-                        }));
-                      }}
-                    />
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              hotelId: selectedItem?.id || "",
+                              cityId: matchedCity?.id || "",
+                            }));
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          {activeFilterTab === "hotels" ? "Гостиница" : "Организация"}
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {hotels?.find((item) => item.id === formData.hotelId)?.name || "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Город</label>
-                    <MUIAutocompleteColor
-                      dropdownWidth="59%"
-                      label={"Выберите город"}
-                      options={cities}
-                      isDisabled={!isEditing}
-                      getOptionLabel={(option) => {
-                        if (!option) return "";
-                        const cityPart =
-                          option.city && option.city !== option.region
-                            ? `, регион: ${option.region}`
-                            : "";
-                        return `${option.city}${cityPart}`.trim();
-                      }}
-                      renderOption={(optionProps, option) => {
-                        const cityPart =
-                          option.city && option.city !== option.name
-                            ? `, регион: ${option.region}`
-                            : "";
-                        const labelText = `${option.city}${cityPart}`.trim();
-                        const words = labelText.split(" ");
+                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        <label>Город</label>
+                        <MUIAutocompleteColor
+                          dropdownWidth="59%"
+                          label={"Выберите город"}
+                          options={cities}
+                          getOptionLabel={(option) => {
+                            if (!option) return "";
+                            const cityPart =
+                              option.city && option.city !== option.region
+                                ? `, регион: ${option.region}`
+                                : "";
+                            return `${option.city}${cityPart}`.trim();
+                          }}
+                          renderOption={(optionProps, option) => {
+                            const cityPart =
+                              option.city && option.city !== option.name
+                                ? `, регион: ${option.region}`
+                                : "";
+                            const labelText = `${option.city}${cityPart}`.trim();
+                            const words = labelText.split(" ");
 
-                        return (
-                          <li {...optionProps} key={option.id}>
-                            {words.map((word, index) => (
-                              <span
-                                key={index}
-                                style={{
-                                  color: index === 0 ? "black" : "gray",
-                                  marginRight: 4,
-                                }}
-                              >
-                                {word}
-                              </span>
-                            ))}
-                          </li>
-                        );
-                      }}
-                      value={
-                        cities.find((o) => o.id === formData.cityId) || null
-                      }
-                      onChange={(e, newValue) => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          cityId: newValue?.id,
-                        }));
-                      }}
-                    />
+                            return (
+                              <li {...optionProps} key={option.id}>
+                                {words.map((word, index) => (
+                                  <span
+                                    key={index}
+                                    style={{
+                                      color: index === 0 ? "black" : "gray",
+                                      marginRight: 4,
+                                    }}
+                                  >
+                                    {word}
+                                  </span>
+                                ))}
+                              </li>
+                            );
+                          }}
+                          value={
+                            cities.find((o) => o.id === formData.cityId) || null
+                          }
+                          onChange={(e, newValue) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              cityId: newValue?.id,
+                            }));
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>Город</div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {cities?.find((o) => o.id === formData.cityId)?.city || "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {activeFilterTab === "hotels" && (
                     <>
-                      <div className={classes.requestDataItem}>
-                        <label>Наименования организации</label>
-                        <input
-                          type="text"
-                          name="legalEntity"
-                          value={formData.legalEntity}
-                          onChange={handleChange}
-                          placeholder='Например: ООО "Буфет"'
-                          disabled={!isEditing}
-                        />
+                      <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                        {isEditing ? (
+                          <>
+                            <label>Наименования организации</label>
+                            <input
+                              type="text"
+                              name="legalEntity"
+                              value={formData.legalEntity}
+                              onChange={handleChange}
+                              placeholder='Например: ООО "Буфет"'
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <div className={classes.requestDataInfo_title}>Наименования организации</div>
+                            <div className={classes.requestDataInfo_desc}>{formData.legalEntity || "—"}</div>
+                          </>
+                        )}
                       </div>
-                      <div className={classes.requestDataItem}>
-                        <label>Отметка о подписании</label>
-                        <input
-                          type="text"
-                          name="signatureMark"
-                          value={formData.signatureMark}
-                          onChange={handleChange}
-                          placeholder="Например: Подписан"
-                          disabled={!isEditing}
-                        />
+                      <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                        {isEditing ? (
+                          <>
+                            <label>Отметка о подписании</label>
+                            <input
+                              type="text"
+                              name="signatureMark"
+                              value={formData.signatureMark}
+                              onChange={handleChange}
+                              placeholder="Например: Подписан"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <div className={classes.requestDataInfo_title}>Отметка о подписании</div>
+                            <div className={classes.requestDataInfo_desc}>{formData.signatureMark || "—"}</div>
+                          </>
+                        )}
                       </div>
 
-                      <div className={classes.requestDataItem}>
-                        <label>Нормативный Акт, Форма договора</label>
-                        <input
-                          type="text"
-                          name="normativeAct"
-                          value={formData.normativeAct}
-                          onChange={handleChange}
-                          placeholder="Например: Наша форма договора"
-                          disabled={!isEditing}
-                        />
+                      <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                        {isEditing ? (
+                          <>
+                            <label>Нормативный Акт, Форма договора</label>
+                            <input
+                              type="text"
+                              name="normativeAct"
+                              value={formData.normativeAct}
+                              onChange={handleChange}
+                              placeholder="Например: Наша форма договора"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <div className={classes.requestDataInfo_title}>Нормативный Акт, Форма договора</div>
+                            <div className={classes.requestDataInfo_desc}>{formData.normativeAct || "—"}</div>
+                          </>
+                        )}
                       </div>
 
-                      {/* <div className={classes.requestDataItem}>
-                    <label>Исполнитель</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"59%"}
-                      label={"Выберите исполнителя"}
-                      isDisabled={!isEditing}
-                      options={dispatchers.map((i) => i.name)}
-                      value={
-                        dispatchers.find(
-                          (option) => option.name === formData.executor
-                        )?.name || null
-                      }
-                      onChange={(event, newValue) => {
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          executor: newValue ? newValue : "",
-                        }));
-                      }}
-                    />
-                  </div> */}
-
-                      <label className={classes.checkboxLabel}>
-                        <input
-                          type="checkbox"
-                          checked={formData.completionMark === "Исполнено"}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              completionMark: e.target.checked
-                                ? "Исполнено"
-                                : "Не исполнено",
-                            }))
-                          }
-                          disabled={!isEditing}
-                        />
-                        <span style={{ marginLeft: 8 }}>
-                          Отметка о исполнении: {formData.completionMark}
-                        </span>
-                      </label>
+                      <div className={isEditing ? null : classes.requestDataInfo}>
+                        {isEditing ? (
+                          <label className={classes.checkboxLabel}>
+                            <input
+                              type="checkbox"
+                              checked={formData.completionMark === "Исполнено"}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  completionMark: e.target.checked
+                                    ? "Исполнено"
+                                    : "Не исполнено",
+                                }))
+                              }
+                            />
+                            <span style={{ marginLeft: 8 }}>
+                              Отметка о исполнении: {formData.completionMark}
+                            </span>
+                          </label>
+                        ) : (
+                          <>
+                            <div className={classes.requestDataInfo_title}>Отметка о исполнении</div>
+                            <div className={classes.requestDataInfo_desc}>{formData.completionMark || "—"}</div>
+                          </>
+                        )}
+                      </div>
                     </>
                   )}
 
-                  <div className={classes.requestDataItem}>
-                    <label>Вид услуги</label>
-                    <input
-                      type="text"
-                      name="applicationType"
-                      value={formData.applicationType}
-                      onChange={handleChange}
-                      placeholder="Например: Проживание"
-                      disabled={!isEditing}
-                    />
+                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        <label>Вид услуги</label>
+                        <input
+                          type="text"
+                          name="applicationType"
+                          value={formData.applicationType}
+                          onChange={handleChange}
+                          placeholder="Например: Проживание"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>Вид услуги</div>
+                        <div className={classes.requestDataInfo_desc}>{formData.applicationType || "—"}</div>
+                      </>
+                    )}
                   </div>
 
                   {isEditing ? (
@@ -942,6 +1005,15 @@ function EditRequestHotelContract({
             )}
             {activeTab === "Общая" && canEdit && (
               <div className={classes.requestButton}>
+                {isEditing && (
+                  <Button
+                    onClick={() => setIsEditing(false)}
+                    backgroundcolor="var(--hover-gray)"
+                    color="#000"
+                  >
+                    Отмена
+                  </Button>
+                )}
                 <Button
                   type="submit"
                   onClick={handleSubmit}

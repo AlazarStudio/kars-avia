@@ -29,7 +29,7 @@ const AirlineAboutTab = lazy(() =>
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
 import classes from "./SuperAdminAirlineContent.module.css";
 
-const SuperAdminAirlineContent = ({ id, selectedTab, handleTabSelect }) => (
+const SuperAdminAirlineContent = ({ id, user, selectedTab, handleTabSelect }) => (
   <Tabs
     className={classes.tabs}
     selectedIndex={selectedTab}
@@ -58,7 +58,7 @@ const SuperAdminAirlineContent = ({ id, selectedTab, handleTabSelect }) => (
 
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineRegisterOfContracts id={id} />
+        <AirlineRegisterOfContracts id={id} user={user} />
       </Suspense>
     </TabPanel>
 

@@ -34,9 +34,9 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
-import { roles } from "../../../roles.js";
+import { isSuperAdmin, isDispatcherAdmin, hasAccessMenu } from "../../../utils/access";
 
-function HotelRegisterOfContracts({ children, id, user, ...props }) {
+function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
@@ -66,8 +66,12 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
 
-  // Проверка прав доступа: только dispatcherAdmin и superAdmin могут редактировать
-  const canEdit = user?.role === roles.dispatcerAdmin || user?.role === roles.superAdmin;
+  const canCreate =
+    isSuperAdmin(user) ||
+    (isDispatcherAdmin(user) && hasAccessMenu(accessMenu, "contractCreate"));
+  const canEdit =
+    isSuperAdmin(user) ||
+    (isDispatcherAdmin(user) && hasAccessMenu(accessMenu, "contractUpdate"));
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_CONTRACTS, {
     context: {
@@ -320,12 +324,6 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
-        <MUITextField
-          className={classes.mainSearch}
-          label={"Поиск по договорам"}
-          value={searchTarif}
-          onChange={handleSearchTarif}
-        />
 
         <DateRangeModalSelector
           width={"170px"}
@@ -337,6 +335,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
 
         <MUIAutocompleteColor
           dropdownWidth={"170px"}
+          hideLabelOnFocus={false}
           label={"Город"}
           options={[
             {
@@ -402,6 +401,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
 
         <MUIAutocomplete
           dropdownWidth={"170px"}
+          hideLabelOnFocus={false}
           label={"ГК Карс"}
           options={["Все компании", ...companies?.map((item) => item.name)]}
           value={selectedCompany ? selectedCompany?.name : ""}
@@ -416,7 +416,14 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
             }
           }}
         />
-        {canEdit && (
+
+        <MUITextField
+          className={classes.mainSearch}
+          label={"Поиск по договорам"}
+          value={searchTarif}
+          onChange={handleSearchTarif}
+        />
+        {canCreate && (
           <Filter
             toggleSidebar={toggleTarifsCategory}
             handleChange={""}
@@ -464,7 +471,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
         </>
       )}
 
-      {canEdit && (
+      {canCreate && (
         <CreateRequestHotelContract
           user={user}
           id={id}

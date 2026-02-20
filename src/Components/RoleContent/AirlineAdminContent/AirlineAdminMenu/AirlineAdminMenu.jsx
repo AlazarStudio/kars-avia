@@ -329,7 +329,7 @@ const AirlineAdminMenu = ({
               }`}
           >
             <div className={classes.svgWrapper}>
-            <svg width="15" height="19" viewBox="0 0 15 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="15" height="19" viewBox="0 0 15 19" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4.5 14.5H10.5M4.5 11.5H10.5M8.50038 0.500872C8.40484 0.5 8.29738 0.5 8.17471 0.5H3.7002C2.58009 0.5 2.01962 0.5 1.5918 0.717988C1.21547 0.909735 0.909734 1.21547 0.717987 1.5918C0.5 2.01962 0.5 2.58009 0.5 3.7002V15.3002C0.5 16.4203 0.5 16.9801 0.717988 17.4079C0.909735 17.7842 1.21547 18.0905 1.5918 18.2822C2.01921 18.5 2.579 18.5 3.69694 18.5L11.3031 18.5C12.421 18.5 12.98 18.5 13.4074 18.2822C13.7837 18.0905 14.0905 17.7842 14.2822 17.4079C14.5 16.9805 14.5 16.4215 14.5 15.3036V6.82568C14.5 6.70302 14.4999 6.59553 14.499 6.5M8.50038 0.500872C8.78583 0.503475 8.96572 0.514066 9.13818 0.55547C9.34225 0.604464 9.53785 0.685265 9.7168 0.794922C9.91857 0.918567 10.0918 1.09181 10.4375 1.4375L13.563 4.56298C13.9089 4.90889 14.0809 5.08136 14.2046 5.28319C14.3142 5.46214 14.3953 5.65726 14.4443 5.86133C14.4857 6.03379 14.4964 6.21454 14.499 6.5M8.50038 0.500872L8.5 3.30021C8.5 4.42031 8.5 4.98015 8.71799 5.40797C8.90973 5.7843 9.21547 6.09048 9.5918 6.28223C10.0192 6.5 10.579 6.5 11.6969 6.5H14.499" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
@@ -399,11 +399,48 @@ const AirlineAdminMenu = ({
             {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
           </Link>
         )}
-        {/* <Link
+        {hasAccessMenu(accessMenu, "analyticsMenu") && (
+          <Link
+            to={"/analytics"}
+            className={`${classes.menu_items__elem___fill} ${!menuOpen ? classes.jcc : ""
+              } ${id == "analytics" && classes.menu_items__activeElem___fill}`}
+          >
+            <div className={classes.svgWrapper}>
+              <svg width="21" height="21" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.87988 18.9C6.46988 18.9 6.12988 18.56 6.12988 18.15V16.08C6.12988 15.67 6.46988 15.33 6.87988 15.33C7.28988 15.33 7.62988 15.67 7.62988 16.08V18.15C7.62988 18.57 7.28988 18.9 6.87988 18.9Z" fill="var(--menu-gray)" />
+                <path d="M12 18.9C11.59 18.9 11.25 18.56 11.25 18.15V14C11.25 13.59 11.59 13.25 12 13.25C12.41 13.25 12.75 13.59 12.75 14V18.15C12.75 18.57 12.41 18.9 12 18.9Z" fill="var(--menu-gray)" />
+                <path d="M17.1201 18.9C16.7101 18.9 16.3701 18.56 16.3701 18.15V11.93C16.3701 11.52 16.7101 11.18 17.1201 11.18C17.5301 11.18 17.8701 11.52 17.8701 11.93V18.15C17.8701 18.57 17.5401 18.9 17.1201 18.9Z" fill="var(--menu-gray)" />
+                <path d="M6.88007 13.18C6.54007 13.18 6.24007 12.95 6.15007 12.61C6.05007 12.21 6.29007 11.8 6.70007 11.7C10.3801 10.78 13.6201 8.77 16.0901 5.9L16.5501 5.36C16.8201 5.05 17.2901 5.01 17.6101 5.28C17.9201 5.55 17.9601 6.02 17.6901 6.34L17.2301 6.88C14.5601 10 11.0401 12.17 7.06007 13.16C7.00007 13.18 6.94007 13.18 6.88007 13.18Z" fill="var(--menu-gray)" />
+                <path d="M17.1199 9.52001C16.7099 9.52001 16.3699 9.18001 16.3699 8.77001V6.60001H14.1899C13.7799 6.60001 13.4399 6.26001 13.4399 5.85001C13.4399 5.44001 13.7799 5.10001 14.1899 5.10001H17.1199C17.5299 5.10001 17.8699 5.44001 17.8699 5.85001V8.78001C17.8699 9.19001 17.5399 9.52001 17.1199 9.52001Z" fill="var(--menu-gray)" />
+                <path d="M15 22.75H9C3.57 22.75 1.25 20.43 1.25 15V9C1.25 3.57 3.57 1.25 9 1.25H15C20.43 1.25 22.75 3.57 22.75 9V15C22.75 20.43 20.43 22.75 15 22.75ZM9 2.75C4.39 2.75 2.75 4.39 2.75 9V15C2.75 19.61 4.39 21.25 9 21.25H15C19.61 21.25 21.25 19.61 21.25 15V9C21.25 4.39 19.61 2.75 15 2.75H9Z" fill="var(--menu-gray)" />
+              </svg>
+            </div>
+            {/* {menuOpen ? "Аналитика" : ""} */}
+            <DelayedText show={menuOpen} delay={200}>
+              Аналитика
+            </DelayedText>
+            {!menuOpen && <span className={classes.tooltip}>Аналитика</span>}
+          </Link>
+        )}
+        <div style={{ margin: "10px 0", height: "1px", width: "100%", backgroundColor: "var(--menu-gray)" }} />
+        <Link
+          to={"/documentation"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+            } ${id == "documentation" && classes.menu_items__activeElem}`}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 17V16.9929M12 14.8571C12 11.6429 15 12.3571 15 9.85714C15 8.27919 13.6568 7 12 7C10.6567 7 9.51961 7.84083 9.13733 9M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="var(--menu-gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <DelayedText show={menuOpen} delay={200}>
+            Помощь
+          </DelayedText>
+          {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
+        </Link>
+        <Link
           to={"/updates"}
-          className={`${classes.menu_items__elem} ${
-            !menuOpen ? classes.jcc : ""
-          } ${id == "updates" && classes.menu_items__activeElem}`}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+            } ${id == "updates" && classes.menu_items__activeElem}`}
+          style={{ gap: "5px" }}
           onMouseEnter={() => {
             setHovered(true);
           }}
@@ -411,10 +448,13 @@ const AirlineAdminMenu = ({
             setHovered(false);
           }}
         >
-          <div className={classes.svgWrapper}>
+          <div
+            className={classes.svgWrapper}
+            style={{ paddingLeft: "5px" }}
+          >
             <svg
-              width="18"
-              height="21"
+              width="16"
+              height="18"
               viewBox="0 0 18 21"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -428,109 +468,33 @@ const AirlineAdminMenu = ({
               />
             </svg>
           </div>
-          <DelayedText show={menuOpen} delay={200}>
-            Обновления
-          </DelayedText>
+          <DelayedText show={menuOpen} delay={200} >Обновления</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
-        </Link> */}
-        {/* <Link
-          to={"/documentation"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "documentation" && classes.menu_items__activeElem}`}
-        >
-          <div className={classes.svgWrapper}>
-            <img src="/instruction.png" alt="" />
-          </div>
-          <DelayedText show={menuOpen} delay={200}>
-            Помощь
-          </DelayedText>
-          {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
-        </Link> */}
-        {hasAccessMenu(accessMenu, "analyticsMenu") && (
-          <Link
-            to={"/analytics"}
-            className={`${classes.menu_items__elem___fill} ${!menuOpen ? classes.jcc : ""
-              } ${id == "analytics" && classes.menu_items__activeElem___fill}`}
-          >
-            <div className={classes.svgWrapper}>
-              <svg
-                width="20"
-                height="18"
-                viewBox="0 0 20 18"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M16.1175 2.72254L14.9033 3.82066C14.6139 4.07033 13.895 4.61726 13.688 4.89748C13.1872 4.7617 12.8301 4.56763 12.2173 4.70589C11.6403 4.83604 11.4521 5.10835 11.0861 5.34276L9.37314 4.70742C9.12602 3.48898 8.55491 2.4667 7.0357 2.692C6.40812 2.78508 5.9492 3.14696 5.71058 3.51504C5.26503 4.20232 5.41614 4.46243 5.40682 5.28719C4.67639 5.84059 3.84502 6.38291 3.19117 6.96385C2.62379 6.78064 1.57119 6.25257 0.610257 7.21818C-0.841181 8.6767 0.790786 11.513 2.96116 10.4C3.90978 9.9135 3.98716 9.28993 3.97282 8.00774C4.6935 7.47406 5.55383 6.90013 6.18713 6.3314C7.69263 6.78052 7.44633 6.91588 8.92691 5.96128L10.6387 6.60082C10.7865 7.3231 10.9041 7.78849 11.3302 8.14785C11.7126 8.47033 12.3508 8.73087 13.0471 8.60055C14.1801 8.38848 14.9411 7.29382 14.5252 5.92559L16.9547 3.74997C17.6893 3.94907 18.7533 4.2631 19.5141 3.2863C20.1148 2.51512 20.0877 1.38972 19.4778 0.664517C18.2543 -0.790381 15.3799 0.289734 16.1175 2.72254ZM1.80461 8.04712C0.896152 8.4945 1.5888 9.5515 2.29606 9.24244C3.0626 8.90749 2.56006 7.67507 1.80461 8.04712ZM12.4343 6.05405C11.5258 6.50146 12.2182 7.55878 12.9257 7.24937C13.6922 6.91416 13.1898 5.68198 12.4343 6.05405ZM17.7491 1.40358C16.8406 1.85099 17.5333 2.90798 18.2405 2.59893C19.0072 2.2639 18.5046 1.03151 17.7491 1.40358ZM7.11943 4.061C6.21125 4.50824 6.90324 5.56557 7.61086 5.25632C8.37753 4.92128 7.87493 3.68893 7.11943 4.061Z"
-                  fill="var(--menu-gray)"
-                />
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M16.987 5.37514C15.6819 5.75305 15.9858 7.12518 15.9858 8.55904C15.9858 9.76679 15.9068 16.2334 16.0106 16.8447C16.0978 17.3584 16.51 17.7919 17.0154 17.9043C17.3274 17.9737 18.7091 17.9708 19.0064 17.8878C20.2444 17.5423 19.9712 16.0368 19.9712 14.7043C19.9712 13.4973 20.0501 7.02947 19.9461 6.41882C19.8583 5.90357 19.4505 5.4714 18.9419 5.35876C18.5841 5.27954 17.3027 5.28373 16.987 5.37514ZM17.3138 16.6147H18.6428L18.6432 6.64869H17.3141L17.3138 16.6147Z"
-                  fill="var(--menu-gray)"
-                />
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M6.35775 8.03269C5.23133 8.35884 5.35647 9.29809 5.35649 10.5522C5.35654 11.6229 5.18053 16.6934 5.56576 17.3148C5.76527 17.6367 6.10618 17.9064 6.68211 17.9402C9.91438 18.1297 9.34195 17.3245 9.34195 11.8809C9.34195 10.1656 9.77436 8.08278 8.01641 7.98074C7.60432 7.95682 6.70478 7.9322 6.35775 8.03269ZM6.68453 16.6148H8.01358L8.01391 9.30623H6.6745L6.68453 16.6148Z"
-                  fill="var(--menu-gray)"
-                />
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M11.6726 10.0257C10.7284 10.2992 10.6689 10.9481 10.6712 12.047C10.6733 13.0434 10.6714 14.0401 10.6714 15.0366C10.6714 15.9835 10.5094 17.0553 11.1063 17.592C11.5569 17.9971 12.9547 18.0937 13.6921 17.8879C14.5741 17.6418 14.6593 16.9011 14.657 15.8671C14.6549 14.8706 14.6569 13.8739 14.6569 12.8774C14.6569 11.9408 14.8092 10.8498 14.223 10.3211C13.7772 9.91885 12.3762 9.82202 11.6726 10.0257ZM11.9995 16.6148H13.3285L13.3288 11.2993H11.9995V16.6148Z"
-                  fill="var(--menu-gray)"
-                />
-                <path
-                  fillRule="evenodd"
-                  clipRule="evenodd"
-                  d="M1.04266 12.0188C-0.323136 12.4142 0.0479976 14.0506 0.0407708 16.0334C0.0374045 16.9566 0.133119 17.4639 0.774823 17.7934C1.18699 18.005 2.58546 18.0209 3.0621 17.8879C4.41914 17.5092 4.02207 15.3894 4.02755 13.8737C4.03089 12.9528 3.93499 12.4401 3.29409 12.113C2.88098 11.9021 1.4899 11.8893 1.04266 12.0188ZM1.36947 16.6147H2.6985L2.69885 13.2923H1.36947V16.6147Z"
-                  fill="var(--menu-gray)"
-                />
-              </svg>
-            </div>
-            {/* {menuOpen ? "Аналитика" : ""} */}
-            <DelayedText show={menuOpen} delay={200}>
-              Аналитика
-            </DelayedText>
-            {!menuOpen && <span className={classes.tooltip}>Аналитика</span>}
-          </Link>
-        )}
+        </Link>
       </div>
       <div
         className={classes.bottomMenu}
-        style={menuOpen ? {} : { display: "flex", flexDirection: "column" }}
+        style={menuOpen ? {} : { display: "flex", flexDirection: "column", flex: 1, justifyContent: "flex-end" }}
       >
-        <Link
-          to={"/documentation"}
-          className={`${classes.menu_items__elem___bottom} ${!menuOpen ? classes.jcc : ""
-            } ${id == "documentation" && classes.menu_items__activeElem___bottom
-            }`}
+        {/* <Link
+          to={"/patchNotes"}
+          className={`${classes.alazar} ${!menuOpen ? classes.jcc : ""
+            } ${id == "patchNotes" && classes.menu_items__activeElem___bottom} ${classes.menuLink}`}
+          style={menuOpen ? {} : { padding: 0 }}
         >
-          <img src="/instruction.png" alt="" />
-
-          {/* {menuOpen ? "Помощь" : ""} */}
-          <DelayedText show={menuOpen} delay={200}>
-            Помощь
-          </DelayedText>
-          {!menuOpen && (
-            <span className={classes.tooltipBottom}>Помощь</span>
-          )}
-        </Link>
-        <Link
-          to={null}
-          className={`${classes.menu_items__elem___bottom} ${!menuOpen ? classes.jcc : ""
-            } ${id == "patchNotes" && classes.menu_items__activeElem___bottom}`}
-        >
-          {menuOpen ? "3.1.1" : "3.1.1"}
-          {/* {menuOpen ? "Kars Avia CRM" : "CRM"} */}
-          {!menuOpen && (
-            <span className={classes.tooltipBottom2}>Kars Avia CRM</span>
-          )}
-        </Link>
+          {menuOpen ? "ver 3.1.1" : "ver 3.1.1"}
+        </Link> */}
+        <div className={classes.alazar} style={menuOpen ? {} : { display: "none", padding: 0, flexWrap: "wrap", fontSize: "12px" }}>
+          Powered by{" "}
+          <a
+            href="https://alazarstudio.ru/"
+            target="_blank"
+            rel="noreferrer"
+            className={classes.menuLink}
+          >
+            Alazar studio
+          </a>
+        </div>
       </div>
     </div>
   );

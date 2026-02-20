@@ -29,8 +29,9 @@ import ReactPaginate from "react-paginate";
 import InfoTableDataDriversCompany from "../InfoTableDataDriversCompany/InfoTableDataDriversCompany";
 import AddDriverToOrganization from "../AddDriverToOrganization/AddDriverToOrganization";
 import ConfirmDriver from "../ConfirmDriver/ConfirmDriver";
+import { hasAccessMenu } from "../../../utils/access";
 
-function DriversCompany_tabComponent({ children, id, user, ...props }) {
+function DriversCompany_tabComponent({ children, id, user, accessMenu, ...props }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
@@ -281,14 +282,16 @@ function DriversCompany_tabComponent({ children, id, user, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          <Filter
-            toggleSidebar={toggleCreateSidebar}
-            handleChange={handleChange}
-            buttonTitle={"Добавить водителей"}
-            filterData={filterData}
-            filterList={filterList}
-            needDate={false}
-          />
+          {(!accessMenu || hasAccessMenu(accessMenu, "organizationAddDrivers")) && (
+            <Filter
+              toggleSidebar={toggleCreateSidebar}
+              handleChange={handleChange}
+              buttonTitle={"Добавить водителей"}
+              filterData={filterData}
+              filterList={filterList}
+              needDate={false}
+            />
+          )}
         </div>
         {loading && <MUILoader />}
         {error && <p>Error: {error.message}</p>}

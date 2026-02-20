@@ -302,7 +302,10 @@ function EditRequestAirlineTarifCategory({
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Изменить договор</div>
+        <div className={classes.requestTitle_name}>
+          Изменить договор
+          {/* {formData.name} */}
+        </div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
           <CloseIcon />
         </div>
@@ -474,6 +477,15 @@ function EditRequestAirlineTarifCategory({
             </div>
           </div>
           <div className={classes.requestButton}>
+            {isEditing && (
+              <Button
+                onClick={() => setIsEditing(false)}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+            )}
             <Button
               type="submit"
               onClick={handleSubmit}

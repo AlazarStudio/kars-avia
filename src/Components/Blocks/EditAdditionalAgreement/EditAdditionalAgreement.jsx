@@ -5,6 +5,7 @@ import Button from "../../Standart/Button/Button.jsx";
 import FixIcon from "../../../shared/icons/FixIcon.jsx";
 import { useMutation } from "@apollo/client";
 import {
+  convertToDate,
   CREATE_AIRLINE_AA,
   server,
   UPDATE_AIRLINE_CONTRACT_AA,
@@ -190,35 +191,68 @@ function EditAdditionalAgreement({
             style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
           >
             <div className={classes.requestData}>
-              <label>№ ДС</label>
-              <input
-                type="text"
-                name="contractNumber"
-                value={local.contractNumber}
-                onChange={handleChange}
-                placeholder="Например: ДС №1"
-                disabled={!agreement?.id ? false : !isEditing}
-              />
+              <div className={agreement?.id && !isEditing ? classes.requestDataInfo : classes.requestDataItem}>
+                {agreement?.id && !isEditing ? (
+                  <>
+                    <div className={classes.requestDataInfo_title}>№ ДС</div>
+                    <div className={classes.requestDataInfo_desc}>{local.contractNumber || "—"}</div>
+                  </>
+                ) : (
+                  <>
+                    <label>№ ДС</label>
+                    <input
+                      type="text"
+                      name="contractNumber"
+                      value={local.contractNumber}
+                      onChange={handleChange}
+                      placeholder="Например: ДС №1"
+                      disabled={!agreement?.id ? false : !isEditing}
+                    />
+                  </>
+                )}
+              </div>
 
-              <label>Дата заключения</label>
-              <input
-                type="date"
-                name="date"
-                value={local.date ? local.date.slice(0, 10) : ""}
-                onChange={handleChange}
-                placeholder="Дата"
-                disabled={!agreement?.id ? false : !isEditing}
-              />
+              <div className={agreement?.id && !isEditing ? classes.requestDataInfo : classes.requestDataItem}>
+                {agreement?.id && !isEditing ? (
+                  <>
+                    <div className={classes.requestDataInfo_title}>Дата заключения</div>
+                    <div className={classes.requestDataInfo_desc}>{local.date ? convertToDate(local.date) : "—"}</div>
+                  </>
+                ) : (
+                  <>
+                    <label>Дата заключения</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={local.date ? local.date.slice(0, 10) : ""}
+                      onChange={handleChange}
+                      placeholder="Дата"
+                      disabled={!agreement?.id ? false : !isEditing}
+                    />
+                  </>
+                )}
+              </div>
 
-              <label>Предмет ДС</label>
-              <input
-                type="text"
-                name="itemAgreement"
-                value={local.itemAgreement}
-                onChange={handleChange}
-                placeholder="Например: Уведомление"
-                disabled={!agreement?.id ? false : !isEditing}
-              />
+              <div className={agreement?.id && !isEditing ? classes.requestDataInfo : classes.requestDataItem}>
+                {agreement?.id && !isEditing ? (
+                  <>
+                    <div className={classes.requestDataInfo_title}>Предмет ДС</div>
+                    <div className={classes.requestDataInfo_desc}>{local.itemAgreement || "—"}</div>
+                  </>
+                ) : (
+                  <>
+                    <label>Предмет ДС</label>
+                    <input
+                      type="text"
+                      name="itemAgreement"
+                      value={local.itemAgreement}
+                      onChange={handleChange}
+                      placeholder="Например: Уведомление"
+                      disabled={!agreement?.id ? false : !isEditing}
+                    />
+                  </>
+                )}
+              </div>
 
               {/* <label>Комментарий</label>
               <textarea
@@ -300,6 +334,15 @@ function EditAdditionalAgreement({
 
           {canEdit && (
             <div className={classes.requestButton}>
+              {isEditing && (
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  backgroundcolor="var(--hover-gray)"
+                  color="#000"
+                >
+                  Отмена
+                </Button>
+              )}
               <Button
                 type="button"
                 onClick={save}

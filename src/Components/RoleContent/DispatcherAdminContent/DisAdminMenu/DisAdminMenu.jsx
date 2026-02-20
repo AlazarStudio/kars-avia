@@ -187,7 +187,7 @@ const DisAdminMenu = ({
           </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Гостиницы</span>}
         </Link>
-        {canAccessMenu(accessMenu, "transferMenu", user) && (
+        {canAccessMenu(accessMenu, "organizationMenu", user) && (
           <Link
             to={"/driversCompany"}
             className={`${classes.menu_items__elem___fill} ${!menuOpen ? classes.jcc : ""
@@ -275,7 +275,6 @@ const DisAdminMenu = ({
               />
             </svg>
           </div>
-          {/* {menuOpen ? "ГК Карс" : ""} */}
           <DelayedText show={menuOpen} delay={200}>
             ГК Карс
           </DelayedText>

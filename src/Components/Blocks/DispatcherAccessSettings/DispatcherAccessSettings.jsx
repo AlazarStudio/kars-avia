@@ -97,6 +97,8 @@ export default function DispatcherAccessSettings() {
     personalUpdate: !!s?.employees?.edit,
 
     contracts: !!s?.contracts?.access,
+    contractCreate: !!s?.contracts?.create,
+    contractUpdate: !!s?.contracts?.edit,
 
     analyticsMenu: !!s?.analytics?.access,
     analyticsUpload: !!s?.analytics?.export,
@@ -106,6 +108,12 @@ export default function DispatcherAccessSettings() {
 
     reportMenu: !!s?.reports?.access,
     reportCreate: !!s?.reports?.create,
+
+    organizationMenu: !!s?.organization?.access,
+    organizationCreate: !!s?.organization?.create,
+    organizationUpdate: !!s?.organization?.edit,
+    organizationAddDrivers: !!s?.organization?.addDrivers,
+    organizationAcceptDrivers: !!s?.organization?.acceptDrivers,
   });
 
   const handleSubmit = async () => {
@@ -265,6 +273,8 @@ function AccessPermissionsPanel({ accessMenu = {}, stateRef, isEditing }) {
       },
       contracts: {
         access: b(accessMenu?.contracts),
+        create: b(accessMenu?.contractCreate),
+        edit: b(accessMenu?.contractUpdate),
       },
       analytics: {
         access: b(accessMenu?.analyticsMenu),
@@ -277,6 +287,13 @@ function AccessPermissionsPanel({ accessMenu = {}, stateRef, isEditing }) {
       reports: {
         access: b(accessMenu?.reportMenu),
         create: b(accessMenu?.reportCreate),
+      },
+      organization: {
+        access: b(accessMenu?.organizationMenu),
+        create: b(accessMenu?.organizationCreate),
+        edit: b(accessMenu?.organizationUpdate),
+        addDrivers: b(accessMenu?.organizationAddDrivers),
+        acceptDrivers: b(accessMenu?.organizationAcceptDrivers),
       },
     }),
     [accessMenu]
@@ -320,6 +337,39 @@ function AccessPermissionsPanel({ accessMenu = {}, stateRef, isEditing }) {
             checked={state.squadron.edit}
             onChange={(v) => set("squadron", "edit", v)}
             disabled={!isEditing || !state.squadron.access}
+          />
+        </SectionCard>
+
+        <SectionCard title="Автопарк">
+          <RowSwitch
+            label="Доступ к разделу"
+            checked={state.organization.access}
+            onChange={(v) => set("organization", "access", v)}
+            disabled={!isEditing}
+          />
+          <RowSwitch
+            label="Создание организаций"
+            checked={state.organization.create}
+            onChange={(v) => set("organization", "create", v)}
+            disabled={!isEditing || !state.organization.access}
+          />
+          <RowSwitch
+            label="Редактирование организаций"
+            checked={state.organization.edit}
+            onChange={(v) => set("organization", "edit", v)}
+            disabled={!isEditing || !state.organization.access}
+          />
+          <RowSwitch
+            label="Добавление водителей"
+            checked={state.organization.addDrivers}
+            onChange={(v) => set("organization", "addDrivers", v)}
+            disabled={!isEditing || !state.organization.access}
+          />
+          <RowSwitch
+            label="Приём водителей"
+            checked={state.organization.acceptDrivers}
+            onChange={(v) => set("organization", "acceptDrivers", v)}
+            disabled={!isEditing || !state.organization.access}
           />
         </SectionCard>
 
@@ -419,6 +469,18 @@ function AccessPermissionsPanel({ accessMenu = {}, stateRef, isEditing }) {
             checked={state.contracts.access}
             onChange={(v) => set("contracts", "access", v)}
             disabled={!isEditing}
+          />
+          <RowSwitch
+            label="Создание договоров"
+            checked={state.contracts.create}
+            onChange={(v) => set("contracts", "create", v)}
+            disabled={!isEditing || !state.contracts.access}
+          />
+          <RowSwitch
+            label="Редактирование"
+            checked={state.contracts.edit}
+            onChange={(v) => set("contracts", "edit", v)}
+            disabled={!isEditing || !state.contracts.access}
           />
         </SectionCard>
 
