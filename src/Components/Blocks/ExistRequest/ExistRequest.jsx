@@ -37,6 +37,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import ExistRequestAdditionalMenu from "./ExistRequestAdditionalMenu";
 import ExistRequestEditForm from "./ExistRequestEditForm";
+import { roles } from "../../../roles";
 
 function ExistRequest({
   show,
@@ -956,7 +957,7 @@ function ExistRequest({
                 )} */}
             </div>
             <div className={classes.requestTitle_close}>
-              {formData.status !== 'canceled' && formData.status !== "archived" && (
+              {formData.status !== 'canceled' && formData.status !== "archived" && formData.status !== "created" && formData.status !== "opened" && (
                 <ExistRequestAdditionalMenu
                   anchorEl={anchorEl}
                   onOpen={handleMenuOpen}
@@ -990,7 +991,8 @@ function ExistRequest({
                   Общая
                 </div>
                 {formData.status !== "created" &&
-                  formData.status !== "opened" && (
+                  formData.status !== "opened" &&
+                  (user?.airlineId ? !isEditing : true) && (
                     <div
                       className={`${classes.tab} ${activeTab === "Питание" ? classes.activeTab : ""
                         }`}
@@ -1065,7 +1067,7 @@ function ExistRequest({
                     <div className={classes.requestDataTitle}>
                       Информация о сотруднике
                     </div>
-                    {(isEditing || ((formData.status === "created" || formData.status === "opened") && !formData.person)) && !(formData.person && (formData.status === "created" || formData.status === "opened")) && !user?.hotelId ? (
+                    {(isEditing || ((formData.status === "created" || formData.status === "opened") && !formData.person)) && !(formData.person && (formData.status === "created" || formData.status === "opened")) && (!user?.hotelId && !user?.airlineId) ? (
                       <>
                         <div className={classes.requestDataInfo}>
                           <div className={classes.requestDataInfo_title}>
@@ -1195,7 +1197,7 @@ function ExistRequest({
                       <div className={classes.requestDataInfo_title}>
                         Питание
                       </div>
-                      {isEditing &&
+                      {isEditing && !user?.airlineId &&
                         formData.status !== "created" &&
                         formData.status !== "opened" ? (
                         <>
@@ -1281,7 +1283,7 @@ function ExistRequest({
                       )}
                     </div>
 
-                    {formData?.mealPlan?.included &&
+                    {formData?.mealPlan?.included && user?.airlineId &&
                       formData.status !== "created" &&
                       formData.status !== "opened" &&
                       !isEditing && (
@@ -1668,7 +1670,7 @@ function ExistRequest({
                       separator={separator}
                       chatHeight={
                         user?.airlineId || user?.hotelId
-                          ? "calc(100vh - 201px)"
+                          ? "calc(100vh - 202px)"
                           : "calc(100vh - 260px)"
                       }
                     />

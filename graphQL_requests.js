@@ -1354,6 +1354,7 @@ export const REQUEST_MESSAGES_SUBSCRIPTION = gql`
         id
         name
         role
+        images
         position {
           id
           name
@@ -1827,6 +1828,7 @@ export const GET_MESSAGES_HOTEL = gql`
             id
             name
           }
+          images
         }
         readBy {
           user {
@@ -4376,6 +4378,11 @@ export const GET_USER_SUPPORT_CHAT = gql`
           id
           name
           role
+          images
+          position {
+            id
+            name
+          }
         }
         isRead
         readBy {
