@@ -1283,7 +1283,7 @@ function ExistRequest({
                       )}
                     </div>
 
-                    {formData?.mealPlan?.included && user?.airlineId &&
+                    {formData?.mealPlan?.included &&
                       formData.status !== "created" &&
                       formData.status !== "opened" &&
                       !isEditing && (
