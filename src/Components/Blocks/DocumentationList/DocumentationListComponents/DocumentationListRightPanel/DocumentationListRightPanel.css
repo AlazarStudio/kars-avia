@@ -66,3 +66,125 @@
   width: 2px;
   background: #1d4ed8;
 }
+
+/* ===== Theme alignment overrides ===== */
+
+.doc-right {
+  padding: 18px 14px 14px;
+  background: linear-gradient(180deg, #fbfcff 0%, #ffffff 100%);
+  color: var(--main-gray);
+}
+
+.doc-right-title {
+  margin-bottom: 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--menu-bg);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.doc-right-empty {
+  color: var(--main-gray);
+}
+
+.doc-right-list {
+  border-left-color: rgba(53, 59, 85, 0.12);
+  /* scrollbar-width: thin;
+  scrollbar-color: #356184 #f9f9fd; */
+}
+
+/* .doc-right-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.doc-right-list::-webkit-scrollbar-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.doc-right-list::-webkit-scrollbar-button:vertical,
+.doc-right-list::-webkit-scrollbar-button:single-button:vertical:decrement,
+.doc-right-list::-webkit-scrollbar-button:single-button:vertical:increment,
+.doc-right-list::-webkit-scrollbar-button:vertical:start:decrement,
+.doc-right-list::-webkit-scrollbar-button:vertical:end:increment,
+.doc-right-list::-webkit-scrollbar-button:double-button:vertical:start:decrement,
+.doc-right-list::-webkit-scrollbar-button:double-button:vertical:end:increment {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.doc-right-list::-webkit-scrollbar-track {
+  -webkit-box-shadow: 5px 5px 5px -5px rgba(34, 60, 80, 0.2) inset;
+  box-shadow: 5px 5px 5px -5px rgba(34, 60, 80, 0.2) inset;
+  background-color: #f9f9fd;
+}
+
+.doc-right-list::-webkit-scrollbar-thumb {
+  background-color: #356184;
+  background-image: -webkit-gradient(
+    linear,
+    0 0,
+    0 100%,
+    color-stop(.5, rgba(255, 255, 255, .25)),
+    color-stop(.5, transparent),
+    to(transparent)
+  );
+}
+
+.doc-right-list::-webkit-scrollbar-thumb:hover {
+  background-color: #315978;
+}
+
+.doc-right-list::-webkit-scrollbar-thumb:active {
+  background-color: #2c506b;
+}
+
+.doc-right-list::-webkit-scrollbar-corner {
+  background: transparent;
+} */
+
+.doc-right-item {
+  margin: 2px 0;
+  border-radius: 0 10px 10px 0;
+  color: var(--main-gray);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.doc-right-item:hover {
+  background: var(--hover-gray);
+  color: var(--menu-bg);
+}
+
+.doc-right-item.active {
+  color: var(--menu-bg);
+  font-weight: 600;
+  background: rgba(53, 59, 85, 0.06);
+}
+
+.doc-right-item.active::before {
+  width: 3px;
+  background: var(--menu-bg);
+}

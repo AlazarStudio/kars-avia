@@ -16,6 +16,16 @@ function rectFromPoints(a, b) {
   return { left, top, right, bottom, width: right - left, height: bottom - top }
 }
 
+function intersectRect(a, b) {
+  if (!a || !b) return null
+  const left = Math.max(a.left, b.left)
+  const top = Math.max(a.top, b.top)
+  const right = Math.min(a.right, b.right)
+  const bottom = Math.min(a.bottom, b.bottom)
+  if (right <= left || bottom <= top) return null
+  return { left, top, right, bottom, width: right - left, height: bottom - top }
+}
+
 function isFormFieldTarget(target) {
   if (!(target instanceof Element)) return false
   return Boolean(target.closest('input, textarea, select'))
@@ -102,6 +112,10 @@ export default function BlockSelectionOverlay({
     const editorDom = view.dom
     const scopeEl = editorDom.closest(scopeSelector) || editorDom.parentElement || editorDom
     const panelScroller = editorDom.closest('.panel-content')
+    const stickyTopEl =
+      panelScroller instanceof HTMLElement
+        ? panelScroller.querySelector('.tiptap-panel-top-sticky')
+        : null
 
     const prevUserSelect = { value: '', important: false }
 
@@ -429,8 +443,41 @@ export default function BlockSelectionOverlay({
       const a = { x: aPage.x - syntheticScroll.x, y: aPage.y - syntheticScroll.y }
       const b = { x: bPage.x - syntheticScroll.x, y: bPage.y - syntheticScroll.y }
       const next = rectFromPoints(a, b)
+      const editorRect = editorDom.getBoundingClientRect()
+      let clipRect = {
+        left: editorRect.left,
+        top: editorRect.top,
+        right: editorRect.right,
+        bottom: editorRect.bottom,
+      }
+
+      if (panelScroller instanceof HTMLElement) {
+        const panelRect = panelScroller.getBoundingClientRect()
+        const stickyRect =
+          stickyTopEl instanceof HTMLElement ? stickyTopEl.getBoundingClientRect() : null
+
+        clipRect = {
+          left: clipRect.left,
+          right: clipRect.right,
+          top: Math.max(
+            clipRect.top,
+            panelRect.top,
+            stickyRect ? stickyRect.bottom : -Infinity
+          ),
+          bottom: Math.min(clipRect.bottom, panelRect.bottom),
+        }
+      }
+
+      const clipped = intersectRect(next, clipRect)
+
+      // Keep the logical lasso rect untouched so selection can continue beyond
+      // the visible article area while scrolling. Only clip the visual overlay.
       dragRef.current.lastRect = next
-      setRectStyle({ left: next.left, top: next.top, width: next.width, height: next.height })
+      setRectStyle(
+        clipped
+          ? { left: clipped.left, top: clipped.top, width: clipped.width, height: clipped.height }
+          : null
+      )
       scheduleSelectionUpdate()
     }
 
@@ -482,6 +529,7 @@ export default function BlockSelectionOverlay({
       if (t.closest('input, textarea, select, button')) return false
 
       const insideEditor = editorDom.contains(t)
+      if (!insideEditor) return false
       if (insideEditor && !e.altKey) return false
 
       return true
@@ -562,6 +610,9 @@ export default function BlockSelectionOverlay({
       const t = normalizeTargetToElement(e.target)
       if (!t) return
       if (t.closest('.block-dnd-handle')) return
+      if (t.closest('.plus-overlay')) return
+      if (t.closest('.position-plus-button')) return
+      if (t.closest('.slash-menu-wrapper')) return
       if (!getSelectedPositions().length) return
 
       if (!e.altKey) clearSelected()
@@ -699,14 +750,7 @@ export default function BlockSelectionOverlay({
 
   return (
     <>
-      {rectStyle && <div className={RECT_CLASS} style={rectStyle} />}
-      {markers.map(m => (
-        <div
-          key={m.key}
-          className={MARKER_CLASS}
-          style={{ top: m.top, left: m.left }}
-        />
-      ))}
+      {rectStyle && <div className={RECT_CLASS} style={{ ...rectStyle, borderRadius: 0 }} />}
     </>
   )
 }

@@ -37,6 +37,75 @@ const renderLinkIcon = (iconType, size = 20) => {
   }
 }
 
+const getLinkStylePreviewStyle = (styleItem) => {
+  if (!styleItem) return undefined
+  const styleId = String(styleItem.id || '')
+  if (styleId.startsWith('custom_')) {
+    const previewStyle = {
+      textUnderlineOffset: '2px',
+    }
+    if (styleItem.color) {
+      previewStyle.color = styleItem.color
+    }
+    if (styleItem.bgColor && styleItem.bgColor !== 'transparent') {
+      previewStyle.backgroundColor = styleItem.bgColor
+    }
+    if (styleItem.underline !== false) {
+      const underlineStyle = styleItem.underlineStyle || 'solid'
+      const underlineColor = styleItem.color || '#3b82f6'
+      previewStyle.textDecoration = `underline ${underlineStyle} ${underlineColor}`
+    } else {
+      previewStyle.textDecoration = 'none'
+    }
+    if (styleItem.bold) {
+      previewStyle.fontWeight = '700'
+    }
+    if (styleItem.italic) {
+      previewStyle.fontStyle = 'italic'
+    }
+    return previewStyle
+  }
+  switch (styleId) {
+    case 'button':
+      return {
+        color: '#ffffff',
+        backgroundColor: '#2563eb',
+        textDecoration: 'none',
+        fontWeight: '600',
+      }
+    case 'highlighted':
+      return {
+        color: '#1f2937',
+        backgroundColor: '#fef3c7',
+        textDecoration: 'none',
+      }
+    case 'dashed':
+      return {
+        color: '#2563eb',
+        textDecoration: 'underline dashed #2563eb',
+        textUnderlineOffset: '2px',
+      }
+    case 'no-underline':
+      return {
+        color: '#2563eb',
+        textDecoration: 'none',
+        fontWeight: '700',
+      }
+    case 'colored':
+      return {
+        color: '#0369a1',
+        backgroundColor: '#e0f2fe',
+        textDecoration: 'none',
+      }
+    default:
+      return {
+        color: '#2563eb',
+        textDecoration: 'underline',
+        textUnderlineOffset: '2px',
+      }
+  }
+}
+
 export default function LinkModal({
   editor,
   onClose,
@@ -267,7 +336,7 @@ export default function LinkModal({
                   <span className="link-style-icon">
                     {renderLinkIcon(linkStyleItem.icon, 20)}
                   </span>
-                  <span className="link-style-label">{linkStyleItem.label}</span>
+                  <span className="link-style-label" style={getLinkStylePreviewStyle(linkStyleItem)}>{linkStyleItem.label}</span>
                 </button>
                 <button 
                   className="edit-style-btn"
@@ -292,7 +361,7 @@ export default function LinkModal({
                   <span className="link-style-icon">
                     {renderLinkIcon(customStyle.icon || 'link', 20)}
                   </span>
-                  <span className="link-style-label">{customStyle.name}</span>
+                  <span className="link-style-label" style={getLinkStylePreviewStyle(customStyle)}>{customStyle.name}</span>
                 </button>
                 <div className="style-actions">
                   <button 

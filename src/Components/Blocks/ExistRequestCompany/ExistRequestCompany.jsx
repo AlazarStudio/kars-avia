@@ -5,7 +5,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import {
   decodeJWT,
   getCookie,
-  server,
+  getMediaUrl,
   UPDATE_DISPATCHER_USER,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
@@ -292,7 +292,7 @@ function ExistRequestCompany({
                   <img
                     src={
                       showIMG?.length !== 0
-                        ? `${server}${showIMG}`
+                        ? getMediaUrl(showIMG)
                         : "/no-avatar.png"
                     }
                     alt=""

@@ -5,7 +5,8 @@ import './toggle.css'
 import './blockResize.css'
 
 export default function ToggleView({ editor, node, updateAttributes, getPos }) {
-  const collapsed = !!node.attrs.collapsed
+  const isEditable = Boolean(editor?.isEditable)
+  const [collapsed, setCollapsed] = useState(false)
   const width = typeof node.attrs.width === 'number' ? node.attrs.width : 520
   const height = typeof node.attrs.height === 'number' ? node.attrs.height : null
   const textAlign = node.attrs.textAlign || 'left'
@@ -35,6 +36,12 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
     return () => clearTimeout(t)
   }, [editing])
 
+  useEffect(() => {
+    if (!isEditable && editing) {
+      setEditing(false)
+    }
+  }, [editing, isEditable])
+
   const safeSetNodeSelectionHere = () => {
     const pos = typeof getPos === 'function' ? getPos() : null
     if (typeof pos === 'number' && editor?.commands?.setNodeSelection) {
@@ -47,19 +54,24 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
     e?.stopPropagation?.()
 
     const next = !collapsed
-    updateAttributes({ collapsed: next })
+    setCollapsed(next)
 
     // если закрываем — не оставляем курсор внутри
     if (next) safeSetNodeSelectionHere()
   }
 
   const startEditTitle = e => {
+    if (!isEditable) return
     e.preventDefault()
     e.stopPropagation()
     setEditing(true)
   }
 
   const saveTitle = () => {
+    if (!isEditable) {
+      setEditing(false)
+      return
+    }
     const next = (tempTitle || '').trim()
     if (next) updateAttributes({ title: next })
     else updateAttributes({ title: 'Раскрываемый список' })
@@ -83,8 +95,8 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
     if (editing) return
     const target = e.target
     if (target instanceof Element) {
-      if (target.closest('.toggle-title') || target.closest('.toggle-title-input'))
-        return
+      if (target.closest('.toggle-title-input')) return
+      if (isEditable && target.closest('.toggle-title')) return
       if (target.closest('.toggle-chevron')) return // у кнопки свой handler
     }
     toggleCollapsed(e)
@@ -103,6 +115,7 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
   const startResize = (e, side) => {
+    if (!isEditable) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -157,10 +170,14 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
       }}
     >
       {/* RESIZE HANDLES */}
-      <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
-      <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
-      <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
-      <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+      {isEditable && (
+        <>
+          <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
+          <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
+          <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
+          <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+        </>
+      )}
 
       <div
         className="toggle-header"
@@ -190,9 +207,9 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
           />
         ) : (
           <div
-            className="toggle-title"
+            className={`toggle-title ${isEditable ? 'is-editable' : ''}`}
             title="Кликните, чтобы переименовать"
-            onClick={startEditTitle}
+            onClick={isEditable ? startEditTitle : undefined}
           >
             {node.attrs.title || 'Раскрываемый список'}
           </div>

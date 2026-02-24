@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 
 // Основная таблица с данными о заявках
 function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
@@ -111,7 +111,7 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
                         <div className={`${classes.InfoTable_data_elem} ${classes.w13}`} style={{justifyContent:'center', padding:'0 0 0 10px'}}>{convertToDate(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{ padding: "0 10px" }}>
                             <div className={classes.InfoTable_data_elem_img} >
-                                <img src={`${server}${item.airline.images[0]}`} alt="" />
+                                <img src={getMediaUrl(item.airline.images[0])} alt="" />
                             </div>
                             {item.airline.name}
                         </div>

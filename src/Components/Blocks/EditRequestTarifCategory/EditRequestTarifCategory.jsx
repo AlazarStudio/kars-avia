@@ -5,8 +5,8 @@ import Sidebar from "../Sidebar/Sidebar";
 
 import {
   getCookie,
+  getMediaUrl,
   REORDER_ROOM_KIND_IMAGES,
-  server,
   UPDATE_HOTEL_TARIF,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
@@ -545,7 +545,7 @@ function EditRequestTarifCategory({
                       }}
                     >
                       <img
-                        src={`${server}${image}`}
+                        src={getMediaUrl(image)}
                         alt={`Image ${index + 1}`}
                       />
                       {isEditing && (

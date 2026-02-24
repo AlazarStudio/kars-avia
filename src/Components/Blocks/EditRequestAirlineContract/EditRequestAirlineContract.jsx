@@ -12,7 +12,7 @@ import {
   GET_AIRPORTS_RELAY,
   GET_ALL_COMPANIES,
   getCookie,
-  server,
+  getMediaUrl,
   UPDATE_AIRLINE_CONTRACT,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
@@ -750,7 +750,7 @@ function EditRequestAirlineContract({
                   {files?.map((i, index) => (
                     <a
                       key={index}
-                      href={`${server}${i}`}
+                      href={getMediaUrl(i)}
                       target="_blank"
                       className={classes.downloadsButton}
                       rel="noopener noreferrer"

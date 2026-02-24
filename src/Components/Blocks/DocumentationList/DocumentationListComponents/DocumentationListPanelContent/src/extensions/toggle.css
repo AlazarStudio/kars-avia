@@ -67,7 +67,7 @@
   word-break: break-word;
 }
 
-.toggle-title:hover {
+.toggle-title.is-editable:hover {
   text-decoration: underline;
 }
 

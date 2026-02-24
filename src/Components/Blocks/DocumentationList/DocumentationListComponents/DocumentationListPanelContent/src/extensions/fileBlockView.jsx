@@ -1,5 +1,6 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './imageBlockModal.css'
 import './fileEmpty.css'
 import './fileBlockView.css'
@@ -190,16 +191,17 @@ const TextPreview = ({ url }) => {
   useEffect(() => {
     const loadText = async () => {
       try {
+        if (!url || typeof url !== 'string') throw new Error('Empty text URL');
         // Для blob-ссылок и data URLs
         if (url.startsWith('blob:') || url.startsWith('data:')) {
           const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const text = await response.text();
           // Ограничиваем длину текста для превью
           setContent(text.length > 10000 ? text.substring(0, 10000) + '\n...' : text);
         } else {
           // Для внешних ссылок - используем прокси через CORS proxy
-          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-          const response = await fetch(proxyUrl);
+          const response = await fetch(url);
           if (!response.ok) throw new Error('Network response was not ok');
           const text = await response.text();
           setContent(text.length > 10000 ? text.substring(0, 10000) + '\n...' : text);
@@ -227,11 +229,12 @@ const TextPreview = ({ url }) => {
   );
 };
 
-export default function FileBlockView({ node, updateAttributes }) {
+export default function FileBlockView({ editor, node, updateAttributes, getPos }) {
   const { fileId, url: rawUrl, name, size, type: _type, mimeType } = node.attrs;
 
   const docUpload = useDocumentationUpload();
   const { uploadFile: docUploadFile, getMediaUrl } = docUpload || {};
+  const canEdit = editor?.isEditable !== false;
   const width = typeof node.attrs.width === 'number' ? node.attrs.width : 520;
   const height = typeof node.attrs.height === 'number' ? node.attrs.height : null;
   const textAlign = node.attrs.textAlign || 'left';
@@ -257,6 +260,11 @@ export default function FileBlockView({ node, updateAttributes }) {
   const fileInputRef = useRef(null);
   const [modalPos, setModalPos] = useState({ x: 0, y: 0 });
   const dragOffset = useRef({ x: 0, y: 0 });
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null;
+  const renderModalPortal = (node) => {
+    if (!node) return null;
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node;
+  };
 
   const announceModalOpen = () => {
     try {
@@ -267,6 +275,18 @@ export default function FileBlockView({ node, updateAttributes }) {
       );
     } catch {
       // ignore
+    }
+  };
+
+  const safeSetNodeSelectionHere = (e) => {
+    if (e?.button != null && e.button !== 0) return;
+
+    const t = e?.target;
+    if (t instanceof Element && t.closest('input, textarea, select, button, a')) return;
+
+    const pos = typeof getPos === 'function' ? getPos() : null;
+    if (typeof pos === 'number' && editor?.commands?.setNodeSelection) {
+      editor.commands.setNodeSelection(pos);
     }
   };
 
@@ -379,6 +399,7 @@ export default function FileBlockView({ node, updateAttributes }) {
 
   /* ================= OPEN MODAL ================= */
   const openAtEvent = (e) => {
+    if (!canEdit) return;
     e.stopPropagation();
     setModalPos({
       x: e.clientX + 10,
@@ -418,6 +439,7 @@ export default function FileBlockView({ node, updateAttributes }) {
 
   /* ================= ADD FILE ================= */
   const addFile = (inputUrl, fileName, fileSize, fileType, mimeType) => {
+    if (!canEdit) return;
     if (!inputUrl || !inputUrl.trim()) return;
 
     const url = inputUrl.trim();
@@ -438,6 +460,7 @@ export default function FileBlockView({ node, updateAttributes }) {
   };
 
   const onUpload = (file) => {
+    if (!canEdit) return;
     if (!file) return;
 
     const fileType = getFileType(file.name, file.type);
@@ -454,6 +477,16 @@ export default function FileBlockView({ node, updateAttributes }) {
               size: file.size || '',
               type: fileType,
               mimeType: file.type || '',
+            });
+          } else {
+            const saved = await saveFile(file);
+            updateAttributes({
+              fileId: saved.id,
+              url: null,
+              name: saved.name || file.name,
+              size: saved.size || file.size,
+              type: fileType,
+              mimeType: saved.mimeType || file.type,
             });
           }
         } else {
@@ -481,6 +514,7 @@ export default function FileBlockView({ node, updateAttributes }) {
 
   /* ================= DRAG & DROP ================= */
   const handleDrop = (e) => {
+    if (!canEdit) return;
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
 
@@ -503,8 +537,9 @@ export default function FileBlockView({ node, updateAttributes }) {
     return url.trim().length > 0;
   };
 
-  /* ================= КНОПКА ВСТАВКИ ================= */
+  /* ================= РљРќРћРџРљРђ Р’РЎРўРђР’РљР ================= */
   const handleInsertFile = () => {
+    if (!canEdit) return;
     if (!fileUrl.trim()) {
       alert('Введите ссылку на файл');
       return;
@@ -518,7 +553,7 @@ export default function FileBlockView({ node, updateAttributes }) {
     addFile(fileUrl, fileName, '', 'file', '');
   };
 
-  /* ================= ОТКРЫТЬ ПРЕВЬЮ ================= */
+  /* ================= РћРўРљР Р«РўР¬ РџР Р•Р’Р¬Р® ================= */
   const openPreview = () => {
     if (!displayUrl) return;
 
@@ -540,7 +575,7 @@ export default function FileBlockView({ node, updateAttributes }) {
     }
   };
 
-  /* ================= ПРЕВЬЮ ИЗОБРАЖЕНИЯ ================= */
+  /* ================= РџР Р•Р’Р¬Р® РР—РћР‘Р РђР–Р•РќРРЇ ================= */
   const handleImageClick = (e) => {
     e.stopPropagation();
     window.dispatchEvent(
@@ -562,7 +597,7 @@ export default function FileBlockView({ node, updateAttributes }) {
     };
   }, [url]);
 
-  /* ================= ГЕНЕРАЦИЯ ПРЕВЬЮ ================= */
+  /* ================= Р“Р•РќР•Р РђР¦РРЇ РџР Р•Р’Р¬Р® ================= */
   const renderPreview = () => {
     if (!displayUrl) return null;
 
@@ -646,6 +681,7 @@ export default function FileBlockView({ node, updateAttributes }) {
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
   const startResize = (e, side) => {
+    if (!canEdit) return;
     e.preventDefault();
     e.stopPropagation();
 
@@ -687,10 +723,13 @@ export default function FileBlockView({ node, updateAttributes }) {
     document.addEventListener('mouseup', up);
   };
 
+  if (!canEdit && !hasFile) return null;
+
   return (
     <>
       <NodeViewWrapper
         className="file-block-wrapper block-resizable"
+        onMouseDown={safeSetNodeSelectionHere}
         style={{
           width,
           ...alignMargins,
@@ -701,12 +740,16 @@ export default function FileBlockView({ node, updateAttributes }) {
         }}
       >
         {/* RESIZE HANDLES */}
-        <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
-        <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
-        {url && (
+        {canEdit && (
           <>
-            <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
-            <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+            <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
+            <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
+            {url && (
+              <>
+                <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
+                <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+              </>
+            )}
           </>
         )}
 
@@ -714,13 +757,13 @@ export default function FileBlockView({ node, updateAttributes }) {
         {!hasFile && (
           <div
             className="file-empty"
-            onClick={openAtEvent}
-            onDragOver={(e) => {
+            onClick={canEdit ? openAtEvent : undefined}
+            onDragOver={canEdit ? (e) => {
               e.preventDefault();
               e.currentTarget.classList.add('drag-over');
-            }}
-            onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')}
-            onDrop={handleDrop}
+            } : undefined}
+            onDragLeave={canEdit ? (e) => e.currentTarget.classList.remove('drag-over') : undefined}
+            onDrop={canEdit ? handleDrop : undefined}
           >
             + Добавить файл
           </div>
@@ -764,6 +807,7 @@ export default function FileBlockView({ node, updateAttributes }) {
                 </button>
                 <button
                   className="file-compact-btn"
+                  style={{ display: canEdit ? undefined : 'none' }}
                   onClick={openAtEvent}
                   title="Настройки"
                 >
@@ -819,6 +863,7 @@ export default function FileBlockView({ node, updateAttributes }) {
 
                 <button
                   className="file-action-btn more-btn"
+                  style={{ display: canEdit ? undefined : 'none' }}
                   onClick={openAtEvent}
                   title="Настройки"
                 >
@@ -848,14 +893,13 @@ export default function FileBlockView({ node, updateAttributes }) {
       </NodeViewWrapper>
 
       {/* MODAL ДЛЯ ДОБАВЛЕНИЯ ФАЙЛА */}
-      {open && (
+      {canEdit && open && renderModalPortal(
         <div
           ref={modalRef}
           className="image-modal"
           style={{
             top: modalPos.y,
             left: modalPos.x,
-            width: '500px',
           }}
         >
           <div className="image-modal-header" onMouseDown={startDragModal}>
@@ -890,7 +934,7 @@ export default function FileBlockView({ node, updateAttributes }) {
                     padding: '24px',
                   }}
                 >
-                  {/* <div style={{ fontSize: '48px', marginBottom: '12px' }}>📁</div> */}
+                  {/* <div style={{ fontSize: '48px', marginBottom: '12px' }}>рџ“Ѓ</div> */}
                   {/* <div style={{ fontSize: '16px', fontWeight: '500' }}>
                     Кликните для выбора файла
                   </div> */}
@@ -946,11 +990,11 @@ export default function FileBlockView({ node, updateAttributes }) {
                     <br />
                     <strong>Примеры:</strong>
                     <br />
-                    • https://example.com/document.pdf
+                    вЂў https://example.com/document.pdf
                     <br />
-                    • https://example.com/data.xlsx
+                    вЂў https://example.com/data.xlsx
                     <br />
-                    • https://example.com/image.jpg
+                    вЂў https://example.com/image.jpg
                   </div> */}
                 </div>
 
@@ -997,7 +1041,7 @@ export default function FileBlockView({ node, updateAttributes }) {
       )}
 
       {/* Notes in file block are disabled */}
-      {previewOpen && selectedFile && (
+      {previewOpen && selectedFile && renderModalPortal(
         <div className="file-preview-modal" onClick={() => setPreviewOpen(false)}>
           <div
             className="file-preview-content"
@@ -1061,6 +1105,3 @@ export default function FileBlockView({ node, updateAttributes }) {
     </>
   );
 }
-
-
-

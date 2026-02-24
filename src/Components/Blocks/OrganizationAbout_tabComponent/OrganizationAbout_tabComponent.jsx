@@ -11,7 +11,7 @@ import {
   GET_ORGANIZATION,
   getCookie,
   ORGANIZATION_CREATED_SUBSCRIPTION,
-  server,
+  getMediaUrl,
   UPDATE_AIRLINE,
   UPDATE_ORGANIZATION,
 } from "../../../../graphQL_requests.js";
@@ -272,8 +272,7 @@ function OrganizationAbout_tabComponent({ id, accessMenu, ...props }) {
                     src={
                       newImage
                         ? URL.createObjectURL(newImage)
-                        : organization.images && organization.images.length > 0 ? `${server}${organization?.images?.[0]}`
-                        : "/no-avatar.png"
+                        : getMediaUrl(organization?.images?.[0]) ?? "/no-avatar.png"
                     }
                     alt={organization.name}
                   />

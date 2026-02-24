@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import classes from "./InfoTableDataPatchNotes.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 
 function InfoTableDataPatchNotes({
   children,
@@ -48,7 +48,7 @@ function InfoTableDataPatchNotes({
             <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
               <div className={classes.InfoTable_data_elem_userInfo}>
                 {/* <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={`${server}${item.images[0]}`} alt="" />
+                                    <img src={getMediaUrl(item.images[0])} alt="" />
                                     </div> */}
                 <div
                   className={`${classes.InfoTable_data_elem_title} ${classes.InfoTable_data__fw600}`}

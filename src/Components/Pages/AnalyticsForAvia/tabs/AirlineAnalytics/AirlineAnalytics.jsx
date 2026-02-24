@@ -14,7 +14,7 @@ import {
   GET_AIRLINES_RELAY,
   GET_ANALYTICS_AIRLINE_REQUESTS,
   getCookie,
-  server,
+  getMediaUrl,
 } from "../../../../../../graphQL_requests";
 import { useQuery } from "@apollo/client";
 import MUITextField from "../../../../Blocks/MUITextField/MUITextField";
@@ -202,7 +202,7 @@ function AirlineAnalytics({ user, height }) {
                   }
                 >
                   <div className={classes.circle}>
-                    <img src={`${server}${airline.images[0]}`} alt="" />
+                    <img src={getMediaUrl(airline.images[0])} alt="" />
                   </div>
                   <p>{airline.name}</p>
                 </li>
@@ -223,11 +223,11 @@ function AirlineAnalytics({ user, height }) {
             <h2 className={classes.title}>
               <div className={classes.circle}>
                 <img
-                  src={`${server}${
+                  src={getMediaUrl(
                     selectedAirline
-                      ? selectedAirline?.images?.[0] || ""
-                      : airlines[0]?.images?.[0] || ""
-                  }`}
+                      ? selectedAirline?.images?.[0]
+                      : airlines[0]?.images?.[0]
+                  )}
                   alt=""
                 />
               </div>

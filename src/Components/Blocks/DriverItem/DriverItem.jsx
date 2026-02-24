@@ -1,6 +1,6 @@
 import classes from "./DriverItem.module.css";
 
-import { convertToDate, server } from "../../../../graphQL_requests.js";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests.js";
 import CarIcon from "../../../shared/icons/CarIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 
@@ -34,7 +34,7 @@ function DriverItem({
         <img
           src={
             props?.documents?.driverPhoto.length > 0
-              ? `${server}${props?.documents?.driverPhoto[0]}`
+              ? getMediaUrl(props?.documents?.driverPhoto[0])
               : "/no-avatar.png"
           }
           alt=""

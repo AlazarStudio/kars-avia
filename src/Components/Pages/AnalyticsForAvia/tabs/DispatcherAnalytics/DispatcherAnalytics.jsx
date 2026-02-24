@@ -15,7 +15,7 @@ import {
   GET_ANALYTICS_USERS,
   GET_DISPATCHERS,
   getCookie,
-  server,
+  getMediaUrl,
 } from "../../../../../../graphQL_requests";
 import { useQuery } from "@apollo/client";
 import MUITextField from "../../../../Blocks/MUITextField/MUITextField";
@@ -213,7 +213,7 @@ function DispatcherAnalytics() {
                 }
               >
                 <div className={classes.circle}>
-                  <img src={`${airline.images[0] ? `${server}${airline.images[0]}` : '/no-avatar.png'}`} alt="" />
+                  <img src={getMediaUrl(airline.images[0]) ?? '/no-avatar.png'} alt="" />
                 </div>
                 <p>{airline.name}</p>
               </li>

@@ -13,7 +13,7 @@ import {
   NEW_UNREAD_MESSAGE_SUBSCRIPTION,
   NOTIFICATIONS_SUBSCRIPTION,
   REQUEST_MESSAGES_SUBSCRIPTION,
-  server,
+  getMediaUrl,
   UNREAD_MESSAGES_COUNT,
 } from "../../../../graphQL_requests";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
@@ -392,11 +392,7 @@ function Header({ children }) {
               ref={dropdownRef}
             >
               <img
-                src={
-                  userData?.images?.[0]
-                    ? `${server}${userData?.images[0]}`
-                    : "/no-avatar.png"
-                }
+                src={getMediaUrl(userData?.images?.[0]) ?? "/no-avatar.png"}
                 alt="Профиль пользователя"
                 style={{ userSelect: "none" }}
               />
@@ -410,11 +406,7 @@ function Header({ children }) {
                 >
                   <div className={classes.dropdown_info}>
                     <img
-                      src={
-                        userData?.images?.[0]
-                          ? `${server}${userData?.images[0]}`
-                          : "/no-avatar.png"
-                      }
+                      src={getMediaUrl(userData?.images?.[0]) ?? "/no-avatar.png"}
                       alt=""
                       style={{ userSelect: "none" }}
                     />

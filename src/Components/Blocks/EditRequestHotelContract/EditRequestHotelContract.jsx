@@ -10,8 +10,8 @@ import {
   GET_HOTEL_CONTRACT,
   GET_ORGANIZATION_CONTRACT,
   getCookie,
+  getMediaUrl,
   normalize,
-  server,
   UPDATE_HOTEL_CONTRACT,
   UPDATE_ORGANIZATION_CONTRACT,
 } from "../../../../graphQL_requests.js";
@@ -990,7 +990,7 @@ function EditRequestHotelContract({
                   {files?.map((i, index) => (
                     <a
                       key={index}
-                      href={`${server}${i}`}
+                      href={getMediaUrl(i)}
                       target="_blank"
                       className={classes.downloadsButton}
                       rel="noopener noreferrer"

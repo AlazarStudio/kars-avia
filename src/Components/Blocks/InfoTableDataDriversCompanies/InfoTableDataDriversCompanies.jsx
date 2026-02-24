@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import classes from "./InfoTableDataDriversCompanies.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 
 function InfoTableDataDriversCompanies({
   children,
@@ -62,7 +62,7 @@ function InfoTableDataDriversCompanies({
             <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
               <div className={classes.InfoTable_data_elem_userInfo}>
                 <div className={classes.InfoTable_data_elem_avatar}>
-                  {(item?.images && item.images.length > 0) ? <img src={`${server}${item?.images[0]}`} alt="" /> : <img src="/no-avatar.png"/>}
+                  {(item?.images && item.images.length > 0) ? <img src={getMediaUrl(item?.images[0])} alt="" /> : <img src="/no-avatar.png"/>}
                 </div>
                 <div className={classes.InfoTable_data_elem_title}>
                   {item.name}

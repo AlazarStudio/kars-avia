@@ -2,7 +2,7 @@ import React from "react";
 import classes from "./InfoTableDataReports.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 
 function InfoTableDataReports({
@@ -60,7 +60,7 @@ function InfoTableDataReports({
                   <div className={classes.InfoTable_data_elem_userInfo}>
                     <div className={classes.InfoTable_data_elem_avatar}>
                       <img
-                        src={image ? `${server}${image}` : "/no-avatar.png"}
+                        src={getMediaUrl(image) ?? "/no-avatar.png"}
                         alt=""
                         style={{ borderRadius: "50%", userSelect: "none" }}
                       />
@@ -87,7 +87,7 @@ function InfoTableDataReports({
                   </div>
                 </div>
                 <div className={classes.InfoTable_data_elem_download}>
-                  <a href={`${server}${item.url}`} target="_blank">
+                  <a href={getMediaUrl(item.url)} target="_blank">
                     {" "}
                     <img src="/download.png" alt="" />{" "}
                   </a>

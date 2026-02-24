@@ -158,6 +158,7 @@ export default function TableWrapperView({ editor, node, getPos }) {
   const tableRef = useRef(null)
   const resizeObserverRef = useRef(null)
   const [controls, setControls] = useState(null)
+  const isEditable = Boolean(editor?.isEditable)
   const textAlign = node?.attrs?.textAlign || 'left'
   const alignMargins =
     textAlign === 'center'
@@ -461,7 +462,7 @@ export default function TableWrapperView({ editor, node, getPos }) {
         </div>
       </NodeViewWrapper>
 
-      {controls && (
+      {isEditable && controls && (
         <>
           <button
             className="table-plus vertical"

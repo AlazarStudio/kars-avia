@@ -5,18 +5,65 @@
   position: relative;
 }
 
-.gallery-layout-controls {
+.gallery-settings-trigger {
   position: absolute;
   top: -8px;
   right: 0;
-  z-index: 8;
+  z-index: 9;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.98);
+  color: #374151;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.gallery-block:hover .gallery-settings-trigger,
+.gallery-settings-trigger.is-open,
+.gallery-settings-trigger:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.gallery-settings-trigger:hover {
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+.gallery-settings-trigger.is-open {
+  border-color: #9ca3af;
+  background: #f3f4f6;
+}
+
+.gallery-layout-controls {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 6px;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.97);
+  background: rgba(255, 255, 255, 0.98);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   opacity: 0;
   pointer-events: none;
@@ -24,7 +71,7 @@
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.gallery-block:hover .gallery-layout-controls {
+.gallery-layout-controls.is-open {
   opacity: 1;
   pointer-events: auto;
   transform: translateY(0);
@@ -94,6 +141,7 @@
 
 .gallery-item {
   position: relative;
+  isolation: isolate;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   overflow: hidden;
@@ -186,8 +234,9 @@
 
 .gallery-remove {
   position: absolute;
-  top: 6px;
+  top: 30px;
   right: 6px;
+  z-index: 12;
   width: 22px;
   height: 22px;
   border-radius: 999px;
@@ -200,8 +249,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  pointer-events: auto;
   opacity: 0;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  transition: opacity 0.15s ease, background 0.15s ease, top 0.15s ease;
 }
 
 .gallery-item:hover .gallery-remove {

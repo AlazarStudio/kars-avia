@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./ExistRequestProfile.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { getCookie, server, UPDATE_USER } from "../../../../graphQL_requests";
+import { getCookie, getMediaUrl, UPDATE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
@@ -218,7 +218,7 @@ function ExistRequestProfile({
                   <img
                     src={
                       showIMG?.length !== 0
-                        ? `${server}${showIMG}`
+                        ? getMediaUrl(showIMG)
                         : "/no-avatar.png"
                     }
                     alt=""

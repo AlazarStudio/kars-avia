@@ -15,7 +15,7 @@ import {
   GET_HOTELS,
   GET_HOTELS_RELAY,
   getCookie,
-  server,
+  getMediaUrl,
 } from "../../../../../../graphQL_requests";
 import { useQuery } from "@apollo/client";
 import MUITextField from "../../../../Blocks/MUITextField/MUITextField";
@@ -201,7 +201,7 @@ function HotelAnalytics() {
                 }
               >
                 <div className={classes.circle}>
-                  <img src={`${server}${airline.images[0]}`} alt="" />
+                  <img src={getMediaUrl(airline.images[0])} alt="" />
                 </div>
                 <p>{airline.name}</p>
               </li>
@@ -222,7 +222,7 @@ function HotelAnalytics() {
               <div className={classes.circle}>
                 {/* {airlines[0]?.images.length !== 0 && (
                     
-                <img src={`${server}${airlines[0]?.images[0]}`} alt="" />
+                <img src={getMediaUrl(airlines[0]?.images[0])} alt="" />
                 )} */}
               </div>
               <p>{selectedAirline.name || airlines[0]?.name}</p>

@@ -1,4 +1,5 @@
 // src/extensions/blockRegistry.js
+import { Selection } from '@tiptap/pm/state'
 
 // Удаляем "/" и выполняем действие
 const deleteSlashAndExecute = (editor, range, action) => {
@@ -11,6 +12,12 @@ const deleteSlashAndExecute = (editor, range, action) => {
   const from = Math.max(0, Math.min(range.from, docSize))
   const to = Math.max(from, Math.min(range.to, docSize))
   const tr = state.tr.deleteRange(from, to)
+  try {
+    const anchor = Math.max(0, Math.min(from, tr.doc.content.size))
+    tr.setSelection(Selection.near(tr.doc.resolve(anchor), 1))
+  } catch {
+    // ignore selection fallback errors (e.g. uncommon node boundaries)
+  }
   view.dispatch(tr)
   action(editor)
 }

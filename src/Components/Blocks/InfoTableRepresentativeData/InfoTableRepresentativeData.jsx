@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import classes from './InfoTableRepresentativeData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 
 function InfoTableRepresentativeData({ children, requests, user, paginationHeight, pageInfo, ...props }) {
     // Ref для контейнера списка
@@ -54,7 +54,7 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{convertToDate(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w18}`}>
                             <div className={classes.InfoTable_data_elem_img}>
-                                <img src={`${server}${item.airline?.images[0]}`} alt="" />
+                                <img src={getMediaUrl(item.airline?.images[0])} alt="" />
                             </div>
                             {item.airline?.name}
                         </div>

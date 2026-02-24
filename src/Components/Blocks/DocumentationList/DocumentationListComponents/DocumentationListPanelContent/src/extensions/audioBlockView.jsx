@@ -1,5 +1,6 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './audioBlock.css'
 import './imageBlockModal.css'
 import './fileEmpty.css'
@@ -66,13 +67,13 @@ const IconMore = ({ className }) => (
   </svg>
 )
 
-export default function AudioBlockView({ node, updateAttributes }) {
+export default function AudioBlockView({ editor, node, updateAttributes }) {
   const { fileId, src, volume, loop } = node.attrs
 
   const docUpload = useDocumentationUpload()
   const { uploadFile: docUploadFile, getMediaUrl } = docUpload || {}
+  const canEdit = editor?.isEditable !== false
   const width = typeof node.attrs.width === 'number' ? node.attrs.width : 520
-  const height = typeof node.attrs.height === 'number' ? node.attrs.height : null
   const textAlign = node.attrs.textAlign || 'left'
 
   const alignMargins =
@@ -88,6 +89,11 @@ export default function AudioBlockView({ node, updateAttributes }) {
   const modalSourceRef = useRef(`audio-block-${Math.random().toString(36).slice(2)}`)
   const [modalPos, setModalPos] = useState({ x: 0, y: 0 })
   const dragOffset = useRef({ x: 0, y: 0 })
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null
+  const renderModalPortal = (node) => {
+    if (!node) return null
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node
+  }
 
   const [open, setOpen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
@@ -207,6 +213,7 @@ export default function AudioBlockView({ node, updateAttributes }) {
   /* ================= OPEN MODAL AT CURSOR ================= */
 
   const openAtEvent = e => {
+    if (!canEdit) return
     e.stopPropagation()
     // Позиция рядом с курсором мыши
     setModalPos({
@@ -310,36 +317,28 @@ export default function AudioBlockView({ node, updateAttributes }) {
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
   const startResize = (e, side) => {
+    if (!canEdit) return
     e.preventDefault()
     e.stopPropagation()
 
     const startX = e.clientX
-    const startY = e.clientY
 
     const wrapperEl = e.currentTarget?.closest?.('[data-node-view-wrapper]')
     const proseMirrorEl = wrapperEl?.closest?.('.ProseMirror') || wrapperEl?.parentElement
     const maxWidth = Math.max(AUDIO_MIN_WIDTH, Math.floor(proseMirrorEl?.clientWidth || 700))
 
-    const startRect = wrapperEl?.getBoundingClientRect?.()
     const startWidth = width
-    const startHeight = typeof height === 'number' ? height : Math.round(startRect?.height || 80)
 
     const move = ev => {
       let deltaX = 0
-      let deltaY = 0
 
       if (side === 'right') deltaX = ev.clientX - startX
       if (side === 'left') deltaX = startX - ev.clientX
-      if (side === 'bottom') deltaY = ev.clientY - startY
-      if (side === 'top') deltaY = startY - ev.clientY
 
       const nextWidth = clamp(startWidth + deltaX, AUDIO_MIN_WIDTH, maxWidth)
-      const nextHeight = clamp(startHeight + deltaY, 60, 400)
-
-      const nextAttrs = {}
-      if (side === 'left' || side === 'right') nextAttrs.width = Math.round(nextWidth)
-      if (side === 'top' || side === 'bottom') nextAttrs.height = Math.round(nextHeight)
-      updateAttributes(nextAttrs)
+      if (side === 'left' || side === 'right') {
+        updateAttributes({ width: Math.round(nextWidth) })
+      }
     }
 
     const up = () => {
@@ -353,22 +352,21 @@ export default function AudioBlockView({ node, updateAttributes }) {
 
   /* ================= RENDER ================= */
 
+  if (!canEdit && !hasAudio) return null
+
   return (
     <NodeViewWrapper
       className="audio-block-wrapper block-resizable"
       style={{
         width,
         ...alignMargins,
-        minHeight: typeof height === 'number' ? height : undefined,
       }}
     >
       {/* RESIZE HANDLES */}
-      <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
-      <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
-      {hasAudio && (
+      {canEdit && (
         <>
-          <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
-          <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+          <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
+          <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
         </>
       )}
 
@@ -380,7 +378,7 @@ export default function AudioBlockView({ node, updateAttributes }) {
 
 
 
-        <div className="file-empty" onClick={openAtEvent}>
+        <div className="file-empty" onClick={canEdit ? openAtEvent : undefined}>
           + Добавить аудио
         </div>
       )}
@@ -401,7 +399,8 @@ export default function AudioBlockView({ node, updateAttributes }) {
 
           <button
             className={`audio-loop-btn ${loop ? 'active' : ''}`}
-            onClick={() => updateAttributes({ loop: !loop })}
+            onClick={canEdit ? () => updateAttributes({ loop: !loop }) : undefined}
+            disabled={!canEdit}
             title={loop ? 'Повтор выключен' : 'Повтор включен'}
           >
             <IconLoop className="audio-btn-icon" />
@@ -438,9 +437,8 @@ export default function AudioBlockView({ node, updateAttributes }) {
                   max="1"
                   step="0.01"
                   value={volume}
-                  onChange={e =>
-                    updateAttributes({ volume: +e.target.value })
-                  }
+                  onChange={canEdit ? e => updateAttributes({ volume: +e.target.value }) : undefined}
+                  disabled={!canEdit}
                 />
                 <div className="audio-volume-value">
                   {Math.round(volume * 100)}%
@@ -450,13 +448,15 @@ export default function AudioBlockView({ node, updateAttributes }) {
           </div>
           
           {/* Кнопка для открытия меню */}
-          <button
-            className="audio-more-btn"
-            onClick={openAtEvent}
-            title="Настройки аудио"
-          >
-            <IconMore className="audio-btn-icon" />
-          </button>
+          {canEdit && (
+            <button
+              className="audio-more-btn"
+              onClick={openAtEvent}
+              title="Audio settings"
+            >
+              <IconMore className="audio-btn-icon" />
+            </button>
+          )}
         </div>
       )}
 
@@ -482,7 +482,7 @@ export default function AudioBlockView({ node, updateAttributes }) {
           <div className="audio-modal-content">
             <div className="file-input-wrapper">
               <label className="file-input-label">
-                <div className="file-input-icon">🎵</div>
+                <div className="file-input-icon">рџЋµ</div>
                 <div className="file-input-text">
                   Нажмите для выбора файла или <strong>перетащите</strong>
                 </div>
@@ -497,13 +497,18 @@ export default function AudioBlockView({ node, updateAttributes }) {
                       try {
                         if (docUploadFile) {
                           const path = await docUploadFile(file)
-                          if (path) updateAttributes({ src: path, fileId: null })
+                          if (path) {
+                            updateAttributes({ src: path, fileId: null })
+                          } else {
+                            const saved = await saveFile(file)
+                            updateAttributes({ fileId: saved.id, src: null })
+                          }
                         } else {
                           const saved = await saveFile(file)
                           updateAttributes({ fileId: saved.id, src: null })
                         }
                       } catch {
-                        // ignore
+                        updateAttributes({ src: URL.createObjectURL(file), fileId: null })
                       } finally {
                         setOpen(false)
                       }
@@ -549,7 +554,7 @@ export default function AudioBlockView({ node, updateAttributes }) {
             className="audio-modal-close"
             onClick={() => setOpen(false)}
           >
-            ✕
+            вњ•
           </button>
         </div>
       )} */}
@@ -559,7 +564,7 @@ export default function AudioBlockView({ node, updateAttributes }) {
 
 
 
-      {open && (
+      {canEdit && open && renderModalPortal(
         <div
           ref={modalRef}
           className="image-modal"
@@ -656,4 +661,3 @@ export default function AudioBlockView({ node, updateAttributes }) {
     </NodeViewWrapper>
   )
 }
-

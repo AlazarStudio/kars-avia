@@ -10,7 +10,7 @@ import {
   MARK_ALL_TRANSFER_MESSAGES_AS_READ,
   SEND_TRANSFER_MESSAGE,
   TRANSFER_MESSAGE_SENT_SUBSCRIPTION,
-  server,
+  getMediaUrl,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
@@ -555,7 +555,7 @@ function TransferMessage({
                             <div className={classes.requestData_message_avatar}>
                               {sender?.images?.[0] ? (
                                 <img
-                                  src={`${server}${sender.images[0]}`}
+                                  src={getMediaUrl(sender.images[0])}
                                   alt={sender?.name}
                                   className={classes.requestData_message_avatarImg}
                                 />

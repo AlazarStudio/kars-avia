@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import classes from './InfoTableDataRepresentativeAirlines.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 
 function InfoTableDataRepresentativeAirlines({ children, toggleRequestSidebar, requests, pageInfo, ...props }) {
     const handleObject = (item, index) => {
@@ -41,7 +41,7 @@ function InfoTableDataRepresentativeAirlines({ children, toggleRequestSidebar, r
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={`${server}${item.images[0]}`} alt="" />
+                                    <img src={getMediaUrl(item.images[0])} alt="" />
                                 </div>
                                 <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>

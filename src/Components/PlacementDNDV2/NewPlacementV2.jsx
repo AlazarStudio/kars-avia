@@ -32,7 +32,7 @@ import {
   convertToDate,
   generateTimestampId,
   getCookie,
-  server,
+  getMediaUrl,
   UPDATE_HOTEL_BRON,
   UPDATE_REQUEST_RELAY,
 } from "../../../graphQL_requests";
@@ -1400,7 +1400,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
                         }}
                       >
                         <img
-                          src={`${server}${request.airline.images[0]}`}
+                          src={getMediaUrl(request.airline.images[0])}
                           alt=""
                           style={{
                             height: "25px",

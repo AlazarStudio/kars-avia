@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 import classes from "./HotelAboutRoomBlock.module.css";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -81,7 +81,7 @@ function HotelAboutRoomBlock({
         <div className={classes.roomImages_wrapper}>
           <img
             src={
-              props.images[0] ? `${server}${props.images[0]}` : "/no-image.png"
+              getMediaUrl(props.images[0]) ?? "/no-image.png"
             }
             alt="Room"
             className={classes.roomImage}
@@ -157,12 +157,12 @@ function HotelAboutRoomBlock({
                   props.images.map((img, i) => (
                     <SwiperSlide key={i}>
                       <img
-                        src={`${server}${img}`}
+                        src={getMediaUrl(img)}
                         alt={`slide ${i}`}
                         className={classes.modalImageAbs}
                       />
                       <img
-                        src={`${server}${img}`}
+                        src={getMediaUrl(img)}
                         alt={`slide ${i}`}
                         className={classes.modalImage}
                       />

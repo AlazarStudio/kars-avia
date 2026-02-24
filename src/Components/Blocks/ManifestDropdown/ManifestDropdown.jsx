@@ -5,10 +5,10 @@ import EditIcon from "@mui/icons-material/Edit";
 import DownloadIcon from "@mui/icons-material/Download";
 import { roles } from "../../../roles";
 import Button from "../../Standart/Button/Button";
+import { getMediaUrl } from "../../../../graphQL_requests";
 
 export default function ManifestDropdown({
   request,
-  server,
   handleFileChange,
   file,
   user,
@@ -96,7 +96,7 @@ export default function ManifestDropdown({
         )}
         {request?.files && request.files.length > 0 && (
           <a
-            href={request.files ? `${server}${request.files[0]}` : ""}
+            href={getMediaUrl(request.files?.[0]) ?? ""}
             target="_blank"
             className={classes.downloadsButton}
             rel="noopener noreferrer"

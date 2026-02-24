@@ -92,7 +92,7 @@
 /* ===== COLOR PALETTE MODAL ===== */
 .color-palette-modal {
   position: fixed !important;
-  z-index: 9 !important;
+  z-index: 2147483000 !important;
   background: white;
   border: 2px solid rgba(0, 0, 0, 0.15);
   border-radius: 12px;
@@ -291,7 +291,7 @@
 /* ===== EMOJI PICKER MODAL ===== */
 .emoji-picker-modal {
   position: fixed !important;
-  z-index: 9 !important;
+  z-index: 2147483000 !important;
   width: 420px !important;
   height: 380px !important;
   background: white !important;

@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
+const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
+const FONT_SIZE_MODAL_SOURCE = 'font-size-select'
 
 const fontSizeOptions = [
   '8','9','10','11','12','14','16','18','20','22','24','26','28','36','48','72'
@@ -20,6 +23,23 @@ export default function FontSizeSelect({ editor, selectedFontSize, setSelectedFo
   const modalRef = useRef(null)
   const inputRef = useRef(null)
   const triggerRef = useRef(null)
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null
+  const renderModalPortal = (node) => {
+    if (!node) return null
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node
+  }
+
+  const announceModalOpen = () => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent(SINGLE_MODAL_EVENT, {
+          detail: { source: FONT_SIZE_MODAL_SOURCE },
+        })
+      )
+    } catch {
+      // ignore
+    }
+  }
 
   /* ================= APPLY ================= */
 
@@ -99,8 +119,11 @@ const applyFontSize = (value) => {
       x: e.clientX,
       y: e.clientY
     })
-    
-    setIsOpen(!isOpen)
+
+    if (!isOpen) {
+      announceModalOpen()
+    }
+    setIsOpen(prev => !prev)
   }
 
   /* ================= DRAG AND DROP ================= */
@@ -172,7 +195,10 @@ const applyFontSize = (value) => {
 
   useEffect(() => {
     const onClick = (e) => {
-      if (selectRef.current && !selectRef.current.contains(e.target)) {
+      const clickedInsideSelect = selectRef.current && selectRef.current.contains(e.target)
+      const clickedInsideModal = modalRef.current && modalRef.current.contains(e.target)
+
+      if (!clickedInsideSelect && !clickedInsideModal) {
         setIsOpen(false)
         commitInput()
       }
@@ -186,6 +212,20 @@ const applyFontSize = (value) => {
   useEffect(() => {
     setInputValue(selectedFontSize || '16')
   }, [selectedFontSize])
+
+  useEffect(() => {
+    const onExternalModalOpen = (event) => {
+      if (event?.detail?.source === FONT_SIZE_MODAL_SOURCE) return
+      if (!isOpen) return
+      setIsOpen(false)
+      commitInput()
+    }
+
+    window.addEventListener(SINGLE_MODAL_EVENT, onExternalModalOpen)
+    return () => {
+      window.removeEventListener(SINGLE_MODAL_EVENT, onExternalModalOpen)
+    }
+  }, [isOpen, inputValue, selectedFontSize])
 
   /* ================= DRAG EVENT LISTENERS ================= */
 
@@ -253,7 +293,7 @@ const applyFontSize = (value) => {
       </div>
 
       {/* ===== DROPDOWN MODAL ===== */}
-      {isOpen && (
+      {isOpen && renderModalPortal(
         
           <div 
             ref={modalRef}
@@ -263,7 +303,7 @@ const applyFontSize = (value) => {
               left: `${position.x}px`,
               top: `${position.y}px`,
               cursor: dragging ? 'grabbing' : 'default',
-              zIndex: 9,
+              zIndex: 2147483000,
               animation: 'fadeIn 0.2s ease-out'
             }}
             onClick={(e) => e.stopPropagation()}

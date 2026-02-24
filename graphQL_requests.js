@@ -21,6 +21,12 @@ export const getCookie = (name) => {
   return token
 };
 
+export const getMediaUrl = (path) => {
+  if (!path) return null;
+  const token = getCookie("token");
+  return `${server}${path}?token=${token}`;
+};
+
 export const decodeJWT = (token) => {
   const tokenParts = token.split('.');
 

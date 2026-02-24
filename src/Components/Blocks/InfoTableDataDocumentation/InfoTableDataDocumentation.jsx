@@ -6,7 +6,7 @@ import { useQuery } from "@apollo/client";
 import {
   GET_DOCUMENTATION,
   GET_DOCUMENTATION_TREE,
-  server,
+  getMediaUrl,
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import { roles } from "../../../roles";
@@ -28,10 +28,10 @@ function DocNode({ node, openModal }) {
           {node.images.map((i, index) => (
             <img
               key={index}
-              src={`${server}${i}`}
+              src={getMediaUrl(i)}
               alt=""
               loading="lazy"
-              onClick={() => openModal(`${server}${i}`)}
+              onClick={() => openModal(getMediaUrl(i))}
             />
           ))}
         </div>
@@ -255,10 +255,10 @@ function InfoTableDataDocumentation({
                 {data.documentationTree.images.map((i, index) => (
                   <img
                     key={index}
-                    src={`${server}${i}`}
+                    src={getMediaUrl(i)}
                     alt=""
                     loading="lazy"
-                    onClick={() => openModal(`${server}${i}`)}
+                    onClick={() => openModal(getMediaUrl(i))}
                   />
                 ))}
               </div>

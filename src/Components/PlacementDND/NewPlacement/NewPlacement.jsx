@@ -12,7 +12,7 @@ import DraggableRequest from "../DraggableRequest/DraggableRequest";
 import ConfirmBookingModal from "../ConfirmBookingModal/ConfirmBookingModal";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ExistRequestInHotel from "../../Blocks/ExistRequestInHotel/ExistRequestInHotel";
-import { convertToDate, decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_MIN, GET_HOTEL_ROOMS, GET_REQUESTS, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT, GET_RESERVE_REQUESTS, getCookie, REQUEST_CREATED_SUBSCRIPTION, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, server, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
+import { convertToDate, decodeJWT, generateTimestampId, GET_BRONS_HOTEL, GET_HOTEL, GET_HOTEL_MIN, GET_HOTEL_ROOMS, GET_REQUESTS, GET_RESERVE_REQUEST, GET_RESERVE_REQUEST_HOTELS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS, GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT, GET_RESERVE_REQUESTS, getCookie, getMediaUrl, REQUEST_CREATED_SUBSCRIPTION, REQUEST_RESERVE_CREATED_SUBSCRIPTION, REQUEST_RESERVE_UPDATED_SUBSCRIPTION, REQUEST_UPDATED_SUBSCRIPTION, UPDATE_HOTEL_BRON, UPDATE_REQUEST_RELAY } from "../../../../graphQL_requests";
 import { } from "date-fns";
 import Notification from "../../Notification/Notification";
 import AddNewPassengerPlacement from "../../Blocks/AddNewPassengerPlacement/AddNewPassengerPlacement";
@@ -1881,7 +1881,7 @@ const NewPlacement = ({ idHotelInfo, searchQuery, params, user }) => {
                                                 alignItems: 'center',
                                             }}>
                                                 <img 
-                                                    src={`${server}${request.airline.images[0]}`} 
+                                                    src={getMediaUrl(request.airline.images[0])} 
                                                     alt="" 
                                                     style={{ 
                                                         height: '25px',

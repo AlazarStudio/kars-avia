@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@apollo/client'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { editorExtensions } from './src/editorExtensions'
@@ -11,6 +11,7 @@ import AnchorHashOverlay from './src/components/AnchorHashOverlay'
 import ImageViewer from './src/ImageViewer'
 import { GET_ARTICLE, getCookie } from '../../../../../../graphQL_requests'
 import { saveDocLayout } from './docDraftStore'
+import { bringDocModalToFront, findDocModalRoot } from './src/utils/modalStacking'
 
 import './src/main.css'
 import './DocumentListTiptapPanelContent.css'
@@ -38,6 +39,7 @@ const DEFAULT_ARTICLE_WIDTH_MODE = 'preset'
 const DEFAULT_ARTICLE_WIDTH_PRESET = 'level4'
 const DEFAULT_ARTICLE_MANUAL_WIDTH = 1080
 const DEFAULT_ARTICLE_PADDING_MODE = 'shared'
+const EDITOR_CONTROLS_GUTTER_PX = 72
 
 const MIN_ARTICLE_CONTENT_SIZE = 120
 const MAX_ARTICLE_PADDING = 260
@@ -803,6 +805,9 @@ export default function DocumentListTiptapPanelContent({
   onForceSync,
   draftHydrationVersion = 0,
   canEdit = false,
+  headerLeadingControls = null,
+  headerTrailingControls = null,
+  emptyStateTopRightControls = null,
 }) {
   const [viewer, setViewer] = useState(null)
   const [isAnchorModeEnabled, setIsAnchorModeEnabled] = useState(false)
@@ -815,6 +820,9 @@ export default function DocumentListTiptapPanelContent({
   const [articlePadding, setArticlePadding] = useState({ ...DEFAULT_ARTICLE_PADDING })
   const [overlayLeftShift, setOverlayLeftShift] = useState(72)
   const [isManualSaving, setIsManualSaving] = useState(false)
+  const [isEditorControlsGutterExpanded, setIsEditorControlsGutterExpanded] = useState(
+    () => Boolean(canEdit)
+  )
 
   const token = getCookie('token')
   const requestContext = useMemo(
@@ -837,7 +845,13 @@ export default function DocumentListTiptapPanelContent({
   const skipLayoutSaveRef = useRef(true)
   const autosaveTimerRef = useRef(null)
   const layoutSaveTimerRef = useRef(null)
+  const hydrationKeyRef = useRef('')
   const editorHoverScopeRef = useRef(null)
+  const headerRef = useRef(null)
+  const headerActionsRef = useRef(null)
+  const saveButtonRef = useRef(null)
+  const saveButtonMeasureRef = useRef(null)
+  const [isSaveButtonCompact, setIsSaveButtonCompact] = useState(false)
 
   const handleArticleWidthPresetChange = useCallback((nextPreset) => {
     if (!Object.prototype.hasOwnProperty.call(ARTICLE_WIDTH_PRESET_MAX, nextPreset)) return
@@ -987,6 +1001,21 @@ export default function DocumentListTiptapPanelContent({
   }, [])
 
   useEffect(() => {
+    const handlePointerDownCapture = (event) => {
+      const modalRoot = findDocModalRoot(event.target)
+      if (!modalRoot) return
+      bringDocModalToFront(modalRoot)
+    }
+
+    document.addEventListener('pointerdown', handlePointerDownCapture, true)
+    document.addEventListener('mousedown', handlePointerDownCapture, true)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDownCapture, true)
+      document.removeEventListener('mousedown', handlePointerDownCapture, true)
+    }
+  }, [])
+
+  useEffect(() => {
     return () => {
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current)
@@ -1014,10 +1043,24 @@ export default function DocumentListTiptapPanelContent({
   }, [canEdit, editor])
 
   useEffect(() => {
+    if (!canEdit) {
+      setIsEditorControlsGutterExpanded(false)
+      return
+    }
+    setIsEditorControlsGutterExpanded(true)
+  }, [canEdit])
+
+  useEffect(() => {
     if (!editor) return
     if (!activeDocId) return
     if (!token) return
 
+    const article = articleData?.article
+    const articleUpdatedAtKey =
+      article && article.id === activeDocId && article.updatedAt != null
+        ? String(article.updatedAt)
+        : ''
+    const hydrationKey = `${activeDocId}:${draftHydrationVersion}:${articleUpdatedAtKey}`
     skipAutosaveRef.current = true
     skipLayoutSaveRef.current = true
 
@@ -1027,13 +1070,41 @@ export default function DocumentListTiptapPanelContent({
       return
     }
 
-    const article = articleData?.article
     if (article && article.id !== activeDocId) {
       skipAutosaveRef.current = false
       skipLayoutSaveRef.current = false
       return
     }
+
+    if (hydrationKeyRef.current === hydrationKey) {
+      skipAutosaveRef.current = false
+      skipLayoutSaveRef.current = false
+      return
+    }
+
     const content = isDocJson(article?.content) ? article.content : EMPTY_DOC
+
+    // Prevent cursor jumps during local editing/autosave:
+    // backend updates `updatedAt`, which changes hydrationKey, but content often stays identical.
+    // Re-hydrating identical content with `setContent` resets the selection to the end.
+    const previousHydrationWasSameDoc = hydrationKeyRef.current.startsWith(`${activeDocId}:`)
+    if (previousHydrationWasSameDoc) {
+      try {
+        const currentEditorContent = editor.getJSON()
+        if (
+          isDocJson(currentEditorContent) &&
+          JSON.stringify(currentEditorContent) === JSON.stringify(content)
+        ) {
+          hydrationKeyRef.current = hydrationKey
+          skipAutosaveRef.current = false
+          skipLayoutSaveRef.current = false
+          return
+        }
+      } catch {
+        // ignore compare failures and fallback to regular hydration
+      }
+    }
+
     queueMicrotask(() => {
       editor.commands.setContent(content, false)
     })
@@ -1045,6 +1116,7 @@ export default function DocumentListTiptapPanelContent({
     setArticlePadding({ ...DEFAULT_ARTICLE_PADDING })
     setArticleWidthFrameVisible(false)
     setArticlePaddingFrameVisible(false)
+    hydrationKeyRef.current = hydrationKey
 
     skipAutosaveRef.current = false
     skipLayoutSaveRef.current = false
@@ -1091,10 +1163,98 @@ export default function DocumentListTiptapPanelContent({
   }, [activeDocId, onAnchorsChange])
 
   useEffect(() => {
+    if (!canEdit) {
+      setIsSaveButtonCompact(false)
+      return
+    }
+
+    let raf = 0
+    const scheduleMeasure = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const headerEl = headerRef.current
+        const actionsEl = headerActionsRef.current
+        const saveBtnEl = saveButtonRef.current
+        const saveMeasureEl = saveButtonMeasureRef.current
+
+        if (
+          !(headerEl instanceof HTMLElement) ||
+          !(actionsEl instanceof HTMLElement) ||
+          !(saveBtnEl instanceof HTMLElement) ||
+          !(saveMeasureEl instanceof HTMLElement)
+        ) {
+          setIsSaveButtonCompact(false)
+          return
+        }
+
+        const headerStyle = window.getComputedStyle(headerEl)
+        const gapValue = headerStyle.columnGap || headerStyle.gap || '0'
+        const gap = Number.parseFloat(gapValue) || 0
+        const paddingLeft = Number.parseFloat(headerStyle.paddingLeft) || 0
+        const paddingRight = Number.parseFloat(headerStyle.paddingRight) || 0
+        const contentWidth = Math.max(0, headerEl.clientWidth - paddingLeft - paddingRight)
+
+        const currentSaveWidth = saveBtnEl.getBoundingClientRect().width || 0
+        const fullSaveWidth = saveMeasureEl.getBoundingClientRect().width || currentSaveWidth
+
+        const children = Array.from(headerEl.children).filter(
+          child => child instanceof HTMLElement
+        )
+
+        let fixedWidth = 0
+        for (const child of children) {
+          const childWidth = child.getBoundingClientRect().width || 0
+          if (child.classList.contains('tiptap-panel-title')) continue
+          if (child === actionsEl) {
+            fixedWidth += Math.max(0, childWidth - currentSaveWidth + fullSaveWidth)
+            continue
+          }
+          fixedWidth += childWidth
+        }
+
+        const totalGapWidth = Math.max(0, children.length - 1) * gap
+        const shouldCompact = fixedWidth + totalGapWidth > contentWidth + 0.5
+        setIsSaveButtonCompact(prev => (prev === shouldCompact ? prev : shouldCompact))
+      })
+    }
+
+    scheduleMeasure()
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(scheduleMeasure) : null
+    if (resizeObserver) {
+      if (headerRef.current instanceof HTMLElement) resizeObserver.observe(headerRef.current)
+      if (headerActionsRef.current instanceof HTMLElement) resizeObserver.observe(headerActionsRef.current)
+      if (saveButtonRef.current instanceof HTMLElement) resizeObserver.observe(saveButtonRef.current)
+      if (saveButtonMeasureRef.current instanceof HTMLElement) {
+        resizeObserver.observe(saveButtonMeasureRef.current)
+      }
+    }
+
+    window.addEventListener('resize', scheduleMeasure)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', scheduleMeasure)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [
+    canEdit,
+    isManualSaving,
+    docTitle,
+    Boolean(headerLeadingControls),
+    Boolean(headerTrailingControls),
+  ])
+
+  useEffect(() => {
     const scopeEl = editorHoverScopeRef.current
     if (!(scopeEl instanceof HTMLElement)) return
     const panelContentEl = scopeEl.closest('.panel-content')
     if (!(panelContentEl instanceof HTMLElement)) return
+    const controlsGutter = canEdit && isEditorControlsGutterExpanded
+      ? EDITOR_CONTROLS_GUTTER_PX
+      : 0
 
     let raf = 0
     const syncShift = () => {
@@ -1104,7 +1264,7 @@ export default function DocumentListTiptapPanelContent({
         const panelRect = panelContentEl.getBoundingClientRect()
         if (!scopeRect || !panelRect) return
 
-        const nextShift = Math.max(0, Math.round(scopeRect.left - panelRect.left))
+        const nextShift = Math.max(0, Math.round(scopeRect.left - panelRect.left)) + controlsGutter
         setOverlayLeftShift(prev => (prev === nextShift ? prev : nextShift))
       })
     }
@@ -1127,7 +1287,13 @@ export default function DocumentListTiptapPanelContent({
         resizeObserver.disconnect()
       }
     }
-  }, [articleWidthMode, articleWidthPreset, articleManualWidth])
+  }, [
+    articleWidthMode,
+    articleWidthPreset,
+    articleManualWidth,
+    canEdit,
+    isEditorControlsGutterExpanded,
+  ])
 
   const articleMaxWidth =
     articleWidthMode === 'manual'
@@ -1135,19 +1301,36 @@ export default function DocumentListTiptapPanelContent({
       : articleWidthPreset === 'level4'
         ? null
         : ARTICLE_WIDTH_PRESET_MAX[articleWidthPreset]
+  const editorControlsGutterWidth = canEdit && isEditorControlsGutterExpanded
+    ? EDITOR_CONTROLS_GUTTER_PX
+    : 0
+  const shouldShowEditorSideControls = canEdit && isEditorControlsGutterExpanded
   const editorScopeStyle = {
     '--article-pad-top': `${articlePadding.top}px`,
     '--article-pad-right': `${articlePadding.right}px`,
     '--article-pad-bottom': `${articlePadding.bottom}px`,
     '--article-pad-left': `${articlePadding.left}px`,
-    '--overlay-left-shift': `${overlayLeftShift}px`,
-    marginLeft: 'auto',
-    marginRight: 'auto',
+    '--article-editor-extra-left': `${editorControlsGutterWidth}px`,
+    '--editor-controls-gutter': `${editorControlsGutterWidth}px`,
+    '--editor-controls-bg': canEdit ? '#f3f4f6' : 'transparent',
+    '--editor-scope-left-offset': `${Math.max(0, overlayLeftShift - editorControlsGutterWidth)}px`,
+    '--overlay-left-shift': `${shouldShowEditorSideControls ? overlayLeftShift : 0}px`,
+    marginLeft: 0,
+    marginRight: 0,
     ...(articleMaxWidth ? { maxWidth: `${articleMaxWidth}px` } : {}),
   }
 
   if (!activeDocId) {
-    return <div className="tiptap-panel tiptap-panel-empty">Выберите документ</div>
+    return (
+      <div className="tiptap-panel tiptap-panel-empty">
+        {emptyStateTopRightControls ? (
+          <div className="tiptap-panel-empty-top-right">
+            {emptyStateTopRightControls}
+          </div>
+        ) : null}
+        <div className="tiptap-panel-empty-message">Выберите документ</div>
+      </div>
+    )
   }
 
   if (!editor) {
@@ -1157,21 +1340,71 @@ export default function DocumentListTiptapPanelContent({
   return (
     <DocumentationUploadProvider>
     <div className="tiptap-panel">
-      <div className="tiptap-panel-header">
+      <div className="tiptap-panel-top-sticky">
+        <div className="tiptap-panel-header" ref={headerRef}>
+        {headerLeadingControls}
         <button className="tiptap-panel-back-btn" onClick={handleBack}>
           ← Назад
         </button>
         <div className="tiptap-panel-title">{docTitle || 'Без названия'}</div>
-        {canEdit && (
-          <div className="tiptap-panel-header-actions">
-            <button
-              type="button"
-              className="tiptap-panel-save-btn"
-              onClick={handleManualSave}
-              disabled={isManualSaving}
-            >
-              {isManualSaving ? 'Сохранение...' : 'Сохранить изменения'}
-            </button>
+        {(canEdit || headerTrailingControls) && (
+          <div
+            className={`tiptap-panel-header-actions${headerTrailingControls ? ' has-trailing-controls' : ''}`}
+            ref={headerActionsRef}
+          >
+            {canEdit && (
+              <button
+                type="button"
+                ref={saveButtonRef}
+                className={`tiptap-panel-save-btn${isSaveButtonCompact ? ' is-icon-only' : ''}${isManualSaving ? ' is-saving' : ''}`}
+                onClick={handleManualSave}
+                disabled={isManualSaving}
+                aria-label={isManualSaving ? 'Сохранение...' : 'Сохранить изменения'}
+                aria-busy={isManualSaving ? 'true' : 'false'}
+              >
+                <span className="tiptap-panel-save-btn-icon" aria-hidden="true">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M5 4h11l3 3v13H5V4Z"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8 4v6h7V4"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M8 16h8"
+                      stroke="currentColor"
+                      strokeWidth="1.7"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                <span className="tiptap-panel-save-btn-label">
+                  {isManualSaving ? 'Сохранение...' : 'Сохранить изменения'}
+                </span>
+              </button>
+            )}
+            {canEdit && (
+              <button
+                type="button"
+                ref={saveButtonMeasureRef}
+                className="tiptap-panel-save-btn tiptap-panel-save-btn-measure"
+                aria-hidden="true"
+                tabIndex={-1}
+              >
+                {isManualSaving ? 'Сохранение...' : 'Сохранить изменения'}
+              </button>
+            )}
+            {headerTrailingControls ? (
+              <div className="tiptap-panel-header-trailing-controls">
+                {headerTrailingControls}
+              </div>
+            ) : null}
           </div>
         )}
       </div>
@@ -1197,7 +1430,45 @@ export default function DocumentListTiptapPanelContent({
         />
       )}
 
-      <div className="editor-hover-scope" style={editorScopeStyle} ref={editorHoverScopeRef}>
+      {canEdit && (
+        <div className="tiptap-panel-sticky-controls">
+          <button
+            type="button"
+            className={`editor-controls-gutter-toggle tiptap-panel-gutter-toggle-btn ${
+              shouldShowEditorSideControls ? 'is-active' : ''
+            }`}
+            onMouseDown={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setIsEditorControlsGutterExpanded(prev => !prev)
+            }}
+            aria-label={
+              shouldShowEditorSideControls
+                ? 'Скрыть область кнопок редактора'
+                : 'Показать область кнопок редактора'
+            }
+            aria-pressed={shouldShowEditorSideControls}
+            title={
+              shouldShowEditorSideControls
+                ? 'Скрыть кнопки + и ⋮⋮'
+                : 'Показать кнопки + и ⋮⋮'
+            }
+          >
+            {shouldShowEditorSideControls ? '<' : '>'}
+          </button>
+        </div>
+      )}
+      </div>
+
+      <div
+        className={`editor-hover-scope ${shouldShowEditorSideControls ? 'editor-controls-gutter-open' : 'editor-controls-gutter-collapsed'}`}
+        style={editorScopeStyle}
+        ref={editorHoverScopeRef}
+      >
         {canEdit && <PlusButtonOverlay editor={editor} />}
         {canEdit && <BlockDragOverlay editor={editor} />}
         {canEdit && <BlockSelectionOverlay editor={editor} />}

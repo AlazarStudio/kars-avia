@@ -1,5 +1,4 @@
-// !!!РїРµСЂРµРјРµРЅРЅР°СЏ РЅР° РєРѕР»РёС‡РµСЃС‚РІРѕ РІР»РѕР¶РµРЅРЅРѕСЃС‚РµР№ Р°СЂС…РёС‚РµРєС‚СѓСЂС‹
-import { useState, useEffect, useRef, useCallback } from 'react'
+﻿import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation } from '@apollo/client'
 import { 
@@ -38,6 +37,87 @@ const DELETE_MODAL_RIGHT_OFFSET = 16
 const DELETE_MODAL_BOTTOM_OFFSET = 16
 const DELETE_MODAL_ESTIMATED_WIDTH = 340
 const DELETE_MODAL_ESTIMATED_HEIGHT = 210
+const COPY_TITLE_SUFFIX = ' (\u043a\u043e\u043f\u0438\u044f)'
+const DEFAULT_DOCUMENTATION_FILTER = 'dispatcher'
+const DOC_NODE_FILTER_STATE_KEY = 'doclist_node_filter_state_v1'
+const DOC_FILTER_INPUT_FIELD_CANDIDATES = ['filter', 'documentationFilter', 'docFilter']
+
+function normalizeDocumentationFilter(rawValue) {
+  if (rawValue == null) return null
+  const value = String(rawValue).trim().toLowerCase()
+  if (!value) return null
+
+  if (
+    value === 'dispatcher' ||
+    value === 'dispatch' ||
+    value === 'dispetcher' ||
+    value.includes('dispatch')
+  ) {
+    return 'dispatcher'
+  }
+
+  if (value === 'hotel' || value === 'hotels' || value.includes('hotel')) {
+    return 'hotel'
+  }
+
+  if (
+    value === 'airline' ||
+    value === 'aviacompany' ||
+    value === 'aircompany' ||
+    value.includes('airline') ||
+    value.includes('avia')
+  ) {
+    return 'airline'
+  }
+
+  return null
+}
+
+function isUnsupportedInputFieldError(error, fieldName) {
+  const message = [
+    error?.message,
+    ...(Array.isArray(error?.graphQLErrors)
+      ? error.graphQLErrors.map(gqlError => gqlError?.message)
+      : []),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+
+  const safeFieldName = String(fieldName || '').toLowerCase()
+  if (!safeFieldName) return false
+
+  return (
+    message.includes(safeFieldName) &&
+    (message.includes('not defined') ||
+      message.includes('unknown field') ||
+      message.includes('cannot query field') ||
+      message.includes('validation') ||
+      message.includes('does not exist'))
+  )
+}
+
+function loadNodeFilterState() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(DOC_NODE_FILTER_STATE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    return parsed
+  } catch {
+    return {}
+  }
+}
+
+function saveNodeFilterState(nextMap) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(DOC_NODE_FILTER_STATE_KEY, JSON.stringify(nextMap))
+  } catch {
+    // ignore storage errors
+  }
+}
 
 function getDeleteModalStartPosition() {
   if (typeof window === 'undefined') return { x: 100, y: 100 }
@@ -72,7 +152,7 @@ function ChildrenPathPreview({ children }) {
   )
 }
 
-// РљРѕРјРїРѕРЅРµРЅС‚ РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ Р·Р°РіРѕР»РѕРІРєР° СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ СЂР°СЃС€РёСЂРµРЅРёСЏ
+// Р С™Р С•Р СР С—Р С•Р Р…Р ВµР Р…РЎвЂљ Р Т‘Р В»РЎРЏ Р С•РЎвЂљР С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘РЎРЏ Р В·Р В°Р С–Р С•Р В»Р С•Р Р†Р С”Р В° РЎРѓ Р Р†Р С•Р В·Р СР С•Р В¶Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹ РЎР‚Р В°РЎРѓРЎв‚¬Р С‘РЎР‚Р ВµР Р…Р С‘РЎРЏ
 function ExpandableTitle({ title, onExpandChange, defaultExpanded = true }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
 
@@ -112,7 +192,14 @@ function ExpandableTitle({ title, onExpandChange, defaultExpanded = true }) {
 
 /* ================= MAIN ================= */
 
-function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = false }) {
+function DocumentationListLeftPanel({
+  tree,
+  setTree,
+  onSelectFile,
+  canManage = false,
+  activeFilter = DEFAULT_DOCUMENTATION_FILTER,
+  activeDocId = null,
+}) {
   const [creating, setCreating] = useState(null)
   const [hovered, setHovered] = useState(false)
   const [lastDeleted, setLastDeleted] = useState(null)
@@ -120,13 +207,36 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [dropHint, setDropHint] = useState(null)
   const [dragState, setDragState] = useState(null)
+  const [leftTreeLassoSelectedIds, setLeftTreeLassoSelectedIds] = useState([])
+  const [leftTreeLassoRectStyle, setLeftTreeLassoRectStyle] = useState(null)
+  const [leftTreeAltMode, setLeftTreeAltMode] = useState(false)
+  const [leftTreeCopyBuffer, setLeftTreeCopyBuffer] = useState(null)
+  const [leftTreePasteHoverHint, setLeftTreePasteHoverHint] = useState(null)
+  const [leftTreePasteTargetHint, setLeftTreePasteTargetHint] = useState(null)
+  const [leftTreePasteBusy, setLeftTreePasteBusy] = useState(false)
+  const leftTreeRef = useRef(null)
+  const leftTreeLassoRef = useRef({
+    active: false,
+    startContentX: 0,
+    startContentY: 0,
+    lastClientX: 0,
+    lastClientY: 0,
+    lastRect: null,
+  })
+  const leftTreeLassoCleanupRef = useRef(null)
+  const suppressTreeClickUntilRef = useRef(0)
+  const leftTreeLassoLastClickedIdRef = useRef(null)
   
-  // РќРѕРІС‹Рµ СЃРѕСЃС‚РѕСЏРЅРёСЏ РґР»СЏ РїРѕРёСЃРєР°
+  // Р СњР С•Р Р†РЎвЂ№Р Вµ РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—Р С•Р С‘РЎРѓР С”Р В°
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [filterType, setFilterType] = useState('all') // 'all', 'section', 'article'
+  const [showSaveIndicator, setShowSaveIndicator] = useState(false)
+  const normalizedDocFilter =
+    normalizeDocumentationFilter(activeFilter) || DEFAULT_DOCUMENTATION_FILTER
+  const saveIndicatorTimerRef = useRef(null)
 
-  // GraphQL мутации
+  // GraphQL РјСѓС‚Р°С†РёРё
   const token = getCookie('token')
   const mutationContext = {
     context: {
@@ -148,6 +258,158 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
   const [updateArticleMutation] = useMutation(UPDATE_ARTICLE, mutationContext)
   const [deleteSectionMutation] = useMutation(DELETE_SECTION, mutationContext)
   const [deleteArticleMutation] = useMutation(DELETE_ARTICLE, mutationContext)
+
+  const createSectionWithFilter = useCallback(
+    async (input) => {
+      const safeInput = { ...input }
+      for (const fieldName of DOC_FILTER_INPUT_FIELD_CANDIDATES) {
+        try {
+          return await createSectionMutation({
+            variables: {
+              input: { ...safeInput, [fieldName]: normalizedDocFilter },
+            },
+          })
+        } catch (error) {
+          if (!isUnsupportedInputFieldError(error, fieldName)) {
+            throw error
+          }
+        }
+      }
+
+      return createSectionMutation({
+        variables: { input: safeInput },
+      })
+    },
+    [createSectionMutation, normalizedDocFilter]
+  )
+
+  const createArticleWithFilter = useCallback(
+    async (input) => {
+      const safeInput = { ...input }
+      for (const fieldName of DOC_FILTER_INPUT_FIELD_CANDIDATES) {
+        try {
+          return await createArticleMutation({
+            variables: {
+              input: { ...safeInput, [fieldName]: normalizedDocFilter },
+            },
+          })
+        } catch (error) {
+          if (!isUnsupportedInputFieldError(error, fieldName)) {
+            throw error
+          }
+        }
+      }
+
+      return createArticleMutation({
+        variables: { input: safeInput },
+      })
+    },
+    [createArticleMutation, normalizedDocFilter]
+  )
+
+  const updateSectionWithFilter = useCallback(
+    async (id, input) => {
+      const safeInput = { ...input }
+      for (const fieldName of DOC_FILTER_INPUT_FIELD_CANDIDATES) {
+        try {
+          return await updateSectionMutation({
+            variables: {
+              id,
+              input: { ...safeInput, [fieldName]: normalizedDocFilter },
+            },
+          })
+        } catch (error) {
+          if (!isUnsupportedInputFieldError(error, fieldName)) {
+            throw error
+          }
+        }
+      }
+
+      return updateSectionMutation({
+        variables: { id, input: safeInput },
+      })
+    },
+    [normalizedDocFilter, updateSectionMutation]
+  )
+
+  const updateArticleWithFilter = useCallback(
+    async (id, input) => {
+      const safeInput = { ...input }
+      for (const fieldName of DOC_FILTER_INPUT_FIELD_CANDIDATES) {
+        try {
+          return await updateArticleMutation({
+            variables: {
+              id,
+              input: { ...safeInput, [fieldName]: normalizedDocFilter },
+            },
+          })
+        } catch (error) {
+          if (!isUnsupportedInputFieldError(error, fieldName)) {
+            throw error
+          }
+        }
+      }
+
+      return updateArticleMutation({
+        variables: { id, input: safeInput },
+      })
+    },
+    [normalizedDocFilter, updateArticleMutation]
+  )
+
+  const persistNodeFilterById = useCallback(
+    (nodeId, filter = normalizedDocFilter) => {
+      if (nodeId == null) return
+      const normalizedFilter =
+        normalizeDocumentationFilter(filter) || DEFAULT_DOCUMENTATION_FILTER
+      const key = String(nodeId)
+      const current = loadNodeFilterState()
+      current[key] = normalizedFilter
+      saveNodeFilterState(current)
+    },
+    [normalizedDocFilter]
+  )
+
+  const persistNodeFilterIds = useCallback(
+    (nodeIds, filter = normalizedDocFilter) => {
+      if (!Array.isArray(nodeIds) || !nodeIds.length) return
+      const normalizedFilter =
+        normalizeDocumentationFilter(filter) || DEFAULT_DOCUMENTATION_FILTER
+      const current = loadNodeFilterState()
+      for (const rawId of nodeIds) {
+        if (rawId == null) continue
+        current[String(rawId)] = normalizedFilter
+      }
+      saveNodeFilterState(current)
+    },
+    [normalizedDocFilter]
+  )
+
+  const removeNodeFilterIds = useCallback((nodeIds) => {
+    if (!Array.isArray(nodeIds) || !nodeIds.length) return
+    const current = loadNodeFilterState()
+    let changed = false
+    for (const rawId of nodeIds) {
+      if (rawId == null) continue
+      const key = String(rawId)
+      if (!Object.prototype.hasOwnProperty.call(current, key)) continue
+      delete current[key]
+      changed = true
+    }
+    if (changed) {
+      saveNodeFilterState(current)
+    }
+  }, [])
+
+  const markSaveSuccess = useCallback(() => {
+    setShowSaveIndicator(true)
+    if (saveIndicatorTimerRef.current) {
+      clearTimeout(saveIndicatorTimerRef.current)
+    }
+    saveIndicatorTimerRef.current = setTimeout(() => {
+      setShowSaveIndicator(false)
+    }, 1400)
+  }, [])
 
   const closeAllLeftModals = () => {
     setShowSearch(false)
@@ -188,7 +450,203 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
     setDropHint(null)
   }, [canManage])
 
+  useEffect(() => {
+    return () => {
+      if (saveIndicatorTimerRef.current) {
+        clearTimeout(saveIndicatorTimerRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (leftTreeLassoCleanupRef.current) {
+        leftTreeLassoCleanupRef.current()
+        leftTreeLassoCleanupRef.current = null
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      setLeftTreeAltMode(Boolean(event.altKey))
+    }
+    const onKeyUp = (event) => {
+      setLeftTreeAltMode(Boolean(event.altKey))
+    }
+    const onBlur = () => {
+      setLeftTreeAltMode(false)
+    }
+
+    document.addEventListener('keydown', onKeyDown, true)
+    document.addEventListener('keyup', onKeyUp, true)
+    window.addEventListener('blur', onBlur, true)
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown, true)
+      document.removeEventListener('keyup', onKeyUp, true)
+      window.removeEventListener('blur', onBlur, true)
+    }
+  }, [])
+
   /* ===== helpers ===== */
+
+  const leftTreeRectsIntersect = (a, b) => {
+    if (!a || !b) return false
+    return !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom)
+  }
+
+  const sameStringArrays = (a, b) => {
+    if (a === b) return true
+    if (!Array.isArray(a) || !Array.isArray(b)) return false
+    if (a.length !== b.length) return false
+    for (let i = 0; i < a.length; i += 1) {
+      if (a[i] !== b[i]) return false
+    }
+    return true
+  }
+
+  const samePasteHint = (a, b) => {
+    if (a === b) return true
+    if (!a || !b) return false
+    return (
+      String(a.id) === String(b.id) &&
+      String(a.parentId ?? 'root') === String(b.parentId ?? 'root') &&
+      String(a.position) === String(b.position) &&
+      Number(a.index) === Number(b.index)
+    )
+  }
+
+  const isFormFieldTarget = (target) => {
+    if (!(target instanceof Element)) return false
+    return Boolean(target.closest('input, textarea, select, button'))
+  }
+
+  const getVisibleTreeItemIds = useCallback(() => {
+    const treeEl = leftTreeRef.current
+    if (!treeEl) return []
+    return Array.from(treeEl.querySelectorAll('.tree-item[data-doc-tree-id]'))
+      .map((node) => String(node.getAttribute('data-doc-tree-id') || ''))
+      .filter(Boolean)
+  }, [])
+
+  const collectBatchTargets = useCallback((selectedIdsInput) => {
+    const selectedSet = new Set(
+      (Array.isArray(selectedIdsInput) ? selectedIdsInput : [])
+        .map((id) => String(id))
+        .filter(Boolean)
+    )
+    if (!selectedSet.size) return []
+
+    const result = []
+    const walk = (nodes, parentId = 'root', ancestorSelectedSection = false) => {
+      if (!Array.isArray(nodes) || !nodes.length) return
+      for (let index = 0; index < nodes.length; index += 1) {
+        const node = nodes[index]
+        if (!node || node.id == null) continue
+        const id = String(node.id)
+        const isSelected = selectedSet.has(id)
+        const shouldInclude = isSelected && !ancestorSelectedSection
+
+        if (shouldInclude) {
+          result.push({
+            id,
+            item: node,
+            parentId,
+            index,
+          })
+        }
+
+        const nextAncestorSelectedSection =
+          ancestorSelectedSection || (shouldInclude && node.type === 'section')
+
+        if (Array.isArray(node.children) && node.children.length) {
+          walk(node.children, node.id, nextAncestorSelectedSection)
+        }
+      }
+    }
+
+    walk(tree)
+    return result
+  }, [tree])
+
+  const stopLeftTreeLasso = useCallback(() => {
+    leftTreeLassoRef.current.active = false
+    leftTreeLassoRef.current.lastRect = null
+    if (leftTreeLassoCleanupRef.current) {
+      leftTreeLassoCleanupRef.current()
+      leftTreeLassoCleanupRef.current = null
+    }
+    setLeftTreeLassoRectStyle(null)
+  }, [])
+
+  const updateLeftTreeLassoSelection = useCallback((clientX, clientY) => {
+    const treeEl = leftTreeRef.current
+    const drag = leftTreeLassoRef.current
+    if (!treeEl || !drag.active) return
+
+    drag.lastClientX = clientX
+    drag.lastClientY = clientY
+
+    const treeRect = treeEl.getBoundingClientRect()
+    const currentContentX = clientX - treeRect.left + treeEl.scrollLeft
+    const currentContentY = clientY - treeRect.top + treeEl.scrollTop
+
+    const left = Math.min(drag.startContentX, currentContentX)
+    const top = Math.min(drag.startContentY, currentContentY)
+    const width = Math.max(1, Math.abs(currentContentX - drag.startContentX))
+    const height = Math.max(1, Math.abs(currentContentY - drag.startContentY))
+
+    const logicalRect = {
+      left,
+      top,
+      right: left + width,
+      bottom: top + height,
+      width,
+      height,
+    }
+    drag.lastRect = logicalRect
+
+    const nextRectStyle = {
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${width}px`,
+      height: `${height}px`,
+    }
+    setLeftTreeLassoRectStyle((prev) => {
+      if (
+        prev &&
+        prev.left === nextRectStyle.left &&
+        prev.top === nextRectStyle.top &&
+        prev.width === nextRectStyle.width &&
+        prev.height === nextRectStyle.height
+      ) {
+        return prev
+      }
+      return nextRectStyle
+    })
+
+    const nextSelectedIds = []
+    const itemNodes = treeEl.querySelectorAll('.tree-item[data-doc-tree-id]')
+    for (const node of itemNodes) {
+      const id = node.getAttribute('data-doc-tree-id')
+      if (!id) continue
+      const rect = node.getBoundingClientRect()
+      const itemRect = {
+        left: rect.left - treeRect.left + treeEl.scrollLeft,
+        top: rect.top - treeRect.top + treeEl.scrollTop,
+        right: rect.right - treeRect.left + treeEl.scrollLeft,
+        bottom: rect.bottom - treeRect.top + treeEl.scrollTop,
+      }
+      if (leftTreeRectsIntersect(logicalRect, itemRect)) {
+        nextSelectedIds.push(String(id))
+      }
+    }
+
+    setLeftTreeLassoSelectedIds((prev) => (
+      sameStringArrays(prev, nextSelectedIds) ? prev : nextSelectedIds
+    ))
+  }, [])
 
   const findAndRemove = (nodes, id, parentId = 'root') => {
     for (let i = 0; i < nodes.length; i++) {
@@ -203,20 +661,6 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
       }
     }
     return null
-  }
-
-  const insertBack = (nodes, parentId, index, item) => {
-    if (parentId === 'root') {
-      nodes.splice(index, 0, item)
-      return
-    }
-    for (const n of nodes) {
-      if (n.id === parentId && n.children) {
-        n.children.splice(index, 0, item)
-        return
-      }
-      if (n.children) insertBack(n.children, parentId, index, item)
-    }
   }
 
   const insertBelow = (nodes, targetId, newItem) => {
@@ -246,17 +690,21 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
     }
   }
 
-  const cloneSection = (section, withChildren) => ({
-    ...structuredClone(section),
-    id: Date.now() + Math.random(),
-    children: withChildren
-      ? section.children?.map(child => ({
-          ...structuredClone(child),
-          id: Date.now() + Math.random()
-        }))
-      : [],
-    isOpen: true
-  })
+  const getChildrenByParentId = (nodes, parentId) => {
+    if (parentId === 'root') return nodes
+    for (const node of nodes) {
+      if (node.id === parentId) {
+        return Array.isArray(node.children) ? node.children : []
+      }
+      if (Array.isArray(node.children) && node.children.length) {
+        const nested = getChildrenByParentId(node.children, parentId)
+        if (nested) return nested
+      }
+    }
+    return null
+  }
+
+  const buildCopiedTitle = (title) => `${String(title || '').trim()}${COPY_TITLE_SUFFIX}`
 
   const findParentSectionId = (nodes, targetId, parentId = null) => {
     for (const n of nodes) {
@@ -273,6 +721,19 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
     return undefined
   }
 
+  const collectNodeIds = (node, acc = []) => {
+    if (!node || typeof node !== 'object') return acc
+    if (node.id != null) {
+      acc.push(String(node.id))
+    }
+    if (Array.isArray(node.children) && node.children.length) {
+      for (const child of node.children) {
+        collectNodeIds(child, acc)
+      }
+    }
+    return acc
+  }
+
   const copyArticleWithContent = async (article) => {
     if (!canManage) return
 
@@ -284,14 +745,10 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
 
       const sectionId = findParentSectionId(tree, article.id) ?? null
 
-      const result = await createArticleMutation({
-        variables: {
-          input: {
-            title: `${article.title} (копия)`,
-            sectionId,
-            content: content && typeof content === 'object' && content.type === 'doc' ? content : null,
-          },
-        },
+      const result = await createArticleWithFilter({
+        title: buildCopiedTitle(article.title),
+        sectionId,
+        content: content && typeof content === 'object' && content.type === 'doc' ? content : null,
       })
 
       const createdArticle = result?.data?.createArticle
@@ -302,21 +759,126 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
         type: 'article',
         title: createdArticle.title,
         editor: 'tiptap',
+        filter: normalizedDocFilter,
       }
+      persistNodeFilterById(createdArticle.id)
 
       setTree(prev => {
         const next = structuredClone(prev)
         insertBelow(next, article.id, newItem)
         return next
       })
+      markSaveSuccess()
     } catch (error) {
       console.error('Failed to copy article:', error)
     }
   }
 
-  // Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїСЂРѕРІРµСЂРєРё, РЅРµ СЏРІР»СЏРµС‚СЃСЏ Р»Рё target РґРѕС‡РµСЂРЅРёРј СЌР»РµРјРµРЅС‚РѕРј draggingItem
+  const copySectionBranch = async (section, targetParentId, withChildren, isRootCopy = false) => {
+    const sectionResult = await createSectionWithFilter({
+      title: isRootCopy ? buildCopiedTitle(section.title) : section.title,
+      parentId: targetParentId,
+    })
+
+    const createdSection = sectionResult?.data?.createSection
+    if (!createdSection?.id) {
+      throw new Error('Failed to create copied section')
+    }
+
+    const copiedSectionNode = {
+      id: createdSection.id,
+      type: 'section',
+      title: createdSection.title,
+      children: [],
+      isOpen: true,
+      filter: normalizedDocFilter,
+    }
+    persistNodeFilterById(createdSection.id)
+
+    if (!withChildren || !Array.isArray(section.children) || !section.children.length) {
+      return copiedSectionNode
+    }
+
+    for (const child of section.children) {
+      if (child.type === 'section') {
+        const copiedChildSection = await copySectionBranch(child, createdSection.id, true, false)
+        if (copiedChildSection) {
+          copiedSectionNode.children.push(copiedChildSection)
+        }
+        continue
+      }
+
+      if (child.type === 'article') {
+        let childContent = null
+        try {
+          const { data } = await fetchArticle({
+            variables: { id: child.id },
+          })
+          const rawContent = data?.article?.content ?? null
+          childContent =
+            rawContent && typeof rawContent === 'object' && rawContent.type === 'doc'
+              ? rawContent
+              : null
+        } catch (error) {
+          console.error('Failed to fetch nested article content for section copy:', error)
+        }
+
+        const createdArticleResult = await createArticleWithFilter({
+          title: child.title,
+          sectionId: createdSection.id,
+          content: childContent,
+        })
+
+        const createdArticle = createdArticleResult?.data?.createArticle
+        if (!createdArticle?.id) continue
+
+        copiedSectionNode.children.push({
+          id: createdArticle.id,
+          type: 'article',
+          title: createdArticle.title,
+          editor: 'tiptap',
+          filter: normalizedDocFilter,
+        })
+        persistNodeFilterById(createdArticle.id)
+      }
+    }
+
+    return copiedSectionNode
+  }
+
+  const copySectionOnServer = async (section, withChildren) => {
+    if (!canManage) return false
+    if (!section || section.type !== 'section') return false
+
+    try {
+      const parentSectionId = findParentSectionId(tree, section.id) ?? null
+      const copiedSectionNode = await copySectionBranch(
+        section,
+        parentSectionId,
+        withChildren,
+        true
+      )
+
+      if (!copiedSectionNode) return false
+      persistNodeFilterIds(collectNodeIds(copiedSectionNode))
+
+      setTree(prev => {
+        const next = structuredClone(prev)
+        insertBelow(next, section.id, copiedSectionNode)
+        return next
+      })
+
+      markSaveSuccess()
+      return true
+    } catch (error) {
+      console.error('Failed to copy section:', error)
+      return false
+    }
+  }
+
+  // Р В¤РЎС“Р Р…Р С”РЎвЂ Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р С‘, Р Р…Р Вµ РЎРЏР Р†Р В»РЎРЏР ВµРЎвЂљРЎРѓРЎРЏ Р В»Р С‘ target Р Т‘Р С•РЎвЂЎР ВµРЎР‚Р Р…Р С‘Р С РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљР С•Р С draggingItem
   const isDescendant = useCallback((nodes, parentId, childId) => {
-    // РЎРЅР°С‡Р°Р»Р° РЅР°С…РѕРґРёРј СЂРѕРґРёС‚РµР»СЊСЃРєРёР№ СѓР·РµР»
+    // Р РЋР Р…Р В°РЎвЂЎР В°Р В»Р В° Р Р…Р В°РЎвЂ¦Р С•Р Т‘Р С‘Р С РЎР‚Р С•Р Т‘Р С‘РЎвЂљР ВµР В»РЎРЉРЎРѓР С”Р С‘Р в„– РЎС“Р В·Р ВµР В»
     const findNode = (nodes, id) => {
       for (const node of nodes) {
         if (node.id === id) return node
@@ -328,11 +890,11 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
       return null
     }
 
-    // РќР°С…РѕРґРёРј СЂРѕРґРёС‚РµР»СЊСЃРєСѓСЋ РЅРѕРґСѓ
+    // Р СњР В°РЎвЂ¦Р С•Р Т‘Р С‘Р С РЎР‚Р С•Р Т‘Р С‘РЎвЂљР ВµР В»РЎРЉРЎРѓР С”РЎС“РЎР‹ Р Р…Р С•Р Т‘РЎС“
     const parentNode = findNode(nodes, parentId)
     if (!parentNode || !parentNode.children) return false
 
-    // РџСЂРѕРІРµСЂСЏРµРј, РµСЃС‚СЊ Р»Рё childId СЃСЂРµРґРё РґРµС‚РµР№ parentNode (СЂРµРєСѓСЂСЃРёРІРЅРѕ)
+    // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР ВµР С, Р ВµРЎРѓРЎвЂљРЎРЉ Р В»Р С‘ childId РЎРѓРЎР‚Р ВµР Т‘Р С‘ Р Т‘Р ВµРЎвЂљР ВµР в„– parentNode (РЎР‚Р ВµР С”РЎС“РЎР‚РЎРѓР С‘Р Р†Р Р…Р С•)
     const checkChildren = (children, targetId) => {
       for (const child of children) {
         if (child.id === targetId) return true
@@ -346,9 +908,9 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
     return checkChildren(parentNode.children, childId)
   }, [])
 
-  // Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРѕРёСЃРєР° СЌР»РµРјРµРЅС‚РѕРІ РІ РґРµСЂРµРІРµ
+  // Р В¤РЎС“Р Р…Р С”РЎвЂ Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—Р С•Р С‘РЎРѓР С”Р В° РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљР С•Р Р† Р Р† Р Т‘Р ВµРЎР‚Р ВµР Р†Р Вµ
   const searchTree = useCallback((nodes, query, typeFilter = 'all') => {
-    if (!query.trim()) return null // Р’РѕР·РІСЂР°С‰Р°РµРј null РµСЃР»Рё РїРѕРёСЃРє РїСѓСЃС‚РѕР№
+    if (!query.trim()) return null // Р вЂ™Р С•Р В·Р Р†РЎР‚Р В°РЎвЂ°Р В°Р ВµР С null Р ВµРЎРѓР В»Р С‘ Р С—Р С•Р С‘РЎРѓР С” Р С—РЎС“РЎРѓРЎвЂљР С•Р в„–
 
     const results = []
     
@@ -356,7 +918,7 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
       items.forEach(item => {
         const currentPath = path ? `${path} / ${item.title}` : item.title
         
-        // РџСЂРѕРІРµСЂСЏРµРј СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ С„РёР»СЊС‚СЂСѓ С‚РёРїР° Рё РїРѕРёСЃРєРѕРІРѕРјСѓ Р·Р°РїСЂРѕСЃСѓ
+        // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР ВµР С РЎРѓР С•Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†Р С‘Р Вµ РЎвЂћР С‘Р В»РЎРЉРЎвЂљРЎР‚РЎС“ РЎвЂљР С‘Р С—Р В° Р С‘ Р С—Р С•Р С‘РЎРѓР С”Р С•Р Р†Р С•Р СРЎС“ Р В·Р В°Р С—РЎР‚Р С•РЎРѓРЎС“
         const matchesType = typeFilter === 'all' || item.type === typeFilter
         const matchesQuery = item.title.toLowerCase().includes(query.toLowerCase())
         
@@ -367,7 +929,7 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
           })
         }
         
-        // Р РµРєСѓСЂСЃРёРІРЅРѕ РёС‰РµРј РІ РґРµС‚СЏС…
+        // Р В Р ВµР С”РЎС“РЎР‚РЎРѓР С‘Р Р†Р Р…Р С• Р С‘РЎвЂ°Р ВµР С Р Р† Р Т‘Р ВµРЎвЂљРЎРЏРЎвЂ¦
         if (item.children && item.children.length > 0) {
           searchNodes(item.children, currentPath)
         }
@@ -378,10 +940,229 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
     return results
   }, [])
 
-  // РџРѕР»СѓС‡Р°РµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹ РїРѕРёСЃРєР°
+  // Р СџР С•Р В»РЎС“РЎвЂЎР В°Р ВµР С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°
   const searchResults = searchQuery.trim() 
     ? searchTree(tree, searchQuery, filterType !== 'all' ? filterType : 'all')
     : null
+
+  const handleLeftTreeLassoMouseDownCapture = useCallback((event) => {
+    if (event.button !== 0 || !event.altKey) return
+    if (searchResults) return
+
+    const treeEl = leftTreeRef.current
+    if (!treeEl) return
+
+    const target = event.target
+    if (!(target instanceof Element)) return
+
+    if (
+      target.closest(
+        'button, input, textarea, select, a, [contenteditable="true"], .rename-input, .action-btn, .drag-handle, .folder-arrow'
+      )
+    ) {
+      return
+    }
+
+    const clickedTreeItem = target.closest('.tree-item[data-doc-tree-id]')
+    const clickedId = clickedTreeItem?.getAttribute('data-doc-tree-id')
+      ? String(clickedTreeItem.getAttribute('data-doc-tree-id'))
+      : null
+    const isAdditivePick =
+      event.altKey && (event.ctrlKey || event.metaKey) && !event.shiftKey
+    const isRangePick = event.altKey && event.shiftKey
+
+    if (clickedId && (isAdditivePick || isRangePick)) {
+      event.preventDefault()
+      event.stopPropagation()
+
+      const currentSelection = Array.from(
+        new Set((leftTreeLassoSelectedIds || []).map((id) => String(id)))
+      )
+
+      let nextSelected = currentSelection
+
+      if (isRangePick) {
+        const visibleIds = getVisibleTreeItemIds()
+        const anchorId =
+          leftTreeLassoLastClickedIdRef.current != null
+            ? String(leftTreeLassoLastClickedIdRef.current)
+            : currentSelection.length
+              ? currentSelection[currentSelection.length - 1]
+              : clickedId
+        const fromIndex = visibleIds.indexOf(anchorId)
+        const toIndex = visibleIds.indexOf(clickedId)
+
+        if (fromIndex >= 0 && toIndex >= 0) {
+          const start = Math.min(fromIndex, toIndex)
+          const end = Math.max(fromIndex, toIndex)
+          nextSelected = visibleIds.slice(start, end + 1)
+        } else {
+          nextSelected = [clickedId]
+        }
+      } else {
+        nextSelected = currentSelection.includes(clickedId)
+          ? currentSelection.filter((id) => id !== clickedId)
+          : [...currentSelection, clickedId]
+      }
+
+      leftTreeLassoLastClickedIdRef.current = clickedId
+      setLeftTreeLassoSelectedIds(nextSelected)
+      return
+    }
+
+    stopLeftTreeLasso()
+    setLeftTreeLassoSelectedIds([])
+    leftTreeLassoLastClickedIdRef.current = clickedId
+
+    const treeRect = treeEl.getBoundingClientRect()
+    leftTreeLassoRef.current.active = true
+    leftTreeLassoRef.current.startContentX =
+      event.clientX - treeRect.left + treeEl.scrollLeft
+    leftTreeLassoRef.current.startContentY =
+      event.clientY - treeRect.top + treeEl.scrollTop
+    leftTreeLassoRef.current.lastClientX = event.clientX
+    leftTreeLassoRef.current.lastClientY = event.clientY
+    leftTreeLassoRef.current.lastRect = null
+
+    suppressTreeClickUntilRef.current = Date.now() + 220
+
+    const onMouseMove = (moveEvent) => {
+      if (!leftTreeLassoRef.current.active) return
+      if ((moveEvent.buttons & 1) !== 1) {
+        stopLeftTreeLasso()
+        return
+      }
+      updateLeftTreeLassoSelection(moveEvent.clientX, moveEvent.clientY)
+    }
+
+    const onMouseUp = () => {
+      suppressTreeClickUntilRef.current = Date.now() + 220
+      stopLeftTreeLasso()
+    }
+
+    const onTreeScroll = () => {
+      if (!leftTreeLassoRef.current.active) return
+      updateLeftTreeLassoSelection(
+        leftTreeLassoRef.current.lastClientX,
+        leftTreeLassoRef.current.lastClientY
+      )
+    }
+
+    const onSelectStart = (selectEvent) => {
+      if (leftTreeLassoRef.current.active) {
+        selectEvent.preventDefault()
+      }
+    }
+
+    const onWindowBlur = () => {
+      stopLeftTreeLasso()
+    }
+
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp, true)
+    document.addEventListener('selectstart', onSelectStart)
+    window.addEventListener('blur', onWindowBlur)
+    treeEl.addEventListener('scroll', onTreeScroll, { passive: true })
+
+    leftTreeLassoCleanupRef.current = () => {
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp, true)
+      document.removeEventListener('selectstart', onSelectStart)
+      window.removeEventListener('blur', onWindowBlur)
+      treeEl.removeEventListener('scroll', onTreeScroll)
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+    updateLeftTreeLassoSelection(event.clientX, event.clientY)
+  }, [
+    getVisibleTreeItemIds,
+    leftTreeLassoSelectedIds,
+    searchResults,
+    stopLeftTreeLasso,
+    updateLeftTreeLassoSelection,
+  ])
+
+  const handleDocLeftMouseDownCapture = useCallback((event) => {
+    if (!event.altKey) return
+    const target = event.target
+    if (!(target instanceof Element)) return
+    if (target.closest('.doc-left-tree')) return
+    event.preventDefault()
+    event.stopPropagation()
+  }, [])
+
+  const handleDocLeftClickCapture = useCallback((event) => {
+    if (!event.altKey) return
+    event.preventDefault()
+    event.stopPropagation()
+  }, [])
+
+  const buildLeftTreePasteHintFromEvent = useCallback((event) => {
+    if (!leftTreeCopyBuffer || leftTreePasteBusy) return null
+    if (event.altKey) return null
+
+    const treeEl = leftTreeRef.current
+    const target = event.target
+    if (!treeEl || !(target instanceof Element)) return null
+
+    if (
+      target.closest(
+        'button, input, textarea, select, a, [contenteditable="true"], .rename-input, .action-btn, .drag-handle, .folder-arrow'
+      )
+    ) {
+      return null
+    }
+
+    const itemEl = target.closest('.tree-item[data-doc-tree-id]')
+    if (!itemEl || !treeEl.contains(itemEl)) return null
+
+    const id = itemEl.getAttribute('data-doc-tree-id')
+    if (!id) return null
+
+    const rect = itemEl.getBoundingClientRect()
+    const offsetY = event.clientY - rect.top
+    const edgeThreshold = Math.max(6, Math.min(12, rect.height * 0.28))
+    let position = null
+    if (offsetY <= edgeThreshold) position = 'before'
+    else if (offsetY >= rect.height - edgeThreshold) position = 'after'
+    else return null
+    const rawParentId = itemEl.getAttribute('data-doc-tree-parent-id')
+    const rawIndex = itemEl.getAttribute('data-doc-tree-index')
+
+    return {
+      id: String(id),
+      parentId: rawParentId == null || rawParentId === '' ? 'root' : String(rawParentId),
+      index: Number.parseInt(rawIndex || '0', 10) || 0,
+      position,
+    }
+  }, [leftTreeCopyBuffer, leftTreePasteBusy])
+
+  const handleLeftTreeMouseMoveCapture = useCallback((event) => {
+    const nextHint = buildLeftTreePasteHintFromEvent(event)
+    setLeftTreePasteHoverHint((prev) => (samePasteHint(prev, nextHint) ? prev : nextHint))
+  }, [buildLeftTreePasteHintFromEvent])
+
+  const handleLeftTreeMouseLeave = useCallback(() => {
+    setLeftTreePasteHoverHint(null)
+  }, [])
+
+  const handleLeftTreeClickCapture = useCallback((event) => {
+    if (event.altKey) {
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+
+    if (!leftTreeCopyBuffer || leftTreePasteBusy) return
+
+    const nextHint = buildLeftTreePasteHintFromEvent(event)
+    if (!nextHint) return
+
+    setLeftTreePasteTargetHint(nextHint)
+    event.preventDefault()
+    event.stopPropagation()
+  }, [buildLeftTreePasteHintFromEvent, leftTreeCopyBuffer, leftTreePasteBusy])
 
   /* ===== create ===== */
 
@@ -407,13 +1188,9 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
     try {
       let result
       if (type === 'section') {
-        result = await createSectionMutation({
-          variables: {
-            input: {
-              title,
-              parentId,
-            },
-          },
+        result = await createSectionWithFilter({
+          title,
+          parentId,
         })
         const createdSection = result?.data?.createSection
         if (createdSection) {
@@ -423,7 +1200,9 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
             title: createdSection.title,
             children: [],
             isOpen: true,
+            filter: normalizedDocFilter,
           }
+          persistNodeFilterById(createdSection.id)
           
           setTree(prev => {
             if (creating.parentId === 'root') {
@@ -439,17 +1218,14 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
               })
             return insert(prev)
           })
+          markSaveSuccess()
         }
       } else {
         // Article
-        result = await createArticleMutation({
-          variables: {
-            input: {
-              title,
-              sectionId: parentId,
-              content: null,
-            },
-          },
+        result = await createArticleWithFilter({
+          title,
+          sectionId: parentId,
+          content: null,
         })
         const createdArticle = result?.data?.createArticle
         if (createdArticle) {
@@ -458,7 +1234,9 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
             type: 'article',
             title: createdArticle.title,
             editor: 'tiptap',
+            filter: normalizedDocFilter,
           }
+          persistNodeFilterById(createdArticle.id)
           
           setTree(prev => {
             if (creating.parentId === 'root') {
@@ -474,6 +1252,7 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
               })
             return insert(prev)
           })
+          markSaveSuccess()
         }
       }
     } catch (error) {
@@ -504,7 +1283,7 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
     if (!canManage) return
     if (!newTitle.trim()) return
 
-    // Найдем тип узла
+    // РќР°Р№РґРµРј С‚РёРї СѓР·Р»Р°
     let nodeType = null
     const findType = (nodes) => {
       for (const n of nodes) {
@@ -524,22 +1303,13 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
 
     try {
       if (nodeType === 'section') {
-        await updateSectionMutation({
-          variables: {
-            id,
-            input: { title: newTitle.trim() },
-          },
-        })
+        await updateSectionWithFilter(id, { title: newTitle.trim() })
       } else {
-        await updateArticleMutation({
-          variables: {
-            id,
-            input: { title: newTitle.trim() },
-          },
-        })
+        await updateArticleWithFilter(id, { title: newTitle.trim() })
       }
+      persistNodeFilterById(id)
 
-      // Обновляем локальное дерево
+      // РћР±РЅРѕРІР»СЏРµРј Р»РѕРєР°Р»СЊРЅРѕРµ РґРµСЂРµРІРѕ
       const rename = (nodes) =>
         nodes.map(n => {
           if (n.id === id) return { ...n, title: newTitle }
@@ -548,113 +1318,742 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
         })
 
       setTree(prev => rename(prev))
+      markSaveSuccess()
     } catch (error) {
       console.error('Failed to rename item:', error)
     }
   }
 
-  /* ===== delete + undo ===== */
+  /* ===== delete ===== */
 
-  const deleteWithUndo = (id) => {
-    if (!canManage) return
-    const nextTree = structuredClone(tree)
-    const deleted = findAndRemove(nextTree, id)
-    if (!deleted) return
-
-    setTree(nextTree)
-    setLastDeleted({
-      ...deleted,
-      toastId: Date.now() + Math.random(),
-    })
-  }
-
-  const undoDelete = () => {
-    if (!lastDeleted) return
+  const restoreDeletedItemLocally = useCallback((deletedEntry) => {
+    if (!deletedEntry?.item) return
 
     setTree(prev => {
-      const clone = structuredClone(prev)
-      insertBack(
-        clone,
-        lastDeleted.parentId,
-        lastDeleted.index,
-        lastDeleted.item
+      const next = structuredClone(prev)
+      insertAt(
+        next,
+        deletedEntry.parentId ?? 'root',
+        Number.isFinite(deletedEntry.index) ? deletedEntry.index : 0,
+        structuredClone(deletedEntry.item)
       )
-      return clone
+      return next
+    })
+  }, [setTree])
+
+  const restoreDeletedEntriesLocally = useCallback((deletedEntries) => {
+    if (!Array.isArray(deletedEntries) || !deletedEntries.length) return
+
+    const entries = deletedEntries
+      .filter((entry) => entry?.item)
+      .map((entry) => ({
+        ...entry,
+        parentKey: String(entry.parentId ?? 'root'),
+        indexValue: Number.isFinite(entry.index) ? entry.index : 0,
+      }))
+      .sort((a, b) => {
+        if (a.parentKey === b.parentKey) return a.indexValue - b.indexValue
+        return 0
+      })
+
+    if (!entries.length) return
+
+    setTree(prev => {
+      const next = structuredClone(prev)
+      for (const entry of entries) {
+        insertAt(
+          next,
+          entry.parentId ?? 'root',
+          entry.indexValue,
+          structuredClone(entry.item)
+        )
+      }
+      return next
+    })
+  }, [setTree])
+
+  const commitDelete = useCallback(async (toastId) => {
+    let pendingDelete = null
+
+    setLastDeleted(prev => {
+      if (!prev) return prev
+      if (toastId != null && prev.toastId !== toastId) return prev
+      pendingDelete = prev
+      return null
     })
 
-    setLastDeleted(null)
-  }
+    const pendingEntries = Array.isArray(pendingDelete?.entries) && pendingDelete.entries.length
+      ? pendingDelete.entries
+      : pendingDelete?.item
+        ? [pendingDelete]
+        : []
 
-  const confirmDelete = async () => {
-    if (!lastDeleted) return
+    if (!pendingEntries.length) return
 
-    const { item } = lastDeleted
-    try {
-      if (item.type === 'section') {
-        await deleteSectionMutation({
-          variables: { id: item.id },
-        })
-      } else {
-        await deleteArticleMutation({
-          variables: { id: item.id },
-        })
+    let anySuccess = false
+    for (const entry of pendingEntries) {
+      if (!entry?.item) continue
+      try {
+        if (entry.item.type === 'section') {
+          await deleteSectionMutation({
+            variables: { id: entry.item.id },
+          })
+        } else {
+          await deleteArticleMutation({
+            variables: { id: entry.item.id },
+          })
+        }
+
+        removeNodeFilterIds(collectNodeIds(entry.item))
+        anySuccess = true
+      } catch (error) {
+        console.error('Failed to delete item from server:', error)
+        restoreDeletedItemLocally(entry)
       }
-    } catch (error) {
-      console.error('Failed to delete item from server:', error)
-      // Восстановим элемент если удаление не удалось
-      undoDelete()
-      return
     }
 
-    setLastDeleted(null)
+    if (anySuccess) {
+      markSaveSuccess()
+    }
+  }, [
+    deleteArticleMutation,
+    deleteSectionMutation,
+    markSaveSuccess,
+    removeNodeFilterIds,
+    restoreDeletedItemLocally,
+  ])
+
+  const undoDelete = useCallback((toastId) => {
+    let pendingDelete = null
+
+    setLastDeleted(prev => {
+      if (!prev) return prev
+      if (toastId != null && prev.toastId !== toastId) return prev
+      pendingDelete = prev
+      return null
+    })
+
+    const pendingEntries = Array.isArray(pendingDelete?.entries) && pendingDelete.entries.length
+      ? pendingDelete.entries
+      : pendingDelete?.item
+        ? [pendingDelete]
+        : []
+
+    if (!pendingEntries.length) return
+    restoreDeletedEntriesLocally(pendingEntries)
+  }, [restoreDeletedEntriesLocally])
+
+  const deleteItemsBulk = async (rawIds) => {
+    if (!canManage) return
+
+    const uniqueIds = Array.from(
+      new Set((Array.isArray(rawIds) ? rawIds : []).map((id) => String(id)).filter(Boolean))
+    )
+    if (!uniqueIds.length) return
+
+    const targets = collectBatchTargets(uniqueIds)
+    if (!targets.length) return
+
+    if (lastDeleted) {
+      await commitDelete(lastDeleted.toastId)
+    }
+
+    const nextTree = structuredClone(tree)
+    const deletedEntries = []
+    for (const target of targets) {
+      const deleted = findAndRemove(nextTree, target.id)
+      if (deleted?.item) {
+        deletedEntries.push(deleted)
+      }
+    }
+    if (!deletedEntries.length) return
+
+    setTree(nextTree)
+    setLeftTreeLassoSelectedIds([])
+
+    const firstItem = deletedEntries[0]?.item
+    const toastId = Date.now() + Math.random()
+
+    setLastDeleted({
+      item: firstItem,
+      parentId: deletedEntries[0]?.parentId,
+      index: deletedEntries[0]?.index,
+      entries: deletedEntries,
+      count: deletedEntries.length,
+      toastId,
+    })
   }
+
+  const deleteItem = async (id) => {
+    await deleteItemsBulk([id])
+  }
+
+  useEffect(() => {
+    if (!lastDeleted) return
+
+    const timeoutId = window.setTimeout(() => {
+      void commitDelete(lastDeleted.toastId)
+    }, 2400)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [commitDelete, lastDeleted])
+
+  const copySelectedItems = useCallback(async (selectedIdsInput) => {
+    if (!canManage) return
+    const targets = collectBatchTargets(selectedIdsInput)
+    if (!targets.length) return
+
+    for (const target of targets) {
+      if (!target?.item) continue
+      if (target.item.type === 'article') {
+        await copyArticleWithContent(target.item)
+        continue
+      }
+      if (target.item.type === 'section') {
+        await copySectionOnServer(target.item, true)
+      }
+    }
+  }, [canManage, collectBatchTargets, copyArticleWithContent, copySectionOnServer])
+
+  const deleteSelectedItems = useCallback(async (selectedIdsInput) => {
+    if (!canManage) return
+    await deleteItemsBulk(selectedIdsInput)
+  }, [canManage, deleteItemsBulk])
+
+  const persistNodePlacementForLeftTree = useCallback(async (
+    node,
+    nextNodeParentId,
+    nodeIndex,
+    fallbackWithoutIndex = false
+  ) => {
+    if (!node?.id) return true
+
+    const isUnsupportedOrderFieldError = (error, fieldName) => {
+      const messages = [
+        error?.message,
+        ...(Array.isArray(error?.graphQLErrors)
+          ? error.graphQLErrors.map(gqlError => gqlError?.message)
+          : []),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return (
+        messages.includes(fieldName) &&
+        (messages.includes('not defined') ||
+          messages.includes('unknown field') ||
+          messages.includes('cannot query field') ||
+          messages.includes('validation'))
+      )
+    }
+
+    const saveSectionPlacement = async (id, baseInput, indexValue) => {
+      try {
+        await updateSectionWithFilter(id, {
+          ...baseInput,
+          index: indexValue,
+        })
+        return true
+      } catch (errorWithIndex) {
+        if (!isUnsupportedOrderFieldError(errorWithIndex, 'index')) {
+          throw errorWithIndex
+        }
+      }
+
+      await updateSectionWithFilter(id, {
+        ...baseInput,
+        order: indexValue,
+      })
+      return true
+    }
+
+    const saveArticlePlacement = async (id, baseInput, indexValue) => {
+      try {
+        await updateArticleWithFilter(id, {
+          ...baseInput,
+          index: indexValue,
+        })
+        return true
+      } catch (errorWithIndex) {
+        if (!isUnsupportedOrderFieldError(errorWithIndex, 'index')) {
+          throw errorWithIndex
+        }
+      }
+
+      await updateArticleWithFilter(id, {
+        ...baseInput,
+        order: indexValue,
+      })
+      return true
+    }
+
+    if (node.type === 'section') {
+      const baseInput = {
+        title: String(node.title || '').trim(),
+        parentId: nextNodeParentId,
+      }
+
+      try {
+        await saveSectionPlacement(node.id, baseInput, nodeIndex)
+        persistNodeFilterById(node.id)
+        return true
+      } catch (orderFieldError) {
+        if (
+          !fallbackWithoutIndex ||
+          (!isUnsupportedOrderFieldError(orderFieldError, 'index') &&
+            !isUnsupportedOrderFieldError(orderFieldError, 'order'))
+        ) {
+          throw orderFieldError
+        }
+
+        await updateSectionWithFilter(node.id, baseInput)
+        persistNodeFilterById(node.id)
+        return false
+      }
+    }
+
+    const baseInput = {
+      title: String(node.title || '').trim(),
+      sectionId: nextNodeParentId,
+    }
+
+    try {
+      await saveArticlePlacement(node.id, baseInput, nodeIndex)
+      persistNodeFilterById(node.id)
+      return true
+    } catch (orderFieldError) {
+      if (
+        !fallbackWithoutIndex ||
+        (!isUnsupportedOrderFieldError(orderFieldError, 'index') &&
+          !isUnsupportedOrderFieldError(orderFieldError, 'order'))
+      ) {
+        throw orderFieldError
+      }
+
+      await updateArticleWithFilter(node.id, baseInput)
+      persistNodeFilterById(node.id)
+      return false
+    }
+  }, [
+    persistNodeFilterById,
+    updateArticleWithFilter,
+    updateSectionWithFilter,
+  ])
+
+  const persistSiblingOrderingForParent = useCallback(async (treeSnapshot, affectedParentId) => {
+    const siblings = getChildrenByParentId(treeSnapshot, affectedParentId)
+    if (!Array.isArray(siblings)) return true
+
+    const siblingParentId = affectedParentId === 'root' ? null : affectedParentId
+
+    let orderSaved = false
+    for (let siblingIndex = 0; siblingIndex < siblings.length; siblingIndex += 1) {
+      const saved = await persistNodePlacementForLeftTree(
+        siblings[siblingIndex],
+        siblingParentId,
+        siblingIndex,
+        true
+      )
+      if (saved) orderSaved = true
+    }
+    return orderSaved
+  }, [persistNodePlacementForLeftTree])
+
+  const createArticleCopyNodeForPaste = useCallback(async (article, targetParentId) => {
+    const { data } = await fetchArticle({
+      variables: { id: article.id },
+    })
+    const rawContent = data?.article?.content ?? null
+    const content =
+      rawContent && typeof rawContent === 'object' && rawContent.type === 'doc'
+        ? rawContent
+        : null
+
+    const result = await createArticleWithFilter({
+      title: buildCopiedTitle(article.title),
+      sectionId: targetParentId,
+      content,
+    })
+
+    const createdArticle = result?.data?.createArticle
+    if (!createdArticle?.id) return null
+
+    persistNodeFilterById(createdArticle.id)
+    return {
+      id: createdArticle.id,
+      type: 'article',
+      title: createdArticle.title,
+      editor: 'tiptap',
+      filter: normalizedDocFilter,
+    }
+  }, [
+    createArticleWithFilter,
+    fetchArticle,
+    normalizedDocFilter,
+    persistNodeFilterById,
+  ])
+
+  const pasteCopiedItemsAtTarget = useCallback(async () => {
+    if (!canManage) return
+    if (leftTreePasteBusy) return
+    if (!leftTreeCopyBuffer?.ids?.length) return
+    if (!leftTreePasteTargetHint) return
+
+    const batchTargets = collectBatchTargets(leftTreeCopyBuffer.ids)
+    if (!batchTargets.length) return
+
+    const targetParentId = String(leftTreePasteTargetHint.parentId ?? 'root')
+    let insertIndex =
+      leftTreePasteTargetHint.position === 'before'
+        ? Number(leftTreePasteTargetHint.index) || 0
+        : (Number(leftTreePasteTargetHint.index) || 0) + 1
+
+    setLeftTreePasteBusy(true)
+    try {
+      const copiedNodes = []
+
+      for (const source of batchTargets) {
+        if (!source?.item) continue
+        if (source.item.type === 'section') {
+          const copiedSectionNode = await copySectionBranch(
+            source.item,
+            targetParentId === 'root' ? null : targetParentId,
+            true,
+            true
+          )
+          if (copiedSectionNode) {
+            copiedNodes.push(copiedSectionNode)
+          }
+          continue
+        }
+
+        if (source.item.type === 'article') {
+          const copiedArticleNode = await createArticleCopyNodeForPaste(
+            source.item,
+            targetParentId === 'root' ? null : targetParentId
+          )
+          if (copiedArticleNode) {
+            copiedNodes.push(copiedArticleNode)
+          }
+        }
+      }
+
+      if (!copiedNodes.length) return
+
+      const nextTree = structuredClone(tree)
+      const insertedIds = []
+      for (const copiedNode of copiedNodes) {
+        insertAt(nextTree, targetParentId, insertIndex, copiedNode)
+        insertIndex += 1
+        insertedIds.push(String(copiedNode.id))
+      }
+
+      setTree(nextTree)
+      setLeftTreeLassoSelectedIds(insertedIds)
+      leftTreeLassoLastClickedIdRef.current = insertedIds[insertedIds.length - 1] || null
+      setLeftTreePasteHoverHint(null)
+      setLeftTreePasteTargetHint((prev) => prev)
+
+      try {
+        await persistSiblingOrderingForParent(nextTree, targetParentId)
+        markSaveSuccess()
+      } catch (persistError) {
+        console.error('Failed to persist pasted items ordering:', persistError)
+      }
+    } finally {
+      setLeftTreePasteBusy(false)
+    }
+  }, [
+    canManage,
+    collectBatchTargets,
+    copySectionBranch,
+    createArticleCopyNodeForPaste,
+    leftTreeCopyBuffer,
+    leftTreePasteBusy,
+    leftTreePasteTargetHint,
+    markSaveSuccess,
+    persistSiblingOrderingForParent,
+    tree,
+  ])
+
+  useEffect(() => {
+    const onGlobalMouseDown = (event) => {
+      if (leftTreeLassoRef.current.active) return
+      if (event.altKey) return
+      if (!leftTreeLassoSelectedIds.length) return
+      const target = event.target
+      if (!(target instanceof Element)) return
+      if (target.closest('.doc-left-tree')) return
+      setLeftTreeLassoSelectedIds([])
+    }
+
+    const onKeyDown = (event) => {
+      if (leftTreeLassoRef.current.active) return
+      if (isFormFieldTarget(event.target)) return
+
+      if (event.key === 'Escape') {
+        if (leftTreeCopyBuffer) {
+          setLeftTreeCopyBuffer(null)
+          setLeftTreePasteHoverHint(null)
+          setLeftTreePasteTargetHint(null)
+        }
+        if (!leftTreeLassoSelectedIds.length) return
+        event.preventDefault()
+        event.stopPropagation()
+        setLeftTreeLassoSelectedIds([])
+        return
+      }
+
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        (event.key === 'v' || event.key === 'V') &&
+        leftTreeCopyBuffer?.ids?.length &&
+        leftTreePasteTargetHint &&
+        canManage
+      ) {
+        const sel = typeof window !== 'undefined' ? window.getSelection?.() : null
+        if (sel && !sel.isCollapsed) return
+        event.preventDefault()
+        event.stopPropagation()
+        void pasteCopiedItemsAtTarget()
+        return
+      }
+
+      if (!leftTreeLassoSelectedIds.length) return
+
+      if (!canManage) return
+
+      if (event.key === 'Backspace' || event.key === 'Delete') {
+        event.preventDefault()
+        event.stopPropagation()
+        void deleteSelectedItems(leftTreeLassoSelectedIds)
+        return
+      }
+
+      if ((event.ctrlKey || event.metaKey) && (event.key === 'c' || event.key === 'C')) {
+        const sel = typeof window !== 'undefined' ? window.getSelection?.() : null
+        if (sel && !sel.isCollapsed) return
+        event.preventDefault()
+        event.stopPropagation()
+        setLeftTreeCopyBuffer({
+          ids: Array.from(new Set(leftTreeLassoSelectedIds.map((id) => String(id)))),
+          createdAt: Date.now(),
+        })
+        setLeftTreePasteHoverHint(null)
+        setLeftTreePasteTargetHint(null)
+      }
+    }
+
+    document.addEventListener('mousedown', onGlobalMouseDown, true)
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => {
+      document.removeEventListener('mousedown', onGlobalMouseDown, true)
+      document.removeEventListener('keydown', onKeyDown, true)
+    }
+  }, [
+    canManage,
+    leftTreeCopyBuffer,
+    leftTreePasteTargetHint,
+    deleteSelectedItems,
+    leftTreeLassoSelectedIds,
+    pasteCopiedItemsAtTarget,
+  ])
 
   /* ===== drag & drop ===== */
 
-  const handleDrop = (targetId, targetIndex, parentId, dragging = dragState) => {
+  const handleDrop = async (targetId, targetIndex, parentId, dragging = dragState) => {
     if (!canManage) return
     if (!dragging) return
 
-    // РџСЂРѕРІРµСЂРєР°: РЅРµР»СЊР·СЏ РїРµСЂРµРјРµС‰Р°С‚СЊ СЌР»РµРјРµРЅС‚ РІРЅСѓС‚СЂСЊ СЃР°РјРѕРіРѕ СЃРµР±СЏ
     if (dragging.id === parentId) {
-      // РћС‚РјРµРЅСЏРµРј РїРµСЂРµРјРµС‰РµРЅРёРµ, РµСЃР»Рё РїС‹С‚Р°РµРјСЃСЏ РїРµСЂРµРјРµСЃС‚РёС‚СЊ РІ СЃР°РјРѕРіРѕ СЃРµР±СЏ
       setDragState(null)
       setDropHint(null)
       return
     }
 
-    // Р•СЃР»Рё РїРµСЂРµРјРµС‰Р°РµРј РІРЅСѓС‚СЂСЊ РїР°РїРєРё (parentId), РїСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ СЌС‚Рѕ РЅРµ РґРѕС‡РµСЂРЅСЏСЏ РїР°РїРєР°
     if (parentId !== 'root') {
-      // РџСЂРѕРІРµСЂСЏРµРј, РЅРµ СЏРІР»СЏРµС‚СЃСЏ Р»Рё parentId РґРѕС‡РµСЂРЅРёРј СЌР»РµРјРµРЅС‚РѕРј dragState.id
       if (isDescendant(tree, dragging.id, parentId)) {
-        // РћС‚РјРµРЅСЏРµРј РїРµСЂРµРјРµС‰РµРЅРёРµ, РµСЃР»Рё РїС‹С‚Р°РµРјСЃСЏ РїРµСЂРµРјРµСЃС‚РёС‚СЊ СЂРѕРґРёС‚РµР»СЏ РІ РїРѕС‚РѕРјРєР°
         setDragState(null)
         setDropHint(null)
         return
       }
     }
 
-    setTree(prev => {
-      const clone = structuredClone(prev)
+    const prevTree = structuredClone(tree)
+    const nextTree = structuredClone(tree)
+    const removed = findAndRemove(nextTree, dragging.id)
+    if (!removed) {
+      setDragState(null)
+      setDropHint(null)
+      return
+    }
 
-      const removed = findAndRemove(clone, dragging.id)
-      if (!removed) return prev
+    let insertIndex = targetIndex
+    if (removed.parentId === parentId && dragging.index < targetIndex) {
+      insertIndex -= 1
+    }
 
-      let insertIndex = targetIndex
-
-      if (
-        removed.parentId === parentId &&
-        dragging.index < targetIndex
-      ) {
-        insertIndex -= 1
-      }
-
-      insertAt(clone, parentId, insertIndex, removed.item)
-      return clone
-    })
-
+    insertAt(nextTree, parentId, insertIndex, removed.item)
+    setTree(nextTree)
     setDragState(null)
     setDropHint(null)
+
+    const nextParentId = parentId === 'root' ? null : parentId
+
+    const isUnsupportedOrderFieldError = (error, fieldName) => {
+      const messages = [
+        error?.message,
+        ...(Array.isArray(error?.graphQLErrors)
+          ? error.graphQLErrors.map(gqlError => gqlError?.message)
+          : []),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return (
+        messages.includes(fieldName) &&
+        (messages.includes('not defined') ||
+          messages.includes('unknown field') ||
+          messages.includes('cannot query field') ||
+          messages.includes('validation'))
+      )
+    }
+
+    const saveSectionPlacement = async (id, baseInput, nodeIndex) => {
+      try {
+        await updateSectionWithFilter(id, {
+          ...baseInput,
+          index: nodeIndex,
+        })
+        return true
+      } catch (errorWithIndex) {
+        if (!isUnsupportedOrderFieldError(errorWithIndex, 'index')) {
+          throw errorWithIndex
+        }
+      }
+
+      await updateSectionWithFilter(id, {
+        ...baseInput,
+        order: nodeIndex,
+      })
+      return true
+    }
+
+    const saveArticlePlacement = async (id, baseInput, nodeIndex) => {
+      try {
+        await updateArticleWithFilter(id, {
+          ...baseInput,
+          index: nodeIndex,
+        })
+        return true
+      } catch (errorWithIndex) {
+        if (!isUnsupportedOrderFieldError(errorWithIndex, 'index')) {
+          throw errorWithIndex
+        }
+      }
+
+      await updateArticleWithFilter(id, {
+        ...baseInput,
+        order: nodeIndex,
+      })
+      return true
+    }
+
+    const persistNodePlacement = async (
+      node,
+      nextNodeParentId,
+      nodeIndex,
+      fallbackWithoutIndex = false
+    ) => {
+      if (!node?.id) return true
+
+      if (node.type === 'section') {
+        const baseInput = {
+          title: String(node.title || '').trim(),
+          parentId: nextNodeParentId,
+        }
+
+        try {
+          await saveSectionPlacement(node.id, baseInput, nodeIndex)
+          persistNodeFilterById(node.id)
+          return true
+        } catch (orderFieldError) {
+          if (
+            !fallbackWithoutIndex ||
+            (!isUnsupportedOrderFieldError(orderFieldError, 'index') &&
+              !isUnsupportedOrderFieldError(orderFieldError, 'order'))
+          ) {
+            throw orderFieldError
+          }
+
+          await updateSectionWithFilter(node.id, baseInput)
+          persistNodeFilterById(node.id)
+          return false
+        }
+      }
+
+      const baseInput = {
+        title: String(node.title || '').trim(),
+        sectionId: nextNodeParentId,
+      }
+
+      try {
+        await saveArticlePlacement(node.id, baseInput, nodeIndex)
+        persistNodeFilterById(node.id)
+        return true
+      } catch (orderFieldError) {
+        if (
+          !fallbackWithoutIndex ||
+          (!isUnsupportedOrderFieldError(orderFieldError, 'index') &&
+            !isUnsupportedOrderFieldError(orderFieldError, 'order'))
+        ) {
+          throw orderFieldError
+        }
+
+        await updateArticleWithFilter(node.id, baseInput)
+        persistNodeFilterById(node.id)
+        return false
+      }
+    }
+
+    try {
+      const movedNodeIndexSaved = await persistNodePlacement(
+        removed.item,
+        nextParentId,
+        insertIndex,
+        true
+      )
+
+      if (movedNodeIndexSaved) {
+        const affectedParentIds = Array.from(new Set([removed.parentId, parentId]))
+
+        for (const affectedParentId of affectedParentIds) {
+          const siblings = getChildrenByParentId(nextTree, affectedParentId)
+          if (!Array.isArray(siblings)) continue
+
+          const siblingParentId =
+            affectedParentId === 'root' ? null : affectedParentId
+
+          for (let siblingIndex = 0; siblingIndex < siblings.length; siblingIndex += 1) {
+            await persistNodePlacement(
+              siblings[siblingIndex],
+              siblingParentId,
+              siblingIndex,
+              false
+            )
+          }
+        }
+      }
+
+      markSaveSuccess()
+    } catch (error) {
+      console.error('Failed to persist moved item:', error)
+      setTree(prevTree)
+    }
   }
 
   const clearSearch = () => {
@@ -682,13 +2081,13 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
     setDeleteConfirm({ id, title })
   }
 
-  // Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРµСЂРµС…РѕРґР° Рє СЌР»РµРјРµРЅС‚Сѓ РІ РґРµСЂРµРІРµ
+  // Р В¤РЎС“Р Р…Р С”РЎвЂ Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—Р ВµРЎР‚Р ВµРЎвЂ¦Р С•Р Т‘Р В° Р С” РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљРЎС“ Р Р† Р Т‘Р ВµРЎР‚Р ВµР Р†Р Вµ
   const navigateToItem = (item) => {
     if (item.type === 'article') {
       onSelectFile(item.id)
     }
     
-    // Р—Р°РєСЂС‹РІР°РµРј РїРѕРёСЃРє РїРѕСЃР»Рµ РІС‹Р±РѕСЂР°
+    // Р вЂ”Р В°Р С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµР С Р С—Р С•Р С‘РЎРѓР С” Р С—Р С•РЎРѓР В»Р Вµ Р Р†РЎвЂ№Р В±Р С•РЎР‚Р В°
     setShowSearch(false)
   }
 
@@ -696,27 +2095,48 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
 
   return (
     <div
-      className="doc-left"
+      className={`doc-left ${leftTreeCopyBuffer ? 'copy-insert-mode' : ''} ${leftTreeAltMode ? 'alt-lasso-cursor' : ''}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onMouseDownCapture={handleDocLeftMouseDownCapture}
+      onClickCapture={handleDocLeftClickCapture}
     >
       <div className="doc-left-header">
         <div className="header-content">
           <span></span>
-          <button
-            className="search-toggle-btn"
-            onClick={openSearchModal}
-            title={'\u041f\u043e\u0438\u0441\u043a'}
-            aria-label={'\u041f\u043e\u0438\u0441\u043a'}
-          >
-            <IconSearch size={16} />
-          </button>
+          <div className="header-actions">
+            {showSaveIndicator && (
+              <span
+                className="save-indicator-dot"
+                title={'\u0421\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043e'}
+                aria-label={'\u0421\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043e'}
+              />
+            )}
+            <button
+              className="search-toggle-btn"
+              onClick={openSearchModal}
+              title={'\u041f\u043e\u0438\u0441\u043a'}
+              aria-label={'\u041f\u043e\u0438\u0441\u043a'}
+            >
+              <IconSearch size={16} />
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="doc-left-tree">
+      <div
+        ref={leftTreeRef}
+        className="doc-left-tree"
+        onMouseDownCapture={handleLeftTreeLassoMouseDownCapture}
+        onMouseMoveCapture={handleLeftTreeMouseMoveCapture}
+        onMouseLeave={handleLeftTreeMouseLeave}
+        onClickCapture={handleLeftTreeClickCapture}
+      >
+        {leftTreeLassoRectStyle && (
+          <div className="doc-left-tree-lasso-rect" style={leftTreeLassoRectStyle} />
+        )}
         {searchResults ? (
-          // РџРѕРєР°Р·С‹РІР°РµРј СЂРµР·СѓР»СЊС‚Р°С‚С‹ РїРѕРёСЃРєР°
+          // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°
           <div className="search-results">
             <div className="search-info">
               {'\u041d\u0430\u0439\u0434\u0435\u043d\u043e'}: {searchResults.length} {'\u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432'}
@@ -755,7 +2175,7 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
             ))}
           </div>
         ) : (
-          // РџРѕРєР°Р·С‹РІР°РµРј РѕР±С‹С‡РЅРѕРµ РґРµСЂРµРІРѕ
+          // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С•Р Вµ Р Т‘Р ВµРЎР‚Р ВµР Р†Р С•
           <>
             {tree.map((item, index) => (
               <TreeItem
@@ -763,20 +2183,22 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
                 item={item}
                 index={index}
                 parentId="root"
+                activeDocId={activeDocId}
                 onSelectFile={onSelectFile}
                 toggleSection={toggleSection}
                 startCreate={startCreate}
                 renameItem={renameItem}
-                deleteWithUndo={deleteWithUndo}
+                deleteItem={deleteItem}
                 creating={creating}
                 setCreating={setCreating}
                 commitCreate={commitCreate}
                 setTree={setTree}
                 openCopyModal={openCopyModal}
                 openDeleteConfirm={openDeleteConfirm}
-                cloneSection={cloneSection}
+                copySectionOnServer={copySectionOnServer}
                 copyArticleWithContent={copyArticleWithContent}
-                insertBelow={insertBelow}
+                copySelectedItems={copySelectedItems}
+                deleteSelectedItems={deleteSelectedItems}
                 dragState={dragState}
                 setDragState={setDragState}
                 handleDrop={handleDrop}
@@ -785,6 +2207,10 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
                 isDescendant={isDescendant}
                 tree={tree}
                 canManage={canManage}
+                lassoSelectedIds={leftTreeLassoSelectedIds}
+                suppressTreeClickUntilRef={suppressTreeClickUntilRef}
+                pasteHoverHint={leftTreePasteHoverHint}
+                pasteTargetHint={leftTreePasteTargetHint}
               />
             ))}
 
@@ -820,7 +2246,7 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
         )}
       </div>
 
-      {/* РњРѕРґР°Р»СЊРЅРѕРµ РѕРєРЅРѕ РїРѕРёСЃРєР° */}
+      {/* Р СљР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р Вµ Р С•Р С”Р Р…Р С• Р С—Р С•Р С‘РЎРѓР С”Р В° */}
       {showSearch && (
         <SearchModal
           searchQuery={searchQuery}
@@ -836,22 +2262,12 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
         <CopyModal
           data={copyModal}
           onClose={closeAllLeftModals}
-          onOnlyFolder={() => {
-            const cloned = cloneSection(copyModal.section, false)
-            setTree(prev => {
-              const next = structuredClone(prev)
-              insertBelow(next, copyModal.section.id, cloned)
-              return next
-            })
+          onOnlyFolder={async () => {
+            await copySectionOnServer(copyModal.section, false)
             closeAllLeftModals()
           }}
-          onWithContent={() => {
-            const cloned = cloneSection(copyModal.section, true)
-            setTree(prev => {
-              const next = structuredClone(prev)
-              insertBelow(next, copyModal.section.id, cloned)
-              return next
-            })
+          onWithContent={async () => {
+            await copySectionOnServer(copyModal.section, true)
             closeAllLeftModals()
           }}
         />
@@ -862,7 +2278,7 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
           title={deleteConfirm.title}
           onCancel={() => setDeleteConfirm(null)}
           onConfirm={() => {
-            deleteWithUndo(deleteConfirm.id)
+            deleteItem(deleteConfirm.id)
             setDeleteConfirm(null)
           }}
         />
@@ -871,10 +2287,17 @@ function DocumentationListLeftPanel({ tree, setTree, onSelectFile, canManage = f
       {lastDeleted && (
         <UndoToast
           key={lastDeleted.toastId}
-          itemType={lastDeleted.item.type}
-          title={lastDeleted.item.title}
-          onUndo={undoDelete}
-          onClose={confirmDelete}
+          itemType={lastDeleted.item?.type}
+          title={lastDeleted.item?.title}
+          itemCount={
+            Number.isFinite(lastDeleted.count)
+              ? lastDeleted.count
+              : Array.isArray(lastDeleted.entries)
+                ? lastDeleted.entries.length
+                : 1
+          }
+          onUndo={() => undoDelete(lastDeleted.toastId)}
+          onClose={() => commitDelete(lastDeleted.toastId)}
         />
       )}
     </div>
@@ -888,20 +2311,22 @@ function TreeItem({
   item,
   parentId,
   index,
+  activeDocId,
   onSelectFile,
   toggleSection,
   startCreate,
   renameItem,
-  deleteWithUndo,
+  deleteItem,
   creating,
   setCreating,
   commitCreate,
   setTree,
   openCopyModal,
   openDeleteConfirm,
-  cloneSection,
+  copySectionOnServer,
   copyArticleWithContent,
-  insertBelow,
+  copySelectedItems,
+  deleteSelectedItems,
   dragState,
   setDragState,
   handleDrop,
@@ -910,6 +2335,10 @@ function TreeItem({
   isDescendant,
   tree,
   canManage,
+  lassoSelectedIds,
+  suppressTreeClickUntilRef,
+  pasteHoverHint,
+  pasteTargetHint,
 }) {
   const [editing, setEditing] = useState(false)
   const [flash, setFlash] = useState(false)
@@ -919,6 +2348,30 @@ function TreeItem({
   const isSection = item.type === 'section'
   const hasChildren = item.children?.length > 0
   const isDragging = dragState?.id === item.id
+  const isActiveArticle =
+    item.type === 'article' &&
+    String(item.id) === String(activeDocId)
+  const isLassoSelected =
+    Array.isArray(lassoSelectedIds) &&
+    lassoSelectedIds.includes(String(item.id))
+  const hasMultiLassoSelection =
+    Array.isArray(lassoSelectedIds) && lassoSelectedIds.length > 1
+  const isPasteHoverBefore =
+    pasteHoverHint &&
+    String(pasteHoverHint.id) === String(item.id) &&
+    pasteHoverHint.position === 'before'
+  const isPasteHoverAfter =
+    pasteHoverHint &&
+    String(pasteHoverHint.id) === String(item.id) &&
+    pasteHoverHint.position === 'after'
+  const isPasteTargetBefore =
+    pasteTargetHint &&
+    String(pasteTargetHint.id) === String(item.id) &&
+    pasteTargetHint.position === 'before'
+  const isPasteTargetAfter =
+    pasteTargetHint &&
+    String(pasteTargetHint.id) === String(item.id) &&
+    pasteTargetHint.position === 'after'
 
   useEffect(() => {
     if (!canManage) {
@@ -940,12 +2393,22 @@ function TreeItem({
     <div className="tree-node">
       <div
         className={`tree-item ${item.type}
+          ${isActiveArticle ? 'is-active' : ''}
+          ${isLassoSelected ? 'lasso-selected' : ''}
+          ${isPasteHoverBefore ? 'paste-hover-before' : ''}
+          ${isPasteHoverAfter ? 'paste-hover-after' : ''}
+          ${isPasteTargetBefore ? 'paste-target-before' : ''}
+          ${isPasteTargetAfter ? 'paste-target-after' : ''}
           ${flash ? 'copied-flash' : ''}
           ${isDragging ? 'dragging' : ''}
           ${dropHint?.id === item.id && dropHint.position === 'inside' ? 'drop-inside' : ''}
           ${dropHint?.id === item.id && dropHint.position === 'before' ? 'drop-before' : ''}
           ${dropHint?.id === item.id && dropHint.position === 'after' ? 'drop-after' : ''}
         `}
+        data-doc-tree-id={item.id}
+        data-doc-tree-type={item.type}
+        data-doc-tree-parent-id={parentId ?? 'root'}
+        data-doc-tree-index={index}
         draggable={canManage}
         onDragStart={() => {
           if (!canManage) return
@@ -981,15 +2444,15 @@ function TreeItem({
           if (!canManage) return
           if (!dropHint || dropHint.id !== item.id) return
 
-          // РџСЂРѕРІРµСЂРєР°: РЅРµР»СЊР·СЏ РїРµСЂРµРјРµС‰Р°С‚СЊ СЌР»РµРјРµРЅС‚ РІРЅСѓС‚СЂСЊ СЃР°РјРѕРіРѕ СЃРµР±СЏ
+          // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°: Р Р…Р ВµР В»РЎРЉР В·РЎРЏ Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р В°РЎвЂљРЎРЉ РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљ Р Р†Р Р…РЎС“РЎвЂљРЎР‚РЎРЉ РЎРѓР В°Р СР С•Р С–Р С• РЎРѓР ВµР В±РЎРЏ
           if (dragState && dragState.id === item.id && dropHint.position === 'inside') {
             setDropHint(null)
             return
           }
 
-          // РџСЂРѕРІРµСЂРєР°: РЅРµР»СЊР·СЏ РїРµСЂРµРјРµС‰Р°С‚СЊ СЂРѕРґРёС‚РµР»СЏ РІ РїРѕС‚РѕРјРєР°
+          // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°: Р Р…Р ВµР В»РЎРЉР В·РЎРЏ Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р В°РЎвЂљРЎРЉ РЎР‚Р С•Р Т‘Р С‘РЎвЂљР ВµР В»РЎРЏ Р Р† Р С—Р С•РЎвЂљР С•Р СР С”Р В°
           if (dropHint.position === 'inside' && item.type === 'section' && dragState) {
-            // РџСЂРѕРІРµСЂСЏРµРј, РЅРµ СЏРІР»СЏРµС‚СЃСЏ Р»Рё С‚РµРєСѓС‰РёР№ СЌР»РµРјРµРЅС‚ (item) РїРѕС‚РѕРјРєРѕРј dragState
+            // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР ВµР С, Р Р…Р Вµ РЎРЏР Р†Р В»РЎРЏР ВµРЎвЂљРЎРѓРЎРЏ Р В»Р С‘ РЎвЂљР ВµР С”РЎС“РЎвЂ°Р С‘Р в„– РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљ (item) Р С—Р С•РЎвЂљР С•Р СР С”Р С•Р С dragState
             if (isDescendant && isDescendant(tree, dragState.id, item.id)) {
               setDropHint(null)
               return
@@ -1008,7 +2471,15 @@ function TreeItem({
           handleDrop(item.id, targetIndex, parentId)
           setDropHint(null)
         }}
-        onClick={() => {
+        onClick={(e) => {
+          if (
+            e.altKey ||
+            (suppressTreeClickUntilRef?.current &&
+              Date.now() < suppressTreeClickUntilRef.current)
+          ) {
+            return
+          }
+
           if (ignoreToggleRef.current) {
             ignoreToggleRef.current = false
             return
@@ -1021,59 +2492,63 @@ function TreeItem({
           }
         }}
       >
-        {/* в”Ђв”Ђв”Ђв”Ђв”Ђ TOP ROW в”Ђв”Ђв”Ђв”Ђв”Ђ */}
+        {/* РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚ TOP ROW РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚ */}
         <div className="tree-row tree-row-title">
-          {!editing ? (
-            <div className="tree-title-text">
-              <ExpandableTitle title={item.title} />
-            </div>
-          ) : (
-            <input
-              className="rename-input"
-              autoFocus
-              defaultValue={item.title}
-              onMouseDown={preventToggle}
-              onBlur={(e) => {
-                renameItem(item.id, e.target.value)
-                setEditing(false)
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  renameItem(item.id, e.target.value)
-                  setEditing(false)
-                }
-                if (e.key === 'Escape') setEditing(false)
-              }}
-            />
-          )}
-        </div>
-
-        {/* в”Ђв”Ђв”Ђв”Ђв”Ђ BOTTOM ROW в”Ђв”Ђв”Ђв”Ђв”Ђ */}
-        <div className="tree-row tree-row-bottom">
-          {/* LEFT */}
-          <div className="tree-row-left">
+          <div
+            className={`tree-row-left tree-row-left-title ${
+              canManage ? 'is-manageable' : ''
+            }`}
+          >
             {canManage && (
-              <span className="drag-handle" onMouseDown={preventToggle}>
+              <span
+                className="drag-handle drag-handle-inline"
+                onMouseDown={preventToggle}
+              >
                 <IconGripVertical size={16} />
               </span>
             )}
 
-            {isSection && (
-              <span
-                className="folder-arrow"
-                onMouseDown={preventToggle}
-                onClick={() => toggleSection(item.id)}
-              >
-                {item.isOpen ? (
-                  <IconChevronDown size={16} />
-                ) : (
-                  <IconChevronUp size={16} />
-                )}
-              </span>
-            )}
+            <div className="tree-title-and-arrow">
+              {!editing ? (
+                <div className="tree-title-text tree-title-shift">
+                  <ExpandableTitle title={item.title} />
+                </div>
+              ) : (
+                <input
+                  className="rename-input tree-title-shift"
+                  autoFocus
+                  defaultValue={item.title}
+                  onMouseDown={preventToggle}
+                  onBlur={(e) => {
+                    renameItem(item.id, e.target.value)
+                    setEditing(false)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      renameItem(item.id, e.target.value)
+                      setEditing(false)
+                    }
+                    if (e.key === 'Escape') setEditing(false)
+                  }}
+                />
+              )}
+
+              {isSection && (
+                <span
+                  className="folder-arrow folder-arrow-inline"
+                  onMouseDown={preventToggle}
+                  onClick={() => toggleSection(item.id)}
+                >
+                  {item.isOpen ? (
+                    <IconChevronDown size={16} />
+                  ) : (
+                    <IconChevronUp size={16} />
+                  )}
+                </span>
+              )}
+            </div>
           </div>
 
-          {/* RIGHT */}
           <div className="tree-row-right">
             {canManage && isSection && (
                 <button
@@ -1094,6 +2569,11 @@ function TreeItem({
                   title={'\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c'}
                   onMouseDown={preventToggle}
                   onClick={async (e) => {
+                    if (isLassoSelected && hasMultiLassoSelection) {
+                      await copySelectedItems(lassoSelectedIds)
+                      return
+                    }
+
                     const rect = e.currentTarget.getBoundingClientRect()
                     const x = Math.min(rect.right + 6, window.innerWidth - 200)
                     const y = Math.min(rect.top, window.innerHeight - 120)
@@ -1105,13 +2585,8 @@ function TreeItem({
                     }
 
                     if (!hasChildren) {
-                      const cloned = cloneSection(item, false)
-                      setTree(prev => {
-                        const next = structuredClone(prev)
-                        insertBelow(next, item.id, cloned)
-                        return next
-                      })
-                      triggerFlash()
+                      const copied = await copySectionOnServer(item, false)
+                      if (copied) triggerFlash()
                     } else {
                       openCopyModal({ section: item, x, y })
                     }
@@ -1134,8 +2609,12 @@ function TreeItem({
                   title={'\u0423\u0434\u0430\u043b\u0438\u0442\u044c'}
                   onMouseDown={preventToggle}
                   onClick={() => {
+                    if (isLassoSelected && hasMultiLassoSelection) {
+                      void deleteSelectedItems(lassoSelectedIds)
+                      return
+                    }
                     if (hasChildren) openDeleteConfirm({ id: item.id, title: item.title })
-                    else deleteWithUndo(item.id)
+                    else deleteItem(item.id)
                   }}
                 >
                   <IconTrash size={16} />
@@ -1164,20 +2643,22 @@ function TreeItem({
               item={child}
               parentId={item.id}
               index={i}
+              activeDocId={activeDocId}
               onSelectFile={onSelectFile}
               toggleSection={toggleSection}
               startCreate={startCreate}
               renameItem={renameItem}
-              deleteWithUndo={deleteWithUndo}
+              deleteItem={deleteItem}
               creating={creating}
               setCreating={setCreating}
               commitCreate={commitCreate}
               setTree={setTree}
               openCopyModal={openCopyModal}
               openDeleteConfirm={openDeleteConfirm}
-              cloneSection={cloneSection}
+              copySectionOnServer={copySectionOnServer}
               copyArticleWithContent={copyArticleWithContent}
-              insertBelow={insertBelow}
+              copySelectedItems={copySelectedItems}
+              deleteSelectedItems={deleteSelectedItems}
               dragState={dragState}
               setDragState={setDragState}
               handleDrop={handleDrop}
@@ -1186,6 +2667,10 @@ function TreeItem({
               isDescendant={isDescendant}
               tree={tree}
               canManage={canManage}
+              lassoSelectedIds={lassoSelectedIds}
+              suppressTreeClickUntilRef={suppressTreeClickUntilRef}
+              pasteHoverHint={pasteHoverHint}
+              pasteTargetHint={pasteTargetHint}
             />
           ))}
         </div>
@@ -1201,14 +2686,14 @@ function SearchModal({ searchQuery, setSearchQuery, filterType, setFilterType, o
   const [position, setPosition] = useState({ x: 100, y: 50 })
   const offsetRef = useRef({ x: 0, y: 0 })
 
-  // Р¤РѕРєСѓСЃ РЅР° input РїСЂРё РѕС‚РєСЂС‹С‚РёРё
+  // Р В¤Р С•Р С”РЎС“РЎРѓ Р Р…Р В° input Р С—РЎР‚Р С‘ Р С•РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљР С‘Р С‘
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [])
 
-  // Drag РґР»СЏ РјРѕРґР°Р»СЊРЅРѕРіРѕ РѕРєРЅР°
+  // Drag Р Т‘Р В»РЎРЏ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
   const handleMouseDown = (e) => {
     if (!e.target.closest('.modal-draggable-header')) return
     
@@ -1226,7 +2711,7 @@ function SearchModal({ searchQuery, setSearchQuery, filterType, setFilterType, o
       const newX = moveEvent.clientX - offsetRef.current.x
       const newY = moveEvent.clientY - offsetRef.current.y
       
-      // РћРіСЂР°РЅРёС‡РёРІР°РµРј РїРµСЂРµРјРµС‰РµРЅРёРµ РІ РїСЂРµРґРµР»Р°С… РѕРєРЅР°
+      // Р С›Р С–РЎР‚Р В°Р Р…Р С‘РЎвЂЎР С‘Р Р†Р В°Р ВµР С Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р ВµР Р…Р С‘Р Вµ Р Р† Р С—РЎР‚Р ВµР Т‘Р ВµР В»Р В°РЎвЂ¦ Р С•Р С”Р Р…Р В°
       const boundedX = Math.max(10, Math.min(newX, window.innerWidth - rect.width - 10))
       const boundedY = Math.max(10, Math.min(newY, window.innerHeight - rect.height - 10))
       
@@ -1242,7 +2727,7 @@ function SearchModal({ searchQuery, setSearchQuery, filterType, setFilterType, o
     document.addEventListener('mouseup', handleMouseUp)
   }
 
-  // Р—Р°РєСЂС‹С‚РёРµ РїСЂРё РЅР°Р¶Р°С‚РёРё Escape
+  // Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР С‘Р Вµ Р С—РЎР‚Р С‘ Р Р…Р В°Р В¶Р В°РЎвЂљР С‘Р С‘ Escape
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -1343,7 +2828,7 @@ function CopyModal({ data, onClose, onOnlyFolder, onWithContent }) {
   const [titleExpanded, setTitleExpanded] = useState(false)
   const offsetRef = useRef({ x: 0, y: 0 })
 
-  // Р—Р°РєСЂС‹С‚РёРµ РїСЂРё РєР»РёРєРµ РІРЅРµ РјРѕРґР°Р»СЊРЅРѕРіРѕ РѕРєРЅР°
+  // Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР С‘Р Вµ Р С—РЎР‚Р С‘ Р С”Р В»Р С‘Р С”Р Вµ Р Р†Р Р…Р Вµ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
   const handleClickOutside = useCallback((e) => {
     if (!ref.current) return
     if (ref.current.contains(e.target)) return
@@ -1355,7 +2840,7 @@ function CopyModal({ data, onClose, onOnlyFolder, onWithContent }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [handleClickOutside])
 
-  // Drag РґР»СЏ РјРѕРґР°Р»СЊРЅРѕРіРѕ РѕРєРЅР°
+  // Drag Р Т‘Р В»РЎРЏ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
   const handleMouseDown = (e) => {
     if (!e.target.closest('.copy-modal-header')) return
     
@@ -1373,7 +2858,7 @@ function CopyModal({ data, onClose, onOnlyFolder, onWithContent }) {
       const newX = moveEvent.clientX - offsetRef.current.x
       const newY = moveEvent.clientY - offsetRef.current.y
       
-      // РћРіСЂР°РЅРёС‡РёРІР°РµРј РїРµСЂРµРјРµС‰РµРЅРёРµ РІ РїСЂРµРґРµР»Р°С… РѕРєРЅР°
+      // Р С›Р С–РЎР‚Р В°Р Р…Р С‘РЎвЂЎР С‘Р Р†Р В°Р ВµР С Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р ВµР Р…Р С‘Р Вµ Р Р† Р С—РЎР‚Р ВµР Т‘Р ВµР В»Р В°РЎвЂ¦ Р С•Р С”Р Р…Р В°
       const boundedX = Math.max(10, Math.min(newX, window.innerWidth - rect.width - 10))
       const boundedY = Math.max(10, Math.min(newY, window.innerHeight - rect.height - 10))
       
@@ -1435,7 +2920,7 @@ function DeleteConfirm({ title, onCancel, onConfirm }) {
   const [titleExpanded, setTitleExpanded] = useState(false)
   const offsetRef = useRef({ x: 0, y: 0 })
 
-  // Р—Р°РєСЂС‹С‚РёРµ РїСЂРё РєР»РёРєРµ РІРЅРµ РјРѕРґР°Р»СЊРЅРѕРіРѕ РѕРєРЅР°
+  // Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР С‘Р Вµ Р С—РЎР‚Р С‘ Р С”Р В»Р С‘Р С”Р Вµ Р Р†Р Р…Р Вµ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
   const handleClickOutside = useCallback((e) => {
     if (!ref.current) return
     if (ref.current.contains(e.target)) return
@@ -1447,7 +2932,7 @@ function DeleteConfirm({ title, onCancel, onConfirm }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [handleClickOutside])
 
-  // Drag РґР»СЏ РјРѕРґР°Р»СЊРЅРѕРіРѕ РѕРєРЅР°
+  // Drag Р Т‘Р В»РЎРЏ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
   const handleMouseDown = (e) => {
     if (!e.target.closest('.delete-confirm-header')) return
     
@@ -1465,7 +2950,7 @@ function DeleteConfirm({ title, onCancel, onConfirm }) {
       const newX = moveEvent.clientX - offsetRef.current.x
       const newY = moveEvent.clientY - offsetRef.current.y
       
-      // РћРіСЂР°РЅРёС‡РёРІР°РµРј РїРµСЂРµРјРµС‰РµРЅРёРµ РІ РїСЂРµРґРµР»Р°С… РѕРєРЅР°
+      // Р С›Р С–РЎР‚Р В°Р Р…Р С‘РЎвЂЎР С‘Р Р†Р В°Р ВµР С Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р ВµР Р…Р С‘Р Вµ Р Р† Р С—РЎР‚Р ВµР Т‘Р ВµР В»Р В°РЎвЂ¦ Р С•Р С”Р Р…Р В°
       const boundedX = Math.max(10, Math.min(newX, window.innerWidth - rect.width - 10))
       const boundedY = Math.max(10, Math.min(newY, window.innerHeight - rect.height - 10))
       
@@ -1585,30 +3070,29 @@ function useOutsideClose(ref, onClose) {
   }, [onClose])
 }
 
-function UndoToast({ title, itemType, onUndo, onClose }) {
-  const [visible, setVisible] = useState(true)
-  const deletedLabel =
-    itemType === 'section'
+function UndoToast({ title, itemType, itemCount = 1, onUndo, onClose }) {
+  const isBatch = Number(itemCount) > 1
+  const deletedLabel = isBatch
+    ? '\u0423\u0434\u0430\u043b\u0435\u043d\u043e \u044d\u043b\u0435\u043c\u0435\u043d\u0442\u043e\u0432'
+    : itemType === 'section'
       ? '\u0423\u0434\u0430\u043b\u0435\u043d\u0430 \u043f\u0430\u043f\u043a\u0430'
       : '\u0423\u0434\u0430\u043b\u0435\u043d\u0430 \u0441\u0442\u0430\u0442\u044c\u044f'
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setVisible(false)
-      setTimeout(onClose, 300)
-    }, 5000)
-    return () => clearTimeout(t)
-  }, [])
-
-  if (!visible) return null
   if (typeof document === 'undefined') return null
 
   return createPortal(
     <div className="undo-toast show">
       <span className="undo-text">
-        {deletedLabel}: <ExpandableTitle title={title} defaultExpanded={false} />
+        {isBatch ? (
+          <>{deletedLabel}: {itemCount}</>
+        ) : (
+          <>
+            {deletedLabel}: <ExpandableTitle title={title} defaultExpanded={false} />
+          </>
+        )}
       </span>
-      <button onClick={onUndo}>{'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c'}</button>
+      <button onClick={onUndo}>
+        {'\u041e\u0442\u043c\u0435\u043d\u0438\u0442\u044c'}
+      </button>
       <button onClick={onClose} aria-label={'\u0417\u0430\u043a\u0440\u044b\u0442\u044c'}>
         <IconX size={14} />
       </button>
@@ -1618,4 +3102,3 @@ function UndoToast({ title, itemType, onUndo, onClose }) {
 }
 
 export default DocumentationListLeftPanel
-

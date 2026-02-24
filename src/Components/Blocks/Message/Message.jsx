@@ -10,7 +10,7 @@ import {
     MARK_MESSAGE_AS_READ, 
     REQUEST_MESSAGES_SUBSCRIPTION, 
     UPDATE_MESSAGE_BRON,
-    server,
+    getMediaUrl,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
@@ -503,7 +503,7 @@ function Message({
                                                             <div className={classes.requestData_message_avatar}>
                                                                 {message.sender?.images?.[0] ? (
                                                                     <img
-                                                                        src={`${server}${message.sender.images[0]}`}
+                                                                        src={getMediaUrl(message.sender.images[0])}
                                                                         alt={message.sender?.name}
                                                                         className={classes.requestData_message_avatarImg}
                                                                     />

@@ -3,7 +3,7 @@ import classes from "./DraggableRequestV2.module.css";
 import ReactDOM from "react-dom";
 import { Box, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 
 function clamp(value, min, max) {
@@ -411,9 +411,7 @@ const DraggableRequestV2 = ({
             >
               {request.airline && duration > 35 || request.status === "Ожидает" ? (
                 <img
-                  src={`${server}${
-                    request.airline ? request.airline.images[0] : "null"
-                  }`}
+                  src={getMediaUrl(request.airline ? request.airline.images[0] : null)}
                   alt=""
                   style={{
                     height: request.status === "Ожидает" ? "30px" : "25px",
@@ -514,9 +512,7 @@ const DraggableRequestV2 = ({
             >
               {request.airline && duration > 25 ? (
                 <img
-                  src={`${server}${
-                    request.airline ? request.airline.images[0] : "null"
-                  }`}
+                  src={getMediaUrl(request.airline ? request.airline.images[0] : null)}
                   alt=""
                   style={{
                     height: "25px",
@@ -563,9 +559,7 @@ const DraggableRequestV2 = ({
             >
               {request.airline ? (
                 <img
-                  src={`${server}${
-                    request.airline ? request.airline.images[0] : "null"
-                  }`}
+                  src={getMediaUrl(request.airline ? request.airline.images[0] : null)}
                   alt=""
                   style={{
                     height: "25px",

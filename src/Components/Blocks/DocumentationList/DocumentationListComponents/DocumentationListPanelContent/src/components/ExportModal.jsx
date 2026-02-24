@@ -55,6 +55,7 @@ export default function ExportModal({
 }) {
   const [fileBaseName, setFileBaseName] = useState('document')
   const [format, setFormat] = useState('json')
+  const [showHelp, setShowHelp] = useState(false)
   const nameInputRef = useRef(null)
 
   useEffect(() => {
@@ -96,6 +97,29 @@ export default function ExportModal({
       <div className="doc-io-modal-content">
         <div className="modal-header" onMouseDown={onMouseDown}>
           <div className="modal-drag-handle">Экспорт</div>
+          <div className="doc-io-header-actions">
+            <button
+              type="button"
+              className={`close-modal-btn doc-io-help-btn ${showHelp ? 'active' : ''}`}
+              onMouseDown={e => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onClick={e => {
+                e.preventDefault()
+                e.stopPropagation()
+                setShowHelp(prev => !prev)
+              }}
+              title={showHelp
+                ? '\u0421\u043a\u0440\u044b\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443'
+                : '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443'}
+              aria-label={showHelp
+                ? '\u0421\u043a\u0440\u044b\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443'
+                : '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443'}
+              aria-pressed={showHelp}
+            >
+              ?
+            </button>
           <button
             className="close-modal-btn"
             onMouseDown={e => {
@@ -111,6 +135,7 @@ export default function ExportModal({
           >
             ×
           </button>
+          </div>
         </div>
 
         <div className="modal-section">
@@ -156,7 +181,7 @@ export default function ExportModal({
               </button>
             ))}
           </div>
-          <div className="doc-io-hint">{current.hint}</div>
+          {showHelp && <div className="doc-io-hint">{current.hint}</div>}
         </div>
 
         <div className="modal-actions">

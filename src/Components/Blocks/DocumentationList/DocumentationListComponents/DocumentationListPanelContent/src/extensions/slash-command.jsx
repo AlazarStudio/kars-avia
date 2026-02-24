@@ -35,10 +35,26 @@ export const SlashCommand = Extension.create({
           let slashRange = null
           let used = false
           let styleElement = null
+          let outsideClickIgnoreUntil = 0
+          let openedAt = 0
+          let openedFromPlus = false
+          let recoveredEarlyExit = false
 
           /* ================= CLOSE ================= */
 
-          const close = () => {
+          const close = (reason = 'unknown') => {
+            const slashStateBeforeCleanup = SlashSourceKey.getState(editor.state)
+            const shouldIgnoreSuggestionExit =
+              reason === 'suggestion-exit' &&
+              !used &&
+              openedFromPlus &&
+              slashRange
+
+            if (shouldIgnoreSuggestionExit && slashStateBeforeCleanup?.fromPlus) {
+              recoveredEarlyExit = true
+              return
+            }
+
             document.removeEventListener('mousedown', handleOutsideClick)
             document.removeEventListener('keydown', handleGlobalKeyDown, true)
             document.removeEventListener('mousemove', handleDrag)
@@ -46,6 +62,16 @@ export const SlashCommand = Extension.create({
 
             // удаляем "/" если меню закрыли без выбора
             const slashState = SlashSourceKey.getState(editor.state)
+            const shouldRecoverEarlyExit =
+              reason === 'suggestion-exit' &&
+              !used &&
+              openedFromPlus &&
+              slashRange
+
+            if (shouldRecoverEarlyExit) {
+              recoveredEarlyExit = true
+              return
+            }
             if (!used && slashState?.fromPlus && slashRange) {
               editor
                 .chain()
@@ -107,13 +133,13 @@ export const SlashCommand = Extension.create({
                 editor: lastProps.editor,
                 range: lastProps.range,
               })
-              close()
+              close('select')
               return true
             }
 
             if (event.key === 'Escape') {
               event.preventDefault()
-              close()
+              close('escape')
               return true
             }
 
@@ -136,6 +162,8 @@ export const SlashCommand = Extension.create({
 
           const handleOutsideClick = e => {
             if (!container) return
+            if (Date.now() < outsideClickIgnoreUntil) return
+            if (!(e.target instanceof Element)) return
 
             // Исключения: клик по "+" или по самой модалке
             if (e.target.closest('.plus-overlay') || e.target.closest('.slash-menu-wrapper')) {
@@ -143,7 +171,7 @@ export const SlashCommand = Extension.create({
             }
 
             if (!container.contains(e.target)) {
-              close()
+              close('outside')
             }
           }
 
@@ -216,7 +244,7 @@ export const SlashCommand = Extension.create({
                   editor: lastProps.editor,
                   range: lastProps.range,
                 })
-                close()
+                close('select')
               }
 
               list.appendChild(el)
@@ -274,6 +302,19 @@ export const SlashCommand = Extension.create({
 
           return {
             onStart: props => {
+              if (container || styleElement) {
+                document.removeEventListener('mousedown', handleOutsideClick)
+                document.removeEventListener('keydown', handleGlobalKeyDown, true)
+                document.removeEventListener('mousemove', handleDrag)
+                document.removeEventListener('mouseup', stopDrag)
+                container?.remove()
+                styleElement?.remove()
+                container = null
+                list = null
+                dragHandle = null
+                styleElement = null
+              }
+
               lastProps = props
               items = props.items || []
               index = 0
@@ -281,6 +322,10 @@ export const SlashCommand = Extension.create({
               slashRange = props.range
 
               const slashState = SlashSourceKey.getState(editor.state)
+              openedFromPlus = Boolean(slashState?.fromPlus)
+              openedAt = Date.now()
+              recoveredEarlyExit = false
+              outsideClickIgnoreUntil = slashState?.fromPlus ? Date.now() + 450 : 0
 
               container = document.createElement('div')
               container.className = 'slash-menu-wrapper'
@@ -398,10 +443,8 @@ export const SlashCommand = Extension.create({
               document.addEventListener('mousemove', handleDrag)
               document.addEventListener('mouseup', stopDrag)
 
-              // click outside — откладываем, чтобы не поймать клик по "+" и дать модалке отрендериться
-              setTimeout(() => {
-                document.addEventListener('mousedown', handleOutsideClick)
-              }, 100)
+              // click outside: вешаем сразу, стартовый клик от "+" отсекается через outsideClickIgnoreUntil
+              document.addEventListener('mousedown', handleOutsideClick)
 
               update()
             },
@@ -417,11 +460,10 @@ export const SlashCommand = Extension.create({
               return handleMenuKeyDown(event)
             },
 
-            onExit: close,
+            onExit: () => close('suggestion-exit'),
           }
         },
       }),
     ]
   },
 })
-

@@ -15,6 +15,50 @@ function getTopLevelBlockPos(view, el) {
   }
 }
 
+function getInsertTargetPosForBlock(view, blockEl) {
+  if (!view || !(blockEl instanceof Element)) return null
+
+  try {
+    const rect = blockEl.getBoundingClientRect()
+    const hit = view.posAtCoords({
+      left: Math.min(rect.left + 24, rect.right - 6),
+      top: Math.min(rect.top + 8, rect.bottom - 8),
+    })
+
+    if (!hit) return null
+
+    const $pos = view.state.doc.resolve(hit.pos)
+
+    for (let d = $pos.depth; d > 0; d--) {
+      if ($pos.node(d).type.name === 'tableCell') {
+        return hit.pos
+      }
+    }
+
+    for (let d = $pos.depth; d > 0; d--) {
+      const node = $pos.node(d)
+      if (node.isTextblock) {
+        return $pos.end(d) - 1
+      }
+    }
+
+    for (let d = $pos.depth; d > 0; d--) {
+      const node = $pos.node(d)
+      if (node.isBlock && node.type.name !== 'doc') {
+        try {
+          return $pos.after(d)
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    return hit.pos
+  } catch {
+    return null
+  }
+}
+
 export default function PlusButtonOverlay({
   editor,
   scopeSelector = '.editor-hover-scope',
@@ -26,6 +70,8 @@ export default function PlusButtonOverlay({
   // текущий “ховернутый” блок и позиция, куда ставим курсор при клике на "+"
   const hoverRef = useRef({ el: null, targetPos: null })
   const inScopeRef = useRef(false)
+  const openRafRef = useRef(0)
+  const openSnapshotRef = useRef(null)
 
   useEffect(() => {
     if (!editor) return
@@ -317,13 +363,60 @@ export default function PlusButtonOverlay({
     }
   }, [editor, scopeSelector, isViewReady])
 
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(openRafRef.current)
+    }
+  }, [])
+
   if (!pos) return null
 
-  const openSlashMenu = () => {
+  const toAnchorRect = (rectLike) => {
+    if (!rectLike) return null
+    const { top, left, right, bottom, width, height } = rectLike
+    if (
+      !Number.isFinite(top) ||
+      !Number.isFinite(left) ||
+      !Number.isFinite(right) ||
+      !Number.isFinite(bottom)
+    ) {
+      return null
+    }
+    return { top, left, right, bottom, width, height }
+  }
+
+  const createOpenSnapshot = () => {
+    const hoverEl = hoverRef.current?.el
+    const hoverRect =
+      hoverEl && typeof hoverEl.getBoundingClientRect === 'function'
+        ? hoverEl.getBoundingClientRect()
+        : null
+    let liveTargetPos = null
+    try {
+      liveTargetPos = getInsertTargetPosForBlock(editor?.view, hoverEl)
+    } catch {
+      liveTargetPos = null
+    }
+    return {
+      targetPos:
+        typeof liveTargetPos === 'number'
+          ? liveTargetPos
+          : typeof hoverRef.current?.targetPos === 'number'
+            ? hoverRef.current.targetPos
+          : null,
+      anchorRect: toAnchorRect(hoverRect),
+    }
+  }
+
+  const openSlashMenu = (snapshot) => {
     const { state, view } = editor
+    const fallbackSnapshot = createOpenSnapshot()
+    const anchorRect = snapshot?.anchorRect || fallbackSnapshot.anchorRect
 
     // помечаем, что slash пришёл от "+"
-    view.dispatch(state.tr.setMeta(SlashSourceKey, { fromPlus: true }))
+    view.dispatch(
+      state.tr.setMeta(SlashSourceKey, { fromPlus: true, anchorRect })
+    )
 
     editor.commands.focus()
 
@@ -337,7 +430,10 @@ export default function PlusButtonOverlay({
     })()
 
     // если мы навелись на блок — переносим курсор туда (но не из таблицы)
-    const targetPos = hoverRef.current?.targetPos
+    const targetPos =
+      typeof snapshot?.targetPos === 'number'
+        ? snapshot.targetPos
+        : fallbackSnapshot.targetPos
     if (!isCursorInsideTable && typeof targetPos === 'number') {
       editor.commands.setTextSelection(targetPos)
     }
@@ -375,27 +471,36 @@ export default function PlusButtonOverlay({
       editor.commands.insertContent('/')
     }
   }
+
+  const scheduleOpenSlashMenu = (snapshot) => {
+    cancelAnimationFrame(openRafRef.current)
+    openRafRef.current = requestAnimationFrame(() => {
+      openSlashMenu(snapshot)
+    })
+  }
   const x = 0
   const y = pos?.top ?? 0 
 
   return (
     <div className={`position-plus-button ${isInScope ? 'plus-visible' : ''}`}>
-    <button
+    <div
       className="plus-overlay"
-      type="button"
+      role="button"
+      aria-label="Добавить блок"
       style={{ transform: `translate3d(${x}px, ${y}px, 0)` }}
-      onMouseDown={e => {
+      onPointerDown={e => {
+        openSnapshotRef.current = createOpenSnapshot()
         e.preventDefault()
         e.stopPropagation()
       }}
       onClick={e => {
         e.preventDefault()
         e.stopPropagation()
-        openSlashMenu()
+        scheduleOpenSlashMenu(openSnapshotRef.current || createOpenSnapshot())
       }}
     >
       +
-    </button>
+    </div>
   </div>
   )
 }

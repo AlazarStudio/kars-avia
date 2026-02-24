@@ -4,7 +4,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
   getCookie,
-  server,
+  getMediaUrl,
   UPDATE_DRIVER_MUTATION,
   convertToDate,
 } from "../../../../graphQL_requests";
@@ -102,7 +102,7 @@ function ConfirmDriver({
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(selectedImageUrl);
+      const response = await fetch(getMediaUrl(selectedImageUrl));
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -438,9 +438,9 @@ function ConfirmDriver({
                     <div className={classes.imageList}>
                       <div className={classes.imageItem}>
                         <img
-                          src={`${server}${chooseObject.documents.driverPhoto}`}
+                          src={getMediaUrl(chooseObject.documents.driverPhoto)}
                           alt="Фото водителя"
-                          onClick={() => openImageModal(`${server}${chooseObject.documents.driverPhoto}`)}
+                          onClick={() => openImageModal(getMediaUrl(chooseObject.documents.driverPhoto))}
                           style={{ cursor: "pointer" }}
                         />
                       </div>
@@ -455,9 +455,9 @@ function ConfirmDriver({
                       {chooseObject.documents.licensePhoto.map((image, index) => (
                         <div key={`license-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`Водительское удостоверение ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -473,9 +473,9 @@ function ConfirmDriver({
                       {chooseObject.documents.stsPhoto.map((image, index) => (
                         <div key={`sts-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`СТС ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -491,9 +491,9 @@ function ConfirmDriver({
                       {chooseObject.documents.ptsPhoto.map((image, index) => (
                         <div key={`pts-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`ПТС ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -509,9 +509,9 @@ function ConfirmDriver({
                       {chooseObject.documents.osagoPhoto.map((image, index) => (
                         <div key={`osago-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`ОСАГО ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -527,9 +527,9 @@ function ConfirmDriver({
                       {chooseObject.documents.carPhotos.map((image, index) => (
                         <div key={`car-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`Фото машины ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>

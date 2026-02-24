@@ -7,7 +7,7 @@ import { useMutation } from "@apollo/client";
 import {
   convertToDate,
   CREATE_AIRLINE_AA,
-  server,
+  getMediaUrl,
   UPDATE_AIRLINE_CONTRACT_AA,
 } from "../../../../graphQL_requests.js";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
@@ -288,7 +288,7 @@ function EditAdditionalAgreement({
               {agreement?.files?.map((i, index) => (
                 <a
                   key={index}
-                  href={`${server}${i}`}
+                  href={getMediaUrl(i)}
                   target="_blank"
                   className={classes.downloadsButton}
                   rel="noopener noreferrer"

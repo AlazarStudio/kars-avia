@@ -62,6 +62,82 @@
   height: 48px;
 }
 
+.viewer-nav[data-viewer-icon] {
+  font-size: 0;
+}
+
+.viewer-toolbar button[data-viewer-icon] > span:first-of-type {
+  display: none;
+}
+
+.viewer-nav[data-viewer-icon]::before,
+.viewer-toolbar button[data-viewer-icon]::before {
+  content: '';
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  pointer-events: none;
+  background-color: currentColor;
+  -webkit-mask-image: var(--viewer-icon);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-image: var(--viewer-icon);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+.viewer-nav[data-viewer-icon]::before {
+  width: 24px;
+  height: 24px;
+}
+
+.viewer-nav[data-viewer-icon='chevron-left']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15%2018L9%2012L15%206'/%3E%3C/svg%3E");
+}
+
+.viewer-nav[data-viewer-icon='chevron-right']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9%2018L15%2012L9%206'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='plus']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M12%205V19M5%2012H19'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='minus']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M5%2012H19'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='rotate-left']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3%2012a9%209%200%201%200%203-6.7'/%3E%3Cpath d='M3%204v5h5'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='rotate-right']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21%2012a9%209%200%201%201-3-6.7'/%3E%3Cpath d='M21%204v5h-5'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='reset']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 10a9 9 0 0 0-15.5-4.7L3.7 7.1'/%3E%3Cpath d='M21 4v6h-6'/%3E%3Cpath d='M3 14a9 9 0 0 0 15.5 4.7l1.8-1.8'/%3E%3Cpath d='M3 20v-6h6'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='download']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12%203v11'/%3E%3Cpath d='M8%2010l4%204l4-4'/%3E%3Cpath d='M4%2020h16'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='link']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10%2013a5%205%200%200%200%207.07%200l1.41-1.41a5%205%200%200%200-7.07-7.07l-.81.82'/%3E%3Cpath d='M14%2011a5%205%200%200%200-7.07%200L5.52%2012.4a5%205%200%200%200%207.07%207.07l.8-.8'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='check']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5%2012l4%204l10-10'/%3E%3C/svg%3E");
+}
+
+.viewer-toolbar button[data-viewer-icon='close']::before {
+  --viewer-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M18%206L6%2018M6%206l12%2012'/%3E%3C/svg%3E");
+}
+
 .viewer-toolbar button:hover {
   background: rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);

@@ -1,10 +1,9 @@
 // src/extensions/toggle.js
 import { mergeAttributes, Node } from '@tiptap/core'
 import { ReactNodeViewRenderer } from '@tiptap/react'
-import { Plugin, PluginKey, NodeSelection } from 'prosemirror-state'
 import ToggleView from './toggleView'
 
-const ToggleSelectionLockKey = new PluginKey('toggleSelectionLock')
+const DEFAULT_TOGGLE_TITLE = 'Раскрываемый список'
 
 export const Toggle = Node.create({
   name: 'toggle',
@@ -17,11 +16,13 @@ export const Toggle = Node.create({
 
   addAttributes() {
     return {
+      // Stored for backward compatibility with existing documents.
+      // The visual open/closed state is handled locally in ToggleView and is not persisted.
       collapsed: {
         default: false,
       },
       title: {
-        default: 'Раскрываемый список',
+        default: DEFAULT_TOGGLE_TITLE,
       },
       width: { default: 520 }, // px
       height: { default: null }, // px (null = auto)
@@ -33,21 +34,18 @@ export const Toggle = Node.create({
     return [
       {
         tag: 'div[data-type="toggle"]',
-        getAttrs: el => {
-          const collapsed = el.getAttribute('data-collapsed') === 'true'
-          const title = el.getAttribute('data-title') || 'Раскрываемый список'
-          return { collapsed, title }
-        },
+        getAttrs: el => ({
+          collapsed: false,
+          title: el.getAttribute('data-title') || DEFAULT_TOGGLE_TITLE,
+        }),
       },
-      // fallback, если кто-то вставит <details>
+      // Fallback for pasted HTML <details>.
       {
         tag: 'details',
-        getAttrs: el => {
-          const open = el.hasAttribute('open')
-          const title =
-            el.querySelector('summary')?.textContent?.trim() || 'Раскрываемый список'
-          return { collapsed: !open, title }
-        },
+        getAttrs: el => ({
+          collapsed: false,
+          title: el.querySelector('summary')?.textContent?.trim() || DEFAULT_TOGGLE_TITLE,
+        }),
       },
     ]
   },
@@ -57,7 +55,7 @@ export const Toggle = Node.create({
       'div',
       mergeAttributes(HTMLAttributes, {
         'data-type': 'toggle',
-        'data-collapsed': node.attrs.collapsed ? 'true' : 'false',
+        'data-collapsed': 'false',
         'data-title': node.attrs.title || '',
       }),
       0,
@@ -77,13 +75,13 @@ export const Toggle = Node.create({
           const { from } = selection
 
           const toggleNode = schema.nodes.toggle.create(
-            { collapsed: false, title: 'Раскрываемый список' },
+            { collapsed: false, title: DEFAULT_TOGGLE_TITLE },
             [schema.nodes.paragraph.create()]
           )
 
           const tr = state.tr.insert(from, toggleNode)
 
-          // курсор в первую строку внутри toggle
+          // Place cursor into the first line inside toggle.
           const cursorPos = from + 2
           tr.setSelection(selection.constructor.near(tr.doc.resolve(cursorPos)))
 
@@ -94,64 +92,6 @@ export const Toggle = Node.create({
   },
 
   addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        key: ToggleSelectionLockKey,
-
-        // если toggle свернут — не даём курсору/selection жить внутри него
-        appendTransaction: (trs, oldState, newState) => {
-          const shouldCheck = trs.some(tr => tr.selectionSet || tr.docChanged)
-          if (!shouldCheck) return null
-
-          const sel = newState.selection
-          const $from = sel.$from
-
-          for (let d = $from.depth; d > 0; d--) {
-            const n = $from.node(d)
-            if (n.type.name === 'toggle' && n.attrs.collapsed) {
-              const pos = $from.before(d)
-
-              // уже выбрали этот toggle — ничего не делаем
-              if (sel instanceof NodeSelection && sel.from === pos) return null
-
-              return newState.tr.setSelection(NodeSelection.create(newState.doc, pos))
-            }
-          }
-
-          return null
-        },
-
-        props: {
-          // клик в “закрытом контенте” выбирает сам toggle
-          handleClick: (view, pos, event) => {
-            const t = event?.target
-            if (!(t instanceof Element)) return false
-
-            // только клики внутри тела toggle (не в заголовке)
-            if (!t.closest('.toggle-body')) return false
-
-            const hit = view.posAtCoords({ left: event.clientX, top: event.clientY })
-            if (!hit) return false
-
-            const $pos = view.state.doc.resolve(hit.pos)
-
-            for (let d = $pos.depth; d > 0; d--) {
-              const n = $pos.node(d)
-              if (n.type.name === 'toggle' && n.attrs.collapsed) {
-                const togglePos = $pos.before(d)
-                view.dispatch(
-                  view.state.tr.setSelection(
-                    NodeSelection.create(view.state.doc, togglePos)
-                  )
-                )
-                return true
-              }
-            }
-
-            return false
-          },
-        },
-      }),
-    ]
+    return []
   },
 })

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import classes from "../InfoTableData/InfoTableData.module.css";
 import InfoTable from "../InfoTable/InfoTable";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 import { statusLabels } from "../../../roles";
 import ReportTimer from "./ReportTimer";
 
@@ -106,7 +106,7 @@ function InfoTableDataTransferOrders({
                   {item.airline.images?.[0] && (
                     <div className={classes.InfoTable_data_elem_img}>
                       <img
-                        src={`${server}${item.airline.images[0]}`}
+                        src={getMediaUrl(item.airline.images[0])}
                         alt=""
                       />
                     </div>

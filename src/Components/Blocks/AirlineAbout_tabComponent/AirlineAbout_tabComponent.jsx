@@ -9,7 +9,7 @@ import {
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
   GET_CITIES,
   getCookie,
-  server,
+  getMediaUrl,
   UPDATE_AIRLINE,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
@@ -341,7 +341,7 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                     src={
                       newImage
                         ? URL.createObjectURL(newImage)
-                        : `${server}${airline.images[0]}`
+                        : getMediaUrl(airline.images[0])
                     }
                     alt={airline.name}
                   />

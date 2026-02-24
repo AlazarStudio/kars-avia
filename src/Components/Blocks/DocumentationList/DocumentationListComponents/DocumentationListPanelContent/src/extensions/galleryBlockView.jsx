@@ -1,5 +1,6 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './imageBlockModal.css'
 import './galleryBlock.css'
 import './fileEmpty.css'
@@ -13,7 +14,7 @@ const DEFAULT_GALLERY_WIDTH = 520
 const DEFAULT_GALLERY_LAYOUT = 'grid'
 const DEFAULT_GALLERY_COLUMNS = 3
 const DEFAULT_GALLERY_GAP = 12
-const MIN_GALLERY_WIDTH = 320
+const MIN_GALLERY_WIDTH = 200
 const MAX_GALLERY_WIDTH = 4096
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
@@ -21,6 +22,7 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 export default function GalleryBlockView({ editor, node, updateAttributes, getPos }) {
   const docUpload = useDocumentationUpload()
   const { uploadImage: docUploadImage, getMediaUrl } = docUpload || {}
+  const canEdit = editor?.isEditable !== false
 
   const images = useMemo(() => {
     return Array.isArray(node.attrs.images) ? node.attrs.images : []
@@ -57,15 +59,22 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
         : { marginLeft: 0, marginRight: 'auto' }
 
   const [open, setOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [tab, setTab] = useState('upload')
   const [url, setUrl] = useState('')
   const [objectUrls, setObjectUrls] = useState(() => new Map())
 
   const imagesRef = useRef(images)
   const modalRef = useRef(null)
+  const settingsModalRef = useRef(null)
   const modalSourceRef = useRef(`gallery-block-${Math.random().toString(36).slice(2)}`)
   const [modalPos, setModalPos] = useState({ x: 0, y: 0 })
   const dragOffset = useRef({ x: 0, y: 0 })
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null
+  const renderModalPortal = (node) => {
+    if (!node) return null
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node
+  }
   const migrationRef = useRef(new Set())
 
   useEffect(() => {
@@ -108,7 +117,9 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
   }
 
   const openAtEvent = e => {
+    if (!canEdit) return
     e.stopPropagation()
+    setSettingsOpen(false)
     setModalPos({
       x: e.clientX + 10,
       y: e.clientY - 10,
@@ -117,10 +128,20 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
     setOpen(true)
   }
 
+  const openSettingsAtEvent = e => {
+    if (!canEdit) return
+    e.preventDefault()
+    e.stopPropagation()
+    setOpen(false)
+    announceModalOpen()
+    setSettingsOpen(prev => !prev)
+  }
+
   useEffect(() => {
     const onExternalModalOpen = event => {
       if (event?.detail?.source === modalSourceRef.current) return
       setOpen(false)
+      setSettingsOpen(false)
     }
 
     window.addEventListener(SINGLE_MODAL_EVENT, onExternalModalOpen)
@@ -130,15 +151,17 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
   }, [])
 
   useEffect(() => {
-    if (!open) return
+    if (!open && !settingsOpen) return
     const close = e => {
-      if (modalRef.current && !modalRef.current.contains(e.target)) {
-        setOpen(false)
-      }
+      const target = e.target
+      if (modalRef.current && modalRef.current.contains(target)) return
+      if (settingsModalRef.current && settingsModalRef.current.contains(target)) return
+      setOpen(false)
+      setSettingsOpen(false)
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
-  }, [open])
+  }, [open, settingsOpen])
 
   const startDragModal = e => {
     e.preventDefault()
@@ -163,6 +186,7 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
   }
 
   const startResize = (e, side) => {
+    if (!canEdit) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -208,6 +232,7 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
   }
 
   const addImage = item => {
+    if (!canEdit) return
     updateAttributes({
       images: [...imagesRef.current, { ...item }],
     })
@@ -216,23 +241,30 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
   }
 
   const onUpload = file => {
+    if (!canEdit) return
     if (!file || !file.type.startsWith('image/')) return
     ;(async () => {
       try {
         if (docUploadImage) {
           const path = await docUploadImage(file)
-          if (path) addImage({ src: path })
+          if (path) {
+            addImage({ src: path })
+          } else {
+            const saved = await saveFile(file)
+            addImage({ fileId: saved.id })
+          }
         } else {
           const saved = await saveFile(file)
           addImage({ fileId: saved.id })
         }
       } catch {
-        // ignore
+        addImage({ src: URL.createObjectURL(file) })
       }
     })()
   }
 
   const handleDrop = e => {
+    if (!canEdit) return
     e.preventDefault()
     e.currentTarget.classList.remove('drag-over')
 
@@ -296,6 +328,7 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
   }
 
   const removeImage = index => {
+    if (!canEdit) return
     updateAttributes({
       images: images.filter((_, i) => i !== index),
     })
@@ -429,6 +462,8 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
     scroller.scrollLeft += delta
   }
 
+  if (!canEdit && !hasImages) return null
+
   return (
     <NodeViewWrapper
       className="gallery-block block-resizable"
@@ -438,11 +473,35 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
         ...alignMargins,
       }}
     >
-      <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
-      <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
+      {canEdit && (
+        <>
+          <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
+          <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
+        </>
+      )}
 
-      {hasImages && (
-        <div className="gallery-layout-controls" contentEditable={false}>
+      {canEdit && hasImages && (
+        <>
+          <button
+            type="button"
+            className={`gallery-settings-trigger${settingsOpen ? ' is-open' : ''}`}
+            contentEditable={false}
+            onMouseDown={e => {
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+            onClick={openSettingsAtEvent}
+            aria-label={'\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u0433\u0430\u043b\u0435\u0440\u0435\u0438'}
+            title={'\u041d\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0438 \u0433\u0430\u043b\u0435\u0440\u0435\u0438'}
+          >
+            {'\u22ee'}
+          </button>
+          <div
+            ref={settingsModalRef}
+            className={`gallery-layout-controls${settingsOpen ? ' is-open' : ''}`}
+            contentEditable={false}
+            onMouseDown={e => e.stopPropagation()}
+          >
           <div className="gallery-layout-row">
             <button
               type="button"
@@ -482,7 +541,8 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
             </div>
           )}
 
-        </div>
+          </div>
+        </>
       )}
 
       <div
@@ -491,7 +551,7 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
         onWheelCapture={handleGalleryWheel}
         onWheel={handleGalleryWheel}
         onDragOver={
-          hasImages
+          canEdit && hasImages
             ? e => {
                 e.preventDefault()
                 e.currentTarget.classList.add('drag-over')
@@ -499,11 +559,11 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
             : undefined
         }
         onDragLeave={
-          hasImages
+          canEdit && hasImages
             ? e => e.currentTarget.classList.remove('drag-over')
             : undefined
         }
-        onDrop={handleDrop}
+        onDrop={canEdit ? handleDrop : undefined}
       >
         {images.map((img, i) => {
           const displaySrc = displayedSrcFor(img)
@@ -549,15 +609,22 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
                 )}
               </div>
 
-              <button
-                className="gallery-remove"
-                onClick={e => {
-                  e.stopPropagation()
-                  removeImage(i)
-                }}
-              >
-                ×
-              </button>
+              {canEdit && (
+                <button
+                  type="button"
+                  className="gallery-remove"
+                  onMouseDown={e => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                  onClick={e => {
+                    e.stopPropagation()
+                    removeImage(i)
+                  }}
+                >
+                  ×
+                </button>
+              )}
             </div>
           )
         })}
@@ -565,17 +632,21 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
         {!hasImages ? (
           <div
             className="file-empty gallery-empty"
-            onClick={openAtEvent}
-            onDragOver={e => {
-              e.preventDefault()
-              e.currentTarget.classList.add('drag-over')
-            }}
-            onDragLeave={e => e.currentTarget.classList.remove('drag-over')}
-            onDrop={handleDrop}
+            onClick={canEdit ? openAtEvent : undefined}
+            onDragOver={
+              canEdit
+                ? e => {
+                    e.preventDefault()
+                    e.currentTarget.classList.add('drag-over')
+                  }
+                : undefined
+            }
+            onDragLeave={canEdit ? e => e.currentTarget.classList.remove('drag-over') : undefined}
+            onDrop={canEdit ? handleDrop : undefined}
           >
             + Добавить изображение
           </div>
-        ) : (
+        ) : canEdit ? (
           <button
             type="button"
             className="gallery-add-circle"
@@ -584,10 +655,10 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
           >
             +
           </button>
-        )}
+        ) : null}
       </div>
 
-      {open && (
+      {canEdit && open && renderModalPortal(
         <div
           ref={modalRef}
           className="image-modal"
@@ -644,4 +715,3 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
     </NodeViewWrapper>
   )
 }
-

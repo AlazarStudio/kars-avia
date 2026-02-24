@@ -9,6 +9,19 @@ import {
 import { setDocumentationUpload, clearDocumentationUpload } from './DocumentationUploadStore'
 
 const DocumentationUploadContext = createContext(null)
+const ABSOLUTE_URL_RE = /^https?:\/\//i
+
+function ensureLeadingSlash(pathname) {
+  if (!pathname) return '/'
+  return pathname.startsWith('/') ? pathname : `/${pathname}`
+}
+
+function normalizeUploadsPath(pathname) {
+  const safePath = ensureLeadingSlash(pathname)
+  if (/^\/files\/uploads\//i.test(safePath)) return safePath
+  if (/^\/uploads\//i.test(safePath)) return `/files${safePath}`
+  return safePath
+}
 
 export function DocumentationUploadProvider({ children }) {
   const token = getCookie('token')
@@ -59,11 +72,27 @@ export function DocumentationUploadProvider({ children }) {
 
   const getMediaUrl = useCallback((path) => {
     if (!path || typeof path !== 'string') return path
-    if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:') || path.startsWith('blob:')) {
+    if (path.startsWith('data:') || path.startsWith('blob:')) {
       return path
     }
+
+    const currentToken = getCookie('token')
+
+    if (ABSOLUTE_URL_RE.test(path)) {
+      try {
+        const parsed = new URL(path)
+        parsed.pathname = normalizeUploadsPath(parsed.pathname)
+        if (currentToken) parsed.searchParams.set('token', currentToken)
+        return parsed.toString()
+      } catch {
+        return path
+      }
+    }
+
     const base = (server || '').replace(/\/+$/, '')
-    return path.startsWith('/') ? `${base}${path}` : `${base}/${path}`
+    const normalizedPath = normalizeUploadsPath(path)
+    const url = `${base}${normalizedPath}`
+    return currentToken ? `${url}?token=${currentToken}` : url
   }, [])
 
   const value = useMemo(

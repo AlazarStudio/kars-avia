@@ -26,8 +26,8 @@ import {
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
   getCookie,
+  getMediaUrl,
   REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
-  server,
 } from "../../../../graphQL_requests";
 import {
   isAirlineRole as isAirlineRoleCheck,
@@ -643,7 +643,6 @@ function ReservePlacement({ children, user, ...props }) {
               <>
                 <ManifestDropdown
                   request={request}
-                  server={server}
                   handleFileChange={handleFileChange}
                   file={file}
                   user={user}
@@ -666,7 +665,7 @@ function ReservePlacement({ children, user, ...props }) {
                   Манифест
                 </label>
                 <a
-                  href={request?.files ? `${server}${request?.files[0]}` : ""}
+                  href={getMediaUrl(request?.files?.[0]) ?? ""}
                   target="_blank"
                   className={classes.downloadsButton}
                 >
@@ -711,7 +710,7 @@ function ReservePlacement({ children, user, ...props }) {
             )}
             {request?.passengerList?.length !== 0 ? (
               <a
-                href={`${server}${request?.passengerList}`}
+                href={getMediaUrl(request?.passengerList)}
                 // onClick={() => {
                 //   request?.passengerList.length === 0
                 //     ? createPassengerList(request?.id)
@@ -814,7 +813,6 @@ function ReservePlacement({ children, user, ...props }) {
               handleFileChange={handleFileChange}
               file={file}
               request={request}
-              server={server}
               classes={classes}
             />
 

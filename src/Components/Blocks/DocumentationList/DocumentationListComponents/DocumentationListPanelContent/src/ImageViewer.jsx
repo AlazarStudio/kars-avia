@@ -228,6 +228,7 @@ export default function ImageViewer({
           <>
             <button
               className="viewer-nav left"
+              data-viewer-icon="chevron-left"
               onClick={e => {
                 e.stopPropagation()
                 setCurrent(v => wrapIndex(v - 1, images.length))
@@ -237,6 +238,7 @@ export default function ImageViewer({
             </button>
             <button
               className="viewer-nav right"
+              data-viewer-icon="chevron-right"
               onClick={e => {
                 e.stopPropagation()
                 setCurrent(v => wrapIndex(v + 1, images.length))
@@ -273,6 +275,7 @@ export default function ImageViewer({
       {/* Панель кнопок ПРИКРЕПЛЕНА К НИЗУ экрана */}
       <div className="viewer-toolbar" onClick={e => e.stopPropagation()}>
         <button 
+          data-viewer-icon="plus"
           onClick={zoomIn} 
           title="Приблизить (50%)"
           disabled={scale >= 5}
@@ -281,6 +284,7 @@ export default function ImageViewer({
           {/* <span style={{ fontSize: '12px', opacity: 0.8 }}>Увеличить</span> */}
         </button>
         <button 
+          data-viewer-icon="minus"
           onClick={zoomOut} 
           title="Отдалить (50%)"
           disabled={scale <= 0.1}
@@ -291,6 +295,7 @@ export default function ImageViewer({
         
         
         <button 
+          data-viewer-icon="rotate-left"
           onClick={() => setRotate(r => r - 90)} 
           title="Повернуть влево"
         >
@@ -299,6 +304,7 @@ export default function ImageViewer({
         </button>
         
         <button 
+          data-viewer-icon="rotate-right"
           onClick={() => setRotate(r => r + 90)} 
           title="Повернуть вправо"
         >
@@ -307,6 +313,7 @@ export default function ImageViewer({
         </button>
         
         <button 
+          data-viewer-icon="reset"
           onClick={resetTransform} 
           title="Сбросить масштаб и поворот"
           disabled={isDefaultScale}
@@ -319,6 +326,7 @@ export default function ImageViewer({
         <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.3)', margin: '0 8px' }} />
         
         <button 
+          data-viewer-icon="download"
           onClick={download} 
           title="Скачать"
         >
@@ -327,6 +335,7 @@ export default function ImageViewer({
         </button>
         
         <button 
+          data-viewer-icon={copied ? 'check' : 'link'}
           onClick={copy} 
           title={copied ? "Скопировано!" : "Скопировать URL"}
           style={{ 
@@ -345,6 +354,7 @@ export default function ImageViewer({
         <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.3)', margin: '0 8px' }} />
         
         <button 
+          data-viewer-icon="close"
           onClick={onClose} 
           title="Закрыть (ESC)"
           style={{ background: 'rgba(220, 38, 38, 0.3)' }}

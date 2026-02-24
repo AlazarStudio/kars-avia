@@ -6,7 +6,7 @@ import Sidebar from "../Sidebar/Sidebar";
 import {
   decodeJWT,
   getCookie,
-  server,
+  getMediaUrl,
   UPDATE_HOTEL_USER,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
@@ -276,7 +276,7 @@ function ExistRequestCompanyHotel({
                   <img
                     src={
                       showIMG?.length !== 0
-                        ? `${server}${showIMG}`
+                        ? getMediaUrl(showIMG)
                         : "/no-avatar.png"
                     }
                     alt=""

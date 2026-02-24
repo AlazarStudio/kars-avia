@@ -1,7 +1,7 @@
 import React from "react";
 import classes from './InfoTableDataAirlineCompany.module.css';
 import InfoTable from "../InfoTable/InfoTable";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import { useNavigate } from "react-router-dom";
 import { menuAccess } from "../../../roles";
@@ -35,7 +35,7 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                 <div className={`${classes.InfoTable_BottomInfo__item}`} key={employeeIndex}>
                                     <div className={`${classes.InfoTable_BottomInfo__item___elem}`}>
                                         <div className={classes.employeeImg}>
-                                            <img src={ employee.images[0] ? `${server}${employee.images[0]}` : '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
+                                            <img src={getMediaUrl(employee.images[0]) ?? '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
                                         </div>
                                         <div className={classes.employeeInfo}>
                                             <div className={classes.employeeName}>{employee.name}</div>

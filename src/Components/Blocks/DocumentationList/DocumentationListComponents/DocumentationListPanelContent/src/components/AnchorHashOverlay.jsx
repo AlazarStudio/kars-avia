@@ -4,6 +4,8 @@ import { buildAnchorDomId, createAnchorId } from '../navigationAnchors'
 const TEXT_NODE_TYPES = new Set(['paragraph', 'heading'])
 const TEXT_BLOCK_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'])
 const TABLE_NODE_TYPES = new Set(['table', 'tableRow', 'tableCell', 'tableHeader'])
+const ANCHOR_HASH_BTN_SIZE = 20
+const ANCHOR_HASH_GAP_FROM_ARTICLE = 2
 
 function normalizeLabel(text) {
   const normalized = (text || '').replace(/\s+/g, ' ').trim()
@@ -78,6 +80,12 @@ export default function AnchorHashOverlay({
     const scopeEl = editorDom.closest(scopeSelector) || editorDom.parentElement || editorDom
     const scopeRect = scopeEl.getBoundingClientRect()
     const editorRect = editorDom.getBoundingClientRect()
+    const panelRoot = editorDom.closest('.tiptap-panel')
+    const stickyEl =
+      panelRoot instanceof HTMLElement
+        ? panelRoot.querySelector('.tiptap-panel-top-sticky')
+        : null
+    const stickyRect = stickyEl instanceof HTMLElement ? stickyEl.getBoundingClientRect() : null
 
     const nextMarkers = []
 
@@ -100,7 +108,13 @@ export default function AnchorHashOverlay({
 
       const top =
         rect.top - scopeRect.top + scopeEl.scrollTop + Math.max(0, (rect.height - 18) / 2)
-      const left = editorRect.right - scopeRect.left + 10
+      const left = editorRect.right - scopeRect.left + ANCHOR_HASH_GAP_FROM_ARTICLE
+      const markerViewportTop = rect.top + Math.max(0, (rect.height - 18) / 2)
+      const markerViewportBottom = markerViewportTop + ANCHOR_HASH_BTN_SIZE
+      const isHiddenBySticky =
+        Boolean(stickyRect) &&
+        markerViewportBottom > stickyRect.top &&
+        markerViewportTop < stickyRect.bottom
 
       nextMarkers.push({
         key: `anchor-${pos}`,
@@ -111,6 +125,7 @@ export default function AnchorHashOverlay({
         level,
         anchorId,
         isActive,
+        isHiddenBySticky,
       })
     })
 
@@ -310,7 +325,11 @@ export default function AnchorHashOverlay({
           key={marker.key}
           type="button"
           className={`anchor-hash-btn ${marker.isActive ? 'active' : ''}`}
-          style={{ transform: `translate3d(${marker.left}px, ${marker.top}px, 0)` }}
+          style={{
+            transform: `translate3d(${marker.left}px, ${marker.top}px, 0)`,
+            visibility: marker.isHiddenBySticky ? 'hidden' : 'visible',
+            pointerEvents: marker.isHiddenBySticky ? 'none' : 'auto',
+          }}
           title={marker.isActive ? 'Убрать метку' : 'Добавить метку'}
           onMouseDown={event => {
             event.preventDefault()
@@ -328,4 +347,3 @@ export default function AnchorHashOverlay({
     </div>
   )
 }
-

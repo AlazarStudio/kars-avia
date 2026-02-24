@@ -1,6 +1,7 @@
 // src/extensions/videoBlockView.jsx
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './imageBlockModal.css'
 import './videoBlock.css'
 import './fileEmpty.css'
@@ -23,6 +24,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
 
   const docUpload = useDocumentationUpload()
   const { uploadFile: docUploadFile, getMediaUrl } = docUpload || {}
+  const canEdit = editor?.isEditable !== false
 
   const videoRef = useRef(null)
   const [open, setOpen] = useState(false)
@@ -35,6 +37,11 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   const modalSourceRef = useRef(`video-block-${Math.random().toString(36).slice(2)}`)
   const [modalPos, setModalPos] = useState({ x: 0, y: 0 })
   const dragOffset = useRef({ x: 0, y: 0 })
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null
+  const renderModalPortal = (node) => {
+    if (!node) return null
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node
+  }
 
   const announceModalOpen = () => {
     try {
@@ -81,6 +88,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   /* ================= OPEN MODAL ================= */
 
   const openAtEvent = e => {
+    if (!canEdit) return
     e.stopPropagation()
     setModalPos({
       x: e.clientX + 10,
@@ -142,6 +150,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   /* ================= SET VIDEO ================= */
 
   const setVideo = videoSrc => {
+    if (!canEdit) return
     const clean = String(videoSrc || '').trim()
     if (!clean) return
 
@@ -164,6 +173,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   }
 
   const onUpload = file => {
+    if (!canEdit) return
     if (!file || !file.type.startsWith('video/')) return
     ;(async () => {
       try {
@@ -171,13 +181,16 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
           const path = await docUploadFile(file)
           if (path) {
             updateAttributes({ src: path, fileId: null })
+          } else {
+            const saved = await saveFile(file)
+            updateAttributes({ fileId: saved.id, src: null })
           }
         } else {
           const saved = await saveFile(file)
           updateAttributes({ fileId: saved.id, src: null })
         }
       } catch {
-        // ignore
+        updateAttributes({ src: URL.createObjectURL(file), fileId: null })
       } finally {
         setOpen(false)
         setUrl('')
@@ -188,6 +201,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   /* ================= DROP (EMPTY) ================= */
 
   const handleDrop = e => {
+    if (!canEdit) return
     e.preventDefault()
     e.currentTarget.classList.remove('drag-over')
 
@@ -271,6 +285,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   /* ================= RESIZE ================= */
 
   const startResize = (e, side, shiftKey = false) => {
+    if (!canEdit) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -331,6 +346,8 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     document.addEventListener('mouseup', up)
   }
 
+  if (!canEdit && !hasVideo) return null
+
   return (
     <>
       <NodeViewWrapper
@@ -339,9 +356,13 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
         style={{ width, maxWidth: '100%', ...alignMargins }}
       >
         {/* RESIZE HANDLES */}
-        <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left', e.shiftKey)} />
-        <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right', e.shiftKey)} />
-        {hasVideo && (
+        {canEdit && (
+          <>
+            <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left', e.shiftKey)} />
+            <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right', e.shiftKey)} />
+          </>
+        )}
+        {canEdit && hasVideo && (
           <>
             <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top', e.shiftKey)} />
             <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom', e.shiftKey)} />
@@ -352,15 +373,21 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
         {!hasVideo && (
           <div
             className="file-empty"
-            onClick={openAtEvent}
-            onDragOver={e => {
-              e.preventDefault()
-              e.currentTarget.classList.add('drag-over')
-            }}
-            onDragLeave={e =>
-              e.currentTarget.classList.remove('drag-over')
+            onClick={canEdit ? openAtEvent : undefined}
+            onDragOver={
+              canEdit
+                ? e => {
+                    e.preventDefault()
+                    e.currentTarget.classList.add('drag-over')
+                  }
+                : undefined
             }
-            onDrop={handleDrop}
+            onDragLeave={
+              canEdit
+                ? e => e.currentTarget.classList.remove('drag-over')
+                : undefined
+            }
+            onDrop={canEdit ? handleDrop : undefined}
           >
             + Добавить видео
           </div>
@@ -404,6 +431,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
 
             <button
               className="video-settings-btn"
+              style={{ display: canEdit ? undefined : 'none' }}
               onClick={openAtEvent}
               title="Настройки видео"
               aria-label="Настройки видео"
@@ -419,14 +447,13 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
             className="video-caption"
             placeholder="Подпись"
             value={caption}
-            onChange={e =>
-              updateAttributes({ caption: e.target.value })
-            }
+            readOnly={!canEdit}
+            onChange={canEdit ? e => updateAttributes({ caption: e.target.value }) : undefined}
           />
         )}
 
         {/* MODAL */}
-        {open && (
+        {canEdit && open && renderModalPortal(
           <div
             ref={modalRef}
             className="image-modal"

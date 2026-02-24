@@ -28,7 +28,6 @@ import {
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
   getCookie,
   REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
-  server,
 } from "../../../../graphQL_requests";
 import {
   isAirlineRole as isAirlineRoleCheck,
@@ -665,7 +664,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               handleFileChange={handleFileChange}
               file={file}
               request={request}
-              server={server}
               classes={classes}
             />
 

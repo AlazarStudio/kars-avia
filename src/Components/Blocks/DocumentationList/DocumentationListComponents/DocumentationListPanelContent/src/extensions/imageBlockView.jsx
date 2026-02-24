@@ -1,5 +1,6 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './imageBlockModal.css'
 import './fileEmpty.css'
 import './blockResize.css'
@@ -7,7 +8,7 @@ import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile }
 import { useDocumentationUpload } from '../DocumentationUploadContext'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
-const IMAGE_MIN_WIDTH = 150
+const IMAGE_MIN_WIDTH = 200
 const IMAGE_FILE_URL_CACHE = new Map()
 
 export default function ImageBlockView({ editor, node, updateAttributes, getPos }) {
@@ -23,6 +24,7 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
 
   const docUpload = useDocumentationUpload()
   const { uploadImage: docUploadImage, getMediaUrl } = docUpload || {}
+  const canEdit = editor?.isEditable !== false
 
   const alignMargins =
     textAlign === 'center'
@@ -48,6 +50,11 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
   const modalSourceRef = useRef(`image-block-${Math.random().toString(36).slice(2)}`)
   const [modalPos, setModalPos] = useState({ x: 0, y: 0 })
   const dragOffset = useRef({ x: 0, y: 0 })
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null
+  const renderModalPortal = (node) => {
+    if (!node) return null
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node
+  }
 
   const announceModalOpen = () => {
     try {
@@ -76,6 +83,7 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
   /* ================= OPEN MODAL ================= */
 
   const openAtEvent = e => {
+    if (!canEdit) return
     e.stopPropagation()
     // Позиция рядом с курсором мыши
     setModalPos({
@@ -151,13 +159,17 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
           const path = await docUploadImage(file)
           if (path) {
             updateAttributes({ src: path, fileId: null })
+          } else {
+            const saved = await saveFile(file)
+            updateAttributes({ fileId: saved.id, src: null })
           }
         } else {
           const saved = await saveFile(file)
           updateAttributes({ fileId: saved.id, src: null })
         }
       } catch {
-        // ignore
+        const blobUrl = URL.createObjectURL(file)
+        updateAttributes({ src: blobUrl, fileId: null })
       } finally {
         setOpen(false)
         setUrl('')
@@ -318,6 +330,7 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
   const startResize = (e, side) => {
+    if (!canEdit) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -381,6 +394,8 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     document.addEventListener('mouseup', up)
   }
 
+  if (!canEdit && !hasImage) return null
+
   return (
     <NodeViewWrapper
       className="image-block-wrapper block-resizable"
@@ -388,9 +403,13 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
       style={{ width, ...alignMargins }}
     >
       {/* RESIZE HANDLES */}
-      <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
-      <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
-      {hasImage && (
+      {canEdit && (
+        <>
+          <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
+          <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
+        </>
+      )}
+      {canEdit && hasImage && (
         <>
           <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
           <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
@@ -417,15 +436,21 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
 
         <div
           className="file-empty"
-          onClick={openAtEvent}
-          onDragOver={e => {
-            e.preventDefault()
-            e.currentTarget.classList.add('drag-over')
-          }}
-          onDragLeave={e =>
-            e.currentTarget.classList.remove('drag-over')
+          onClick={canEdit ? openAtEvent : undefined}
+          onDragOver={
+            canEdit
+              ? e => {
+                  e.preventDefault()
+                  e.currentTarget.classList.add('drag-over')
+                }
+              : undefined
           }
-          onDrop={handleDrop}
+          onDragLeave={
+            canEdit
+              ? e => e.currentTarget.classList.remove('drag-over')
+              : undefined
+          }
+          onDrop={canEdit ? handleDrop : undefined}
         >
           + Добавить изображение
         </div>
@@ -457,20 +482,25 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
             }}
             style={{ cursor: 'pointer' }}
           />
-          <button
-            className="image-more-btn"
-            onClick={openAtEvent}
-          >
-            ⋮
-          </button>
+          {canEdit && (
+            <button
+              className="image-more-btn"
+              onClick={openAtEvent}
+            >
+              ⋮
+            </button>
+          )}
 
           {showCaption && (
             <input
               className="image-caption"
               placeholder="Комментарий"
               value={caption}
-              onChange={e =>
-                updateAttributes({ caption: e.target.value })
+              readOnly={!canEdit}
+              onChange={
+                canEdit
+                  ? e => updateAttributes({ caption: e.target.value })
+                  : undefined
               }
             />
           )}
@@ -478,7 +508,7 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
       )}
 
       {/* MODAL */}
-      {open && (
+      {canEdit && open && renderModalPortal(
         <div
           ref={modalRef}
           className="image-modal"

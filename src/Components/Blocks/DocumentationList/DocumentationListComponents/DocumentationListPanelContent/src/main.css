@@ -11,7 +11,7 @@
     var(--article-pad-top, 14px)
     var(--article-pad-right, 16px)
     var(--article-pad-bottom, 14px)
-    var(--article-pad-left, 16px);
+    calc(var(--article-pad-left, 16px) + var(--article-editor-extra-left, 0px));
   box-sizing: border-box;
 
   border: 1px solid #e5e7eb;
@@ -20,6 +20,7 @@
   /* ?? ВАЖНО: фикс белого текста */
   color: #111;
   background: #fff;
+  transition: padding-left 0.16s ease;
 }
 
 @media (max-width: 720px) {
@@ -184,10 +185,10 @@
   position: relative;
   --article-button-distance: 20px;
   --article-button-gap: 8px;
-  --article-button-shift-right: 0px;
+  --article-button-shift-right: 6px;
   --article-button-cluster-width: calc(48px + var(--article-button-gap, 8px));
-  left: calc(var(--overlay-left-shift, 0px) * -1);
-  width: calc(100% + var(--overlay-left-shift, 0px));
+  left: 0;
+  width: 100%;
 }
 
 .plus-overlay {
@@ -222,7 +223,7 @@
 }
 
 .plus-overlay:hover {
-  background: #f3f4f6;
+  background: #e8edf7;
   transform: scale(1.1);
   border-color: #9ca3af;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -575,11 +576,18 @@ details[open] summary::before {
 /* ================= SELECTION ================= */
 
 .ProseMirror-selectednode {
-  outline: 2px solid #6366f1;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.ProseMirror-selectednode::before,
+.ProseMirror-selectednode::after {
+  display: none !important;
 }
 
 .ProseMirror-focused {
-  border-color: #6366f1;
+  border-color: #e5e7eb;
+  box-shadow: none;
 }
 
 /* ================= BLOCK LASSO ================= */
@@ -587,8 +595,8 @@ details[open] summary::before {
 .block-lasso-rect {
   position: fixed;
   z-index: 9;
-  border: 1px solid rgba(99, 102, 241, 0.9);
-  background: rgba(99, 102, 241, 0.16);
+  border: 1px solid rgba(107, 140, 186, 0.62);
+  background: rgba(107, 140, 186, 0.10);
   border-radius: 10px;
   pointer-events: none;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
@@ -600,17 +608,17 @@ details[open] summary::before {
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: rgba(99, 102, 241, 0.95);
+  background: rgba(107, 140, 186, 0.82);
   box-shadow:
     0 0 0 2px rgba(255, 255, 255, 0.95),
-    0 0 0 3px rgba(99, 102, 241, 0.6);
+    0 0 0 3px rgba(107, 140, 186, 0.34);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
 .ProseMirror > *.block-lasso-selected {
   border-radius: 10px;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.85);
+  box-shadow: 0 0 0 2px rgba(107, 140, 186, 0.42);
 }
 
 /* ================= BLOCK DND ================= */
@@ -667,7 +675,7 @@ details[open] summary::before {
 
 .ProseMirror > *.block-dnd-active {
   border-radius: 10px;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 0 2px rgba(107, 140, 186, 0.18);
 }
 
 .ProseMirror > *.block-dnd-over {
@@ -676,14 +684,14 @@ details[open] summary::before {
 
 .ProseMirror > *.block-dnd-over-left {
   box-shadow:
-    inset 3px 0 0 rgba(59, 130, 246, 0.82),
-    0 0 0 2px rgba(59, 130, 246, 0.26);
+    inset 3px 0 0 rgba(107, 140, 186, 0.50),
+    0 0 0 2px rgba(107, 140, 186, 0.15);
 }
 
 .ProseMirror > *.block-dnd-over-right {
   box-shadow:
-    inset -3px 0 0 rgba(59, 130, 246, 0.82),
-    0 0 0 2px rgba(59, 130, 246, 0.26);
+    inset -3px 0 0 rgba(107, 140, 186, 0.50),
+    0 0 0 2px rgba(107, 140, 186, 0.15);
 }
 
 .ProseMirror.block-dnd-native-active > p.block-dnd-over-top::before,
@@ -1009,7 +1017,7 @@ details[open] summary::before {
 @media (max-width: 768px) {
   .ProseMirror {
     max-width: 100%;
-    padding: 12px;
+    padding: 12px 12px 12px calc(12px + var(--article-editor-extra-left, 0px));
   }
 
   .ProseMirror [data-columns-layout] {
@@ -1273,16 +1281,78 @@ body.dragging-modal .table-controls-modal {
   opacity: 1;
   pointer-events: auto;
 }
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-overlay,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-gutter-indicator,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-side-indicator {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 .editor-hover-scope {
   --overlay-left-shift: 72px;
+  --editor-controls-gutter: 72px;
+  --editor-controls-bg: #f3f4f6;
   position: relative;
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  margin-left: auto;
+  margin-left: 0;
   margin-right: 0;
   box-sizing: border-box;
 }
+
+.editor-controls-gutter-corner {
+  position: absolute;
+  top: -12px;
+  left: 6px;
+  z-index: 13;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+.editor-controls-gutter-toggle {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: var(--gray);
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(17, 24, 39, 0.08);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s ease,
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease;
+}
+.editor-controls-gutter-corner:hover .editor-controls-gutter-toggle,
+.editor-hover-scope.editor-controls-gutter-open .editor-controls-gutter-toggle,
+.editor-hover-scope:focus-within .editor-controls-gutter-toggle {
+  opacity: 1;
+  transform: translateX(0);
+}
+.editor-controls-gutter-toggle:hover {
+  background: #e8edf7;
+  border-color: #9ca3af;
+  color: #111827;
+}
+.editor-controls-gutter-toggle.is-active {
+  border-color: #cfd7e3;
+  background: var(--gray);
+  color: #1f2937;
+}
+
 
 .editor-content-frame {
   position: relative;
@@ -1380,7 +1450,7 @@ body.dragging-modal .table-controls-modal {
 
 @media (max-width: 720px) {
   .editor-hover-scope {
-    --overlay-left-shift: 44px;
+    --overlay-left-shift: 72px;
   }
 }
 
@@ -1391,9 +1461,16 @@ body.dragging-modal .table-controls-modal {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc((var(--overlay-left-shift, 72px) + 40px) * -1);
-  width: calc(var(--overlay-left-shift, 72px) + 40px);
-  background: rgba(0, 0, 0, 0);
+  left: 0;
+  width: var(--editor-controls-gutter, 0px);
+  background: var(--editor-controls-bg, transparent);
+  border-right: 1px solid #e5e7eb;
+  pointer-events: none;
+  transition: width 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+.editor-hover-scope.editor-controls-gutter-collapsed::before {
+  border-right-color: transparent;
+  background: transparent;
 }
 
 .editor-hover-scope::after {

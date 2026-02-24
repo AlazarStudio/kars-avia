@@ -1,7 +1,7 @@
 import React from "react";
 import classes from "./InfoTableDataDispatcherCompany.module.css";
 import InfoTable from "../InfoTable/InfoTable";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import { canAccessMenu, isDispatcherAdmin } from "../../../utils/access";
 
@@ -66,7 +66,7 @@ function InfoTableDataDispatcherCompany({
                       <img
                         src={
                           dispatcher.images?.[0]
-                            ? `${server}${dispatcher.images[0]}`
+                            ? getMediaUrl(dispatcher.images[0])
                             : "/no-avatar.png"
                         }
                         alt="avatar"

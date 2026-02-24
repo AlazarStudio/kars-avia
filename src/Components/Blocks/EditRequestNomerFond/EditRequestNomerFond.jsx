@@ -8,7 +8,7 @@ import {
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   getCookie,
   REORDER_ROOM_KIND_IMAGES,
-  server,
+  getMediaUrl,
   UPDATE_HOTEL,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
@@ -792,7 +792,7 @@ function EditRequestNomerFond({
                         // }}
                         >
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`Image ${index + 1}`}
                           />
                           {/* {isEditing && (
