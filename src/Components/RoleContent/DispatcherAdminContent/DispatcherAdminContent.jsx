@@ -22,6 +22,7 @@ import DisAdminAutoparkContent from "./DisAdminAutoparkContent/DisAdminAutoparkC
 import DispatcherAccessSettings from "../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings";
 import DispatcherNotificationsSettings from "../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings";
 import { canAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
+import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 
 const NoAccess = () => (
   <div
@@ -61,7 +62,8 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
       {
         ids: ["reserve"],
         guardKey: "reserveMenu",
-        Comp: Reserve,
+        Comp: RepresentativeRequests,
+        // Comp: Reserve,
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {

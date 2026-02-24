@@ -660,7 +660,7 @@ function CreateRepresentativeRequest({
                     checked={formData.transferHabitation}
                     onChange={handleChange}
                   />
-                  Трансфер+Проживание
+                  Трансфер
                 </label>
 
                 {formData.transferHabitation && (

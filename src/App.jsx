@@ -107,14 +107,14 @@ function App() {
             />
 
             {/* Резерв внутри заявки */}
-            <Route
+            {/* <Route
               path="/:id/reservePlacement/:idRequest"
               element={<ReservePlacement user={user} />}
-            />
-            {/* <Route
+            /> */}
+            <Route
               path="/:id/representativeRequestsPlacement/:idRequest"
               element={<ReservePlacementRepresentative user={user} />}
-            /> */}
+            />
 
             {/* Шахматка */}
             {/* <Route

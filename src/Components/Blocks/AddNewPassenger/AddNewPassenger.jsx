@@ -101,8 +101,7 @@ function AddNewPassenger({
     return (
       formData.passengers &&
       formData.city &&
-      formData.hotel &&
-      formData.requestId
+      formData.hotel
     );
   };
 

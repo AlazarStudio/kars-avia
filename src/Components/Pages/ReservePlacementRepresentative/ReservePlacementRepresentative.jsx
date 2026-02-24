@@ -19,6 +19,7 @@ import {
   DELETE_PERSON_FROM_HOTEL,
   GET_AIRLINE_DEPARTMENT,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  GET_DISPATCHER_DEPARTMENTS,
   GET_HOTELS_RELAY,
   GET_PASSENGER_REQUEST,
   GET_RESERVE_REQUEST,
@@ -29,6 +30,10 @@ import {
   REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
   server,
 } from "../../../../graphQL_requests";
+import {
+  isAirlineRole as isAirlineRoleCheck,
+  isDispatcherRole as isDispatcherRoleCheck,
+} from "../../../utils/access";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
@@ -76,7 +81,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       },
       {
         key: "transferAccommodation",
-        label: "Трансфер+проживание",
+        label: "Трансфер",
         enabled:
           currentRequest.livingService?.plan?.enabled &&
           currentRequest.livingService?.withTransfer,
@@ -164,9 +169,26 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   );
 
   const [accessMenu, setAccessMenu] = useState({});
-  // console.log(user);
-  const { data: departmentData, refetch: departmentRefetch } = useQuery(
-    GET_AIRLINE_DEPARTMENT,
+
+  const isDispatcherRole = isDispatcherRoleCheck(user);
+  const isAirlineRole = isAirlineRoleCheck(user);
+  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
+
+  const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
+    useQuery(GET_AIRLINE_DEPARTMENT, {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      variables: {
+        airlineDepartmentId: user?.airlineDepartmentId,
+      },
+      skip: !isAirlineRole || !user?.airlineDepartmentId,
+    });
+
+  const { data: dispatcherDepartmentsData } = useQuery(
+    GET_DISPATCHER_DEPARTMENTS,
     {
       context: {
         headers: {
@@ -174,31 +196,52 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
         },
       },
       variables: {
-        airlineDepartmentId: user?.departmentId,
+        pagination: { all: true },
       },
-      skip: !user?.departmentId,
+      // skip: !isDispatcherRole || !dispatcherDepartmentId,
     }
   );
 
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  //   console.log(user);
+  //   console.log(isDispatcherRole)
+  // console.log(isAirlineRole)
+  // console.log(dispatcherDepartmentId)
+  useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      onData: () => {
-        departmentRefetch();
-      },
-    }
-  );
+    },
+    skip: !isAirlineRole || !user?.airlineDepartmentId,
+    onData: () => {
+      refetchAirlineDepartment();
+    },
+  });
 
   useEffect(() => {
-    if (departmentData && departmentData.airlineDepartment.accessMenu) {
-      setAccessMenu(departmentData?.airlineDepartment?.accessMenu);
+    if (isDispatcherRole) {
+      const department =
+        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
+          (item) => item.id === dispatcherDepartmentId
+        );
+      setAccessMenu(department?.accessMenu || {});
+      return;
     }
-  }, [departmentData, dataSubscriptionUpd]);
+
+    if (isAirlineRole) {
+      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
+      return;
+    }
+
+    setAccessMenu({});
+  }, [
+    isDispatcherRole,
+    isAirlineRole,
+    dispatcherDepartmentId,
+    dispatcherDepartmentsData,
+    airlineDepartmentData,
+  ]);
+
 
   // console.log(dataHotel);
 
@@ -347,7 +390,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id={"representativeRequests"} accessMenu={accessMenu} />
+      <MenuDispetcher id={"reserve"} accessMenu={accessMenu} />
       {isInitialized && !cookiesAccepted && (
         <CookiesNotice onAccept={acceptCookies} />
       )}
@@ -574,7 +617,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       chatHeight={
                         user.role !== roles.hotelAdmin &&
                         user.role !== roles.airlineAdmin
-                          ? "calc(100vh - 352px)"
+                          ? "calc(100vh - 364px)"
                           : "calc(100vh - 280px)"
                       }
                       separator={separator}

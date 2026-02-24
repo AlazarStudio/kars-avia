@@ -76,7 +76,7 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                                     {item.waterService?.plan?.enabled && <>Вода<br /></>}
                                     {item.mealService?.plan?.enabled && <>Питание <br /></>}
                                     {(item.livingService?.plan?.enabled && !item.livingService?.withTransfer) && <>Проживание <br /></>}
-                                    {item.livingService?.withTransfer && <>Трансфер+Проживание <br /></>}
+                                    {item.livingService?.withTransfer && <>Трансфер <br /></>}
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_position}>

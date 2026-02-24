@@ -406,7 +406,7 @@ function AddRepresentativeService({
                         checked={formData.transferHabitation}
                         onChange={handleChange}
                       />
-                      Трансфер+Проживание
+                      Трансфер
                     </label>
 
                     {formData.transferHabitation && (
