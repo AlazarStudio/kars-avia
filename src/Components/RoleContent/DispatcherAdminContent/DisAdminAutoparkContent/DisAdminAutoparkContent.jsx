@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import classes from "./DisAdminAutoparkContent.module.css";
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
 import Header from "../../../Blocks/Header/Header";
+import { isSuperAdmin } from "../../../../utils/access";
 
 const DriversCompanyList = lazy(() =>
   import("../../../Blocks/DriversCompanyList/DriversCompanyList")
@@ -19,6 +20,17 @@ const DriversCompanyPage = lazy(() =>
 const DisAdminAutoparkContent = ({ user, accessMenu }) => {
   const navigate = useNavigate();
   const { id, driversCompanyID } = useParams();
+
+  const effectiveAccessMenu = isSuperAdmin(user)
+    ? {
+        organizationCreate: true,
+        organizationAcceptDrivers: true,
+        organizationAddDrivers: true,
+        organizationUpdate: true,
+        contractCreate: true,
+        contractUpdate: true,
+      }
+    : accessMenu;
 
   const isCompanyDetails = !id && !!driversCompanyID;
 
@@ -41,7 +53,7 @@ const DisAdminAutoparkContent = ({ user, accessMenu }) => {
   if (isCompanyDetails) {
     return (
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <DriversCompanyPage id={driversCompanyID} user={user} accessMenu={accessMenu} />
+        <DriversCompanyPage id={driversCompanyID} user={user} accessMenu={effectiveAccessMenu} />
       </Suspense>
     );
   }
@@ -68,13 +80,13 @@ const DisAdminAutoparkContent = ({ user, accessMenu }) => {
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
-            <DriversCompanyList user={user} disAdmin={true} accessMenu={accessMenu} />
+            <DriversCompanyList user={user} disAdmin={true} accessMenu={effectiveAccessMenu} />
           </Suspense>
         </TabPanel>
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
-            <DriversList user={user} disAdmin={true} accessMenu={accessMenu} />
+            <DriversList user={user} disAdmin={true} accessMenu={effectiveAccessMenu} />
           </Suspense>
         </TabPanel>
       </Tabs>
