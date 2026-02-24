@@ -7,6 +7,7 @@ import HotelPage from '../../Blocks/HotelPage/HotelPage'
 import HotelsList from '../../Blocks/HotelsList/HotelsList'
 import Reports from '../../Blocks/Reports/Reports'
 import Reserve from '../../Blocks/Reserve/Reserve'
+import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 import Company from '../../Blocks/Сompany/Сompany'
 import SupportPage from '../../Blocks/SupportPage/SupportPage'
 import PatchNotesList from '../../Blocks/PatchNotesList/PatchNotesList'
@@ -38,7 +39,8 @@ const SuperAdminContent = ({ user }) => {
       {(id === 'relay' || (!id && !hotelID && !airlineID && !orderId && !driversCompanyID)) && (
         <Estafeta user={user} />
       )}
-      {id === 'reserve' && <Reserve user={user} />}
+      {id === 'reserve' && <RepresentativeRequests user={user} />}
+      {/* {id === 'reserve' && <Reserve user={user} />} */}
       {id === 'company' && <Company user={user} />}
       {id === 'hotels' && <HotelsList user={user} />}
       {id === 'airlines' && <AirlinesList user={user} />}
