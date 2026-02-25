@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import classes from "./TransferAccommodationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { exampleData, hotelsReserveData } from "../../../roles";
+import { convertToDateNew } from "../../../../graphQL_requests";
+import { hotelsReserveData } from "../../../roles";
 import Button from "../../Standart/Button/Button";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
@@ -13,9 +14,11 @@ export default function TransferAccommodationTab({
   transferAccommodation,
   addHotel,
 }) {
-  const drivers = useMemo(() => request?.transfer?.drivers ?? [], [request]);
-  const [statusDrivers] = useState(request?.transfer?.status ?? "Принята");
-  const [statusHotels] = useState(request?.accommodation?.status ?? "Принята");
+  const drivers = useMemo(() => request?.transferService?.drivers ?? [], [request]);
+  const ts = request?.transferService;
+  const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
+  const [statusDrivers] = useState(statusToLabel[ts?.status] ?? "Принята");
+  const [statusHotels] = useState(statusToLabel[request?.livingService?.status] ?? "Принята");
 
   return (
     <section
@@ -39,27 +42,26 @@ export default function TransferAccommodationTab({
                 Кол-во пассажиров
               </div>
               <div className={`${classes.w10} ${classes.jcEnd}`}>Ссылка</div>
-              {!!request?.livingService?.withTransfer && (
+              {!!request?.transferService?.plan?.peopleCount && (
                 <span className={classes.countChip}>
-                  <PeopleCountIcon /> {request.livingService.plan.peopleCount}
+                  <PeopleCountIcon /> {request.transferService.plan.peopleCount}
                 </span>
               )}
             </div>
             <div className={classes.tableCard}>
-              {(drivers.length ? drivers : request?.drivers ?? exampleData).map(
-                (d, idx) => (
+              {drivers.map((d, idx) => (
                   <div key={d.id || idx} className={classes.tableRow}>
                     <div className={classes.w5}>
-                      {String(d.code ?? d.id ?? idx).padStart(4, "0")}
+                      {String(idx + 1).padStart(4, "0")}
                     </div>
                     <div className={`${classes.w30} ${classes.jcCenter}`}>
-                      {d.name ?? d.fullName ?? "—"}
+                      {d.fullName ?? "—"}
                     </div>
                     <div className={`${classes.w15} ${classes.jcCenter}`}>
-                      {d.time ?? d.issueTime ?? "—"}
+                      {d.pickupAt ? convertToDateNew(d.pickupAt, true).trim() : "—"}
                     </div>
                     <div className={`${classes.w20} ${classes.jcCenter}`}>
-                      {d.passengers ?? d.passengersCount ?? "—"}
+                      {d.peopleCount ?? "—"}
                     </div>
                     <div className={`${classes.w10} ${classes.jcEnd} blueText`}>
                       <div className={classes.link}>
@@ -67,30 +69,27 @@ export default function TransferAccommodationTab({
                       </div>
                     </div>
                   </div>
-                )
-              )}
+                ))}
             </div>
           </>
           <ServiceFooter
             statusText={statusDrivers}
-            // ctaLabel="Питание доставлена"
-            // onCta={() => mutate()}
             disabled={statusHotels === "Поставка завершена"}
             history={[
               {
                 label: "Принята",
                 dot: "#C4CBD6",
-                time: request?.waterSupply?.acceptedAt ?? "14:30",
+                time: ts?.times?.acceptedAt ? convertToDateNew(ts.times.acceptedAt, true).trim() : "—",
               },
               {
                 label: "Выполняется",
                 dot: "#2A6EF5",
-                time: request?.waterSupply?.inProgressAt ?? "14:40",
+                time: ts?.times?.inProgressAt ? convertToDateNew(ts.times.inProgressAt, true).trim() : "—",
               },
               {
                 label: "Поставка завершена",
                 dot: "#2ABF46",
-                time: request?.waterSupply?.finishedAt ?? "15:00",
+                time: ts?.times?.finishedAt ? convertToDateNew(ts.times.finishedAt, true).trim() : "—",
               },
             ]}
           />
@@ -142,17 +141,17 @@ export default function TransferAccommodationTab({
                 {
                   label: "Принята",
                   dot: "#C4CBD6",
-                  time: request?.waterSupply?.acceptedAt ?? "14:30",
+                  time: request?.livingService?.times?.acceptedAt ? convertToDateNew(request.livingService.times.acceptedAt, true).trim() : "—",
                 },
                 {
                   label: "Выполняется",
                   dot: "#2A6EF5",
-                  time: request?.waterSupply?.inProgressAt ?? "14:40",
+                  time: request?.livingService?.times?.inProgressAt ? convertToDateNew(request.livingService.times.inProgressAt, true).trim() : "—",
                 },
                 {
                   label: "Поставка завершена",
                   dot: "#2ABF46",
-                  time: request?.waterSupply?.finishedAt ?? "15:00",
+                  time: request?.livingService?.times?.finishedAt ? convertToDateNew(request.livingService.times.finishedAt, true).trim() : "—",
                 },
               ]}
             />

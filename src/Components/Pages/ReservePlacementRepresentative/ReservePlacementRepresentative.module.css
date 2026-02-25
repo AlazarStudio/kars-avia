@@ -210,10 +210,16 @@
     display: grid;
     grid-template-columns: 1fr 360px;
     gap: 20px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .tabContent {
     height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .tableCard {

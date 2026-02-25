@@ -249,22 +249,13 @@ function CreateRepresentativeRequest({
 
     if (type === "checkbox") {
       setFormData((prev) => {
-        // взаимоисключающие флаги с полным сбросом полей
+        // независимые чекбоксы: при снятии сбрасываем только свои поля
         if (name === "habitation") {
           return {
             ...prev,
             habitation: checked,
-            // сбрасываем поля при снятии чекбокса
             habitationPeopleCount: checked ? prev.habitationPeopleCount : "",
             habitationPlannedAt: checked ? prev.habitationPlannedAt : "",
-            // если включаем проживание - выключаем и сбрасываем трансфер+проживание
-            transferHabitation: checked ? false : prev.transferHabitation,
-            transferHabitationPeopleCount: checked
-              ? ""
-              : prev.transferHabitationPeopleCount,
-            transferHabitationPlannedAt: checked
-              ? ""
-              : prev.transferHabitationPlannedAt,
           };
         }
 
@@ -272,21 +263,15 @@ function CreateRepresentativeRequest({
           return {
             ...prev,
             transferHabitation: checked,
-            // сбрасываем поля при снятии чекбокса
             transferHabitationPeopleCount: checked
               ? prev.transferHabitationPeopleCount
               : "",
             transferHabitationPlannedAt: checked
               ? prev.transferHabitationPlannedAt
               : "",
-            // если включаем трансфер+проживание - выключаем и сбрасываем проживание
-            habitation: checked ? false : prev.habitation,
-            habitationPeopleCount: checked ? "" : prev.habitationPeopleCount,
-            habitationPlannedAt: checked ? "" : prev.habitationPlannedAt,
           };
         }
 
-        // для остальных чекбоксов сбрасываем поля при снятии
         if (name === "waterSupply") {
           return {
             ...prev,
@@ -334,12 +319,26 @@ function CreateRepresentativeRequest({
       formData.foodSupply ||
       formData.waterSupply;
 
-    return (
-      formData.airportId &&
-      formData.airlineId &&
-      formData.flightNumber &&
-      hasAnyService
-    );
+    if (
+      !formData.airportId ||
+      !formData.airlineId ||
+      !formData.flightNumber ||
+      !hasAnyService
+    ) {
+      return false;
+    }
+
+    // для каждой выбранной услуги — количество человек и время
+    if (formData.waterSupply && (!formData.waterPeopleCount || !formData.waterPlannedAt))
+      return false;
+    if (formData.foodSupply && (!formData.foodPeopleCount || !formData.foodPlannedAt))
+      return false;
+    if (formData.habitation && (!formData.habitationPeopleCount || !formData.habitationPlannedAt))
+      return false;
+    if (formData.transferHabitation && (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt))
+      return false;
+
+    return true;
   };
 
   const [isLoading, setIsLoading] = useState(false);
@@ -358,35 +357,42 @@ function CreateRepresentativeRequest({
       airlineId: formData.airlineId,
       flightNumber: formData.flightNumber.trim(),
       airportId: formData.airportId || null,
-      livingService: {
-        plan: {
-          enabled:
-            formData.habitation || formData.transferHabitation ? true : false,
-          peopleCount:
-            Number(formData.habitationPeopleCount) ||
-            Number(formData.transferHabitationPeopleCount) ||
-            null,
-          plannedAt:
-            buildPlannedAt(formData.habitationPlannedAt) ||
-            buildPlannedAt(formData.transferHabitationPlannedAt) ||
-            null,
-        },
-        withTransfer: formData.transferHabitation || false,
-      },
-      mealService: {
-        plan: {
-          enabled: formData.foodSupply || false,
-          peopleCount: Number(formData.foodPeopleCount),
-          plannedAt: buildPlannedAt(formData.foodPlannedAt),
-        },
-      },
-      waterService: {
-        plan: {
-          enabled: formData.waterSupply || false,
-          peopleCount: Number(formData.waterPeopleCount),
-          plannedAt: buildPlannedAt(formData.waterPlannedAt),
-        },
-      },
+      waterService: formData.waterSupply
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.waterPeopleCount),
+              plannedAt: buildPlannedAt(formData.waterPlannedAt),
+            },
+          }
+        : undefined,
+      mealService: formData.foodSupply
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.foodPeopleCount),
+              plannedAt: buildPlannedAt(formData.foodPlannedAt),
+            },
+          }
+        : undefined,
+      livingService: formData.habitation
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.habitationPeopleCount),
+              plannedAt: buildPlannedAt(formData.habitationPlannedAt),
+            },
+          }
+        : undefined,
+      transferService: formData.transferHabitation
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.transferHabitationPeopleCount),
+              plannedAt: buildPlannedAt(formData.transferHabitationPlannedAt),
+            },
+          }
+        : undefined,
     };
 
     console.log(input);
@@ -420,7 +426,7 @@ function CreateRepresentativeRequest({
     }
   };
 
-  console.log(formData);
+  // console.log(formData);
 
   // Клик вне боковой панели закрывает её
   useEffect(() => {

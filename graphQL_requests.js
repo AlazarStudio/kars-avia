@@ -1723,6 +1723,54 @@ export const UPDATE_PASSENGER_REQUEST = gql`
   }
 `;
 
+export const SET_PASSENGER_SERVICE_STATUS = gql`
+  mutation SetPassengerServiceStatus($id: ID!, $service: PassengerServiceKind!, $status: PassengerServiceStatus!) {
+    setPassengerRequestServiceStatus(id: $id, service: $service, status: $status) {
+      id
+    }
+  }
+`;
+
+export const ADD_PASSENGER_REQUEST_HOTEL = gql`
+  mutation AddPassengerRequestHotel($requestId: ID!, $hotel: PassengerServiceHotelInput!) {
+    addPassengerRequestHotel(requestId: $requestId, hotel: $hotel) {
+      id
+    }
+  }
+`;
+
+export const ADD_PASSENGER_REQUEST_HOTEL_PERSON = gql`
+  mutation AddPassengerRequestHotelPerson(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $person: PassengerServiceHotelPersonInput!
+  ) {
+    addPassengerRequestHotelPerson(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      person: $person
+    ) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
+  mutation RemovePassengerRequestHotelPerson(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $personIndex: Int!
+  ) {
+    removePassengerRequestHotelPerson(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      personIndex: $personIndex
+    ) {
+      id
+    }
+  }
+`;
+
 export const GET_BRONS_HOTEL = gql`
   query Hotel($hotelId: ID!, $hcPagination: HotelChessPaginationInput) {
     hotel(id: $hotelId) {
@@ -2468,8 +2516,31 @@ export const GET_PASSENGER_REQUESTS = gql`
           peopleCount
           plannedAt
         }
-        withTransfer
       }
+      transferService {
+        status
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+      }
+    }
+  }
+`;
+
+export const PASSENGER_REQUEST_CREATED_SUBSCRIPTION = gql`
+  subscription PassengerRequestCreated {
+    passengerRequestCreated {
+      id
+    }
+  }
+`;
+
+export const PASSENGER_REQUEST_UPDATED_SUBSCRIPTION = gql`
+  subscription PassengerRequestUpdated {
+    passengerRequestUpdated {
+      id
     }
   }
 `;
@@ -2614,7 +2685,6 @@ export const GET_PASSENGER_REQUEST = gql`
           peopleCount
           plannedAt
         }
-        withTransfer
         status
         times {
           acceptedAt
@@ -2628,6 +2698,26 @@ export const GET_PASSENGER_REQUEST = gql`
           peopleCount
           address
           link
+          people {
+            fullName
+            phone
+            gender
+            roomNumber
+          }
+        }
+      }
+      transferService {
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+        status
+        times {
+          acceptedAt
+          inProgressAt
+          finishedAt
+          cancelledAt
         }
         drivers {
           fullName

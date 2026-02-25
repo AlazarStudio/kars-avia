@@ -44,6 +44,15 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  color: #0057C3;
+  font-size: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.link:hover {
+  text-decoration: underline;
 }
 
 .tableCard {
@@ -72,6 +81,23 @@
 .tableRow {
   border-bottom: 1px solid #E4E4EF;
   color: var(--main-gray);
+}
+
+.tableRowClickable {
+  cursor: pointer;
+}
+
+.tableRowClickable:hover {
+  background-color: #F6F8FC;
+}
+
+.lineClamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .actionBtn {

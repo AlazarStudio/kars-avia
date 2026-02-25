@@ -1,26 +1,17 @@
 import React, { useMemo, useState } from "react";
 import classes from "./WaterSupplyTab.module.css";
-import { gql, useMutation } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { exampleData } from "../../../roles";
+import { convertToDateNew, SET_PASSENGER_SERVICE_STATUS } from "../../../../graphQL_requests";
 
-const UPDATE_SERVICE_STATUS = gql`
-  mutation UpdateServiceStatus(
-    $reserveId: ID!
-    $service: ServiceType!
-    $status: ServiceStatus!
-  ) {
-    updateReserveServiceStatus(
-      reserveId: $reserveId
-      service: $service
-      status: $status
-    ) {
-      service
-      status
-    }
-  }
-`;
+const statusToLabel = {
+  NEW: "Принята",
+  ACCEPTED: "Принята",
+  IN_PROGRESS: "Выполняется",
+  COMPLETED: "Поставка завершена",
+  CANCELLED: "Отменена",
+};
 
 export default function WaterSupplyTab({
   id,
@@ -28,17 +19,17 @@ export default function WaterSupplyTab({
   onStatusChanged,
   addNotification,
 }) {
-  // Драйверы для воды из бэка (если нет — пусто)
-  const drivers = useMemo(() => request?.waterSupply?.drivers ?? [], [request]);
-
-  const initialStatus = request?.waterSupply?.status ?? "Принята";
+  const people = useMemo(() => request?.waterService?.people ?? [], [request]);
+  const ws = request?.waterService;
+  const rawStatus = ws?.status ?? "NEW";
+  const initialStatus = statusToLabel[rawStatus] ?? "Принята";
   const [status, setStatus] = useState(initialStatus);
 
-  const [mutate, { loading }] = useMutation(UPDATE_SERVICE_STATUS, {
+  const [mutate, { loading }] = useMutation(SET_PASSENGER_SERVICE_STATUS, {
     variables: {
-      reserveId: request?.id,
+      id: request?.id,
       service: "WATER",
-      status: "DELIVERED",
+      status: "COMPLETED",
     },
     onCompleted: () => {
       addNotification("Поставка завершена", "success");
@@ -46,12 +37,11 @@ export default function WaterSupplyTab({
       onStatusChanged?.();
     },
     onError: () => {
-      /* оставим локально, чтобы не падало */ setStatus("Поставка завершена");
+      setStatus("Поставка завершена");
       onStatusChanged?.();
       addNotification("Поставка завершена", "success");
     },
   });
-// console.log(request);
 
   // WaterSupplyTab.jsx
   return (
@@ -78,21 +68,19 @@ export default function WaterSupplyTab({
           </div>
         </div>
 
-        {(drivers.length ? drivers : request?.drivers ?? exampleData).map(
-          (d, idx) => (
-            <div key={d.id || idx} className={classes.tableRow}>
-              <div className={classes.w10}>
-                {String(d.code ?? d.id ?? idx).padStart(4, "0")}
-              </div>
-              <div className={`${classes.w30} ${classes.jcCenter}`}>
-                {d.name ?? d.fullName ?? "—"}
-              </div>
-              <div className={`${classes.w20} ${classes.jcCenter}`}>
-                {d.time ?? d.issueTime ?? "—"}
-              </div>
+        {people.map((p, idx) => (
+          <div key={p.id || idx} className={classes.tableRow}>
+            <div className={classes.w10}>
+              {String(idx + 1).padStart(4, "0")}
             </div>
-          )
-        )}
+            <div className={`${classes.w30} ${classes.jcCenter}`}>
+              {p.fullName ?? "—"}
+            </div>
+            <div className={`${classes.w20} ${classes.jcCenter}`}>
+              {p.issuedAt ? convertToDateNew(p.issuedAt, true).trim() : "—"}
+            </div>
+          </div>
+        ))}
       </div>
 
       <ServiceFooter
@@ -104,17 +92,17 @@ export default function WaterSupplyTab({
           {
             label: "Принята",
             dot: "#C4CBD6",
-            time: request?.waterSupply?.acceptedAt ?? "14:30",
+            time: ws?.times?.acceptedAt ? convertToDateNew(ws.times.acceptedAt, true).trim() : "—",
           },
           {
             label: "Выполняется",
             dot: "#2A6EF5",
-            time: request?.waterSupply?.inProgressAt ?? "14:40",
+            time: ws?.times?.inProgressAt ? convertToDateNew(ws.times.inProgressAt, true).trim() : "—",
           },
           {
             label: "Поставка завершена",
             dot: "#2ABF46",
-            time: request?.waterSupply?.finishedAt ?? "15:00",
+            time: ws?.times?.finishedAt ? convertToDateNew(ws.times.finishedAt, true).trim() : "—",
           },
         ]}
       />

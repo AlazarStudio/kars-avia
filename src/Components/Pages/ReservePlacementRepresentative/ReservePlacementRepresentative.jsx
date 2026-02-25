@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import classes from "./ReservePlacementRepresentative.module.css";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Header from "../../Blocks/Header/Header";
 import Filter from "../../Blocks/Filter/Filter";
@@ -27,7 +27,7 @@ import {
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
   getCookie,
-  REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
+  PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import {
   isAirlineRole as isAirlineRoleCheck,
@@ -51,11 +51,13 @@ import Message from "../../Blocks/Message/Message";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import { useCookies } from "../../../hooks/useCookies";
 import AddRepresentativeService from "../../Blocks/AddRepresentativeService/AddRepresentativeService";
+import AddRepresentativeHotel from "../../Blocks/AddRepresentativeHotel/AddRepresentativeHotel";
 
 function ReservePlacementRepresentative({ children, user, ...props }) {
   const token = getCookie("token");
-
-  let { idRequest } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id, idRequest } = useParams();
   const [request, setRequest] = useState([]);
   const [placement, setPlacement] = useState([]);
   const [filter, setFilter] = useState("waterSupply");
@@ -71,28 +73,24 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       {
         key: "waterSupply",
         label: "Поставка воды",
-        enabled: currentRequest.waterService?.plan.enabled,
+        enabled: currentRequest.waterService?.plan?.enabled,
       },
       {
         key: "powerSupply",
         label: "Поставка питания",
-        enabled: currentRequest.mealService?.plan.enabled,
+        enabled: currentRequest.mealService?.plan?.enabled,
       },
       {
         key: "transferAccommodation",
         label: "Трансфер",
-        enabled:
-          currentRequest.livingService?.plan?.enabled &&
-          currentRequest.livingService?.withTransfer,
+        enabled: currentRequest.transferService?.plan?.enabled,
       },
       {
         key: "habitation",
         label: "Проживание",
-        enabled:
-          currentRequest.livingService?.plan?.enabled &&
-          !currentRequest.livingService?.withTransfer,
+        enabled: currentRequest.livingService?.plan?.enabled,
       },
-    ].filter((filter) => filter.enabled);
+    ].filter((f) => f.enabled);
   };
 
   // Используем useMemo для filters чтобы избежать лишних ререндеров
@@ -153,19 +151,17 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     }
   );
 
-  const { data: subscriptionDataUpdate } = useSubscription(
-    REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      onComplete: () => {
-        refetch();
-      },
-    }
-  );
+    },
+    onData: () => {
+      refetch();
+      refetchHotel();
+    },
+  });
 
   const [accessMenu, setAccessMenu] = useState({});
 
@@ -216,6 +212,12 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       refetchAirlineDepartment();
     },
   });
+
+  useEffect(() => {
+    if (location.state?.tab === "habitation") {
+      setFilter("habitation");
+    }
+  }, [location.state?.tab]);
 
   useEffect(() => {
     if (isDispatcherRole) {
@@ -298,6 +300,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showServiceSidebar, setShowServiceSidebar] = useState(false);
+  const [showAddHotelSidebar, setShowAddHotelSidebar] = useState(false);
 
   const toggleCreateSidebar = () => {
     setShowCreateSidebar(!showCreateSidebar);
@@ -305,6 +308,10 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   const toggleServiceSidebar = () => {
     setShowServiceSidebar(!showServiceSidebar);
+  };
+
+  const toggleAddHotelSidebar = () => {
+    setShowAddHotelSidebar((prev) => !prev);
   };
 
   const [showChooseHotel, setShowChooseHotel] = useState(false);
@@ -535,9 +542,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             )} */}
 
             {(transferAccommodation === "hotel" || filter === "habitation") && (
-              <Button onClick={toggleCreateSidebar}>Добавить гостиницу</Button>
+              <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
             )}
-            {filters.length < 3 && (
+            {filters.length < 4 && (
               <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
             )}
           </div>
@@ -569,30 +576,30 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                     />
                   )}
                 {filter === "transferAccommodation" &&
-                  request.livingService?.plan?.enabled &&
-                  request.livingService?.withTransfer && (
+                  request.transferService?.plan?.enabled && (
                     <TransferAccommodationTab
                       id="panel-transferAccommodation"
                       request={request}
-                      hotels={placement} // уже собранные выше
+                      hotels={placement}
                       transferAccommodation={transferAccommodation}
                       onStatusChanged={() => {
                         refetch();
                         refetchHotel();
                       }}
-                      addHotel={toggleCreateSidebar}
+                      addHotel={toggleAddHotelSidebar}
                       addNotification={addNotification}
                     />
                   )}
                 {filter === "habitation" &&
-                  request.livingService?.plan?.enabled &&
-                  !request.livingService?.withTransfer && (
+                  request.livingService?.plan?.enabled && (
                     <HabitationTab
                       id="panel-habitation"
-                      hotels={placement}
                       request={request}
                       addNotification={addNotification}
-                      // если хотите оставить вашу сложную таблицу — можно здесь подключить старую
+                      onHotelSelect={(h, i) => {
+                        const hotelId = h.hotelId ?? h.name ?? String(i);
+                        navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`);
+                      }}
                     />
                   )}
               </div>
@@ -637,6 +644,14 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               onClose={toggleServiceSidebar}
               request={request}
               user={user}
+              addNotification={addNotification}
+            />
+
+            <AddRepresentativeHotel
+              show={showAddHotelSidebar}
+              onClose={toggleAddHotelSidebar}
+              request={request}
+              addNotification={addNotification}
             />
 
             <AddNewPassenger

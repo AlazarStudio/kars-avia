@@ -25,10 +25,10 @@ function AddRepresentativeService({
   const sidebarRef = useRef();
 
   // Определяем, какие услуги уже есть в заявке
-  const hasWaterService = request?.waterService?.plan.enabled;
-  const hasMealService = request?.mealService?.plan.enabled;
-  const hasLivingService = request?.livingService?.plan.enabled;
-  const hasTransferHabitation = request?.livingService?.withTransfer;
+  const hasWaterService = request?.waterService?.plan?.enabled;
+  const hasMealService = request?.mealService?.plan?.enabled;
+  const hasLivingService = request?.livingService?.plan?.enabled;
+  const hasTransferService = request?.transferService?.plan?.enabled;
 
   // Инициализируем форму только для услуг, которых еще нет
   const [formData, setFormData] = useState({
@@ -93,20 +93,12 @@ function AddRepresentativeService({
 
     if (type === "checkbox") {
       setFormData((prev) => {
-        // взаимоисключающие флаги с полным сбросом полей
         if (name === "habitation") {
           return {
             ...prev,
             habitation: checked,
             habitationPeopleCount: checked ? prev.habitationPeopleCount : "",
             habitationPlannedAt: checked ? prev.habitationPlannedAt : "",
-            transferHabitation: checked ? false : prev.transferHabitation,
-            transferHabitationPeopleCount: checked
-              ? ""
-              : prev.transferHabitationPeopleCount,
-            transferHabitationPlannedAt: checked
-              ? ""
-              : prev.transferHabitationPlannedAt,
           };
         }
 
@@ -120,9 +112,6 @@ function AddRepresentativeService({
             transferHabitationPlannedAt: checked
               ? prev.transferHabitationPlannedAt
               : "",
-            habitation: checked ? false : prev.habitation,
-            habitationPeopleCount: checked ? "" : prev.habitationPeopleCount,
-            habitationPlannedAt: checked ? "" : prev.habitationPlannedAt,
           };
         }
 
@@ -163,26 +152,25 @@ function AddRepresentativeService({
   };
 
   const isFormValid = () => {
-    // Проверяем только те услуги, которых еще нет в заявке
     const hasAnyNewService =
       (!hasWaterService && formData.waterSupply) ||
       (!hasMealService && formData.foodSupply) ||
-      (!hasLivingService && (formData.habitation || formData.transferHabitation));
+      (!hasLivingService && formData.habitation) ||
+      (!hasTransferService && formData.transferHabitation);
 
     if (!hasAnyNewService) return false;
 
-    // Проверяем заполненность полей только для новых услуг
     if (!hasWaterService && formData.waterSupply) {
       if (!formData.waterPeopleCount || !formData.waterPlannedAt) return false;
     }
-
     if (!hasMealService && formData.foodSupply) {
       if (!formData.foodPeopleCount || !formData.foodPlannedAt) return false;
     }
-
-    if (!hasLivingService) {
-      if (formData.habitation && (!formData.habitationPeopleCount || !formData.habitationPlannedAt)) return false;
-      if (formData.transferHabitation && (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt)) return false;
+    if (!hasLivingService && formData.habitation) {
+      if (!formData.habitationPeopleCount || !formData.habitationPlannedAt) return false;
+    }
+    if (!hasTransferService && formData.transferHabitation) {
+      if (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt) return false;
     }
 
     return true;
@@ -222,14 +210,23 @@ function AddRepresentativeService({
       };
     }
 
-    if (!hasLivingService && (formData.habitation || formData.transferHabitation)) {
+    if (!hasLivingService && formData.habitation) {
       input.livingService = {
         plan: {
           enabled: true,
-          peopleCount: Number(formData.habitationPeopleCount) || Number(formData.transferHabitationPeopleCount),
-          plannedAt: buildPlannedAt(formData.habitationPlannedAt) || buildPlannedAt(formData.transferHabitationPlannedAt),
+          peopleCount: Number(formData.habitationPeopleCount),
+          plannedAt: buildPlannedAt(formData.habitationPlannedAt),
         },
-        withTransfer: formData.transferHabitation,
+      };
+    }
+
+    if (!hasTransferService && formData.transferHabitation) {
+      input.transferService = {
+        plan: {
+          enabled: true,
+          peopleCount: Number(formData.transferHabitationPeopleCount),
+          plannedAt: buildPlannedAt(formData.transferHabitationPlannedAt),
+        },
       };
     }
 
@@ -240,7 +237,7 @@ function AddRepresentativeService({
       return;
     }
 
-    console.log(input);
+    // console.log(input);
 
     try {
       const response = await updatePassengerRequest({
@@ -365,7 +362,6 @@ function AddRepresentativeService({
                   </>
                 )}
 
-                {/* Услуги проживания показываем только если их еще нет */}
                 {!hasLivingService && (
                   <>
                     <label className={classes.checkBoxWrapper}>
@@ -398,7 +394,11 @@ function AddRepresentativeService({
                         />
                       </>
                     )}
+                  </>
+                )}
 
+                {!hasTransferService && (
+                  <>
                     <label className={classes.checkBoxWrapper}>
                       <input
                         type="checkbox"
@@ -432,8 +432,7 @@ function AddRepresentativeService({
                   </>
                 )}
 
-                {/* Сообщение, если все услуги уже добавлены */}
-                {hasWaterService && hasMealService && hasLivingService && (
+                {hasWaterService && hasMealService && hasLivingService && hasTransferService && (
                   <div className={classes.noServicesMessage}>
                     Все доступные услуги уже добавлены в заявку.
                   </div>

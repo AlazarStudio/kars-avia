@@ -1,0 +1,45 @@
+.title {
+  text-align: center;
+  font-weight: 700 !important;
+  /* padding-bottom: 5px; */
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 400px;
+}
+
+.label {
+  font-size: 14px;
+  color: var(--text, #333);
+}
+
+.input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* .input:focus {
+  outline: none;
+  border-color: #1976d2;
+} */
+
+.actions {
+  padding: 0 24px 12px 24px !important;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.actions button {
+  margin: 0 !important;
+  flex-basis: 50%;
+}

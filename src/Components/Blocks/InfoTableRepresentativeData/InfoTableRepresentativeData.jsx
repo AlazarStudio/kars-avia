@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import classes from './InfoTableRepresentativeData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
+import { convertToDateNew, getMediaUrl } from "../../../../graphQL_requests";
 
 function InfoTableRepresentativeData({ children, requests, user, paginationHeight, pageInfo, ...props }) {
     // Ref для контейнера списка
@@ -51,7 +51,7 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                             ) && <div className={classes.newRequest}></div>}
 
 
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{convertToDate(item.createdAt)}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{convertToDateNew(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w18}`}>
                             <div className={classes.InfoTable_data_elem_img}>
                                 <img src={getMediaUrl(item.airline?.images[0])} alt="" />
@@ -75,8 +75,8 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                                     <span><img src="/time.png" alt="" /> {convertToDate(item.departure, true)}</span> */}
                                     {item.waterService?.plan?.enabled && <>Вода<br /></>}
                                     {item.mealService?.plan?.enabled && <>Питание <br /></>}
-                                    {(item.livingService?.plan?.enabled && !item.livingService?.withTransfer) && <>Проживание <br /></>}
-                                    {item.livingService?.withTransfer && <>Трансфер <br /></>}
+                                    {item.livingService?.plan?.enabled && <>Проживание <br /></>}
+                                    {item.transferService?.plan?.enabled && <>Трансфер <br /></>}
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_position}>

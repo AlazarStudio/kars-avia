@@ -30,6 +30,7 @@ import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
 import { TokenRefresher } from "./TokenRefresher";
 import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementRepresentative/ReservePlacementRepresentative";
+import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHotelDetailPage/RepresentativeHotelDetailPage";
 import TransferOrder from "./Components/Blocks/TransferOrder/TransferOrder";
 
 function App() {
@@ -114,6 +115,10 @@ function App() {
             <Route
               path="/:id/representativeRequestsPlacement/:idRequest"
               element={<ReservePlacementRepresentative user={user} />}
+            />
+            <Route
+              path="/:id/representativeRequestsPlacement/:idRequest/hotel/:hotelId"
+              element={<RepresentativeHotelDetailPage user={user} />}
             />
 
             {/* Шахматка */}
