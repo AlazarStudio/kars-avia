@@ -1,0 +1,122 @@
+.sectionReport {
+  overflow: visible;
+}
+
+.tabContentReport {
+  overflow: visible;
+}
+
+.cardWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+  /* background-color: white; */
+  border-radius: 10px;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.searchField {
+  flex: 1;
+  min-width: 200px;
+  max-width: 350px;
+}
+
+.tableCard {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tableWrap {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.reportGrid {
+  display: grid;
+  grid-template-columns: 50px 140px 1fr 90px 80px 80px 80px 120px 120px 120px;
+  align-items: center;
+  padding: 20px;
+  gap: 10px;
+  min-width: 1000px;
+}
+
+.tableHead {
+  background: #fff;
+  color: #9E9E9E;
+  font-size: 16px;
+  border-bottom: 1px solid #E4E4EF;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tableRow {
+  border-bottom: 1px solid #E4E4EF;
+  font-size: 16px;
+  color: var(--main-gray);
+}
+
+.reportInput {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #E4E4EF;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.reportInput:focus {
+  outline: none;
+  border-color: #005EFF;
+}
+
+.reportInputNum {
+  text-align: right;
+}
+
+.footerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: #fff;
+  margin-top: auto;
+  border-top: 1px solid #E4E4EF;
+}
+
+.totalLabel {
+  font-size: 16px;
+  color: #545873;
+  font-weight: 600;
+}
+
+.emptyMessage {
+  padding: 40px 20px;
+  text-align: center;
+  color: #9E9E9E;
+  font-size: 16px;
+}
+
+.tabContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}

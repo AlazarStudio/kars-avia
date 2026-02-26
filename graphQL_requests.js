@@ -5216,6 +5216,24 @@ export const COMPANY_CHANGE_SUBSCRIPTION = gql`
 
 // Аналитика
 
+export const MARK_USER_OFFLINE = gql`
+  mutation MarkUserOffline {
+    markUserOffline {
+      id
+      isOnline
+    }
+  }
+`;
+
+export const MARK_USER_ONLINE = gql`
+  mutation MarkUserOnline {
+    markUserOnline {
+      id
+      isOnline
+    }
+  }
+`;
+
 export const GET_ANALYTICS_AIRLINE_REQUESTS = gql`
   query AnaliticsAirlineRequests($input: AnalyticsInput) {
     analyticsEntityRequests(input: $input) {

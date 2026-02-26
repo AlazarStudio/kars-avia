@@ -5,9 +5,19 @@ import CopyIcon from "../../../shared/icons/CopyIcon";
 
 const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
 
-export default function HabitationTab({ id, request, addNotification, onHotelSelect }) {
+export default function HabitationTab({ id, request, searchQuery = "", addNotification, onHotelSelect }) {
   const [status] = useState(statusToLabel[request?.livingService?.status] ?? "Принята");
-  const hotels = request?.livingService?.hotels ?? [];
+  const allHotels = request?.livingService?.hotels ?? [];
+  const q = (searchQuery || "").trim().toLowerCase();
+  const hotelsWithIndex = q
+    ? allHotels
+        .map((h, i) => ({ h, originalIndex: i }))
+        .filter(
+          ({ h }) =>
+            (h.name ?? "").toLowerCase().includes(q) ||
+            (h.address ?? "").toLowerCase().includes(q)
+        )
+    : allHotels.map((h, i) => ({ h, originalIndex: i }));
 
   const copyLink = (url) => {
     if (!url) return;
@@ -34,14 +44,14 @@ export default function HabitationTab({ id, request, addNotification, onHotelSel
           <div className={`${classes.w20} ${classes.jcCenter}`}>Адрес</div>
           <div className={`${classes.w20} ${classes.jcEnd}`}>Ссылка</div>
         </div>
-        {hotels.map((h, i) => (
+        {hotelsWithIndex.map(({ h, originalIndex }, i) => (
           <div
-            key={h.hotelId || h.name + i || i}
+            key={h.hotelId || h.name + originalIndex || i}
             className={`${classes.tableRow} ${onHotelSelect ? classes.tableRowClickable : ""}`}
             role={onHotelSelect ? "button" : undefined}
             tabIndex={onHotelSelect ? 0 : undefined}
-            onClick={() => onHotelSelect?.(h, i)}
-            onKeyDown={(e) => onHotelSelect && (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onHotelSelect(h, i))}
+            onClick={() => onHotelSelect?.(h, originalIndex)}
+            onKeyDown={(e) => onHotelSelect && (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onHotelSelect(h, originalIndex))}
           >
             <div className={`${classes.w20} ${classes.lineClamp2}`}>{h.name ?? "—"}</div>
             <div className={`${classes.w25} ${classes.jcCenter}`}>

@@ -20,10 +20,6 @@
     "@mui/system": "^6.1.10",
     "@pbe/react-yandex-maps": "^1.2.5",
     "@react-input/mask": "^2.0.4",
-    "apollo-upload-client": "^18.0.1",
-    "date-fns": "^4.1.0",
-    "dayjs": "^1.11.13",
-    "emoji-picker-react": "^4.12.0",
     "@tiptap/core": "^3.19.0",
     "@tiptap/extension-color": "^3.19.0",
     "@tiptap/extension-highlight": "^3.19.0",
@@ -39,6 +35,10 @@
     "@tiptap/react": "^3.19.0",
     "@tiptap/starter-kit": "^3.19.0",
     "@tiptap/suggestion": "^3.19.0",
+    "apollo-upload-client": "^18.0.1",
+    "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
+    "emoji-picker-react": "^4.12.0",
     "graphql": "^16.9.0",
     "graphql-ws": "^5.16.0",
     "lodash": "^4.17.21",
@@ -55,7 +55,8 @@
     "react-tabs": "^6.0.2",
     "react-window": "^1.8.11",
     "recharts": "^3.1.2",
-    "swiper": "^11.2.4"
+    "swiper": "^11.2.4",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.2.55",

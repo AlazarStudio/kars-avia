@@ -61,7 +61,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   const [request, setRequest] = useState([]);
   const [placement, setPlacement] = useState([]);
   const [filter, setFilter] = useState("waterSupply");
-  const [transferAccommodation, setTransferAccommodation] = useState("driver");
 
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
   const [separator, setSeparator] = useState("airline");
@@ -331,6 +330,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   };
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [habitationSearchQuery, setHabitationSearchQuery] = useState("");
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
@@ -403,7 +403,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       <div className={classes.section}>
         <Header>
           <div className={classes.titleHeader}>
-            <Link to={-1} className={classes.backButton}>
+            <Link to={`/reserve`} className={classes.backButton}>
               <img src="/arrow.png" alt="" />
             </Link>
             Заявка {request.flightNumber}
@@ -430,7 +430,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
         </div>
 
         <div className={classes.section_searchAndFilter}>
-          {filter !== "transferAccommodation" && filter !== "habitation" && (
+          {filter !== "habitation" && (
             <MUITextField
               className={classes.mainSearch}
               label={"Поиск"}
@@ -440,33 +440,12 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
           )}
 
           {filter === "habitation" && (
-            <p className={classes.title}>Гостиница</p>
-          )}
-
-          {filter === "transferAccommodation" && (
-            <div className={classes.filter_wrapper}>
-              {/* <p className={classes.title}>Водитель</p> */}
-              <button
-                onClick={() => setTransferAccommodation("driver")}
-                className={
-                  transferAccommodation === "driver"
-                    ? classes.activeButton
-                    : undefined
-                }
-              >
-                Водитель
-              </button>
-              <button
-                onClick={() => setTransferAccommodation("hotel")}
-                className={
-                  transferAccommodation === "hotel"
-                    ? classes.activeButton
-                    : undefined
-                }
-              >
-                Гостиница
-              </button>
-            </div>
+            <MUITextField
+              className={classes.mainSearch}
+              label="Поиск"
+              value={habitationSearchQuery}
+              onChange={(e) => setHabitationSearchQuery(e.target.value)}
+            />
           )}
 
           <div className={classes.downloadsButtonsWrapper}>
@@ -541,7 +520,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               </div>
             )} */}
 
-            {(transferAccommodation === "hotel" || filter === "habitation") && (
+            {filter === "habitation" && (
               <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
             )}
             {filters.length < 4 && (
@@ -580,13 +559,10 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                     <TransferAccommodationTab
                       id="panel-transferAccommodation"
                       request={request}
-                      hotels={placement}
-                      transferAccommodation={transferAccommodation}
                       onStatusChanged={() => {
                         refetch();
                         refetchHotel();
                       }}
-                      addHotel={toggleAddHotelSidebar}
                       addNotification={addNotification}
                     />
                   )}
@@ -595,6 +571,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                     <HabitationTab
                       id="panel-habitation"
                       request={request}
+                      searchQuery={habitationSearchQuery}
                       addNotification={addNotification}
                       onHotelSelect={(h, i) => {
                         const hotelId = h.hotelId ?? h.name ?? String(i);

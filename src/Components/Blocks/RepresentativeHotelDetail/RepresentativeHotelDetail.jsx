@@ -12,7 +12,7 @@ import {
   getCookie,
 } from "../../../../graphQL_requests.js";
 
-export function HotelDetailToolbar({ searchQuery, onSearchChange, onAddBooking, className }) {
+export function HotelDetailToolbar({ searchQuery, onSearchChange, onAddBooking, onGenerateReport, className }) {
   return (
     <div className={className ? `${className} ${classes.headerRow}` : classes.headerRow}>
       <MUITextField
@@ -25,7 +25,7 @@ export function HotelDetailToolbar({ searchQuery, onSearchChange, onAddBooking, 
         <button type="button" className={classes.headerBtn}>
           <EditIcon /> Редактировать
         </button>
-        <button type="button" className={classes.headerBtn}>
+        <button type="button" className={classes.headerBtn} onClick={onGenerateReport}>
           <img src="/plus.png" alt="" style={{ width: "15px", objectFit: "contain", filter: "invert(100%)" }} />
           Сформировать отчет
         </button>
@@ -47,6 +47,7 @@ export default function RepresentativeHotelDetail({
   addNotification,
   showAddBooking = false,
   onCloseAddBooking,
+  onGenerateReport,
   onBack,
   hidePageTitle,
   hideToolbar,
@@ -124,7 +125,7 @@ export default function RepresentativeHotelDetail({
             <button type="button" className={classes.headerBtn}>
               <EditIcon /> Редактировать
             </button>
-            <button type="button" className={classes.headerBtn}>
+            <button type="button" className={classes.headerBtn} onClick={onGenerateReport}>
               <img src="/plus.png" alt="" style={{ width: "15px", objectFit: "contain", filter: "invert(100%)" }} />
               Сформировать отчет
             </button>

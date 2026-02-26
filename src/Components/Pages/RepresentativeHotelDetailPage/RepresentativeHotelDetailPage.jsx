@@ -116,6 +116,11 @@ function RepresentativeHotelDetailPage({ user }) {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onAddBooking={() => setShowAddBooking(true)}
+          onGenerateReport={() =>
+            navigate(
+              `/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}/report`
+            )
+          }
           className={classes.section_searchAndFilter}
         />
         <div className={classes.contentWithChat}>

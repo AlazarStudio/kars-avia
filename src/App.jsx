@@ -29,8 +29,10 @@ import Login from "./Components/Pages/Login/Login";
 import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
 import { TokenRefresher } from "./TokenRefresher";
+import { UserActivityTracker } from "./UserActivityTracker";
 import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementRepresentative/ReservePlacementRepresentative";
 import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHotelDetailPage/RepresentativeHotelDetailPage";
+import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
 import TransferOrder from "./Components/Blocks/TransferOrder/TransferOrder";
 
 function App() {
@@ -81,6 +83,7 @@ function App() {
   return (
     <ApolloProvider client={client}>
       {/* <TokenRefresher /> */}
+      {/* {user && <UserActivityTracker />} */}
       <Routes>
         {user ? (
           <Route path="/" element={<Layout />}>
@@ -119,6 +122,10 @@ function App() {
             <Route
               path="/:id/representativeRequestsPlacement/:idRequest/hotel/:hotelId"
               element={<RepresentativeHotelDetailPage user={user} />}
+            />
+            <Route
+              path="/:id/representativeRequestsPlacement/:idRequest/hotel/:hotelId/report"
+              element={<RepresentativeHotelReportPage user={user} />}
             />
 
             {/* Шахматка */}
