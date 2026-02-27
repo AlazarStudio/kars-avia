@@ -260,6 +260,17 @@
   border-color: #2f344c;
 }
 
+/* Keep the editor gutter pseudo-elements behind the editable content.
+   Otherwise the left gutter strip can visually cover the caret in nested blocks. */
+.tiptap-panel .editor-content-frame {
+  z-index: 1;
+}
+
+.tiptap-panel .editor-hover-scope::before,
+.tiptap-panel .editor-hover-scope::after {
+  z-index: 0;
+}
+
 .tiptap-panel-back-btn {
   border-color: rgba(53, 59, 85, 0.12);
   color: var(--menu-bg);

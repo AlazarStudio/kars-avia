@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import { 
   LinkIcon, 
   ButtonIcon, 
@@ -305,10 +306,19 @@ export default function LinkModal({
               title="Проверить ссылку"
             >
               {isLinkLoading ? '...' : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.35-4.35"/>
-                </svg>
+                <>
+                  {/* Legacy SVG icon:
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
+                  */}
+                  <SearchRoundedIcon
+                    aria-hidden="true"
+                    fontSize="inherit"
+                    style={{ width: 16, height: 16, fontSize: 16 }}
+                  />
+                </>
               )}
             </button>
           </div>

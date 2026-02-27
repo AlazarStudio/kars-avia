@@ -1,6 +1,11 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded'
+import PauseRoundedIcon from '@mui/icons-material/PauseRounded'
+import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
+import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded'
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded'
 import './audioBlock.css'
 import './imageBlockModal.css'
 import './fileEmpty.css'
@@ -12,59 +17,84 @@ const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
 const AUDIO_MIN_WIDTH = 200
 
 const IconPlay = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <path d="M8 6.5v11a1 1 0 0 0 1.53.85l8.5-5.5a1 1 0 0 0 0-1.7l-8.5-5.5A1 1 0 0 0 8 6.5z" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M8 6.5v11a1 1 0 0 0 1.53.85l8.5-5.5a1 1 0 0 0 0-1.7l-8.5-5.5A1 1 0 0 0 8 6.5z" />
+    </svg>
+    */}
+    <PlayArrowRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 )
 
 const IconPause = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <rect x="7" y="6" width="4" height="12" rx="1" />
-    <rect x="13" y="6" width="4" height="12" rx="1" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <rect x="7" y="6" width="4" height="12" rx="1" />
+      <rect x="13" y="6" width="4" height="12" rx="1" />
+    </svg>
+    */}
+    <PauseRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 )
 
 const IconLoop = ({ className }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M17 1l3 3-3 3" />
-    <path d="M3 11V9a5 5 0 0 1 5-5h12" />
-    <path d="M7 23l-3-3 3-3" />
-    <path d="M21 13v2a5 5 0 0 1-5 5H4" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M17 1l3 3-3 3" />
+      <path d="M3 11V9a5 5 0 0 1 5-5h12" />
+      <path d="M7 23l-3-3 3-3" />
+      <path d="M21 13v2a5 5 0 0 1-5 5H4" />
+    </svg>
+    */}
+    <RepeatRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 )
 
 const IconVolume = ({ className }) => (
-  <svg
-    className={className}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M3 10v4h4l5 4V6l-5 4H3z" />
-    <path d="M16 9a4 4 0 0 1 0 6" />
-    <path d="M19 6a8 8 0 0 1 0 12" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 10v4h4l5 4V6l-5 4H3z" />
+      <path d="M16 9a4 4 0 0 1 0 6" />
+      <path d="M19 6a8 8 0 0 1 0 12" />
+    </svg>
+    */}
+    <VolumeUpRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 )
 
 const IconMore = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <circle cx="12" cy="5" r="1.8" />
-    <circle cx="12" cy="12" r="1.8" />
-    <circle cx="12" cy="19" r="1.8" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="12" cy="19" r="1.8" />
+    </svg>
+    */}
+    <MoreVertRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 )
 
 export default function AudioBlockView({ editor, node, updateAttributes }) {

@@ -1740,3 +1740,46 @@
 .copy-modal-body button {
   white-space: nowrap;
 }
+
+/* Thread-like nesting connectors for folder/article children (temporarily disabled)
+.doc-left-tree {
+  --doc-left-tree-connector-color: #d1d5db;
+}
+
+.tree-children::before {
+  left: 5px;
+  background: var(--doc-left-tree-connector-color);
+}
+
+.tree-children > .tree-node {
+  position: relative;
+}
+
+.tree-children > .tree-node::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 5px;
+  width: 5px;
+  height: 16px;
+  border-left: 2px solid var(--doc-left-tree-connector-color);
+  border-bottom: 2px solid var(--doc-left-tree-connector-color);
+  border-bottom-left-radius: 10px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tree-children > .tree-node > .tree-item,
+.tree-children > .tree-node > .create-row {
+  position: relative;
+  z-index: 1;
+}
+
+.tree-children > .tree-node > .tree-item.article {
+  z-index: 2;
+}
+
+.tree-children > .tree-node > .tree-item.article.is-active {
+  z-index: 3;
+}
+*/

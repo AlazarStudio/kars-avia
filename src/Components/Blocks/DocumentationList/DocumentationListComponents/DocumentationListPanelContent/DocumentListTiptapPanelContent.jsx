@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@apollo/client'
 import { EditorContent, useEditor } from '@tiptap/react'
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
 import { editorExtensions } from './src/editorExtensions'
 import { DocumentationUploadProvider } from './src/DocumentationUploadContext'
 import Toolbar from './src/components/Toolbar'
@@ -48,6 +49,21 @@ const MAX_ARTICLE_WIDTH = 2400
 
 function isDocJson(value) {
   return Boolean(value && typeof value === 'object' && value.type === 'doc')
+}
+
+function isSameDocContentSemantically(editor, nextContent) {
+  if (!editor || !isDocJson(nextContent)) return false
+
+  try {
+    const currentDoc = editor?.state?.doc
+    const schema = editor?.state?.schema
+    if (!currentDoc || !schema?.nodeFromJSON) return false
+
+    const nextDoc = schema.nodeFromJSON(nextContent)
+    return Boolean(nextDoc && typeof currentDoc.eq === 'function' && currentDoc.eq(nextDoc))
+  } catch {
+    return false
+  }
 }
 
 function clamp(value, min, max) {
@@ -801,6 +817,7 @@ export default function DocumentListTiptapPanelContent({
   docTitle,
   setActiveDocId,
   onAnchorsChange,
+  onAnchorActivated,
   onDraftPersist,
   onForceSync,
   draftHydrationVersion = 0,
@@ -924,26 +941,13 @@ export default function DocumentListTiptapPanelContent({
       editable: canEdit,
       injectCSS: false,
 
-      onUpdate: ({ editor }) => {
-        if (!canEdit) return
-        if (!activeDocId) return
-        if (skipAutosaveRef.current) return
-
+      onUpdate: () => {
+        // Content is saved manually via the "Сохранить" button.
+        // Clear any legacy pending autosave timer just in case.
         if (autosaveTimerRef.current) {
           clearTimeout(autosaveTimerRef.current)
+          autosaveTimerRef.current = null
         }
-
-        autosaveTimerRef.current = setTimeout(async () => {
-          try {
-            const contentJson = editor.getJSON()
-            if (!isDocJson(contentJson)) return
-            if (typeof onDraftPersist === 'function') {
-              onDraftPersist(activeDocId, 'content', contentJson)
-            }
-          } catch {
-            // ignore
-          }
-        }, 500)
       },
     },
     [activeDocId, canEdit, onDraftPersist]
@@ -969,12 +973,12 @@ export default function DocumentListTiptapPanelContent({
 
       const contentJson = editor.getJSON()
       if (isDocJson(contentJson) && typeof onDraftPersist === 'function') {
-        onDraftPersist(activeDocId, 'content', contentJson)
+        await onDraftPersist(activeDocId, 'content', contentJson)
       }
       await saveDocLayout(activeDocId, buildLayoutPayload())
 
       if (typeof onDraftPersist === 'function') {
-        onDraftPersist(activeDocId, 'layout')
+        await onDraftPersist(activeDocId, 'layout')
       }
       if (typeof onForceSync === 'function') {
         await onForceSync()
@@ -1087,14 +1091,12 @@ export default function DocumentListTiptapPanelContent({
     // Prevent cursor jumps during local editing/autosave:
     // backend updates `updatedAt`, which changes hydrationKey, but content often stays identical.
     // Re-hydrating identical content with `setContent` resets the selection to the end.
+    // Use ProseMirror structural equality instead of JSON.stringify:
+    // custom nodes (e.g. toggle) may differ in JSON key order / default attrs representation.
     const previousHydrationWasSameDoc = hydrationKeyRef.current.startsWith(`${activeDocId}:`)
     if (previousHydrationWasSameDoc) {
       try {
-        const currentEditorContent = editor.getJSON()
-        if (
-          isDocJson(currentEditorContent) &&
-          JSON.stringify(currentEditorContent) === JSON.stringify(content)
-        ) {
+        if (isSameDocContentSemantically(editor, content)) {
           hydrationKeyRef.current = hydrationKey
           skipAutosaveRef.current = false
           skipLayoutSaveRef.current = false
@@ -1363,26 +1365,35 @@ export default function DocumentListTiptapPanelContent({
                 aria-busy={isManualSaving ? 'true' : 'false'}
               >
                 <span className="tiptap-panel-save-btn-icon" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M5 4h11l3 3v13H5V4Z"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinejoin="round"
+                  <>
+                    {/* Legacy SVG icon:
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M5 4h11l3 3v13H5V4Z"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8 4v6h7V4"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M8 16h8"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    */}
+                    <SaveRoundedIcon
+                      aria-hidden="true"
+                      fontSize="inherit"
+                      style={{ width: 16, height: 16, fontSize: 16 }}
                     />
-                    <path
-                      d="M8 4v6h7V4"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M8 16h8"
-                      stroke="currentColor"
-                      strokeWidth="1.7"
-                      strokeLinecap="round"
-                    />
-                  </svg>
+                  </>
                 </span>
                 <span className="tiptap-panel-save-btn-label">
                   {isManualSaving ? 'Сохранение...' : 'Сохранить изменения'}
@@ -1476,6 +1487,7 @@ export default function DocumentListTiptapPanelContent({
           editor={editor}
           enabled={canEdit && isAnchorModeEnabled}
           onAnchorsChange={onAnchorsChange}
+          onAnchorActivated={onAnchorActivated}
         />
         <div className="editor-content-frame">
           <EditorContent editor={editor} />

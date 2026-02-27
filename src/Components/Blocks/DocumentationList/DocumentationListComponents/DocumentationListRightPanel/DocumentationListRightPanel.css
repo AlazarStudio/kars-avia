@@ -51,6 +51,11 @@
   color: #111827;
 }
 
+.doc-right-item:focus-visible {
+  outline: 2px solid rgba(47, 109, 213, 0.5);
+  outline-offset: 2px;
+}
+
 /* Активный пункт */
 .doc-right-item.active {
   color: #1d4ed8;
@@ -176,6 +181,11 @@
 .doc-right-item:hover {
   background: var(--hover-gray);
   color: var(--menu-bg);
+}
+
+.doc-right-item:focus-visible {
+  outline: 2px solid rgba(53, 59, 85, 0.35);
+  outline-offset: 2px;
 }
 
 .doc-right-item.active {

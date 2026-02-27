@@ -2136,114 +2136,114 @@ function DocumentationListLeftPanel({
           <div className="doc-left-tree-lasso-rect" style={leftTreeLassoRectStyle} />
         )}
         {searchResults ? (
-          // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°
-          <div className="search-results">
-            <div className="search-info">
-              {'\u041d\u0430\u0439\u0434\u0435\u043d\u043e'}: {searchResults.length} {'\u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432'}
-              <button 
-                className="clear-search-btn"
-                onClick={clearSearch}
-                title={'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043f\u043e\u0438\u0441\u043a'}
-              >
-                <IconX size={12} />
-              </button>
-            </div>
-            {searchResults.map((result, index) => (
-              <div 
-                key={`search-${result.id}-${index}`}
-                className="search-result-item"
-                onClick={() => navigateToItem(result)}
-              >
-                <div className="search-result-type">
-                  {result.type === 'section' ? (
-                    <IconFolder size={16} />
-                  ) : (
-                    <IconFile size={16} />
-                  )}
-                </div>
-                <div className="search-result-content">
-                  <div className="search-result-title">
-                    {result.title}
-                  </div>
-                  {result.path && result.path !== result.title && (
-                    <div className="search-result-path">
-                      {result.path}
-                    </div>
-                  )}
-                </div>
+            // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°
+            <div className="search-results">
+              <div className="search-info">
+                {'\u041d\u0430\u0439\u0434\u0435\u043d\u043e'}: {searchResults.length} {'\u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432'}
+                <button 
+                  className="clear-search-btn"
+                  onClick={clearSearch}
+                  title={'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043f\u043e\u0438\u0441\u043a'}
+                >
+                  <IconX size={12} />
+                </button>
               </div>
-            ))}
-          </div>
-        ) : (
-          // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С•Р Вµ Р Т‘Р ВµРЎР‚Р ВµР Р†Р С•
-          <>
-            {tree.map((item, index) => (
-              <TreeItem
-                key={item.id}
-                item={item}
-                index={index}
-                parentId="root"
-                activeDocId={activeDocId}
-                onSelectFile={onSelectFile}
-                toggleSection={toggleSection}
-                startCreate={startCreate}
-                renameItem={renameItem}
-                deleteItem={deleteItem}
-                creating={creating}
-                setCreating={setCreating}
-                commitCreate={commitCreate}
-                setTree={setTree}
-                openCopyModal={openCopyModal}
-                openDeleteConfirm={openDeleteConfirm}
-                copySectionOnServer={copySectionOnServer}
-                copyArticleWithContent={copyArticleWithContent}
-                copySelectedItems={copySelectedItems}
-                deleteSelectedItems={deleteSelectedItems}
-                dragState={dragState}
-                setDragState={setDragState}
-                handleDrop={handleDrop}
-                dropHint={dropHint}
-                setDropHint={setDropHint}
-                isDescendant={isDescendant}
-                tree={tree}
-                canManage={canManage}
-                lassoSelectedIds={leftTreeLassoSelectedIds}
-                suppressTreeClickUntilRef={suppressTreeClickUntilRef}
-                pasteHoverHint={leftTreePasteHoverHint}
-                pasteTargetHint={leftTreePasteTargetHint}
+              {searchResults.map((result, index) => (
+                <div 
+                  key={`search-${result.id}-${index}`}
+                  className="search-result-item"
+                  onClick={() => navigateToItem(result)}
+                >
+                  <div className="search-result-type">
+                    {result.type === 'section' ? (
+                      <IconFolder size={16} />
+                    ) : (
+                      <IconFile size={16} />
+                    )}
+                  </div>
+                  <div className="search-result-content">
+                    <div className="search-result-title">
+                      {result.title}
+                    </div>
+                    {result.path && result.path !== result.title && (
+                      <div className="search-result-path">
+                        {result.path}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С•Р Вµ Р Т‘Р ВµРЎР‚Р ВµР Р†Р С•
+            <>
+              {tree.map((item, index) => (
+                <TreeItem
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  parentId="root"
+                  activeDocId={activeDocId}
+                  onSelectFile={onSelectFile}
+                  toggleSection={toggleSection}
+                  startCreate={startCreate}
+                  renameItem={renameItem}
+                  deleteItem={deleteItem}
+                  creating={creating}
+                  setCreating={setCreating}
+                  commitCreate={commitCreate}
+                  setTree={setTree}
+                  openCopyModal={openCopyModal}
+                  openDeleteConfirm={openDeleteConfirm}
+                  copySectionOnServer={copySectionOnServer}
+                  copyArticleWithContent={copyArticleWithContent}
+                  copySelectedItems={copySelectedItems}
+                  deleteSelectedItems={deleteSelectedItems}
+                  dragState={dragState}
+                  setDragState={setDragState}
+                  handleDrop={handleDrop}
+                  dropHint={dropHint}
+                  setDropHint={setDropHint}
+                  isDescendant={isDescendant}
+                  tree={tree}
+                  canManage={canManage}
+                  lassoSelectedIds={leftTreeLassoSelectedIds}
+                  suppressTreeClickUntilRef={suppressTreeClickUntilRef}
+                  pasteHoverHint={leftTreePasteHoverHint}
+                  pasteTargetHint={leftTreePasteTargetHint}
+                />
+              ))}
+
+              <div
+                className="drop-zone-end"
+                onDragOver={(e) => {
+                  if (!canManage) return
+                  e.preventDefault()
+                }}
+                onDrop={() => {
+                  if (!canManage) return
+                  handleDrop(null, tree.length, 'root')
+                }}
               />
-            ))}
 
-            <div
-              className="drop-zone-end"
-              onDragOver={(e) => {
-                if (!canManage) return
-                e.preventDefault()
-              }}
-              onDrop={() => {
-                if (!canManage) return
-                handleDrop(null, tree.length, 'root')
-              }}
-            />
+              {canManage && creating?.parentId === 'root' && (
+                <CreateRow
+                  creating={creating}
+                  setCreating={setCreating}
+                  commitCreate={commitCreate}
+                />
+              )}
 
-            {canManage && creating?.parentId === 'root' && (
-              <CreateRow
-                creating={creating}
-                setCreating={setCreating}
-                commitCreate={commitCreate}
-              />
-            )}
-
-            {canManage && !creating && (
-              <button
-                className={`root-plus ${hovered ? 'visible' : ''}`}
-                onClick={() => startCreate('root')}
-              >
-                +
-              </button>
-            )}
-          </>
-        )}
+              {canManage && !creating && (
+                <button
+                  className={`root-plus ${hovered ? 'visible' : ''}`}
+                  onClick={() => startCreate('root')}
+                >
+                  +
+                </button>
+              )}
+            </>
+          )}
       </div>
 
       {/* Р СљР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р Вµ Р С•Р С”Р Р…Р С• Р С—Р С•Р С‘РЎРѓР С”Р В° */}

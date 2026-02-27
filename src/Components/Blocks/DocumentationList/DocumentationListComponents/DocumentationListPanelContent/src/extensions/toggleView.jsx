@@ -67,6 +67,18 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
     setEditing(true)
   }
 
+  const onHeaderMouseDown = e => {
+    const target = e.target
+    if (target instanceof Element && target.closest('.toggle-title-input')) {
+      // Let the input receive focus, but keep the editor selection stable.
+      e.stopPropagation()
+      return
+    }
+
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
   const saveTitle = () => {
     if (!isEditable) {
       setEditing(false)
@@ -79,6 +91,9 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
   }
 
   const onTitleKeyDown = e => {
+    // Title editing is an inline control inside the node-view. Do not leak keys to ProseMirror.
+    e.stopPropagation()
+
     if (e.key === 'Enter') {
       e.preventDefault()
       saveTitle()
@@ -103,6 +118,9 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
   }
 
   const onHeaderKeyDown = e => {
+    // Header is a UI control, not editor content.
+    e.stopPropagation()
+
     if (editing) return
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -185,6 +203,7 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
         role="button"
         tabIndex={0}
         aria-expanded={!collapsed}
+        onMouseDown={onHeaderMouseDown}
         onClick={onHeaderClick}
         onKeyDown={onHeaderKeyDown}
       >
@@ -192,6 +211,7 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
           type="button"
           className="toggle-chevron"
           onMouseDown={e => e.preventDefault()} // не даём ProseMirror увести selection
+          onKeyDown={e => e.stopPropagation()}
           onClick={toggleCollapsed}
           aria-label={collapsed ? 'Раскрыть' : 'Свернуть'}
         />
@@ -202,6 +222,7 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
             className="toggle-title-input"
             value={tempTitle}
             onChange={e => setTempTitle(e.target.value)}
+            onMouseDown={e => e.stopPropagation()}
             onKeyDown={onTitleKeyDown}
             onBlur={saveTitle}
           />

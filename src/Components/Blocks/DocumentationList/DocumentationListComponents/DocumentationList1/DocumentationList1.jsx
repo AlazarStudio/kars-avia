@@ -1,6 +1,7 @@
 ﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client'
 import PropTypes from 'prop-types'
+import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded'
 import {
   CREATE_SECTION,
   CREATE_ARTICLE,
@@ -914,6 +915,20 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     setIsRightPanelOpen(prev => !prev)
   }
 
+  const handleAnchorsChange = useCallback((nextBlocks) => {
+    const normalizedBlocks = Array.isArray(nextBlocks) ? nextBlocks : []
+    setRightPanelBlocks(normalizedBlocks)
+
+    if (normalizedBlocks.length === 0) {
+      setIsRightPanelOpen(false)
+    }
+  }, [])
+
+  const handleAnchorActivated = useCallback(() => {
+    if (!activeDocId) return
+    setIsRightPanelOpen(true)
+  }, [activeDocId])
+
   const refreshDocumentationTree = useCallback(
     async ({ showLoading = false } = {}) => {
       if (!token) return
@@ -993,37 +1008,47 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
       aria-label={'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u044c\u0438'}
       title={'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u044c\u0438'}
     >
-      <svg
-        className={classes['reload-articles-icon']}
-        viewBox="0 0 24 24"
-        width="16"
-        height="16"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <path
-          d="M20 4V9H15"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+      <>
+        {/* Legacy SVG icon:
+        <svg
+          className={classes['reload-articles-icon']}
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            d="M20 4V9H15"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M4 20V15H9"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M6.5 9.5C7.05 7.96 8.26 6.72 9.78 6.13C11.3 5.55 13 5.65 14.44 6.41C15.88 7.17 16.92 8.5 17.31 10.07M6.69 13.93C7.08 15.5 8.12 16.83 9.56 17.59C11 18.35 12.7 18.45 14.22 17.87C15.74 17.28 16.95 16.04 17.5 14.5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        */}
+        <AutorenewRoundedIcon
+          className={classes['reload-articles-icon']}
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
         />
-        <path
-          d="M4 20V15H9"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M6.5 9.5C7.05 7.96 8.26 6.72 9.78 6.13C11.3 5.55 13 5.65 14.44 6.41C15.88 7.17 16.92 8.5 17.31 10.07M6.69 13.93C7.08 15.5 8.12 16.83 9.56 17.59C11 18.35 12.7 18.45 14.22 17.87C15.74 17.28 16.95 16.04 17.5 14.5"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      </>
     </button>
   )
 
@@ -1149,7 +1174,8 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
             activeDocId={activeDocId}
             docTitle={activeDoc?.title}
             setActiveDocId={setActiveDocId}
-            onAnchorsChange={setRightPanelBlocks}
+            onAnchorsChange={handleAnchorsChange}
+            onAnchorActivated={handleAnchorActivated}
             onDraftPersist={handleDraftPersist}
             onForceSync={syncTreeToServer}
             draftHydrationVersion={draftHydrationVersion}
@@ -1195,5 +1221,3 @@ DocumentationList1.propTypes = {
   }),
   filterValue: PropTypes.string,
 }
-
-

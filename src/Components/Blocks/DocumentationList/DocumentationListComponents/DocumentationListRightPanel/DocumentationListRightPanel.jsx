@@ -4,17 +4,34 @@ import './DocumentationListRightPanel.css'
 const NAV_SCROLL_GAP = 8
 const NAV_SCROLL_LOCK_THRESHOLD = 24
 
-function getPanelScroller(targetElement) {
-  if (!(targetElement instanceof HTMLElement)) return null
-  const closestPanel = targetElement.closest('.panel-content')
-  if (closestPanel instanceof HTMLElement) return closestPanel
+function getPanelScroller(targetElement, navRootElement = null) {
+  if (targetElement instanceof HTMLElement) {
+    const closestPanel = targetElement.closest('.panel-content')
+    if (closestPanel instanceof HTMLElement) return closestPanel
+  }
+  if (!(navRootElement instanceof HTMLElement)) return null
 
-  const fallbackPanel = document.querySelector('.panel-content')
-  return fallbackPanel instanceof HTMLElement ? fallbackPanel : null
+  const rightPanelEl = navRootElement.closest('.right-panel')
+  const layoutRoot = rightPanelEl?.parentElement
+  if (!(layoutRoot instanceof HTMLElement)) return null
+
+  const siblingPanel = Array.from(layoutRoot.children).find(
+    child => child instanceof HTMLElement && child.classList.contains('panel-content')
+  )
+  return siblingPanel instanceof HTMLElement ? siblingPanel : null
 }
 
-function getStickyToolbarOffset(scroller) {
+function getStickyTopOffset(scroller) {
   if (!(scroller instanceof HTMLElement)) return 0
+
+  const stickyTop = scroller.querySelector('.tiptap-panel-top-sticky')
+  if (stickyTop instanceof HTMLElement) {
+    const stickyStyle = window.getComputedStyle(stickyTop)
+    if (stickyStyle.position === 'sticky' || stickyStyle.position === 'fixed') {
+      return stickyTop.getBoundingClientRect().height
+    }
+  }
+
   const toolbar = scroller.querySelector('.toolbar')
   if (!(toolbar instanceof HTMLElement)) return 0
 
@@ -24,9 +41,23 @@ function getStickyToolbarOffset(scroller) {
   return toolbar.getBoundingClientRect().height
 }
 
+function findSectionElement(scroller, id) {
+  if (!(scroller instanceof HTMLElement) || !id) return null
+  const safeId = String(id).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+  try {
+    const el = scroller.querySelector(`[id="${safeId}"]`)
+    return el instanceof HTMLElement ? el : null
+  } catch {
+    return null
+  }
+}
+
 function DocumentationListRightPanel({ blocks = [] }) {
   const [activeId, setActiveId] = useState(null)
   const pendingScrollTargetRef = useRef(null)
+  const pendingScrollDirectionRef = useRef(null)
+  const pendingScrollTopRef = useRef(null)
+  const navRootRef = useRef(null)
 
   // 1️⃣ Берём только блоки с #
   const sections = useMemo(() => {
@@ -44,6 +75,8 @@ function DocumentationListRightPanel({ blocks = [] }) {
     if (!sections.length) {
       setActiveId(null)
       pendingScrollTargetRef.current = null
+      pendingScrollDirectionRef.current = null
+      pendingScrollTopRef.current = null
       return
     }
 
@@ -51,34 +84,63 @@ function DocumentationListRightPanel({ blocks = [] }) {
     const firstSectionId = sections[0].id
 
     const updateActiveSection = () => {
-      const firstSectionEl = document.getElementById(firstSectionId)
-      const scroller = getPanelScroller(firstSectionEl)
+      const scroller = getPanelScroller(null, navRootRef.current)
 
       let probeTop = NAV_SCROLL_GAP + 1
       if (scroller instanceof HTMLElement) {
         const scrollerRect = scroller.getBoundingClientRect()
-        probeTop = scrollerRect.top + getStickyToolbarOffset(scroller) + NAV_SCROLL_GAP + 1
+        probeTop = scrollerRect.top + getStickyTopOffset(scroller) + NAV_SCROLL_GAP + 1
       }
 
       const pendingTargetId = pendingScrollTargetRef.current
       if (pendingTargetId) {
-        const pendingTargetEl = document.getElementById(pendingTargetId)
+        const pendingScrollTop = pendingScrollTopRef.current
+        if (
+          scroller instanceof HTMLElement &&
+          Number.isFinite(pendingScrollTop)
+        ) {
+          const scrollDelta = Math.abs(scroller.scrollTop - pendingScrollTop)
+          if (scrollDelta > 1) {
+            setActiveId(prev => (prev === pendingTargetId ? prev : pendingTargetId))
+            return
+          }
+
+          pendingScrollTargetRef.current = null
+          pendingScrollDirectionRef.current = null
+          pendingScrollTopRef.current = null
+          setActiveId(prev => (prev === pendingTargetId ? prev : pendingTargetId))
+          return
+        }
+
+        const pendingTargetEl = findSectionElement(scroller, pendingTargetId)
         if (pendingTargetEl instanceof HTMLElement) {
-          const deltaToProbe = Math.abs(pendingTargetEl.getBoundingClientRect().top - probeTop)
-          if (deltaToProbe <= NAV_SCROLL_LOCK_THRESHOLD) {
+          const deltaToProbe = pendingTargetEl.getBoundingClientRect().top - probeTop
+          const pendingDirection = pendingScrollDirectionRef.current
+          const hasReachedProbeLine =
+            pendingDirection === 'down'
+              ? deltaToProbe <= 1
+              : pendingDirection === 'up'
+                ? deltaToProbe >= -1
+                : Math.abs(deltaToProbe) <= NAV_SCROLL_LOCK_THRESHOLD
+
+          if (hasReachedProbeLine) {
             pendingScrollTargetRef.current = null
+            pendingScrollDirectionRef.current = null
+            pendingScrollTopRef.current = null
           } else {
             setActiveId(prev => (prev === pendingTargetId ? prev : pendingTargetId))
             return
           }
         } else {
           pendingScrollTargetRef.current = null
+          pendingScrollDirectionRef.current = null
+          pendingScrollTopRef.current = null
         }
       }
 
       let nextActiveId = firstSectionId
       for (const section of sections) {
-        const sectionEl = document.getElementById(section.id)
+        const sectionEl = findSectionElement(scroller, section.id)
         if (!(sectionEl instanceof HTMLElement)) continue
         if (sectionEl.getBoundingClientRect().top <= probeTop) {
           nextActiveId = section.id
@@ -95,9 +157,8 @@ function DocumentationListRightPanel({ blocks = [] }) {
       raf = requestAnimationFrame(updateActiveSection)
     }
 
-    const firstSectionEl = document.getElementById(firstSectionId)
-    const scroller = getPanelScroller(firstSectionEl)
-    const rightPanel = document.querySelector('.right-panel')
+    const scroller = getPanelScroller(null, navRootRef.current)
+    const rightPanel = navRootRef.current?.closest('.right-panel')
 
     scheduleUpdate()
 
@@ -131,31 +192,45 @@ function DocumentationListRightPanel({ blocks = [] }) {
   }, [sections])
 
   const scrollTo = id => {
-    const target = document.getElementById(id)
+    const scroller = getPanelScroller(null, navRootRef.current)
+    const target = findSectionElement(scroller, id)
     if (!(target instanceof HTMLElement)) return
     pendingScrollTargetRef.current = id
+    pendingScrollDirectionRef.current = null
+    pendingScrollTopRef.current = null
 
-    const scroller = getPanelScroller(target)
     if (!(scroller instanceof HTMLElement)) {
-      target.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
-      setActiveId(id)
       return
     }
 
     const scrollerRect = scroller.getBoundingClientRect()
     const targetRect = target.getBoundingClientRect()
-    const stickyOffset = getStickyToolbarOffset(scroller)
+    const stickyOffset = getStickyTopOffset(scroller)
+    const probeTop = scrollerRect.top + stickyOffset + NAV_SCROLL_GAP + 1
     const targetTop =
       scroller.scrollTop +
       (targetRect.top - scrollerRect.top) -
       stickyOffset -
       NAV_SCROLL_GAP
+    const nextScrollTop = Math.max(0, targetTop)
+
+    if (targetRect.top > probeTop + 1) {
+      pendingScrollDirectionRef.current = 'down'
+    } else if (targetRect.top < probeTop - 1) {
+      pendingScrollDirectionRef.current = 'up'
+    }
+    pendingScrollTopRef.current = nextScrollTop
+
+    if (Math.abs(scroller.scrollTop - nextScrollTop) <= 1) {
+      pendingScrollTargetRef.current = null
+      pendingScrollDirectionRef.current = null
+      pendingScrollTopRef.current = null
+      setActiveId(id)
+      return
+    }
 
     scroller.scrollTo({
-      top: Math.max(0, targetTop),
+      top: nextScrollTop,
       behavior: 'smooth',
     })
     setActiveId(id)
@@ -164,7 +239,7 @@ function DocumentationListRightPanel({ blocks = [] }) {
   if (!sections.length) return null
 
   return (
-    <div className="doc-right">
+    <div className="doc-right" ref={navRootRef}>
       <div className="doc-right-title">Навигация</div>
 
       <ul className="doc-right-list">
@@ -173,9 +248,14 @@ function DocumentationListRightPanel({ blocks = [] }) {
             key={`${section.id}-${index}`}
             className={`doc-right-item ${activeId === section.id ? 'active' : ''}`}
             onClick={() => scrollTo(section.id)}
-            style={{
-              paddingLeft: section.level !== 'h1' ? 24 : 12
+            onKeyDown={event => {
+              if (event.key !== 'Enter' && event.key !== ' ') return
+              event.preventDefault()
+              scrollTo(section.id)
             }}
+            role="button"
+            tabIndex={0}
+            aria-current={activeId === section.id ? 'location' : undefined}
           >
             {section.label}
           </li>

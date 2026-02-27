@@ -43,6 +43,13 @@ export const SlashCommand = Extension.create({
           /* ================= CLOSE ================= */
 
           const close = (reason = 'unknown') => {
+            // For item selection we always close explicitly via close('select').
+            // Ignoring suggestion-exit here avoids race conditions while commands
+            // dispatch extra selection transactions (e.g. placing cursor inside block).
+            if (reason === 'suggestion-exit' && used) {
+              return
+            }
+
             const slashStateBeforeCleanup = SlashSourceKey.getState(editor.state)
             const shouldIgnoreSuggestionExit =
               reason === 'suggestion-exit' &&

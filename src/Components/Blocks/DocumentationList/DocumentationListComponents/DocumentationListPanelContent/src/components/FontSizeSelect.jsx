@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
 const FONT_SIZE_MODAL_SOURCE = 'font-size-select'
@@ -269,9 +271,18 @@ const applyFontSize = (value) => {
           onClick={handleOpenModal}
           title="Выбрать размер из списка"
         >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-          </svg>
+          <>
+            {/* Legacy SVG icon:
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+            </svg>
+            */}
+            <ExpandMoreRoundedIcon
+              aria-hidden="true"
+              fontSize="inherit"
+              style={{ width: 12, height: 12, fontSize: 12 }}
+            />
+          </>
         </button>
         <div className="font-input-size-controls">
           <button 
@@ -363,9 +374,18 @@ const applyFontSize = (value) => {
                     </div>
                     {selectedFontSize === size && (
                       <div className="checkmark">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
+                        <>
+                          {/* Legacy SVG icon:
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                          </svg>
+                          */}
+                          <CheckRoundedIcon
+                            aria-hidden="true"
+                            fontSize="inherit"
+                            style={{ width: 16, height: 16, fontSize: 16 }}
+                          />
+                        </>
                       </div>
                     )}
                   </div>

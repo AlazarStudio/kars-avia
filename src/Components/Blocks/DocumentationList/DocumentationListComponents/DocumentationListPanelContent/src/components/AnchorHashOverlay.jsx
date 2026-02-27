@@ -1,5 +1,6 @@
 ﻿import { useCallback, useEffect, useState } from 'react'
 import { buildAnchorDomId, createAnchorId } from '../navigationAnchors'
+import { useRef } from 'react'
 
 const TEXT_NODE_TYPES = new Set(['paragraph', 'heading'])
 const TEXT_BLOCK_TAGS = new Set(['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'])
@@ -10,6 +11,15 @@ const ANCHOR_HASH_GAP_FROM_ARTICLE = 2
 function normalizeLabel(text) {
   const normalized = (text || '').replace(/\s+/g, ' ').trim()
   return normalized || 'Без названия'
+}
+
+function buildAnchorsSignature(blocks) {
+  return blocks
+    .map(block => {
+      const label = Array.isArray(block.lines) ? block.lines[0] || '' : ''
+      return `${block.id}|${block.domId}|${block.level}|${label}`
+    })
+    .join('\n')
 }
 
 
@@ -36,9 +46,11 @@ export default function AnchorHashOverlay({
   enabled,
   scopeSelector = '.editor-hover-scope',
   onAnchorsChange,
+  onAnchorActivated,
 }) {
   const [isViewReady, setIsViewReady] = useState(false)
   const [markers, setMarkers] = useState([])
+  const lastAnchorsSignatureRef = useRef('')
 
   const emitAnchors = useCallback(
     nextMarkers => {
@@ -60,6 +72,10 @@ export default function AnchorHashOverlay({
           level: marker.level,
           domId: buildAnchorDomId(marker.anchorId),
         }))
+
+      const nextSignature = buildAnchorsSignature(nextBlocks)
+      if (nextSignature === lastAnchorsSignatureRef.current) return
+      lastAnchorsSignatureRef.current = nextSignature
 
       onAnchorsChange(nextBlocks)
     },
@@ -129,52 +145,60 @@ export default function AnchorHashOverlay({
       })
     })
 
-    const seenAnchorIds = new Set()
-    let fixTransaction = view.state.tr
-    let hasDuplicateIds = false
+    const canAutoFixAnchorIds = Boolean(enabled && editor?.isEditable)
+    if (canAutoFixAnchorIds) {
+      const seenAnchorIds = new Set()
+      let fixTransaction = view.state.tr
+      let hasDuplicateIds = false
 
-    nextMarkers.forEach(marker => {
-      if (!marker.isActive) return
+      nextMarkers.forEach(marker => {
+        if (!marker.isActive) return
 
-      const node = view.state.doc.nodeAt(marker.pos)
-      if (!node || !TEXT_NODE_TYPES.has(node.type.name)) return
+        const node = view.state.doc.nodeAt(marker.pos)
+        if (!node || !TEXT_NODE_TYPES.has(node.type.name)) return
 
-      const currentAnchorId = node.attrs?.anchorId
-      if (!currentAnchorId || seenAnchorIds.has(currentAnchorId)) {
-        const nextAnchorId = createAnchorId()
-        marker.anchorId = nextAnchorId
-        hasDuplicateIds = true
+        const currentAnchorId = node.attrs?.anchorId
+        if (!currentAnchorId || seenAnchorIds.has(currentAnchorId)) {
+          const nextAnchorId = createAnchorId()
+          marker.anchorId = nextAnchorId
+          hasDuplicateIds = true
 
-        fixTransaction = fixTransaction.setNodeMarkup(
-          marker.pos,
-          node.type,
-          {
-            ...node.attrs,
-            anchorTag: true,
-            anchorId: nextAnchorId,
-          },
-          node.marks
-        )
-        seenAnchorIds.add(nextAnchorId)
+          fixTransaction = fixTransaction.setNodeMarkup(
+            marker.pos,
+            node.type,
+            {
+              ...node.attrs,
+              anchorTag: true,
+              anchorId: nextAnchorId,
+            },
+            node.marks
+          )
+          seenAnchorIds.add(nextAnchorId)
+          return
+        }
+
+        seenAnchorIds.add(currentAnchorId)
+      })
+
+      if (hasDuplicateIds) {
+        fixTransaction.setMeta('addToHistory', false)
+        view.dispatch(fixTransaction)
+        requestAnimationFrame(rebuildMarkers)
         return
       }
-
-      seenAnchorIds.add(currentAnchorId)
-    })
-
-    if (hasDuplicateIds) {
-      view.dispatch(fixTransaction)
-      requestAnimationFrame(rebuildMarkers)
-      return
     }
 
-    setMarkers(enabled ? nextMarkers : [])
+    if (enabled) {
+      setMarkers(nextMarkers)
+    } else {
+      setMarkers(prev => (prev.length ? [] : prev))
+    }
     emitAnchors(nextMarkers)
   }, [editor, emitAnchors, enabled, isViewReady, scopeSelector])
 
   const toggleMarker = useCallback(
     marker => {
-      if (!editor || !isViewReady) return
+      if (!enabled || !editor?.isEditable || !editor || !isViewReady) return
 
       let view
       try {
@@ -203,9 +227,12 @@ export default function AnchorHashOverlay({
       )
 
       view.dispatch(tr)
+      if (nextIsActive && typeof onAnchorActivated === 'function') {
+        onAnchorActivated()
+      }
       requestAnimationFrame(rebuildMarkers)
     },
-    [editor, isViewReady, rebuildMarkers]
+    [editor, enabled, isViewReady, onAnchorActivated, rebuildMarkers]
   )
 
   useEffect(() => {
@@ -263,7 +290,6 @@ export default function AnchorHashOverlay({
 
     editor.on('update', schedule)
     editor.on('transaction', schedule)
-    editor.on('selectionUpdate', schedule)
 
     editorDom.addEventListener('scroll', schedule)
     scopeEl.addEventListener('scroll', schedule)
@@ -296,7 +322,6 @@ export default function AnchorHashOverlay({
       cancelAnimationFrame(raf)
       editor.off('update', schedule)
       editor.off('transaction', schedule)
-      editor.off('selectionUpdate', schedule)
       editorDom.removeEventListener('scroll', schedule)
       scopeEl.removeEventListener('scroll', schedule)
       if (panelScroller instanceof HTMLElement) {

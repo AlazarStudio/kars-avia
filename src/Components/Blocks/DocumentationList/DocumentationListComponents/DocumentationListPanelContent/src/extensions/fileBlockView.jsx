@@ -1,6 +1,12 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import './imageBlockModal.css'
 import './fileEmpty.css'
 import './fileBlockView.css'
@@ -96,58 +102,92 @@ const getFileIconClass = (fileType) => {
 };
 
 const FileTypeIcon = ({ fileType, className }) => (
-  <svg
-    className={`file-type-icon ${getFileIconClass(fileType)} ${className || ''}`}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M7 3h6l4 4v14H7z" />
-    <path d="M13 3v4h4" />
-    <path d="M9 13h6" />
-    <path d="M9 17h6" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg
+      className={`file-type-icon ${getFileIconClass(fileType)} ${className || ''}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M7 3h6l4 4v14H7z" />
+      <path d="M13 3v4h4" />
+      <path d="M9 13h6" />
+      <path d="M9 17h6" />
+    </svg>
+    */}
+    <InsertDriveFileOutlinedIcon
+      className={`file-type-icon ${getFileIconClass(fileType)} ${className || ''}`}
+      aria-hidden="true"
+      fontSize="inherit"
+    />
+  </>
 );
 
 const IconDownload = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 3v12" />
-    <path d="M7 10l5 5 5-5" />
-    <path d="M5 21h14" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3v12" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M5 21h14" />
+    </svg>
+    */}
+    <DownloadRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 const IconEye = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+    */}
+    <VisibilityOutlinedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 const IconLink = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 1 0-7.07-7.07L10 4" />
-    <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L14 20" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 1 0-7.07-7.07L10 4" />
+      <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L14 20" />
+    </svg>
+    */}
+    <LinkRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 const IconMore = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <circle cx="12" cy="5" r="1.6" />
-    <circle cx="12" cy="12" r="1.6" />
-    <circle cx="12" cy="19" r="1.6" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="12" cy="19" r="1.6" />
+    </svg>
+    */}
+    <MoreVertRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 const IconClose = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M6 6l12 12" />
-    <path d="M18 6l-12 12" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 6l12 12" />
+      <path d="M18 6l-12 12" />
+    </svg>
+    */}
+    <CloseRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 // Форматирование размера файла
