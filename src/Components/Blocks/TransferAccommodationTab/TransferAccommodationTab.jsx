@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import classes from "./TransferAccommodationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { convertToDateNew } from "../../../../graphQL_requests";
+import { convertToDate } from "../../../../graphQL_requests";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 
@@ -50,7 +50,7 @@ export default function TransferAccommodationTab({
                 {d.fullName ?? "—"}
               </div>
               <div className={`${classes.w15} ${classes.jcCenter}`}>
-                {d.pickupAt ? convertToDateNew(d.pickupAt, true).trim() : "—"}
+                {d.pickupAt ? convertToDate(d.pickupAt, true).trim() : "—"}
               </div>
               <div className={`${classes.w20} ${classes.jcCenter}`}>
                 {d.peopleCount ?? "—"}
@@ -69,17 +69,17 @@ export default function TransferAccommodationTab({
             {
               label: "Принята",
               dot: "#C4CBD6",
-              time: ts?.times?.acceptedAt ? convertToDateNew(ts.times.acceptedAt, true).trim() : "—",
+              time: ts?.times?.acceptedAt ? convertToDate(ts.times.acceptedAt, true).trim() : "—",
             },
             {
               label: "Выполняется",
               dot: "#2A6EF5",
-              time: ts?.times?.inProgressAt ? convertToDateNew(ts.times.inProgressAt, true).trim() : "—",
+              time: ts?.times?.inProgressAt ? convertToDate(ts.times.inProgressAt, true).trim() : "—",
             },
             {
               label: "Поставка завершена",
               dot: "#2ABF46",
-              time: ts?.times?.finishedAt ? convertToDateNew(ts.times.finishedAt, true).trim() : "—",
+              time: ts?.times?.finishedAt ? convertToDate(ts.times.finishedAt, true).trim() : "—",
             },
           ]}
         />

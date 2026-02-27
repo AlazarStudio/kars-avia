@@ -104,7 +104,7 @@
 .tableHead,
 .tableRow {
   display: grid;
-  grid-template-columns: 70px 1fr 1fr 140px 1fr 50px;
+  grid-template-columns: 70px 1fr 1fr 140px 1fr 60px;
   align-items: center;
   padding: 20px;
   gap: 10px;
@@ -161,6 +161,27 @@
   font-size: 15px;
   font-weight: 400;
   cursor: pointer;
+}
+
+.cellActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 8px;
+}
+
+.editBtn {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.editBtn:hover {
+  opacity: 0.8;
 }
 
 .deleteBtn {

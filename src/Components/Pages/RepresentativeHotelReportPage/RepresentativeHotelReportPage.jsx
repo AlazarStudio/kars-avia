@@ -1,17 +1,17 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
+import * as XLSX from "xlsx";
 import classes from "../ReservePlacementRepresentative/ReservePlacementRepresentative.module.css";
 import reportClasses from "./RepresentativeHotelReportPage.module.css";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Header from "../../Blocks/Header/Header";
 import { useCookies } from "../../../hooks/useCookies";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
-import { GET_PASSENGER_REQUEST, getCookie } from "../../../../graphQL_requests";
+import { GET_PASSENGER_REQUEST, SAVE_PASSENGER_REQUEST_HOTEL_REPORT, getCookie } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import Button from "../../Standart/Button/Button";
-import * as XLSX from "xlsx";
 
 function toNum(v) {
   const n = Number(v);
@@ -23,6 +23,7 @@ function buildReportRows(people) {
     fullName: p.fullName ?? "",
     roomNumber: p.roomNumber ?? "",
     roomCategory: "",
+    daysCount: 0,
     breakfast: 0,
     lunch: 0,
     dinner: 0,
@@ -72,6 +73,12 @@ function RepresentativeHotelReportPage({ user }) {
   const people = hotel?.people ?? [];
   const [reportRows, setReportRows] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const initReportRef = useRef(false);
+
+  const [saveReport, { loading: saving }] = useMutation(SAVE_PASSENGER_REQUEST_HOTEL_REPORT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    refetchQueries: [{ query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: idRequest } }],
+  });
 
   const updateRow = (reportIndex, field, value) => {
     setReportRows((prev) => {
@@ -83,11 +90,7 @@ function RepresentativeHotelReportPage({ user }) {
   };
 
   const rowTotal = (row) =>
-    toNum(row.breakfast) +
-    toNum(row.lunch) +
-    toNum(row.dinner) +
-    toNum(row.foodCost) +
-    toNum(row.accommodationCost);
+    toNum(row.foodCost) + toNum(row.accommodationCost);
 
   const filteredRowsWithIndex = useMemo(() => {
     if (!searchQuery.trim()) return reportRows.map((row, i) => ({ row, reportIndex: i }));
@@ -102,12 +105,37 @@ function RepresentativeHotelReportPage({ user }) {
     [reportRows]
   );
 
-  const handleExportExcel = () => {
+  const handleSaveReport = async () => {
+    if (!request?.id || hotelIndex < 0) return;
+    try {
+      await saveReport({
+        variables: {
+          requestId: request.id,
+          hotelIndex,
+          reportRows: reportRows.map((row) => ({
+            fullName: row.fullName ?? "",
+            roomNumber: row.roomNumber ?? "",
+            roomCategory: row.roomCategory ?? "",
+            daysCount: toNum(row.daysCount),
+            breakfast: toNum(row.breakfast),
+            lunch: toNum(row.lunch),
+            dinner: toNum(row.dinner),
+            foodCost: toNum(row.foodCost),
+            accommodationCost: toNum(row.accommodationCost),
+          })),
+        },
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDownloadReport = () => {
     const headers = [
       "ID",
       "Категория номера",
+      "Суток",
       "ФИО",
-      "ТИП",
       "Завтрак",
       "Обед",
       "Ужин",
@@ -117,9 +145,9 @@ function RepresentativeHotelReportPage({ user }) {
     ];
     const dataRows = reportRows.map((row, i) => [
       i + 1,
-      row.roomCategory || "",
-      row.fullName || "",
-      "пассажир",
+      row.roomCategory ?? "",
+      toNum(row.daysCount),
+      row.fullName ?? "",
       toNum(row.breakfast),
       toNum(row.lunch),
       toNum(row.dinner),
@@ -127,22 +155,41 @@ function RepresentativeHotelReportPage({ user }) {
       toNum(row.accommodationCost),
       rowTotal(row),
     ]);
-    const totalRow = ["", "", "Общая итоговая стоимость", "", "", "", "", "", "", grandTotal];
-    const aoa = [headers, ...dataRows, totalRow];
+    const aoa = [headers, ...dataRows, [], ["Общая итоговая стоимость:", grandTotal]];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Отчёт");
     const safe = (s) => String(s).replace(/[/\\?*\[\]:]/g, "_").slice(0, 100);
     const dateStr = new Date().toISOString().slice(0, 10);
-    const fileName = `otchet_${safe(request?.flightNumber ?? "")}_${safe(hotel?.name ?? "")}_${dateStr}.xlsx`;
+    const fileName = `otchet_otel_${safe(hotel?.name ?? "")}_${dateStr}.xlsx`;
     XLSX.writeFile(wb, fileName);
   };
 
   useEffect(() => {
-    if (!loading && people.length > 0 && reportRows.length === 0) {
+    if (loading || !request || hotelIndex < 0) return;
+    const key = `${request.id}-${hotelIndex}`;
+    if (initReportRef.current === key) return;
+    const hotelReports = request.hotelReports ?? [];
+    const saved = hotelReports.find((r) => r.hotelIndex === hotelIndex);
+    if (saved?.reportRows?.length) {
+      setReportRows(
+        saved.reportRows.map((r) => ({
+          fullName: r.fullName ?? "",
+          roomNumber: r.roomNumber ?? "",
+          roomCategory: r.roomCategory ?? "",
+          daysCount: r.daysCount ?? 0,
+          breakfast: r.breakfast ?? 0,
+          lunch: r.lunch ?? 0,
+          dinner: r.dinner ?? 0,
+          foodCost: r.foodCost ?? 0,
+          accommodationCost: r.accommodationCost ?? 0,
+        }))
+      );
+    } else if (people.length > 0) {
       setReportRows(buildReportRows(people));
     }
-  }, [loading, people.length, reportRows.length]);
+    initReportRef.current = key;
+  }, [loading, request, hotelIndex, request?.id, request?.hotelReports, people]);
 
   useEffect(() => {
     if (!loading && request && !hotel) {
@@ -208,8 +255,8 @@ function RepresentativeHotelReportPage({ user }) {
                 <div className={`${reportClasses.reportGrid} ${reportClasses.tableHead}`}>
                   <div>ID</div>
                   <div>Категория номера</div>
+                  <div>Суток</div>
                   <div>ФИО</div>
-                  <div>ТИП</div>
                   <div>Завтрак</div>
                   <div>Обед</div>
                   <div>Ужин</div>
@@ -236,14 +283,23 @@ function RepresentativeHotelReportPage({ user }) {
                           onChange={(e) => updateRow(reportIndex, "roomCategory", e.target.value)}
                         />
                       </div>
+                      <div>
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.5}
+                          className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
+                          value={row.daysCount === 0 ? 0 : row.daysCount}
+                          onChange={(e) => updateRow(reportIndex, "daysCount", e.target.value)}
+                        />
+                      </div>
                       <div>{row.fullName || "—"}</div>
-                      <div>пассажир</div>
                       <div>
                         <input
                           type="number"
                           min={0}
                           className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
-                          value={row.breakfast === 0 ? "" : row.breakfast}
+                          value={row.breakfast === 0 ? 0 : row.breakfast}
                           onChange={(e) => updateRow(reportIndex, "breakfast", e.target.value)}
                         />
                       </div>
@@ -252,7 +308,7 @@ function RepresentativeHotelReportPage({ user }) {
                           type="number"
                           min={0}
                           className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
-                          value={row.lunch === 0 ? "" : row.lunch}
+                          value={row.lunch === 0 ? 0 : row.lunch}
                           onChange={(e) => updateRow(reportIndex, "lunch", e.target.value)}
                         />
                       </div>
@@ -261,7 +317,7 @@ function RepresentativeHotelReportPage({ user }) {
                           type="number"
                           min={0}
                           className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
-                          value={row.dinner === 0 ? "" : row.dinner}
+                          value={row.dinner === 0 ? 0 : row.dinner}
                           onChange={(e) => updateRow(reportIndex, "dinner", e.target.value)}
                         />
                       </div>
@@ -270,7 +326,7 @@ function RepresentativeHotelReportPage({ user }) {
                           type="number"
                           min={0}
                           className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
-                          value={row.foodCost === 0 ? "" : row.foodCost}
+                          value={row.foodCost === 0 ? 0 : row.foodCost}
                           onChange={(e) => updateRow(reportIndex, "foodCost", e.target.value)}
                         />
                       </div>
@@ -279,7 +335,7 @@ function RepresentativeHotelReportPage({ user }) {
                           type="number"
                           min={0}
                           className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
-                          value={row.accommodationCost === 0 ? "" : row.accommodationCost}
+                          value={row.accommodationCost === 0 ? 0 : row.accommodationCost}
                           onChange={(e) => updateRow(reportIndex, "accommodationCost", e.target.value)}
                         />
                       </div>
@@ -292,9 +348,14 @@ function RepresentativeHotelReportPage({ user }) {
               <span className={reportClasses.totalLabel}>
                 Общая итоговая стоимость: {grandTotal}
               </span>
-              <Button type="button" onClick={handleExportExcel}>
-                Сформировать отчёт
-              </Button>
+              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                <Button type="button" onClick={handleSaveReport} disabled={saving}>
+                  Сформировать отчёт
+                </Button>
+                <Button type="button" onClick={handleDownloadReport} disabled={reportRows.length === 0}>
+                  Скачать отчёт
+                </Button>
+              </div>
             </div>
             </div>
           </section>

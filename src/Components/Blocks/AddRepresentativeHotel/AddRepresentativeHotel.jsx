@@ -4,6 +4,8 @@ import classes from "./AddRepresentativeHotel.module.css";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
   ADD_PASSENGER_REQUEST_HOTEL,
+  CREATE_HOTEL,
+  GET_CITIES,
   GET_HOTELS_RELAY,
   GET_PASSENGER_REQUEST,
   getCookie,
@@ -18,6 +20,8 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
   const [selectedHotel, setSelectedHotel] = useState(null);
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
+  const [quickCreate, setQuickCreate] = useState({ name: "", city: "" });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -27,7 +31,7 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
     hotelId: "",
   });
 
-  const { data: hotelsData } = useQuery(GET_HOTELS_RELAY, {
+  const { data: hotelsData, refetch: refetchHotels } = useQuery(GET_HOTELS_RELAY, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -37,6 +41,21 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
   });
 
   const hotels = hotelsData?.hotels?.hotels ?? [];
+
+  const { data: citiesData } = useQuery(GET_CITIES, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    skip: !show,
+  });
+  const citiesList = citiesData?.citys ?? [];
+
+  const [createHotelMutation, { loading: creatingHotel }] = useMutation(CREATE_HOTEL, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
 
   const [addHotel, { loading }] = useMutation(ADD_PASSENGER_REQUEST_HOTEL, {
     context: {
@@ -62,6 +81,8 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
       link: "",
       hotelId: "",
     });
+    setShowQuickCreate(false);
+    setQuickCreate({ name: "", city: "" });
     setIsEdited(false);
   }, []);
 
@@ -91,9 +112,52 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
     );
   };
 
+  const handleQuickCreate = async () => {
+    if (creatingHotel) return;
+    const name = quickCreate.name?.trim();
+    if (!name) {
+      addNotification?.("Укажите название гостиницы.", "error");
+      return;
+    }
+    try {
+      const res = await createHotelMutation({
+        variables: {
+          input: {
+            name,
+            information: {
+              city: quickCreate.city?.trim() || undefined,
+            },
+          },
+          images: [],
+        },
+      });
+      const created = res?.data?.createHotel;
+      if (created) {
+        const hotelOption = {
+          id: created.id,
+          name: created.name,
+          information: created.information ?? {},
+        };
+        setSelectedHotel(hotelOption);
+        setFormData((prev) => ({
+          ...prev,
+          hotelId: created.id,
+          name: created.name,
+        }));
+        setShowQuickCreate(false);
+        setQuickCreate({ name: "", city: "" });
+        await refetchHotels();
+        addNotification?.("Гостиница создана.", "success");
+      }
+    } catch (err) {
+      console.error(err);
+      addNotification?.(err?.message || "Ошибка при создании гостиницы", "error");
+    }
+  };
+
   const handleSubmit = async () => {
     if (!isFormValid()) {
-      alert("Выберите гостиницу из списка и укажите количество мест.");
+      alert("Выберите гостиницу из списка (или создайте новую) и укажите количество мест.");
       return;
     }
 
@@ -194,6 +258,41 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
                   }));
                 }}
               />
+              <div className={classes.quickCreateWrap}>
+                <button
+                  type="button"
+                  className={classes.quickCreateLink}
+                  onClick={() => setShowQuickCreate((v) => !v)}
+                >
+                  {showQuickCreate ? "Отмена" : "Нет в списке? Создать гостиницу"}
+                </button>
+                {showQuickCreate && (
+                  <div className={classes.quickCreateForm}>
+                    <input
+                      type="text"
+                      placeholder="Название гостиницы *"
+                      value={quickCreate.name}
+                      onChange={(e) => setQuickCreate((p) => ({ ...p, name: e.target.value }))}
+                      className={classes.quickCreateInput}
+                    />
+                    <MUIAutocompleteColor
+                      dropdownWidth="100%"
+                      label="Город"
+                      options={citiesList}
+                      getOptionLabel={(option) =>
+                        option ? `${option.city}${option.region ? `, ${option.region}` : ""}`.trim() : ""
+                      }
+                      value={citiesList.find((c) => c.city === quickCreate.city) || null}
+                      onChange={(e, newValue) =>
+                        setQuickCreate((p) => ({ ...p, city: newValue?.city ?? "" }))
+                      }
+                    />
+                    <Button onClick={handleQuickCreate} disabled={creatingHotel}>
+                      {creatingHotel ? "Создание…" : "Создать и выбрать"}
+                    </Button>
+                  </div>
+                )}
+              </div>
 
               <label>Количество мест</label>
               <input

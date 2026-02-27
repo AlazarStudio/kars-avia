@@ -22,17 +22,14 @@ export function HotelDetailToolbar({ searchQuery, onSearchChange, onAddBooking, 
         onChange={(e) => onSearchChange(e.target.value)}
       />
       <div className={classes.actionsWrap}>
-        <button type="button" className={classes.headerBtn}>
+        {/* <button type="button" className={classes.headerBtn}>
           <EditIcon /> Редактировать
-        </button>
-        <button type="button" className={classes.headerBtn} onClick={onGenerateReport}>
+        </button> */}
+        {/* <button type="button" className={classes.headerBtn} onClick={onGenerateReport}>
           <img src="/plus.png" alt="" style={{ width: "15px", objectFit: "contain", filter: "invert(100%)" }} />
           Сформировать отчет
-        </button>
-        <button type="button" className={classes.headerBtn}>
-          Расселение
-          <img src="/downloadManifest.png" alt="" style={{ width: 16, height: 16 }} />
-        </button>
+        </button> */}
+        <Button onClick={onGenerateReport}>Сформировать отчет</Button>
         <Button onClick={onAddBooking}>Добавить бронь</Button>
       </div>
     </div>
@@ -56,16 +53,23 @@ export default function RepresentativeHotelDetail({
 }) {
   const [internalSearch, setInternalSearch] = useState("");
   const [internalShowAddBooking, setInternalShowAddBooking] = useState(false);
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState(null);
+  const [editingPersonIndex, setEditingPersonIndex] = useState(null);
+
   const search = searchQuery !== undefined ? searchQuery : internalSearch;
   const setSearch = onSearchChange || setInternalSearch;
   const isModalControlled = onCloseAddBooking != null;
-  const modalOpen = isModalControlled ? showAddBooking : internalShowAddBooking;
-  const modalOnClose = isModalControlled ? onCloseAddBooking : () => setInternalShowAddBooking(false);
+  const modalOpenForAdd = isModalControlled ? showAddBooking : internalShowAddBooking;
+  const modalOpen = modalOpenForAdd || editingPersonIndex !== null;
+  const modalOnClose = () => {
+    if (editingPersonIndex !== null) setEditingPersonIndex(null);
+    if (isModalControlled) onCloseAddBooking?.();
+    else setInternalShowAddBooking(false);
+  };
   const onAddBookingClick = isModalControlled ? undefined : () => setInternalShowAddBooking(true);
 
   const bookings = request?.livingService?.hotels?.[hotelIndex]?.people ?? [];
   const token = getCookie("token");
-  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState(null);
 
   const [removeHotelPerson, { loading: removing }] = useMutation(
     REMOVE_PASSENGER_REQUEST_HOTEL_PERSON,
@@ -122,16 +126,12 @@ export default function RepresentativeHotelDetail({
             onChange={(e) => setSearch(e.target.value)}
           />
           <div className={classes.actionsWrap}>
-            <button type="button" className={classes.headerBtn}>
+            {/* <button type="button" className={classes.headerBtn}>
               <EditIcon /> Редактировать
-            </button>
+            </button> */}
             <button type="button" className={classes.headerBtn} onClick={onGenerateReport}>
               <img src="/plus.png" alt="" style={{ width: "15px", objectFit: "contain", filter: "invert(100%)" }} />
               Сформировать отчет
-            </button>
-            <button type="button" className={classes.headerBtn}>
-              Расселение
-              <img src="/downloadManifest.png" alt="" style={{ width: 16, height: 16 }} />
             </button>
             <Button onClick={onAddBookingClick}>Добавить бронь</Button>
           </div>
@@ -143,7 +143,12 @@ export default function RepresentativeHotelDetail({
         onClose={modalOnClose}
         requestId={request?.id}
         hotelIndex={hotelIndex}
-        onSuccess={onRefetch}
+        initialPerson={editingPersonIndex !== null ? bookings[editingPersonIndex] : undefined}
+        personIndex={editingPersonIndex !== null ? editingPersonIndex : undefined}
+        onSuccess={() => {
+          onRefetch?.();
+          setEditingPersonIndex(null);
+        }}
         addNotification={addNotification}
       />
 
@@ -173,7 +178,15 @@ export default function RepresentativeHotelDetail({
               <div>—</div>
               <div style={{ textAlign: "center" }}>{row.roomNumber ?? "—"}</div>
               <div style={{ textAlign: "center" }}>{row.fullName ?? "—"}</div>
-              <div>
+              <div className={classes.cellActions}>
+                <button
+                  type="button"
+                  onClick={() => setEditingPersonIndex(index)}
+                  className={classes.editBtn}
+                  aria-label="Редактировать бронь"
+                >
+                  <img src="/edit.svg.png" alt="" />
+                </button>
                 <button
                   type="button"
                   onClick={() => setDeleteConfirmIndex(index)}

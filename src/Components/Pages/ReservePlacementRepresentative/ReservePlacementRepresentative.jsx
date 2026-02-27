@@ -52,6 +52,8 @@ import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import { useCookies } from "../../../hooks/useCookies";
 import AddRepresentativeService from "../../Blocks/AddRepresentativeService/AddRepresentativeService";
 import AddRepresentativeHotel from "../../Blocks/AddRepresentativeHotel/AddRepresentativeHotel";
+import * as XLSX from "xlsx";
+import DownloadIcon from "../../../shared/icons/DownloadIcon";
 
 function ReservePlacementRepresentative({ children, user, ...props }) {
   const token = getCookie("token");
@@ -313,6 +315,34 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     setShowAddHotelSidebar((prev) => !prev);
   };
 
+  const handleRasselenieExport = () => {
+    const hotels = request?.livingService?.hotels ?? [];
+    const rows = [];
+    const subHeaders = ["ФИО", "Номер комнаты", "Телефон", "Пол"];
+    for (const hotel of hotels) {
+      rows.push([hotel.name ?? ""]);
+      rows.push(subHeaders);
+      const people = hotel.people ?? [];
+      for (const person of people) {
+        rows.push([
+          person.fullName ?? "",
+          person.roomNumber ?? "",
+          person.phone ?? "",
+          person.gender ?? "",
+        ]);
+      }
+      rows.push([]);
+    }
+    const aoa = rows;
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Расселение");
+    const safe = (s) => String(s).replace(/[/\\?*\[\]:]/g, "_").slice(0, 100);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `rasselenie_${safe(request?.flightNumber ?? "")}_${dateStr}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
   const [showChooseHotel, setShowChooseHotel] = useState(false);
   const toggleChooseHotel = () => {
     setShowChooseHotel(!showChooseHotel);
@@ -521,7 +551,17 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             )} */}
 
             {filter === "habitation" && (
-              <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
+              <>
+                <button
+                  type="button"
+                  className={classes.rasselenieBtn}
+                  onClick={handleRasselenieExport}
+                >
+                  Расселение
+                  <DownloadIcon />
+                </button>
+                <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
+              </>
             )}
             {filters.length < 4 && (
               <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
@@ -599,7 +639,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       chatPadding={"0"}
                       chatHeight={
                         user.role !== roles.hotelAdmin &&
-                        user.role !== roles.airlineAdmin
+                          user.role !== roles.airlineAdmin
                           ? "calc(100vh - 364px)"
                           : "calc(100vh - 280px)"
                       }

@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import classes from "./PowerSupplyTab.module.css";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
 import { useMutation } from "@apollo/client";
-import { convertToDateNew, SET_PASSENGER_SERVICE_STATUS } from "../../../../graphQL_requests";
+import { convertToDate, SET_PASSENGER_SERVICE_STATUS } from "../../../../graphQL_requests";
 
 const statusToLabel = {
   NEW: "Принята",
@@ -22,24 +22,22 @@ export default function PowerSupplyTab({
   const people = useMemo(() => request?.mealService?.people ?? [], [request]);
   const ms = request?.mealService;
   const rawStatus = ms?.status ?? "NEW";
-  const initialStatus = statusToLabel[rawStatus] ?? "Принята";
-  const [status, setStatus] = useState(initialStatus);
+  const statusText = statusToLabel[rawStatus] ?? "Принята";
+  const canMarkDelivered = rawStatus === "NEW";
 
   const [mutate, { loading }] = useMutation(SET_PASSENGER_SERVICE_STATUS, {
     variables: {
       id: request?.id,
       service: "MEAL",
-      status: "COMPLETED",
+      status: "ACCEPTED",
     },
     onCompleted: () => {
-      addNotification("Поставка завершена", "success");
-      setStatus("Поставка завершена");
+      addNotification("Питание доставлено (услуга принята)", "success");
       onStatusChanged?.();
     },
-    onError: () => {
-      setStatus("Поставка завершена");
+    onError: (err) => {
+      addNotification(err?.message || "Ошибка", "error");
       onStatusChanged?.();
-      addNotification("Поставка завершена", "success");
     },
   });
 
@@ -75,31 +73,31 @@ export default function PowerSupplyTab({
               {p.fullName ?? "—"}
             </div>
             <div className={`${classes.w20} ${classes.jcCenter}`}>
-              {p.issuedAt ? convertToDateNew(p.issuedAt, true).trim() : "—"}
+              {p.issuedAt ? convertToDate(p.issuedAt, true).trim() : "—"}
             </div>
           </div>
         ))}
       </div>
       <ServiceFooter
-        statusText={status}
+        statusText={statusText}
         ctaLabel="Питание доставлено"
         onCta={() => mutate()}
-        disabled={loading || status === "Поставка завершена"}
+        disabled={loading || !canMarkDelivered}
         history={[
           {
             label: "Принята",
             dot: "#C4CBD6",
-            time: ms?.times?.acceptedAt ? convertToDateNew(ms.times.acceptedAt, true).trim() : "—",
+            time: ms?.times?.acceptedAt ? convertToDate(ms.times.acceptedAt, true).trim() : "—",
           },
           {
             label: "Выполняется",
             dot: "#2A6EF5",
-            time: ms?.times?.inProgressAt ? convertToDateNew(ms.times.inProgressAt, true).trim() : "—",
+            time: ms?.times?.inProgressAt ? convertToDate(ms.times.inProgressAt, true).trim() : "—",
           },
           {
             label: "Поставка завершена",
             dot: "#2ABF46",
-            time: ms?.times?.finishedAt ? convertToDateNew(ms.times.finishedAt, true).trim() : "—",
+            time: ms?.times?.finishedAt ? convertToDate(ms.times.finishedAt, true).trim() : "—",
           },
         ]}
       />

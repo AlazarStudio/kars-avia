@@ -1771,6 +1771,43 @@ export const REMOVE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
   }
 `;
 
+export const UPDATE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
+  mutation UpdatePassengerRequestHotelPerson(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $personIndex: Int!
+    $person: PassengerServiceHotelPersonInput!
+  ) {
+    updatePassengerRequestHotelPerson(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      personIndex: $personIndex
+      person: $person
+    ) {
+      id
+    }
+  }
+`;
+
+export const BUILD_PASSENGER_REQUEST_REPORT = gql`
+  mutation BuildPassengerRequestReport($requestId: ID!, $input: PassengerRequestReportInput!) {
+    buildPassengerRequestReport(requestId: $requestId, input: $input) {
+      requestId
+      flightNumber
+      total
+      savedReport {
+        id
+        name
+        url
+        reportType
+        passengerRequestId
+        passengerTotal
+        createdAt
+      }
+    }
+  }
+`;
+
 export const GET_BRONS_HOTEL = gql`
   query Hotel($hotelId: ID!, $hcPagination: HotelChessPaginationInput) {
     hotel(id: $hotelId) {
@@ -2777,6 +2814,49 @@ export const GET_PASSENGER_REQUEST = gql`
           phone
           seat
         }
+      }
+      hotelReports {
+        id
+        hotelIndex
+        reportRows {
+          fullName
+          roomNumber
+          roomCategory
+          daysCount
+          breakfast
+          lunch
+          dinner
+          foodCost
+          accommodationCost
+        }
+      }
+    }
+  }
+`;
+
+export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
+  mutation SavePassengerRequestHotelReport(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $reportRows: [PassengerRequestHotelReportRowInput!]!
+  ) {
+    savePassengerRequestHotelReport(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      reportRows: $reportRows
+    ) {
+      id
+      hotelIndex
+      reportRows {
+        fullName
+        roomNumber
+        roomCategory
+        daysCount
+        breakfast
+        lunch
+        dinner
+        foodCost
+        accommodationCost
       }
     }
   }

@@ -197,6 +197,31 @@
     cursor: pointer;
 }
 
+.rasselenieBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 30px;
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #545873;
+    background-color: var(--white);
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    text-transform: none;
+    width: auto;
+    justify-content: center;
+}
+
+.rasselenieBtn img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
 .chatWrapper {
     /* width: 500px; */
     background-color: #fff;

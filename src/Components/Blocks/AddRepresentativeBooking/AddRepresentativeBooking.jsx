@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useMutation } from "@apollo/client";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -8,30 +8,69 @@ import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import {
   ADD_PASSENGER_REQUEST_HOTEL_PERSON,
+  UPDATE_PASSENGER_REQUEST_HOTEL_PERSON,
   GET_PASSENGER_REQUEST,
   getCookie,
 } from "../../../../graphQL_requests.js";
 import classes from "./AddRepresentativeBooking.module.css";
+
+const emptyForm = {
+  fullName: "",
+  phone: "",
+  gender: "",
+  roomNumber: "",
+};
 
 function AddRepresentativeBooking({
   open,
   onClose,
   requestId,
   hotelIndex,
+  initialPerson,
+  personIndex,
   onSuccess,
   addNotification,
 }) {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    phone: "",
-    gender: "",
-    roomNumber: "",
-  });
+  const [formData, setFormData] = useState(emptyForm);
+  const isEditMode = initialPerson != null && personIndex != null;
+
+  useEffect(() => {
+    if (open) {
+      if (initialPerson) {
+        setFormData({
+          fullName: initialPerson.fullName ?? "",
+          phone: initialPerson.phone ?? "",
+          gender: initialPerson.gender ?? "",
+          roomNumber: initialPerson.roomNumber ?? "",
+        });
+      } else {
+        setFormData(emptyForm);
+      }
+    }
+  }, [open, initialPerson]);
 
   const token = getCookie("token");
 
-  const [addHotelPerson, { loading }] = useMutation(
+  const [addHotelPerson, { loading: adding }] = useMutation(
     ADD_PASSENGER_REQUEST_HOTEL_PERSON,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      refetchQueries: [
+        {
+          query: GET_PASSENGER_REQUEST,
+          variables: { passengerRequestId: requestId },
+        },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const [updateHotelPerson, { loading: updating }] = useMutation(
+    UPDATE_PASSENGER_REQUEST_HOTEL_PERSON,
     {
       context: {
         headers: {
@@ -54,12 +93,7 @@ function AddRepresentativeBooking({
   }, []);
 
   const handleClose = useCallback(() => {
-    setFormData({
-      fullName: "",
-      phone: "",
-      gender: "",
-      roomNumber: "",
-    });
+    setFormData(emptyForm);
     onClose();
   }, [onClose]);
 
@@ -78,27 +112,43 @@ function AddRepresentativeBooking({
     };
 
     try {
-      await addHotelPerson({
-        variables: {
-          requestId,
-          hotelIndex,
-          person,
-        },
-      });
-      addNotification?.("Бронь добавлена.", "success");
+      if (isEditMode) {
+        await updateHotelPerson({
+          variables: {
+            requestId,
+            hotelIndex,
+            personIndex,
+            person,
+          },
+        });
+        addNotification?.("Бронь обновлена.", "success");
+      } else {
+        await addHotelPerson({
+          variables: {
+            requestId,
+            hotelIndex,
+            person,
+          },
+        });
+        addNotification?.("Бронь добавлена.", "success");
+      }
       onSuccess?.();
       handleClose();
     } catch (error) {
       console.error(error);
       const message =
-        error?.graphQLErrors?.[0]?.message || error?.message || "Ошибка при добавлении брони.";
+        error?.graphQLErrors?.[0]?.message || error?.message || "Ошибка при сохранении брони.";
       addNotification?.(message, "error");
     }
   };
 
+  const loading = adding || updating;
+
   return (
     <Dialog open={open} onClose={handleClose} PaperProps={{ sx: { borderRadius: "15px" } }}>
-      <DialogTitle className={classes.title}>Добавить бронь</DialogTitle>
+      <DialogTitle className={classes.title}>
+        {isEditMode ? "Редактировать бронь" : "Добавить бронь"}
+      </DialogTitle>
       <DialogContent className={classes.content}>
         <label className={classes.label}>ФИО пассажира</label>
         <input
@@ -143,7 +193,7 @@ function AddRepresentativeBooking({
           Отмена
         </Button>
         <Button onClick={handleSubmit} disabled={loading}>
-          Добавить
+          {isEditMode ? "Сохранить" : "Добавить"}
         </Button>
       </DialogActions>
     </Dialog>

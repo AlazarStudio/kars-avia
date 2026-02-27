@@ -1,9 +1,9 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import classes from "./WaterSupplyTab.module.css";
 import { useMutation } from "@apollo/client";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { convertToDateNew, SET_PASSENGER_SERVICE_STATUS } from "../../../../graphQL_requests";
+import { convertToDate, SET_PASSENGER_SERVICE_STATUS } from "../../../../graphQL_requests";
 
 const statusToLabel = {
   NEW: "Принята",
@@ -22,28 +22,25 @@ export default function WaterSupplyTab({
   const people = useMemo(() => request?.waterService?.people ?? [], [request]);
   const ws = request?.waterService;
   const rawStatus = ws?.status ?? "NEW";
-  const initialStatus = statusToLabel[rawStatus] ?? "Принята";
-  const [status, setStatus] = useState(initialStatus);
+  const statusText = statusToLabel[rawStatus] ?? "Принята";
+  const canMarkDelivered = rawStatus === "NEW";
 
   const [mutate, { loading }] = useMutation(SET_PASSENGER_SERVICE_STATUS, {
     variables: {
       id: request?.id,
       service: "WATER",
-      status: "COMPLETED",
+      status: "ACCEPTED",
     },
     onCompleted: () => {
-      addNotification("Поставка завершена", "success");
-      setStatus("Поставка завершена");
+      addNotification("Вода доставлена (услуга принята)", "success");
       onStatusChanged?.();
     },
-    onError: () => {
-      setStatus("Поставка завершена");
+    onError: (err) => {
+      addNotification(err?.message || "Ошибка", "error");
       onStatusChanged?.();
-      addNotification("Поставка завершена", "success");
     },
   });
 
-  // WaterSupplyTab.jsx
   return (
     <section
       id={id}
@@ -77,32 +74,32 @@ export default function WaterSupplyTab({
               {p.fullName ?? "—"}
             </div>
             <div className={`${classes.w20} ${classes.jcCenter}`}>
-              {p.issuedAt ? convertToDateNew(p.issuedAt, true).trim() : "—"}
+              {p.issuedAt ? convertToDate(p.issuedAt, true).trim() : "—"}
             </div>
           </div>
         ))}
       </div>
 
       <ServiceFooter
-        statusText={status}
+        statusText={statusText}
         ctaLabel="Вода доставлена"
         onCta={() => mutate()}
-        disabled={loading || status === "Поставка завершена"}
+        disabled={loading || !canMarkDelivered}
         history={[
           {
             label: "Принята",
             dot: "#C4CBD6",
-            time: ws?.times?.acceptedAt ? convertToDateNew(ws.times.acceptedAt, true).trim() : "—",
+            time: ws?.times?.acceptedAt ? convertToDate(ws.times.acceptedAt, true).trim() : "—",
           },
           {
             label: "Выполняется",
             dot: "#2A6EF5",
-            time: ws?.times?.inProgressAt ? convertToDateNew(ws.times.inProgressAt, true).trim() : "—",
+            time: ws?.times?.inProgressAt ? convertToDate(ws.times.inProgressAt, true).trim() : "—",
           },
           {
             label: "Поставка завершена",
             dot: "#2ABF46",
-            time: ws?.times?.finishedAt ? convertToDateNew(ws.times.finishedAt, true).trim() : "—",
+            time: ws?.times?.finishedAt ? convertToDate(ws.times.finishedAt, true).trim() : "—",
           },
         ]}
       />
