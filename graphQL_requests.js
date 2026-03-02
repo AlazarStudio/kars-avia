@@ -1620,6 +1620,7 @@ export const GET_REQUEST = gql`
           user {
             name
             role
+            images
           }
         }
         totalCount
@@ -2289,6 +2290,7 @@ export const GET_HOTEL_LOGS = gql`
           user {
             name
             role
+            images
           }
         }
       }
@@ -2314,6 +2316,7 @@ export const GET_AIRLINE_LOGS = gql`
           user {
             name
             role
+            images
           }
         }
       }
@@ -2335,6 +2338,7 @@ export const GET_RESERVE_LOGS = gql`
           user {
             name
             role
+            images
           }
         }
       }

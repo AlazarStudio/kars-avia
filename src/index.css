@@ -370,6 +370,6 @@ textarea {
 }
 
 .historyLogTime {
-    color: #54587380;
-    padding-right: 8px;
+    color: var(--text);
+    /* padding-right: 8px; */
 }

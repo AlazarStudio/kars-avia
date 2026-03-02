@@ -19,6 +19,7 @@ import {
   SAVE_HANDLE_EXTEND_MUTATION,
   SAVE_MEALS_MUTATION,
   UPDATE_REQUEST_RELAY,
+  getMediaUrl,
 } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 import {
@@ -37,7 +38,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import ExistRequestAdditionalMenu from "./ExistRequestAdditionalMenu";
 import ExistRequestEditForm from "./ExistRequestEditForm";
-import { roles } from "../../../roles";
+import { roles, roleLabels } from "../../../roles";
 
 function ExistRequest({
   show,
@@ -178,6 +179,32 @@ function ExistRequest({
       skip: newPageIndex * prev.take,
     }));
   };
+
+  // Группировка истории по датам (как в уведомлениях)
+  const dayKey = (s) => {
+    const d = new Date(s);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+  const fmtDay = (ts) =>
+    new Date(ts).toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  const groupedHistory = useMemo(() => {
+    const list = logsData?.logs?.logs ?? [];
+    const sorted = [...list].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    const m = new Map();
+    for (const log of sorted) {
+      const k = dayKey(log.createdAt);
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(log);
+    }
+    return Array.from(m.entries()).sort((a, b) => b[0] - a[0]);
+  }, [logsData?.logs?.logs]);
 
   useEffect(() => {
     if (formData) {
@@ -1683,32 +1710,44 @@ function ExistRequest({
                     style={{ paddingBottom: totalPages > 1 ? "60px" : "20px" }}
                   >
                     <div className={classes.logs}>
-                      {[...logsData.logs.logs].map((log, index) => (
-                        <>
-                          <div className={classes.historyDate} key={index}>
-                            {new Date(log.createdAt).toLocaleDateString(
-                              "ru-RU",
-                              {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              }
-                            )}
-                            {/* {convertToDate(log.createdAt)}{" "}
-                        {convertToDate(log.createdAt, true)} */}
+                      {groupedHistory.map(([dayTs, dayLogs]) => (
+                        <div
+                          className={classes.historySection}
+                          key={dayTs}
+                        >
+                          <div className={classes.historyDate}>
+                            {fmtDay(dayTs)}
                           </div>
-                          <div
-                            className={classes.historyLog}
-                            dangerouslySetInnerHTML={{
-                              __html: `<span class='historyLogTime'>${convertToDate(
+                          {console.log(dayLogs)
+                          }
+                          {dayLogs.map((log, idx) => (
+                            <div className={classes.logText}>
+                              <span className='historyLogTime'>{convertToDate(
                                 log.createdAt,
                                 true
-                              )}</span> ${log.description}`,
-                            }}
-                          >
-                            {/* {log.description} */}
-                          </div>
-                        </>
+                              )}</span>
+                              <div
+                                key={log.id ?? `${dayTs}-${idx}`}
+                                className={classes.historyLog}
+                                dangerouslySetInnerHTML={{
+                                  __html: `${log.description}`,
+                                }}
+                              />
+                              <div
+                                className={classes.logImg}
+                                title={
+                                  log.user
+                                    ? [log.user.name, roleLabels[log.user.role] ?? roleLabels[log.user.role?.toUpperCase()] ?? log.user.role]
+                                        .filter(Boolean)
+                                        .join(", ") || undefined
+                                    : undefined
+                                }
+                              >
+                                <img src={log.user?.images[0] ? getMediaUrl(log.user?.images[0]) : "/no-avatar.png"} alt="" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       ))}
                     </div>
                     {totalPages > 1 && (

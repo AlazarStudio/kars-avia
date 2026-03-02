@@ -13,6 +13,8 @@ import {
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
 
 function EditAdditionalAgreement({
   show,
@@ -25,6 +27,7 @@ function EditAdditionalAgreement({
   updId,
   token,
   agreementSidebarRef,
+  onRequestDelete,
 }) {
   const [local, setLocal] = useState({
     id: undefined,
@@ -35,6 +38,8 @@ function EditAdditionalAgreement({
     files: [],
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuRef = useRef(null);
 
   // console.log(agreement);
 
@@ -60,18 +65,26 @@ function EditAdditionalAgreement({
     if (agreement) setLocal({ ...agreement, files: "" });
   }, [agreement]);
 
-  const sidebarRef = useRef();
+  useEffect(() => {
+    if (!show) setAnchorEl(null);
+  }, [show]);
+
   useEffect(() => {
     if (!show) return;
     const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+      const clickedInsideMenu = event.target.closest("[role=\"menu\"]");
+      if (
+        agreementSidebarRef?.current &&
+        !agreementSidebarRef.current.contains(event.target) &&
+        !clickedInsideMenu
+      ) {
         onClose?.();
         setIsEditing(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show]);
+  }, [show, onClose, agreementSidebarRef]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -167,19 +180,40 @@ function EditAdditionalAgreement({
   //   onSave?.(local);
   // };
 
+  const handleClose = () => {
+    onClose?.();
+    setIsEditing(false);
+  };
+
   return (
     <Sidebar show={show} sidebarRef={agreementSidebarRef}>
       <div className={classes.requestTitle}>
-        <div
-          className={classes.requestTitle_close}
-          onClick={() => {
-            onClose(), setIsEditing(false);
-          }}
-        >
-          <img src="/arrow.png" alt="" />
+        <div className={classes.requestTitle_left}>
+          <div
+            className={classes.requestTitle_back}
+            onClick={handleClose}
+          >
+            <img src="/arrow.png" alt="" />
+          </div>
+          <div className={classes.requestTitle_name}>
+            {local.contractNumber || "—"}
+          </div>
         </div>
-        <div className={classes.requestTitle_name}>
-          {local.contractNumber || "—"}
+        <div className={classes.requestTitle_close}>
+          {canEdit && (
+            <EditContractAdditionalMenu
+              anchorEl={anchorEl}
+              onOpen={(e) => setAnchorEl(e?.currentTarget ?? e)}
+              onClose={() => setAnchorEl(null)}
+              menuRef={menuRef}
+              canEdit={canEdit}
+              onEdit={() => setIsEditing(true)}
+              onDelete={() => onRequestDelete?.()}
+            />
+          )}
+          <div onClick={handleClose} className={classes.closeIconWrapper}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
       {isLoading ? (
@@ -188,7 +222,7 @@ function EditAdditionalAgreement({
         <>
           <div
             className={classes.requestMiddle}
-            style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
+            style={!canEdit ? { height: "calc(100% - 148px)" } : isEditing ? {height: "calc(100vh - 161px)"} : {height: "calc(100vh - 80px)"}}
           >
             <div className={classes.requestData}>
               <div className={agreement?.id && !isEditing ? classes.requestDataInfo : classes.requestDataItem}>
@@ -301,7 +335,7 @@ function EditAdditionalAgreement({
                 </a>
               ))}
               {/* <input type="file" onChange={handleFiles} multiple /> */}
-              {canEdit && (
+              {(canEdit && isEditing) && (
                 <div
                   ref={dropRef}
                   className={classes.fileDrop}
@@ -332,32 +366,22 @@ function EditAdditionalAgreement({
             </div>
           </div>
 
-          {canEdit && (
+          {canEdit && isEditing && (
             <div className={classes.requestButton}>
-              {isEditing && (
-                <Button
-                  onClick={() => setIsEditing(false)}
-                  backgroundcolor="var(--hover-gray)"
-                  color="#000"
-                >
-                  Отмена
-                </Button>
-              )}
+              <Button
+                onClick={() => setIsEditing(false)}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
               <Button
                 type="button"
                 onClick={save}
-                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-                color={!isEditing ? "#3B6C54" : "#fff"}
+                backgroundcolor="#0057C3"
+                color="#fff"
               >
-                {isEditing ? (
-                  <>
-                    Сохранить <img src="/saveDispatcher.png" alt="" />
-                  </>
-                ) : (
-                  <>
-                    Изменить <img src="/editDispetcher.png" alt="" />
-                  </>
-                )}
+                Сохранить <img src="/saveDispatcher.png" alt="" />
               </Button>
             </div>
           )}

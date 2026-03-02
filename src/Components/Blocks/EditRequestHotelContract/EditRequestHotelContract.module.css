@@ -27,13 +27,21 @@
 }
 
 .requestTitle_close {
-    cursor: pointer;
+    display: flex;
+    gap: 15px;
+    align-items: center;
 }
 
 .requestTitle_close img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.closeIconWrapper {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .tabs {
@@ -134,7 +142,7 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100% - 198px);
+    height: calc(100% - 117px);
     overflow: hidden;
     overflow-y: auto;
 }

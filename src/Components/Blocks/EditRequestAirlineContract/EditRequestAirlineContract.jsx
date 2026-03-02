@@ -25,6 +25,7 @@ import CreateAdditionalAgreement from "../CreateAdditionalAgreement/CreateAdditi
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
 
 /**
  * Компонент редактирования договора авиакомпании.
@@ -42,6 +43,7 @@ function EditRequestAirlineContract({
   tarif, // тут приходит airlineContractId
   addNotification,
   canEdit = false, // Флаг для разрешения редактирования
+  onRequestDelete, // колбэк: закрыть сайдбар и открыть модал удаления договора
 }) {
   const token = getCookie("token");
 
@@ -99,6 +101,8 @@ function EditRequestAirlineContract({
   // Управление режимом редактирования (как в исходнике)
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("Общая");
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuRef = useRef(null);
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
   const [airports, setAirports] = useState([]); // Список аэропортов
@@ -396,6 +400,10 @@ function EditRequestAirlineContract({
   // console.log(formData);
 
   useEffect(() => {
+    if (!show) setAnchorEl(null);
+  }, [show]);
+
+  useEffect(() => {
     if (!show) return;
 
     const handleClickOutside = (event) => {
@@ -404,8 +412,9 @@ function EditRequestAirlineContract({
       const clickedOutsideAgreement = !agreementSidebarRef.current?.contains(
         event.target
       );
+      const clickedInsideMenu = event.target.closest("[role=\"menu\"]");
 
-      if (clickedOutsideMain && clickedOutsideAgreement) {
+      if (clickedOutsideMain && clickedOutsideAgreement && !clickedInsideMenu) {
         closeButton();
       }
     };
@@ -422,8 +431,21 @@ function EditRequestAirlineContract({
             {formData?.contractNumber}
             {/* {canEdit ? "Изменить договор" : formData?.contractNumber} */}
           </div>
-          <div className={classes.requestTitle_close} onClick={closeButton}>
-            <CloseIcon />
+          <div className={classes.requestTitle_close}>
+            {canEdit && (
+              <EditContractAdditionalMenu
+                anchorEl={anchorEl}
+                onOpen={(e) => setAnchorEl(e?.currentTarget ?? e)}
+                onClose={() => setAnchorEl(null)}
+                menuRef={menuRef}
+                canEdit={canEdit}
+                onEdit={() => setIsEditing(true)}
+                onDelete={() => onRequestDelete?.()}
+              />
+            )}
+            <div onClick={closeButton} className={classes.closeIconWrapper}>
+              <CloseIcon />
+            </div>
           </div>
         </div>
 
@@ -458,7 +480,7 @@ function EditRequestAirlineContract({
             {activeTab === "Общая" ? (
               <div
                 className={classes.requestMiddle}
-                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
+                style={!canEdit ? { height: "calc(100% - 148px)" } : isEditing ? {height: "calc(100vh - 198px)"} : {height: "calc(100vh - 117px)"}}
               >
                 <div className={classes.requestData}>
                   {/* Договор: основные поля */}
@@ -650,7 +672,7 @@ function EditRequestAirlineContract({
                     multiple
                     disabled={!isEditing}
                   /> */}
-                  {canEdit && (
+                  {(canEdit && isEditing) && (
                     <div
                       ref={dropRef}
                       className={classes.fileDrop}
@@ -765,32 +787,22 @@ function EditRequestAirlineContract({
               </div>
             )}
 
-            {activeTab === "Общая" && canEdit && (
+            {activeTab === "Общая" && canEdit && isEditing && (
               <div className={classes.requestButton}>
-                {isEditing && (
-                  <Button
-                    onClick={() => setIsEditing(false)}
-                    backgroundcolor="var(--hover-gray)"
-                    color="#000"
-                  >
-                    Отмена
-                  </Button>
-                )}
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  backgroundcolor="var(--hover-gray)"
+                  color="#000"
+                >
+                  Отмена
+                </Button>
                 <Button
                   type="submit"
                   onClick={handleSubmit}
-                  backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-                  color={!isEditing ? "#3B6C54" : "#fff"}
+                  backgroundcolor="#0057C3"
+                  color="#fff"
                 >
-                  {isEditing ? (
-                    <>
-                      Сохранить <img src="/saveDispatcher.png" alt="" />
-                    </>
-                  ) : (
-                    <>
-                      Изменить <img src="/editDispetcher.png" alt="" />
-                    </>
-                  )}
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
                 </Button>
               </div>
             )}
@@ -807,7 +819,17 @@ function EditRequestAirlineContract({
         onSave={saveAgreement}
         refetch={refetch}
         token={token}
-        agreementSidebarRef={agreementSidebarRef} // Pass the ref here
+        agreementSidebarRef={agreementSidebarRef}
+        onRequestDelete={
+          canEdit && selectedAgreement != null
+            ? () => {
+                const ag = selectedAgreement.data;
+                const idx = selectedAgreement.index;
+                closeAgreement();
+                if (ag != null && idx != null) deleteAgreement(ag, idx);
+              }
+            : undefined
+        }
       />
 
       <CreateAdditionalAgreement

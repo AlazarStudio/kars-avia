@@ -11,6 +11,8 @@ import MUILoader from "../MUILoader/MUILoader";
 import { useNavigate } from "react-router-dom";
 import { NetworkStatus } from "@apollo/client";
 import { roles } from "../../../roles";
+import ExportIcon from "../../../shared/icons/ExportIcon";
+import CloseIcon from "../../../shared/icons/CloseIcon";
 
 const TAKE = 50; // размер страницы
 
@@ -179,8 +181,7 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
             const merged = [...prev, ...newItems].filter((it) => {
               const key =
                 it.id ??
-                `${it.createdAt}-${it.description?.action}-${
-                  it.reserveId ?? it.requestId ?? ""
+                `${it.createdAt}-${it.description?.action}-${it.reserveId ?? it.requestId ?? ""
                 }`;
               if (seen.has(key)) return false;
               seen.add(key);
@@ -240,13 +241,23 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div
         className={classes.notifyWrapper}
-        // убедитесь, что этот контейнер реально скроллится:
-        // style={{ overflow: "auto", maxHeight: 600 }}
+      // убедитесь, что этот контейнер реально скроллится:
+      // style={{ overflow: "auto", maxHeight: 600 }}
       >
         {isInitialLoading && <MUILoader fullHeight={"100vh"} />}
 
         {!isInitialLoading && !error && (
           <>
+          <div className={classes.requestTitle}>
+            <div className={classes.requestTitle_name}>
+              Уведомления
+            </div>
+            <div className={classes.requestTitle_close}>
+              <div onClick={onClose} className={classes.closeIconWrapper}>
+                <CloseIcon />
+              </div>
+            </div>
+          </div>
             <div className={classes.separatorWrapper}>
               <button
                 onClick={() => setSeparator("All")}
@@ -264,7 +275,13 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                 onClick={() => setSeparator("reserve")}
                 className={separator === "reserve" ? classes.active : null}
               >
-                Пассажиры
+                ФАП
+              </button>
+              <button
+                onClick={() => setSeparator("transfer")}
+                className={separator === "transfer" ? classes.active : null}
+              >
+                Трансфер
               </button>
             </div>
 
@@ -286,29 +303,10 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                             <div className={classes.notifyMessageTime}>
                               <p>{convertToDate(notify.createdAt, true)}</p>
                             </div>
-                            {isHotelAdmin && isReserve ? (
-                              <p
-                                className={classes.toRequest}
-                                onClick={() => navigate(requestLink)}
-                              >
-                                Перейти к заявке
-                              </p>
-                            ) : (
-                              <p
-                                className={classes.toRequest}
-                                onClick={() =>
-                                  isReserve
-                                    ? navigate(requestLink)
-                                    : onRequestClick(notify)
-                                }
-                              >
-                                Перейти к заявке
-                              </p>
-                            )}
                           </div>
                           <div className={classes.notifyMessageText}>
                             {notify?.description?.action === "new_message" &&
-                            notify.chatId ? (
+                              notify.chatId ? (
                               <p className={classes.notifyDescription}>
                                 В чате новое сообщение
                               </p>
@@ -321,6 +319,25 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                               />
                             )}
                           </div>
+                          {isHotelAdmin && isReserve ? (
+                            <p
+                              className={classes.toRequest}
+                              onClick={() => navigate(requestLink)}
+                            >
+                              <ExportIcon />
+                            </p>
+                          ) : (
+                            <p
+                              className={classes.toRequest}
+                              onClick={() =>
+                                isReserve
+                                  ? navigate(requestLink)
+                                  : onRequestClick(notify)
+                              }
+                            >
+                              <ExportIcon />
+                            </p>
+                          )}
                         </div>
                       </div>
                     );

@@ -217,7 +217,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
     setEditShowAddTarif(false);
   };
 
-  // NEW: открыть модал удаления договора
+  // NEW: открыть модал удаления договора (из таблицы — закрывает сайдбар)
   const openDeleteContract = (contract) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -225,6 +225,15 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
       data: { contract },
     });
     setEditShowAddTarif(false);
+  };
+
+  // Открыть модал удаления без закрытия сайдбара (из меню договора)
+  const openDeleteContractFromMenu = (contract) => {
+    setShowDelete(true);
+    setDeleteIndex({
+      type: "deleteContract",
+      data: { contract },
+    });
   };
 
   const openDeleteComponentCategory = (category, tarif) => {
@@ -248,6 +257,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
       setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
       await refetch();
       setShowDelete(false);
+      setEditShowAddTarif(false);
       addNotification?.("Договор удалён.", "success");
     } catch (e) {
       console.error(e);
@@ -444,6 +454,14 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
         addTarif={addTarif}
         tarif={selectedTarif}
         addNotification={addNotification}
+        onRequestDelete={
+          canEdit
+            ? () => {
+                const contract = addTarif.find((x) => x.id === selectedTarif);
+                if (contract) openDeleteContractFromMenu(contract);
+              }
+            : undefined
+        }
       />
 
       {canEdit && showDelete && (

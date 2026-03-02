@@ -356,7 +356,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
     setEditShowAddTarif(false);
   };
 
-  // NEW: открыть модал удаления договора
+  // NEW: открыть модал удаления договора (из таблицы — закрывает сайдбар)
   const openDeleteContract = (contract) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -364,6 +364,15 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
       data: { contract },
     });
     setEditShowAddTarif(false);
+  };
+
+  // Открыть модал удаления без закрытия сайдбара (из меню договора)
+  const openDeleteContractFromMenu = (contract) => {
+    setShowDelete(true);
+    setDeleteIndex({
+      type: "deleteContract",
+      data: { contract },
+    });
   };
 
   // NEW: удалить договор (авиа/гостиница)
@@ -386,6 +395,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
       setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
       await refetch();
       setShowDelete(false);
+      setEditShowAddTarif(false);
       addNotification?.("Договор удалён.", "success");
     } catch (e) {
       console.error(e);
@@ -817,6 +827,14 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             addTarif={addTarif}
             tarif={selectedTarif}
             addNotification={addNotification}
+            onRequestDelete={
+              canEdit
+                ? () => {
+                    const contract = addTarif.find((x) => x.id === selectedTarif);
+                    if (contract) openDeleteContractFromMenu(contract);
+                  }
+                : undefined
+            }
           />
         </>
       ) : null}
@@ -853,6 +871,14 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             addTarif={addTarif}
             tarif={selectedTarif}
             addNotification={addNotification}
+            onRequestDelete={
+              canEdit
+                ? () => {
+                    const contract = addTarif.find((x) => x.id === selectedTarif);
+                    if (contract) openDeleteContractFromMenu(contract);
+                  }
+                : undefined
+            }
           />
         </>
       ) : null}

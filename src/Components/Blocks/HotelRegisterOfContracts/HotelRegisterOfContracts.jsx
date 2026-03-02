@@ -251,7 +251,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
     setEditShowAddTarif(false);
   };
 
-  // NEW: открыть модал удаления договора
+  // NEW: открыть модал удаления договора (из таблицы — закрывает сайдбар)
   const openDeleteContract = (contract) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -259,6 +259,15 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
       data: { contract },
     });
     setEditShowAddTarif(false);
+  };
+
+  // Открыть модал удаления без закрытия сайдбара (из меню договора)
+  const openDeleteContractFromMenu = (contract) => {
+    setShowDelete(true);
+    setDeleteIndex({
+      type: "deleteContract",
+      data: { contract },
+    });
   };
 
   // NEW: удалить договор (авиа/гостиница)
@@ -277,6 +286,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
       setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
       await refetch();
       setShowDelete(false);
+      setEditShowAddTarif(false);
       addNotification?.("Договор удалён.", "success");
     } catch (e) {
       console.error(e);
@@ -500,6 +510,14 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
         addTarif={addTarif}
         tarif={selectedTarif}
         addNotification={addNotification}
+        onRequestDelete={
+          canEdit
+            ? () => {
+                const contract = addTarif.find((x) => x.id === selectedTarif);
+                if (contract) openDeleteContractFromMenu(contract);
+              }
+            : undefined
+        }
       />
 
       {canEdit && showDelete && (
