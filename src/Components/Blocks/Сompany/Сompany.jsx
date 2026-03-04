@@ -104,12 +104,23 @@ function Company({ user, accessMenu }) {
   const [positions, setPositions] = useState([]);
 
   useEffect(() => {
-    if (dispatchersData?.dispatcherUsers?.users) {
-      const sortedDispatchers = [...dispatchersData.dispatcherUsers.users].sort(
-        (a, b) => a.name.localeCompare(b.name)
-      );
-      setDispatchers(sortedDispatchers);
-    }
+    if (!dispatchersData?.dispatcherUsers?.users) return;
+    const users = dispatchersData.dispatcherUsers.users;
+    setDispatchers((prev) => {
+      const copied = users.map((d) => {
+        const positionFromData = d.position
+          ? { ...d.position }
+          : d.position;
+        const prevDispatcher = prev.find((p) => p.id === d.id);
+        const position =
+          positionFromData ??
+          (prevDispatcher?.position
+            ? { ...prevDispatcher.position }
+            : positionFromData);
+        return { ...d, position };
+      });
+      return [...copied].sort((a, b) => a.name.localeCompare(b.name));
+    });
   }, [dispatchersData]);
 
   useEffect(() => {
@@ -398,6 +409,7 @@ function Company({ user, accessMenu }) {
             show={showEditDepartment}
             onClose={() => setShowEditDepartment(false)}
             department={selectedDepartment}
+            refetchDepartments={refetchDepartments}
             onUpdated={() => refetchDepartments()}
             addNotification={addNotification}
           />

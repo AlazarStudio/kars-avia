@@ -166,7 +166,7 @@ select {
     bottom: 0;
     background-color: #fff;
     width: 100%;
-    gap: 5px;
+    gap: 10px;
     /* display: flex;
     justify-content: flex-end; */
 }

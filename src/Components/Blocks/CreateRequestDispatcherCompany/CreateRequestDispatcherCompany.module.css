@@ -109,7 +109,7 @@ select {
 }
 
 .requestButton button {
-    width: 49%;
+    width: 50%;
 }
 
 @media (min-width: 0px) and (max-width: 1399px) {

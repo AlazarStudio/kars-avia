@@ -18,13 +18,13 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 
 function ExistRequestMyCompany({
   show,
   onClose,
   chooseObject,
   updateDispatcher,
-  openDeleteComponent,
   addNotification,
 }) {
   const token = getCookie("token");
@@ -87,6 +87,8 @@ function ExistRequestMyCompany({
   }, [infoCities]);
 
   const sidebarRef = useRef();
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   // console.log(companyData);
 
@@ -110,27 +112,37 @@ function ExistRequestMyCompany({
   }, [companyData, show]);
 
   const resetForm = useCallback(() => {
+    const company = companyData?.getCompany;
     setFormData({
-      id: "",
-      name: "",
-      description: "",
-      country: "",
-      city: "",
-      email: "",
-      inn: "",
-      ogrn: "",
-      bik: "",
-      rs: "",
-      bank: "",
-      index: "",
+      id: company?.id || "",
+      name: company?.name || "",
+      description: company?.information?.description || "",
+      country: company?.information?.country || "",
+      city: company?.information?.city || "",
+      email: company?.information?.email || "",
+      inn: company?.information?.inn || "",
+      ogrn: company?.information?.ogrn || "",
+      bik: company?.information?.bik || "",
+      rs: company?.information?.rs || "",
+      bank: company?.information?.bank || "",
+      index: company?.information?.index || "",
     });
-    setIsEdited(false); // Сброс флага изменений
-  }, []);
+    setIsEdited(false);
+  }, [companyData]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => setIsEditing(true);
+  const handleCancelEdit = () => {
+    resetForm();
+    setIsEditing(false);
+  };
+
   const closeButton = useCallback(() => {
+    setAnchorEl(null);
     if (!isEdited) {
       resetForm();
       onClose();
@@ -143,7 +155,7 @@ function ExistRequestMyCompany({
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, isEditing, onClose]);
+  }, [isEdited, isEditing, onClose, resetForm]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -179,77 +191,63 @@ function ExistRequestMyCompany({
   //   }
   // };
 
-  const handleUpdate = async () => {
-    if (isEditing) {
-      setIsLoading(true);
-      // Проверяем обязательные поля
-      const requiredFields = ["name"];
-      const emptyFields = requiredFields.filter(
-        (field) => !formData[field]?.trim()
-      );
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.();
+    setIsLoading(true);
+    const requiredFields = ["name"];
+    const emptyFields = requiredFields.filter(
+      (field) => !formData[field]?.trim()
+    );
 
-      if (emptyFields.length > 0) {
-        alert("Пожалуйста, заполните все обязательные поля.");
-        setIsLoading(false);
-        return;
-      }
-      // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      // if (!emailRegex.test(formData.email)) {
-      //   alert("Введите корректный email.");
-      //   setIsLoading(false);
-      //   return;
-      // }
+    if (emptyFields.length > 0) {
+      alert("Пожалуйста, заполните все обязательные поля.");
+      setIsLoading(false);
+      return;
+    }
 
-      try {
-        let response_update_user = await uploadFile({
-          variables: {
-            input: {
-              id: formData.id,
-              name: formData.name,
-              information: {
-                description: formData.description,
-                country: formData.country,
-                city: formData.city,
-                email: formData.email,
-                inn: formData.inn,
-                ogrn: formData.ogrn,
-                bik: formData.bik,
-                rs: formData.rs,
-                bank: formData.bank,
-                index: formData.index,
-              },
+    try {
+      let response_update_user = await uploadFile({
+        variables: {
+          input: {
+            id: formData.id,
+            name: formData.name,
+            information: {
+              description: formData.description,
+              country: formData.country,
+              city: formData.city,
+              email: formData.email,
+              inn: formData.inn,
+              ogrn: formData.ogrn,
+              bik: formData.bik,
+              rs: formData.rs,
+              bank: formData.bank,
+              index: formData.index,
             },
           },
-        });
+        },
+      });
 
-        if (response_update_user) {
-          // updateDispatcher(response_update_user.data.updateUser, index);
-          updateDispatcher();
-          resetForm();
-          onClose();
-          setIsLoading(false);
-          addNotification("Редактирование компании прошло успешно.", "success");
-        }
-      } catch (error) {
-        console.error("Ошибка обновления пользователя:", error);
-      } finally {
-        // resetForm();
-        // onClose();
-        setIsLoading(false); // Сбрасываем isLoading после завершения запроса
-        // addNotification("Редактирование диспетчера прошло успешно.", "success");
+      if (response_update_user) {
+        updateDispatcher();
+        setIsEditing(false);
+        addNotification("Редактирование компании прошло успешно.", "success");
       }
+    } catch (error) {
+      console.error("Ошибка обновления пользователя:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (anchorEl && menuRef.current?.contains(event.target)) {
+        setAnchorEl(null);
+        return;
       }
-
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
+      }
       closeButton();
     };
 
@@ -262,7 +260,7 @@ function ExistRequestMyCompany({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, anchorEl]);
 
   // console.log(user);
 
@@ -270,15 +268,24 @@ function ExistRequestMyCompany({
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать компанию</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <CloseIcon />
+        <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleEditFromMenu}
+          />
+          <div className={classes.closeIconWrapper} onClick={closeButton}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
       {isLoading ? (
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} style={isEditing ? { height: "calc(100vh - 161px)" } : { height: "calc(100vh - 80px)" }}>
             <div className={classes.requestData}>
               <label>Название</label>
               <input
@@ -439,30 +446,24 @@ function ExistRequestMyCompany({
             </div>
           </div>
 
-          <div className={classes.requestButton}>
-            {/* <Button
-              onClick={() => openDeleteComponent(index, formData.id)}
-              backgroundcolor={"#FF9C9C"}
-            >
-              Удалить <img src="/delete.png" alt="" />
-            </Button> */}
-
-            <Button
-              onClick={handleUpdate}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className={classes.requestButton}>
+              <Button
+                onClick={handleCancelEdit}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                backgroundcolor="#0057C3"
+                color="#fff"
+              >
+                Сохранить <img src="/saveDispatcher.png" alt="" />
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

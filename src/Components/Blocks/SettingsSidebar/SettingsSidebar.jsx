@@ -17,6 +17,7 @@ import AccessPermissionsPanel from "./AccessPermissionsPanel";
 import NotificationsPermissionsPanel from "./NotificationsPermissionsPanel";
 import Button from "../../Standart/Button/Button";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 
 export default function SettingsSidebar({
   show,
@@ -33,6 +34,7 @@ export default function SettingsSidebar({
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const [accessMenu, setAccessMenu] = useState({});
   const [notificationMenu, setNotificationMenu] = useState({});
@@ -41,6 +43,7 @@ export default function SettingsSidebar({
 
   const accessStateRef = useRef(null);
   const notificationsStateRef = useRef(null);
+  const menuRef = useRef(null);
 
   // Запрос для авиакомпаний
   const { loading: airlineLoading, data: airlineData, refetch: refetchAirline } = useQuery(
@@ -245,7 +248,26 @@ export default function SettingsSidebar({
     }
   };
 
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => {
+    handleMenuClose();
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    if (currentDepartment) {
+      setAccessMenu(currentDepartment.accessMenu || {});
+      setNotificationMenu(currentDepartment.notificationMenu || {});
+      if (type === "airline" && currentDepartment.position) {
+        setPositionIds(currentDepartment.position.map((p) => String(p.id)));
+      }
+    }
+    setIsEditing(false);
+  };
+
   const handleClose = () => {
+    setAnchorEl(null);
     setIsEditing(false);
     setActiveTab("access");
     onClose();
@@ -258,9 +280,13 @@ export default function SettingsSidebar({
 
   const loading = type === "airline" ? airlineLoading : dispatcherLoading;
 
-  // Клик вне боковой панели закрывает её
+  // Клик вне боковой панели закрывает её; клик вне при открытом меню — только закрыть меню
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (anchorEl && menuRef.current?.contains(event.target)) {
+        setAnchorEl(null);
+        return;
+      }
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         handleClose();
       }
@@ -270,7 +296,7 @@ export default function SettingsSidebar({
     else document.removeEventListener("mousedown", handleClickOutside);
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, handleClose]);
+  }, [show, handleClose, anchorEl]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -281,9 +307,18 @@ export default function SettingsSidebar({
               Настройки {currentDepartment?.name ? `"${currentDepartment.name}"` : ""}
             </h2>
           </div>
-          <button className={classes.closeButton} onClick={handleClose}>
-            <CloseIcon />
-          </button>
+          <div className={classes.headerActions}>
+            <AdditionalMenu
+              anchorEl={anchorEl}
+              onOpen={handleMenuOpen}
+              onClose={handleMenuClose}
+              menuRef={menuRef}
+              onEdit={handleEditFromMenu}
+            />
+            <button className={classes.closeButton} onClick={handleClose}>
+              <CloseIcon />
+            </button>
+          </div>
         </div>
 
         <div className={classes.tabs}>
@@ -330,26 +365,23 @@ export default function SettingsSidebar({
           )}
         </div>
 
-        <div className={classes.footer}>
-          <button className={classes.cancelButton} onClick={handleClose}>
-            Отмена
-          </button>
-          <Button
-            onClick={handleSubmit}
-            backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-            color={!isEditing ? "#3B6C54" : "#fff"}
-          >
-            {isEditing ? (
-              <>
-                Сохранить <img src="/saveDispatcher.png" alt="" />
-              </>
-            ) : (
-              <>
-                Изменить <img src="/editDispetcher.png" alt="" />
-              </>
-            )}
-          </Button>
-        </div>
+        {isEditing && (
+          <div className={classes.footer}>
+            {/* <button className={classes.cancelButton} onClick={handleCancelEdit}>
+              Отмена
+            </button> */}
+            <Button
+              onClick={handleCancelEdit}
+              backgroundcolor="var(--hover-gray)"
+              color="#000"
+            >
+              Отмена
+            </Button>
+            <Button onClick={handleSubmit} backgroundcolor="#0057C3" color="#fff">
+              Сохранить <img src="/saveDispatcher.png" alt="" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {notifications.map((n, index) => (

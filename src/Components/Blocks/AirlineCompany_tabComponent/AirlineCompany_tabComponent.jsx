@@ -395,8 +395,8 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         onSubmit={handleEditNomer}
         addTarif={addTarif}
         positions={positions}
-        // uniqueCategories={uniqueCategories}
         addNotification={addNotification}
+        openDeleteComponent={openDeleteNomerComponent}
       />
       {(!user?.airlineId || accessMenu.userUpdate) && (
         <>

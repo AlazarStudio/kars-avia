@@ -25,18 +25,14 @@ import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Notification from "../../Notification/Notification";
 import MUILoader from "../MUILoader/MUILoader";
-import MyCompanyIcon from "../../../shared/icons/MyCompanyIcon";
-import SettingsIcon from "../../../shared/icons/SettingsIcon";
-import ExitIcon from "../../../shared/icons/ExitIcon";
 import NotificationsSidebar from "../NotificationsSidebar/NotificationsSidebar";
+import ProfileSidebar from "../ProfileSidebar/ProfileSidebar";
 
 function Header({ children }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
   
   const navigate = useNavigate();
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isFullyVisible, setIsFullyVisible] = useState(false); // Управляет полным отображением профиля
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // Управляет отображением уведомлений
   const [isNotificationsFullyVisible, setIsNotificationsFullyVisible] =
     useState(false); // Полное отображение уведомлений
@@ -49,11 +45,10 @@ function Header({ children }) {
   const [existRequestData, setExistRequestData] = useState(); // Для хранения данных выбранной заявки
   const [showERequestSidebar, setShowERequestSidebar] = useState(false);
   const [showChooseHotel, setShowChooseHotel] = useState(false);
+  const [showProfileSidebar, setShowProfileSidebar] = useState(false);
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
-    setIsDropdownOpen(false);
-    setIsFullyVisible(false);
   };
 
   const toggleSupportSidebar = () => {
@@ -101,11 +96,9 @@ function Header({ children }) {
     if (!isNotificationsOpen) {
       setIsNotificationsFullyVisible(true);
       setTimeout(() => setIsNotificationsOpen(true), 0);
-      setIsFullyVisible(false);
     } else {
       setIsNotificationsOpen(false);
       setTimeout(() => setIsNotificationsFullyVisible(false), 300);
-      setIsFullyVisible(false);
     }
   };
 
@@ -243,30 +236,10 @@ function Header({ children }) {
   //     document.removeEventListener("mousedown", handleClickOutside);
   //   };
   // }, []);
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Закрываем только дропдаун профиля
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-        setTimeout(() => setIsFullyVisible(false), 300);
-      }
-      // Уведомления не трогаем — их закрывает NotificationsSidebar сам
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleProfileClick = () => {
-    if (!isDropdownOpen) {
-      setIsFullyVisible(true); // Показать блок
-      setTimeout(() => setIsDropdownOpen(true), 0); // Включить видимость
-      setIsNotificationsFullyVisible(false);
-    } else {
-      setIsDropdownOpen(false);
-      setTimeout(() => setIsFullyVisible(false), 300); // Убираем через 300ms
-      setIsNotificationsFullyVisible(false);
-    }
+    setShowProfileSidebar(true);
+    setIsNotificationsFullyVisible(false);
   };
 
   const [notifications, setNotifications] = useState([]);
@@ -396,68 +369,6 @@ function Header({ children }) {
                 alt="Профиль пользователя"
                 style={{ userSelect: "none" }}
               />
-
-              {isFullyVisible && (
-                <div
-                  className={`${classes.profile_dropdown} ${
-                    isDropdownOpen ? classes.open : classes.closed
-                  }`}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className={classes.dropdown_info}>
-                    <img
-                      src={getMediaUrl(userData?.images?.[0]) ?? "/no-avatar.png"}
-                      alt=""
-                      style={{ userSelect: "none" }}
-                    />
-                    <div className={classes.text_info}>
-                      <p>{userData?.name}</p>
-                      <p>{data?.user?.position?.name}</p>
-                    </div>
-                  </div>
-                  <div className={classes.dropdownButtons}>
-                    {/* {userData.role === roles.superAdmin && (
-                    <div
-                      className={classes.settings_item}
-                      onClick={() => {
-                        navigate("/myCompany");
-                      }}
-                    >
-                      <div className={classes.settings_item__img}>
-                        <MyCompanyIcon width={20} height={19} />
-                      </div>
-                      <p>Мои компании</p>
-                    </div>
-                  )} */}
-                    <div
-                      className={classes.settings_item}
-                      onClick={toggleRequestSidebar}
-                    >
-                      <div className={classes.settings_item__img}>
-                        <SettingsIcon strokeWidth={1} />
-                      </div>
-                      <p>Настройки</p>
-                    </div>
-                    {/* <div
-                      className={classes.settings_item}
-                      onClick={() => {navigate("/access")}}
-                    >
-                      <div className={classes.settings_item__img}>
-                        <SettingsIcon width={21} height={22} />
-                      </div>
-                      <p>Уведомления и доступ</p>
-                    </div> */}
-                    <div className={classes.settings_item} onClick={logout}>
-                      <div
-                        className={`${classes.settings_item__img} ${classes.img_padding}`}
-                      >
-                        <ExitIcon />
-                      </div>
-                      <p>Выход</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -496,6 +407,27 @@ function Header({ children }) {
         onClose={() => {
           setIsNotificationsOpen(false);
         }}
+      />
+
+      <ProfileSidebar
+        show={showProfileSidebar}
+        onClose={() => setShowProfileSidebar(false)}
+        user={userData}
+        positionName={data?.user?.position?.name}
+        onOpenSettings={() => {
+          setShowProfileSidebar(false);
+          setShowRequestSidebar(true);
+        }}
+        onOpenNotifications={() => {
+          setShowProfileSidebar(false);
+          setIsNotificationsFullyVisible(true);
+          setTimeout(() => setIsNotificationsOpen(true), 0);
+        }}
+        onOpenSupport={() => {
+          setShowProfileSidebar(false);
+          setShowSupportSidebar(true);
+        }}
+        onLogout={logout}
       />
 
       <ExistRequestProfile

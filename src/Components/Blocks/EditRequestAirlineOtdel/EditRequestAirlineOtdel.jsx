@@ -9,6 +9,8 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
+import CloseIcon from "../../../shared/icons/CloseIcon";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 
 function EditRequestAirlineOtdel({
   show,
@@ -40,6 +42,8 @@ function EditRequestAirlineOtdel({
   // );
 
   const sidebarRef = useRef();
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   useEffect(() => {
     if (show && category) {
@@ -61,15 +65,26 @@ function EditRequestAirlineOtdel({
     setIsEdited(false);
   }, [category]);
 
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => setIsEditing(true);
+  const handleCancelEdit = () => {
+    resetForm();
+    setIsEditing(false);
+  };
+
   const closeButton = useCallback(() => {
+    setAnchorEl(null);
     if (!isEdited) {
       resetForm();
       onClose();
+      setIsEditing(false);
       return;
     }
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       onClose();
+      setIsEditing(false);
     }
   }, [isEdited, resetForm, onClose]);
 
@@ -109,10 +124,6 @@ function EditRequestAirlineOtdel({
   // console.log(selectedPositions);
 
   const handleSubmit = async (e) => {
-    if (!isEditing) {
-      setIsEditing(true);
-      return;
-    }
     e.preventDefault();
     setIsLoading(true);
 
@@ -156,6 +167,7 @@ function EditRequestAirlineOtdel({
 
         onSubmit(sortedDepartments);
         resetForm();
+        setIsEditing(false);
         addNotification("Редактирование отдела прошло успешно.", "success");
       }
     } catch (err) {
@@ -169,6 +181,10 @@ function EditRequestAirlineOtdel({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (anchorEl && menuRef.current?.contains(event.target)) {
+        setAnchorEl(null);
+        return;
+      }
       if (sidebarRef.current?.contains(event.target)) {
         return;
       }
@@ -184,14 +200,23 @@ function EditRequestAirlineOtdel({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, anchorEl]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Изменить отдел</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="Закрыть" />
+        <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleEditFromMenu}
+          />
+          <div className={classes.closeIconWrapper} onClick={closeButton}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
       {isLoading ? (
@@ -238,23 +263,24 @@ function EditRequestAirlineOtdel({
               </div> */}
             </div>
           </div>
-          <div className={classes.requestButton}>
-            <Button
-              onClick={handleSubmit}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className={classes.requestButton}>
+              <Button
+                onClick={handleCancelEdit}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                backgroundcolor="#0057C3"
+                color="#fff"
+              >
+                Сохранить <img src="/saveDispatcher.png" alt="" />
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

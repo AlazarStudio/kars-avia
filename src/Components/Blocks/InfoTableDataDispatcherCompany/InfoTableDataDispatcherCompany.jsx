@@ -83,7 +83,7 @@ function InfoTableDataDispatcherCompany({
                           : "Модератор"}
                       </div>
                       <div className={classes.employeePost}>
-                        {dispatcher.position?.name}
+                        {dispatcher?.position?.name}
                       </div>
                     </div>
                     {canEdit && (

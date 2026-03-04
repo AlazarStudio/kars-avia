@@ -21,6 +21,12 @@
     gap: 10px;
 }
 
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 .title {
     font-family: Inter;
     font-size: 24px;
@@ -134,7 +140,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 15px;
+    gap: 10px;
 }
 
 .cancelButton {
@@ -176,11 +182,8 @@
     cursor: not-allowed;
 } */
 
-.footer button:last-child {
+.footer button {
     flex-basis: 50%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 

@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client'
 import PropTypes from 'prop-types'
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded'
@@ -28,6 +28,9 @@ const MIN_CENTER_PANEL_WIDTH = 360
 const DOC_TYPE = 'documentation'
 const TREE_SYNC_DEBOUNCE_MS = 1200
 const DOC_REALTIME_REFRESH_MS = 5000
+const DOC_POLLING_BACKOFF_MS = 60000
+const DOC_ERROR_LOG_THROTTLE_MS = 60000
+const DOC_CONSECUTIVE_FAILURES_BEFORE_BACKOFF = 2
 const DOC_META_KEY = '__doclist_meta'
 const DOC_META_VERSION = 1
 const DOC_SECTION_OPEN_STATE_KEY = 'doclist_section_open_state_v1'
@@ -541,6 +544,9 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
   const syncReadyRef = useRef(false)
   const reloadInFlightRef = useRef(false)
   const queuedManualReloadRef = useRef(false)
+  const lastErrorLogTimeRef = useRef(0)
+  const consecutiveFailuresRef = useRef(0)
+  const [pollingIntervalMs, setPollingIntervalMs] = useState(DOC_REALTIME_REFRESH_MS)
   const apolloClient = useApolloClient()
   const canManageDocs = useMemo(() => {
     const normalizedRole = String(user?.role || '').trim().toUpperCase()
@@ -958,8 +964,18 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
             include: [GET_ARTICLE],
           })
         }
+        consecutiveFailuresRef.current = 0
+        setPollingIntervalMs(DOC_REALTIME_REFRESH_MS)
       } catch (error) {
-        console.error('Failed to reload documentation roots', error)
+        consecutiveFailuresRef.current += 1
+        const now = Date.now()
+        if (now - lastErrorLogTimeRef.current >= DOC_ERROR_LOG_THROTTLE_MS) {
+          console.error('Failed to reload documentation roots', error)
+          lastErrorLogTimeRef.current = now
+        }
+        if (consecutiveFailuresRef.current >= DOC_CONSECUTIVE_FAILURES_BEFORE_BACKOFF) {
+          setPollingIntervalMs(DOC_POLLING_BACKOFF_MS)
+        }
       } finally {
         syncReadyRef.current = true
         reloadInFlightRef.current = false
@@ -985,12 +1001,12 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     const timerId = window.setInterval(() => {
       if (canManageDocs && activeDocId) return
       refreshDocumentationTree()
-    }, DOC_REALTIME_REFRESH_MS)
+    }, pollingIntervalMs)
 
     return () => {
       window.clearInterval(timerId)
     }
-  }, [activeDocId, canManageDocs, refreshDocumentationTree, token])
+  }, [activeDocId, canManageDocs, refreshDocumentationTree, token, pollingIntervalMs])
 
   const isReloadButtonBusy = allDocsLoading || isReloadingArticles
   const shouldRenderInlineHeaderPanelControls = hasOpenedContent && !isRightPanelOpen
