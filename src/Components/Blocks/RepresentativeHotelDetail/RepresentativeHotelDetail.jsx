@@ -337,7 +337,6 @@ export default function RepresentativeHotelDetail({
             <div>Дата/время заезда</div>
             <div>Дата/время выезда</div>
             <div style={{ textAlign: "center" }}>Номер комнаты</div>
-            <div style={{ textAlign: "center" }}>Категория / вид</div>
             <div style={{ textAlign: "center" }}>ФИО</div>
             <div />
           </div>
@@ -355,9 +354,6 @@ export default function RepresentativeHotelDetail({
               <div>{checkInStr}</div>
               <div>{checkOutStr}</div>
               <div style={{ textAlign: "center" }}>{row.roomNumber ?? "—"}</div>
-              <div style={{ textAlign: "center" }}>
-                {[row.roomCategory, row.roomKind].filter(Boolean).join(" / ") || "—"}
-              </div>
               <div style={{ textAlign: "center" }}>{row.fullName ?? "—"}</div>
               <div className={classes.cellActions}>
                 <button

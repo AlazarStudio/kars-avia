@@ -47,6 +47,296 @@
 
 .reportGrid {
   display: grid;
+  grid-template-columns: 30px 140px 100px 60px 1fr 60px 60px 60px 100px 100px 120px;
+  align-items: center;
+  padding: 20px;
+  gap: 10px;
+  /* min-width: 1000px; */
+}
+
+.tableHead {
+  background: #fff;
+  color: #9E9E9E;
+  font-size: 16px;
+  border-bottom: 1px solid #E4E4EF;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.tableRow {
+  border-bottom: 1px solid #E4E4EF;
+  font-size: 16px;
+  color: var(--main-gray);
+}
+
+.reportInput {
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #E4E4EF;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.reportInput:focus {
+  outline: none;
+  border-color: #005EFF;
+}
+
+.reportInputNum {
+  text-align: right;
+}
+
+.footerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  background: #fff;
+  margin-top: auto;
+  border-top: 1px solid #E4E4EF;
+}
+
+.totalLabel {
+  font-size: 16px;
+  color: #545873;
+  font-weight: 600;
+}
+
+.emptyMessage {
+  padding: 40px 20px;
+  text-align: center;
+  color: #9E9E9E;
+  font-size: 16px;
+}
+
+.groupsSection {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid #E4E4EF;
+}
+
+.groupsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.groupsTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--main-gray, #545873);
+}
+
+.groupsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: calc(100vh - 368px);
+  overflow-y: auto;
+}
+
+.groupCard {
+  border: 1px solid #E4E4EF;
+  border-radius: 10px;
+  padding: 16px;
+  background: #FAFAFC;
+}
+
+.groupGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.groupLabel {
+  display: block;
+  font-size: 12px;
+  color: #9E9E9E;
+  margin-bottom: 4px;
+}
+
+.groupPeople {
+  border-top: 1px solid #E4E4EF;
+  padding-top: 12px;
+}
+
+.groupPeopleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--main-gray, #545873);
+}
+
+.groupPeopleActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.personSelect {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid #E4E4EF;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  min-width: 180px;
+}
+
+.removeGroupBtn {
+  background: none;
+  border: none;
+  color: #d32f2f;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.removeGroupBtn:hover {
+  text-decoration: underline;
+}
+
+.groupPeopleList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.groupPersonRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: #fff;
+  border-radius: 6px;
+  border: 1px solid #E4E4EF;
+  font-size: 14px;
+}
+
+.groupPersonName {
+  flex: 1;
+  min-width: 0;
+}
+
+.groupPersonDays {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.daysInput {
+  width: 70px;
+}
+
+.removePersonBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: #E4E4EF;
+  color: #545873;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.removePersonBtn:hover {
+  background: #ffcdd2;
+  color: #c62828;
+}
+
+.groupEmpty {
+  margin: 0;
+  padding: 8px 0;
+  font-size: 14px;
+  color: #9E9E9E;
+}
+
+.tableTitle {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--main-gray, #545873);
+}
+
+.tabContent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+
+/* .sectionReport {
+  overflow: visible;
+}
+
+.tabContentReport {
+  overflow: visible;
+}
+
+.cardWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+  border-radius: 10px;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.searchField {
+  flex: 1;
+  min-width: 200px;
+  max-width: 350px;
+}
+
+.tableCard {
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.tableWrap {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.reportGrid {
+  display: grid;
   grid-template-columns: 50px 140px 100px 70px 1fr 80px 80px 80px 120px 120px 120px;
   align-items: center;
   padding: 20px;
@@ -119,4 +409,4 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
+} */

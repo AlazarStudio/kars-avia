@@ -17,8 +17,6 @@ const emptyForm = {
   fullName: "",
   phone: "",
   roomNumber: "",
-  roomCategory: "",
-  roomKind: "",
 };
 
 function AddRepresentativeBooking({
@@ -41,8 +39,6 @@ function AddRepresentativeBooking({
           fullName: initialPerson.fullName ?? "",
           phone: initialPerson.phone ?? "",
           roomNumber: initialPerson.roomNumber ?? "",
-          roomCategory: initialPerson.roomCategory ?? "",
-          roomKind: initialPerson.roomKind ?? "",
         });
       } else {
         setFormData(emptyForm);
@@ -109,8 +105,6 @@ function AddRepresentativeBooking({
       fullName,
       phone: formData.phone?.trim() || null,
       roomNumber: formData.roomNumber?.trim() || null,
-      roomCategory: formData.roomCategory?.trim() || null,
-      roomKind: formData.roomKind?.trim() || null,
     };
 
     try {
@@ -177,24 +171,6 @@ function AddRepresentativeBooking({
           value={formData.roomNumber}
           onChange={handleChange}
           placeholder="Номер комнаты"
-          className={classes.input}
-        />
-        <label className={classes.label}>Категория номера</label>
-        <input
-          type="text"
-          name="roomCategory"
-          value={formData.roomCategory}
-          onChange={handleChange}
-          placeholder="Напр. Двухместный"
-          className={classes.input}
-        />
-        <label className={classes.label}>Вид номера</label>
-        <input
-          type="text"
-          name="roomKind"
-          value={formData.roomKind}
-          onChange={handleChange}
-          placeholder="Напр. Стандарт"
           className={classes.input}
         />
       </DialogContent>
