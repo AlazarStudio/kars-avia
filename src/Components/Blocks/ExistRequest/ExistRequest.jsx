@@ -1718,21 +1718,22 @@ function ExistRequest({
                           <div className={classes.historyDate}>
                             {fmtDay(dayTs)}
                           </div>
-                          {console.log(dayLogs)
-                          }
+                          {/* {console.log(dayLogs)} */}
                           {dayLogs.map((log, idx) => (
                             <div className={classes.logText}>
-                              <span className='historyLogTime'>{convertToDate(
-                                log.createdAt,
-                                true
-                              )}</span>
-                              <div
-                                key={log.id ?? `${dayTs}-${idx}`}
-                                className={classes.historyLog}
-                                dangerouslySetInnerHTML={{
-                                  __html: `${log.description}`,
-                                }}
-                              />
+                              <div className={classes.logInfo}>
+                                <span className='historyLogTime'>{convertToDate(
+                                  log.createdAt,
+                                  true
+                                )}</span>
+                                <div
+                                  key={log.id ?? `${dayTs}-${idx}`}
+                                  className={classes.historyLog}
+                                  dangerouslySetInnerHTML={{
+                                    __html: `${log.description}`,
+                                  }}
+                                />
+                              </div>
                               <div
                                 className={classes.logImg}
                                 title={

@@ -14,6 +14,7 @@ import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
+  COMPLETE_PASSENGER_REQUEST_EARLY,
   CREATE_RESERVE_REPORT,
   DELETE_PASSENGER_FROM_HOTEL,
   DELETE_PERSON_FROM_HOTEL,
@@ -46,12 +47,14 @@ import ChatPanel from "./ChatPanel";
 import WaterSupplyTab from "../../Blocks/WaterSupplyTab/WaterSupplyTab";
 import PowerSupplyTab from "../../Blocks/PowerSupplyTab/PowerSupplyTab";
 import TransferAccommodationTab from "../../Blocks/TransferAccommodationTab/TransferAccommodationTab";
+import BaggageDeliveryTab from "../../Blocks/BaggageDeliveryTab/BaggageDeliveryTab";
 import HabitationTab from "../../Blocks/HabitationTab/HabitationTab";
 import Message from "../../Blocks/Message/Message";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import { useCookies } from "../../../hooks/useCookies";
 import AddRepresentativeService from "../../Blocks/AddRepresentativeService/AddRepresentativeService";
 import AddRepresentativeHotel from "../../Blocks/AddRepresentativeHotel/AddRepresentativeHotel";
+import PassengerRequestLogs from "../../Blocks/LogsHistory/PassengerRequestLogs";
 import * as XLSX from "xlsx";
 import DownloadIcon from "../../../shared/icons/DownloadIcon";
 
@@ -87,6 +90,11 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
         enabled: currentRequest.transferService?.plan?.enabled,
       },
       {
+        key: "baggageDelivery",
+        label: "Доставка багажа",
+        enabled: currentRequest.baggageDeliveryService?.plan?.enabled,
+      },
+      {
         key: "habitation",
         label: "Проживание",
         enabled: currentRequest.livingService?.plan?.enabled,
@@ -98,6 +106,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   const filters = useMemo(() => getAvailableFilters(request), [request]);
 
   const [showCreateSidebarHotel, setShowCreateSidebarHotel] = useState(false);
+  const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
+  const [earlyCompleteReason, setEarlyCompleteReason] = useState("");
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
 
   const { loading, error, data, refetch } = useQuery(GET_PASSENGER_REQUEST, {
     context: {
@@ -163,6 +174,42 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       refetchHotel();
     },
   });
+
+  const [completeEarly, { loading: completingEarly }] = useMutation(
+    COMPLETE_PASSENGER_REQUEST_EARLY,
+    {
+      context: { headers: { Authorization: `Bearer ${token}` } },
+      refetchQueries: [
+        { query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: idRequest } },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  // Досрочное завершение всей заявки временно скрыто; доступно досрочное завершение услуг (вода, питание) в подвале каждой вкладки
+  const canCompleteEarly = false;
+
+  const handleEarlyComplete = async () => {
+    const reason = (earlyCompleteReason || "").trim();
+    if (!reason) {
+      addNotification("Укажите причину досрочного завершения.", "error");
+      return;
+    }
+    try {
+      await completeEarly({
+        variables: { id: request.id, reason },
+      });
+      setShowEarlyCompleteModal(false);
+      setEarlyCompleteReason("");
+      addNotification("Заявка досрочно завершена.", "success");
+      refetch();
+    } catch (err) {
+      addNotification(
+        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при завершении.",
+        "error"
+      );
+    }
+  };
 
   const [accessMenu, setAccessMenu] = useState({});
 
@@ -247,22 +294,22 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   // console.log(dataHotel);
 
+  // Всегда обновлять request из данных заявки ФАП (в т.ч. после refetch при «Вода доставлена» / «Питание доставлено»)
   useEffect(() => {
-    if (data && data.passengerRequest && dataHotel) {
+    if (data?.passengerRequest) {
       setRequest(data.passengerRequest);
-
-      // Используем локальную переменную passengerRequest вместо request
       const availableFilters = getAvailableFilters(data.passengerRequest);
-
-      // console.log("Available filters:", availableFilters); // Теперь будет срабатывать только при реальном изменении
-
       if (
         availableFilters.length > 0 &&
         !availableFilters.some((f) => f.key === filter)
       ) {
         setFilter(availableFilters[0].key);
       }
+    }
+  }, [data]);
 
+  useEffect(() => {
+    if (data && data.passengerRequest && dataHotel?.reservationHotels) {
       const getClientInfo = (client, hotelChess, isPassenger) => {
         const clientInfo = isPassenger
           ? hotelChess.find((entry) => entry.passenger?.id === client)
@@ -273,24 +320,24 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       const transformedData = dataHotel.reservationHotels.map((item) => ({
         hotel: {
           reservationHotelId: item.id,
-          id: item.hotel.id,
-          name: item.hotel.name,
-          passengersCount: item.capacity.toString(),
-          city: item.hotel.city,
-          requestId: item.reserve.id,
-          passengers: item.passengers.map((passenger, index) => ({
+          id: item.hotel?.id,
+          name: item.hotel?.name,
+          passengersCount: item.capacity?.toString?.() ?? "0",
+          city: item.hotel?.city,
+          requestId: item.reserve?.id,
+          passengers: (item.passengers ?? []).map((passenger, index) => ({
             status: getClientInfo(passenger.id, item.hotelChess, true)
               ? getClientInfo(passenger.id, item.hotelChess, true).status
               : "waiting",
             room: getClientInfo(passenger.id, item.hotelChess, true)
               ? getClientInfo(passenger.id, item.hotelChess, true).room
               : "-",
-            name: passenger.name || "не указано",
-            gender: passenger.gender || "не указано",
-            number: passenger.number || "не указано",
-            type: passenger.type || "не указано",
+            name: passenger?.name || "не указано",
+            gender: passenger?.gender || "не указано",
+            number: passenger?.number || "не указано",
+            type: passenger?.type || "не указано",
             order: index + 1,
-            id: passenger.id || `id-${index}`,
+            id: passenger?.id || `id-${index}`,
           })),
         },
       }));
@@ -563,11 +610,61 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
               </>
             )}
-            {filters.length < 4 && (
+            <Button
+              onClick={() => setShowHistoryPanel(true)}
+              title="История изменений заявки"
+            >
+              История
+            </Button>
+            {canCompleteEarly && (
+              <Button
+                onClick={() => setShowEarlyCompleteModal(true)}
+                disabled={completingEarly}
+              >
+                Досрочно завершить
+              </Button>
+            )}
+            {filters.length < 5 && (
               <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
             )}
           </div>
         </div>
+        <PassengerRequestLogs
+          show={showHistoryPanel}
+          onClose={() => setShowHistoryPanel(false)}
+          passengerRequestId={idRequest}
+        />
+        {showEarlyCompleteModal && (
+          <div className={classes.modalOverlay} onClick={() => !completingEarly && setShowEarlyCompleteModal(false)}>
+            <div className={classes.modalContent} onClick={(e) => e.stopPropagation()}>
+              <h3>Досрочно завершить заявку</h3>
+              <p>Укажите причину досрочного завершения (обязательно):</p>
+              <MUITextField
+                multiline
+                minRows={3}
+                label="Причина"
+                value={earlyCompleteReason}
+                onChange={(e) => setEarlyCompleteReason(e.target.value)}
+                fullWidth
+                className={classes.modalReasonInput}
+              />
+              <div className={classes.modalActions}>
+                <Button
+                  onClick={() => {
+                    setShowEarlyCompleteModal(false);
+                    setEarlyCompleteReason("");
+                  }}
+                  disabled={completingEarly}
+                >
+                  Отмена
+                </Button>
+                <Button onClick={handleEarlyComplete} disabled={completingEarly}>
+                  {completingEarly ? "Сохранение…" : "Завершить"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         {loading && <MUILoader />}
         {error && <p>Error: {error.message}</p>}
 
@@ -583,6 +680,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       request={request}
                       onStatusChanged={() => refetch()}
                       addNotification={addNotification}
+                      token={token}
                     />
                   )}
                 {filter === "powerSupply" &&
@@ -592,12 +690,25 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       request={request}
                       onStatusChanged={() => refetch()}
                       addNotification={addNotification}
+                      token={token}
                     />
                   )}
                 {filter === "transferAccommodation" &&
                   request.transferService?.plan?.enabled && (
                     <TransferAccommodationTab
                       id="panel-transferAccommodation"
+                      request={request}
+                      onStatusChanged={() => {
+                        refetch();
+                        refetchHotel();
+                      }}
+                      addNotification={addNotification}
+                    />
+                  )}
+                {filter === "baggageDelivery" &&
+                  request.baggageDeliveryService?.plan?.enabled && (
+                    <BaggageDeliveryTab
+                      id="panel-baggageDelivery"
                       request={request}
                       onStatusChanged={() => {
                         refetch();

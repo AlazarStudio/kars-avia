@@ -1504,6 +1504,7 @@ export const CREATE_REQUEST_MUTATION = gql`
 export const CREATE_PASSENGER_REQUEST = gql`
   mutation CreatePassengerRequest($input: PassengerRequestCreateInput!) {
     createPassengerRequest(input: $input) {
+      id
       flightNumber
     }
   }
@@ -1768,6 +1769,107 @@ export const REMOVE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
       personIndex: $personIndex
     ) {
       id
+    }
+  }
+`;
+
+export const COMPLETE_PASSENGER_REQUEST_EARLY = gql`
+  mutation CompletePassengerRequestEarly($id: ID!, $reason: String!) {
+    completePassengerRequestEarly(id: $id, reason: $reason) {
+      id
+      status
+      earlyCompletionReason
+      earlyCompletedAt
+    }
+  }
+`;
+
+export const COMPLETE_PASSENGER_REQUEST_WATER_EARLY = gql`
+  mutation CompletePassengerRequestWaterEarly($requestId: ID!, $reason: String!) {
+    completePassengerRequestWaterEarly(requestId: $requestId, reason: $reason) {
+      id
+    }
+  }
+`;
+
+export const COMPLETE_PASSENGER_REQUEST_MEAL_EARLY = gql`
+  mutation CompletePassengerRequestMealEarly($requestId: ID!, $reason: String!) {
+    completePassengerRequestMealEarly(requestId: $requestId, reason: $reason) {
+      id
+    }
+  }
+`;
+
+export const RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
+  mutation RelocatePassengerRequestHotelPerson(
+    $requestId: ID!
+    $fromHotelIndex: Int!
+    $toHotelIndex: Int!
+    $personIndex: Int!
+    $reason: String!
+    $movedAt: Date
+  ) {
+    relocatePassengerRequestHotelPerson(
+      requestId: $requestId
+      fromHotelIndex: $fromHotelIndex
+      toHotelIndex: $toHotelIndex
+      personIndex: $personIndex
+      reason: $reason
+      movedAt: $movedAt
+    ) {
+      id
+      livingService {
+        hotels {
+          name
+          people {
+            fullName
+            accommodationChesses {
+              hotelIndex
+              startAt
+              endAt
+              reason
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const EVICT_PASSENGER_REQUEST_HOTEL_PERSON = gql`
+  mutation EvictPassengerRequestHotelPerson(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $personIndex: Int!
+    $reason: String!
+    $evictedAt: Date
+  ) {
+    evictPassengerRequestHotelPerson(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      personIndex: $personIndex
+      reason: $reason
+      evictedAt: $evictedAt
+    ) {
+      id
+      livingService {
+        evictions {
+          reason
+          evictedAt
+          person { fullName }
+        }
+      }
+    }
+  }
+`;
+
+export const ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
+  mutation AddPassengerRequestBaggageDriver($requestId: ID!, $driver: PassengerServiceDriverInput!) {
+    addPassengerRequestBaggageDriver(requestId: $requestId, driver: $driver) {
+      id
+      baggageDeliveryService {
+        drivers { fullName phone pickupAt }
+      }
     }
   }
 `;
@@ -2525,6 +2627,8 @@ export const GET_PASSENGER_REQUESTS = gql`
         cancelledAt
       }
       status
+      earlyCompletionReason
+      earlyCompletedAt
       waterService {
         status
         plan {
@@ -2566,6 +2670,14 @@ export const GET_PASSENGER_REQUESTS = gql`
           plannedAt
         }
       }
+      baggageDeliveryService {
+        status
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+      }
     }
   }
 `;
@@ -2582,6 +2694,15 @@ export const PASSENGER_REQUEST_UPDATED_SUBSCRIPTION = gql`
   subscription PassengerRequestUpdated {
     passengerRequestUpdated {
       id
+      status
+      earlyCompletionReason
+      earlyCompletedAt
+      livingService {
+        evictions {
+          reason
+          evictedAt
+        }
+      }
     }
   }
 `;
@@ -2720,11 +2841,15 @@ export const GET_PASSENGER_REQUEST = gql`
         name
         images
       }
+      earlyCompletionReason
+      earlyCompletedAt
       livingService {
         plan {
           enabled
           peopleCount
           plannedAt
+          plannedFromAt
+          plannedToAt
         }
         status
         times {
@@ -2742,12 +2867,48 @@ export const GET_PASSENGER_REQUEST = gql`
           people {
             fullName
             phone
-            gender
             roomNumber
+            roomCategory
+            roomKind
+            accommodationChesses {
+              hotelIndex
+              hotelName
+              startAt
+              endAt
+              reason
+            }
+          }
+        }
+        evictions {
+          reason
+          evictedAt
+          person {
+            fullName
           }
         }
       }
       transferService {
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+        status
+        times {
+          acceptedAt
+          inProgressAt
+          finishedAt
+          cancelledAt
+        }
+        drivers {
+          fullName
+          phone
+          peopleCount
+          pickupAt
+          link
+        }
+      }
+      baggageDeliveryService {
         plan {
           enabled
           peopleCount
@@ -2826,12 +2987,41 @@ export const GET_PASSENGER_REQUEST = gql`
           fullName
           roomNumber
           roomCategory
+          roomKind
           daysCount
           breakfast
           lunch
           dinner
           foodCost
           accommodationCost
+        }
+      }
+    }
+  }
+`;
+
+export const GET_PASSENGER_REQUEST_LOGS = gql`
+  query PassengerRequestLogs(
+    $passengerRequestId: ID!
+    $pagination: LogPaginationInput
+  ) {
+    passengerRequest(id: $passengerRequestId) {
+      id
+      logs(pagination: $pagination) {
+        totalCount
+        totalPages
+        logs {
+          id
+          description
+          fulldescription
+          reason
+          createdAt
+          action
+          user {
+            name
+            role
+            images
+          }
         }
       }
     }
@@ -2855,6 +3045,7 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
         fullName
         roomNumber
         roomCategory
+        roomKind
         daysCount
         breakfast
         lunch
@@ -5340,6 +5531,132 @@ export const GET_ANALYTICS_USERS = gql`
       createdRequests
       processedRequests
       cancelledRequests
+    }
+  }
+`;
+
+// ----- External Auth (magic link) -----
+
+export const EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK = gql`
+  mutation ExternalUserSignInWithMagicLink($token: String!, $fingerprint: String) {
+    externalUserSignInWithMagicLink(token: $token, fingerprint: $fingerprint) {
+      token
+      refreshToken
+      subjectType
+      externalUser {
+        id
+        email
+        name
+        hotelId
+        organizationId
+        airlineId
+        sessionExpiresAt
+        active
+      }
+    }
+  }
+`;
+
+export const PASSENGER_REQUEST_EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK = gql`
+  mutation PassengerRequestExternalUserSignInWithMagicLink($token: String!, $fingerprint: String) {
+    passengerRequestExternalUserSignInWithMagicLink(token: $token, fingerprint: $fingerprint) {
+      token
+      refreshToken
+      subjectType
+      passengerRequestExternalUser {
+        id
+        email
+        name
+        passengerRequestId
+        passengerServiceHotelItemId
+        sessionExpiresAt
+        active
+      }
+    }
+  }
+`;
+
+export const ADMIN_ISSUE_EXTERNAL_USER_MAGIC_LINK = gql`
+  mutation AdminIssueExternalUserMagicLink($input: AdminIssueExternalUserMagicLinkInput!) {
+    adminIssueExternalUserMagicLink(input: $input) {
+      success
+      emailed
+      link
+    }
+  }
+`;
+
+export const ADMIN_ISSUE_PASSENGER_REQUEST_EXTERNAL_USER_MAGIC_LINK = gql`
+  mutation AdminIssuePassengerRequestExternalUserMagicLink($input: AdminIssuePassengerRequestExternalUserMagicLinkInput!) {
+    adminIssuePassengerRequestExternalUserMagicLink(input: $input) {
+      success
+      emailed
+      link
+    }
+  }
+`;
+
+export const ADMIN_EXTEND_EXTERNAL_USER_SESSION = gql`
+  mutation AdminExtendExternalUserSession($externalUserId: ID!) {
+    adminExtendExternalUserSession(externalUserId: $externalUserId)
+  }
+`;
+
+export const ADMIN_REISSUE_EXTERNAL_USER_MAGIC_LINK = gql`
+  mutation AdminReissueExternalUserMagicLink($externalUserId: ID!) {
+    adminReissueExternalUserMagicLink(externalUserId: $externalUserId) {
+      success
+      emailed
+      link
+    }
+  }
+`;
+
+export const ADMIN_EXTEND_PASSENGER_REQUEST_EXTERNAL_USER_SESSION = gql`
+  mutation AdminExtendPassengerRequestExternalUserSession($id: ID!) {
+    adminExtendPassengerRequestExternalUserSession(id: $id)
+  }
+`;
+
+export const ADMIN_REISSUE_PASSENGER_REQUEST_EXTERNAL_USER_MAGIC_LINK = gql`
+  mutation AdminReissuePassengerRequestExternalUserMagicLink($id: ID!) {
+    adminReissuePassengerRequestExternalUserMagicLink(id: $id) {
+      success
+      emailed
+      link
+    }
+  }
+`;
+
+export const GET_EXTERNAL_USERS = gql`
+  query ExternalUsers($pagination: ExternalUserPaginationInput, $filter: ExternalUserFilterInput) {
+    externalUsers(pagination: $pagination, filter: $filter) {
+      totalPages
+      totalCount
+      users {
+        id
+        email
+        name
+        hotelId
+        organizationId
+        airlineId
+        active
+        sessionExpiresAt
+      }
+    }
+  }
+`;
+
+export const GET_PASSENGER_REQUEST_EXTERNAL_USERS = gql`
+  query PassengerRequestExternalUsers($passengerRequestId: ID!) {
+    passengerRequestExternalUsers(passengerRequestId: $passengerRequestId) {
+      id
+      email
+      name
+      passengerRequestId
+      passengerServiceHotelItemId
+      active
+      sessionExpiresAt
     }
   }
 `;

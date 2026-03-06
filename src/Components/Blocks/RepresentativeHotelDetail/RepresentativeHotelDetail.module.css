@@ -104,11 +104,54 @@
 .tableHead,
 .tableRow {
   display: grid;
-  grid-template-columns: 70px 1fr 1fr 140px 1fr 60px;
+  grid-template-columns: 24px 30px 1fr 1fr 130px 1fr 1fr 60px;
   align-items: center;
   padding: 20px;
   gap: 10px;
   min-width: 700px;
+}
+
+.colCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.colCheckbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.selectionBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: #f5f6f8;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}
+
+.selectionBarLabel {
+  font-size: 14px;
+  color: var(--main-gray, #545873);
+  margin-right: 8px;
+}
+
+.clearSelectionBtn {
+  margin-left: auto;
+  padding: 6px 12px;
+  font-size: 14px;
+  color: #545873;
+  background: transparent;
+  border: 1px solid #c4cbd6;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.clearSelectionBtn:hover {
+  background: #e4e4ef;
 }
 
 .tableHead {
@@ -205,6 +248,15 @@
   object-fit: contain;
   opacity: 0.7; */
   cursor: pointer;
+}
+
+.relocateSelect {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid #c4cbd6;
+  font-size: 14px;
 }
 
 @media (min-width: 0px) and (max-width: 1499px) {

@@ -29,6 +29,7 @@ function AddRepresentativeService({
   const hasMealService = request?.mealService?.plan?.enabled;
   const hasLivingService = request?.livingService?.plan?.enabled;
   const hasTransferService = request?.transferService?.plan?.enabled;
+  const hasBaggageDeliveryService = request?.baggageDeliveryService?.plan?.enabled;
 
   // Инициализируем форму только для услуг, которых еще нет
   const [formData, setFormData] = useState({
@@ -40,10 +41,16 @@ function AddRepresentativeService({
     foodPlannedAt: "",
     habitation: false,
     habitationPeopleCount: "",
-    habitationPlannedAt: "",
+    habitationPlannedFromDate: "",
+    habitationPlannedFromTime: "",
+    habitationPlannedToDate: "",
+    habitationPlannedToTime: "",
     transferHabitation: false,
     transferHabitationPeopleCount: "",
     transferHabitationPlannedAt: "",
+    baggageDelivery: false,
+    baggageDeliveryPeopleCount: "",
+    baggageDeliveryPlannedAt: "",
   });
 
   const [updatePassengerRequest] = useMutation(UPDATE_PASSENGER_REQUEST, {
@@ -66,10 +73,16 @@ function AddRepresentativeService({
       foodPlannedAt: "",
       habitation: false,
       habitationPeopleCount: "",
-      habitationPlannedAt: "",
+      habitationPlannedFromDate: "",
+      habitationPlannedFromTime: "",
+      habitationPlannedToDate: "",
+      habitationPlannedToTime: "",
       transferHabitation: false,
       transferHabitationPeopleCount: "",
       transferHabitationPlannedAt: "",
+      baggageDelivery: false,
+      baggageDeliveryPeopleCount: "",
+      baggageDeliveryPlannedAt: "",
     });
     setIsEdited(false);
   }, []);
@@ -98,7 +111,10 @@ function AddRepresentativeService({
             ...prev,
             habitation: checked,
             habitationPeopleCount: checked ? prev.habitationPeopleCount : "",
-            habitationPlannedAt: checked ? prev.habitationPlannedAt : "",
+            habitationPlannedFromDate: checked ? prev.habitationPlannedFromDate : "",
+            habitationPlannedFromTime: checked ? prev.habitationPlannedFromTime : "",
+            habitationPlannedToDate: checked ? prev.habitationPlannedToDate : "",
+            habitationPlannedToTime: checked ? prev.habitationPlannedToTime : "",
           };
         }
 
@@ -112,6 +128,15 @@ function AddRepresentativeService({
             transferHabitationPlannedAt: checked
               ? prev.transferHabitationPlannedAt
               : "",
+          };
+        }
+
+        if (name === "baggageDelivery") {
+          return {
+            ...prev,
+            baggageDelivery: checked,
+            baggageDeliveryPeopleCount: checked ? prev.baggageDeliveryPeopleCount : "",
+            baggageDeliveryPlannedAt: checked ? prev.baggageDeliveryPlannedAt : "",
           };
         }
 
@@ -151,27 +176,35 @@ function AddRepresentativeService({
     return d.toISOString();
   };
 
+  const buildPlannedFromTo = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return null;
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d, hours, minutes, 0, 0);
+    return date.toISOString();
+  };
+
   const isFormValid = () => {
-    const hasAnyNewService =
-      (!hasWaterService && formData.waterSupply) ||
-      (!hasMealService && formData.foodSupply) ||
-      (!hasLivingService && formData.habitation) ||
-      (!hasTransferService && formData.transferHabitation);
+    // const hasAnyNewService =
+    //   (!hasWaterService && formData.waterSupply) ||
+    //   (!hasMealService && formData.foodSupply) ||
+    //   (!hasLivingService && formData.habitation) ||
+    //   (!hasTransferService && formData.transferHabitation);
 
-    if (!hasAnyNewService) return false;
+    // if (!hasAnyNewService) return false;
 
-    if (!hasWaterService && formData.waterSupply) {
-      if (!formData.waterPeopleCount || !formData.waterPlannedAt) return false;
-    }
-    if (!hasMealService && formData.foodSupply) {
-      if (!formData.foodPeopleCount || !formData.foodPlannedAt) return false;
-    }
-    if (!hasLivingService && formData.habitation) {
-      if (!formData.habitationPeopleCount || !formData.habitationPlannedAt) return false;
-    }
-    if (!hasTransferService && formData.transferHabitation) {
-      if (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt) return false;
-    }
+    // if (!hasWaterService && formData.waterSupply) {
+    //   if (!formData.waterPeopleCount || !formData.waterPlannedAt) return false;
+    // }
+    // if (!hasMealService && formData.foodSupply) {
+    //   if (!formData.foodPeopleCount || !formData.foodPlannedAt) return false;
+    // }
+    // if (!hasLivingService && formData.habitation) {
+    //   if (!formData.habitationPeopleCount || !formData.habitationPlannedAt) return false;
+    // }
+    // if (!hasTransferService && formData.transferHabitation) {
+    //   if (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt) return false;
+    // }
 
     return true;
   };
@@ -215,7 +248,8 @@ function AddRepresentativeService({
         plan: {
           enabled: true,
           peopleCount: Number(formData.habitationPeopleCount),
-          plannedAt: buildPlannedAt(formData.habitationPlannedAt),
+          plannedFromAt: buildPlannedFromTo(formData.habitationPlannedFromDate, formData.habitationPlannedFromTime),
+          plannedToAt: buildPlannedFromTo(formData.habitationPlannedToDate, formData.habitationPlannedToTime),
         },
       };
     }
@@ -226,6 +260,16 @@ function AddRepresentativeService({
           enabled: true,
           peopleCount: Number(formData.transferHabitationPeopleCount),
           plannedAt: buildPlannedAt(formData.transferHabitationPlannedAt),
+        },
+      };
+    }
+
+    if (!hasBaggageDeliveryService && formData.baggageDelivery) {
+      input.baggageDeliveryService = {
+        plan: {
+          enabled: true,
+          peopleCount: Number(formData.baggageDeliveryPeopleCount),
+          plannedAt: buildPlannedAt(formData.baggageDeliveryPlannedAt),
         },
       };
     }
@@ -384,13 +428,32 @@ function AddRepresentativeService({
                           onChange={handleChange}
                         />
 
-                        <label>Введите время</label>
+                        <label>Дата и время заезда</label>
+                        <input
+                          type="date"
+                          name="habitationPlannedFromDate"
+                          value={formData.habitationPlannedFromDate}
+                          onChange={handleChange}
+                        />
                         <input
                           type="time"
-                          name="habitationPlannedAt"
-                          value={formData.habitationPlannedAt}
+                          name="habitationPlannedFromTime"
+                          value={formData.habitationPlannedFromTime}
                           onChange={handleChange}
-                          placeholder="Время"
+                        />
+
+                        <label>Дата и время выезда</label>
+                        <input
+                          type="date"
+                          name="habitationPlannedToDate"
+                          value={formData.habitationPlannedToDate}
+                          onChange={handleChange}
+                        />
+                        <input
+                          type="time"
+                          name="habitationPlannedToTime"
+                          value={formData.habitationPlannedToTime}
+                          onChange={handleChange}
                         />
                       </>
                     )}
@@ -432,7 +495,42 @@ function AddRepresentativeService({
                   </>
                 )}
 
-                {hasWaterService && hasMealService && hasLivingService && hasTransferService && (
+                {!hasBaggageDeliveryService && (
+                  <>
+                    <label className={classes.checkBoxWrapper}>
+                      <input
+                        type="checkbox"
+                        name="baggageDelivery"
+                        checked={formData.baggageDelivery}
+                        onChange={handleChange}
+                      />
+                      Доставка багажа
+                    </label>
+
+                    {formData.baggageDelivery && (
+                      <>
+                        <label>Введите количество человек</label>
+                        <input
+                          type="number"
+                          name="baggageDeliveryPeopleCount"
+                          value={formData.baggageDeliveryPeopleCount}
+                          onChange={handleChange}
+                        />
+
+                        <label>Введите время</label>
+                        <input
+                          type="time"
+                          name="baggageDeliveryPlannedAt"
+                          value={formData.baggageDeliveryPlannedAt}
+                          onChange={handleChange}
+                          placeholder="Время"
+                        />
+                      </>
+                    )}
+                  </>
+                )}
+
+                {hasWaterService && hasMealService && hasLivingService && hasTransferService && hasBaggageDeliveryService && (
                   <div className={classes.noServicesMessage}>
                     Все доступные услуги уже добавлены в заявку.
                   </div>

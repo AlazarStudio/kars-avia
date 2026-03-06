@@ -5,7 +5,6 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "../../Standart/Button/Button.jsx";
-import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import {
   ADD_PASSENGER_REQUEST_HOTEL_PERSON,
   UPDATE_PASSENGER_REQUEST_HOTEL_PERSON,
@@ -17,8 +16,9 @@ import classes from "./AddRepresentativeBooking.module.css";
 const emptyForm = {
   fullName: "",
   phone: "",
-  gender: "",
   roomNumber: "",
+  roomCategory: "",
+  roomKind: "",
 };
 
 function AddRepresentativeBooking({
@@ -40,8 +40,9 @@ function AddRepresentativeBooking({
         setFormData({
           fullName: initialPerson.fullName ?? "",
           phone: initialPerson.phone ?? "",
-          gender: initialPerson.gender ?? "",
           roomNumber: initialPerson.roomNumber ?? "",
+          roomCategory: initialPerson.roomCategory ?? "",
+          roomKind: initialPerson.roomKind ?? "",
         });
       } else {
         setFormData(emptyForm);
@@ -107,8 +108,9 @@ function AddRepresentativeBooking({
     const person = {
       fullName,
       phone: formData.phone?.trim() || null,
-      gender: formData.gender?.trim() || null,
       roomNumber: formData.roomNumber?.trim() || null,
+      roomCategory: formData.roomCategory?.trim() || null,
+      roomKind: formData.roomKind?.trim() || null,
     };
 
     try {
@@ -168,16 +170,6 @@ function AddRepresentativeBooking({
           placeholder="Номер телефона"
           className={classes.input}
         />
-        <label className={classes.label}>Пол</label>
-        <MUIAutocomplete
-          dropdownWidth="100%"
-          label="Выберите пол"
-          options={["Мужской", "Женский"]}
-          value={formData.gender}
-          onChange={(event, newValue) =>
-            setFormData((prev) => ({ ...prev, gender: newValue ?? "" }))
-          }
-        />
         <label className={classes.label}>Номер комнаты</label>
         <input
           type="text"
@@ -185,6 +177,24 @@ function AddRepresentativeBooking({
           value={formData.roomNumber}
           onChange={handleChange}
           placeholder="Номер комнаты"
+          className={classes.input}
+        />
+        <label className={classes.label}>Категория номера</label>
+        <input
+          type="text"
+          name="roomCategory"
+          value={formData.roomCategory}
+          onChange={handleChange}
+          placeholder="Напр. Двухместный"
+          className={classes.input}
+        />
+        <label className={classes.label}>Вид номера</label>
+        <input
+          type="text"
+          name="roomKind"
+          value={formData.roomKind}
+          onChange={handleChange}
+          placeholder="Напр. Стандарт"
           className={classes.input}
         />
       </DialogContent>

@@ -368,3 +368,11 @@
 - Пункт «Помощь» выполняет переход на страницу документации по маршруту `/documentation`.
 - Пункты «Мой профиль» и «Вход и безопасность» открывают существующий сайдбар редактирования профиля (`ExistRequestProfile`); «Уведомления» — панель уведомлений; «Техподдержка» — сайдбар техподдержки.
 - В `Header` удалены выпадающий блок профиля (`profile_dropdown`), связанные состояния и неиспользуемые стили в `Header.module.css`.
+
+### v11.10 (25.02.2026)
+- Реализована история (лог) заявки ФАП по аналогии с гостиницей и авиакомпанией: на бэкенде в модель `Log` добавлено поле `passengerRequestId` и связь с `PassengerRequest`; все действия по заявке ФАП (создание, обновление, смена статусов, добавление отелей и пассажиров, переселение, выселение, досрочное завершение, сохранение отчёта и т.д.) записываются в лог с привязкой к заявке.
+- В GraphQL для типа `PassengerRequest` добавлено поле `logs(pagination: LogPaginationInput): LogConnection!`; резолвер возвращает список логов с пагинацией и сортировкой по дате (сначала новые).
+- На странице заявки ФАП (ReservePlacementRepresentative) добавлена кнопка «История»; по нажатию открывается модальное окно с историей заявки: записи сгруппированы по дням, для каждой записи отображаются время, описание действия и пользователь (аватар, имя, роль); реализована пагинация по 20 записей.
+- Создан отдельный компонент `PassengerRequestLogs` (`src/Components/Blocks/LogsHistory/PassengerRequestLogs.jsx`) по образцу `Logs.jsx`: принимает пропсы `show`, `onClose`, `passengerRequestId`; внутри — запрос `GET_PASSENGER_REQUEST_LOGS`, группировка по дням, пагинация (по 50 записей), отображение времени, описания, причины (если есть) и аватара пользователя.
+- Стили истории ФАП приведены к виду `Logs.module.css`: используются те же классы и вёрстка (`requestTitle`, `requestData`, `logs`, `historySection`, `historyDate`, `logText`, `logImg`, `historyLogTime`, `historyLog`, пагинация с `activePaginationNumber`, `paginationNumber`); добавлен класс `historyLogReason` для блока «Причина»; при загрузке отображается `MUILoader`.
+- На странице представителя (ReservePlacementRepresentative) логика и разметка истории вынесены в `PassengerRequestLogs`; подключение через `<PassengerRequestLogs show={showHistoryPanel} onClose={...} passengerRequestId={idRequest} />`.

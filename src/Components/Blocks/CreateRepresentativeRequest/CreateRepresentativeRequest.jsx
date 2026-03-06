@@ -47,10 +47,16 @@ function CreateRepresentativeRequest({
     foodPlannedAt: "",
     habitation: false,
     habitationPeopleCount: "",
-    habitationPlannedAt: "",
+    habitationPlannedFromDate: "",
+    habitationPlannedFromTime: "",
+    habitationPlannedToDate: "",
+    habitationPlannedToTime: "",
     transferHabitation: false,
     transferHabitationPeopleCount: "",
     transferHabitationPlannedAt: "",
+    baggageDelivery: false,
+    baggageDeliveryPeopleCount: "",
+    baggageDeliveryPlannedAt: "",
     city: "",
   });
 
@@ -181,10 +187,16 @@ function CreateRepresentativeRequest({
       foodPlannedAt: "",
       habitation: false,
       habitationPeopleCount: "",
-      habitationPlannedAt: "",
+      habitationPlannedFromDate: "",
+      habitationPlannedFromTime: "",
+      habitationPlannedToDate: "",
+      habitationPlannedToTime: "",
       transferHabitation: false,
       transferHabitationPeopleCount: "",
       transferHabitationPlannedAt: "",
+      baggageDelivery: false,
+      baggageDeliveryPeopleCount: "",
+      baggageDeliveryPlannedAt: "",
       city: "",
     });
     setIsEdited(false);
@@ -255,7 +267,10 @@ function CreateRepresentativeRequest({
             ...prev,
             habitation: checked,
             habitationPeopleCount: checked ? prev.habitationPeopleCount : "",
-            habitationPlannedAt: checked ? prev.habitationPlannedAt : "",
+            habitationPlannedFromDate: checked ? prev.habitationPlannedFromDate : "",
+            habitationPlannedFromTime: checked ? prev.habitationPlannedFromTime : "",
+            habitationPlannedToDate: checked ? prev.habitationPlannedToDate : "",
+            habitationPlannedToTime: checked ? prev.habitationPlannedToTime : "",
           };
         }
 
@@ -269,6 +284,15 @@ function CreateRepresentativeRequest({
             transferHabitationPlannedAt: checked
               ? prev.transferHabitationPlannedAt
               : "",
+          };
+        }
+
+        if (name === "baggageDelivery") {
+          return {
+            ...prev,
+            baggageDelivery: checked,
+            baggageDeliveryPeopleCount: checked ? prev.baggageDeliveryPeopleCount : "",
+            baggageDeliveryPlannedAt: checked ? prev.baggageDeliveryPlannedAt : "",
           };
         }
 
@@ -301,21 +325,26 @@ function CreateRepresentativeRequest({
   }, []);
 
   const buildPlannedAt = (timeStr) => {
-    if (!timeStr) return null; // ничего не шлём
-
+    if (!timeStr) return null;
     const [hours, minutes] = timeStr.split(":").map(Number);
-
-    // можно взять сегодняшнюю дату
     const d = new Date();
     d.setHours(hours, minutes, 0, 0);
+    return d.toISOString();
+  };
 
-    return d.toISOString(); // ISO-строка для GraphQL DateTime
+  const buildPlannedFromTo = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return null;
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d, hours, minutes, 0, 0);
+    return date.toISOString();
   };
 
   const isFormValid = () => {
     const hasAnyService =
       formData.habitation ||
       formData.transferHabitation ||
+      formData.baggageDelivery ||
       formData.foodSupply ||
       formData.waterSupply;
 
@@ -333,9 +362,11 @@ function CreateRepresentativeRequest({
       return false;
     if (formData.foodSupply && (!formData.foodPeopleCount || !formData.foodPlannedAt))
       return false;
-    if (formData.habitation && (!formData.habitationPeopleCount || !formData.habitationPlannedAt))
+    if (formData.habitation && (!formData.habitationPeopleCount || !formData.habitationPlannedFromDate || !formData.habitationPlannedFromTime || !formData.habitationPlannedToDate || !formData.habitationPlannedToTime))
       return false;
     if (formData.transferHabitation && (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt))
+      return false;
+    if (formData.baggageDelivery && (!formData.baggageDeliveryPeopleCount || !formData.baggageDeliveryPlannedAt))
       return false;
 
     return true;
@@ -380,7 +411,8 @@ function CreateRepresentativeRequest({
             plan: {
               enabled: true,
               peopleCount: Number(formData.habitationPeopleCount),
-              plannedAt: buildPlannedAt(formData.habitationPlannedAt),
+              plannedFromAt: buildPlannedFromTo(formData.habitationPlannedFromDate, formData.habitationPlannedFromTime),
+              plannedToAt: buildPlannedFromTo(formData.habitationPlannedToDate, formData.habitationPlannedToTime),
             },
           }
         : undefined,
@@ -390,6 +422,15 @@ function CreateRepresentativeRequest({
               enabled: true,
               peopleCount: Number(formData.transferHabitationPeopleCount),
               plannedAt: buildPlannedAt(formData.transferHabitationPlannedAt),
+            },
+          }
+        : undefined,
+      baggageDeliveryService: formData.baggageDelivery
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.baggageDeliveryPeopleCount),
+              plannedAt: buildPlannedAt(formData.baggageDeliveryPlannedAt),
             },
           }
         : undefined,
@@ -648,13 +689,32 @@ function CreateRepresentativeRequest({
                       onChange={handleChange}
                     />
 
-                    <label>Введите время</label>
+                    <label>Дата и время заезда</label>
+                    <input
+                      type="date"
+                      name="habitationPlannedFromDate"
+                      value={formData.habitationPlannedFromDate}
+                      onChange={handleChange}
+                    />
                     <input
                       type="time"
-                      name="habitationPlannedAt"
-                      value={formData.habitationPlannedAt}
+                      name="habitationPlannedFromTime"
+                      value={formData.habitationPlannedFromTime}
                       onChange={handleChange}
-                      placeholder="Время"
+                    />
+
+                    <label>Дата и время выезда</label>
+                    <input
+                      type="date"
+                      name="habitationPlannedToDate"
+                      value={formData.habitationPlannedToDate}
+                      onChange={handleChange}
+                    />
+                    <input
+                      type="time"
+                      name="habitationPlannedToTime"
+                      value={formData.habitationPlannedToTime}
+                      onChange={handleChange}
                     />
                   </>
                 )}
@@ -684,6 +744,37 @@ function CreateRepresentativeRequest({
                       type="time"
                       name="transferHabitationPlannedAt"
                       value={formData.transferHabitationPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
+                  </>
+                )}
+
+                <label className={classes.checkBoxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="baggageDelivery"
+                    checked={formData.baggageDelivery}
+                    onChange={handleChange}
+                  />
+                  Доставка багажа
+                </label>
+
+                {formData.baggageDelivery && (
+                  <>
+                    <label>Введите количество человек</label>
+                    <input
+                      type="number"
+                      name="baggageDeliveryPeopleCount"
+                      value={formData.baggageDeliveryPeopleCount}
+                      onChange={handleChange}
+                    />
+
+                    <label>Введите время</label>
+                    <input
+                      type="time"
+                      name="baggageDeliveryPlannedAt"
+                      value={formData.baggageDeliveryPlannedAt}
                       onChange={handleChange}
                       placeholder="Время"
                     />

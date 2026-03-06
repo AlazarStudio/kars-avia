@@ -1,5 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useMutation } from "@apollo/client";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import classes from "./RepresentativeHotelDetail.module.css";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import EditIcon from "../../../shared/icons/EditIcon";
@@ -8,8 +12,11 @@ import AddRepresentativeBooking from "../AddRepresentativeBooking/AddRepresentat
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import {
   REMOVE_PASSENGER_REQUEST_HOTEL_PERSON,
+  RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
+  EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
   GET_PASSENGER_REQUEST,
   getCookie,
+  convertToDate,
 } from "../../../../graphQL_requests.js";
 
 export function HotelDetailToolbar({ searchQuery, onSearchChange, onAddBooking, onGenerateReport, className }) {
@@ -55,6 +62,11 @@ export default function RepresentativeHotelDetail({
   const [internalShowAddBooking, setInternalShowAddBooking] = useState(false);
   const [deleteConfirmIndex, setDeleteConfirmIndex] = useState(null);
   const [editingPersonIndex, setEditingPersonIndex] = useState(null);
+  const [relocateModal, setRelocateModal] = useState(null);
+  const [evictModal, setEvictModal] = useState(null);
+  const [relocateReason, setRelocateReason] = useState("");
+  const [evictReason, setEvictReason] = useState("");
+  const [selectedPersonIndices, setSelectedPersonIndices] = useState([]);
 
   const search = searchQuery !== undefined ? searchQuery : internalSearch;
   const setSearch = onSearchChange || setInternalSearch;
@@ -84,6 +96,130 @@ export default function RepresentativeHotelDetail({
       awaitRefetchQueries: true,
     }
   );
+
+  const [relocatePerson, { loading: relocating }] = useMutation(
+    RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
+    {
+      context: { headers: { Authorization: `Bearer ${token}` } },
+      refetchQueries: [
+        {
+          query: GET_PASSENGER_REQUEST,
+          variables: { passengerRequestId: request?.id },
+        },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const [evictPerson, { loading: evicting }] = useMutation(
+    EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
+    {
+      context: { headers: { Authorization: `Bearer ${token}` } },
+      refetchQueries: [
+        {
+          query: GET_PASSENGER_REQUEST,
+          variables: { passengerRequestId: request?.id },
+        },
+      ],
+      awaitRefetchQueries: true,
+    }
+  );
+
+  const plan = request?.livingService?.plan;
+  const formatDateAndTime = (dateVal) => {
+    if (!dateVal) return "—";
+    const d = convertToDate(dateVal, false);
+    const t = convertToDate(dateVal, true);
+    if (!d) return "—";
+    // если t уже содержит дату (DD.MM.YYYY ...), не дублируем
+    const timeOnly = t && t.includes(" ") ? t.split(" ").pop() : t;
+    return timeOnly ? `${d} ${timeOnly}` : d;
+  };
+  const checkInStr = formatDateAndTime(plan?.plannedFromAt || plan?.plannedAt);
+  const checkOutStr = formatDateAndTime(plan?.plannedToAt);
+
+  const otherHotelsWithIndex = useMemo(
+    () =>
+      (request?.livingService?.hotels ?? [])
+        .map((h, idx) => ({ hotel: h, originalIndex: idx }))
+        .filter(({ originalIndex }) => originalIndex !== hotelIndex),
+    [request?.livingService?.hotels, hotelIndex]
+  );
+
+  const toggleSelectedIndex = (index) => {
+    setSelectedPersonIndices((prev) =>
+      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index].sort((a, b) => a - b)
+    );
+  };
+
+  const handleRelocate = async () => {
+    if (!relocateModal || !relocateReason.trim()) {
+      addNotification?.("Укажите причину переселения.", "error");
+      return;
+    }
+    const { personIndices, toHotelIndex } = relocateModal;
+    if (!personIndices?.length || toHotelIndex === undefined) return;
+    try {
+      for (const personIndex of [...personIndices].sort((a, b) => b - a)) {
+        await relocatePerson({
+          variables: {
+            requestId: request.id,
+            fromHotelIndex: hotelIndex,
+            toHotelIndex,
+            personIndex,
+            reason: relocateReason.trim(),
+          },
+        });
+      }
+      addNotification?.(
+        personIndices.length === 1 ? "Пассажир переселён." : `Переселено пассажиров: ${personIndices.length}.`,
+        "success"
+      );
+      onRefetch?.();
+      setRelocateModal(null);
+      setRelocateReason("");
+      setSelectedPersonIndices([]);
+    } catch (err) {
+      addNotification?.(
+        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при переселении.",
+        "error"
+      );
+    }
+  };
+
+  const handleEvict = async () => {
+    if (!evictModal || !evictReason.trim()) {
+      addNotification?.("Укажите причину выселения.", "error");
+      return;
+    }
+    const { personIndices } = evictModal;
+    if (!personIndices?.length) return;
+    try {
+      for (const personIndex of [...personIndices].sort((a, b) => b - a)) {
+        await evictPerson({
+          variables: {
+            requestId: request.id,
+            hotelIndex,
+            personIndex,
+            reason: evictReason.trim(),
+          },
+        });
+      }
+      addNotification?.(
+        personIndices.length === 1 ? "Пассажир выселен." : `Выселено пассажиров: ${personIndices.length}.`,
+        "success"
+      );
+      onRefetch?.();
+      setEvictModal(null);
+      setEvictReason("");
+      setSelectedPersonIndices([]);
+    } catch (err) {
+      addNotification?.(
+        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при выселении.",
+        "error"
+      );
+    }
+  };
 
   const handleRemoveConfirm = async (personIndex) => {
     try {
@@ -161,22 +297,67 @@ export default function RepresentativeHotelDetail({
         />
       )}
 
+      {selectedPersonIndices.length > 0 && (
+        <div className={classes.selectionBar}>
+          <span className={classes.selectionBarLabel}>
+            Выбрано броней: {selectedPersonIndices.length} —
+          </span>
+          <Button
+            onClick={() =>
+              setRelocateModal({
+                personIndices: [...selectedPersonIndices],
+                toHotelIndex: otherHotelsWithIndex[0]?.originalIndex,
+              })
+            }
+            disabled={relocating || otherHotelsWithIndex.length === 0}
+          >
+            Переселить
+          </Button>
+          <Button
+            onClick={() => setEvictModal({ personIndices: [...selectedPersonIndices] })}
+            disabled={evicting}
+          >
+            Выселить
+          </Button>
+          <button
+            type="button"
+            className={classes.clearSelectionBtn}
+            onClick={() => setSelectedPersonIndices([])}
+          >
+            Снять выбор
+          </button>
+        </div>
+      )}
+
       <div className={classes.tableCard}>
         <div className={classes.tableWrap}>
           <div className={classes.tableHead}>
+            <div className={classes.colCheckbox} />
             <div>ID</div>
             <div>Дата/время заезда</div>
             <div>Дата/время выезда</div>
             <div style={{ textAlign: "center" }}>Номер комнаты</div>
+            <div style={{ textAlign: "center" }}>Категория / вид</div>
             <div style={{ textAlign: "center" }}>ФИО</div>
             <div />
           </div>
           {bookings.map((row, index) => (
             <div key={index} className={classes.tableRow}>
+              <div className={classes.colCheckbox}>
+                <input
+                  type="checkbox"
+                  checked={selectedPersonIndices.includes(index)}
+                  onChange={() => toggleSelectedIndex(index)}
+                  aria-label="Выбрать для переселения или выселения"
+                />
+              </div>
               <div>{index + 1}</div>
-              <div>—</div>
-              <div>—</div>
+              <div>{checkInStr}</div>
+              <div>{checkOutStr}</div>
               <div style={{ textAlign: "center" }}>{row.roomNumber ?? "—"}</div>
+              <div style={{ textAlign: "center" }}>
+                {[row.roomCategory, row.roomKind].filter(Boolean).join(" / ") || "—"}
+              </div>
               <div style={{ textAlign: "center" }}>{row.fullName ?? "—"}</div>
               <div className={classes.cellActions}>
                 <button
@@ -184,6 +365,7 @@ export default function RepresentativeHotelDetail({
                   onClick={() => setEditingPersonIndex(index)}
                   className={classes.editBtn}
                   aria-label="Редактировать бронь"
+                  title="Редактировать бронь"
                 >
                   <img src="/edit.svg.png" alt="" />
                 </button>
@@ -202,9 +384,104 @@ export default function RepresentativeHotelDetail({
         </div>
       </div>
 
+      {relocateModal !== null && (
+        <Dialog
+          open
+          onClose={() => !relocating && (setRelocateModal(null), setRelocateReason(""), setSelectedPersonIndices([])) }
+          PaperProps={{ sx: { borderRadius: "15px" } }}
+        >
+          <DialogTitle>
+            {relocateModal.personIndices?.length > 1
+              ? `Переселить пассажиров (${relocateModal.personIndices.length})`
+              : "Переселить пассажира"}
+          </DialogTitle>
+          <DialogContent>
+            <p style={{ marginBottom: 8 }}>Выберите отель и укажите причину:</p>
+            <select
+              className={classes.relocateSelect}
+              value={relocateModal.toHotelIndex ?? ""}
+              onChange={(e) =>
+                setRelocateModal((prev) => ({
+                  ...prev,
+                  toHotelIndex: Number(e.target.value),
+                }))
+              }
+            >
+              <option value="">— Отель —</option>
+              {otherHotelsWithIndex.map(({ hotel, originalIndex }) => (
+                <option key={originalIndex} value={originalIndex}>
+                  {hotel.name ?? "—"}
+                </option>
+              ))}
+            </select>
+            <MUITextField
+              label="Причина"
+              value={relocateReason}
+              onChange={(e) => setRelocateReason(e.target.value)}
+              multiline
+              minRows={2}
+              fullWidth
+              style={{ marginTop: 12 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => { setRelocateModal(null); setRelocateReason(""); setSelectedPersonIndices([]); }}
+              disabled={relocating}
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={handleRelocate}
+              disabled={relocating || !relocateReason.trim() || relocateModal.toHotelIndex === undefined}
+            >
+              {relocating ? "Сохранение…" : relocateModal.personIndices?.length > 1 ? "Переселить всех" : "Переселить"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {evictModal !== null && (
+        <Dialog
+          open
+          onClose={() => !evicting && (setEvictModal(null), setEvictReason(""), setSelectedPersonIndices([]))}
+          PaperProps={{ sx: { borderRadius: "15px" } }}
+        >
+          <DialogTitle>
+            {evictModal.personIndices?.length > 1
+              ? `Выселить пассажиров (${evictModal.personIndices.length})`
+              : "Выселить пассажира"}
+          </DialogTitle>
+          <DialogContent>
+            <p style={{ marginBottom: 8 }}>Укажите причину выселения (обязательно):</p>
+            <MUITextField
+              label="Причина"
+              value={evictReason}
+              onChange={(e) => setEvictReason(e.target.value)}
+              multiline
+              minRows={2}
+              fullWidth
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => { setEvictModal(null); setEvictReason(""); setSelectedPersonIndices([]); }}
+              disabled={evicting}
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={handleEvict}
+              disabled={evicting || !evictReason.trim()}
+            >
+              {evicting ? "Сохранение…" : evictModal.personIndices?.length > 1 ? "Выселить всех" : "Выселить"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
       <div className={classes.footerRow}>
         <span className={classes.passengerCount}>{bookings.length} пассажира</span>
-        <Button>Сформировать заявку</Button>
       </div>
     </section>
   );

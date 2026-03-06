@@ -1,9 +1,15 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import classes from "./PowerSupplyTab.module.css";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
+import Button from "../../Standart/Button/Button";
+import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import { useMutation } from "@apollo/client";
-import { convertToDate, SET_PASSENGER_SERVICE_STATUS } from "../../../../graphQL_requests";
+import {
+  convertToDate,
+  SET_PASSENGER_SERVICE_STATUS,
+  COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
+} from "../../../../graphQL_requests";
 
 const statusToLabel = {
   NEW: "Принята",
@@ -18,12 +24,18 @@ export default function PowerSupplyTab({
   request,
   onStatusChanged,
   addNotification,
+  token,
 }) {
   const people = useMemo(() => request?.mealService?.people ?? [], [request]);
   const ms = request?.mealService;
   const rawStatus = ms?.status ?? "NEW";
   const statusText = statusToLabel[rawStatus] ?? "Принята";
   const canMarkDelivered = rawStatus === "NEW";
+  const canEarlyComplete =
+    rawStatus !== "COMPLETED" && rawStatus !== "CANCELLED";
+
+  const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
+  const [earlyCompleteReason, setEarlyCompleteReason] = useState("");
 
   const [mutate, { loading }] = useMutation(SET_PASSENGER_SERVICE_STATUS, {
     variables: {
@@ -31,6 +43,9 @@ export default function PowerSupplyTab({
       service: "MEAL",
       status: "ACCEPTED",
     },
+    context: token
+      ? { headers: { Authorization: `Bearer ${token}` } }
+      : undefined,
     onCompleted: () => {
       addNotification("Питание доставлено (услуга принята)", "success");
       onStatusChanged?.();
@@ -40,6 +55,35 @@ export default function PowerSupplyTab({
       onStatusChanged?.();
     },
   });
+
+  const [completeEarly, { loading: completingEarly }] = useMutation(
+    COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
+    {
+      context: token
+        ? { headers: { Authorization: `Bearer ${token}` } }
+        : undefined,
+      onCompleted: () => {
+        addNotification("Услуга «Поставка питания» досрочно завершена", "success");
+        setShowEarlyCompleteModal(false);
+        setEarlyCompleteReason("");
+        onStatusChanged?.();
+      },
+      onError: (err) => {
+        addNotification(err?.message || "Ошибка", "error");
+      },
+    }
+  );
+
+  const handleEarlyComplete = () => {
+    const reason = earlyCompleteReason?.trim();
+    if (!reason) {
+      addNotification("Укажите причину досрочного завершения", "error");
+      return;
+    }
+    completeEarly({
+      variables: { requestId: request?.id, reason },
+    });
+  };
 
   return (
     <div className={classes.cardWrap}>
@@ -83,6 +127,11 @@ export default function PowerSupplyTab({
         ctaLabel="Питание доставлено"
         onCta={() => mutate()}
         disabled={loading || !canMarkDelivered}
+        earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
+        onEarlyCompleteClick={
+          canEarlyComplete ? () => setShowEarlyCompleteModal(true) : undefined
+        }
+        earlyCompleteDisabled={completingEarly}
         history={[
           {
             label: "Принята",
@@ -101,6 +150,44 @@ export default function PowerSupplyTab({
           },
         ]}
       />
+
+      {showEarlyCompleteModal && (
+        <div
+          className={classes.modalOverlay}
+          onClick={() => !completingEarly && setShowEarlyCompleteModal(false)}
+        >
+          <div
+            className={classes.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Досрочно завершить услугу «Поставка питания»</h3>
+            <p>Укажите причину досрочного завершения (обязательно):</p>
+            <MUITextField
+              multiline
+              minRows={3}
+              label="Причина"
+              value={earlyCompleteReason}
+              onChange={(e) => setEarlyCompleteReason(e.target.value)}
+              fullWidth
+              className={classes.modalReasonInput}
+            />
+            <div className={classes.modalActions}>
+              <Button
+                onClick={() => {
+                  setShowEarlyCompleteModal(false);
+                  setEarlyCompleteReason("");
+                }}
+                disabled={completingEarly}
+              >
+                Отмена
+              </Button>
+              <Button onClick={handleEarlyComplete} disabled={completingEarly}>
+                {completingEarly ? "Сохранение…" : "Завершить"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

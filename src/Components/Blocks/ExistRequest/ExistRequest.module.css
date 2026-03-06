@@ -435,12 +435,19 @@ select {
 }
 
 .logText {
+    width: 100%;
     padding: 30px 0;
     display: flex;
+    justify-content: space-between;
     gap: 10px;
     border-bottom: 1px dashed;
     color: var(--text);
     font-size: 14px;
+}
+
+.logInfo {
+    display: flex;
+    gap: 10px;
 }
 
 .logImg {

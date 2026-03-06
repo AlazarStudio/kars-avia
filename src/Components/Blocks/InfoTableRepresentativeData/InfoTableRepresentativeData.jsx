@@ -77,14 +77,16 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                                     {item.mealService?.plan?.enabled && <>Питание <br /></>}
                                     {item.livingService?.plan?.enabled && <>Проживание <br /></>}
                                     {item.transferService?.plan?.enabled && <>Трансфер <br /></>}
+                                    {item.baggageDeliveryService?.plan?.enabled && <>Доставка багажа <br /></>}
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_position}>
                                 <div className={item.status?.toLowerCase()}></div>
+                                {/* {console.log(item.status)} */}
                                 {item.status?.toLowerCase() == 'created' && 'Создан'}
                                 {item.status?.toLowerCase() == 'opened' && 'В обработке'}
                                 {item.status?.toLowerCase() == 'cancelled' && 'Отменен'}
-                                {item.status?.toLowerCase() == 'done' && 'Размещен'}
+                                {item.status == 'COMPLETED' && 'Размещен'}
                             </div>
                         </div>
                     </Link>

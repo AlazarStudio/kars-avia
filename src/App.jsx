@@ -34,11 +34,10 @@ import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementR
 import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHotelDetailPage/RepresentativeHotelDetailPage";
 import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
 import TransferOrder from "./Components/Blocks/TransferOrder/TransferOrder";
+import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
 
 function App() {
   const { user } = useAuth();
-
-  const token = getCookie("token");
 
   const uploadLink = createUploadLink({
     uri: `${server}/graphql`,
@@ -49,17 +48,10 @@ function App() {
     createClient({
       // url: `wss://${path}/graphql`,
       url: `ws://${path}/graphql`,
-      connectionParams: {
-        Authorization: `Bearer ${token}`,
+      connectionParams: () => {
+        const t = getCookie("token");
+        return t ? { Authorization: `Bearer ${t}` } : {};
       },
-      // connectionParams: () => {
-      // if (!token) {
-      //   return {};
-      // }
-      // return {
-      //   Authorization: `Bearer ${token}`,
-      // };
-      // },
     })
   );
 
@@ -147,6 +139,7 @@ function App() {
         ) : (
           <>
             <Route path="/login" element={<Login />} />
+            <Route path="/external-login" element={<ExternalLogin />} />
             <Route path="/reset-to-email" element={<Email />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<Login />} />

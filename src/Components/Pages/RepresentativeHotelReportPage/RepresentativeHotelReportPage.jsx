@@ -22,7 +22,8 @@ function buildReportRows(people) {
   return (people || []).map((p) => ({
     fullName: p.fullName ?? "",
     roomNumber: p.roomNumber ?? "",
-    roomCategory: "",
+    roomCategory: p.roomCategory ?? "",
+    roomKind: p.roomKind ?? "",
     daysCount: 0,
     breakfast: 0,
     lunch: 0,
@@ -116,6 +117,7 @@ function RepresentativeHotelReportPage({ user }) {
             fullName: row.fullName ?? "",
             roomNumber: row.roomNumber ?? "",
             roomCategory: row.roomCategory ?? "",
+            roomKind: row.roomKind ?? "",
             daysCount: toNum(row.daysCount),
             breakfast: toNum(row.breakfast),
             lunch: toNum(row.lunch),
@@ -134,6 +136,7 @@ function RepresentativeHotelReportPage({ user }) {
     const headers = [
       "ID",
       "Категория номера",
+      "Вид номера",
       "Суток",
       "ФИО",
       "Завтрак",
@@ -146,6 +149,7 @@ function RepresentativeHotelReportPage({ user }) {
     const dataRows = reportRows.map((row, i) => [
       i + 1,
       row.roomCategory ?? "",
+      row.roomKind ?? "",
       toNum(row.daysCount),
       row.fullName ?? "",
       toNum(row.breakfast),
@@ -177,6 +181,7 @@ function RepresentativeHotelReportPage({ user }) {
           fullName: r.fullName ?? "",
           roomNumber: r.roomNumber ?? "",
           roomCategory: r.roomCategory ?? "",
+          roomKind: r.roomKind ?? "",
           daysCount: r.daysCount ?? 0,
           breakfast: r.breakfast ?? 0,
           lunch: r.lunch ?? 0,
@@ -255,6 +260,7 @@ function RepresentativeHotelReportPage({ user }) {
                 <div className={`${reportClasses.reportGrid} ${reportClasses.tableHead}`}>
                   <div>ID</div>
                   <div>Категория номера</div>
+                  <div>Вид номера</div>
                   <div>Суток</div>
                   <div>ФИО</div>
                   <div>Завтрак</div>
@@ -281,6 +287,14 @@ function RepresentativeHotelReportPage({ user }) {
                           className={reportClasses.reportInput}
                           value={row.roomCategory}
                           onChange={(e) => updateRow(reportIndex, "roomCategory", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="text"
+                          className={reportClasses.reportInput}
+                          value={row.roomKind}
+                          onChange={(e) => updateRow(reportIndex, "roomKind", e.target.value)}
                         />
                       </div>
                       <div>
