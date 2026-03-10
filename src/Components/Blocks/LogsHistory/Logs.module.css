@@ -266,8 +266,9 @@
 }
 
 .logText {
-    padding: 30px 0;
+    padding: var(--log-text-padding);
     display: flex;
+    align-items: var(--log-text-align-items);
     gap: 10px;
     border-bottom: 1px dashed;
     color: var(--text);
@@ -276,8 +277,9 @@
 }
 
 .logImg {
-    min-width: 35px !important;
-    height: 35px;
+    min-width: var(--log-img-width) !important;
+    max-width: var(--log-img-width) !important;
+    height: var(--log-img-height);
     cursor: pointer;
 }
 

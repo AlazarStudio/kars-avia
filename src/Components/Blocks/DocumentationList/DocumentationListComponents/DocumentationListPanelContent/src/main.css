@@ -187,6 +187,10 @@
   --article-button-gap: 8px;
   --article-button-shift-right: 6px;
   --article-button-cluster-width: calc(48px + var(--article-button-gap, 8px));
+  --doc-controls-fade-duration: 90ms;
+  --doc-controls-fade-ease: ease;
+  --doc-controls-follow-duration: 95ms;
+  --doc-controls-toggle-fade-duration: 0ms;
   left: 0;
   width: 100%;
 }
@@ -205,9 +209,10 @@
   );
   width: 24px;
   height: 24px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: white;
+  border-radius: 8px;
+  border: 1px solid #d6dbe4;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #1f2937;
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -215,29 +220,114 @@
   align-items: center;
   justify-content: center;
   z-index: 9;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-  will-change: transform;
-  transition: transform 160ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 120ms ease;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 3px 8px rgba(15, 23, 42, 0.08);
+  will-change: transform, translate, opacity;
+  transition:
+    transform var(--doc-controls-follow-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    translate var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    opacity var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease);
 }
 
 .plus-overlay:hover {
-  background: #e8edf7;
-  transform: scale(1.1);
-  border-color: #9ca3af;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: #f3f6fb;
+  border-color: #aeb8c7;
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.1),
+    0 6px 12px rgba(15, 23, 42, 0.1);
 }
 
+.plus-handle-cluster {
+  position: absolute;
+  top: 0;
+  left: max(
+    0px,
+    calc(
+      (
+        var(--overlay-left-shift, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2 +
+      var(--article-button-shift-right, 0px)
+    )
+  );
+  width: 24px;
+  height: 76px;
+  z-index: 9;
+  pointer-events: auto;
+  will-change: transform, translate, opacity;
+  transition:
+    transform var(--doc-controls-follow-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    translate var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    opacity var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease);
+}
+
+.plus-handle-cluster .plus-overlay {
+  top: 0;
+  left: 0;
+}
+
+.plus-step-btn {
+  position: absolute;
+  left: 0;
+  width: 24px;
+  height: 18px;
+  border-radius: 8px;
+  border: 1px solid #d6dbe4;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+  transition: opacity 120ms ease, transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.plus-step-btn-up {
+  top: 12px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  transform: translateY(6px) scale(0.96);
+}
+
+.plus-step-btn-down {
+  top: 58px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+
+.plus-handle-cluster:hover .plus-step-btn-up,
+.plus-step-btn-up:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.plus-handle-cluster:hover .plus-step-btn-down,
+.plus-step-btn-down:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.plus-step-btn:hover:not(:disabled) {
+  background: #f3f6fb;
+  border-color: #aeb8c7;
+}
 /* ================= BLOCK DRAG HANDLE ================= */
 
 .block-dnd-handle {
   position: absolute;
   width: 24px;
   height: 24px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: white;
+  border-radius: 8px;
+  border: 1px solid #d6dbe4;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #4b5563;
   cursor: grab;
   font-size: 12px;
   line-height: 1;
@@ -259,9 +349,15 @@
     )
   );
 
-  will-change: transform;
-  transition: transform 160ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 120ms ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  will-change: transform, translate, opacity;
+  transition:
+    transform var(--doc-controls-follow-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    translate var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    opacity var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    border-radius 120ms ease;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 3px 8px rgba(15, 23, 42, 0.08);
 
   user-select: none;
   touch-action: none;
@@ -352,10 +448,11 @@
 }
 
 .block-dnd-handle:hover {
-  background: #f3f4f6;
-  transform: scale(1.1);
-  border-color: #9ca3af;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: #f3f6fb;
+  border-color: #aeb8c7;
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.1),
+    0 6px 12px rgba(15, 23, 42, 0.1);
 }
 
 .block-dnd-handle:active {
@@ -888,8 +985,12 @@ details[open] summary::before {
   z-index: 2;
 }
 
+.ProseMirror[contenteditable="false"] .selectedCell:after {
+  display: none;
+}
+
 .ProseMirror .column-resize-handle {
-  background-color: #3b82f6;
+  background-color: #64748b;
   bottom: -2px;
   position: absolute;
   right: -2px;
@@ -911,7 +1012,7 @@ details[open] summary::before {
 }
 
 .ProseMirror .row-resize-handle {
-  background-color: #3b82f6;
+  background-color: #64748b;
   bottom: -2px;
   position: absolute;
   left: 0;
@@ -937,7 +1038,7 @@ details[open] summary::before {
   right: 0;
   bottom: 0;
   height: 4px;
-  background-color: rgba(59, 130, 246, 0.7);
+  background-color: rgba(100, 116, 139, 0.72);
 }
 
 .ProseMirror .corner-resize-handle .corner-col-line {
@@ -946,7 +1047,7 @@ details[open] summary::before {
   bottom: 0;
   right: 0;
   width: 4px;
-  background-color: rgba(59, 130, 246, 0.7);
+  background-color: rgba(100, 116, 139, 0.72);
 }
 
 .ProseMirror .corner-resize-handle .corner-dot {
@@ -955,18 +1056,18 @@ details[open] summary::before {
   bottom: 0;
   width: 8px;
   height: 8px;
-  background-color: #3b82f6;
+  background-color: #64748b;
   border-radius: 2px;
 }
 
 .ProseMirror.corner-resize-cursor .corner-resize-handle .corner-row-line,
 .ProseMirror.corner-resize-cursor .corner-resize-handle .corner-col-line {
-  background-color: #3b82f6;
+  background-color: #64748b;
 }
 
 .ProseMirror .corner-resize-handle.active .corner-row-line,
 .ProseMirror .corner-resize-handle.active .corner-col-line {
-  background-color: #2563eb;
+  background-color: #475569;
 }
 
 /* ================= BULLET LIST ================= */
@@ -1261,27 +1362,40 @@ body.dragging-modal .table-controls-modal {
 .position-plus-button .plus-overlay {
   opacity: 0;
   pointer-events: none;
-  transform: translateX(-4px);
-  transition: opacity 120ms ease, transform 120ms ease;
+  translate: -10px 0;
 }
 
 .position-plus-button.plus-visible .plus-overlay {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(0);
+  translate: 0 0;
 }
 
+.position-plus-button .plus-handle-cluster {
+  opacity: 0;
+  pointer-events: none;
+  translate: -10px 0;
+}
+
+.position-plus-button.plus-visible .plus-handle-cluster {
+  opacity: 1;
+  pointer-events: auto;
+  translate: 0 0;
+}
 .position-plus-button .block-dnd-handle {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease, transform 120ms ease;
+  translate: -10px 0;
 }
 
 .position-plus-button.plus-visible .block-dnd-handle {
   opacity: 1;
   pointer-events: auto;
+  translate: 0 0;
 }
 .editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-overlay,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-handle-cluster,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-step-btn,
 .editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle,
 .editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-gutter-indicator,
 .editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-side-indicator {
@@ -1561,8 +1675,198 @@ body.dragging-blocks {
 }
 
 body.dragging-blocks .plus-overlay,
+body.dragging-blocks .plus-handle-cluster,
+body.dragging-blocks .plus-step-btn,
 body.dragging-blocks .block-dnd-handle {
   opacity: 0 !important;
   pointer-events: none !important;
 }
 
+
+.editor-hover-scope.alt-pick-cursor,
+.editor-hover-scope.alt-pick-cursor * {
+  cursor: pointer !important;
+}
+
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-overlay,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle-cluster {
+  translate: -10px 0 !important;
+}
+
+
+.editor-hover-scope.alt-pick-cursor .plus-overlay {
+  cursor: pointer !important;
+}
+
+.editor-hover-scope.alt-pick-cursor .block-dnd-handle {
+  cursor: grab !important;
+}
+
+.editor-hover-scope.alt-pick-cursor .block-dnd-handle:active {
+  cursor: grabbing !important;
+}
+
+/* Lasso visibility fixes */
+.ProseMirror .block-lasso-selected.image-block-wrapper .image-preview img,
+.ProseMirror .block-lasso-selected .image-preview img {
+  box-shadow: 0 0 0 2px rgba(107, 140, 186, 0.55) !important;
+}
+
+.ProseMirror hr.block-lasso-selected {
+  outline: 2px solid rgba(107, 140, 186, 0.55);
+  outline-offset: 5px;
+  border-radius: 6px;
+  border-top-color: rgba(107, 140, 186, 0.82);
+}
+
+/* Block step move controls */
+.block-dnd-handle-cluster {
+  position: absolute;
+  top: 0;
+  left: max(
+    0px,
+    calc(
+      (
+        var(--overlay-left-shift, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2 +
+      24px +
+      var(--article-button-gap, 8px) +
+      var(--article-button-shift-right, 0px)
+    )
+  );
+  width: 24px;
+  height: 76px;
+  z-index: 9;
+  pointer-events: auto;
+  will-change: transform, translate, opacity;
+  transition:
+    transform var(--doc-controls-follow-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    translate var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    opacity var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    border-radius 120ms ease;
+}
+
+.block-dnd-main-handle {
+  top: 0;
+  left: 0;
+}
+
+.block-dnd-step-btn {
+  position: absolute;
+  left: 0;
+  width: 24px;
+  height: 18px;
+  border-radius: 8px;
+  border: 1px solid #d6dbe4;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+  transition: opacity 120ms ease, transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.block-dnd-step-btn-up {
+  top: 12px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  transform: translateY(6px) scale(0.96);
+}
+
+.block-dnd-step-btn-down {
+  top: 58px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+
+.block-dnd-handle-cluster:hover .block-dnd-step-btn-up,
+.block-dnd-step-btn-up:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.block-dnd-handle-cluster:hover .block-dnd-step-btn-down,
+.block-dnd-step-btn-down:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.block-dnd-step-btn:hover:not(:disabled) {
+  background: #f3f6fb;
+  border-color: #aeb8c7;
+}
+
+.block-dnd-step-btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.position-plus-button .block-dnd-handle-cluster {
+  opacity: 0;
+  pointer-events: none;
+  translate: -10px 0;
+}
+
+.position-plus-button.plus-visible .block-dnd-handle-cluster {
+  opacity: 1;
+  pointer-events: auto;
+  translate: 0 0;
+}
+
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle-cluster,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-step-btn {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.dragging-blocks .block-dnd-handle-cluster,
+body.dragging-blocks .block-dnd-step-btn {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
+
+
+
+.block-dnd-handle-cluster:hover .block-dnd-main-handle,
+.block-dnd-handle-cluster:focus-within .block-dnd-main-handle {
+  border-radius: 0;
+}
+
+.editor-hover-scope.alt-lasso-cursor .plus-overlay,
+.editor-hover-scope.alt-lasso-cursor .position-plus-button,
+.editor-hover-scope.alt-lasso-cursor .block-dnd-handle,
+.editor-hover-scope.alt-lasso-cursor .anchor-hash-overlay .anchor-hash-btn,
+.editor-hover-scope.alt-pick-cursor .plus-overlay,
+.editor-hover-scope.alt-pick-cursor .position-plus-button,
+.editor-hover-scope.alt-pick-cursor .block-dnd-handle,
+.editor-hover-scope.alt-pick-cursor .anchor-hash-overlay .anchor-hash-btn {
+  pointer-events: none !important;
+}
+
+/* Alt block-selection mode: hide and disable all resize handles. */
+.editor-hover-scope.alt-lasso-cursor .block-resize,
+.editor-hover-scope.alt-lasso-cursor .column-resize-handle,
+.editor-hover-scope.alt-lasso-cursor .row-resize-handle,
+.editor-hover-scope.alt-lasso-cursor .corner-resize-handle,
+.editor-hover-scope.alt-pick-cursor .block-resize,
+.editor-hover-scope.alt-pick-cursor .column-resize-handle,
+.editor-hover-scope.alt-pick-cursor .row-resize-handle,
+.editor-hover-scope.alt-pick-cursor .corner-resize-handle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.editor-hover-scope.editor-controls-toggle-animating .position-plus-button {
+  --doc-controls-toggle-fade-duration: var(--doc-controls-fade-duration);
+}

@@ -330,6 +330,7 @@ function EditRequestAirlineTarifCategory({
               <label>Аэропорты</label>
               <MultiSelectAutocomplete
                 isDisabled={!isEditing}
+                showSelectAll={true}
                 isMultiple={true}
                 dropdownWidth={"100%"}
                 label={"Выберите аэропорты"}

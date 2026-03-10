@@ -436,8 +436,9 @@ select {
 
 .logText {
     width: 100%;
-    padding: 30px 0;
+    padding: var(--log-text-padding);
     display: flex;
+    align-items: var(--log-text-align-items);
     justify-content: space-between;
     gap: 10px;
     border-bottom: 1px dashed;
@@ -451,8 +452,10 @@ select {
 }
 
 .logImg {
-    min-width: 35px !important;
-    height: 35px;
+    min-width: var(--log-img-width) !important;
+    max-width: var(--log-img-width) !important;
+    height: var(--log-img-height);
+    flex-shrink: 0;
     cursor: pointer;
 }
 

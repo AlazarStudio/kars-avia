@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import { 
   LinkIcon, 
@@ -120,13 +120,16 @@ export default function LinkModal({
   onOpenCustomStyleModal,
   applyLinkStyle,
   fetchLinkPreview,
-  onEditStyle
+  onEditStyle,
+  initialStyleId = 'default',
+  focusUrlInput = false,
 }) {
   const [url, setUrl] = useState('')
-  const [style, setStyle] = useState('default')
+  const [style, setStyle] = useState(initialStyleId || 'default')
   const [linkPreview, setLinkPreview] = useState(null)
   const [isLinkLoading, setIsLinkLoading] = useState(false)
   const [notification, setNotification] = useState(null)
+  const urlInputRef = useRef(null)
   
   useEffect(() => {
     const { from, to } = editor.state.selection
@@ -144,6 +147,24 @@ export default function LinkModal({
       }
     }
   }, [editor])
+
+  useEffect(() => {
+    if (!initialStyleId) return
+    setStyle(initialStyleId)
+  }, [initialStyleId])
+
+  useEffect(() => {
+    if (!focusUrlInput) return
+    const frame = requestAnimationFrame(() => {
+      const input = urlInputRef.current
+      if (!input) return
+      input.focus({ preventScroll: true })
+      const length = typeof input.value === 'string' ? input.value.length : 0
+      input.setSelectionRange(length, length)
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [focusUrlInput])
   
   // Автоматическое скрытие уведомления через 3 секунды
   useEffect(() => {
@@ -286,6 +307,7 @@ export default function LinkModal({
           <h4>URL ссылки:</h4>
           <div className="link-input-container">
             <input
+              ref={urlInputRef}
               type="url"
               value={url}
               onChange={handleUrlChange}

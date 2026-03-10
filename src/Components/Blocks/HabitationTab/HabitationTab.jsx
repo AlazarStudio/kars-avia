@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import classes from "./HabitationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
 import CopyIcon from "../../../shared/icons/CopyIcon";
+import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 
 const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
 
@@ -43,6 +44,11 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
           </div>
           <div className={`${classes.w20} ${classes.jcCenter}`}>Адрес</div>
           <div className={`${classes.w20} ${classes.jcEnd}`}>Ссылка</div>
+          {!!request?.livingService?.plan?.peopleCount && (
+            <span className={classes.countChip}>
+              <PeopleCountIcon /> {request.livingService.plan.peopleCount}
+            </span>
+          )}
         </div>
         {hotelsWithIndex.map(({ h, originalIndex }, i) => (
           <div

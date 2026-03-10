@@ -1,0 +1,63 @@
+/* Те же стили, что в CreateRequestAirlineTarifCategory */
+.requestTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 20px 30px;
+  border-bottom: 1px solid #54587380;
+}
+
+.requestTitle_name {
+  font-family: Inter;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 38.73px;
+  color: var(--text);
+}
+
+.requestTitle_close {
+  cursor: pointer;
+}
+
+.requestTitle_close img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.requestData {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 20px 20px 30px;
+  gap: 15px;
+}
+
+.requestData label {
+  display: flex;
+  gap: 15px;
+}
+
+.requestData select {
+  cursor: pointer;
+}
+
+/* Убираем свою рамку у MUI Autocomplete — у него уже есть оформление */
+
+.requestMiddle {
+  height: calc(100% - 90px - 71px);
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.requestButton {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  align-items: center;
+  padding: 20px 20px 20px 30px;
+  border-top: 1px solid #54587380;
+}
+
+.requestButton button {
+  flex-basis: 50%;
+}

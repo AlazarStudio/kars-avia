@@ -63,6 +63,49 @@ a {
   margin-right: 2px;
 }
 
+.toolbar-lasso-indicator {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #eef2ff;
+  color: #4338ca;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+  padding: 0;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.toolbar-lasso-indicator:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+.toolbar.toolbar-alt-locked .toolbar-main .toolbar-group,
+.toolbar.toolbar-alt-locked .toolbar-right > :not(.toolbar-anchor-group) {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.toolbar.toolbar-alt-locked .toolbar-main .toolbar-group.toolbar-group-alignment,
+.toolbar.toolbar-alt-locked .toolbar-main .toolbar-group.toolbar-group-alignment .toolbar-btn {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.toolbar.toolbar-alt-locked .toolbar-anchor-group .toolbar-btn {
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.toolbar.toolbar-alt-locked .toolbar-anchor-group .toolbar-lasso-indicator {
+  pointer-events: auto;
+  opacity: 1;
+}
+
 .toolbar-group-overflow-hidden {
   visibility: hidden;
   pointer-events: none;
@@ -99,6 +142,7 @@ a {
 .modal.toolbar-overflow-modal {
   width: min(720px, calc(100vw - 40px));
   max-width: min(720px, calc(100vw - 40px));
+  min-width: 0;
 }
 
 .toolbar-overflow-groups {
@@ -2110,9 +2154,10 @@ a {
   position: relative;
   padding: 8px 10px;
   min-height: 48px;
-  max-height: 48px;
-  overflow: hidden;
-  gap: 0;
+  max-height: min(64vh, 420px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  gap: 8px;
 }
 
 .toolbar-group-in-overflow {
@@ -2143,13 +2188,14 @@ a {
 
 .modal.toolbar-overflow-modal .toolbar-overflow-groups {
   margin-top: 0;
-  height: 32px;
-  max-height: 32px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  flex-wrap: nowrap;
-  align-items: center;
-  align-content: stretch;
+  min-height: 32px;
+  height: auto;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: visible;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
   gap: 8px;
   padding: 0 22px 0 0;
 }

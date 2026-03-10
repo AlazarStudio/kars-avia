@@ -1,10 +1,12 @@
-import { useState, useRef, useEffect } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded'
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
 const FONT_SIZE_MODAL_SOURCE = 'font-size-select'
+const FONT_SIZE_MODAL_ESTIMATED_SIZE = { width: 280, height: 400 }
 
 const fontSizeOptions = [
   '8','9','10','11','12','14','16','18','20','22','24','26','28','36','48','72'
@@ -51,7 +53,7 @@ const getBaselineSize = () => {
   for (let lvl = 1; lvl <= 6; lvl++) {
     if (editor.isActive('heading', { level: lvl })) return HEAD_BASE[lvl]
   }
-  return 16 // обычный текст
+  return 16 // РѕР±С‹С‡РЅС‹Р№ С‚РµРєСЃС‚
 }
 
 const applyFontSize = (value) => {
@@ -61,7 +63,7 @@ const applyFontSize = (value) => {
   setSelectedFontSize(String(size))
   setInputValue(String(size))
 
-  // ✅ Убираем fontSize-mark только если размер равен базовому для текущего блока
+  // вњ… РЈР±РёСЂР°РµРј fontSize-mark С‚РѕР»СЊРєРѕ РµСЃР»Рё СЂР°Р·РјРµСЂ СЂР°РІРµРЅ Р±Р°Р·РѕРІРѕРјСѓ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ Р±Р»РѕРєР°
   if (size === baseline) {
     editor.chain().focus().unsetFontSize().run()
   } else {
@@ -86,10 +88,10 @@ const applyFontSize = (value) => {
   }
 
   const commitInput = () => {
-  // если пусто — ничего не применяем (не трогаем marks)
+  // РµСЃР»Рё РїСѓСЃС‚Рѕ вЂ” РЅРёС‡РµРіРѕ РЅРµ РїСЂРёРјРµРЅСЏРµРј (РЅРµ С‚СЂРѕРіР°РµРј marks)
   if (!inputValue) return
 
-  // 🔥 если значение не менялось — НЕ применять заново (убирает “липкость”)
+  // рџ”Ґ РµСЃР»Рё Р·РЅР°С‡РµРЅРёРµ РЅРµ РјРµРЅСЏР»РѕСЃСЊ вЂ” РќР• РїСЂРёРјРµРЅСЏС‚СЊ Р·Р°РЅРѕРІРѕ (СѓР±РёСЂР°РµС‚ вЂњР»РёРїРєРѕСЃС‚СЊвЂќ)
   if (String(inputValue) === String(selectedFontSize)) return
 
   applyFontSize(inputValue)
@@ -116,7 +118,7 @@ const applyFontSize = (value) => {
   const handleOpenModal = (e) => {
     e.stopPropagation()
     
-    // Сохраняем позицию клика для открытия модалки
+    // РЎРѕС…СЂР°РЅСЏРµРј РїРѕР·РёС†РёСЋ РєР»РёРєР° РґР»СЏ РѕС‚РєСЂС‹С‚РёСЏ РјРѕРґР°Р»РєРё
     setClickPosition({
       x: e.clientX,
       y: e.clientY
@@ -149,49 +151,62 @@ const applyFontSize = (value) => {
     const newX = e.clientX - dragOffset.x
     const newY = e.clientY - dragOffset.y
     
-    const modalWidth = modalRef.current?.offsetWidth || 280
-    const modalHeight = modalRef.current?.offsetHeight || 400
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-    
-    const boundedX = Math.max(0, Math.min(newX, viewportWidth - modalWidth))
-    const boundedY = Math.max(0, Math.min(newY, viewportHeight - modalHeight))
-    
-    setPosition({ x: boundedX, y: boundedY })
+    const modalSize = {
+      width: modalRef.current?.offsetWidth || FONT_SIZE_MODAL_ESTIMATED_SIZE.width,
+      height: modalRef.current?.offsetHeight || FONT_SIZE_MODAL_ESTIMATED_SIZE.height,
+    }
+
+    setPosition(
+      clampFixedModalPosition(
+        { x: newX, y: newY },
+        modalSize,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
   }
 
   const handleDragEnd = () => {
     setDragging(false)
   }
 
-  /* ================= POSITION MODAL ================= */
+    /* ================= POSITION MODAL ================= */
 
   useEffect(() => {
     if (isOpen && modalRef.current) {
-      const modalWidth = 280 // примерная ширина модалки
-      const modalHeight = 400 // примерная высота модалки
-      const viewportWidth = window.innerWidth
-      const viewportHeight = window.innerHeight
-      
-      // Позиционируем модалку рядом с курсором
-      let x = clickPosition.x + 10
-      let y = clickPosition.y + 10
-      
-      // Проверяем, не выходит ли модалка за пределы экрана
-      if (x + modalWidth > viewportWidth) {
-        x = viewportWidth - modalWidth - 10
-      }
-      if (y + modalHeight > viewportHeight) {
-        y = viewportHeight - modalHeight - 10
-      }
-      
-      // Обеспечиваем минимальные отступы от краев
-      x = Math.max(10, x)
-      y = Math.max(10, y)
-      
-      setPosition({ x, y })
+      const rect = modalRef.current.getBoundingClientRect()
+      setPosition(
+        clampFixedModalPosition(
+          { x: clickPosition.x + 10, y: clickPosition.y + 10 },
+          {
+            width: rect?.width || FONT_SIZE_MODAL_ESTIMATED_SIZE.width,
+            height: rect?.height || FONT_SIZE_MODAL_ESTIMATED_SIZE.height,
+          },
+          MODAL_VIEWPORT_MARGIN
+        )
+      )
     }
   }, [isOpen, clickPosition])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const clampModalToViewport = () => {
+      const rect = modalRef.current?.getBoundingClientRect?.()
+      if (!rect) return
+      setPosition(prev => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN)
+        if (next.x === prev.x && next.y === prev.y) return prev
+        return next
+      })
+    }
+
+    const rafId = window.requestAnimationFrame(clampModalToViewport)
+    window.addEventListener('resize', clampModalToViewport)
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', clampModalToViewport)
+    }
+  }, [isOpen])
 
   /* ================= OUTSIDE CLICK ================= */
 
@@ -269,7 +284,7 @@ const applyFontSize = (value) => {
           ref={triggerRef}
           className="color-select-btn"
           onClick={handleOpenModal}
-          title="Выбрать размер из списка"
+          title="Р’С‹Р±СЂР°С‚СЊ СЂР°Р·РјРµСЂ РёР· СЃРїРёСЃРєР°"
         >
           <>
             {/* Legacy SVG icon:
@@ -288,16 +303,16 @@ const applyFontSize = (value) => {
           <button 
             onClick={() => step(1)} 
             className="size-controls-btn-left"
-            title="Увеличить размер шрифта"
+            title="РЈРІРµР»РёС‡РёС‚СЊ СЂР°Р·РјРµСЂ С€СЂРёС„С‚Р°"
           >
             +
           </button>
           <button 
             onClick={() => step(-1)} 
             className="size-controls-btn-right"
-            title="Уменьшить размер шрифта"
+            title="РЈРјРµРЅСЊС€РёС‚СЊ СЂР°Р·РјРµСЂ С€СЂРёС„С‚Р°"
           >
-            −
+            -
           </button>
         </div>
 
@@ -328,7 +343,7 @@ const applyFontSize = (value) => {
               }}
             >
               <div className="modal-header">
-                <span>Размер шрифта</span>
+                <span>Р Р°Р·РјРµСЂ С€СЂРёС„С‚Р°</span>
                 <button 
                   className="close-modal-btn"
                   onClick={(e) => {
@@ -336,7 +351,7 @@ const applyFontSize = (value) => {
                     setIsOpen(false)
                   }}
                 >
-                  ×
+                  Г—
                 </button>
               </div>
             </div>
@@ -399,7 +414,7 @@ const applyFontSize = (value) => {
                 onClick={(e) => {
                   e.stopPropagation()
                   
-                  // Проверяем, активен ли заголовок
+                  // РџСЂРѕРІРµСЂСЏРµРј, Р°РєС‚РёРІРµРЅ Р»Рё Р·Р°РіРѕР»РѕРІРѕРє
                   const isHeading = editor.isActive('heading', { level: 1 }) ||
                                     editor.isActive('heading', { level: 2 }) ||
                                     editor.isActive('heading', { level: 3 }) ||
@@ -408,7 +423,7 @@ const applyFontSize = (value) => {
                                     editor.isActive('heading', { level: 6 });
                   
                   if (isHeading) {
-                    // Для заголовков сбрасываем к размеру по умолчанию для этого уровня
+                    // Р”Р»СЏ Р·Р°РіРѕР»РѕРІРєРѕРІ СЃР±СЂР°СЃС‹РІР°РµРј Рє СЂР°Р·РјРµСЂСѓ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґР»СЏ СЌС‚РѕРіРѕ СѓСЂРѕРІРЅСЏ
                     let fontSize = '16';
                     if (editor.isActive('heading', { level: 1 })) fontSize = '32';
                     else if (editor.isActive('heading', { level: 2 })) fontSize = '24';
@@ -420,7 +435,7 @@ const applyFontSize = (value) => {
                     editor.chain().focus().setFontSize(parseInt(fontSize)).run()
                     applyFontSize(fontSize)
                   } else {
-                    // Для обычного текста сбрасываем размер
+                    // Р”Р»СЏ РѕР±С‹С‡РЅРѕРіРѕ С‚РµРєСЃС‚Р° СЃР±СЂР°СЃС‹РІР°РµРј СЂР°Р·РјРµСЂ
                     editor.chain().focus().unsetFontSize().run()
                     applyFontSize(16)
                   }
@@ -428,7 +443,7 @@ const applyFontSize = (value) => {
                   setIsOpen(false)
                 }}
               >
-                Сбросить к стандартному
+                РЎР±СЂРѕСЃРёС‚СЊ Рє СЃС‚Р°РЅРґР°СЂС‚РЅРѕРјСѓ
               </button>
             </div>
           </div>
@@ -437,3 +452,4 @@ const applyFontSize = (value) => {
     </div>
   )
 }
+

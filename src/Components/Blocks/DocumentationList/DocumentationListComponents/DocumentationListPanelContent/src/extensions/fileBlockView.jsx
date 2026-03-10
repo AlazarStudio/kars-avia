@@ -13,9 +13,11 @@ import './fileBlockView.css'
 import './blockResize.css'
 import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
 const FILE_BLOCK_MIN_HEIGHT = 120
 const FILE_BLOCK_MIN_WIDTH = 200
+const FILE_MODAL_ESTIMATED_SIZE = { width: 360, height: 260 }
 
 // Определяем тип файла по расширению или MIME-типу
 const getFileType = (filename, mimeType = '') => {
@@ -426,10 +428,17 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
   };
 
   const onDragModal = (e) => {
-    setModalPos({
-      x: e.clientX - dragOffset.current.x,
-      y: e.clientY - dragOffset.current.y,
-    });
+    const rect = modalRef.current?.getBoundingClientRect?.();
+    setModalPos(
+      clampFixedModalPosition(
+        {
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y,
+        },
+        rect || FILE_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    );
   };
 
   const stopDragModal = () => {
@@ -441,10 +450,14 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
   const openAtEvent = (e) => {
     if (!canEdit) return;
     e.stopPropagation();
-    setModalPos({
-      x: e.clientX + 10,
-      y: e.clientY - 10,
-    });
+    const rect = modalRef.current?.getBoundingClientRect?.();
+    setModalPos(
+      clampFixedModalPosition(
+        { x: e.clientX + 10, y: e.clientY - 10 },
+        rect || FILE_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    );
     announceModalOpen();
     setPreviewOpen(false);
     setOpen(true);
@@ -475,6 +488,27 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
     };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const clampModalToViewport = () => {
+      const rect = modalRef.current?.getBoundingClientRect?.();
+      if (!rect) return;
+      setModalPos((prev) => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN);
+        if (next.x === prev.x && next.y === prev.y) return prev;
+        return next;
+      });
+    };
+
+    const rafId = window.requestAnimationFrame(clampModalToViewport);
+    window.addEventListener('resize', clampModalToViewport);
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', clampModalToViewport);
+    };
   }, [open]);
 
   /* ================= ADD FILE ================= */
@@ -735,22 +769,26 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
     const startRect = wrapperEl?.getBoundingClientRect?.();
     const startWidth = width;
     const startHeight = typeof height === 'number' ? height : Math.round(startRect?.height || 120);
+    const isLeft = side.includes('left');
+    const isRight = side.includes('right');
+    const isTop = side.includes('top');
+    const isBottom = side.includes('bottom');
 
     const move = ev => {
       let deltaX = 0;
       let deltaY = 0;
 
-      if (side === 'right') deltaX = ev.clientX - startX;
-      if (side === 'left') deltaX = startX - ev.clientX;
-      if (side === 'bottom') deltaY = ev.clientY - startY;
-      if (side === 'top') deltaY = startY - ev.clientY;
+      if (isRight) deltaX = ev.clientX - startX;
+      if (isLeft) deltaX = startX - ev.clientX;
+      if (isBottom) deltaY = ev.clientY - startY;
+      if (isTop) deltaY = startY - ev.clientY;
 
       const nextWidth = clamp(startWidth + deltaX, FILE_BLOCK_MIN_WIDTH, maxWidth);
       const nextHeight = clamp(startHeight + deltaY, FILE_BLOCK_MIN_HEIGHT, 900);
 
       const nextAttrs = {};
-      if (side === 'left' || side === 'right') nextAttrs.width = Math.round(nextWidth);
-      if (side === 'top' || side === 'bottom') nextAttrs.height = Math.round(nextHeight);
+      if (isLeft || isRight) nextAttrs.width = Math.round(nextWidth);
+      if (isTop || isBottom) nextAttrs.height = Math.round(nextHeight);
       updateAttributes(nextAttrs);
     };
 
@@ -788,6 +826,10 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
               <>
                 <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
                 <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+                <div className="block-resize corner top-left" contentEditable={false} onMouseDown={e => startResize(e, 'top-left')} />
+                <div className="block-resize corner top-right" contentEditable={false} onMouseDown={e => startResize(e, 'top-right')} />
+                <div className="block-resize corner bottom-left" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-left')} />
+                <div className="block-resize corner bottom-right" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-right')} />
               </>
             )}
           </>

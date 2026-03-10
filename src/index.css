@@ -35,6 +35,12 @@ a {
     --blue: #007AFF;
     --dark-blue: #0057C3;
     --black: #000;
+
+
+    --log-img-width: 30px;
+    --log-img-height: 30px;
+    --log-text-padding: 25px 0;
+    --log-text-align-items: none;
 }
 
 .blueText {

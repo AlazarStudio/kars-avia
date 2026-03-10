@@ -30,6 +30,7 @@
 }
 
 .tree-item {
+
   border-top-left-radius: 20px;
   border-bottom-left-radius: 20px;
 
@@ -756,9 +757,87 @@
 }
 
 .header-actions {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+}
+
+
+
+.doc-left-header {
+  --doc-left-header-control-size: 34px;
+  --doc-left-header-filter-size: 34px;
+}
+
+.doc-filter-switcher {
+  width: 124px;
+  min-width: 124px;
+  height: var(--doc-left-header-filter-size) !important;
+}
+
+.doc-filter-switcher .MuiAutocomplete-root,
+.doc-filter-switcher .MuiFormControl-root {
+  width: 100% !important;
+  height: var(--doc-left-header-filter-size) !important;
+  min-height: var(--doc-left-header-filter-size) !important;
+  max-height: var(--doc-left-header-filter-size) !important;
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.doc-filter-switcher .MuiInputBase-root {
+  min-height: var(--doc-left-header-filter-size) !important;
+  height: var(--doc-left-header-filter-size) !important;
+  max-height: var(--doc-left-header-filter-size) !important;
+  border-radius: 10px !important;
+  font-size: 12px !important;
+  background: #ffffff !important;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.doc-filter-switcher .MuiOutlinedInput-root {
+  min-height: var(--doc-left-header-filter-size) !important;
+  height: var(--doc-left-header-filter-size) !important;
+  max-height: var(--doc-left-header-filter-size) !important;
+  padding: 0 30px 0 10px !important;
+  box-sizing: border-box !important;
+}
+
+.doc-filter-switcher .MuiFormLabel-root,
+.doc-filter-switcher .MuiInputLabel-root {
+  display: none !important;
+}
+
+.doc-filter-switcher .MuiAutocomplete-input,
+.doc-filter-switcher .MuiAutocomplete-inputRoot input {
+  padding: 0 0 0 2px !important;
+  margin: 0 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: var(--doc-left-header-filter-size) !important;
+  color: #4b5563 !important;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.doc-filter-switcher .MuiOutlinedInput-notchedOutline legend {
+  display: none !important;
+}
+
+.doc-filter-switcher .MuiAutocomplete-endAdornment {
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
 }
 
 .save-indicator-dot {
@@ -785,18 +864,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
+  width: var(--doc-left-header-control-size);
+  height: var(--doc-left-header-control-size);
+  min-width: var(--doc-left-header-control-size);
+  background: #ffffff;
+  border: 1px solid rgba(53, 59, 85, 0.16);
   cursor: pointer;
   font-size: 14px;
   color: #6b7280;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 0;
+  border-radius: 10px;
+  box-sizing: border-box;
   transition: all 0.15s ease;
 }
 
 .search-toggle-btn:hover {
   background: #f3f4f6;
+  border-color: rgba(53, 59, 85, 0.28);
   color: #374151;
 }
 
@@ -1416,6 +1500,11 @@
   color: var(--text);
 }
 
+.tree-item.section,
+.tree-item.article {
+  margin-left: 8px;
+}
+
 .tree-item.article {
   color: var(--main-gray);
 }
@@ -1507,14 +1596,24 @@
   outline-color: rgba(53, 59, 85, 0.45);
 }
 
-.folder-arrow,
-.action-btn,
 .search-toggle-btn {
-  color: var(--main-gray);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--doc-left-header-control-size);
+  height: var(--doc-left-header-control-size);
+  min-width: var(--doc-left-header-control-size);
+  background: #ffffff;
+  border: 1px solid rgba(53, 59, 85, 0.16);
+  cursor: pointer;
+  font-size: 14px;
+  color: #6b7280;
+  padding: 0;
+  border-radius: 10px;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
 }
 
-.folder-arrow:hover,
-.action-btn:hover,
 .search-toggle-btn:hover {
   background: var(--hover-gray);
   color: var(--menu-bg);
@@ -1783,3 +1882,16 @@
   z-index: 3;
 }
 */
+
+/* Keep tree controls transparent; only header search button should stay white. */
+.doc-left .tree-item .folder-arrow,
+.doc-left .tree-item .action-btn {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.doc-left .tree-item .folder-arrow:hover,
+.doc-left .tree-item .action-btn:hover {
+  background: var(--hover-gray, #f3f4f6) !important;
+}

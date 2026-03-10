@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client'
 import PropTypes from 'prop-types'
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded'
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import {
   CREATE_SECTION,
   CREATE_ARTICLE,
@@ -28,13 +30,9 @@ const MIN_CENTER_PANEL_WIDTH = 360
 const DOC_TYPE = 'documentation'
 const TREE_SYNC_DEBOUNCE_MS = 1200
 const DOC_REALTIME_REFRESH_MS = 5000
-const DOC_POLLING_BACKOFF_MS = 60000
-const DOC_ERROR_LOG_THROTTLE_MS = 60000
-const DOC_CONSECUTIVE_FAILURES_BEFORE_BACKOFF = 2
 const DOC_META_KEY = '__doclist_meta'
 const DOC_META_VERSION = 1
 const DOC_SECTION_OPEN_STATE_KEY = 'doclist_section_open_state_v1'
-const DOC_NODE_FILTER_STATE_KEY = 'doclist_node_filter_state_v1'
 const DEFAULT_DOCUMENTATION_FILTER = 'dispatcher'
 const DOC_MANAGE_ROLES = new Set([
   String(roles.superAdmin || '').toUpperCase(),
@@ -179,7 +177,8 @@ function extractNodeDocumentationFilter(node) {
 
   const candidateKeys = [
     'filter',
-    '__localDocFilter',
+    '__docFilter',
+    '__doc_filter',
     'docFilter',
     'documentationFilter',
     'categoryFilter',
@@ -415,65 +414,6 @@ function loadSectionOpenState() {
   }
 }
 
-function loadNodeFilterState() {
-  if (typeof window === 'undefined') return {}
-  try {
-    const raw = window.localStorage.getItem(DOC_NODE_FILTER_STATE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    if (!isPlainObject(parsed)) return {}
-    return parsed
-  } catch {
-    return {}
-  }
-}
-
-function saveNodeFilterState(nodeFilterStateMap) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(
-      DOC_NODE_FILTER_STATE_KEY,
-      JSON.stringify(nodeFilterStateMap)
-    )
-  } catch {
-    // ignore storage errors
-  }
-}
-
-function hydrateHierarchyFilterState(nodes, filterStateMap) {
-  if (!Array.isArray(nodes)) return []
-  const safeMap = isPlainObject(filterStateMap) ? filterStateMap : {}
-
-  return nodes
-    .filter(node => isPlainObject(node))
-    .map(node => {
-      const nodeId = node.id == null ? null : String(node.id)
-      const explicitFilter = extractNodeDocumentationFilter(node)
-      const mappedFilter = nodeId
-        ? normalizeDocumentationFilter(safeMap[nodeId])
-        : null
-      const resolvedFilter = explicitFilter || mappedFilter
-
-      const nextNode = { ...node }
-      if (!explicitFilter && resolvedFilter) {
-        nextNode.__localDocFilter = resolvedFilter
-      }
-      if (nodeId && resolvedFilter) {
-        safeMap[nodeId] = resolvedFilter
-      }
-
-      if (Array.isArray(node.childrens)) {
-        nextNode.childrens = hydrateHierarchyFilterState(node.childrens, safeMap)
-      }
-
-      if (Array.isArray(node.articles)) {
-        nextNode.articles = hydrateHierarchyFilterState(node.articles, safeMap)
-      }
-
-      return nextNode
-    })
-}
-
 function saveSectionOpenState(openStateMap) {
   if (typeof window === 'undefined') return
   try {
@@ -521,7 +461,13 @@ function applySectionOpenState(nodes, openStateMap) {
   })
 }
 
-function DocumentationList1({ user, filterValue = 'dispatcher' }) {
+function DocumentationList1({
+  user,
+  filterValue = 'dispatcher',
+  showFilterSwitcher = false,
+  filterOptions = [],
+  onFilterValueChange,
+}) {
   const token = getCookie('token')
   const [tree, setTree] = useState(loadTree)
   const [activeDocId, setActiveDocId] = useState(null)
@@ -534,7 +480,6 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
   const [draftHydrationVersion, setDraftHydrationVersion] = useState(0)
   const treeRef = useRef(tree)
   const sectionOpenStateRef = useRef(loadSectionOpenState())
-  const nodeFilterStateRef = useRef(loadNodeFilterState())
   const resizeStateRef = useRef(null)
   const rootServerIdMapRef = useRef(new Map())
   const syncTimerRef = useRef(null)
@@ -544,9 +489,6 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
   const syncReadyRef = useRef(false)
   const reloadInFlightRef = useRef(false)
   const queuedManualReloadRef = useRef(false)
-  const lastErrorLogTimeRef = useRef(0)
-  const consecutiveFailuresRef = useRef(0)
-  const [pollingIntervalMs, setPollingIntervalMs] = useState(DOC_REALTIME_REFRESH_MS)
   const apolloClient = useApolloClient()
   const canManageDocs = useMemo(() => {
     const normalizedRole = String(user?.role || '').trim().toUpperCase()
@@ -631,19 +573,9 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
       // РџСЂРµРѕР±СЂР°Р·СѓРµРј РІ РјР°СЃСЃРёРІ РµСЃР»Рё СЌС‚Рѕ РЅРµ РјР°СЃСЃРёРІ
       const dataArray = Array.isArray(parsedData) ? parsedData : [parsedData]
 
-      // Left panel writes node filter bindings to localStorage during create/copy/move.
-      // Merge the latest persisted map before hydration so filtered trees (hotel/airline)
-      // do not lose freshly created nodes on the next refetch.
-      const nextNodeFilterState = {
-        ...nodeFilterStateRef.current,
-        ...loadNodeFilterState(),
-      }
-      const hydratedHierarchy = hydrateHierarchyFilterState(
-        dataArray,
-        nextNodeFilterState
-      )
-      nodeFilterStateRef.current = nextNodeFilterState
-      saveNodeFilterState(nextNodeFilterState)
+      // Source of truth for documentation filter bindings is backend fields
+      // (filter/documentationFilter/docFilter in hierarchy payload).
+      const hydratedHierarchy = dataArray
 
       // РџСЂРµРѕР±СЂР°Р·СѓРµРј РєР°Р¶РґС‹Р№ РєРѕСЂРЅРµРІРѕР№ СѓР·РµР»
       let rootItems = hydratedHierarchy
@@ -964,18 +896,8 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
             include: [GET_ARTICLE],
           })
         }
-        consecutiveFailuresRef.current = 0
-        setPollingIntervalMs(DOC_REALTIME_REFRESH_MS)
       } catch (error) {
-        consecutiveFailuresRef.current += 1
-        const now = Date.now()
-        if (now - lastErrorLogTimeRef.current >= DOC_ERROR_LOG_THROTTLE_MS) {
-          console.error('Failed to reload documentation roots', error)
-          lastErrorLogTimeRef.current = now
-        }
-        if (consecutiveFailuresRef.current >= DOC_CONSECUTIVE_FAILURES_BEFORE_BACKOFF) {
-          setPollingIntervalMs(DOC_POLLING_BACKOFF_MS)
-        }
+        console.error('Failed to reload documentation roots', error)
       } finally {
         syncReadyRef.current = true
         reloadInFlightRef.current = false
@@ -1001,12 +923,12 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     const timerId = window.setInterval(() => {
       if (canManageDocs && activeDocId) return
       refreshDocumentationTree()
-    }, pollingIntervalMs)
+    }, DOC_REALTIME_REFRESH_MS)
 
     return () => {
       window.clearInterval(timerId)
     }
-  }, [activeDocId, canManageDocs, refreshDocumentationTree, token, pollingIntervalMs])
+  }, [activeDocId, canManageDocs, refreshDocumentationTree, token])
 
   const isReloadButtonBusy = allDocsLoading || isReloadingArticles
   const shouldRenderInlineHeaderPanelControls = hasOpenedContent && !isRightPanelOpen
@@ -1079,7 +1001,19 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
       aria-label={isRightPanelOpen ? 'Close navigation' : 'Open navigation'}
       title={isRightPanelOpen ? 'Close navigation' : 'Open navigation'}
     >
-      {isRightPanelOpen ? '>' : '<'}
+      {isRightPanelOpen ? (
+        <ChevronRightRoundedIcon
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      ) : (
+        <ChevronLeftRoundedIcon
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      )}
     </button>
   )
 
@@ -1094,7 +1028,19 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
       aria-label={isLeftPanelOpen ? 'Close left panel' : 'Open left panel'}
       title={isLeftPanelOpen ? 'Close left panel' : 'Open left panel'}
     >
-      {isLeftPanelOpen ? '<' : '>'}
+      {isLeftPanelOpen ? (
+        <ChevronLeftRoundedIcon
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      ) : (
+        <ChevronRightRoundedIcon
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      )}
     </button>
   )
 
@@ -1111,6 +1057,9 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
 
   const emptyPanelTopRightControls = !hasOpenedContent && !isRightPanelOpen
     ? renderReloadArticlesButton()
+    : null
+  const emptyPanelTopLeftControls = !hasOpenedContent && !isLeftPanelOpen
+    ? renderLeftPanelToggleButton()
     : null
 
   return (
@@ -1138,6 +1087,10 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
             canManage={canManageDocs}
             activeFilter={effectiveFilter}
             activeDocId={activeDocId}
+            showDocumentationFilter={showFilterSwitcher}
+            documentationFilters={filterOptions}
+            documentationFilterValue={filterValue}
+            onDocumentationFilterChange={onFilterValueChange}
           />
         </div>
 
@@ -1156,7 +1109,7 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
           aria-valuenow={leftPanelWidth}
         />
 
-        {(!hasOpenedContent || isLeftPanelOpen) && (
+        {isLeftPanelOpen && (
           <div
             className={cn(
               classes['left-panel-toggle-zone'],
@@ -1198,6 +1151,7 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
             canEdit={canManageDocs}
             headerLeadingControls={inlineHeaderLeftControls}
             headerTrailingControls={inlineHeaderPanelControls}
+            emptyStateTopLeftControls={emptyPanelTopLeftControls}
             emptyStateTopRightControls={emptyPanelTopRightControls}
           />
         </div>
@@ -1236,4 +1190,12 @@ DocumentationList1.propTypes = {
     role: PropTypes.string,
   }),
   filterValue: PropTypes.string,
+  showFilterSwitcher: PropTypes.bool,
+  filterOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string,
+      label: PropTypes.string,
+    })
+  ),
+  onFilterValueChange: PropTypes.func,
 }

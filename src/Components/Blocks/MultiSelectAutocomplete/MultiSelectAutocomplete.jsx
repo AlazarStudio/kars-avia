@@ -1,8 +1,17 @@
 import React from "react";
 import classes from "./MultiSelectAutocomplete.module.css";
 import { Autocomplete, TextField, Checkbox } from "@mui/material";
+import { createFilterOptions } from "@mui/material/Autocomplete";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+
+const SELECT_ALL_OPTION = {
+  id: "__select_all__",
+  label: "Выбрать всё",
+  isSelectAll: true,
+};
+
+const defaultFilter = createFilterOptions();
 
 function MultiSelectAutocomplete({
   label,
@@ -14,19 +23,65 @@ function MultiSelectAutocomplete({
   isMultiple,
   listboxHeight,
   children,
+  showSelectAll = false,
   ...props
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
+  const baseOptions = options ?? [];
+  const hasObjectOptions =
+    baseOptions.length > 0 &&
+    typeof baseOptions[0] === "object" &&
+    baseOptions[0] != null &&
+    "id" in baseOptions[0];
+  const useSelectAll = showSelectAll && (isMultiple || false) && hasObjectOptions;
+
+  const filterOptions = (optionsToFilter, state) => {
+    const filterFn = props.filterOptions ?? defaultFilter;
+    const filtered = filterFn(optionsToFilter, state);
+    if (useSelectAll) {
+      return [SELECT_ALL_OPTION, ...filtered];
+    }
+    return filtered;
+  };
+
+  const handleChange = (event, newValue, reason, details) => {
+    if (details?.option?.isSelectAll) {
+      const allSelected =
+        (value?.length ?? 0) === baseOptions.length && baseOptions.length > 0;
+      onChange?.(event, allSelected ? [] : [...baseOptions], reason, details);
+      return;
+    }
+    const cleanedValue = Array.isArray(newValue)
+      ? newValue.filter((opt) => opt?.id !== SELECT_ALL_OPTION.id)
+      : newValue;
+    onChange?.(event, cleanedValue, reason, details);
+  };
+
+  const getOptionLabel = (option) => {
+    if (option?.isSelectAll) return option.label;
+    return typeof option === "string" ? option : option?.label ?? "";
+  };
+
+  const isOptionEqualToValue = (option, val) => {
+    if (option?.isSelectAll) return false;
+    if (typeof option === "string" && typeof val === "string") return option === val;
+    if (option && val && typeof option === "object" && typeof val === "object") {
+      if (option.id != null && val.id != null) return option.id === val.id;
+      if (option.value != null && val.value != null) return option.value === val.value;
+      return option.id === val.id;
+    }
+    return false;
+  };
+
   return (
     <Autocomplete
       multiple={isMultiple || false}
-      options={options ? options : []}
-      // Используем getOptionLabel для преобразования объекта в строку
-      getOptionLabel={(option) =>
-        typeof option === "string" ? option : option.label
-      }
+      options={baseOptions}
+      filterOptions={filterOptions}
+      getOptionLabel={getOptionLabel}
+      isOptionEqualToValue={isOptionEqualToValue}
       limitTags={2}
       disablePortal
       disabled={isDisabled || false}
@@ -72,7 +127,7 @@ function MultiSelectAutocomplete({
         },
       }}
       value={value}
-      onChange={onChange}
+      onChange={handleChange}
       noOptionsText="Ничего не найдено."
       renderInput={(params) => (
         <TextField
@@ -127,17 +182,26 @@ function MultiSelectAutocomplete({
       {...props}
       renderOption={
         isMultiple
-          ? (optionProps, option, { selected }) => (
-              <li {...optionProps} key={option.id}>
-                <Checkbox
-                  icon={icon}
-                  checkedIcon={checkedIcon}
-                  style={{ marginRight: 8 }}
-                  checked={selected}
-                />
-                {option.label}
-              </li>
-            )
+          ? (optionProps, option, { selected }) => {
+              const isSelectAllOption = option?.isSelectAll;
+              const checked = isSelectAllOption
+                ? (value?.length ?? 0) === baseOptions.length &&
+                  baseOptions.length > 0
+                : selected;
+              const label =
+                typeof option === "string" ? option : option?.label ?? "";
+              return (
+                <li {...optionProps} key={option?.id ?? option?.label ?? label}>
+                  <Checkbox
+                    icon={icon}
+                    checkedIcon={checkedIcon}
+                    style={{ marginRight: 8 }}
+                    checked={checked}
+                  />
+                  {label}
+                </li>
+              );
+            }
           : undefined
       }
     />

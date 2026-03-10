@@ -5,6 +5,7 @@ import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded'
 import PauseRoundedIcon from '@mui/icons-material/PauseRounded'
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded'
 import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded'
+import VolumeOffRoundedIcon from '@mui/icons-material/VolumeOffRounded'
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded'
 import './audioBlock.css'
 import './imageBlockModal.css'
@@ -12,9 +13,27 @@ import './fileEmpty.css'
 import './blockResize.css'
 import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
-const AUDIO_MIN_WIDTH = 200
+const AUDIO_MIN_WIDTH = 280
+const AUDIO_MODAL_ESTIMATED_SIZE = { width: 360, height: 260 }
+
+const formatAudioTime = (seconds, { forceHours = false } = {}) => {
+  const safeSeconds = Number.isFinite(Number(seconds)) && Number(seconds) > 0
+    ? Math.floor(Number(seconds))
+    : 0
+
+  const hours = Math.floor(safeSeconds / 3600)
+  const minutes = Math.floor((safeSeconds % 3600) / 60)
+  const secs = safeSeconds % 60
+
+  if (forceHours || hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+  }
+
+  return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+}
 
 const IconPlay = ({ className }) => (
   <>
@@ -84,6 +103,10 @@ const IconVolume = ({ className }) => (
   </>
 )
 
+const IconVolumeOff = ({ className }) => (
+  <VolumeOffRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+)
+
 const IconMore = ({ className }) => (
   <>
     {/* Legacy SVG icon:
@@ -114,6 +137,8 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
         : { marginLeft: 0, marginRight: 'auto' }
 
   const audioRef = useRef(null)
+  const progressTrackRef = useRef(null)
+  const seekDragRef = useRef({ active: false, wasPlaying: false })
   const idRef = useRef(Math.random().toString(36).slice(2))
   const modalRef = useRef(null)
   const modalSourceRef = useRef(`audio-block-${Math.random().toString(36).slice(2)}`)
@@ -129,7 +154,6 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [current, setCurrent] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [showVolume, setShowVolume] = useState(false)
   const [url, setUrl] = useState('')
   const [tab, setTab] = useState('upload')
   const [objectUrl, setObjectUrl] = useState(null)
@@ -137,6 +161,14 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   const displayUrl = objectUrl || (src && getMediaUrl ? getMediaUrl(src) : src)
   const hasAudio = Boolean(audioUrl)
   const migrationRef = useRef({ running: false, doneFor: null })
+  const lastVolumeBeforeMuteRef = useRef(
+    Number.isFinite(Number(volume)) && Number(volume) > 0 ? Number(volume) : 1
+  )
+  const normalizedVolume = Math.min(1, Math.max(0, Number(volume) || 0))
+  const isEffectivelyMuted = normalizedVolume <= 0.001
+  const showDurationHours = duration >= 3600
+  const currentTimeLabel = formatAudioTime(current, { forceHours: current >= 3600 })
+  const durationLabel = formatAudioTime(duration, { forceHours: showDurationHours })
 
   const announceModalOpen = () => {
     try {
@@ -167,9 +199,16 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
 
   useEffect(() => {
     if (!audioRef.current) return
-    audioRef.current.volume = volume
+    audioRef.current.volume = normalizedVolume
     audioRef.current.loop = loop
-  }, [volume, loop])
+    audioRef.current.muted = normalizedVolume <= 0.001
+  }, [normalizedVolume, loop])
+
+  useEffect(() => {
+    if (normalizedVolume > 0.001) {
+      lastVolumeBeforeMuteRef.current = normalizedVolume
+    }
+  }, [normalizedVolume])
 
   /* ================= RESOLVE LOCAL FILE ================= */
 
@@ -246,10 +285,14 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
     if (!canEdit) return
     e.stopPropagation()
     // Позиция рядом с курсором мыши
-    setModalPos({
-      x: e.clientX + 10,
-      y: e.clientY - 10,
-    })
+    const rect = modalRef.current?.getBoundingClientRect?.()
+    setModalPos(
+      clampFixedModalPosition(
+        { x: e.clientX + 10, y: e.clientY - 10 },
+        rect || AUDIO_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
     announceModalOpen()
     setOpen(true)
   }
@@ -279,6 +322,27 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
     return () => document.removeEventListener('mousedown', close)
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+
+    const clampModalToViewport = () => {
+      const rect = modalRef.current?.getBoundingClientRect?.()
+      if (!rect) return
+      setModalPos(prev => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN)
+        if (next.x === prev.x && next.y === prev.y) return prev
+        return next
+      })
+    }
+
+    const rafId = window.requestAnimationFrame(clampModalToViewport)
+    window.addEventListener('resize', clampModalToViewport)
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', clampModalToViewport)
+    }
+  }, [open])
+
   /* ================= DRAG MODAL ================= */
 
   const startDragModal = e => {
@@ -293,10 +357,17 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   }
 
   const onDragModal = e => {
-    setModalPos({
-      x: e.clientX - dragOffset.current.x,
-      y: e.clientY - dragOffset.current.y,
-    })
+    const rect = modalRef.current?.getBoundingClientRect?.()
+    setModalPos(
+      clampFixedModalPosition(
+        {
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y,
+        },
+        rect || AUDIO_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
   }
 
   const stopDragModal = () => {
@@ -322,6 +393,7 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   }
 
   const onTime = () => {
+    if (seekDragRef.current.active) return
     setCurrent(audioRef.current.currentTime)
   }
 
@@ -329,18 +401,99 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
     setDuration(audioRef.current.duration || 0)
   }
 
-  const seek = e => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const percent = (e.clientX - rect.left) / rect.width
-    audioRef.current.currentTime = percent * duration
+  const applySeekFromClientX = clientX => {
+    const audioEl = audioRef.current
+    const trackEl = progressTrackRef.current
+    if (!audioEl || !trackEl) return
+
+    const activeDuration =
+      Number.isFinite(duration) && duration > 0 ? duration : Number(audioEl.duration || 0)
+    if (!Number.isFinite(activeDuration) || activeDuration <= 0) return
+
+    const rect = trackEl.getBoundingClientRect()
+    if (!rect.width) return
+
+    const percent = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
+    const nextTime = percent * activeDuration
+
+    if (typeof audioEl.fastSeek === 'function') {
+      audioEl.fastSeek(nextTime)
+    } else {
+      audioEl.currentTime = nextTime
+    }
+
+    setCurrent(nextTime)
   }
 
-  const format = s =>
-    `${Math.floor(s / 60)
-      .toString()
-      .padStart(2, '0')}:${Math.floor(s % 60)
-      .toString()
-      .padStart(2, '0')}`
+  const onSeekMouseMove = e => {
+    if (!seekDragRef.current.active) return
+    applySeekFromClientX(e.clientX)
+  }
+
+  const stopSeekDrag = () => {
+    if (!seekDragRef.current.active) return
+    seekDragRef.current.active = false
+    seekDragRef.current.wasPlaying = false
+    document.removeEventListener('mousemove', onSeekMouseMove)
+    document.removeEventListener('mouseup', stopSeekDrag)
+  }
+
+  const startSeekDrag = e => {
+    if (e.button !== 0) return
+    if (!audioRef.current) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    const audioEl = audioRef.current
+    seekDragRef.current.active = true
+    seekDragRef.current.wasPlaying = !audioEl.paused || isPlaying
+
+    applySeekFromClientX(e.clientX)
+
+    if (seekDragRef.current.wasPlaying) {
+      const playPromise = audioEl.play?.()
+      if (playPromise && typeof playPromise.catch === 'function') {
+        playPromise.catch(() => {})
+      }
+      setIsPlaying(true)
+    }
+
+    document.addEventListener('mousemove', onSeekMouseMove)
+    document.addEventListener('mouseup', stopSeekDrag)
+  }
+
+  useEffect(
+    () => () => {
+      document.removeEventListener('mousemove', onSeekMouseMove)
+      document.removeEventListener('mouseup', stopSeekDrag)
+    },
+    []
+  )
+
+  const handleToggleMute = () => {
+    if (!canEdit) return
+
+    if (isEffectivelyMuted) {
+      const restored = Math.min(1, Math.max(0.05, lastVolumeBeforeMuteRef.current || 1))
+      updateAttributes({ volume: Number(restored.toFixed(2)) })
+      return
+    }
+
+    if (normalizedVolume > 0.001) {
+      lastVolumeBeforeMuteRef.current = normalizedVolume
+    }
+    updateAttributes({ volume: 0 })
+  }
+
+  const handleVolumeChange = e => {
+    if (!canEdit) return
+
+    const nextVolume = Math.min(1, Math.max(0, Number(e.target.value) || 0))
+    if (nextVolume > 0.001) {
+      lastVolumeBeforeMuteRef.current = nextVolume
+    }
+    updateAttributes({ volume: Number(nextVolume.toFixed(2)) })
+  }
 
   /* ================= RESIZE ================= */
 
@@ -418,8 +571,11 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
           <audio
             ref={audioRef}
             src={displayUrl}
+            preload="auto"
             onTimeUpdate={onTime}
             onLoadedMetadata={onLoaded}
+            onSeeking={onTime}
+            onSeeked={onTime}
             onEnded={() => setIsPlaying(false)}
           />
 
@@ -436,11 +592,15 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
             <IconLoop className="audio-btn-icon" />
           </button>
 
-          <span className="audio-time">
-            {format(current)} / {format(duration)}
+          <span className="audio-timecode" title="Текущее время / Длительность">
+            {`${currentTimeLabel} / ${durationLabel}`}
           </span>
 
-          <div className="audio-progress" onClick={seek}>
+          <div
+            ref={progressTrackRef}
+            className="audio-progress"
+            onMouseDown={startSeekDrag}
+          >
             <div
               className="audio-progress-fill"
               style={{
@@ -451,30 +611,34 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
             />
           </div>
 
-          <div
-            className="audio-volume"
-            onMouseEnter={() => setShowVolume(true)}
-            onMouseLeave={() => setShowVolume(false)}
-          >
-            <button className="audio-volume-btn" title="Громкость">
-              <IconVolume className="audio-btn-icon" />
+          <div className="audio-volume-inline">
+            <button
+              className={`audio-volume-btn ${isEffectivelyMuted ? 'active' : ''}`}
+              onClick={handleToggleMute}
+              disabled={!canEdit}
+              title={isEffectivelyMuted ? 'Включить звук' : 'Выключить звук'}
+            >
+              {isEffectivelyMuted
+                ? <IconVolumeOff className="audio-btn-icon" />
+                : <IconVolume className="audio-btn-icon" />}
             </button>
-            {showVolume && (
-              <div className="audio-volume-slider">
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={volume}
-                  onChange={canEdit ? e => updateAttributes({ volume: +e.target.value }) : undefined}
-                  disabled={!canEdit}
-                />
-                <div className="audio-volume-value">
-                  {Math.round(volume * 100)}%
-                </div>
-              </div>
-            )}
+
+            <input
+              className="audio-volume-range"
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              value={normalizedVolume}
+              onChange={handleVolumeChange}
+              disabled={!canEdit}
+              title="Громкость"
+              aria-label="Громкость"
+            />
+
+            <span className="audio-volume-value">
+              {Math.round(normalizedVolume * 100)}%
+            </span>
           </div>
           
           {/* Кнопка для открытия меню */}

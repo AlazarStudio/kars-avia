@@ -6,6 +6,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import classes from "./RepresentativeHotelDetail.module.css";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import EditIcon from "../../../shared/icons/EditIcon";
 import Button from "../../Standart/Button/Button";
 import AddRepresentativeBooking from "../AddRepresentativeBooking/AddRepresentativeBooking";
@@ -144,6 +145,16 @@ export default function RepresentativeHotelDetail({
         .map((h, idx) => ({ hotel: h, originalIndex: idx }))
         .filter(({ originalIndex }) => originalIndex !== hotelIndex),
     [request?.livingService?.hotels, hotelIndex]
+  );
+
+  const hotelAutocompleteOptions = useMemo(
+    () =>
+      otherHotelsWithIndex.map(({ hotel, originalIndex }) => ({
+        label: hotel?.name ?? "—",
+        originalIndex,
+        hotel,
+      })),
+    [otherHotelsWithIndex]
   );
 
   const toggleSelectedIndex = (index) => {
@@ -303,13 +314,20 @@ export default function RepresentativeHotelDetail({
             Выбрано броней: {selectedPersonIndices.length} —
           </span>
           <Button
-            onClick={() =>
+            onClick={() => {
+              if (otherHotelsWithIndex.length === 0) {
+                addNotification?.(
+                  "Переселение недоступно: в заявке только одна гостиница. Добавьте ещё одну гостиницу, чтобы переселять пассажиров.",
+                  "warning"
+                );
+                return;
+              }
               setRelocateModal({
                 personIndices: [...selectedPersonIndices],
                 toHotelIndex: otherHotelsWithIndex[0]?.originalIndex,
-              })
-            }
-            disabled={relocating || otherHotelsWithIndex.length === 0}
+              });
+            }}
+            disabled={relocating}
           >
             Переселить
           </Button>
@@ -393,31 +411,26 @@ export default function RepresentativeHotelDetail({
           </DialogTitle>
           <DialogContent>
             <p style={{ marginBottom: 8 }}>Выберите отель и укажите причину:</p>
-            <select
-              className={classes.relocateSelect}
-              value={relocateModal.toHotelIndex ?? ""}
-              onChange={(e) =>
+            <MUIAutocompleteColor
+              label="Отель"
+              options={hotelAutocompleteOptions}
+              value={hotelAutocompleteOptions.find((o) => o.originalIndex === relocateModal.toHotelIndex) ?? null}
+              onChange={(e, newValue) =>
                 setRelocateModal((prev) => ({
                   ...prev,
-                  toHotelIndex: Number(e.target.value),
+                  toHotelIndex: newValue?.originalIndex,
                 }))
               }
-            >
-              <option value="">— Отель —</option>
-              {otherHotelsWithIndex.map(({ hotel, originalIndex }) => (
-                <option key={originalIndex} value={originalIndex}>
-                  {hotel.name ?? "—"}
-                </option>
-              ))}
-            </select>
-            <MUITextField
-              label="Причина"
+              getOptionLabel={(option) => (option?.label != null ? option.label : "—")}
+              dropdownWidth="100%"
+              style={{ marginBottom: 12 }}
+            />
+            <textarea
+              className={classes.reasonTextarea}
+              placeholder="Причина"
               value={relocateReason}
               onChange={(e) => setRelocateReason(e.target.value)}
-              multiline
-              minRows={2}
-              fullWidth
-              style={{ marginTop: 12 }}
+              rows={3}
             />
           </DialogContent>
           <DialogActions>
@@ -450,13 +463,12 @@ export default function RepresentativeHotelDetail({
           </DialogTitle>
           <DialogContent>
             <p style={{ marginBottom: 8 }}>Укажите причину выселения (обязательно):</p>
-            <MUITextField
-              label="Причина"
+            <textarea
+              className={classes.reasonTextarea}
+              placeholder="Причина"
               value={evictReason}
               onChange={(e) => setEvictReason(e.target.value)}
-              multiline
-              minRows={2}
-              fullWidth
+              rows={3}
             />
           </DialogContent>
           <DialogActions>

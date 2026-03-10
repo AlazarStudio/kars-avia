@@ -13,6 +13,7 @@ import {
 } from '../../../../../../graphQL_requests'
 import { useLazyQuery } from '@apollo/client'
 import './DocumentationListLeftPanel.css'
+import MUIAutocomplete from '../../../MUIAutocomplete/MUIAutocomplete'
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -39,8 +40,29 @@ const DELETE_MODAL_ESTIMATED_WIDTH = 340
 const DELETE_MODAL_ESTIMATED_HEIGHT = 210
 const COPY_TITLE_SUFFIX = ' (\u043a\u043e\u043f\u0438\u044f)'
 const DEFAULT_DOCUMENTATION_FILTER = 'dispatcher'
-const DOC_NODE_FILTER_STATE_KEY = 'doclist_node_filter_state_v1'
 const DOC_FILTER_INPUT_FIELD_CANDIDATES = ['filter', 'documentationFilter', 'docFilter']
+const DOC_FILTER_DESCRIPTION_META_KEY = '__docFilter'
+
+function buildDescriptionWithFilterMeta(rawDescription, rawFilter) {
+  const normalizedFilter =
+    normalizeDocumentationFilter(rawFilter) || DEFAULT_DOCUMENTATION_FILTER
+
+  let parsed = null
+  if (typeof rawDescription === 'string' && rawDescription.trim()) {
+    try {
+      const maybeJson = JSON.parse(rawDescription)
+      if (maybeJson && typeof maybeJson === 'object' && !Array.isArray(maybeJson)) {
+        parsed = maybeJson
+      }
+    } catch {
+      parsed = null
+    }
+  }
+
+  const nextMeta = parsed && typeof parsed === 'object' ? { ...parsed } : {}
+  nextMeta[DOC_FILTER_DESCRIPTION_META_KEY] = normalizedFilter
+  return JSON.stringify(nextMeta)
+}
 
 function normalizeDocumentationFilter(rawValue) {
   if (rawValue == null) return null
@@ -95,28 +117,6 @@ function isUnsupportedInputFieldError(error, fieldName) {
       message.includes('validation') ||
       message.includes('does not exist'))
   )
-}
-
-function loadNodeFilterState() {
-  if (typeof window === 'undefined') return {}
-  try {
-    const raw = window.localStorage.getItem(DOC_NODE_FILTER_STATE_KEY)
-    if (!raw) return {}
-    const parsed = JSON.parse(raw)
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
-    return parsed
-  } catch {
-    return {}
-  }
-}
-
-function saveNodeFilterState(nextMap) {
-  if (typeof window === 'undefined') return
-  try {
-    window.localStorage.setItem(DOC_NODE_FILTER_STATE_KEY, JSON.stringify(nextMap))
-  } catch {
-    // ignore storage errors
-  }
 }
 
 function getDeleteModalStartPosition() {
@@ -199,6 +199,10 @@ function DocumentationListLeftPanel({
   canManage = false,
   activeFilter = DEFAULT_DOCUMENTATION_FILTER,
   activeDocId = null,
+  showDocumentationFilter = false,
+  documentationFilters = [],
+  documentationFilterValue = DEFAULT_DOCUMENTATION_FILTER,
+  onDocumentationFilterChange,
 }) {
   const [creating, setCreating] = useState(null)
   const [hovered, setHovered] = useState(false)
@@ -234,6 +238,15 @@ function DocumentationListLeftPanel({
   const [showSaveIndicator, setShowSaveIndicator] = useState(false)
   const normalizedDocFilter =
     normalizeDocumentationFilter(activeFilter) || DEFAULT_DOCUMENTATION_FILTER
+  const availableDocumentationFilters = Array.isArray(documentationFilters)
+    ? documentationFilters.filter(
+        option => option && typeof option.value === 'string' && typeof option.label === 'string'
+      )
+    : []
+  const currentDocumentationFilterLabel =
+    availableDocumentationFilters.find(option => option.value === documentationFilterValue)?.label ||
+    availableDocumentationFilters[0]?.label ||
+    ''
   const saveIndicatorTimerRef = useRef(null)
 
   // GraphQL РјСѓС‚Р°С†РёРё
@@ -276,6 +289,24 @@ function DocumentationListLeftPanel({
         }
       }
 
+      try {
+        return await createSectionMutation({
+          variables: {
+            input: {
+              ...safeInput,
+              description: buildDescriptionWithFilterMeta(
+                safeInput.description,
+                normalizedDocFilter
+              ),
+            },
+          },
+        })
+      } catch (error) {
+        if (!isUnsupportedInputFieldError(error, 'description')) {
+          throw error
+        }
+      }
+
       return createSectionMutation({
         variables: { input: safeInput },
       })
@@ -297,6 +328,24 @@ function DocumentationListLeftPanel({
           if (!isUnsupportedInputFieldError(error, fieldName)) {
             throw error
           }
+        }
+      }
+
+      try {
+        return await createArticleMutation({
+          variables: {
+            input: {
+              ...safeInput,
+              description: buildDescriptionWithFilterMeta(
+                safeInput.description,
+                normalizedDocFilter
+              ),
+            },
+          },
+        })
+      } catch (error) {
+        if (!isUnsupportedInputFieldError(error, 'description')) {
+          throw error
         }
       }
 
@@ -325,6 +374,25 @@ function DocumentationListLeftPanel({
         }
       }
 
+      try {
+        return await updateSectionMutation({
+          variables: {
+            id,
+            input: {
+              ...safeInput,
+              description: buildDescriptionWithFilterMeta(
+                safeInput.description,
+                normalizedDocFilter
+              ),
+            },
+          },
+        })
+      } catch (error) {
+        if (!isUnsupportedInputFieldError(error, 'description')) {
+          throw error
+        }
+      }
+
       return updateSectionMutation({
         variables: { id, input: safeInput },
       })
@@ -350,6 +418,25 @@ function DocumentationListLeftPanel({
         }
       }
 
+      try {
+        return await updateArticleMutation({
+          variables: {
+            id,
+            input: {
+              ...safeInput,
+              description: buildDescriptionWithFilterMeta(
+                safeInput.description,
+                normalizedDocFilter
+              ),
+            },
+          },
+        })
+      } catch (error) {
+        if (!isUnsupportedInputFieldError(error, 'description')) {
+          throw error
+        }
+      }
+
       return updateArticleMutation({
         variables: { id, input: safeInput },
       })
@@ -358,48 +445,16 @@ function DocumentationListLeftPanel({
   )
 
   const persistNodeFilterById = useCallback(
-    (nodeId, filter = normalizedDocFilter) => {
-      if (nodeId == null) return
-      const normalizedFilter =
-        normalizeDocumentationFilter(filter) || DEFAULT_DOCUMENTATION_FILTER
-      const key = String(nodeId)
-      const current = loadNodeFilterState()
-      current[key] = normalizedFilter
-      saveNodeFilterState(current)
-    },
+    (_nodeId, _filter = normalizedDocFilter) => {},
     [normalizedDocFilter]
   )
 
   const persistNodeFilterIds = useCallback(
-    (nodeIds, filter = normalizedDocFilter) => {
-      if (!Array.isArray(nodeIds) || !nodeIds.length) return
-      const normalizedFilter =
-        normalizeDocumentationFilter(filter) || DEFAULT_DOCUMENTATION_FILTER
-      const current = loadNodeFilterState()
-      for (const rawId of nodeIds) {
-        if (rawId == null) continue
-        current[String(rawId)] = normalizedFilter
-      }
-      saveNodeFilterState(current)
-    },
+    (_nodeIds, _filter = normalizedDocFilter) => {},
     [normalizedDocFilter]
   )
 
-  const removeNodeFilterIds = useCallback((nodeIds) => {
-    if (!Array.isArray(nodeIds) || !nodeIds.length) return
-    const current = loadNodeFilterState()
-    let changed = false
-    for (const rawId of nodeIds) {
-      if (rawId == null) continue
-      const key = String(rawId)
-      if (!Object.prototype.hasOwnProperty.call(current, key)) continue
-      delete current[key]
-      changed = true
-    }
-    if (changed) {
-      saveNodeFilterState(current)
-    }
-  }, [])
+  const removeNodeFilterIds = useCallback((_nodeIds) => {}, [])
 
   const markSaveSuccess = useCallback(() => {
     setShowSaveIndicator(true)
@@ -2111,6 +2166,26 @@ function DocumentationListLeftPanel({
                 title={'\u0421\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043e'}
                 aria-label={'\u0421\u043e\u0445\u0440\u0430\u043d\u0435\u043d\u043e'}
               />
+            )}
+            {showDocumentationFilter && availableDocumentationFilters.length > 0 && (
+              <div className="doc-filter-switcher">
+                <MUIAutocomplete
+                  dropdownWidth={'136px'}
+                  label={''}
+                  hideLabelOnFocus={true}
+                  disableClearable={true}
+                  options={availableDocumentationFilters.map(option => option.label)}
+                  value={currentDocumentationFilterLabel}
+                  onChange={(event, newLabel) => {
+                    const found =
+                      availableDocumentationFilters.find(option => option.label === newLabel) ||
+                      availableDocumentationFilters[0]
+                    if (found?.value && typeof onDocumentationFilterChange === 'function') {
+                      onDocumentationFilterChange(found.value)
+                    }
+                  }}
+                />
+              </div>
             )}
             <button
               className="search-toggle-btn"

@@ -2,6 +2,9 @@
 import { useQuery } from '@apollo/client'
 import { EditorContent, useEditor } from '@tiptap/react'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded'
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import { editorExtensions } from './src/editorExtensions'
 import { DocumentationUploadProvider } from './src/DocumentationUploadContext'
 import Toolbar from './src/components/Toolbar'
@@ -41,6 +44,7 @@ const DEFAULT_ARTICLE_WIDTH_PRESET = 'level4'
 const DEFAULT_ARTICLE_MANUAL_WIDTH = 1080
 const DEFAULT_ARTICLE_PADDING_MODE = 'shared'
 const EDITOR_CONTROLS_GUTTER_PX = 72
+const GUTTER_TOGGLE_ANIMATION_MS = 160
 
 const MIN_ARTICLE_CONTENT_SIZE = 120
 const MAX_ARTICLE_PADDING = 260
@@ -824,10 +828,13 @@ export default function DocumentListTiptapPanelContent({
   canEdit = false,
   headerLeadingControls = null,
   headerTrailingControls = null,
+  emptyStateTopLeftControls = null,
   emptyStateTopRightControls = null,
 }) {
   const [viewer, setViewer] = useState(null)
   const [isAnchorModeEnabled, setIsAnchorModeEnabled] = useState(false)
+  const [isAltBlockSelectionMode, setIsAltBlockSelectionMode] = useState(false)
+  const [altSelectionModeResetTick, setAltSelectionModeResetTick] = useState(0)
   const [articleWidthMode, setArticleWidthMode] = useState(DEFAULT_ARTICLE_WIDTH_MODE)
   const [articleWidthPreset, setArticleWidthPreset] = useState(DEFAULT_ARTICLE_WIDTH_PRESET)
   const [articleManualWidth, setArticleManualWidth] = useState(DEFAULT_ARTICLE_MANUAL_WIDTH)
@@ -840,6 +847,7 @@ export default function DocumentListTiptapPanelContent({
   const [isEditorControlsGutterExpanded, setIsEditorControlsGutterExpanded] = useState(
     () => Boolean(canEdit)
   )
+  const [isGutterToggleAnimating, setIsGutterToggleAnimating] = useState(false)
 
   const token = getCookie('token')
   const requestContext = useMemo(
@@ -862,6 +870,7 @@ export default function DocumentListTiptapPanelContent({
   const skipLayoutSaveRef = useRef(true)
   const autosaveTimerRef = useRef(null)
   const layoutSaveTimerRef = useRef(null)
+  const gutterToggleAnimationTimerRef = useRef(null)
   const hydrationKeyRef = useRef('')
   const editorHoverScopeRef = useRef(null)
   const headerRef = useRef(null)
@@ -959,6 +968,11 @@ export default function DocumentListTiptapPanelContent({
     }
   }, [setActiveDocId])
 
+  const handleDisableAltSelectionMode = useCallback(() => {
+    setAltSelectionModeResetTick(prev => prev + 1)
+    setIsAltBlockSelectionMode(false)
+  }, [])
+
   const handleManualSave = useCallback(async () => {
     if (!canEdit || !activeDocId || !editor || isManualSaving) return
 
@@ -1026,6 +1040,9 @@ export default function DocumentListTiptapPanelContent({
       }
       if (layoutSaveTimerRef.current) {
         clearTimeout(layoutSaveTimerRef.current)
+      }
+      if (gutterToggleAnimationTimerRef.current) {
+        clearTimeout(gutterToggleAnimationTimerRef.current)
       }
     }
   }, [])
@@ -1325,6 +1342,11 @@ export default function DocumentListTiptapPanelContent({
   if (!activeDocId) {
     return (
       <div className="tiptap-panel tiptap-panel-empty">
+        {emptyStateTopLeftControls ? (
+          <div className="tiptap-panel-empty-top-left">
+            {emptyStateTopLeftControls}
+          </div>
+        ) : null}
         {emptyStateTopRightControls ? (
           <div className="tiptap-panel-empty-top-right">
             {emptyStateTopRightControls}
@@ -1346,7 +1368,12 @@ export default function DocumentListTiptapPanelContent({
         <div className="tiptap-panel-header" ref={headerRef}>
         {headerLeadingControls}
         <button className="tiptap-panel-back-btn" onClick={handleBack}>
-          ← Назад
+          <ArrowBackRoundedIcon
+            aria-hidden="true"
+            fontSize="inherit"
+            style={{ width: 16, height: 16, fontSize: 16 }}
+          />
+          <span>Назад</span>
         </button>
         <div className="tiptap-panel-title">{docTitle || 'Без названия'}</div>
         {(canEdit || headerTrailingControls) && (
@@ -1424,7 +1451,9 @@ export default function DocumentListTiptapPanelContent({
         <Toolbar
           editor={editor}
           anchorModeEnabled={isAnchorModeEnabled}
+          altSelectionModeActive={isAltBlockSelectionMode}
           onToggleAnchorMode={() => setIsAnchorModeEnabled(prev => !prev)}
+          onDisableAltSelectionMode={handleDisableAltSelectionMode}
           articleWidthMode={articleWidthMode}
           articleWidthPreset={articleWidthPreset}
           articleManualWidth={articleManualWidth}
@@ -1455,6 +1484,14 @@ export default function DocumentListTiptapPanelContent({
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
+              if (gutterToggleAnimationTimerRef.current) {
+                clearTimeout(gutterToggleAnimationTimerRef.current)
+              }
+              setIsGutterToggleAnimating(true)
+              gutterToggleAnimationTimerRef.current = setTimeout(() => {
+                setIsGutterToggleAnimating(false)
+                gutterToggleAnimationTimerRef.current = null
+              }, GUTTER_TOGGLE_ANIMATION_MS)
               setIsEditorControlsGutterExpanded(prev => !prev)
             }}
             aria-label={
@@ -1469,20 +1506,38 @@ export default function DocumentListTiptapPanelContent({
                 : 'Показать кнопки + и ⋮⋮'
             }
           >
-            {shouldShowEditorSideControls ? '<' : '>'}
+            {shouldShowEditorSideControls ? (
+              <ChevronLeftRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            ) : (
+              <ChevronRightRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            )}
           </button>
         </div>
       )}
       </div>
 
       <div
-        className={`editor-hover-scope ${shouldShowEditorSideControls ? 'editor-controls-gutter-open' : 'editor-controls-gutter-collapsed'}`}
+        className={`editor-hover-scope ${shouldShowEditorSideControls ? 'editor-controls-gutter-open' : 'editor-controls-gutter-collapsed'} ${isGutterToggleAnimating ? 'editor-controls-toggle-animating' : ''}`.trim()}
         style={editorScopeStyle}
         ref={editorHoverScopeRef}
       >
         {canEdit && <PlusButtonOverlay editor={editor} />}
         {canEdit && <BlockDragOverlay editor={editor} />}
-        {canEdit && <BlockSelectionOverlay editor={editor} />}
+        {canEdit && (
+          <BlockSelectionOverlay
+            editor={editor}
+            onAltModeChange={setIsAltBlockSelectionMode}
+            altModeResetTick={altSelectionModeResetTick}
+          />
+        )}
         <AnchorHashOverlay
           editor={editor}
           enabled={canEdit && isAnchorModeEnabled}

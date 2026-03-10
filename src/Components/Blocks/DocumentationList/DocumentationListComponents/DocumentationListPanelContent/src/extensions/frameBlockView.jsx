@@ -293,22 +293,26 @@ export default function FrameBlockView({ editor, node, updateAttributes }) {
     const startRect = wrapperEl?.getBoundingClientRect?.()
     const startWidth = width
     const startHeight = typeof height === 'number' ? height : Math.round(startRect?.height || 80)
+    const isLeft = side.includes('left')
+    const isRight = side.includes('right')
+    const isTop = side.includes('top')
+    const isBottom = side.includes('bottom')
 
     const move = ev => {
       let deltaX = 0
       let deltaY = 0
 
-      if (side === 'right') deltaX = ev.clientX - startX
-      if (side === 'left') deltaX = startX - ev.clientX
-      if (side === 'bottom') deltaY = ev.clientY - startY
-      if (side === 'top') deltaY = startY - ev.clientY
+      if (isRight) deltaX = ev.clientX - startX
+      if (isLeft) deltaX = startX - ev.clientX
+      if (isBottom) deltaY = ev.clientY - startY
+      if (isTop) deltaY = startY - ev.clientY
 
       const nextWidth = clamp(startWidth + deltaX, 280, maxWidth)
       const nextHeight = clamp(startHeight + deltaY, 60, 900)
 
       const nextAttrs = {}
-      if (side === 'left' || side === 'right') nextAttrs.width = Math.round(nextWidth)
-      if (side === 'top' || side === 'bottom') nextAttrs.height = Math.round(nextHeight)
+      if (isLeft || isRight) nextAttrs.width = Math.round(nextWidth)
+      if (isTop || isBottom) nextAttrs.height = Math.round(nextHeight)
       updateAttributes(nextAttrs)
     }
 
@@ -342,6 +346,10 @@ export default function FrameBlockView({ editor, node, updateAttributes }) {
           <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
           <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
           <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+          <div className="block-resize corner top-left" contentEditable={false} onMouseDown={e => startResize(e, 'top-left')} />
+          <div className="block-resize corner top-right" contentEditable={false} onMouseDown={e => startResize(e, 'top-right')} />
+          <div className="block-resize corner bottom-left" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-left')} />
+          <div className="block-resize corner bottom-right" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-right')} />
         </>
       )}
 

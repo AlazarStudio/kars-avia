@@ -1,0 +1,102 @@
+.tarifsWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  height: calc(100vh - 292px);
+  overflow-y: auto;
+}
+
+.contractsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.contractRow {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+}
+
+.contractRowHeader {
+  font-family: Nunito Sans, sans-serif;
+  font-size: 18px;
+  line-height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.contractRowHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.expandButton.expanded {
+  transform: rotate(90deg);
+}
+
+.contractRowActions {
+  display: flex;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.pricesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.priceItem {
+  flex-basis: 18%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--hover-gray);
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: all ease-in-out 0.3s;
+}
+
+.priceItemLabel {
+  font-size: 14px;
+}
+
+.priceItemValue {
+  font-size: 14px;
+  color: #666666;
+  margin-top: 4px;
+}
+
+.airportList {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #444;
+}
+
+.airportListTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 14px;
+  color: #444;
+}
+
+.airportItem {
+  margin-left: 16px;
+}

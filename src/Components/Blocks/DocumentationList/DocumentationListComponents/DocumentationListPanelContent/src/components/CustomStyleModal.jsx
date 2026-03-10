@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { AddIcon } from './icons'
 
 export default function CustomStyleModal({
   onClose,
@@ -20,7 +19,7 @@ export default function CustomStyleModal({
   const [bold, setBold] = useState(false)
   const [italic, setItalic] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  
+
   // Инициализация формы при открытии
   useEffect(() => {
     if (editingStyle) {
@@ -43,48 +42,51 @@ export default function CustomStyleModal({
       setItalic(false)
     }
   }, [editingStyle])
-  
+
   // Проверяем, является ли стиль стандартным
   const isStandardStyle = () => {
     if (!editingStyle || !standardStyles) return false
     return standardStyles.some(style => style.id === editingStyle.id)
   }
-  
+
   const handleSave = (e) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     if (!name.trim()) {
       alert('Введите название стиля')
       return
     }
-    
+
+    let createdStyleId = null
+
     if (isEditing) {
       if (isStandardStyle()) {
         // Для стандартного стиля создаем новый кастомный
         const newStyle = {
           id: `custom_${Date.now()}`,
           name: name.trim(),
-          color: color,
-          bgColor: bgColor,
-          underline: underline,
-          underlineStyle: underlineStyle,
-          bold: bold,
-          italic: italic,
-          icon: 'custom'
+          color,
+          bgColor,
+          underline,
+          underlineStyle,
+          bold,
+          italic,
+          icon: 'custom',
         }
         onCreateCustomStyle(newStyle)
+        createdStyleId = newStyle.id
       } else {
         // Для существующего кастомного стиля обновляем
         const updatedStyle = {
           ...editingStyle,
           name: name.trim(),
-          color: color,
-          bgColor: bgColor,
-          underline: underline,
-          underlineStyle: underlineStyle,
-          bold: bold,
-          italic: italic,
+          color,
+          bgColor,
+          underline,
+          underlineStyle,
+          bold,
+          italic,
         }
         onUpdateCustomStyle(updatedStyle)
       }
@@ -93,27 +95,37 @@ export default function CustomStyleModal({
       const newStyle = {
         id: `custom_${Date.now()}`,
         name: name.trim(),
-        color: color,
-        bgColor: bgColor,
-        underline: underline,
-        underlineStyle: underlineStyle,
-        bold: bold,
-        italic: italic,
-        icon: 'custom'
+        color,
+        bgColor,
+        underline,
+        underlineStyle,
+        bold,
+        italic,
+        icon: 'custom',
       }
       onCreateCustomStyle(newStyle)
+      createdStyleId = newStyle.id
     }
-    
+
+    if (createdStyleId) {
+      onClose({
+        reopenLinkModal: true,
+        selectedLinkStyleId: createdStyleId,
+        focusUrlInput: true,
+      })
+      return
+    }
+
     onClose()
   }
-  
+
   const handleClose = (e) => {
     e.preventDefault()
     e.stopPropagation()
     onClose()
   }
 
-  const modalTitle = isEditing 
+  const modalTitle = isEditing
     ? (isStandardStyle() ? 'Создать стиль на основе стандартного' : 'Редактировать стиль')
     : 'Создать свой стиль ссылки'
 
@@ -127,14 +139,14 @@ export default function CustomStyleModal({
       onClick={(e) => e.stopPropagation()}
     >
       <div className="custom-style-modal-content">
-        <div 
+        <div
           className="custom-style-modal-header"
           onMouseDown={onMouseDown}
         >
           <div className="modal-drag-handle">
             {modalTitle}
           </div>
-          <button 
+          <button
             className="close-modal-btn"
             onClick={handleClose}
             title="Закрыть"
@@ -142,7 +154,7 @@ export default function CustomStyleModal({
             ×
           </button>
         </div>
-        
+
         {isEditing && isStandardStyle() && (
           <div className="link-notification warning" style={{ marginBottom: '12px' }}>
             <span className="notification-icon">ℹ️</span>
@@ -151,7 +163,7 @@ export default function CustomStyleModal({
             </span>
           </div>
         )}
-        
+
         <div className="custom-style-section">
           <h4>Название стиля:</h4>
           <input
@@ -164,7 +176,7 @@ export default function CustomStyleModal({
             onBlur={() => setBlockClose(false)}
           />
         </div>
-        
+
         <div className="custom-style-section">
           <h4>Настройки стиля:</h4>
           <div className="style-settings-grid">
@@ -189,7 +201,7 @@ export default function CustomStyleModal({
                 />
               </div>
             </div>
-            
+
             <div className="style-setting">
               <label>Цвет фона:</label>
               <div className="style-color-picker">
@@ -217,7 +229,7 @@ export default function CustomStyleModal({
                 </select>
               </div>
             </div>
-            
+
             <div className="style-setting">
               <label className="style-checkbox">
                 <input
@@ -229,7 +241,7 @@ export default function CustomStyleModal({
                 />
                 <span>Подчеркивание</span>
               </label>
-              
+
               {underline && (
                 <select
                   value={underlineStyle}
@@ -245,7 +257,7 @@ export default function CustomStyleModal({
                 </select>
               )}
             </div>
-            
+
             <div className="style-setting">
               <label className="style-checkbox">
                 <input
@@ -257,7 +269,7 @@ export default function CustomStyleModal({
                 />
                 <span>Жирный</span>
               </label>
-              
+
               <label className="style-checkbox">
                 <input
                   type="checkbox"
@@ -271,42 +283,41 @@ export default function CustomStyleModal({
             </div>
           </div>
         </div>
-        
+
         <div className="custom-style-section">
           <h4>Предпросмотр:</h4>
           <div className="style-preview">
-            <div 
+            <div
               className="style-preview-text"
               style={{
-                color: color,
+                color,
                 backgroundColor: bgColor,
-                textDecoration: underline ? 
-                  `underline ${underlineStyle}` : 'none',
+                textDecoration: underline ? `underline ${underlineStyle}` : 'none',
                 fontWeight: bold ? 'bold' : 'normal',
                 fontStyle: italic ? 'italic' : 'normal',
                 padding: '8px 12px',
                 borderRadius: '4px',
                 border: '1px solid #e5e7eb',
-                display: 'inline-block'
+                display: 'inline-block',
               }}
             >
               Пример ссылки
             </div>
           </div>
         </div>
-        
+
         <div className="custom-style-actions">
-          <button 
+          <button
             className="modal-btn primary"
             onClick={handleSave}
             disabled={!name.trim()}
           >
-            {isEditing 
+            {isEditing
               ? (isStandardStyle() ? 'Создать новый стиль' : 'Сохранить изменения')
               : 'Создать стиль'}
           </button>
-          
-          <button 
+
+          <button
             className="modal-btn secondary"
             onClick={handleClose}
           >
@@ -317,3 +328,4 @@ export default function CustomStyleModal({
     </div>
   )
 }
+

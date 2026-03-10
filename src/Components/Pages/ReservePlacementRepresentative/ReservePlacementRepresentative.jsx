@@ -486,24 +486,41 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             Заявка {request.flightNumber}
           </div>
         </Header>
-        <div
-          className={classes.filter_wrapper}
-          role="tablist"
-          aria-label="Фильтры услуги"
-        >
-          {filters.map((i) => (
+        <div className={classes.tabsRowWrapper}>
+          <div
+            className={classes.filter_wrapper}
+            role="tablist"
+            aria-label="Фильтры услуги"
+          >
+            {filters.map((i) => (
+              <button
+                key={i.key}
+                role="tab"
+                aria-selected={filter === i.key}
+                aria-controls={`panel-${i.key}`}
+                tabIndex={filter === i.key ? 0 : -1}
+                onClick={() => setFilter(i.key)}
+                className={filter === i.key ? classes.activeButton : undefined}
+              >
+                {i.label}
+              </button>
+            ))}
+          </div>
+          <div className={classes.tabsRowActions}>
             <button
-              key={i.key}
-              role="tab"
-              aria-selected={filter === i.key}
-              aria-controls={`panel-${i.key}`}
-              tabIndex={filter === i.key ? 0 : -1}
-              onClick={() => setFilter(i.key)}
-              className={filter === i.key ? classes.activeButton : undefined}
+              className={classes.historyButton}
+              onClick={() => setShowHistoryPanel(true)}
+              title="История изменений заявки"
             >
-              {i.label}
+              История <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 15C3.35786 15 0 11.6421 0 7.5C0 3.35786 3.35786 0 7.5 0C11.6421 0 15 3.35786 15 7.5C14.9955 11.6403 11.6403 14.9955 7.5 15ZM7.5 1.5C4.18629 1.5 1.5 4.18629 1.5 7.5C1.5 10.8137 4.18629 13.5 7.5 13.5C10.8137 13.5 13.5 10.8137 13.5 7.5C13.4963 4.18783 10.8122 1.50372 7.5 1.5ZM11.25 8.25H6.75V3.75H8.25V6.75H11.25V8.25Z" fill="#545873" />
+              </svg>
+
             </button>
-          ))}
+            {filters.length < 5 && (
+              <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
+            )}
+          </div>
         </div>
 
         <div className={classes.section_searchAndFilter}>
@@ -610,12 +627,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
               </>
             )}
-            <Button
-              onClick={() => setShowHistoryPanel(true)}
-              title="История изменений заявки"
-            >
-              История
-            </Button>
             {canCompleteEarly && (
               <Button
                 onClick={() => setShowEarlyCompleteModal(true)}
@@ -623,9 +634,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               >
                 Досрочно завершить
               </Button>
-            )}
-            {filters.length < 5 && (
-              <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
             )}
           </div>
         </div>

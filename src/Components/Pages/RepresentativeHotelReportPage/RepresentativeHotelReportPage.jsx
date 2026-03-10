@@ -9,6 +9,7 @@ import Header from "../../Blocks/Header/Header";
 import { useCookies } from "../../../hooks/useCookies";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import { GET_PASSENGER_REQUEST, SAVE_PASSENGER_REQUEST_HOTEL_REPORT, getCookie } from "../../../../graphQL_requests";
+import { calculateEffectiveCostDays } from "../../../utils/effectiveCostDays";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import Button from "../../Standart/Button/Button";
@@ -22,22 +23,18 @@ function rowTotal(row) {
   return toNum(row.foodCost) + toNum(row.accommodationCost);
 }
 
-/** Сутки по датам заезда/выезда: accommodationChesses этого отеля или plan */
+/** Сутки по датам заезда/выезда (эффективные: 0.5 и полные сутки). accommodationChesses этого отеля или plan */
 function getPersonDays(person, hotelIndex, plan) {
   const chess = (person?.accommodationChesses ?? []).find(
     (c) => c != null && Number(c.hotelIndex) === Number(hotelIndex)
   ) || (person?.accommodationChesses ?? [])[0];
-  const start = chess?.startAt ? new Date(chess.startAt).getTime() : null;
-  const end = chess?.endAt ? new Date(chess.endAt).getTime() : null;
-  if (start != null && end != null && end >= start) {
-    return Math.round((end - start) / (24 * 60 * 60 * 1000) * 100) / 100;
+  if (chess?.startAt && chess?.endAt) {
+    return calculateEffectiveCostDays(chess.startAt, chess.endAt);
   }
   const planStart = plan?.plannedFromAt || plan?.plannedAt;
   const planEnd = plan?.plannedToAt;
   if (planStart && planEnd) {
-    const s = new Date(planStart).getTime();
-    const e = new Date(planEnd).getTime();
-    if (e >= s) return Math.round((e - s) / (24 * 60 * 60 * 1000) * 100) / 100;
+    return calculateEffectiveCostDays(planStart, planEnd);
   }
   return 0;
 }

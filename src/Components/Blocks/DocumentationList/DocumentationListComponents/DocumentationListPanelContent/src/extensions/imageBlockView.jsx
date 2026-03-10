@@ -6,10 +6,13 @@ import './fileEmpty.css'
 import './blockResize.css'
 import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
 const IMAGE_MIN_WIDTH = 200
+const IMAGE_MIN_HEIGHT = 120
 const IMAGE_FILE_URL_CACHE = new Map()
+const IMAGE_MODAL_ESTIMATED_SIZE = { width: 360, height: 260 }
 
 export default function ImageBlockView({ editor, node, updateAttributes, getPos }) {
   const {
@@ -86,10 +89,14 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     if (!canEdit) return
     e.stopPropagation()
     // Позиция рядом с курсором мыши
-    setModalPos({
-      x: e.clientX + 10,
-      y: e.clientY - 10,
-    })
+    const rect = modalRef.current?.getBoundingClientRect?.()
+    setModalPos(
+      clampFixedModalPosition(
+        { x: e.clientX + 10, y: e.clientY - 10 },
+        rect || IMAGE_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
     announceModalOpen()
     setOpen(true)
   }
@@ -119,6 +126,27 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     return () => document.removeEventListener('mousedown', close)
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+
+    const clampModalToViewport = () => {
+      const rect = modalRef.current?.getBoundingClientRect?.()
+      if (!rect) return
+      setModalPos(prev => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN)
+        if (next.x === prev.x && next.y === prev.y) return prev
+        return next
+      })
+    }
+
+    const rafId = window.requestAnimationFrame(clampModalToViewport)
+    window.addEventListener('resize', clampModalToViewport)
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', clampModalToViewport)
+    }
+  }, [open])
+
   /* ================= DRAG MODAL ================= */
 
   const startDragModal = e => {
@@ -132,10 +160,17 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
   }
 
   const onDragModal = e => {
-    setModalPos({
-      x: e.clientX - dragOffset.current.x,
-      y: e.clientY - dragOffset.current.y,
-    })
+    const rect = modalRef.current?.getBoundingClientRect?.()
+    setModalPos(
+      clampFixedModalPosition(
+        {
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y,
+        },
+        rect || IMAGE_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
   }
 
   const stopDragModal = () => {
@@ -317,14 +352,6 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     })()
   }, [fileId, src, updateAttributes, docUploadImage])
 
-  // Legacy image blocks could keep fixed height from old resize logic.
-  // Drop it once to restore natural aspect-ratio rendering.
-  useEffect(() => {
-    if (!hasImage) return
-    if (typeof height !== 'number') return
-    updateAttributes({ height: null })
-  }, [hasImage, height, updateAttributes])
-
   /* ================= RESIZE ================= */
 
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
@@ -337,6 +364,7 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     const startX = e.clientX
     const startY = e.clientY
     const minWidth = IMAGE_MIN_WIDTH
+    const minHeight = IMAGE_MIN_HEIGHT
 
     const wrapperEl = e.currentTarget?.closest?.('[data-node-view-wrapper]')
     const proseMirrorEl = wrapperEl?.closest?.('.ProseMirror') || wrapperEl?.parentElement
@@ -344,45 +372,39 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     const proseStyles = proseMirrorEl ? window.getComputedStyle(proseMirrorEl) : null
     const paddingLeft = proseStyles ? parseFloat(proseStyles.paddingLeft) || 0 : 0
     const paddingRight = proseStyles ? parseFloat(proseStyles.paddingRight) || 0 : 0
+    const paddingTop = proseStyles ? parseFloat(proseStyles.paddingTop) || 0 : 0
+    const paddingBottom = proseStyles ? parseFloat(proseStyles.paddingBottom) || 0 : 0
     const maxWidth = Math.max(IMAGE_MIN_WIDTH, Math.floor((proseMirrorEl?.clientWidth || 700) - paddingLeft - paddingRight))
+    const maxHeight = Math.max(IMAGE_MIN_HEIGHT, Math.floor((proseMirrorEl?.clientHeight || window.innerHeight || 900) - paddingTop - paddingBottom))
 
     const imgEl = wrapperEl?.querySelector?.('.image-preview img')
     const imgRect = imgEl?.getBoundingClientRect?.()
 
     const startWidth = Number.isFinite(width) ? width : Math.round(imgRect?.width || IMAGE_MIN_WIDTH)
-    const naturalRatio =
-      Number.isFinite(imgEl?.naturalWidth) &&
-      Number.isFinite(imgEl?.naturalHeight) &&
-      imgEl.naturalWidth > 0 &&
-      imgEl.naturalHeight > 0
-        ? imgEl.naturalWidth / imgEl.naturalHeight
-        : null
-    const renderedRatio =
-      Number.isFinite(imgRect?.width) &&
-      Number.isFinite(imgRect?.height) &&
-      imgRect.width > 0 &&
-      imgRect.height > 0
-        ? imgRect.width / imgRect.height
-        : null
-    const attrsRatio =
-      typeof height === 'number' && height > 0 && startWidth > 0
-        ? startWidth / height
-        : null
-    const ratio = naturalRatio || renderedRatio || attrsRatio || 1
+    const startHeight =
+      typeof height === 'number' && height > 0
+        ? height
+        : Math.round(imgRect?.height || IMAGE_MIN_HEIGHT)
+    const isLeft = side.includes('left')
+    const isRight = side.includes('right')
+    const isTop = side.includes('top')
+    const isBottom = side.includes('bottom')
 
     const move = ev => {
-      let widthDelta = 0
+      let deltaX = 0
+      let deltaY = 0
 
-      if (side === 'right') widthDelta = ev.clientX - startX
-      if (side === 'left') widthDelta = startX - ev.clientX
-      if (side === 'bottom') widthDelta = (ev.clientY - startY) * ratio
-      if (side === 'top') widthDelta = (startY - ev.clientY) * ratio
+      if (isRight) deltaX = ev.clientX - startX
+      if (isLeft) deltaX = startX - ev.clientX
+      if (isBottom) deltaY = ev.clientY - startY
+      if (isTop) deltaY = startY - ev.clientY
 
-      const nextWidth = clamp(startWidth + widthDelta, minWidth, maxWidth)
-      updateAttributes({
-        width: Math.round(nextWidth),
-        height: null,
-      })
+      const nextWidth = clamp(startWidth + deltaX, minWidth, maxWidth)
+      const nextHeight = clamp(startHeight + deltaY, minHeight, maxHeight)
+      const nextAttrs = {}
+      if (isLeft || isRight) nextAttrs.width = Math.round(nextWidth)
+      if (isTop || isBottom) nextAttrs.height = Math.round(nextHeight)
+      updateAttributes(nextAttrs)
     }
 
     const up = () => {
@@ -413,6 +435,10 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
         <>
           <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
           <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+          <div className="block-resize corner top-left" contentEditable={false} onMouseDown={e => startResize(e, 'top-left')} />
+          <div className="block-resize corner top-right" contentEditable={false} onMouseDown={e => startResize(e, 'top-right')} />
+          <div className="block-resize corner bottom-left" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-left')} />
+          <div className="block-resize corner bottom-right" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-right')} />
         </>
       )}
 
@@ -458,7 +484,13 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
 
       {/* IMAGE */}
       {(objectUrl || src) && (
-        <div className="image-preview" style={{ width: '100%' }}>
+        <div
+          className="image-preview"
+          style={{
+            width: '100%',
+            height: typeof height === 'number' && height > 0 ? Math.round(height) : 'auto',
+          }}
+        >
           <img
             src={displaySrc}
             draggable
@@ -480,7 +512,11 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
                 })
               )
             }}
-            style={{ cursor: 'pointer' }}
+            style={{
+              cursor: 'pointer',
+              height: typeof height === 'number' && height > 0 ? '100%' : 'auto',
+              objectFit: typeof height === 'number' && height > 0 ? 'contain' : undefined,
+            }}
           />
           {canEdit && (
             <button

@@ -349,6 +349,7 @@ function CreateRequestAirlineTarifCategory({
               <label>Аэропорты</label>
               <MultiSelectAutocomplete
                 isMultiple={true}
+                showSelectAll={true}
                 dropdownWidth={"100%"}
                 label={"Выберите аэропорты"}
                 options={airportOptions}

@@ -28,6 +28,9 @@ const OrganizationAboutTab = lazy(() =>
 const OrganizationRegisterOfContracts = lazy(() =>
   import("../../../Blocks/OrganizationRegisterOfContracts/OrganizationRegisterOfContracts")
 );
+const OrganizationTransferPricesTab = lazy(() =>
+  import("../../../Blocks/OrganizationTransferPrices_tabComponent/OrganizationTransferPrices_tabComponent")
+);
 
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
 import classes from "./TransferAdminDriversContent.module.css";
@@ -42,6 +45,7 @@ const TransferAdminDriversContent = ({ id, user, accessMenu, selectedTab, handle
     <TabList className={classes.tabList}>
       <Tab className={classes.tab}>Водители</Tab>
       <Tab className={classes.tab}>Реестр договоров</Tab>
+      <Tab className={classes.tab}>Цены</Tab>
       <Tab className={classes.tab}>Об организации</Tab>
     </TabList>
 
@@ -54,6 +58,12 @@ const TransferAdminDriversContent = ({ id, user, accessMenu, selectedTab, handle
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
         <OrganizationRegisterOfContracts id={id} user={user} accessMenu={accessMenu} />
+      </Suspense>
+    </TabPanel>
+
+    <TabPanel className={classes.tabPanel} forceRender={false}>
+      <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+        <OrganizationTransferPricesTab id={id} user={user} accessMenu={accessMenu} />
       </Suspense>
     </TabPanel>
 

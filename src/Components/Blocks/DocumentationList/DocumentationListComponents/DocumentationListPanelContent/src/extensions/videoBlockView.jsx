@@ -2,6 +2,7 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded'
 import './imageBlockModal.css'
 import './videoBlock.css'
 import './fileEmpty.css'
@@ -9,8 +10,10 @@ import './blockResize.css'
 import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
 import { parseVideoUrl } from '../utils/videoEmbedParser'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
+const VIDEO_MODAL_ESTIMATED_SIZE = { width: 360, height: 260 }
 
 export default function VideoBlockView({ editor, node, updateAttributes, getPos }) {
   const {
@@ -83,6 +86,10 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     }
   }
 
+  const preventNativeDrag = e => {
+    e.preventDefault()
+  }
+
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
   /* ================= OPEN MODAL ================= */
@@ -90,10 +97,14 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   const openAtEvent = e => {
     if (!canEdit) return
     e.stopPropagation()
-    setModalPos({
-      x: e.clientX + 10,
-      y: e.clientY - 10,
-    })
+    const rect = modalRef.current?.getBoundingClientRect?.()
+    setModalPos(
+      clampFixedModalPosition(
+        { x: e.clientX + 10, y: e.clientY - 10 },
+        rect || VIDEO_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
     announceModalOpen()
     setOpen(true)
   }
@@ -123,6 +134,27 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     return () => document.removeEventListener('mousedown', close)
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+
+    const clampModalToViewport = () => {
+      const rect = modalRef.current?.getBoundingClientRect?.()
+      if (!rect) return
+      setModalPos(prev => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN)
+        if (next.x === prev.x && next.y === prev.y) return prev
+        return next
+      })
+    }
+
+    const rafId = window.requestAnimationFrame(clampModalToViewport)
+    window.addEventListener('resize', clampModalToViewport)
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', clampModalToViewport)
+    }
+  }, [open])
+
   /* ================= DRAG MODAL ================= */
 
   const startDragModal = e => {
@@ -136,10 +168,17 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   }
 
   const onDragModal = e => {
-    setModalPos({
-      x: e.clientX - dragOffset.current.x,
-      y: e.clientY - dragOffset.current.y,
-    })
+    const rect = modalRef.current?.getBoundingClientRect?.()
+    setModalPos(
+      clampFixedModalPosition(
+        {
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y,
+        },
+        rect || VIDEO_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
   }
 
   const stopDragModal = () => {
@@ -352,7 +391,9 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     <>
       <NodeViewWrapper
         className="video-block-wrapper block-resizable"
+        draggable={false}
         onMouseDown={safeSetNodeSelectionHere}
+        onDragStartCapture={preventNativeDrag}
         style={{ width, maxWidth: '100%', ...alignMargins }}
       >
         {/* RESIZE HANDLES */}
@@ -366,6 +407,10 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
           <>
             <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top', e.shiftKey)} />
             <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom', e.shiftKey)} />
+            <div className="block-resize corner top-left" contentEditable={false} onMouseDown={e => startResize(e, 'top-left', e.shiftKey)} />
+            <div className="block-resize corner top-right" contentEditable={false} onMouseDown={e => startResize(e, 'top-right', e.shiftKey)} />
+            <div className="block-resize corner bottom-left" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-left', e.shiftKey)} />
+            <div className="block-resize corner bottom-right" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-right', e.shiftKey)} />
           </>
         )}
 
@@ -398,11 +443,13 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
           <div
             className="video-preview"
             style={{ width: '100%', height }}
+            onDragStart={preventNativeDrag}
           >
             {embedUrl ? (
               <iframe
                 src={embedUrl}
                 title="Встроенное видео"
+                draggable={false}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 referrerPolicy="strict-origin-when-cross-origin"
@@ -418,6 +465,8 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
               <video
                 ref={videoRef}
                 src={displayVideoSrc}
+                draggable={false}
+                onDragStart={preventNativeDrag}
                 controls
                 style={{
                   width: '100%',
@@ -433,10 +482,14 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
               className="video-settings-btn"
               style={{ display: canEdit ? undefined : 'none' }}
               onClick={openAtEvent}
-              title="Настройки видео"
-              aria-label="Настройки видео"
+              title="РќР°СЃС‚СЂРѕР№РєРё РІРёРґРµРѕ"
+              aria-label="РќР°СЃС‚СЂРѕР№РєРё РІРёРґРµРѕ"
             >
-              •
+              <MoreVertRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 18, height: 18, fontSize: 18 }}
+              />
             </button>
           </div>
         )}
@@ -529,3 +582,5 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     </>
   )
 }
+
+

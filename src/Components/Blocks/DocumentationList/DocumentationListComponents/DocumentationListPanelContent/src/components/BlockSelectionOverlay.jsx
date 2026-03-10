@@ -7,6 +7,7 @@ const RECT_CLASS = 'block-lasso-rect'
 const MARKER_CLASS = 'block-lasso-marker'
 
 const MARKER_OFFSET_X = 18
+const ALT_TAP_MAX_MS = 220
 
 function rectFromPoints(a, b) {
   const left = Math.min(a.x, b.x)
@@ -55,6 +56,8 @@ export default function BlockSelectionOverlay({
   scopeSelector = '.editor-hover-scope',
   requireAlt = true,
   onSelectionChange,
+  onAltModeChange,
+  altModeResetTick = 0,
 }) {
   const [rectStyle, setRectStyle] = useState(null)
   const [markers, setMarkers] = useState([])
@@ -72,6 +75,12 @@ export default function BlockSelectionOverlay({
 
   const selectedPosRef = useRef([])
   const lastClickedPosRef = useRef(null)
+  const altToggleModeRef = useRef(false)
+  const altKeyDownRef = useRef(false)
+  const altPressStartedAtRef = useRef(0)
+  const altModeUiRef = useRef(false)
+  const disableAltModeRef = useRef(null)
+  const lastAltModeResetTickRef = useRef(altModeResetTick)
 
   useEffect(() => {
     if (!editor) return
@@ -98,6 +107,14 @@ export default function BlockSelectionOverlay({
       cancelAnimationFrame(raf)
     }
   }, [editor])
+
+  useEffect(() => {
+    if (altModeResetTick === lastAltModeResetTickRef.current) return
+    const disableFn = disableAltModeRef.current
+    if (typeof disableFn !== 'function') return
+    disableFn()
+    lastAltModeResetTickRef.current = altModeResetTick
+  }, [altModeResetTick, isViewReady])
 
   useEffect(() => {
     if (!editor) return
@@ -127,9 +144,22 @@ export default function BlockSelectionOverlay({
       style.userSelect = value
     }
 
-    const setAltCursorMode = enabled => {
+    const emitAltModeChange = enabled => {
+      const next = Boolean(enabled)
+      if (altModeUiRef.current === next) return
+      altModeUiRef.current = next
+      onAltModeChange?.(next)
+    }
+
+    const applyAltCursorMode = () => {
       if (!(scopeEl instanceof HTMLElement)) return
-      scopeEl.classList.toggle('alt-lasso-cursor', Boolean(enabled))
+      const isHoldMode = Boolean(requireAlt && altKeyDownRef.current)
+      const isToggleMode = Boolean(requireAlt && altToggleModeRef.current)
+
+      scopeEl.classList.toggle('alt-lasso-cursor', isHoldMode)
+      scopeEl.classList.toggle('alt-pick-cursor', !isHoldMode && isToggleMode)
+
+      emitAltModeChange(isHoldMode || isToggleMode)
     }
 
     const samePositions = (a, b) => {
@@ -501,7 +531,8 @@ export default function BlockSelectionOverlay({
     }
 
     const onBlur = () => {
-      setAltCursorMode(false)
+      altKeyDownRef.current = false
+      applyAltCursorMode()
       if (!dragRef.current.active) return
       if (dragRef.current.lastRect) {
         applySelection(computeSelectedForRect(dragRef.current.lastRect))
@@ -522,7 +553,8 @@ export default function BlockSelectionOverlay({
       if (e.button !== 0) return false
       const t = normalizeTargetToElement(e.target)
       if (!t) return false
-      if (requireAlt && !e.altKey) return false
+      const altSelectionGesture = e.altKey || altToggleModeRef.current
+      if (requireAlt && !altSelectionGesture) return false
       if (t.closest('.block-dnd-handle')) return false
       if (t.closest('.plus-overlay')) return false
       if (t.closest('.slash-menu-wrapper')) return false
@@ -530,19 +562,35 @@ export default function BlockSelectionOverlay({
 
       const insideEditor = editorDom.contains(t)
       if (!insideEditor) return false
-      if (insideEditor && !e.altKey) return false
+      if (insideEditor && !altSelectionGesture) return false
 
       return true
     }
 
     const onMouseDown = e => {
-      if (!canStart(e)) return
+      const targetEl = normalizeTargetToElement(e.target)
+      const insideScope = targetEl instanceof Element && scopeEl.contains(targetEl)
+      const altModeActive = Boolean(requireAlt && (e.altKey || altKeyDownRef.current || altToggleModeRef.current))
+
+      if (!canStart(e)) {
+        if (altModeActive && insideScope) {
+          // In Alt mode block regular block interactions (buttons/modals/handles/editing).
+          e.preventDefault()
+          e.stopPropagation()
+        }
+        return
+      }
 
       const clickedPos = getTopLevelPosFromTarget(e.target)
-      const isAdditivePick = e.altKey && (e.ctrlKey || e.metaKey) && !e.shiftKey
-      const isRangePick = e.altKey && e.shiftKey
+      const isSelectionGesture = e.altKey || altToggleModeRef.current
+      const isTogglePickMode = altToggleModeRef.current && !e.altKey
+      const isAdditivePick = isSelectionGesture && (e.ctrlKey || e.metaKey) && !e.shiftKey
+      const isRangePick = isSelectionGesture && e.shiftKey
 
-      if (typeof clickedPos === 'number' && (isAdditivePick || isRangePick)) {
+      if (
+        typeof clickedPos === 'number' &&
+        (isAdditivePick || isRangePick || isTogglePickMode)
+      ) {
         e.preventDefault()
 
         const currentSelection = Array.from(new Set(getSelectedPositions()))
@@ -563,11 +611,13 @@ export default function BlockSelectionOverlay({
             typeof anchorPos === 'number'
               ? buildRangePositions(anchorPos, clickedPos)
               : [clickedPos]
-        } else {
+        } else if (isAdditivePick) {
           const isAlreadySelected = currentSelection.includes(clickedPos)
           nextPos = isAlreadySelected
             ? currentSelection.filter(pos => pos !== clickedPos)
             : [...currentSelection, clickedPos].sort((a, b) => a - b)
+        } else {
+          nextPos = [clickedPos]
         }
 
         applySelection({
@@ -578,6 +628,13 @@ export default function BlockSelectionOverlay({
         if (nextPos.length) {
           editor.commands.focus()
         }
+        return
+      }
+
+      if (isTogglePickMode) {
+        // Toggle Alt mode is "pick only": never start a lasso rectangle here.
+        e.preventDefault()
+        e.stopPropagation()
         return
       }
 
@@ -605,6 +662,18 @@ export default function BlockSelectionOverlay({
       }
     }
 
+    const onScopeClickCapture = e => {
+      const targetEl = normalizeTargetToElement(e.target)
+      if (!(targetEl instanceof Element)) return
+      if (!scopeEl.contains(targetEl)) return
+      if (!requireAlt) return
+      if (!altToggleModeRef.current && !altKeyDownRef.current && !e.altKey) return
+
+      // Selection is done on mousedown; suppress follow-up click handlers in block controls.
+      e.preventDefault()
+      e.stopPropagation()
+    }
+
     const onGlobalMouseDown = e => {
       if (dragRef.current.active) return
       const t = normalizeTargetToElement(e.target)
@@ -615,7 +684,7 @@ export default function BlockSelectionOverlay({
       if (t.closest('.slash-menu-wrapper')) return
       if (!getSelectedPositions().length) return
 
-      if (!e.altKey) clearSelected()
+      if (!e.altKey && !altToggleModeRef.current) clearSelected()
     }
 
     const onCopy = e => {
@@ -643,12 +712,95 @@ export default function BlockSelectionOverlay({
       data.setData('text/plain', text)
     }
 
+    const copySelectedBlocksProgrammatically = () => {
+      const slice = buildSelectedSlice()
+      if (!slice) return false
+
+      const { dom } = view.serializeForClipboard(slice)
+      const html = dom.innerHTML
+      const text = slice.content.textBetween(0, slice.content.size, '\n\n')
+
+      const installCopyPayloadOnce = () => {
+        const once = event => {
+          const data = event.clipboardData
+          if (!data) return
+          event.preventDefault()
+          event.stopPropagation()
+          try {
+            data.clearData()
+          } catch {
+            // ignore
+          }
+          data.setData('text/html', html)
+          data.setData('text/plain', text)
+        }
+        document.addEventListener('copy', once, { capture: true, once: true })
+      }
+
+      const tryExecCommandCopy = () => {
+        installCopyPayloadOnce()
+        try {
+          return document.execCommand('copy')
+        } catch {
+          return false
+        }
+      }
+
+      if (navigator.clipboard && window.ClipboardItem) {
+        navigator.clipboard
+          .write([
+            new ClipboardItem({
+              'text/html': new Blob([html], { type: 'text/html' }),
+              'text/plain': new Blob([text], { type: 'text/plain' }),
+            }),
+          ])
+          .catch(() => {
+            if (!tryExecCommandCopy()) {
+              navigator.clipboard?.writeText?.(text).catch(() => {})
+            }
+          })
+        return true
+      }
+
+      return tryExecCommandCopy()
+    }
+
     const onKeyDown = e => {
-      if (requireAlt) {
-        setAltCursorMode(Boolean(e.altKey))
+      if (requireAlt && e.key === 'Alt' && !e.repeat) {
+        altKeyDownRef.current = true
+        altPressStartedAtRef.current = performance.now()
+        applyAltCursorMode()
       }
 
       const selectedPositions = getSelectedPositions()
+      const canHandleSelectionShortcuts =
+        !dragRef.current.active &&
+        selectedPositions.length > 0
+      const isDeleteShortcut =
+        canHandleSelectionShortcuts &&
+        (e.key === 'Backspace' || e.key === 'Delete') &&
+        !isFormFieldTarget(e.target)
+      const isCopyShortcut =
+        canHandleSelectionShortcuts &&
+        (e.key === 'c' || e.key === 'C') &&
+        (e.metaKey || e.ctrlKey)
+
+      const altModeActive = Boolean(requireAlt && (altToggleModeRef.current || altKeyDownRef.current))
+      if (
+        altModeActive &&
+        e.key !== 'Alt' &&
+        e.key !== 'Shift' &&
+        e.key !== 'Control' &&
+        e.key !== 'Meta' &&
+        !isDeleteShortcut &&
+        !isCopyShortcut
+      ) {
+        // While Alt block-selection mode is active, only selection interactions are allowed.
+        e.preventDefault()
+        e.stopPropagation()
+        return
+      }
+
       if (
         (e.key === 'Backspace' || e.key === 'Delete') &&
         !dragRef.current.active &&
@@ -682,33 +834,7 @@ export default function BlockSelectionOverlay({
           // ignore
         }
 
-        let ok = false
-        try {
-          ok = document.execCommand('copy')
-        } catch {
-          ok = false
-        }
-
-        if (!ok && navigator.clipboard && window.ClipboardItem) {
-          const slice = buildSelectedSlice()
-          if (!slice) return
-
-          const { dom } = view.serializeForClipboard(slice)
-          const html = dom.innerHTML
-          const text = slice.content.textBetween(0, slice.content.size, '\n\n')
-
-          navigator.clipboard
-            .write([
-              new ClipboardItem({
-                'text/html': new Blob([html], { type: 'text/html' }),
-                'text/plain': new Blob([text], { type: 'text/plain' }),
-              }),
-            ])
-            .catch(() => {
-              navigator.clipboard?.writeText?.(text).catch(() => {})
-            })
-        }
-
+        copySelectedBlocksProgrammatically()
         return
       }
 
@@ -720,12 +846,32 @@ export default function BlockSelectionOverlay({
     }
 
     const onKeyUp = e => {
-      if (requireAlt) {
-        setAltCursorMode(Boolean(e.altKey))
+      if (requireAlt && e.key === 'Alt') {
+        const heldMs = performance.now() - (altPressStartedAtRef.current || 0)
+        const isTap = !dragRef.current.active && heldMs <= ALT_TAP_MAX_MS
+        if (isTap) {
+          altToggleModeRef.current = !altToggleModeRef.current
+        }
+        altKeyDownRef.current = false
+        applyAltCursorMode()
       }
     }
 
+    const disableAltSelectionMode = () => {
+      altKeyDownRef.current = false
+      altToggleModeRef.current = false
+      if (dragRef.current.active) {
+        stopDrag()
+      }
+      clearSelected()
+      applyAltCursorMode()
+    }
+    disableAltModeRef.current = disableAltSelectionMode
+
+    applyAltCursorMode()
+
     scopeEl.addEventListener('mousedown', onMouseDown, true)
+    scopeEl.addEventListener('click', onScopeClickCapture, true)
     document.addEventListener('mousedown', onGlobalMouseDown, true)
     document.addEventListener('copy', onCopy, true)
     document.addEventListener('keydown', onKeyDown, true)
@@ -734,16 +880,21 @@ export default function BlockSelectionOverlay({
 
     return () => {
       scopeEl.removeEventListener('mousedown', onMouseDown, true)
+      scopeEl.removeEventListener('click', onScopeClickCapture, true)
       document.removeEventListener('mousedown', onGlobalMouseDown, true)
       document.removeEventListener('copy', onCopy, true)
       document.removeEventListener('keydown', onKeyDown, true)
       document.removeEventListener('keyup', onKeyUp, true)
       window.removeEventListener('blur', onBlur, true)
+      disableAltModeRef.current = null
       stopDrag()
-      setAltCursorMode(false)
+      altKeyDownRef.current = false
+      altToggleModeRef.current = false
+      applyAltCursorMode()
+      emitAltModeChange(false)
       clearSelected()
     }
-  }, [editor, scopeSelector, requireAlt, onSelectionChange, isViewReady])
+  }, [editor, scopeSelector, requireAlt, onSelectionChange, onAltModeChange, isViewReady])
 
   const hasAnyOverlay = Boolean(rectStyle || markers.length)
   if (!hasAnyOverlay) return null

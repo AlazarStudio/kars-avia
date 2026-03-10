@@ -259,6 +259,23 @@
   font-size: 14px;
 }
 
+.reasonTextarea {
+  width: 500px;
+  min-height: 150px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.reasonTextarea:focus {
+  outline: none;
+  border-color: var(--mui-palette-primary-main, #1976d2);
+}
+
 @media (min-width: 0px) and (max-width: 1499px) {
   .tableHead,
   .tableRow {

@@ -8,7 +8,6 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
   const isEditable = Boolean(editor?.isEditable)
   const [collapsed, setCollapsed] = useState(false)
   const width = typeof node.attrs.width === 'number' ? node.attrs.width : 520
-  const height = typeof node.attrs.height === 'number' ? node.attrs.height : null
   const textAlign = node.attrs.textAlign || 'left'
 
   const alignMargins =
@@ -138,31 +137,23 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
     e.stopPropagation()
 
     const startX = e.clientX
-    const startY = e.clientY
 
     const wrapperEl = e.currentTarget?.closest?.('[data-node-view-wrapper]')
     const proseMirrorEl = wrapperEl?.closest?.('.ProseMirror') || wrapperEl?.parentElement
     const maxWidth = Math.max(280, Math.floor(proseMirrorEl?.clientWidth || 700))
 
-    const startRect = wrapperEl?.getBoundingClientRect?.()
     const startWidth = width
-    const startHeight = typeof height === 'number' ? height : Math.round(startRect?.height || 80)
 
     const move = ev => {
       let deltaX = 0
-      let deltaY = 0
 
       if (side === 'right') deltaX = ev.clientX - startX
       if (side === 'left') deltaX = startX - ev.clientX
-      if (side === 'bottom') deltaY = ev.clientY - startY
-      if (side === 'top') deltaY = startY - ev.clientY
 
       const nextWidth = clamp(startWidth + deltaX, 280, maxWidth)
-      const nextHeight = clamp(startHeight + deltaY, 60, 900)
 
       const nextAttrs = {}
       if (side === 'left' || side === 'right') nextAttrs.width = Math.round(nextWidth)
-      if (side === 'top' || side === 'bottom') nextAttrs.height = Math.round(nextHeight)
       updateAttributes(nextAttrs)
     }
 
@@ -184,7 +175,6 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
       style={{
         width,
         ...alignMargins,
-        minHeight: typeof height === 'number' ? height : undefined,
       }}
     >
       {/* RESIZE HANDLES */}
@@ -192,8 +182,6 @@ export default function ToggleView({ editor, node, updateAttributes, getPos }) {
         <>
           <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
           <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
-          <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
-          <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
         </>
       )}
 

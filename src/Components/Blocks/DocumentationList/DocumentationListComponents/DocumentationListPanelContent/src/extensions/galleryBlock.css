@@ -7,8 +7,8 @@
 
 .gallery-settings-trigger {
   position: absolute;
-  top: -8px;
-  right: 0;
+  top: -14px;
+  right: -10px;
   z-index: 9;
   width: 28px;
   height: 28px;
@@ -54,8 +54,8 @@
 
 .gallery-layout-controls {
   position: absolute;
-  top: 26px;
-  right: 0;
+  top: 22px;
+  right: -10px;
   z-index: 10;
   display: flex;
   flex-direction: column;
@@ -137,9 +137,18 @@
   border-radius: 12px;
 }
 
+/* Lasso selection highlight (Alt block selection) */
+.ProseMirror .block-lasso-selected .gallery-grid {
+  outline: 2px solid rgba(107, 140, 186, 0.68);
+  outline-offset: 4px;
+  border-radius: 12px;
+}
+
 /* ================= ITEM ================= */
 
 .gallery-item {
+  --gallery-remove-size: clamp(16px, 22%, 22px);
+  --gallery-remove-offset: clamp(2px, 8%, 8px);
   position: relative;
   isolation: isolate;
   border-radius: 10px;
@@ -168,6 +177,67 @@
 .gallery-item:hover {
   border-color: rgba(59, 130, 246, 0.55);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.gallery-grid.is-reordering .gallery-item:hover {
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.gallery-item.is-dragging {
+  opacity: 0.45;
+}
+
+.gallery-item.is-drop-top,
+.gallery-item.is-drop-bottom,
+.gallery-item.is-drop-left,
+.gallery-item.is-drop-right {
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+.gallery-item.is-drop-top::before,
+.gallery-item.is-drop-bottom::after,
+.gallery-item.is-drop-left::before,
+.gallery-item.is-drop-right::after {
+  content: '';
+  position: absolute;
+  z-index: 13;
+  pointer-events: none;
+  background: #2563eb;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.96),
+    0 0 0 2px rgba(37, 99, 235, 0.42),
+    0 0 8px rgba(37, 99, 235, 0.65);
+  border-radius: 999px;
+}
+
+.gallery-item.is-drop-top::before {
+  top: 0;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+}
+
+.gallery-item.is-drop-bottom::after {
+  bottom: 0;
+  left: 4px;
+  right: 4px;
+  height: 4px;
+}
+
+.gallery-item.is-drop-left::before {
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
+}
+
+.gallery-item.is-drop-right::after {
+  right: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 4px;
 }
 
 .gallery-item-inner {
@@ -232,18 +302,15 @@
 
 /* ================= REMOVE ================= */
 
-.gallery-remove {
+.gallery-remove,
+.gallery-replace {
   position: absolute;
-  top: 30px;
-  right: 6px;
+  top: var(--gallery-remove-offset);
   z-index: 12;
-  width: 22px;
-  height: 22px;
+  height: var(--gallery-remove-size);
   border-radius: 999px;
-  border: none;
   background: rgba(17, 24, 39, 0.75);
   color: #ffffff;
-  font-size: 14px;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -251,14 +318,40 @@
   cursor: pointer;
   pointer-events: auto;
   opacity: 0;
-  transition: opacity 0.15s ease, background 0.15s ease, top 0.15s ease;
+  transform: translateY(-1px) scale(0.96);
+  transition: opacity 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
-.gallery-item:hover .gallery-remove {
+.gallery-remove {
+  right: var(--gallery-remove-offset);
+  width: var(--gallery-remove-size);
+  border: none;
+  font-size: 12px;
+}
+
+.gallery-replace {
+  right: calc(var(--gallery-remove-offset) + var(--gallery-remove-size) + 6px);
+  width: var(--gallery-remove-size);
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 12px;
+}
+
+.gallery-replace svg {
+  display: block;
+}
+
+.gallery-item:hover .gallery-remove,
+.gallery-item:hover .gallery-replace {
   opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 .gallery-remove:hover {
+  background: rgba(17, 24, 39, 0.92);
+}
+
+.gallery-replace:hover {
   background: rgba(17, 24, 39, 0.92);
 }
 
@@ -282,7 +375,22 @@
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
-.gallery-grid.layout-strip .gallery-add-circle {
+.gallery-add-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-grid.layout-masonry .gallery-add-slot {
+  display: inline-flex;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  margin-bottom: var(--gallery-gap);
+  break-inside: avoid;
+}
+
+.gallery-grid.layout-strip .gallery-add-slot {
+  flex: 0 0 clamp(190px, 34%, 280px);
   align-self: stretch;
 }
 

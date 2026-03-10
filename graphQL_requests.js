@@ -781,6 +781,18 @@ export const GET_ORGANIZATIONS = gql`
 `;
 
 export const GET_ORGANIZATION = gql`
+  fragment TransferPriceFields on TransferPrice {
+    id
+    createdAt
+    updatedAt
+    prices {
+      threeSeater { intercity city }
+      fiveSeater { intercity city }
+      sevenSeater { intercity city }
+    }
+    airports { id name code city }
+    cities { id city region }
+  }
   query Organization($organizationId: ID!) {
     organization(id: $organizationId) {
       id
@@ -801,6 +813,9 @@ export const GET_ORGANIZATION = gql`
         description
       }
       name
+      transferPrices {
+        ...TransferPriceFields
+      }
       drivers {
           id
           name

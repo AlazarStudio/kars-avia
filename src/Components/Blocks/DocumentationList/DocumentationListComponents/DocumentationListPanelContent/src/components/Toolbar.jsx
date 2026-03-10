@@ -13,6 +13,7 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
 import DataObjectRoundedIcon from '@mui/icons-material/DataObjectRounded'
 import DesktopWindowsRoundedIcon from '@mui/icons-material/DesktopWindowsRounded'
 import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded'
+import GestureRoundedIcon from '@mui/icons-material/GestureRounded'
 import FontSizeSelect from './FontSizeSelect'
 import ColorModal from './ColorModal'
 import LinkModal from './LinkModal'
@@ -28,6 +29,7 @@ import {
   createDocxBlobFromPlainText,
 } from '../utils/officeExport'
 import { docxArrayBufferToHtml } from '../utils/docxImport'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const linkStyles = [
   {
@@ -76,6 +78,7 @@ const BLOCK_ALIGN_NODE_TYPES = new Set([
   'toggle',
   'frameBlock',
   'tableWrapper',
+  'blockquote',
 ])
 
 const TEXT_ALIGN_NODE_TYPES = new Set(['paragraph', 'heading'])
@@ -101,6 +104,79 @@ const TOOLBAR_GROUP_ORDER = [
   'article-layout',
   'reset',
 ]
+const CUSTOM_COLOR_SLOT_COUNT = 10
+const DOC_TOOLBAR_TEXT_COLORS_KEY = 'doclist_toolbar_custom_text_colors_v1'
+const DOC_TOOLBAR_BG_COLORS_KEY = 'doclist_toolbar_custom_bg_colors_v1'
+const DOC_TOOLBAR_LINK_STYLES_KEY = 'doclist_toolbar_custom_link_styles_v1'
+
+function createEmptyColorSlots() {
+  return Array(CUSTOM_COLOR_SLOT_COUNT).fill(null)
+}
+
+function readToolbarStorageJSON(keys) {
+  if (typeof window === 'undefined' || !window.localStorage) return null
+
+  const keyList = Array.isArray(keys) ? keys : [keys]
+  for (const key of keyList) {
+    if (!key) continue
+    try {
+      const raw = window.localStorage.getItem(key)
+      if (!raw) continue
+      return JSON.parse(raw)
+    } catch {
+      // ignore malformed storage values
+    }
+  }
+
+  return null
+}
+
+function normalizeColorSlots(raw) {
+  const slots = createEmptyColorSlots()
+  if (!Array.isArray(raw)) return slots
+
+  const max = Math.min(CUSTOM_COLOR_SLOT_COUNT, raw.length)
+  for (let i = 0; i < max; i += 1) {
+    const value = raw[i]
+    slots[i] = typeof value === 'string' && value.trim() ? value : null
+  }
+
+  return slots
+}
+
+function normalizeCustomLinkStyles(raw) {
+  if (!Array.isArray(raw)) return []
+
+  const styles = []
+  for (let index = 0; index < raw.length; index += 1) {
+    const item = raw[index]
+    if (!item || typeof item !== 'object') continue
+
+    const rawId = typeof item.id === 'string' ? item.id.trim() : ''
+    const baseId = rawId || `${Date.now()}_${index}`
+    const id = baseId.startsWith('custom_') ? baseId : `custom_${baseId}`
+    const nameCandidate = typeof item.name === 'string' ? item.name : item.label
+    const name = typeof nameCandidate === 'string' && nameCandidate.trim()
+      ? nameCandidate.trim()
+      : 'Пользовательский стиль'
+
+    styles.push({
+      id,
+      name,
+      color: typeof item.color === 'string' && item.color.trim() ? item.color : '#3b82f6',
+      bgColor: typeof item.bgColor === 'string' && item.bgColor.trim() ? item.bgColor : 'transparent',
+      underline: item.underline !== false,
+      underlineStyle: typeof item.underlineStyle === 'string' && item.underlineStyle.trim()
+        ? item.underlineStyle
+        : 'solid',
+      bold: Boolean(item.bold),
+      italic: Boolean(item.italic),
+      icon: typeof item.icon === 'string' && item.icon.trim() ? item.icon : 'custom',
+    })
+  }
+
+  return styles
+}
 
 function areStringArraysEqual(a, b) {
   if (a === b) return true
@@ -116,10 +192,69 @@ function getArticleWidthPresetText(option) {
   return String(option?.label || '')
 }
 
+function parseColorToRgba(input) {
+  if (typeof input !== 'string') return null
+  const color = input.trim()
+  if (!color) return null
+
+  if (color[0] === '#') {
+    const hex = color.slice(1)
+    if (hex.length === 3 || hex.length === 4) {
+      const r = Number.parseInt(hex[0] + hex[0], 16)
+      const g = Number.parseInt(hex[1] + hex[1], 16)
+      const b = Number.parseInt(hex[2] + hex[2], 16)
+      const a = hex.length === 4 ? Number.parseInt(hex[3] + hex[3], 16) / 255 : 1
+      if ([r, g, b, a].some(Number.isNaN)) return null
+      return { r, g, b, a }
+    }
+    if (hex.length === 6 || hex.length === 8) {
+      const r = Number.parseInt(hex.slice(0, 2), 16)
+      const g = Number.parseInt(hex.slice(2, 4), 16)
+      const b = Number.parseInt(hex.slice(4, 6), 16)
+      const a = hex.length === 8 ? Number.parseInt(hex.slice(6, 8), 16) / 255 : 1
+      if ([r, g, b, a].some(Number.isNaN)) return null
+      return { r, g, b, a }
+    }
+    return null
+  }
+
+  const rgbMatch = color.match(
+    /^rgba?\(\s*([+-]?\d*\.?\d+)\s*[, ]\s*([+-]?\d*\.?\d+)\s*[, ]\s*([+-]?\d*\.?\d+)(?:\s*[,/ ]\s*([+-]?\d*\.?\d+))?\s*\)$/i
+  )
+  if (!rgbMatch) return null
+
+  const clamp255 = value => Math.max(0, Math.min(255, Math.round(Number(value))))
+  const clampAlpha = value => Math.max(0, Math.min(1, Number(value)))
+
+  const r = clamp255(rgbMatch[1])
+  const g = clamp255(rgbMatch[2])
+  const b = clamp255(rgbMatch[3])
+  const a = rgbMatch[4] == null ? 1 : clampAlpha(rgbMatch[4])
+
+  if ([r, g, b, a].some(Number.isNaN)) return null
+  return { r, g, b, a }
+}
+
+function getReadableTextColorForBackground(backgroundColor) {
+  const parsed = parseColorToRgba(backgroundColor)
+  if (!parsed) return '#111827'
+
+  // Assume button sits on a light toolbar backdrop for alpha compositing.
+  const alpha = Number.isFinite(parsed.a) ? parsed.a : 1
+  const r = Math.round(parsed.r * alpha + 255 * (1 - alpha))
+  const g = Math.round(parsed.g * alpha + 255 * (1 - alpha))
+  const b = Math.round(parsed.b * alpha + 255 * (1 - alpha))
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+  return luminance < 0.58 ? '#FFFFFF' : '#111827'
+}
+
 export default function Toolbar({
   editor,
   anchorModeEnabled = false,
+  altSelectionModeActive = false,
   onToggleAnchorMode,
+  onDisableAltSelectionMode,
   articleWidthMode = 'preset',
   articleWidthPreset = 'level4',
   articleManualWidth = 1080,
@@ -164,9 +299,36 @@ export default function Toolbar({
   const draggedModalRef = useRef(null)
   
   // Custom presets state
-  const [customTextColors, setCustomTextColors] = useState(() => Array(10).fill(null))
-  const [customBgColors, setCustomBgColors] = useState(() => Array(10).fill(null))
-  const [customLinkStyles, setCustomLinkStyles] = useState(() => [])
+  const [customTextColors, setCustomTextColors] = useState(() =>
+    normalizeColorSlots(
+      readToolbarStorageJSON([
+        DOC_TOOLBAR_TEXT_COLORS_KEY,
+        'doclist_toolbar_custom_text_colors',
+        'toolbar_custom_text_colors',
+        'customTextColors',
+      ])
+    )
+  )
+  const [customBgColors, setCustomBgColors] = useState(() =>
+    normalizeColorSlots(
+      readToolbarStorageJSON([
+        DOC_TOOLBAR_BG_COLORS_KEY,
+        'doclist_toolbar_custom_bg_colors',
+        'toolbar_custom_bg_colors',
+        'customBgColors',
+      ])
+    )
+  )
+  const [customLinkStyles, setCustomLinkStyles] = useState(() =>
+    normalizeCustomLinkStyles(
+      readToolbarStorageJSON([
+        DOC_TOOLBAR_LINK_STYLES_KEY,
+        'doclist_toolbar_custom_link_styles',
+        'toolbar_custom_link_styles',
+        'customLinkStyles',
+      ])
+    )
+  )
   
   // State for editing a custom link style
   const [editingStyle, setEditingStyle] = useState(null)
@@ -176,10 +338,13 @@ export default function Toolbar({
   
   // Selected value for font size select
   const [selectedFontSize, setSelectedFontSize] = useState('16')
+  const [linkModalInitialStyleId, setLinkModalInitialStyleId] = useState('default')
+  const [focusLinkModalUrlInput, setFocusLinkModalUrlInput] = useState(false)
   
   // Guard for popup closing while interacting with inputs
   const [blockClose, setBlockClose] = useState(false)
   const [toolbarRefreshTick, forceToolbarRefresh] = useReducer(v => v + 1, 0)
+  const bgButtonTextColor = getReadableTextColorForBackground(bgColor)
   
   // Refs
   const textColorButtonRef = useRef(null)
@@ -196,11 +361,34 @@ export default function Toolbar({
   const toolbarOverflowTriggerRef = useRef(null)
   const toolbarGroupRefs = useRef({})
   const backdropRef = useRef(null)
+  const linkStyleSelectionRef = useRef(null)
   const modalPortalTarget = typeof document !== 'undefined' ? document.body : null
   const renderModalPortal = (node) => {
     if (!node) return null
     return modalPortalTarget ? createPortal(node, modalPortalTarget) : node
   }
+
+  const captureLinkStyleSelection = useCallback(({ preserveOnCollapsed = false } = {}) => {
+    if (!editor?.state?.selection) {
+      if (!preserveOnCollapsed) {
+        linkStyleSelectionRef.current = null
+      }
+      return linkStyleSelectionRef.current
+    }
+
+    const { from, to } = editor.state.selection
+    if (typeof from === 'number' && typeof to === 'number' && from !== to) {
+      const range = { from: Math.min(from, to), to: Math.max(from, to) }
+      linkStyleSelectionRef.current = range
+      return range
+    }
+
+    if (!preserveOnCollapsed) {
+      linkStyleSelectionRef.current = null
+    }
+
+    return linkStyleSelectionRef.current
+  }, [editor])
 
   const closeAllModals = useCallback((options = {}) => {
     const preserveWidthFrame = Boolean(options.preserveWidthFrame)
@@ -223,6 +411,7 @@ export default function Toolbar({
     setShowJsonModal(false)
     setShowArticleLayoutModal(false)
     setShowToolbarOverflowModal(false)
+    setFocusLinkModalUrlInput(false)
     setArticleLayoutTab('width')
     setEditingStyle(null)
     if (hideWidthFrame) {
@@ -345,6 +534,33 @@ useEffect(() => {
       }
     }
   }, [editor])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return
+    try {
+      window.localStorage.setItem(DOC_TOOLBAR_TEXT_COLORS_KEY, JSON.stringify(customTextColors))
+    } catch {
+      // ignore storage quota / privacy mode failures
+    }
+  }, [customTextColors])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return
+    try {
+      window.localStorage.setItem(DOC_TOOLBAR_BG_COLORS_KEY, JSON.stringify(customBgColors))
+    } catch {
+      // ignore storage quota / privacy mode failures
+    }
+  }, [customBgColors])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return
+    try {
+      window.localStorage.setItem(DOC_TOOLBAR_LINK_STYLES_KEY, JSON.stringify(customLinkStyles))
+    } catch {
+      // ignore storage quota / privacy mode failures
+    }
+  }, [customLinkStyles])
 
   const getLassoSelectedPositions = () => {
     if (!editor) return []
@@ -714,6 +930,15 @@ useEffect(() => {
     )
   }
 
+  const clampToolbarModalPosition = useCallback((position, modalSize = null) => {
+    return clampFixedModalPosition(position, modalSize || {}, MODAL_VIEWPORT_MARGIN)
+  }, [])
+
+  const setClampedToolbarModalPosition = useCallback((position, modalSize = null, extra = null) => {
+    const clamped = clampToolbarModalPosition(position, modalSize)
+    setModalPosition(extra ? { ...clamped, ...extra } : clamped)
+  }, [clampToolbarModalPosition])
+
   const openTextColorModal = () => {
     closeAllModals()
     announceModalOpen()
@@ -721,10 +946,10 @@ useEffect(() => {
     
     if (textSelectButtonRef.current) {
       const rect = textSelectButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 280),
-        y: rect.bottom + 10
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 280, height: 380 }
+      )
     }
   }
 
@@ -735,24 +960,33 @@ useEffect(() => {
     
     if (bgSelectButtonRef.current) {
       const rect = bgSelectButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 280),
-        y: rect.bottom + 10
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 280, height: 380 }
+      )
     }
   }
 
-  const openLinkModal = () => {
+  const openLinkModal = (options = {}) => {
+    const initialStyleId = typeof options.initialStyleId === 'string' && options.initialStyleId.trim()
+      ? options.initialStyleId.trim()
+      : 'default'
+    const focusUrlInput = Boolean(options.focusUrlInput)
+    const preserveSelection = Boolean(options.preserveSelection)
+
+    captureLinkStyleSelection({ preserveOnCollapsed: preserveSelection })
     closeAllModals()
     announceModalOpen()
+    setLinkModalInitialStyleId(initialStyleId)
+    setFocusLinkModalUrlInput(focusUrlInput)
     setShowLinkModal(true)
     
     if (linkButtonRef.current) {
       const rect = linkButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 450),
-        y: rect.bottom + 10
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 340, height: 560 }
+      )
     }
   }
 
@@ -763,17 +997,17 @@ useEffect(() => {
 
     if (exportButtonRef.current) {
       const rect = exportButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 450),
-        y: rect.bottom + 10,
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 420, height: 420 }
+      )
       return
     }
 
-    setModalPosition({
-      x: window.innerWidth / 2 - 200,
-      y: window.innerHeight / 2 - 180,
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 180 },
+      { width: 420, height: 420 }
+    )
   }
 
   const openImportModal = () => {
@@ -783,17 +1017,17 @@ useEffect(() => {
 
     if (importButtonRef.current) {
       const rect = importButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 450),
-        y: rect.bottom + 10,
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 420, height: 460 }
+      )
       return
     }
 
-    setModalPosition({
-      x: window.innerWidth / 2 - 200,
-      y: window.innerHeight / 2 - 180,
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 180 },
+      { width: 420, height: 460 }
+    )
   }
 
   const refreshJsonFromEditor = () => {
@@ -822,19 +1056,18 @@ useEffect(() => {
     if (jsonButtonRef.current) {
       const rect = jsonButtonRef.current.getBoundingClientRect()
       const defaultJsonModalWidth = DEFAULT_JSON_MODAL_WIDTH
-      const maxX = Math.max(20, window.innerWidth - defaultJsonModalWidth - 20)
-      setModalPosition({
-        x: Math.min(Math.max(20, rect.left), maxX),
-        y: rect.bottom + 10,
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: defaultJsonModalWidth, height: 520 }
+      )
       return
     }
 
     const defaultJsonModalWidth = DEFAULT_JSON_MODAL_WIDTH
-    setModalPosition({
-      x: Math.max(20, window.innerWidth / 2 - defaultJsonModalWidth / 2),
-      y: window.innerHeight / 2 - 260,
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - defaultJsonModalWidth / 2, y: window.innerHeight / 2 - 260 },
+      { width: defaultJsonModalWidth, height: 520 }
+    )
   }
 
   const switchArticleLayoutTab = (tab) => {
@@ -883,17 +1116,17 @@ useEffect(() => {
 
     if (articleLayoutButtonRef.current) {
       const rect = articleLayoutButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(Math.max(20, rect.left), window.innerWidth - 320),
-        y: rect.bottom + 10,
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 340, height: 380 }
+      )
       return
     }
 
-    setModalPosition({
-      x: Math.max(20, window.innerWidth / 2 - 150),
-      y: Math.max(20, window.innerHeight / 2 - 160),
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 160 },
+      { width: 340, height: 380 }
+    )
   }
 
   const applyJsonToEditor = () => {
@@ -938,26 +1171,80 @@ useEffect(() => {
   }
 
   const openCustomStyleModal = (style = null) => {
+    captureLinkStyleSelection({ preserveOnCollapsed: true })
     closeAllModals()
     announceModalOpen()
     setEditingStyle(style)
     setShowCustomStyleModal(true)
     
-    setModalPosition({
-      x: window.innerWidth / 2 - 200,
-      y: window.innerHeight / 2 - 250
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 250 },
+      { width: 400, height: 620 }
+    )
   }
 
   const handleEditStyle = (style) => {
     openCustomStyleModal(style)
   }
 
-  const applyLinkStyle = (styleId) => {
+  const handleCustomStyleModalClose = (options = {}) => {
+    const reopenLinkModal = Boolean(options?.reopenLinkModal)
+    const selectedLinkStyleId =
+      typeof options?.selectedLinkStyleId === 'string' && options.selectedLinkStyleId.trim()
+        ? options.selectedLinkStyleId.trim()
+        : 'default'
+    const focusUrlInput = Boolean(options?.focusUrlInput)
+
+    closeAllModals()
+    if (!reopenLinkModal) return
+
+    requestAnimationFrame(() => {
+      openLinkModal({
+        initialStyleId: selectedLinkStyleId,
+        focusUrlInput,
+        preserveSelection: true,
+      })
+    })
+  }
+
+  const applyLinkStyle = (styleId, options = {}) => {
     if (!editor) return
-    
-    const { from, to } = editor.state.selection
-    if (from === to) return
+
+    const normalizedStyleId = String(styleId || '')
+    if (!normalizedStyleId) return
+
+    const explicitSelection = options?.selection
+    let from = explicitSelection?.from
+    let to = explicitSelection?.to
+
+    const hasExplicitSelection =
+      typeof from === 'number' && typeof to === 'number' && Number.isFinite(from) && Number.isFinite(to) && from !== to
+
+    if (!hasExplicitSelection) {
+      from = editor.state.selection?.from
+      to = editor.state.selection?.to
+    }
+
+    if (
+      typeof from !== 'number' ||
+      typeof to !== 'number' ||
+      !Number.isFinite(from) ||
+      !Number.isFinite(to) ||
+      from === to
+    ) {
+      const fallbackRange = captureLinkStyleSelection({ preserveOnCollapsed: true })
+      if (!fallbackRange || fallbackRange.from === fallbackRange.to) return
+      from = fallbackRange.from
+      to = fallbackRange.to
+    }
+
+    if (from > to) {
+      const swap = from
+      from = to
+      to = swap
+    }
+
+    linkStyleSelectionRef.current = { from, to }
     
     editor.chain()
       .focus()
@@ -966,17 +1253,21 @@ useEffect(() => {
       .unsetMark('textStyle')
       .run()
     
-    const isCustomStyle = styleId.startsWith('custom_')
+    const isCustomStyle = normalizedStyleId.startsWith('custom_')
     let styleConfig = null
     
     if (isCustomStyle) {
-      styleConfig = customLinkStyles.find(s => s.id === styleId)
+      if (options?.styleConfig && options.styleConfig.id === normalizedStyleId) {
+        styleConfig = options.styleConfig
+      } else {
+        styleConfig = customLinkStyles.find(s => s.id === normalizedStyleId)
+      }
     } else {
-      styleConfig = linkStyles.find(s => s.id === styleId)
+      styleConfig = linkStyles.find(s => s.id === normalizedStyleId)
     }
     
     if (!styleConfig) {
-      switch (styleId) {
+      switch (normalizedStyleId) {
         case 'button':
           editor.chain()
             .focus()
@@ -1073,7 +1364,13 @@ useEffect(() => {
   }
 
   const createCustomStyle = (newStyle) => {
-    setCustomLinkStyles([...customLinkStyles, newStyle])
+    if (!newStyle?.id) return
+
+    setCustomLinkStyles(prevStyles => [...prevStyles, newStyle])
+    applyLinkStyle(newStyle.id, {
+      styleConfig: newStyle,
+      selection: linkStyleSelectionRef.current,
+    })
   }
 
 useEffect(() => {
@@ -1573,15 +1870,16 @@ useEffect(() => {
     const modalWidth = modalEl?.offsetWidth || 0
     const modalHeight = modalEl?.offsetHeight || 0
 
-    const maxX = Math.max(0, window.innerWidth - modalWidth)
-    const maxY = Math.max(0, window.innerHeight - modalHeight)
-    const boundedX = Math.max(0, Math.min(newX, maxX))
-    const boundedY = Math.max(0, Math.min(newY, maxY))
+    const clamped = clampFixedModalPosition(
+      { x: newX, y: newY },
+      { width: modalWidth, height: modalHeight },
+      MODAL_VIEWPORT_MARGIN
+    )
     
     setModalPosition(prev => ({
       ...prev,
-      x: boundedX,
-      y: boundedY
+      x: clamped.x,
+      y: clamped.y
     }))
   }, [isDragging, dragOffset])
 
@@ -1605,6 +1903,48 @@ useEffect(() => {
       }
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
+
+  const hasAnyToolbarModalOpen =
+    showTextColorModal ||
+    showBgColorModal ||
+    showLinkModal ||
+    showCustomStyleModal ||
+    showExportModal ||
+    showImportModal ||
+    showJsonModal ||
+    showArticleLayoutModal ||
+    showToolbarOverflowModal
+
+  useEffect(() => {
+    if (!hasAnyToolbarModalOpen) return
+
+    const clampRenderedModalToViewport = () => {
+      const modalSelector = [
+        '.modal.toolbar-overflow-modal',
+        '.modal.json-modal',
+        '.modal.article-layout-modal',
+        '.modal.doc-io-modal',
+        '.custom-style-modal',
+        '.link-modal',
+        '.modal.color-modal',
+      ].join(', ')
+      const modalEl = document.querySelector(modalSelector)
+      if (!(modalEl instanceof HTMLElement)) return
+      const rect = modalEl.getBoundingClientRect()
+      setModalPosition(prev => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN)
+        if (next.x === prev.x && next.y === prev.y) return prev
+        return { ...prev, ...next }
+      })
+    }
+
+    const rafId = window.requestAnimationFrame(clampRenderedModalToViewport)
+    window.addEventListener('resize', clampRenderedModalToViewport)
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', clampRenderedModalToViewport)
+    }
+  }, [hasAnyToolbarModalOpen, jsonModalWidth])
 
   const handleJsonResizeMouseDown = useCallback(
     e => {
@@ -1832,19 +2172,14 @@ useEffect(() => {
           : null
 
       if (toolbarRect) {
-        const width = Math.round(toolbarRect.width)
-        const x = Math.min(
-          Math.max(20, Math.round(toolbarRect.left)),
-          Math.max(20, window.innerWidth - width - 20)
-        )
-        const y = Math.min(
-          Math.max(20, Math.round(toolbarRect.bottom) + 4),
-          Math.max(20, window.innerHeight - 220)
+        const width = Math.max(1, Math.round(toolbarRect.width))
+        const anchored = clampToolbarModalPosition(
+          { x: Math.round(toolbarRect.left), y: Math.round(toolbarRect.bottom) + 4 },
+          { width, height: 220 }
         )
 
         setModalPosition({
-          x,
-          y,
+          ...anchored,
           width,
         })
         return
@@ -1864,10 +2199,65 @@ useEffect(() => {
     })
   }
 
+  const syncToolbarOverflowModalWidth = useCallback(() => {
+    const toolbarRect =
+      toolbarRootRef.current instanceof HTMLElement
+        ? toolbarRootRef.current.getBoundingClientRect()
+        : null
+    if (!toolbarRect) return
+
+    const width = Math.max(1, Math.round(toolbarRect.width))
+    setModalPosition(prev => {
+      const clamped = clampToolbarModalPosition(
+        { x: Math.round(toolbarRect.left), y: prev.y },
+        { width, height: 220 }
+      )
+      const next = { ...prev, ...clamped, width }
+      if (
+        prev.x === next.x &&
+        prev.y === next.y &&
+        Number(prev.width) === Number(next.width)
+      ) {
+        return prev
+      }
+      return next
+    })
+  }, [clampToolbarModalPosition])
+
+  useEffect(() => {
+    if (!showToolbarOverflowModal) return
+
+    let raf = 0
+    const schedule = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(syncToolbarOverflowModalWidth)
+    }
+
+    schedule()
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null
+
+    if (resizeObserver && toolbarRootRef.current instanceof HTMLElement) {
+      resizeObserver.observe(toolbarRootRef.current)
+    }
+
+    window.addEventListener('resize', schedule)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', schedule)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [showToolbarOverflowModal, syncToolbarOverflowModalWidth])
+
   const renderToolbarGroup = (groupId, { inOverflow = false } = {}) => {
     const isHiddenInMain = !inOverflow && overflowGroupIds.includes(groupId)
     const groupClassName = [
       'toolbar-group',
+      `toolbar-group-${groupId}`,
       inOverflow ? 'toolbar-group-in-overflow' : '',
       isHiddenInMain ? 'toolbar-group-overflow-hidden' : '',
     ]
@@ -2057,7 +2447,7 @@ useEffect(() => {
               className={`color-main-btn bg-color-btn ${isBgPaintingMode ? 'painting-mode' : ''}`}
               style={{
                 backgroundColor: bgColor,
-                color: textColor,
+                color: bgButtonTextColor,
               }}
               onClick={e => {
                 e.stopPropagation()
@@ -2263,7 +2653,10 @@ useEffect(() => {
 
   return (
     <>
-      <div className="toolbar" ref={toolbarRootRef}>
+      <div
+        className={`toolbar${altSelectionModeActive ? ' toolbar-alt-locked' : ''}`}
+        ref={toolbarRootRef}
+      >
         <div className="toolbar-main" ref={toolbarMainRef}>
           {TOOLBAR_GROUP_ORDER.map(groupId => renderToolbarGroup(groupId))}
         </div>
@@ -2292,6 +2685,25 @@ useEffect(() => {
               '#',
               'Режим якорей',
             )}
+            {altSelectionModeActive ? (
+              <button
+                type="button"
+                className="toolbar-lasso-indicator"
+                title={'\u0412\u044b\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0440\u0435\u0436\u0438\u043c \u0432\u044b\u0434\u0435\u043b\u0435\u043d\u0438\u044f \u0431\u043b\u043e\u043a\u043e\u0432 (Alt)'}
+                aria-label={'\u0412\u044b\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0440\u0435\u0436\u0438\u043c \u0432\u044b\u0434\u0435\u043b\u0435\u043d\u0438\u044f \u0431\u043b\u043e\u043a\u043e\u0432 (Alt)'}
+                onClick={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onDisableAltSelectionMode?.()
+                }}
+              >
+                <GestureRoundedIcon
+                  aria-hidden="true"
+                  fontSize="inherit"
+                  style={{ width: 15, height: 15, fontSize: 15 }}
+                />
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -2367,13 +2779,15 @@ useEffect(() => {
             onEditStyle={handleEditStyle}
             applyLinkStyle={applyLinkStyle}
             fetchLinkPreview={fetchLinkPreview}
+            initialStyleId={linkModalInitialStyleId}
+            focusUrlInput={focusLinkModalUrlInput}
           />
         )}
       
       {showCustomStyleModal &&
         renderModalPortal(
           <CustomStyleModal
-            onClose={closeAllModals}
+            onClose={handleCustomStyleModalClose}
             position={modalPosition}
             onMouseDown={handleMouseDown}
             blockClose={blockClose}

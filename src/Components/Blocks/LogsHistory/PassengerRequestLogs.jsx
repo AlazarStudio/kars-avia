@@ -113,7 +113,7 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
         {logsData && (
           <div
             className={classes.requestData}
-            style={{ paddingBottom: totalPages > 1 ? "40px" : "20px" }}
+            style={{ paddingBottom: totalPages > 1 ? "40px" : "0" }}
           >
             <div ref={logRef} className={classes.logs}>
               {groupedHistory.length === 0 ? (

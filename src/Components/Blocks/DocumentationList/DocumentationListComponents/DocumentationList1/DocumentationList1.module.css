@@ -227,6 +227,14 @@
   pointer-events: auto;
 }
 
+.left-panel-toggle-btn,
+.right-panel-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
 .left-panel-toggle-zone:hover .left-panel-toggle-btn {
   opacity: 1;
   transform: translateX(0);
