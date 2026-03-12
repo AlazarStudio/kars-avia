@@ -341,6 +341,8 @@
  import classes from "./InfoTableAirlineDataTarifs.module.css";
  import InfoTable from "../InfoTable/InfoTable";
  import { roles } from "../../../roles";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 
  function InfoTableAirlineDataTarifs({
    toggleRequestSidebar,
@@ -385,16 +387,14 @@
                    <span>{item.name}</span>
                  </div>
                  <div className={classes.contractRowActions}>
-                   <img
-                     src="/editPassenger.png"
-                     alt="Редактировать договор"
+                   <EditPencilIcon
+                     cursor="pointer"
                      title="Редактировать"
                      onClick={() => toggleEditTarifsCategory(item)}
                    />
                    {onDeleteTarifsCategory && item.id && (
-                     <img
-                       src="/deletePassenger.png"
-                       alt="Удалить договор"
+                     <DeleteIcon
+                       cursor="pointer"
                        title="Удалить"
                        onClick={() => onDeleteTarifsCategory(item)}
                      />

@@ -26,6 +26,8 @@ import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
 
 /**
  * Компонент редактирования договора авиакомпании.
@@ -141,13 +143,13 @@ function EditRequestAirlineContract({
       files: [],
       additionalAgreements: Array.isArray(c.additionalAgreements)
         ? c.additionalAgreements.map((a) => ({
-          id: a.id,
-          contractNumber: a.contractNumber || "",
-          date: a.date || "",
-          itemAgreement: a.itemAgreement || "",
-          notes: a.notes || "",
-          files: Array.isArray(a.files) ? a.files : [],
-        }))
+            id: a.id,
+            contractNumber: a.contractNumber || "",
+            date: a.date || "",
+            itemAgreement: a.itemAgreement || "",
+            notes: a.notes || "",
+            files: Array.isArray(a.files) ? a.files : [],
+          }))
         : [],
     });
     setFiles(Array.isArray(c.files) ? c.files : []);
@@ -410,9 +412,9 @@ function EditRequestAirlineContract({
       const clickedOutsideMain =
         sidebarRef.current && !sidebarRef.current.contains(event.target);
       const clickedOutsideAgreement = !agreementSidebarRef.current?.contains(
-        event.target
+        event.target,
       );
-      const clickedInsideMenu = event.target.closest("[role=\"menu\"]");
+      const clickedInsideMenu = event.target.closest('[role="menu"]');
 
       if (clickedOutsideMain && clickedOutsideAgreement && !clickedInsideMenu) {
         closeButton();
@@ -451,22 +453,25 @@ function EditRequestAirlineContract({
 
         <div className={classes.tabs}>
           <div
-            className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
-              }`}
+            className={`${classes.tab} ${
+              activeTab === "Общая" ? classes.activeTab : ""
+            }`}
             onClick={() => handleTabChange("Общая")}
           >
             Общая
           </div>
           <div
-            className={`${classes.tab} ${activeTab === "ДС" ? classes.activeTab : ""
-              }`}
+            className={`${classes.tab} ${
+              activeTab === "ДС" ? classes.activeTab : ""
+            }`}
             onClick={() => handleTabChange("ДС")}
           >
             ДС
           </div>
           <div
-            className={`${classes.tab} ${activeTab === "Файлы" ? classes.activeTab : ""
-              }`}
+            className={`${classes.tab} ${
+              activeTab === "Файлы" ? classes.activeTab : ""
+            }`}
             onClick={() => handleTabChange("Файлы")}
           >
             Файлы
@@ -480,11 +485,23 @@ function EditRequestAirlineContract({
             {activeTab === "Общая" ? (
               <div
                 className={classes.requestMiddle}
-                style={!canEdit ? { height: "calc(100% - 148px)" } : isEditing ? {height: "calc(100vh - 198px)"} : {height: "calc(100vh - 117px)"}}
+                style={
+                  !canEdit
+                    ? { height: "calc(100% - 148px)" }
+                    : isEditing
+                      ? { height: "calc(100vh - 198px)" }
+                      : { height: "calc(100vh - 117px)" }
+                }
               >
                 <div className={classes.requestData}>
                   {/* Договор: основные поля */}
-                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
                     {isEditing ? (
                       <>
                         <label>№ Договора</label>
@@ -498,33 +515,55 @@ function EditRequestAirlineContract({
                       </>
                     ) : (
                       <>
-                        <div className={classes.requestDataInfo_title}>№ Договора</div>
-                        <div className={classes.requestDataInfo_desc}>{formData.contractNumber || "—"}</div>
+                        <div className={classes.requestDataInfo_title}>
+                          № Договора
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.contractNumber || "—"}
+                        </div>
                       </>
                     )}
                   </div>
 
-                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
                     {isEditing ? (
                       <>
                         <label>Дата заключения</label>
                         <input
                           type="date"
                           name="date"
-                          value={formData.date ? formData.date.slice(0, 10) : ""}
+                          value={
+                            formData.date ? formData.date.slice(0, 10) : ""
+                          }
                           onChange={handleChange}
                           placeholder="Дата"
                         />
                       </>
                     ) : (
                       <>
-                        <div className={classes.requestDataInfo_title}>Дата заключения</div>
-                        <div className={classes.requestDataInfo_desc}>{formData.date ? convertToDate(formData.date) : "—"}</div>
+                        <div className={classes.requestDataInfo_title}>
+                          Дата заключения
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.date ? convertToDate(formData.date) : "—"}
+                        </div>
                       </>
                     )}
                   </div>
 
-                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
                     {isEditing ? (
                       <>
                         <label>ГК КАРС</label>
@@ -533,12 +572,13 @@ function EditRequestAirlineContract({
                           label={"Введите компанию"}
                           options={companies?.map((item) => item.name)}
                           value={
-                            companies.find((item) => item.id === formData.companyId)
-                              ?.name || null
+                            companies.find(
+                              (item) => item.id === formData.companyId,
+                            )?.name || null
                           }
                           onChange={(event, newValue) => {
                             const selectedCompany = companies.find(
-                              (item) => item.name === newValue
+                              (item) => item.name === newValue,
                             );
                             setFormData((prevFormData) => ({
                               ...prevFormData,
@@ -550,15 +590,25 @@ function EditRequestAirlineContract({
                       </>
                     ) : (
                       <>
-                        <div className={classes.requestDataInfo_title}>ГК КАРС</div>
+                        <div className={classes.requestDataInfo_title}>
+                          ГК КАРС
+                        </div>
                         <div className={classes.requestDataInfo_desc}>
-                          {companies?.find((item) => item.id === formData.companyId)?.name || "—"}
+                          {companies?.find(
+                            (item) => item.id === formData.companyId,
+                          )?.name || "—"}
                         </div>
                       </>
                     )}
                   </div>
 
-                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
                     {isEditing ? (
                       <>
                         <label>Авиакомпания</label>
@@ -568,12 +618,12 @@ function EditRequestAirlineContract({
                           options={airlines?.map((airline) => airline.name)}
                           value={
                             airlines?.find(
-                              (airline) => airline.id === formData.airlineId
+                              (airline) => airline.id === formData.airlineId,
                             )?.name || null
                           }
                           onChange={(event, newValue) => {
                             const selectedAirline = airlines.find(
-                              (airline) => airline.name === newValue
+                              (airline) => airline.name === newValue,
                             );
                             setSelectedAirline(selectedAirline);
                             setFormData((prevFormData) => ({
@@ -586,15 +636,25 @@ function EditRequestAirlineContract({
                       </>
                     ) : (
                       <>
-                        <div className={classes.requestDataInfo_title}>Авиакомпания</div>
+                        <div className={classes.requestDataInfo_title}>
+                          Авиакомпания
+                        </div>
                         <div className={classes.requestDataInfo_desc}>
-                          {airlines?.find((airline) => airline.id === formData.airlineId)?.name || "—"}
+                          {airlines?.find(
+                            (airline) => airline.id === formData.airlineId,
+                          )?.name || "—"}
                         </div>
                       </>
                     )}
                   </div>
 
-                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
                     {isEditing ? (
                       <>
                         <label>Регион</label>
@@ -608,13 +668,23 @@ function EditRequestAirlineContract({
                       </>
                     ) : (
                       <>
-                        <div className={classes.requestDataInfo_title}>Регион</div>
-                        <div className={classes.requestDataInfo_desc}>{formData.region || "—"}</div>
+                        <div className={classes.requestDataInfo_title}>
+                          Регион
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.region || "—"}
+                        </div>
                       </>
                     )}
                   </div>
 
-                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
                     {isEditing ? (
                       <>
                         <label>Вид приложения</label>
@@ -624,7 +694,7 @@ function EditRequestAirlineContract({
                           options={action}
                           value={
                             action.find(
-                              (option) => option === formData.applicationType
+                              (option) => option === formData.applicationType,
                             ) || null
                           }
                           onChange={(event, newValue) => {
@@ -638,8 +708,12 @@ function EditRequestAirlineContract({
                       </>
                     ) : (
                       <>
-                        <div className={classes.requestDataInfo_title}>Вид приложения</div>
-                        <div className={classes.requestDataInfo_desc}>{formData.applicationType || "—"}</div>
+                        <div className={classes.requestDataInfo_title}>
+                          Вид приложения
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.applicationType || "—"}
+                        </div>
                       </>
                     )}
                   </div>
@@ -672,7 +746,7 @@ function EditRequestAirlineContract({
                     multiple
                     disabled={!isEditing}
                   /> */}
-                  {(canEdit && isEditing) && (
+                  {canEdit && isEditing && (
                     <div
                       ref={dropRef}
                       className={classes.fileDrop}
@@ -745,15 +819,13 @@ function EditRequestAirlineContract({
 
                       {canEdit && (
                         <>
-                          <img
-                            src="/edit.svg.png"
-                            alt="edit"
+                          <EditPencilIcon
+                            cursor="pointer"
                             onClick={() => openAgreement(ag, index)}
                             style={{ justifySelf: "end", cursor: "pointer" }}
                           />
-                          <img
-                            src="/deleteReport.png"
-                            alt="delete"
+                          <DeleteIcon
+                            cursor="pointer"
                             onClick={() => deleteAgreement(ag, index)}
                             style={{ cursor: "pointer" }}
                           />

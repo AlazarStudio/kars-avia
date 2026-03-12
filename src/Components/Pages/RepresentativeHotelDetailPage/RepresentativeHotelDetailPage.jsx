@@ -12,6 +12,8 @@ import { useCookies } from "../../../hooks/useCookies";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import {
   GET_PASSENGER_REQUEST,
+  GET_AIRLINE_DEPARTMENT,
+  GET_DISPATCHER_DEPARTMENTS,
   getCookie,
   ADMIN_ISSUE_PASSENGER_REQUEST_EXTERNAL_USER_MAGIC_LINK,
 } from "../../../../graphQL_requests";
@@ -21,7 +23,11 @@ import RepresentativeHotelDetail, { HotelDetailToolbar } from "../../Blocks/Repr
 import Message from "../../Blocks/Message/Message";
 import Notification from "../../Notification/Notification";
 import Button from "../../Standart/Button/Button";
-import { isExternalPassengerRequestUser } from "../../../utils/access";
+import {
+  isExternalPassengerRequestUser,
+  isAirlineRole as isAirlineRoleCheck,
+  isDispatcherRole as isDispatcherRoleCheck,
+} from "../../../utils/access";
 import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
 
 const ACCOUNT_TYPE_CRM = "CRM";
@@ -45,6 +51,56 @@ function RepresentativeHotelDetailPage({ user }) {
 
   const request = data?.passengerRequest ?? null;
   const decodedHotelId = hotelId ? decodeURIComponent(hotelId) : "";
+
+  const [accessMenu, setAccessMenu] = useState({});
+  const isDispatcherRole = isDispatcherRoleCheck(user);
+  const isAirlineRole = isAirlineRoleCheck(user);
+  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
+
+  const { data: airlineDepartmentData } = useQuery(GET_AIRLINE_DEPARTMENT, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      airlineDepartmentId: user?.airlineDepartmentId,
+    },
+    skip: !isAirlineRole || !user?.airlineDepartmentId,
+  });
+
+  const { data: dispatcherDepartmentsData } = useQuery(GET_DISPATCHER_DEPARTMENTS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: {
+      pagination: { all: true },
+    },
+  });
+
+  useEffect(() => {
+    if (isDispatcherRole) {
+      const department =
+        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
+          (item) => item.id === dispatcherDepartmentId
+        );
+      setAccessMenu(department?.accessMenu || {});
+      return;
+    }
+    if (isAirlineRole) {
+      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
+      return;
+    }
+    setAccessMenu({});
+  }, [
+    isDispatcherRole,
+    isAirlineRole,
+    dispatcherDepartmentId,
+    dispatcherDepartmentsData,
+    airlineDepartmentData,
+  ]);
 
   const { hotel, hotelIndex } = useMemo(() => {
     const hotels = request?.livingService?.hotels ?? [];
@@ -201,7 +257,7 @@ function RepresentativeHotelDetailPage({ user }) {
   if (loading || !request) {
     return (
       <div className={classes.main}>
-        <MenuDispetcher id="reserve" accessMenu={{}} />
+        <MenuDispetcher id="reserve" accessMenu={accessMenu} />
         <div className={classes.section}>
           <MUILoader />
         </div>
@@ -212,7 +268,7 @@ function RepresentativeHotelDetailPage({ user }) {
   if (error) {
     return (
       <div className={classes.main}>
-        <MenuDispetcher id="reserve" accessMenu={{}} />
+        <MenuDispetcher id="reserve" accessMenu={accessMenu} />
         <div className={classes.section}>
           <p>Error: {error.message}</p>
         </div>
@@ -226,7 +282,7 @@ function RepresentativeHotelDetailPage({ user }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id="reserve" accessMenu={{}} />
+      <MenuDispetcher id="reserve" accessMenu={accessMenu} />
       {isInitialized && !cookiesAccepted && (
         <CookiesNotice onAccept={acceptCookies} />
       )}

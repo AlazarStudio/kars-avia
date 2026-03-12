@@ -27,6 +27,8 @@ import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
 
 function EditRequestHotelContract({
   show,
@@ -985,15 +987,13 @@ function EditRequestHotelContract({
 
                       {canEdit && (
                         <>
-                          <img
-                            src="/edit.svg.png"
-                            alt="edit"
+                          <EditPencilIcon
+                            cursor="pointer"
                             onClick={() => openAgreement(ag, index)}
                             style={{ justifySelf: "end", cursor: "pointer" }}
                           />
-                          <img
-                            src="/deleteReport.png"
-                            alt="delete"
+                          <DeleteIcon
+                            cursor="pointer"
                             onClick={() => deleteAgreement(ag, index)}
                             style={{ cursor: "pointer" }}
                           />

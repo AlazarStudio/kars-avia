@@ -5,6 +5,8 @@ import AttachIcon from "../../../shared/icons/AttachIcon";
 import BackArrowIcon from "../../../shared/icons/BackArrowIcon";
 import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
 
 function InfoTableAllDataTarifs({
   id,
@@ -118,14 +120,13 @@ function InfoTableAllDataTarifs({
                         {canEdit && (
 
                           <div className={`${classes.buttonsWrapper} ${classes.w10}`} onClick={(e) => e.stopPropagation()}>
-                            <img 
-                                src="/edit.svg.png" 
-                                alt="" 
+                            <EditPencilIcon
+                                cursor="pointer"
                                 style={{width:"fit-content", height:"fit-content"}}
                                 onClick={() => handleObject(item.id)}
                             />
-                            <img 
-                                src="/deleteReport.png" alt="" 
+                            <DeleteIcon
+                                cursor="pointer"
                                 onClick={() => {openDeleteContract(item)}}
                             />
                         </div>

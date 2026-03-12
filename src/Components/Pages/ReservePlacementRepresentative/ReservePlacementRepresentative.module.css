@@ -660,19 +660,44 @@
     width: 60px;
 }
 
-.driverPassengersColTime {
-    width: 180px;
+.driverPassengersColFio {
+    flex: 2;
 }
 
-.driverPassengersColFio {
+.driverPassengersColPhone {
     flex: 1;
+}
+
+.driverPassengersColSeat {
+    width: 100px;
+}
+
+.driverPassengersColAddressFrom {
+    flex: 2;
+}
+
+.driverPassengersColAddressTo {
+    flex: 2;
 }
 
 .driverPassengersTableCard {
     background: #fff;
-    border: 1px solid #E4E4EF;
     border-top: none;
     border-radius: 0 0 10px 10px;
     overflow-y: auto;
-    min-height: 120px;
+}
+
+.driverPassengersTableRow {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    gap: 20px;
+    background: #fff;
+    color: var(--main-black, #1a1a1a);
+    font-size: 16px;
+    border-bottom: 1px solid #E4E4EF;
+}
+
+.driverPassengersTableRow:last-child {
+    border-bottom: none;
 }

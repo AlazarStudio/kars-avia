@@ -3,6 +3,8 @@ import classes from "./InfoTableDataDispatcherCompany.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { getMediaUrl } from "../../../../graphQL_requests";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { canAccessMenu, isDispatcherAdmin } from "../../../utils/access";
 
 function InfoTableDataDispatcherCompany({
@@ -32,19 +34,17 @@ function InfoTableDataDispatcherCompany({
               <div className={classes.infoTable_buttons}>
                 {!group.isNoDepartment && canEdit && (
                   <>
-                    <img
-                      src="/editPassenger.png"
-                      alt="Edit"
+                    <EditPencilIcon
+                      cursor="pointer"
                       onClick={() => onEditDepartment?.(group)}
                     />
                     <SettingsIcon
                       cursor={"pointer"}
-                      strokeWidth={0.5}
+                      strokeWidth={1}
                       onClick={() => onOpenAccess?.(group)}
                     />
-                    <img
-                      src="/deletePassenger.png"
-                      alt="Delete"
+                    <DeleteIcon
+                      cursor="pointer"
                       onClick={() => onDeleteDepartment?.(group)}
                     />
                   </>
@@ -88,14 +88,12 @@ function InfoTableDataDispatcherCompany({
                     </div>
                     {canEdit && (
                       <div className={classes.infoTable_buttons}>
-                        <img
-                          src="/editPassenger.png"
-                          alt="Edit"
+                        <EditPencilIcon
+                          cursor="pointer"
                           onClick={() => onEditDispatcher?.(dispatcher)}
                         />
-                        <img
-                          src="/deletePassenger.png"
-                          alt="Delete"
+                        <DeleteIcon
+                          cursor="pointer"
                           onClick={() => onDeleteDispatcher?.(dispatcher)}
                         />
                       </div>

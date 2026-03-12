@@ -3,6 +3,8 @@ import classes from './InfoTableDataAirlineCompany.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { getMediaUrl } from "../../../../graphQL_requests";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { useNavigate } from "react-router-dom";
 import { menuAccess } from "../../../roles";
 
@@ -23,10 +25,10 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
 
                             <div className={classes.infoTable_buttons}>
                                 {(!user?.airlineId || accessMenu.userUpdate) && 
-                                <><img src="/editPassenger.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} />
+                                <><EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestSidebar(item)} />
                                 {/* <img src="/settings.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} /> */}
                                 {!representative && (<SettingsIcon cursor={"pointer"} strokeWidth={0.5} onClick={() => onOpenSettings ? onOpenSettings(item) : navigate("/airlineAccess", { state:{ item: item, airlineId: airlineId } } )} />)}
-                                <img src="/deletePassenger.png" alt="Delete" onClick={() => openDeleteComponent(index, item.id)} /></>}
+                                <DeleteIcon cursor="pointer" strokeWidth={0.5} onClick={() => openDeleteComponent(index, item.id)} /></>}
                             </div>
 
                         </div>
@@ -43,10 +45,10 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                             <div className={classes.employeePost}>{employee.position?.name}</div>
                                         </div>
                                         <div className={classes.infoTable_buttons}>
-                                            <img src="/editPassenger.png" alt="Edit" onClick={() => toggleRequestEditNumber(employee, item.name)} /> 
+                                            <EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestEditNumber(employee, item.name)} /> 
                                             {(!user?.airlineId || accessMenu.userUpdate) && 
                                             <>
-                                                <img src="/deletePassenger.png" alt="Delete" onClick={() => openDeleteNomerComponent(employee, item.name)} />
+                                                <DeleteIcon cursor="pointer" strokeWidth={0.5} onClick={() => openDeleteNomerComponent(employee, item.name)} />
                                             </>}
                                         </div>
                                     </div>

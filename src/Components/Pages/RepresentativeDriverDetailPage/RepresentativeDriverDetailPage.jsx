@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@apollo/client";
 import classes from "../ReservePlacementRepresentative/ReservePlacementRepresentative.module.css";
@@ -9,10 +15,7 @@ import Sidebar from "../../Blocks/Sidebar/Sidebar";
 import Button from "../../Standart/Button/Button";
 import { useCookies } from "../../../hooks/useCookies";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
-import {
-  GET_PASSENGER_REQUEST,
-  getCookie,
-} from "../../../../graphQL_requests";
+import { GET_PASSENGER_REQUEST, getCookie } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import Message from "../../Blocks/Message/Message";
@@ -119,15 +122,46 @@ function RepresentativeDriverDetailPage({ user }) {
         </div>
 
         <div className={classes.contentWithChat}>
-          <div className={classes.tabContent} style={{ padding: "20px 0", display: "flex", flexDirection: "column", gap: 20 }}>
+          <div
+            className={classes.tabContent}
+            style={{ display: "flex", flexDirection: "column", gap: 20 }}
+          >
             <div className={classes.driverPassengersTableWrap}>
               <div className={classes.driverPassengersTableHead}>
                 <div className={classes.driverPassengersColId}>ID</div>
-                <div className={classes.driverPassengersColTime}>Время</div>
-                <div className={classes.driverPassengersColFio}>ФИО пассажиров</div>
+                <div className={classes.driverPassengersColFio}>
+                  ФИО пассажиров
+                </div>
+                <div className={classes.driverPassengersColPhone}>Телефон</div>
+                <div className={classes.driverPassengersColSeat}>Место</div>
+                <div className={classes.driverPassengersColAddressFrom}>
+                  Адрес отправления
+                </div>
+                <div className={classes.driverPassengersColAddressTo}>
+                  Адрес прибытия
+                </div>
               </div>
               <div className={classes.driverPassengersTableCard}>
-                {/* Пустая таблица — строки пассажиров пока не выводятся */}
+                {(driver.people ?? []).map((person, rowIndex) => (
+                  <div key={rowIndex} className={classes.driverPassengersTableRow}>
+                    <div className={classes.driverPassengersColId}>{rowIndex + 1}</div>
+                    <div className={classes.driverPassengersColFio}>
+                      {person.fullName ?? "—"}
+                    </div>
+                    <div className={classes.driverPassengersColPhone}>
+                      {person.phone ?? "—"}
+                    </div>
+                    <div className={classes.driverPassengersColSeat}>
+                      {person.seat ?? "—"}
+                    </div>
+                    <div className={classes.driverPassengersColAddressFrom}>
+                      {driver.addressFrom ?? "—"}
+                    </div>
+                    <div className={classes.driverPassengersColAddressTo}>
+                      {driver.addressTo ?? "—"}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

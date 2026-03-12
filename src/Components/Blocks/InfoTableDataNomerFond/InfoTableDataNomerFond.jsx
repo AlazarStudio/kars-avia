@@ -1,6 +1,8 @@
 import React from "react";
 import classes from './InfoTableDataNomerFond.module.css';
 import InfoTable from "../InfoTable/InfoTable";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
 
 function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, ...props }) {
     const buildFilteredRequests = (reserveFilter) => {
@@ -48,8 +50,14 @@ function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, re
                                             {elem.type !== 'apartment' ? "№" : ""} {elem.name} {!elem.active && '(не работает)'} {elem?.roomKind?.name}
                                             {/* {console.log(elem)} */}
                                             <div className={classes.infoTable_buttons}>
-                                                <img src="/editPassenger.png" alt="" onClick={() => toggleRequestEditNumber(elem, item)} />
-                                                <img src="/deletePassenger.png" alt="" onClick={() => openDeleteNomerComponent(elem, item.name)} />
+                                                <EditPencilIcon
+                                                    cursor="pointer"
+                                                    onClick={() => toggleRequestEditNumber(elem, item)}
+                                                />
+                                                <DeleteIcon
+                                                    cursor="pointer"
+                                                    onClick={() => openDeleteNomerComponent(elem, item.name)}
+                                                />
                                             </div>
                                         </div>
 

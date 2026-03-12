@@ -54,7 +54,7 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{convertToDateNew(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w18}`}>
                             <div className={classes.InfoTable_data_elem_img}>
-                                <img src={getMediaUrl(item.airline?.images[0])} alt="" />
+                                <img src={item.airline?.images[0] ? getMediaUrl(item.airline?.images[0]) : '/no-avatar.png'} alt="" />
                             </div>
                             {item.airline?.name}
                         </div>

@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import classes from "./InfoTableOrganizationTransferPrices.module.css";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
 
 function InfoTableOrganizationTransferPrices({
   requests = [],
@@ -47,16 +49,14 @@ function InfoTableOrganizationTransferPrices({
                 <span>Ценник {index + 1}</span>
               </div>
               <div className={classes.contractRowActions}>
-                <img
-                  src="/editPassenger.png"
-                  alt="Редактировать ценник"
+                <EditPencilIcon
+                  cursor="pointer"
                   title="Редактировать"
                   onClick={() => onEdit(item, index)}
                 />
                 {onDelete && item.id && (
-                  <img
-                    src="/deletePassenger.png"
-                    alt="Удалить ценник"
+                  <DeleteIcon
+                    cursor="pointer"
                     title="Удалить"
                     onClick={() => onDelete(item, index)}
                   />

@@ -69,9 +69,9 @@ const AirlineAdminMenu = ({
         )}
         {hasAccessMenu(accessMenu, "reserveMenu") && (
           <Link
-            to={"/reserve"}
+            to={"/representativeRequests"}
             className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-              } ${(id == "reserve" ||
+              } ${(id == "representativeRequests" ||
                 ((id == undefined || !id) &&
                   safeAccessMenu.requestMenu === false)) &&
               classes.menu_items__activeElem
@@ -101,7 +101,7 @@ const AirlineAdminMenu = ({
             </div>
             {/* {menuOpen ? "Пассажиры" : ""} */}
             <DelayedText show={menuOpen} delay={200}>
-              Пассажиры
+              ФАП
             </DelayedText>
             {allCreatedReserves > 0 && (
               <div
@@ -111,7 +111,7 @@ const AirlineAdminMenu = ({
                 {allCreatedReserves}
               </div>
             )}
-            {!menuOpen && <span className={classes.tooltip}>Пассажиры</span>}
+            {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
           </Link>
         )}
         {hasAccessMenu(accessMenu, "transferMenu") && (

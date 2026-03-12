@@ -19,6 +19,8 @@ import {
   getCookie,
   convertToDate,
 } from "../../../../graphQL_requests.js";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
 
 export function HotelDetailToolbar({
   searchQuery,
@@ -37,11 +39,11 @@ export function HotelDetailToolbar({
         onChange={(e) => onSearchChange(e.target.value)}
       />
       <div className={classes.actionsWrap}>
-        {onIssueLink && (
+        {/* {onIssueLink && (
           <Button onClick={onIssueLink} type="button">
             Выдать ссылку для гостиницы
           </Button>
-        )}
+        )} */}
         <Button onClick={onGenerateReport}>Сформировать отчет</Button>
         <Button onClick={onAddBooking}>Добавить бронь</Button>
       </div>
@@ -386,7 +388,7 @@ export default function RepresentativeHotelDetail({
                   aria-label="Редактировать бронь"
                   title="Редактировать бронь"
                 >
-                  <img src="/edit.svg.png" alt="" />
+                  <EditPencilIcon cursor="pointer" />
                 </button>
                 <button
                   type="button"
@@ -395,7 +397,7 @@ export default function RepresentativeHotelDetail({
                   className={classes.deleteBtn}
                   aria-label="Удалить бронь"
                 >
-                  <img src="/deleteReport.png" alt="Удалить" className={classes.trashIcon} />
+                  <DeleteIcon cursor="pointer" />
                 </button>
               </div>
             </div>
