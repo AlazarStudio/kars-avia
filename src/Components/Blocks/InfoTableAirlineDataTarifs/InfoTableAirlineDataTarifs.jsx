@@ -345,6 +345,7 @@
  function InfoTableAirlineDataTarifs({
    toggleRequestSidebar,
    toggleEditTarifsCategory,
+   onDeleteTarifsCategory,
    toggleEditMealPrices,
    requests,
    mealPrices,
@@ -387,8 +388,17 @@
                    <img
                      src="/editPassenger.png"
                      alt="Редактировать договор"
+                     title="Редактировать"
                      onClick={() => toggleEditTarifsCategory(item)}
                    />
+                   {onDeleteTarifsCategory && item.id && (
+                     <img
+                       src="/deletePassenger.png"
+                       alt="Удалить договор"
+                       title="Удалить"
+                       onClick={() => onDeleteTarifsCategory(item)}
+                     />
+                   )}
                  </div>
                </div>
 

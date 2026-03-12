@@ -7,6 +7,7 @@ import {
   split,
   HttpLink,
 } from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
@@ -33,11 +34,23 @@ import { UserActivityTracker } from "./UserActivityTracker";
 import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementRepresentative/ReservePlacementRepresentative";
 import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHotelDetailPage/RepresentativeHotelDetailPage";
 import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
+import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDriverDetailPage/RepresentativeDriverDetailPage";
 import TransferOrder from "./Components/Blocks/TransferOrder/TransferOrder";
 import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
 
 function App() {
   const { user } = useAuth();
+
+  const authLink = setContext((_, { context }) => {
+    const token = getCookie("token");
+    return {
+      ...context,
+      headers: {
+        ...(context?.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    };
+  });
 
   const uploadLink = createUploadLink({
     uri: `${server}/graphql`,
@@ -64,7 +77,7 @@ function App() {
       );
     },
     wsLink,
-    uploadLink
+    authLink.concat(uploadLink)
   );
 
   const client = new ApolloClient({
@@ -118,6 +131,10 @@ function App() {
             <Route
               path="/:id/representativeRequestsPlacement/:idRequest/hotel/:hotelId/report"
               element={<RepresentativeHotelReportPage user={user} />}
+            />
+            <Route
+              path="/:id/representativeRequestsPlacement/:idRequest/driver/:driverIndex"
+              element={<RepresentativeDriverDetailPage user={user} />}
             />
 
             {/* Шахматка */}

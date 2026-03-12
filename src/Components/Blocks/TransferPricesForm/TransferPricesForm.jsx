@@ -156,7 +156,7 @@ function TransferPricesForm({
           className={classes.addBtn}
           onClick={addRecord}
         >
-          + Добавить ценник
+          + Добавить договор
         </button>
       )}
     </div>

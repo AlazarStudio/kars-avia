@@ -9,24 +9,10 @@ import {
 } from "@mui/material";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import { EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK, PASSENGER_REQUEST_EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK } from "../../../../graphQL_requests";
+import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
 
 const KIND_EXTERNAL_USER = "EXTERNAL_USER";
 const KIND_PASSENGER_REQUEST_EXTERNAL_USER = "PASSENGER_REQUEST_EXTERNAL_USER";
-
-const ERROR_MESSAGES = {
-  "Invalid or expired magic link": "Ссылка недействительна, истекла или уже использована.",
-  "Access forbidden": "Доступ запрещён.",
-  FORBIDDEN: "Доступ запрещён.",
-  "PassengerRequest not found": "Заявка не найдена.",
-  "PassengerServiceHotel item not found": "Указанный отель в заявке не найден.",
-  "Magic link issue limit exceeded": "Превышен лимит выдачи ссылок. Попробуйте позже.",
-  "External user has no active session": "Нет активной сессии. Невозможно продлить.",
-};
-
-function getErrorMessage(err) {
-  const msg = err?.message || err?.graphQLErrors?.[0]?.message || "";
-  return ERROR_MESSAGES[msg] || msg || "Ошибка входа по ссылке.";
-}
 
 function ExternalLogin() {
   const [searchParams] = useSearchParams();
@@ -57,7 +43,7 @@ function ExternalLogin() {
 
     const run = async () => {
       try {
-        const variables = { token: token.trim(), fingerprint: null };
+        const variables = { token: token.trim() };
         let data;
 
         if (kind === KIND_EXTERNAL_USER) {
@@ -74,14 +60,20 @@ function ExternalLogin() {
           return;
         }
 
-        const refreshToken = data.refreshToken || "";
-        document.cookie = `token=${data.token}; SameSite=Lax; Max-Age=86400`;
-        document.cookie = `refreshToken=${refreshToken}; SameSite=Lax; Max-Age=${30 * 24 * 3600}`;
+        document.cookie = `token=${data.token}; SameSite=Lax; Max-Age=86400; Path=/`;
+        if (data.refreshToken) {
+          document.cookie = `refreshToken=${data.refreshToken}; SameSite=Lax; Max-Age=${30 * 24 * 3600}; Path=/`;
+        }
 
         setStatus("success");
-        window.location.href = "/";
+        if (kind === KIND_PASSENGER_REQUEST_EXTERNAL_USER && data?.passengerRequestExternalUser?.passengerRequestId) {
+          const prId = data.passengerRequestExternalUser.passengerRequestId;
+          window.location.href = `/reserve/representativeRequestsPlacement/${prId}`;
+        } else {
+          window.location.href = "/";
+        }
       } catch (err) {
-        setError(getErrorMessage(err));
+        setError(getExternalAuthErrorMessage(err, "Ошибка входа по ссылке."));
         setStatus("error");
       }
     };

@@ -60,7 +60,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
-        ids: ["reserve"],
+        ids: ["representativeRequests"],
         guardKey: "reserveMenu",
         Comp: RepresentativeRequests,
         // Comp: Reserve,

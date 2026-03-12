@@ -12,8 +12,13 @@ export const AuthProvider = ({ children }) => {
     const token = getCookie("token");
 
     if (token) {
-      const decodedUser = decodeJWT(token);
-      setUser(decodedUser);
+      try {
+        const decodedUser = decodeJWT(token);
+        setUser(decodedUser);
+      } catch {
+        // Битый или невалидный токен — не считаем пользователя авторизованным
+        setUser(null);
+      }
     }
 
     setLoading(false); // Завершение загрузки

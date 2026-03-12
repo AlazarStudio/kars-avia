@@ -20,7 +20,14 @@ import {
   convertToDate,
 } from "../../../../graphQL_requests.js";
 
-export function HotelDetailToolbar({ searchQuery, onSearchChange, onAddBooking, onGenerateReport, className }) {
+export function HotelDetailToolbar({
+  searchQuery,
+  onSearchChange,
+  onAddBooking,
+  onGenerateReport,
+  onIssueLink,
+  className,
+}) {
   return (
     <div className={className ? `${className} ${classes.headerRow}` : classes.headerRow}>
       <MUITextField
@@ -30,13 +37,11 @@ export function HotelDetailToolbar({ searchQuery, onSearchChange, onAddBooking, 
         onChange={(e) => onSearchChange(e.target.value)}
       />
       <div className={classes.actionsWrap}>
-        {/* <button type="button" className={classes.headerBtn}>
-          <EditIcon /> Редактировать
-        </button> */}
-        {/* <button type="button" className={classes.headerBtn} onClick={onGenerateReport}>
-          <img src="/plus.png" alt="" style={{ width: "15px", objectFit: "contain", filter: "invert(100%)" }} />
-          Сформировать отчет
-        </button> */}
+        {onIssueLink && (
+          <Button onClick={onIssueLink} type="button">
+            Выдать ссылку для гостиницы
+          </Button>
+        )}
         <Button onClick={onGenerateReport}>Сформировать отчет</Button>
         <Button onClick={onAddBooking}>Добавить бронь</Button>
       </div>

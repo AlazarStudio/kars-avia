@@ -184,8 +184,8 @@ function Header({ children }) {
     });
 
     if (result && data) {
-      document.cookie = "token=; Max-Age=0; Path=/;";
-      document.cookie = "refreshToken=; Max-Age=0; Path=/;";
+      document.cookie = "token=; Max-Age=0; Path=/";
+      document.cookie = "refreshToken=; Max-Age=0; Path=/";
       localStorage.removeItem("isAirline");
       navigate("/");
       window.location.reload();

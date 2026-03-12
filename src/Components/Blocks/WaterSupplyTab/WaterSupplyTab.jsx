@@ -4,7 +4,6 @@ import { useMutation } from "@apollo/client";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
 import Button from "../../Standart/Button/Button";
-import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import {
   convertToDate,
   SET_PASSENGER_SERVICE_STATUS,
@@ -164,14 +163,14 @@ export default function WaterSupplyTab({
           >
             <h3>Досрочно завершить услугу «Поставка воды»</h3>
             <p>Укажите причину досрочного завершения (обязательно):</p>
-            <MUITextField
-              multiline
-              minRows={3}
-              label="Причина"
+            {/* <label className={classes.modalReasonLabel} htmlFor="water-early-reason">Причина</label> */}
+            <textarea
+              id="water-early-reason"
+              className={classes.modalReasonInput}
               value={earlyCompleteReason}
               onChange={(e) => setEarlyCompleteReason(e.target.value)}
-              fullWidth
-              className={classes.modalReasonInput}
+              rows={4}
+              placeholder="Причина"
             />
             <div className={classes.modalActions}>
               <Button

@@ -122,8 +122,30 @@
   font-size: 14px;
 }
 
+.modalReasonLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  color: var(--text, #1a1a1a);
+}
+
 .modalReasonInput {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
   margin-bottom: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.modalReasonInput:focus {
+  border-color: var(--primary, #2A6EF5);
 }
 
 .modalActions {

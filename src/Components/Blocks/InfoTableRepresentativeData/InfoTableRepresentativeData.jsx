@@ -70,14 +70,14 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                         >
                             {item.flightNumber}
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.p0} ${classes.w18}`} style={{justifyContent:"center", textAlign:'center'}}>
-                                    {/* <span><img src="/calendar.png" alt="" /> {convertToDate(item.departure)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDate(item.departure, true)}</span> */}
-                                    {item.waterService?.plan?.enabled && <>Вода<br /></>}
-                                    {item.mealService?.plan?.enabled && <>Питание <br /></>}
-                                    {item.livingService?.plan?.enabled && <>Проживание <br /></>}
-                                    {item.transferService?.plan?.enabled && <>Трансфер <br /></>}
-                                    {item.baggageDeliveryService?.plan?.enabled && <>Доставка багажа <br /></>}
+                        <div className={`${classes.InfoTable_data_elem} ${classes.p0} ${classes.w18} ${classes.serviceCell}`}>
+                            <div className={classes.serviceChips}>
+                                {item.waterService?.plan?.enabled && <span className={classes.serviceChip}>Вода</span>}
+                                {item.mealService?.plan?.enabled && <span className={classes.serviceChip}>Питание</span>}
+                                {item.livingService?.plan?.enabled && <span className={classes.serviceChip}>Проживание</span>}
+                                {item.transferService?.plan?.enabled && <span className={classes.serviceChip}>Трансфер</span>}
+                                {item.baggageDeliveryService?.plan?.enabled && <span className={classes.serviceChip}>Багаж</span>}
+                            </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_position}>

@@ -17,8 +17,9 @@ export const DEFAULT_CENTER = [55.755864, 37.617698]; // твой регион
 export const getCookie = (name) => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  const token = parts.pop().split(';').shift()
-  return token
+  if (parts.length < 2) return undefined;
+  const token = parts.pop().split(";").shift();
+  return token === undefined ? undefined : (token || undefined);
 };
 
 export const getMediaUrl = (path) => {
@@ -871,6 +872,12 @@ export const UPDATE_ORGANIZATION = gql`
     updateOrganization(id: $updateOrganizationId, input: $input, images: $images) {
       id
     }
+  }
+`;
+
+export const DELETE_ORGANIZATION_TRANSFER_PRICE = gql`
+  mutation DeleteOrganizationTransferPrice($id: ID!) {
+    deleteOrganizationTransferPrice(id: $id)
   }
 `;
 
@@ -1751,6 +1758,14 @@ export const SET_PASSENGER_SERVICE_STATUS = gql`
 export const ADD_PASSENGER_REQUEST_HOTEL = gql`
   mutation AddPassengerRequestHotel($requestId: ID!, $hotel: PassengerServiceHotelInput!) {
     addPassengerRequestHotel(requestId: $requestId, hotel: $hotel) {
+      id
+    }
+  }
+`;
+
+export const ADD_PASSENGER_REQUEST_DRIVER = gql`
+  mutation AddPassengerRequestDriver($requestId: ID!, $driver: PassengerServiceDriverInput!) {
+    addPassengerRequestDriver(requestId: $requestId, driver: $driver) {
       id
     }
   }
@@ -2875,6 +2890,7 @@ export const GET_PASSENGER_REQUEST = gql`
         }
         hotels {
           hotelId
+          itemId
           name
           peopleCount
           address
@@ -2921,6 +2937,8 @@ export const GET_PASSENGER_REQUEST = gql`
           peopleCount
           pickupAt
           link
+          addressFrom
+          addressTo
         }
       }
       baggageDeliveryService {
@@ -3922,6 +3940,30 @@ export const GET_AIRLINE = gql`
   }
 `;
 
+export const GET_AIRLINE_TRANSFER_PRICES = gql`
+  fragment AirlineTransferPriceFields on TransferPrice {
+    id
+    createdAt
+    updatedAt
+    prices {
+      threeSeater { intercity city }
+      fiveSeater { intercity city }
+      sevenSeater { intercity city }
+    }
+    airports { id name code city }
+    cities { id city region }
+  }
+  query AirlineTransferPrices($airlineId: ID!) {
+    airline(id: $airlineId) {
+      id
+      name
+      transferPrices {
+        ...AirlineTransferPriceFields
+      }
+    }
+  }
+`;
+
 // export const GET_AIRLINE_TARIFS = gql`
 //   query Airline($airlineId: ID!) {
 //     airline(id: $airlineId) {
@@ -4052,6 +4094,18 @@ export const DELETE_AIRLINE_TARIFF = gql`
     deleteTariff(id: $deleteTariffId) {
       name
     }
+  }
+`;
+
+export const DELETE_AIRLINE_PRICE = gql`
+  mutation DeleteAirlinePrice($id: ID!) {
+    deleteAirlinePrice(id: $id)
+  }
+`;
+
+export const DELETE_AIRLINE_TRANSFER_PRICE = gql`
+  mutation DeleteAirlineTransferPrice($id: ID!) {
+    deleteAirlineTransferPrice(id: $id)
   }
 `;
 
@@ -5581,6 +5635,8 @@ export const PASSENGER_REQUEST_EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK = gql`
       passengerRequestExternalUser {
         id
         email
+        login
+        accountType
         name
         passengerRequestId
         passengerServiceHotelItemId

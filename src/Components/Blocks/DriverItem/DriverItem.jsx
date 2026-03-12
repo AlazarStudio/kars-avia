@@ -17,7 +17,7 @@ function DriverItem({
     <div
       className={classes.InfoTable_row}
       onClick={() => handleObject(props.id, props)}
-      // data-id={props.id}
+    // data-id={props.id}
     >
       {/* {console.log(props)} */}
       <div className={`${classes.col} ${classes.colImage}`}>
@@ -50,14 +50,15 @@ function DriverItem({
           </span>
         </div>
         <div className={classes.clientBottom}>
-          <CarIcon />{" "}
+          {/* <CarIcon /> */}
+          {"Активные заявки: "}
           {activeTransfersCount ||
             props.transfers.filter(
               (i) =>
                 i.status.toLowerCase() !== "completed" &&
                 i.status.toLowerCase() !== "cancelled"
             ).length}
-          <span className={classes.tooltip}>Активные заявки</span>
+          {/* <span className={classes.tooltip}>Активные заявки</span> */}
         </div>
       </div>
       <div className={`${classes.col} ${classes.colCarInfo}`}>
@@ -81,9 +82,18 @@ function DriverItem({
             </div>
           )}
         </div> */}
-        <Button padding="0 15px" minwidth="150px">
+        {btnTitle === "Назначен" ? (
+          <span style={{ padding: "0 15px", minWidth: "150px", color: "var(--blue)", fontWeight: 600, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+            {btnTitle}
+          </span>
+        ) : (
+          <Button padding="0 15px" minwidth="150px">
+            {btnTitle}
+          </Button>
+        )}
+        {/* <Button padding="0 15px" minwidth="150px">
           {btnTitle}
-        </Button>
+        </Button> */}
       </div>
     </div>
   );

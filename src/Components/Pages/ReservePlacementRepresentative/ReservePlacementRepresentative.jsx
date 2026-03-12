@@ -33,6 +33,7 @@ import {
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
+  isExternalPassengerRequestUser,
 } from "../../../utils/access";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
@@ -54,6 +55,7 @@ import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import { useCookies } from "../../../hooks/useCookies";
 import AddRepresentativeService from "../../Blocks/AddRepresentativeService/AddRepresentativeService";
 import AddRepresentativeHotel from "../../Blocks/AddRepresentativeHotel/AddRepresentativeHotel";
+import AddRepresentativeDriver from "../../Blocks/AddRepresentativeDriver/AddRepresentativeDriver";
 import PassengerRequestLogs from "../../Blocks/LogsHistory/PassengerRequestLogs";
 import * as XLSX from "xlsx";
 import DownloadIcon from "../../../shared/icons/DownloadIcon";
@@ -118,6 +120,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     },
     variables: { passengerRequestId: idRequest },
   });
+
+  // console.log(data);
+  
 
   const {
     loading: loadingHotel,
@@ -215,7 +220,17 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   const isDispatcherRole = isDispatcherRoleCheck(user);
   const isAirlineRole = isAirlineRoleCheck(user);
+  const isExternalUser = isExternalPassengerRequestUser(user);
+  const restrictedToHotelItemId = user?.passengerServiceHotelItemId;
   const dispatcherDepartmentId = user?.dispatcherDepartmentId;
+
+  const habitationRequest = useMemo(() => {
+    if (!request || !isExternalUser || !restrictedToHotelItemId) return request;
+    const hotels = request.livingService?.hotels ?? [];
+    const allowed = hotels.filter((h) => h.itemId === restrictedToHotelItemId);
+    if (allowed.length === 0) return request;
+    return { ...request, livingService: { ...request.livingService, hotels: allowed } };
+  }, [request, isExternalUser, restrictedToHotelItemId]);
 
   const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
     useQuery(GET_AIRLINE_DEPARTMENT, {
@@ -265,6 +280,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     if (location.state?.tab === "habitation") {
       setFilter("habitation");
     }
+    if (location.state?.tab === "transferAccommodation") {
+      setFilter("transferAccommodation");
+    }
   }, [location.state?.tab]);
 
   useEffect(() => {
@@ -291,6 +309,20 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     airlineDepartmentData,
   ]);
 
+  useEffect(() => {
+    if (!request || !isExternalUser) return;
+    if (user?.passengerRequestId && request.id !== user.passengerRequestId) {
+      navigate(`/${id}/representativeRequestsPlacement/${user.passengerRequestId}`, { replace: true });
+      return;
+    }
+    if (!restrictedToHotelItemId) return;
+    if (location.pathname.includes("/hotel/")) return;
+    const hotels = request.livingService?.hotels ?? [];
+    const allowed = hotels.find((h) => h.itemId === restrictedToHotelItemId);
+    if (!allowed) return;
+    const hotelId = allowed.hotelId ?? allowed.name ?? String(hotels.findIndex((h) => h.itemId === restrictedToHotelItemId));
+    navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`, { replace: true });
+  }, [request, isExternalUser, restrictedToHotelItemId, user?.passengerRequestId, location.pathname, id, idRequest, navigate]);
 
   // console.log(dataHotel);
 
@@ -360,6 +392,11 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   const toggleAddHotelSidebar = () => {
     setShowAddHotelSidebar((prev) => !prev);
+  };
+
+  const [showAddDriverSidebar, setShowAddDriverSidebar] = useState(false);
+  const toggleAddDriverSidebar = () => {
+    setShowAddDriverSidebar((prev) => !prev);
   };
 
   const handleRasselenieExport = () => {
@@ -473,14 +510,14 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id={"reserve"} accessMenu={accessMenu} />
+      <MenuDispetcher id={"representativeRequests"} accessMenu={accessMenu} />
       {isInitialized && !cookiesAccepted && (
         <CookiesNotice onAccept={acceptCookies} />
       )}
       <div className={classes.section}>
         <Header>
           <div className={classes.titleHeader}>
-            <Link to={`/reserve`} className={classes.backButton}>
+            <Link to={`/representativeRequests`} className={classes.backButton}>
               <img src="/arrow.png" alt="" />
             </Link>
             Заявка {request.flightNumber}
@@ -507,17 +544,18 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             ))}
           </div>
           <div className={classes.tabsRowActions}>
-            <button
-              className={classes.historyButton}
-              onClick={() => setShowHistoryPanel(true)}
-              title="История изменений заявки"
-            >
-              История <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7.5 15C3.35786 15 0 11.6421 0 7.5C0 3.35786 3.35786 0 7.5 0C11.6421 0 15 3.35786 15 7.5C14.9955 11.6403 11.6403 14.9955 7.5 15ZM7.5 1.5C4.18629 1.5 1.5 4.18629 1.5 7.5C1.5 10.8137 4.18629 13.5 7.5 13.5C10.8137 13.5 13.5 10.8137 13.5 7.5C13.4963 4.18783 10.8122 1.50372 7.5 1.5ZM11.25 8.25H6.75V3.75H8.25V6.75H11.25V8.25Z" fill="#545873" />
-              </svg>
-
-            </button>
-            {filters.length < 5 && (
+            {!isExternalUser && (
+              <button
+                className={classes.historyButton}
+                onClick={() => setShowHistoryPanel(true)}
+                title="История изменений заявки"
+              >
+                История <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.5 15C3.35786 15 0 11.6421 0 7.5C0 3.35786 3.35786 0 7.5 0C11.6421 0 15 3.35786 15 7.5C14.9955 11.6403 11.6403 14.9955 7.5 15ZM7.5 1.5C4.18629 1.5 1.5 4.18629 1.5 7.5C1.5 10.8137 4.18629 13.5 7.5 13.5C10.8137 13.5 13.5 10.8137 13.5 7.5C13.4963 4.18783 10.8122 1.50372 7.5 1.5ZM11.25 8.25H6.75V3.75H8.25V6.75H11.25V8.25Z" fill="#545873" />
+                </svg>
+              </button>
+            )}
+            {!isExternalUser && filters.length < 5 && (
               <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
             )}
           </div>
@@ -624,9 +662,16 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                   Расселение
                   <DownloadIcon />
                 </button>
-                <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
+                {!isExternalUser && (
+                  <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
+                )}
               </>
             )}
+            {filter === "transferAccommodation" &&
+              request?.transferService?.plan?.enabled &&
+              !isExternalUser && (
+                <Button onClick={toggleAddDriverSidebar}>Добавить водителя</Button>
+              )}
             {canCompleteEarly && (
               <Button
                 onClick={() => setShowEarlyCompleteModal(true)}
@@ -711,6 +756,11 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                         refetchHotel();
                       }}
                       addNotification={addNotification}
+                      onDriverSelect={(d, idx) =>
+                        navigate(
+                          `/${id}/representativeRequestsPlacement/${idRequest}/driver/${idx}`
+                        )
+                      }
                     />
                   )}
                 {filter === "baggageDelivery" &&
@@ -729,7 +779,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                   request.livingService?.plan?.enabled && (
                     <HabitationTab
                       id="panel-habitation"
-                      request={request}
+                      request={habitationRequest}
                       searchQuery={habitationSearchQuery}
                       addNotification={addNotification}
                       onHotelSelect={(h, i) => {
@@ -786,6 +836,13 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             <AddRepresentativeHotel
               show={showAddHotelSidebar}
               onClose={toggleAddHotelSidebar}
+              request={request}
+              addNotification={addNotification}
+            />
+
+            <AddRepresentativeDriver
+              show={showAddDriverSidebar}
+              onClose={toggleAddDriverSidebar}
               request={request}
               addNotification={addNotification}
             />

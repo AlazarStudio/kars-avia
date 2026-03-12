@@ -6,6 +6,7 @@ function InfoTableOrganizationTransferPrices({
   airports = [],
   cities = [],
   onEdit,
+  onDelete,
 }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
 
@@ -52,6 +53,14 @@ function InfoTableOrganizationTransferPrices({
                   title="Редактировать"
                   onClick={() => onEdit(item, index)}
                 />
+                {onDelete && item.id && (
+                  <img
+                    src="/deletePassenger.png"
+                    alt="Удалить ценник"
+                    title="Удалить"
+                    onClick={() => onDelete(item, index)}
+                  />
+                )}
               </div>
             </div>
 

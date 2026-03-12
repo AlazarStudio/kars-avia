@@ -27,7 +27,6 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
     name: "",
     peopleCount: "",
     address: "",
-    link: "",
     hotelId: "",
   });
 
@@ -89,7 +88,6 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
       name: "",
       peopleCount: "",
       address: "",
-      link: "",
       hotelId: "",
     });
     setShowQuickCreate(false);
@@ -232,7 +230,7 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
       name: formData.name.trim(),
       peopleCount: Number(formData.peopleCount),
       address: formData.address?.trim() || null,
-      link: formData.link?.trim() || null,
+      link: null,
       hotelId: formData.hotelId?.trim() || null,
     };
 
@@ -393,14 +391,9 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
                 placeholder="Адрес"
               />
 
-              <label>Ссылка</label>
-              <input
-                type="url"
-                name="link"
-                value={formData.link}
-                onChange={handleChange}
-                placeholder="https://..."
-              />
+              {/*               <p className={classes.linkHint}>
+                Ссылка для входа по External Login (вид: …/external-login?kind=…&token=…) формируется на сервере при добавлении гостиницы. Если бэкенд поддерживает автогенерацию, она появится в таблице после сохранения.
+              </p> */}
             </div>
           </div>
 

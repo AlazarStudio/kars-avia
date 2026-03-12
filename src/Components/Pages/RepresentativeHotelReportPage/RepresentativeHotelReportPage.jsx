@@ -12,6 +12,7 @@ import { GET_PASSENGER_REQUEST, SAVE_PASSENGER_REQUEST_HOTEL_REPORT, getCookie }
 import { calculateEffectiveCostDays } from "../../../utils/effectiveCostDays";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
+import MUIAutocompleteColor from "../../Blocks/MUIAutocompleteColor/MUIAutocompleteColor";
 import Button from "../../Standart/Button/Button";
 
 function toNum(v) {
@@ -526,22 +527,23 @@ function RepresentativeHotelReportPage({ user }) {
                         <div className={reportClasses.groupPeopleHeader}>
                           <span>Гости ({g.personIndices.length})</span>
                           <div className={reportClasses.groupPeopleActions}>
-                            <select
+                            <MUIAutocompleteColor
+                              key={g.id}
                               className={reportClasses.personSelect}
-                              value=""
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (val !== "") addPersonToGroup(g.id, Number(val));
-                                e.target.value = "";
+                              label="+ Добавить гостя"
+                              options={unassignedPeople}
+                              value={null}
+                              onChange={(e, newValue) => {
+                                if (newValue != null) addPersonToGroup(g.id, newValue.index);
                               }}
-                            >
-                              <option value="">+ Добавить гостя</option>
-                              {unassignedPeople.map(({ person, index }) => (
-                                <option key={index} value={index}>
-                                  {person.fullName || "—"} {person.roomNumber ? `(№ ${person.roomNumber})` : ""}
-                                </option>
-                              ))}
-                            </select>
+                              getOptionLabel={(option) =>
+                                option && option.person
+                                  ? `${option.person.fullName ?? "—"}${option.person.roomNumber ? ` (№ ${option.person.roomNumber})` : ""}`.trim()
+                                  : ""
+                              }
+                              dropdownWidth="220px"
+                              noOptionsText="Нет свободных гостей"
+                            />
                             <button
                               type="button"
                               className={reportClasses.removeGroupBtn}

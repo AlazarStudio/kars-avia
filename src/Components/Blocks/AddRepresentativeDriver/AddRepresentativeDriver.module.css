@@ -89,8 +89,13 @@
   border-radius: 10px;
 }
 
-.linkHint {
-  font-size: 12px;
-  color: #545873;
-  margin: 0;
+.reis_info {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+
+.reis_info input {
+  width: 50%;
 }

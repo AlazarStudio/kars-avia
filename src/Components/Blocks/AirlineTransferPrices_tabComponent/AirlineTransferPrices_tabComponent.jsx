@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import classes from "./OrganizationTransferPrices_tabComponent.module.css";
+import classes from "./AirlineTransferPrices_tabComponent.module.css";
 import {
   getCookie,
-  GET_ORGANIZATION,
+  GET_AIRLINE_TRANSFER_PRICES,
   GET_AIRPORTS_RELAY,
   GET_CITIES,
-  UPDATE_ORGANIZATION,
-  DELETE_ORGANIZATION_TRANSFER_PRICE,
+  UPDATE_AIRLINE,
+  DELETE_AIRLINE_TRANSFER_PRICE,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
@@ -20,19 +20,18 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import {
   transferPriceToInput,
   transferPriceInputsToPayload,
-  createEmptyTransferPriceInput,
 } from "../../../utils/transferPrices.js";
 
-function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
+function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
   const token = getCookie("token");
 
-  const { loading, error, data, refetch } = useQuery(GET_ORGANIZATION, {
+  const { loading, error, data, refetch } = useQuery(GET_AIRLINE_TRANSFER_PRICES, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { organizationId: id },
+    variables: { airlineId: id },
   });
 
   const { data: airportsData } = useQuery(GET_AIRPORTS_RELAY, {
@@ -51,7 +50,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
     },
   });
 
-  const [updateOrganization] = useMutation(UPDATE_ORGANIZATION, {
+  const [updateAirline] = useMutation(UPDATE_AIRLINE, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -60,8 +59,8 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
     },
   });
 
-  const [deleteOrganizationTransferPrice] = useMutation(
-    DELETE_ORGANIZATION_TRANSFER_PRICE,
+  const [deleteAirlineTransferPrice] = useMutation(
+    DELETE_AIRLINE_TRANSFER_PRICE,
     {
       context: {
         headers: { Authorization: `Bearer ${token}` },
@@ -87,22 +86,22 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
   };
 
   useEffect(() => {
-    if (!data?.organization) return;
-    const list = data.organization.transferPrices;
+    if (!data?.airline) return;
+    const list = data.airline.transferPrices;
     if (Array.isArray(list) && list.length > 0) {
       setTransferPricesInput(list.map(transferPriceToInput));
     } else {
       setTransferPricesInput([]);
     }
-  }, [data?.organization?.id, data?.organization?.transferPrices]);
+  }, [data?.airline?.id, data?.airline?.transferPrices]);
 
   const saveTransferPrices = async (newList) => {
     setIsSaving(true);
     try {
       const payload = transferPriceInputsToPayload(newList);
-      await updateOrganization({
+      await updateAirline({
         variables: {
-          updateOrganizationId: id,
+          updateAirlineId: id,
           input: { transferPrices: payload },
           images: null,
         },
@@ -142,17 +141,17 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
     setShowEditSidebar(true);
   };
 
-  const handleDeleteClick = (item, index) => {
-    if (item?.id) setDeleteConfirmItem({ item, index });
+  const handleDeleteClick = (item) => {
+    if (item?.id) setDeleteConfirmItem(item);
   };
 
   const handleDeleteConfirm = async () => {
-    if (!deleteConfirmItem?.item?.id) return;
+    if (!deleteConfirmItem?.id) return;
     try {
-      const res = await deleteOrganizationTransferPrice({
-        variables: { id: deleteConfirmItem.item.id },
+      const res = await deleteAirlineTransferPrice({
+        variables: { id: deleteConfirmItem.id },
       });
-      if (res?.data?.deleteOrganizationTransferPrice) {
+      if (res?.data?.deleteAirlineTransferPrice) {
         addNotification("Ценник удалён.", "success");
         refetch();
       } else {
@@ -202,7 +201,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
 
   if (loading) return <MUILoader fullHeight="70vh" />;
   if (error) return <p>Ошибка: {error.message}</p>;
-  if (!data?.organization) return null;
+  if (!data?.airline) return null;
 
   return (
     <div className={classes.tariffsWrapper}>
@@ -277,4 +276,4 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
   );
 }
 
-export default OrganizationTransferPrices_tabComponent;
+export default AirlineTransferPrices_tabComponent;

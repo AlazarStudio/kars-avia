@@ -84,8 +84,8 @@ function Login() {
       
 
       // document.cookie = `token=${token}; HttpOnly; Secure; SameSite=Lax; Max-Age=3600`; // когда будет https и заливать куки из сервака
-      document.cookie = `token=${token}; SameSite=Lax; Max-Age=86400`;
-      document.cookie = `refreshToken=${refreshToken}; SameSite=Lax; Max-Age=${30 * 24 * 3600}`;
+      document.cookie = `token=${token}; SameSite=Lax; Max-Age=86400; Path=/`;
+      document.cookie = `refreshToken=${refreshToken}; SameSite=Lax; Max-Age=${30 * 24 * 3600}; Path=/`;
 
       navigate("/");
       window.location.reload();

@@ -108,7 +108,7 @@ function TransferPriceSidebarForm({
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>
-          {isEditMode ? "Изменить ценник" : "Добавить ценник"}
+          {isEditMode ? "Изменить договор" : "Добавить договор"}
         </div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
           <CloseIcon />
@@ -255,7 +255,7 @@ function TransferPriceSidebarForm({
                 </>
               )
             ) : (
-              "Добавить ценник"
+              "Добавить договор"
             )}
           </Button>
         </div>

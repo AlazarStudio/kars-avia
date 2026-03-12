@@ -3,7 +3,6 @@ import classes from "./PowerSupplyTab.module.css";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
 import Button from "../../Standart/Button/Button";
-import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import { useMutation } from "@apollo/client";
 import {
   convertToDate,
@@ -162,14 +161,14 @@ export default function PowerSupplyTab({
           >
             <h3>Досрочно завершить услугу «Поставка питания»</h3>
             <p>Укажите причину досрочного завершения (обязательно):</p>
-            <MUITextField
-              multiline
-              minRows={3}
-              label="Причина"
+            {/* <label className={classes.modalReasonLabel} htmlFor="meal-early-reason">Причина</label> */}
+            <textarea
+              id="meal-early-reason"
+              className={classes.modalReasonInput}
               value={earlyCompleteReason}
               onChange={(e) => setEarlyCompleteReason(e.target.value)}
-              fullWidth
-              className={classes.modalReasonInput}
+              rows={4}
+              placeholder="Причина"
             />
             <div className={classes.modalActions}>
               <Button
