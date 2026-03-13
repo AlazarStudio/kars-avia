@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import classes from "../InfoTableData/InfoTableData.module.css";
+import localClasses from "./InfoTableDataTransferOrders.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 import { statusLabels } from "../../../roles";
@@ -139,10 +140,14 @@ function InfoTableDataTransferOrders({
             <div
               className={`${classes.InfoTable_data_elem} ${classes.w20}`}
             >
-              {item.fromAddress || "—"}
+              <span className={localClasses.addressClamp}>
+                {item.fromAddress || "—"}
+              </span>
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-              {item.toAddress || "—"}
+              <span className={localClasses.addressClamp}>
+                {item.toAddress || "—"}
+              </span>
             </div>
             <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
               <div className={classes.InfoTable_data_elem_position}>

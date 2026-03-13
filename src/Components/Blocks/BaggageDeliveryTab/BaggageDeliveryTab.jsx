@@ -91,10 +91,16 @@ export default function BaggageDeliveryTab({
               <div className={`${classes.w15} ${classes.jcCenter}`}>
                 {d.fullName ?? "—"}
               </div>
-              <div className={`${classes.w18} ${classes.jcCenter}`}>
+              <div
+                className={`${modalClasses.addressCell} ${classes.w18} ${classes.jcCenter}`}
+                title={d.addressFrom ?? undefined}
+              >
                 {d.addressFrom ?? "—"}
               </div>
-              <div className={`${classes.w18} ${classes.jcCenter}`}>
+              <div
+                className={`${modalClasses.addressCell} ${classes.w18} ${classes.jcCenter}`}
+                title={d.addressTo ?? undefined}
+              >
                 {d.addressTo ?? "—"}
               </div>
               <div className={`${classes.w12} ${classes.jcCenter}`}>

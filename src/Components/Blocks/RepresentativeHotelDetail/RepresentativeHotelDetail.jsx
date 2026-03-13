@@ -29,6 +29,7 @@ export function HotelDetailToolbar({
   onGenerateReport,
   onIssueLink,
   className,
+  showAddBookingButton = true,
 }) {
   return (
     <div className={className ? `${className} ${classes.headerRow}` : classes.headerRow}>
@@ -45,7 +46,9 @@ export function HotelDetailToolbar({
           </Button>
         )} */}
         <Button onClick={onGenerateReport}>Сформировать отчет</Button>
-        <Button onClick={onAddBooking}>Добавить бронь</Button>
+        {showAddBookingButton && (
+          <Button onClick={onAddBooking}>Добавить бронь</Button>
+        )}
       </div>
     </div>
   );
@@ -89,6 +92,9 @@ export default function RepresentativeHotelDetail({
   const onAddBookingClick = isModalControlled ? undefined : () => setInternalShowAddBooking(true);
 
   const bookings = request?.livingService?.hotels?.[hotelIndex]?.people ?? [];
+  const hotelCapacity = hotel?.peopleCount ?? null;
+  const canAddBooking =
+    hotelCapacity == null || (bookings.length < hotelCapacity);
   const token = getCookie("token");
 
   const [removeHotelPerson, { loading: removing }] = useMutation(
@@ -287,7 +293,9 @@ export default function RepresentativeHotelDetail({
               <img src="/plus.png" alt="" style={{ width: "15px", objectFit: "contain", filter: "invert(100%)" }} />
               Сформировать отчет
             </button>
-            <Button onClick={onAddBookingClick}>Добавить бронь</Button>
+            {canAddBooking && (
+              <Button onClick={onAddBookingClick}>Добавить бронь</Button>
+            )}
           </div>
         </div>
       )}

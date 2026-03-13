@@ -78,7 +78,8 @@ function ExistRequestTransfer({
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>
-          {transfer ? `№ ${transfer.id}` : "Заявка"}
+          {/* {transfer ? `№ ${transfer.id}` : "Заявка"} */}
+          Заявка
         </div>
         <div className={classes.requestTitle_close}>
           <div onClick={closeButton} className={classes.closeIconWrapper}>

@@ -54,12 +54,14 @@ import Message from "../../Blocks/Message/Message";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import { useCookies } from "../../../hooks/useCookies";
 import AddRepresentativeService from "../../Blocks/AddRepresentativeService/AddRepresentativeService";
+import EditRepresentativeRequest from "../../Blocks/EditRepresentativeRequest/EditRepresentativeRequest";
 import AddRepresentativeHotel from "../../Blocks/AddRepresentativeHotel/AddRepresentativeHotel";
 import AddRepresentativeDriver from "../../Blocks/AddRepresentativeDriver/AddRepresentativeDriver";
 import AddRepresentativeBaggageDriver from "../../Blocks/AddRepresentativeBaggageDriver/AddRepresentativeBaggageDriver";
 import PassengerRequestLogs from "../../Blocks/LogsHistory/PassengerRequestLogs";
 import * as XLSX from "xlsx";
 import DownloadIcon from "../../../shared/icons/DownloadIcon";
+import WhiteEditIcon from "../../../shared/icons/WhiteEditIcon";
 
 function ReservePlacementRepresentative({ children, user, ...props }) {
   const token = getCookie("token");
@@ -381,6 +383,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showServiceSidebar, setShowServiceSidebar] = useState(false);
+  const [showEditRequestSidebar, setShowEditRequestSidebar] = useState(false);
   const [showAddHotelSidebar, setShowAddHotelSidebar] = useState(false);
 
   const toggleCreateSidebar = () => {
@@ -581,9 +584,12 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 </svg>
               </button>
             )}
-            {!isExternalUser && filters.length < 5 && (
-              <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
+            {!isExternalUser && (
+              <Button onClick={() => setShowEditRequestSidebar(true)}>Редактировать</Button>
             )}
+            {/* {!isExternalUser && filters.length < 5 && (
+              <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
+            )} */}
           </div>
         </div>
 
@@ -862,6 +868,13 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               onClose={toggleServiceSidebar}
               request={request}
               user={user}
+              addNotification={addNotification}
+            />
+
+            <EditRepresentativeRequest
+              show={showEditRequestSidebar}
+              onClose={() => setShowEditRequestSidebar(false)}
+              request={request}
               addNotification={addNotification}
             />
 

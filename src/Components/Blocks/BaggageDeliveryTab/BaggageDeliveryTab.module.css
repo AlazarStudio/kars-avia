@@ -1,3 +1,14 @@
+/* Адрес: не более 2 строк, многоточие, при наведении — полный текст в title */
+.addressCell {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
 .modalOverlay {
   position: fixed;
   inset: 0;

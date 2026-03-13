@@ -306,6 +306,11 @@ function RepresentativeHotelDetailPage({ user }) {
           }
           onIssueLink={!isExternalUser ? () => setShowIssueLinkModal(true) : undefined}
           className={classes.section_searchAndFilter}
+          showAddBookingButton={
+            hotel == null ||
+            hotel.peopleCount == null ||
+            (hotel.people?.length ?? 0) < hotel.peopleCount
+          }
         />
         <div className={classes.contentWithChat}>
           <div className={classes.tabContent}>

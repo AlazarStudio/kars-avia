@@ -65,7 +65,10 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
             <div className={`${classes.w25} ${classes.jcCenter}`}>
               {h.peopleCount ?? "—"}
             </div>
-            <div className={`${classes.w20} ${classes.jcCenter} ${classes.lineClamp2}`}>
+            <div
+              className={`${classes.w20} ${classes.jcCenter} ${classes.lineClamp2}`}
+              title={h.address ?? undefined}
+            >
               {h.address ?? "—"}
             </div>
             <div className={`${classes.w20} ${classes.jcEnd}`}>

@@ -300,7 +300,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
               </div>
 
               <AddressField
-                label="Адрес отправления *"
+                label="Адрес отправления"
                 placeholder="г. Черкесск, Ленина, 57Б"
                 value={formData.addressFrom}
                 onChange={(addr) => {
@@ -310,7 +310,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
               />
 
               <AddressField
-                label="Адрес прибытия *"
+                label="Адрес прибытия"
                 placeholder="г. Минеральные Воды, Ленина, 10К1"
                 value={formData.addressTo}
                 onChange={(addr) => {
@@ -319,7 +319,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
                 }}
               />
 
-              <label>Описание (необязательно)</label>
+              <label>Описание</label>
               <textarea
                 name="description"
                 value={formData.description}
@@ -336,14 +336,6 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
                 }}
               />
 
-              <label>Ссылка (необязательно)</label>
-              <input
-                type="url"
-                name="link"
-                value={formData.link}
-                onChange={handleChange}
-                placeholder="https://..."
-              />
             </div>
           </div>
 

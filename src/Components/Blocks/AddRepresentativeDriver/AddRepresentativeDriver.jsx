@@ -366,7 +366,7 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
               </div>
 
               <AddressField
-                label="Адрес отправления *"
+                label="Адрес отправления"
                 placeholder="г. Черкесск, Ленина, 57Б"
                 value={formData.addressFrom}
                 onChange={(addr) => {
@@ -376,7 +376,7 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
               />
 
               <AddressField
-                label="Адрес прибытия *"
+                label="Адрес прибытия"
                 placeholder="г. Минеральные Воды, Ленина, 10К1"
                 value={formData.addressTo}
                 onChange={(addr) => {
@@ -385,7 +385,7 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
                 }}
               />
 
-              <label>Количество людей *</label>
+              <label>Количество людей</label>
               <input
                 type="number"
                 name="peopleCount"
@@ -400,14 +400,6 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
                 placeholder="Количество людей"
               />
 
-              <label>Ссылка (необязательно)</label>
-              <input
-                type="url"
-                name="link"
-                value={formData.link}
-                onChange={handleChange}
-                placeholder="https://..."
-              />
             </div>
           </div>
 
