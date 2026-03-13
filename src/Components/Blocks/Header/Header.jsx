@@ -46,6 +46,7 @@ function Header({ children }) {
   const [showERequestSidebar, setShowERequestSidebar] = useState(false);
   const [showChooseHotel, setShowChooseHotel] = useState(false);
   const [showProfileSidebar, setShowProfileSidebar] = useState(false);
+  const [profileEditMode, setProfileEditMode] = useState(null);
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
@@ -414,7 +415,8 @@ function Header({ children }) {
         onClose={() => setShowProfileSidebar(false)}
         user={userData}
         positionName={data?.user?.position?.name}
-        onOpenSettings={() => {
+        onOpenSettings={(section) => {
+          setProfileEditMode(section);
           setShowProfileSidebar(false);
           setShowRequestSidebar(true);
         }}
@@ -432,12 +434,16 @@ function Header({ children }) {
 
       <ExistRequestProfile
         show={showRequestSidebar}
-        onClose={toggleRequestSidebar}
+        onClose={() => {
+          setProfileEditMode(null);
+          setShowRequestSidebar(false);
+        }}
         user={userData}
         updateUser={handleUpdateUser}
         openDeleteComponent={null}
         deleteComponentRef={null}
         addNotification={addNotification}
+        mode={profileEditMode}
       />
 
       {data?.user?.role !== roles.superAdmin && showSupportSidebar ? (

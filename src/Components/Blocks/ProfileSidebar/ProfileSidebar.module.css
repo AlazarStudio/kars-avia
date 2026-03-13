@@ -47,6 +47,14 @@
   align-items: center;
   gap: 12px;
   /* padding: 20px 20px 20px 30px; */
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
 }
 
 .avatar {

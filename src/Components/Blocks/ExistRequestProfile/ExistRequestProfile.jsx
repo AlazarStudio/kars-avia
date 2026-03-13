@@ -14,6 +14,7 @@ function ExistRequestProfile({
   updateUser,
   openDeleteComponent,
   addNotification,
+  mode = null,
 }) {
   const token = getCookie("token");
 
@@ -115,29 +116,52 @@ function ExistRequestProfile({
   const handleUpdate = async () => {
     if (isEditing) {
       setIsLoading(true);
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(formData.email)) {
-        alert("Введите корректный email.");
-        setIsLoading(false);
-        return;
+
+      const isProfileMode = mode === "profile";
+      const isSecurityMode = mode === "security";
+
+      if (isSecurityMode) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+          alert("Введите корректный email.");
+          setIsLoading(false);
+          return;
+        }
+        if (formData.password !== "" && formData.password.length < 8) {
+          alert("Новый пароль должен содержать минимум 8 символов.");
+          setIsLoading(false);
+          return;
+        }
       }
-      if (formData.password !== "" && formData.password.length < 8) {
-        alert("Новый пароль должен содержать минимум 8 символов.");
-        setIsLoading(false);
-        return;
-      }
+
       try {
+        let input = { id: formData.id };
+        let images = null;
+
+        if (isProfileMode) {
+          input.name = formData.name;
+          images = formData.images;
+        } else if (isSecurityMode) {
+          input.email = formData.email;
+          input.login = formData.login;
+          input.oldPassword = formData.oldPassword;
+          input.password = formData.password;
+        } else {
+          input = {
+            id: formData.id,
+            name: formData.name,
+            email: formData.email,
+            login: formData.login,
+            oldPassword: formData.oldPassword,
+            password: formData.password,
+          };
+          images = formData.images;
+        }
+
         let response_update_user = await uploadFile({
           variables: {
-            input: {
-              id: formData.id,
-              name: formData.name,
-              email: formData.email,
-              login: formData.login,
-              oldPassword: formData.oldPassword,
-              password: formData.password,
-            },
-            images: formData.images,
+            input,
+            images,
           },
         });
 
@@ -213,119 +237,130 @@ function ExistRequestProfile({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <div className={classes.requestDataInfo_img}>
-                <div className={classes.requestDataInfo_img_imgBlock}>
-                  <img
-                    src={
-                      showIMG?.length !== 0
-                        ? getMediaUrl(showIMG)
-                        : "/no-avatar.png"
-                    }
-                    alt=""
+              {(mode === "profile" || mode === null) && (
+                <>
+                  <div className={classes.requestDataInfo_img}>
+                    <div className={classes.requestDataInfo_img_imgBlock}>
+                      <img
+                        src={
+                          showIMG?.length !== 0
+                            ? getMediaUrl(showIMG)
+                            : "/no-avatar.png"
+                        }
+                        alt=""
+                      />
+                    </div>
+                  </div>
+
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>ФИО</div>
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Иванов Иван Иванович"
+                      value={formData.name}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                </>
+              )}
+
+              {(mode === "security" || mode === null) && (
+                <>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>Почта</div>
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="example@mail.ru"
+                      value={formData.email}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                    />
+                  </div>
+
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>Логин</div>
+                    <input
+                      type="text"
+                      name="login"
+                      placeholder="Логин"
+                      value={formData.login}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Старый пароль
+                    </div>
+                    <input
+                      type={showOldPassword ? "text" : "password"}
+                      name="oldPassword"
+                      placeholder="Старый пароль"
+                      value={formData.oldPassword}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                    />
+                    <img
+                      src={showOldPassword ? "/eyeOpen.png" : "/eyeClose.png"}
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        objectFit: "contain",
+                        position: "absolute",
+                        right: "40px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() =>
+                        isEditing ? setShowOldPassword((prev) => !prev) : null
+                      }
+                      alt=""
+                    />
+                  </div>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Новый пароль
+                    </div>
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      name="password"
+                      placeholder="Новый пароль"
+                      value={formData.password}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                    />
+                    <img
+                      src={showNewPassword ? "/eyeOpen.png" : "/eyeClose.png"}
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        objectFit: "contain",
+                        position: "absolute",
+                        right: "40px",
+                        cursor: "pointer",
+                      }}
+                      onClick={() =>
+                        isEditing ? setShowNewPassword((prev) => !prev) : null
+                      }
+                      alt=""
+                    />
+                  </div>
+                </>
+              )}
+
+              {(mode === "profile" || mode === null) && (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>Аватар</div>
+                  <input
+                    type="file"
+                    name="images"
+                    onChange={handleFileChange}
+                    disabled={!isEditing}
                   />
                 </div>
-              </div>
-
-              <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>ФИО</div>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Иванов Иван Иванович"
-                  value={formData.name}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Почта</div>
-                <input
-                  type="email"
-                  name="email"
-                  placeholder="example@mail.ru"
-                  value={formData.email}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-              </div>
-
-              <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Логин</div>
-                <input
-                  type="text"
-                  name="login"
-                  placeholder="Логин"
-                  value={formData.login}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-              </div>
-              <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>
-                  Старый пароль
-                </div>
-                <input
-                  type={showOldPassword ? "text" : "password"}
-                  name="oldPassword"
-                  placeholder="Старый пароль"
-                  value={formData.oldPassword}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-                <img
-                  src={showOldPassword ? "/eyeOpen.png" : "/eyeClose.png"}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    objectFit: "contain",
-                    position: "absolute",
-                    right: "40px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() =>
-                    isEditing ? setShowOldPassword((prev) => !prev) : null
-                  }
-                  alt=""
-                />
-              </div>
-              <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>
-                  Новый пароль
-                </div>
-                <input
-                  type={showNewPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Новый пароль"
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-                <img
-                  src={showNewPassword ? "/eyeOpen.png" : "/eyeClose.png"}
-                  style={{
-                    width: "20px",
-                    height: "20px",
-                    objectFit: "contain",
-                    position: "absolute",
-                    right: "40px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() =>
-                    isEditing ? setShowNewPassword((prev) => !prev) : null
-                  }
-                  alt=""
-                />
-              </div>
-              <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Аватар</div>
-                <input
-                  type="file"
-                  name="images"
-                  onChange={handleFileChange}
-                  disabled={!isEditing}
-                />
-              </div>
+              )}
             </div>
           </div>
 

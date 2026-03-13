@@ -90,7 +90,7 @@ function ThemeMixIcon() {
 const MENU_ITEMS = [
   { id: "profile", title: "Мой профиль", subtitle: "ФИО, аватар", Icon: ProfileHomeIcon },
   { id: "security", title: "Вход и безопасность", subtitle: "Пароли, телефон, e-mail", Icon: SecurityIcon },
-  { id: "notifications", title: "Уведомления", subtitle: "На почту, в браузере", Icon: NotificationIcon },
+  // { id: "notifications", title: "Уведомления", subtitle: "На почту, в браузере", Icon: NotificationIcon },
   { id: "help", title: "Помощь", subtitle: "Инструкции по работе в системе", Icon: HelpIcon },
   { id: "support", title: "Техподдержка", subtitle: "Написать в техподдержку", Icon: SupportIcon },
   { id: "theme", title: "Тема", subtitle: "Оформление системы", Icon: ThemeLightIcon, isThemeSection: true },
@@ -140,9 +140,12 @@ function ProfileSidebar({
   }, [theme]);
 
   const handleMenuClick = (id) => {
-    if (id === "profile" || id === "security") {
+    if (id === "profile") {
       onClose();
-      onOpenSettings?.();
+      onOpenSettings?.("profile");
+    } else if (id === "security") {
+      onClose();
+      onOpenSettings?.("security");
     } else if (id === "notifications") {
       onClose();
       onOpenNotifications?.();
@@ -162,7 +165,14 @@ function ProfileSidebar({
       <div className={classes.wrapper}>
         <div className={classes.header}>
           {/* <h2 className={classes.title}>Профиль</h2> */}
-          <div className={classes.userBlock}>
+          <button
+            type="button"
+            className={classes.userBlock}
+            onClick={() => {
+              onClose();
+              onOpenSettings?.("profile");
+            }}
+          >
             <img
               src={getMediaUrl(user?.images?.[0]) ?? "/no-avatar.png"}
               alt=""
@@ -172,7 +182,7 @@ function ProfileSidebar({
               <p className={classes.userName}>{user?.name ?? ""}</p>
               <p className={classes.userPosition}>{user?.position?.name ?? ""}</p>
             </div>
-          </div>
+          </button>
 
           <div className={classes.headerButtons}>
             <button type="button" className={classes.closeBtn} onClick={onLogout}>
@@ -185,7 +195,7 @@ function ProfileSidebar({
         </div>
 
         <nav className={classes.menu}>
-          {MENU_ITEMS.filter((item) => !item.isThemeSection).map((item) => {
+          {MENU_ITEMS.filter((item) => !item.isThemeSection && item.id !== "notifications").map((item) => {
             const Icon = item.Icon;
             return (
               <button
