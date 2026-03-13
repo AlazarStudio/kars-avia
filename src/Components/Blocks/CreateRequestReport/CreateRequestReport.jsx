@@ -229,9 +229,6 @@ function CreateRequestReport({
     );
   };
 
-  console.log(formData);
-  
-
   // Обработчик отправки формы
   const handleSubmit = async (e) => {
     e.preventDefault();

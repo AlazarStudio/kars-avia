@@ -680,6 +680,21 @@
     flex: 2;
 }
 
+.driverPassengersColActions {
+    width: 80px;
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.driverPassengersColActions button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+}
+
 .driverPassengersTableCard {
     background: #fff;
     border-top: none;

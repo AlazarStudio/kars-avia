@@ -1771,6 +1771,56 @@ export const ADD_PASSENGER_REQUEST_DRIVER = gql`
   }
 `;
 
+export const ADD_PASSENGER_REQUEST_DRIVER_PERSON = gql`
+  mutation AddPassengerRequestDriverPerson(
+    $requestId: ID!
+    $driverIndex: Int!
+    $person: PassengerServiceDriverPersonInput!
+  ) {
+    addPassengerRequestDriverPerson(
+      requestId: $requestId
+      driverIndex: $driverIndex
+      person: $person
+    ) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_PASSENGER_REQUEST_DRIVER_PERSON = gql`
+  mutation UpdatePassengerRequestDriverPerson(
+    $requestId: ID!
+    $driverIndex: Int!
+    $personIndex: Int!
+    $person: PassengerServiceDriverPersonInput!
+  ) {
+    updatePassengerRequestDriverPerson(
+      requestId: $requestId
+      driverIndex: $driverIndex
+      personIndex: $personIndex
+      person: $person
+    ) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_DRIVER_PERSON = gql`
+  mutation RemovePassengerRequestDriverPerson(
+    $requestId: ID!
+    $driverIndex: Int!
+    $personIndex: Int!
+  ) {
+    removePassengerRequestDriverPerson(
+      requestId: $requestId
+      driverIndex: $driverIndex
+      personIndex: $personIndex
+    ) {
+      id
+    }
+  }
+`;
+
 export const ADD_PASSENGER_REQUEST_HOTEL_PERSON = gql`
   mutation AddPassengerRequestHotelPerson(
     $requestId: ID!
@@ -1826,6 +1876,33 @@ export const COMPLETE_PASSENGER_REQUEST_MEAL_EARLY = gql`
   mutation CompletePassengerRequestMealEarly($requestId: ID!, $reason: String!) {
     completePassengerRequestMealEarly(requestId: $requestId, reason: $reason) {
       id
+    }
+  }
+`;
+
+export const COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY = gql`
+  mutation CompletePassengerRequestBaggageEarly($requestId: ID!, $reason: String!) {
+    completePassengerRequestBaggageEarly(requestId: $requestId, reason: $reason) {
+      id
+    }
+  }
+`;
+
+export const COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY = gql`
+  mutation CompletePassengerRequestBaggageDriverDelivery($requestId: ID!, $driverIndex: Int!) {
+    completePassengerRequestBaggageDriverDelivery(requestId: $requestId, driverIndex: $driverIndex) {
+      id
+      baggageDeliveryService {
+        drivers {
+          fullName
+          phone
+          link
+          addressFrom
+          addressTo
+          description
+          deliveryCompletedAt
+        }
+      }
     }
   }
 `;
@@ -1898,7 +1975,7 @@ export const ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
     addPassengerRequestBaggageDriver(requestId: $requestId, driver: $driver) {
       id
       baggageDeliveryService {
-        drivers { fullName phone pickupAt }
+        drivers { fullName phone pickupAt link addressFrom addressTo description }
       }
     }
   }
@@ -2939,6 +3016,10 @@ export const GET_PASSENGER_REQUEST = gql`
           link
           addressFrom
           addressTo
+          people {
+            fullName
+            phone
+          }
         }
       }
       baggageDeliveryService {
@@ -2960,6 +3041,10 @@ export const GET_PASSENGER_REQUEST = gql`
           peopleCount
           pickupAt
           link
+          addressFrom
+          addressTo
+          description
+          deliveryCompletedAt
         }
       }
       mealService {

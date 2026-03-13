@@ -5,6 +5,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useQuery } from "@apollo/client";
 import {
   convertToDate,
+  convertToDateNew,
   GET_PASSENGER_REQUEST_LOGS,
   getCookie,
   getMediaUrl,
@@ -135,7 +136,7 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
                         key={log.id ?? `${dayTs}-${idx}`}
                       >
                         <span className={classes.historyLogTime}>
-                          {convertToDate(log.createdAt, true)}
+                          {convertToDateNew(log.createdAt, true)}
                         </span>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div

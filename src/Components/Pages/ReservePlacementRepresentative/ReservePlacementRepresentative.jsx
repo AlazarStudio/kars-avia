@@ -56,6 +56,7 @@ import { useCookies } from "../../../hooks/useCookies";
 import AddRepresentativeService from "../../Blocks/AddRepresentativeService/AddRepresentativeService";
 import AddRepresentativeHotel from "../../Blocks/AddRepresentativeHotel/AddRepresentativeHotel";
 import AddRepresentativeDriver from "../../Blocks/AddRepresentativeDriver/AddRepresentativeDriver";
+import AddRepresentativeBaggageDriver from "../../Blocks/AddRepresentativeBaggageDriver/AddRepresentativeBaggageDriver";
 import PassengerRequestLogs from "../../Blocks/LogsHistory/PassengerRequestLogs";
 import * as XLSX from "xlsx";
 import DownloadIcon from "../../../shared/icons/DownloadIcon";
@@ -399,6 +400,31 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     setShowAddDriverSidebar((prev) => !prev);
   };
 
+  const [showAddBaggageDriverSidebar, setShowAddBaggageDriverSidebar] = useState(false);
+  const toggleAddBaggageDriverSidebar = () => {
+    setShowAddBaggageDriverSidebar((prev) => !prev);
+  };
+
+  const canAddTransferRequest = useMemo(() => {
+    const planCount = request?.transferService?.plan?.peopleCount;
+    if (planCount == null) return true;
+    const usedPlaces = (request?.transferService?.drivers ?? []).reduce(
+      (sum, d) => sum + (d.peopleCount ?? 0),
+      0
+    );
+    return usedPlaces < planCount;
+  }, [request?.transferService?.plan?.peopleCount, request?.transferService?.drivers]);
+
+  const canAddHabitationRequest = useMemo(() => {
+    const planCount = request?.livingService?.plan?.peopleCount;
+    if (planCount == null) return true;
+    const usedPlaces = (request?.livingService?.hotels ?? []).reduce(
+      (sum, h) => sum + (h.peopleCount ?? 0),
+      0
+    );
+    return usedPlaces < planCount;
+  }, [request?.livingService?.plan?.peopleCount, request?.livingService?.hotels]);
+
   const handleRasselenieExport = () => {
     const hotels = request?.livingService?.hotels ?? [];
     const rows = [];
@@ -662,15 +688,21 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                   Расселение
                   <DownloadIcon />
                 </button>
-                {!isExternalUser && (
+                {!isExternalUser && canAddHabitationRequest && (
                   <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
                 )}
               </>
             )}
             {filter === "transferAccommodation" &&
               request?.transferService?.plan?.enabled &&
+              !isExternalUser &&
+              canAddTransferRequest && (
+                <Button onClick={toggleAddDriverSidebar}>Создать заявку на трансфер</Button>
+              )}
+            {filter === "baggageDelivery" &&
+              request?.baggageDeliveryService?.plan?.enabled &&
               !isExternalUser && (
-                <Button onClick={toggleAddDriverSidebar}>Добавить водителя</Button>
+                <Button onClick={toggleAddBaggageDriverSidebar}>Создать заявку на трансфер багажа</Button>
               )}
             {canCompleteEarly && (
               <Button
@@ -843,6 +875,13 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             <AddRepresentativeDriver
               show={showAddDriverSidebar}
               onClose={toggleAddDriverSidebar}
+              request={request}
+              addNotification={addNotification}
+            />
+
+            <AddRepresentativeBaggageDriver
+              show={showAddBaggageDriverSidebar}
+              onClose={toggleAddBaggageDriverSidebar}
               request={request}
               addNotification={addNotification}
             />

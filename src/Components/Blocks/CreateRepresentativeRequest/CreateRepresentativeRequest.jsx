@@ -55,7 +55,6 @@ function CreateRepresentativeRequest({
     transferHabitationPeopleCount: "",
     transferHabitationPlannedAt: "",
     baggageDelivery: false,
-    baggageDeliveryPeopleCount: "",
     baggageDeliveryPlannedAt: "",
     city: "",
   });
@@ -195,7 +194,6 @@ function CreateRepresentativeRequest({
       transferHabitationPeopleCount: "",
       transferHabitationPlannedAt: "",
       baggageDelivery: false,
-      baggageDeliveryPeopleCount: "",
       baggageDeliveryPlannedAt: "",
       city: "",
     });
@@ -291,7 +289,6 @@ function CreateRepresentativeRequest({
           return {
             ...prev,
             baggageDelivery: checked,
-            baggageDeliveryPeopleCount: checked ? prev.baggageDeliveryPeopleCount : "",
             baggageDeliveryPlannedAt: checked ? prev.baggageDeliveryPlannedAt : "",
           };
         }
@@ -366,7 +363,7 @@ function CreateRepresentativeRequest({
       return false;
     if (formData.transferHabitation && (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt))
       return false;
-    if (formData.baggageDelivery && (!formData.baggageDeliveryPeopleCount || !formData.baggageDeliveryPlannedAt))
+    if (formData.baggageDelivery && !formData.baggageDeliveryPlannedAt)
       return false;
 
     return true;
@@ -429,14 +426,13 @@ function CreateRepresentativeRequest({
         ? {
             plan: {
               enabled: true,
-              peopleCount: Number(formData.baggageDeliveryPeopleCount),
               plannedAt: buildPlannedAt(formData.baggageDeliveryPlannedAt),
             },
           }
         : undefined,
     };
 
-    console.log(input);
+    // console.log(input);
 
     try {
       const response = await createRequest({ variables: { input } });
@@ -762,14 +758,6 @@ function CreateRepresentativeRequest({
 
                 {formData.baggageDelivery && (
                   <>
-                    <label>Введите количество человек</label>
-                    <input
-                      type="number"
-                      name="baggageDeliveryPeopleCount"
-                      value={formData.baggageDeliveryPeopleCount}
-                      onChange={handleChange}
-                    />
-
                     <label>Введите время</label>
                     <input
                       type="time"

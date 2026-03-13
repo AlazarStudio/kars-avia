@@ -49,7 +49,6 @@ function AddRepresentativeService({
     transferHabitationPeopleCount: "",
     transferHabitationPlannedAt: "",
     baggageDelivery: false,
-    baggageDeliveryPeopleCount: "",
     baggageDeliveryPlannedAt: "",
   });
 
@@ -81,7 +80,6 @@ function AddRepresentativeService({
       transferHabitationPeopleCount: "",
       transferHabitationPlannedAt: "",
       baggageDelivery: false,
-      baggageDeliveryPeopleCount: "",
       baggageDeliveryPlannedAt: "",
     });
     setIsEdited(false);
@@ -135,7 +133,6 @@ function AddRepresentativeService({
           return {
             ...prev,
             baggageDelivery: checked,
-            baggageDeliveryPeopleCount: checked ? prev.baggageDeliveryPeopleCount : "",
             baggageDeliveryPlannedAt: checked ? prev.baggageDeliveryPlannedAt : "",
           };
         }
@@ -268,7 +265,6 @@ function AddRepresentativeService({
       input.baggageDeliveryService = {
         plan: {
           enabled: true,
-          peopleCount: Number(formData.baggageDeliveryPeopleCount),
           plannedAt: buildPlannedAt(formData.baggageDeliveryPlannedAt),
         },
       };
@@ -509,14 +505,6 @@ function AddRepresentativeService({
 
                     {formData.baggageDelivery && (
                       <>
-                        <label>Введите количество человек</label>
-                        <input
-                          type="number"
-                          name="baggageDeliveryPeopleCount"
-                          value={formData.baggageDeliveryPeopleCount}
-                          onChange={handleChange}
-                        />
-
                         <label>Введите время</label>
                         <input
                           type="time"

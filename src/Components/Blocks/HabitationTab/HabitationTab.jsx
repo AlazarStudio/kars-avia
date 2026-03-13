@@ -1,13 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import classes from "./HabitationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
+import { convertToDate } from "../../../../graphQL_requests";
 
 const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
 
 export default function HabitationTab({ id, request, searchQuery = "", addNotification, onHotelSelect }) {
-  const [status] = useState(statusToLabel[request?.livingService?.status] ?? "Принята");
+  const ls = request?.livingService;
+  const statusText = statusToLabel[ls?.status] ?? "Принята";
   const allHotels = request?.livingService?.hotels ?? [];
   const q = (searchQuery || "").trim().toLowerCase();
   const hotelsWithIndex = q
@@ -86,7 +88,26 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
           </div>
         ))}
       </div>
-      <ServiceFooter statusText={status} />
+      <ServiceFooter
+        statusText={statusText}
+        history={[
+          {
+            label: "Принята",
+            dot: "#C4CBD6",
+            time: ls?.times?.acceptedAt ? convertToDate(ls.times.acceptedAt, true).trim() : "—",
+          },
+          {
+            label: "Выполняется",
+            dot: "#2A6EF5",
+            time: ls?.times?.inProgressAt ? convertToDate(ls.times.inProgressAt, true).trim() : "—",
+          },
+          {
+            label: "Поставка завершена",
+            dot: "#2ABF46",
+            time: ls?.times?.finishedAt ? convertToDate(ls.times.finishedAt, true).trim() : "—",
+          },
+        ]}
+      />
     </section>
   );
 }

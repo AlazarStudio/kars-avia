@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import classes from "./AddRepresentativeDriver.module.css";
+import classes from "../AddRepresentativeDriver/AddRepresentativeDriver.module.css";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
-  ADD_PASSENGER_REQUEST_DRIVER,
+  ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER,
   CREATE_DRIVER_MUTATION,
   DRIVERS_QUERY,
   GET_PASSENGER_REQUEST,
@@ -15,7 +15,7 @@ import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { AddressField } from "../AddressField/AddressField.jsx";
 
-function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
+function AddRepresentativeBaggageDriver({ show, onClose, request, addNotification }) {
   const token = getCookie("token");
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
@@ -31,22 +31,11 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
-    peopleCount: "",
     addressFrom: "",
     addressTo: "",
     link: "",
+    description: "",
   });
-
-  const totalServicePeople = request?.transferService?.plan?.peopleCount ?? null;
-  const usedServicePeople =
-    request?.transferService?.drivers?.reduce(
-      (sum, d) => sum + (Number(d.peopleCount) || 0),
-      0
-    ) ?? 0;
-  const remainingServicePeople =
-    typeof totalServicePeople === "number"
-      ? Math.max(totalServicePeople - usedServicePeople, 0)
-      : null;
 
   const { data: driversData, refetch: refetchDrivers } = useQuery(DRIVERS_QUERY, {
     context: {
@@ -72,7 +61,7 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
     }
   );
 
-  const [addDriver, { loading }] = useMutation(ADD_PASSENGER_REQUEST_DRIVER, {
+  const [addBaggageDriver, { loading }] = useMutation(ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -92,10 +81,10 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
     setFormData({
       fullName: "",
       phone: "",
-      peopleCount: "",
       addressFrom: "",
       addressTo: "",
       link: "",
+      description: "",
     });
     setShowQuickCreate(false);
     setQuickCreate({ name: "", number: "", email: "", password: "" });
@@ -117,49 +106,14 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setIsEdited(true);
-    if (name === "peopleCount") {
-      const next = value.replace(/\D/g, "");
-      if (next === "") {
-        setFormData((prev) => ({ ...prev, peopleCount: "" }));
-        return;
-      }
-      let numeric = Number(next);
-      if (
-        typeof remainingServicePeople === "number" &&
-        remainingServicePeople >= 0 &&
-        numeric > remainingServicePeople
-      ) {
-        numeric = remainingServicePeople;
-        if (remainingServicePeople === 0) {
-          addNotification?.(
-            "Все места по услуге трансфера уже распределены.",
-            "error"
-          );
-        } else {
-          addNotification?.(
-            `Максимум доступно мест: ${remainingServicePeople}.`,
-            "error"
-          );
-        }
-      }
-      setFormData((prev) => ({
-        ...prev,
-        peopleCount: String(numeric),
-      }));
-      return;
-    }
     setFormData((prev) => ({ ...prev, [name]: value }));
-  }, [remainingServicePeople, addNotification]);
+  }, []);
 
   const isFormValid = () => {
     return (
       formData.fullName?.trim() &&
-      formData.peopleCount !== "" &&
-      Number(formData.peopleCount) > 0 &&
       formData.addressFrom?.trim() &&
-      formData.addressTo?.trim() &&
-      (typeof remainingServicePeople !== "number" ||
-        Number(formData.peopleCount) <= remainingServicePeople)
+      formData.addressTo?.trim()
     );
   };
 
@@ -209,41 +163,21 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
 
   const handleSubmit = async () => {
     if (!isFormValid()) {
-      if (
-        typeof remainingServicePeople === "number" &&
-        remainingServicePeople <= 0
-      ) {
-        addNotification?.(
-          "Нельзя добавить водителя: все места по услуге трансфера уже распределены.",
-          "error"
-        );
-      } else if (
-        typeof remainingServicePeople === "number" &&
-        Number(formData.peopleCount) > remainingServicePeople
-      ) {
-        addNotification?.(
-          `Количество мест превышает доступное по услуге (${remainingServicePeople}).`,
-          "error"
-        );
-      } else {
-        addNotification?.(
-          "Заполните водителя, адреса и количество людей.",
-          "error"
-        );
-      }
+      addNotification?.("Заполните водителя и адреса отправления и прибытия.", "error");
       return;
     }
     const driver = {
       fullName: formData.fullName.trim(),
       phone: formData.phone?.trim() || null,
-      peopleCount: Number(formData.peopleCount),
+      peopleCount: 0,
       pickupAt: null,
       link: formData.link?.trim() || null,
       addressFrom: formData.addressFrom?.trim() || null,
       addressTo: formData.addressTo?.trim() || null,
+      description: formData.description?.trim() || null,
     };
     try {
-      await addDriver({
+      await addBaggageDriver({
         variables: {
           requestId: request?.id,
           driver,
@@ -251,10 +185,10 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
       });
       resetForm();
       onClose();
-      addNotification?.("Водитель добавлен.", "success");
+      addNotification?.("Заявка на трансфер багажа добавлена.", "success");
     } catch (err) {
       addNotification?.(
-        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при добавлении водителя",
+        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при добавлении заявки",
         "error"
       );
     }
@@ -385,19 +319,21 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
                 }}
               />
 
-              <label>Количество людей *</label>
-              <input
-                type="number"
-                name="peopleCount"
-                min={1}
-                max={
-                  typeof remainingServicePeople === "number"
-                    ? remainingServicePeople
-                    : undefined
-                }
-                value={formData.peopleCount}
+              <label>Описание (необязательно)</label>
+              <textarea
+                name="description"
+                value={formData.description}
                 onChange={handleChange}
-                placeholder="Количество людей"
+                placeholder="Описание заявки на трансфер багажа"
+                rows={3}
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  outline: "none",
+                  resize: "vertical",
+                  border: "1px solid #ddd",
+                  borderRadius: "4px",
+                }}
               />
 
               <label>Ссылка (необязательно)</label>
@@ -422,4 +358,4 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
   );
 }
 
-export default AddRepresentativeDriver;
+export default AddRepresentativeBaggageDriver;

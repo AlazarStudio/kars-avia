@@ -421,7 +421,7 @@ function RepresentativeHotelReportPage({ user }) {
   if (loading || !request) {
     return (
       <div className={classes.main}>
-        <MenuDispetcher id="reserve" accessMenu={accessMenu} />
+        <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />
         <div className={classes.section}>
           <MUILoader />
         </div>
@@ -432,7 +432,7 @@ function RepresentativeHotelReportPage({ user }) {
   if (error) {
     return (
       <div className={classes.main}>
-        <MenuDispetcher id="reserve" accessMenu={accessMenu} />
+        <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />
         <div className={classes.section}>
           <p>Error: {error.message}</p>
         </div>
@@ -446,7 +446,7 @@ function RepresentativeHotelReportPage({ user }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id="reserve" accessMenu={accessMenu} />
+      <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />
       {isInitialized && !cookiesAccepted && (
         <CookiesNotice onAccept={acceptCookies} />
       )}
