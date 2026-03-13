@@ -27,6 +27,7 @@ import Notification from "../../Notification/Notification";
 import MUILoader from "../MUILoader/MUILoader";
 import NotificationsSidebar from "../NotificationsSidebar/NotificationsSidebar";
 import ProfileSidebar from "../ProfileSidebar/ProfileSidebar";
+import NotifyIcon from "../../../shared/icons/NotifyIcon";
 
 function Header({ children }) {
   const token = getCookie("token");
@@ -333,11 +334,12 @@ function Header({ children }) {
               {notifySubscriptionData ? (
                 <div className={classes.section_top_elems_notify_red}></div>
               ) : null}
-              <img
+              {/* <img
                 src="/notify.png"
                 alt="Уведомления"
                 style={{ userSelect: "none" }}
-              />
+              /> */}
+              <NotifyIcon />
             </div>
 
             {/* {isNotificationsFullyVisible && (
