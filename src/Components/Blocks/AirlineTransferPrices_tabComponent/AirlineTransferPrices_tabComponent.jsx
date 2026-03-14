@@ -152,14 +152,14 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
         variables: { id: deleteConfirmItem.id },
       });
       if (res?.data?.deleteAirlineTransferPrice) {
-        addNotification("Ценник удалён.", "success");
+        addNotification("Цена на трансфер удалена.", "success");
         refetch();
       } else {
-        addNotification("Не удалось удалить ценник.", "error");
+        addNotification("Не удалось удалить цену на трансфер.", "error");
       }
     } catch (err) {
       console.error(err);
-      addNotification(err?.message || "Не удалось удалить ценник.", "error");
+      addNotification(err?.message || "Не удалось удалить цену на трансфер.", "error");
     } finally {
       setDeleteConfirmItem(null);
     }
@@ -250,11 +250,16 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
         airports={airports}
         cities={cities}
         onSubmit={handleSidebarSubmit}
+        onDelete={(item) => {
+          setShowEditSidebar(false);
+          setEditIndex(null);
+          setDeleteConfirmItem(item ?? (editIndex !== null ? transferPricesInput[editIndex] : null));
+        }}
       />
 
       {deleteConfirmItem && (
         <DeleteComponent
-          title="Вы действительно хотите удалить ценник?"
+          title="Вы действительно хотите удалить цену на трансфер?"
           remove={handleDeleteConfirm}
           close={() => setDeleteConfirmItem(null)}
         />

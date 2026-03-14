@@ -786,6 +786,7 @@ export const GET_ORGANIZATION = gql`
     id
     createdAt
     updatedAt
+    name
     prices {
       threeSeater { intercity city }
       fiveSeater { intercity city }
@@ -1747,6 +1748,14 @@ export const UPDATE_PASSENGER_REQUEST = gql`
   }
 `;
 
+export const SET_PASSENGER_REQUEST_STATUS = gql`
+  mutation SetPassengerRequestStatus($id: ID!, $status: PassengerRequestStatus!) {
+    setPassengerRequestStatus(id: $id, status: $status) {
+      id
+    }
+  }
+`;
+
 export const SET_PASSENGER_SERVICE_STATUS = gql`
   mutation SetPassengerServiceStatus($id: ID!, $service: PassengerServiceKind!, $status: PassengerServiceStatus!) {
     setPassengerRequestServiceStatus(id: $id, service: $service, status: $status) {
@@ -1883,6 +1892,22 @@ export const COMPLETE_PASSENGER_REQUEST_MEAL_EARLY = gql`
 export const COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY = gql`
   mutation CompletePassengerRequestBaggageEarly($requestId: ID!, $reason: String!) {
     completePassengerRequestBaggageEarly(requestId: $requestId, reason: $reason) {
+      id
+    }
+  }
+`;
+
+export const COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY = gql`
+  mutation CompletePassengerRequestTransferEarly($requestId: ID!, $reason: String!) {
+    completePassengerRequestTransferEarly(requestId: $requestId, reason: $reason) {
+      id
+    }
+  }
+`;
+
+export const COMPLETE_PASSENGER_REQUEST_LIVING_EARLY = gql`
+  mutation CompletePassengerRequestLivingEarly($requestId: ID!, $reason: String!) {
+    completePassengerRequestLivingEarly(requestId: $requestId, reason: $reason) {
       id
     }
   }
@@ -4030,6 +4055,7 @@ export const GET_AIRLINE_TRANSFER_PRICES = gql`
     id
     createdAt
     updatedAt
+    name
     prices {
       threeSeater { intercity city }
       fiveSeater { intercity city }
@@ -5689,11 +5715,21 @@ export const GET_ANALYTICS_USERS = gql`
   }
 `;
 
-// ----- External Auth (magic link) -----
+// ----- External Auth (unified API: createExternalAuthLink, authorizeExternalAuth, adminExtendExternalAuthSession) -----
 
-export const EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK = gql`
-  mutation ExternalUserSignInWithMagicLink($token: String!, $fingerprint: String) {
-    externalUserSignInWithMagicLink(token: $token, fingerprint: $fingerprint) {
+export const CREATE_EXTERNAL_AUTH_LINK = gql`
+  mutation CreateExternalAuthLink($input: CreateExternalAuthLinkInput!) {
+    createExternalAuthLink(input: $input) {
+      success
+      emailed
+      link
+    }
+  }
+`;
+
+export const AUTHORIZE_EXTERNAL_AUTH = gql`
+  mutation AuthorizeExternalAuth($token: String!) {
+    authorizeExternalAuth(token: $token) {
       token
       refreshToken
       subjectType
@@ -5701,86 +5737,19 @@ export const EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK = gql`
         id
         email
         name
+        scope
+        accessType
         hotelId
-        organizationId
-        airlineId
+        driverId
         sessionExpiresAt
-        active
       }
     }
   }
 `;
 
-export const PASSENGER_REQUEST_EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK = gql`
-  mutation PassengerRequestExternalUserSignInWithMagicLink($token: String!, $fingerprint: String) {
-    passengerRequestExternalUserSignInWithMagicLink(token: $token, fingerprint: $fingerprint) {
-      token
-      refreshToken
-      subjectType
-      passengerRequestExternalUser {
-        id
-        email
-        login
-        accountType
-        name
-        passengerRequestId
-        passengerServiceHotelItemId
-        sessionExpiresAt
-        active
-      }
-    }
-  }
-`;
-
-export const ADMIN_ISSUE_EXTERNAL_USER_MAGIC_LINK = gql`
-  mutation AdminIssueExternalUserMagicLink($input: AdminIssueExternalUserMagicLinkInput!) {
-    adminIssueExternalUserMagicLink(input: $input) {
-      success
-      emailed
-      link
-    }
-  }
-`;
-
-export const ADMIN_ISSUE_PASSENGER_REQUEST_EXTERNAL_USER_MAGIC_LINK = gql`
-  mutation AdminIssuePassengerRequestExternalUserMagicLink($input: AdminIssuePassengerRequestExternalUserMagicLinkInput!) {
-    adminIssuePassengerRequestExternalUserMagicLink(input: $input) {
-      success
-      emailed
-      link
-    }
-  }
-`;
-
-export const ADMIN_EXTEND_EXTERNAL_USER_SESSION = gql`
-  mutation AdminExtendExternalUserSession($externalUserId: ID!) {
-    adminExtendExternalUserSession(externalUserId: $externalUserId)
-  }
-`;
-
-export const ADMIN_REISSUE_EXTERNAL_USER_MAGIC_LINK = gql`
-  mutation AdminReissueExternalUserMagicLink($externalUserId: ID!) {
-    adminReissueExternalUserMagicLink(externalUserId: $externalUserId) {
-      success
-      emailed
-      link
-    }
-  }
-`;
-
-export const ADMIN_EXTEND_PASSENGER_REQUEST_EXTERNAL_USER_SESSION = gql`
-  mutation AdminExtendPassengerRequestExternalUserSession($id: ID!) {
-    adminExtendPassengerRequestExternalUserSession(id: $id)
-  }
-`;
-
-export const ADMIN_REISSUE_PASSENGER_REQUEST_EXTERNAL_USER_MAGIC_LINK = gql`
-  mutation AdminReissuePassengerRequestExternalUserMagicLink($id: ID!) {
-    adminReissuePassengerRequestExternalUserMagicLink(id: $id) {
-      success
-      emailed
-      link
-    }
+export const ADMIN_EXTEND_EXTERNAL_AUTH_SESSION = gql`
+  mutation AdminExtendExternalAuthSession($externalUserId: ID!) {
+    adminExtendExternalAuthSession(externalUserId: $externalUserId)
   }
 `;
 
@@ -5793,26 +5762,13 @@ export const GET_EXTERNAL_USERS = gql`
         id
         email
         name
+        scope
+        accessType
         hotelId
-        organizationId
-        airlineId
+        driverId
         active
         sessionExpiresAt
       }
-    }
-  }
-`;
-
-export const GET_PASSENGER_REQUEST_EXTERNAL_USERS = gql`
-  query PassengerRequestExternalUsers($passengerRequestId: ID!) {
-    passengerRequestExternalUsers(passengerRequestId: $passengerRequestId) {
-      id
-      email
-      name
-      passengerRequestId
-      passengerServiceHotelItemId
-      active
-      sessionExpiresAt
     }
   }
 `;

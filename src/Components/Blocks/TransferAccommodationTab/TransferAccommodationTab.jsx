@@ -1,9 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import classes from "./TransferAccommodationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { convertToDate } from "../../../../graphQL_requests";
+import { convertToDate, COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY, getCookie } from "../../../../graphQL_requests";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
+import { useMutation } from "@apollo/client";
+import Button from "../../Standart/Button/Button";
 
 export default function TransferAccommodationTab({
   id,
@@ -12,10 +14,47 @@ export default function TransferAccommodationTab({
   addNotification,
   onDriverSelect,
 }) {
+  const token = getCookie("token");
   const drivers = useMemo(() => request?.transferService?.drivers ?? [], [request]);
   const ts = request?.transferService;
   const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
   const statusDrivers = statusToLabel[ts?.status] ?? "Принята";
+
+  const requestCancelled = request?.status === "CANCELLED";
+  const canEarlyComplete =
+    !requestCancelled &&
+    ts?.status !== "COMPLETED" &&
+    ts?.status !== "CANCELLED";
+
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completeReason, setCompleteReason] = useState("");
+
+  const [completeEarly, { loading: completingEarly }] = useMutation(
+    COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY,
+    {
+      context: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+      onCompleted: () => {
+        addNotification?.("Услуга «Трансфер» завершена", "success");
+        setShowCompleteModal(false);
+        setCompleteReason("");
+        onStatusChanged?.();
+      },
+      onError: (err) => {
+        addNotification?.(err?.message || "Ошибка", "error");
+      },
+    }
+  );
+
+  const handleComplete = () => {
+    const reason = completeReason?.trim();
+    if (!reason) {
+      addNotification?.("Укажите причину завершения", "error");
+      return;
+    }
+    completeEarly({
+      variables: { requestId: request?.id, reason },
+    });
+  };
 
   const copyLink = (url) => {
     if (!url) return;
@@ -107,6 +146,9 @@ export default function TransferAccommodationTab({
         </div>
         <ServiceFooter
           statusText={statusDrivers}
+          earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
+          onEarlyCompleteClick={canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
+          earlyCompleteDisabled={completingEarly}
           history={[
             {
               label: "Принята",
@@ -126,6 +168,42 @@ export default function TransferAccommodationTab({
           ]}
         />
       </div>
+
+      {showCompleteModal && (
+        <div
+          className={classes.modalOverlay}
+          onClick={() => !completingEarly && setShowCompleteModal(false)}
+        >
+          <div
+            className={classes.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Завершить услугу «Трансфер»</h3>
+            <p>Укажите причину завершения (обязательно):</p>
+            <textarea
+              className={classes.modalReasonInput}
+              value={completeReason}
+              onChange={(e) => setCompleteReason(e.target.value)}
+              rows={4}
+              placeholder="Причина"
+            />
+            <div className={classes.modalActions}>
+              <Button
+                onClick={() => {
+                  setShowCompleteModal(false);
+                  setCompleteReason("");
+                }}
+                disabled={completingEarly}
+              >
+                Отмена
+              </Button>
+              <Button onClick={handleComplete} disabled={completingEarly}>
+                {completingEarly ? "Сохранение…" : "Завершить"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

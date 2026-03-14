@@ -8,51 +8,34 @@ import {
   Alert,
 } from "@mui/material";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
-import { EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK, PASSENGER_REQUEST_EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK } from "../../../../graphQL_requests";
+import { AUTHORIZE_EXTERNAL_AUTH } from "../../../../graphQL_requests";
 import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
-
-const KIND_EXTERNAL_USER = "EXTERNAL_USER";
-const KIND_PASSENGER_REQUEST_EXTERNAL_USER = "PASSENGER_REQUEST_EXTERNAL_USER";
 
 function ExternalLogin() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | success | error
+  console.log(searchParams.get("token")?.trim());
 
-  const [externalUserSignIn] = useMutation(EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK);
-  const [passengerRequestExternalUserSignIn] = useMutation(
-    PASSENGER_REQUEST_EXTERNAL_USER_SIGN_IN_WITH_MAGIC_LINK
-  );
+  const [authorizeExternalAuth] = useMutation(AUTHORIZE_EXTERNAL_AUTH);
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const kind = searchParams.get("kind");
+    const token = searchParams.get("token")?.trim();
 
-    if (!token?.trim()) {
+    if (!token) {
       setError("Ссылка недействительна: отсутствует токен.");
-      setStatus("error");
-      return;
-    }
-
-    if (kind !== KIND_EXTERNAL_USER && kind !== KIND_PASSENGER_REQUEST_EXTERNAL_USER) {
-      setError("Ссылка недействительна: неизвестный тип входа.");
       setStatus("error");
       return;
     }
 
     const run = async () => {
       try {
-        const variables = { token: token.trim() };
-        let data;
-
-        if (kind === KIND_EXTERNAL_USER) {
-          const res = await externalUserSignIn({ variables });
-          data = res?.data?.externalUserSignInWithMagicLink;
-        } else {
-          const res = await passengerRequestExternalUserSignIn({ variables });
-          data = res?.data?.passengerRequestExternalUserSignInWithMagicLink;
-        }
+        const res = await authorizeExternalAuth({
+          variables: { token },
+        });
+        const data = res?.data?.authorizeExternalAuth;
+        console.log(data);
 
         if (!data?.token) {
           setError("Ссылка недействительна или истекла.");
@@ -65,13 +48,18 @@ function ExternalLogin() {
           document.cookie = `refreshToken=${data.refreshToken}; SameSite=Lax; Max-Age=${30 * 24 * 3600}; Path=/`;
         }
 
-        setStatus("success");
-        if (kind === KIND_PASSENGER_REQUEST_EXTERNAL_USER && data?.passengerRequestExternalUser?.passengerRequestId) {
-          const prId = data.passengerRequestExternalUser.passengerRequestId;
-          window.location.href = `/reserve/representativeRequestsPlacement/${prId}`;
-        } else {
-          window.location.href = "/";
+        const extUser = data.externalUser;
+        if (extUser) {
+          const payload = JSON.stringify({
+            scope: extUser.scope,
+            hotelId: extUser.hotelId ?? null,
+            driverId: extUser.driverId ?? null,
+          });
+          document.cookie = `externalUserContext=${encodeURIComponent(payload)}; SameSite=Lax; Max-Age=86400; Path=/`;
         }
+
+        setStatus("success");
+        window.location.href = "/";
       } catch (err) {
         setError(getExternalAuthErrorMessage(err, "Ошибка входа по ссылке."));
         setStatus("error");

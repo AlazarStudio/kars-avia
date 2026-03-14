@@ -19,7 +19,11 @@ export default function BaggageDeliveryTab({
   const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
   const statusDrivers = statusToLabel[bds?.status] ?? "Принята";
 
-  const canEarlyComplete = bds?.status !== "COMPLETED" && bds?.status !== "CANCELLED";
+  const requestCancelled = request?.status === "CANCELLED";
+  const canEarlyComplete =
+    !requestCancelled &&
+    bds?.status !== "COMPLETED" &&
+    bds?.status !== "CANCELLED";
 
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completeReason, setCompleteReason] = useState("");

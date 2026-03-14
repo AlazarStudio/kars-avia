@@ -540,9 +540,11 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         addTarif={addTarif}
         selectedContract={selectedContract}
         tarif={selectedTarif}
-        // onSubmit={handleEditTarifCategory}
         addNotification={addNotification}
-        // refetchAllCategories={refetch}
+        onDelete={() => {
+          setEditShowAddTarif(false);
+          openDeleteContractConfirm(selectedTarif);
+        }}
       />
 
       {/* <EditRequestAllTarifCategory

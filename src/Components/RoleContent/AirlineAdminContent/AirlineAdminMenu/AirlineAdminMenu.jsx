@@ -99,7 +99,7 @@ const AirlineAdminMenu = ({
                 />
               </svg>
             </div>
-            {/* {menuOpen ? "Пассажиры" : ""} */}
+            {/* {menuOpen ? "ФАП" : ""} */}
             <DelayedText show={menuOpen} delay={200}>
               ФАП
             </DelayedText>

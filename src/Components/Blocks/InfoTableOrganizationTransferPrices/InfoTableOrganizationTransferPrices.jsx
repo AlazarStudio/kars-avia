@@ -46,7 +46,7 @@ function InfoTableOrganizationTransferPrices({
                     <path d="M1.5 1L6.5 6L1.5 11" stroke="#545873" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <span>Ценник {index + 1}</span>
+                <span>{item.name?.trim() ? item.name : `Ценник ${index + 1}`}</span>
               </div>
               <div className={classes.contractRowActions}>
                 <EditPencilIcon

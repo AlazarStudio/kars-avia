@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestNomerFond.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 
 import {
   GET_HOTEL_TARIFS,
@@ -36,6 +37,7 @@ function EditRequestNomerFond({
   selectedNomer,
   filter,
   addNotification,
+  openDeleteNomerComponent,
 }) {
   const token = getCookie("token");
   // console.log(nomer);
@@ -62,7 +64,7 @@ function EditRequestNomerFond({
       onData: () => {
         refetch();
       },
-    }
+    },
   );
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -81,11 +83,32 @@ function EditRequestNomerFond({
   // console.log(selectedRoomKind);
 
   const sidebarRef = useRef();
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const resetForm = useCallback(() => {
-    setIsEdited(false); // Сброс флага изменений
-    setSelectedRoomKind(null);
-  }, []);
+    if (nomer) {
+      setFormData({
+        nomerName: nomer?.name || nomer?.id || "",
+        category: type === "apartment" ? category?.origName : null,
+        beds: nomer?.beds || "",
+        reserve: typeof nomer?.reserve === "boolean" ? nomer?.reserve : false,
+        active: typeof nomer?.active === "boolean" ? nomer?.active : false,
+        description: nomer?.description || "",
+        descriptionSecond: nomer?.descriptionSecond || "",
+        price: nomer?.price || null,
+        roomImages: null,
+      });
+      setCoverImage(nomer?.images?.[0] || null);
+      setCoverImage2(null);
+      setDeletedImages([]);
+      const preselected = hotelTariff?.find(
+        (t) => t?.id === nomer?.roomKind?.id,
+      );
+      setSelectedRoomKind(preselected || null);
+    }
+    setIsEdited(false);
+  }, [nomer, type, category, hotelTariff]);
 
   useEffect(() => {
     if (show) {
@@ -105,21 +128,24 @@ function EditRequestNomerFond({
 
   useEffect(() => {
     if (data && show) {
-      setHotelTariff(data.hotel?.roomKind);
+      setHotelTariff(
+        Array.isArray(data.hotel?.roomKind) ? data.hotel.roomKind : [],
+      );
     }
   }, [data, show]);
 
   // Если в номере задан тариф (roomKind.id), ищем его в загруженных тарифах и устанавливаем selectedRoomKind
   useEffect(() => {
+    const tariffs = Array.isArray(hotelTariff) ? hotelTariff : [];
     if (
       show &&
       nomer &&
       nomer.roomKind &&
       nomer.roomKind.id &&
-      hotelTariff.length > 0
+      tariffs.length > 0
     ) {
-      const preselectedTariff = hotelTariff.find(
-        (tariff) => tariff.id === nomer.roomKind.id
+      const preselectedTariff = tariffs.find(
+        (tariff) => tariff.id === nomer.roomKind.id,
       );
       if (preselectedTariff) {
         setSelectedRoomKind(preselectedTariff);
@@ -130,19 +156,38 @@ function EditRequestNomerFond({
   const [isEditing, setIsEditing] = useState(false);
 
   const closeButton = useCallback(() => {
+    setAnchorEl(null);
     if (!isEdited) {
       resetForm();
       setIsEditing(false);
       onClose();
       return;
     }
-
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       setIsEditing(false);
       onClose();
     }
   }, [isEdited, resetForm, onClose]);
+
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => {
+    handleMenuClose();
+    setIsEditing(true);
+  };
+  const handleDeleteFromMenu = () => {
+    handleMenuClose();
+    if (openDeleteNomerComponent && nomer) {
+      const categoryName = category?.name ?? category?.origName ?? category;
+      onClose();
+      openDeleteNomerComponent(nomer, categoryName);
+    }
+  };
+  const handleCancelEdit = () => {
+    resetForm();
+    setIsEditing(false);
+  };
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -169,16 +214,15 @@ function EditRequestNomerFond({
     }
   };
 
-  // удаление нового выбранного файла из formData.images (File)
+  // удаление нового выбранного файла из formData.roomImages (File)
   const removeNewFile = (index) => {
+    setIsEdited(true);
+    const file = formData.roomImages?.[index];
     setFormData((prev) => {
-      const newFiles = Array.from(prev.images || []);
+      const newFiles = Array.from(prev.roomImages || []);
       newFiles.splice(index, 1);
-      return { ...prev, images: newFiles };
+      return { ...prev, roomImages: newFiles };
     });
-
-    // если удаляли coverImage2 (File), сбрасываем его
-    const file = formData.images?.[index];
     if (coverImage2 === file) setCoverImage2(null);
   };
 
@@ -325,20 +369,21 @@ function EditRequestNomerFond({
       },
     },
   });
+  const nomerImages = Array.isArray(nomer?.images) ? nomer.images : [];
   const imagesArray = coverImage
     ? [
-      coverImage,
-      ...nomer?.images.filter(
-        (img) => img !== coverImage && !deletedImages.includes(img)
-      ),
-    ]
-    : nomer?.images?.filter((img) => !deletedImages.includes(img));
+        coverImage,
+        ...nomerImages.filter(
+          (img) => img !== coverImage && !deletedImages.includes(img),
+        ),
+      ]
+    : nomerImages.filter((img) => !deletedImages.includes(img));
 
   const imagesArray2 = coverImage2
     ? [
-      coverImage2,
-      ...(formData?.roomImages?.filter((f) => f !== coverImage2) || []),
-    ]
+        coverImage2,
+        ...(formData?.roomImages?.filter((f) => f !== coverImage2) || []),
+      ]
     : formData?.roomImages || [];
 
   const handleSubmit = async (e) => {
@@ -428,7 +473,7 @@ function EditRequestNomerFond({
               }
               acc[room.category].rooms.push(room);
               return acc;
-            }, {})
+            }, {}),
           );
 
           sortedTarifs.forEach((category) => {
@@ -451,36 +496,26 @@ function EditRequestNomerFond({
         if (addNotification) {
           addNotification("Редактирование номера прошло успешно.", "success");
         }
+        setIsEditing(false);
       } catch (error) {
         console.error("Ошибка при обновлении номера", error);
       } finally {
         setIsLoading(false);
       }
     }
-    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
-      }
-
+      if (anchorEl && menuRef.current?.contains(event.target)) return;
+      if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
-
     if (show) {
       document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [show, closeButton]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [show, closeButton, anchorEl]);
 
   const categories = [
     {
@@ -569,270 +604,367 @@ function EditRequestNomerFond({
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать номер</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <CloseIcon />
+        <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleEditFromMenu}
+            onDelete={
+              openDeleteNomerComponent ? handleDeleteFromMenu : undefined
+            }
+          />
+          <div className={classes.closeIconWrapper} onClick={closeButton}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
       {isLoading ? (
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div
+            className={classes.requestMiddle}
+            style={
+              isEditing
+                ? { height: "calc(100vh - 161px)" }
+                : { height: "calc(100vh - 81px)" }
+            }
+          >
             <div className={classes.requestData}>
-              {type === "apartment" ? null : (
+              {type !== "apartment" && (
                 <>
-                  <label>Квота или резерв</label>
-                  <MUIAutocomplete
-                    dropdownWidth={"100%"}
-                    label={"Выберите тип"}
-                    options={["Квота", "Резерв"]}
-                    value={formData.reserve === true ? "Резерв" : "Квота"}
-                    onChange={(event, newValue) => {
-                      setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        reserve: newValue === "Резерв",
-                      }));
-                      setIsEdited(true);
-                    }}
-                    isDisabled={!isEditing}
-                  />
-
-                  <label>Тариф</label>
-                  <MUIAutocomplete
-                    dropdownWidth={"100%"}
-                    label={"Выберите тариф"}
-                    options={hotelTariff.map((tariff) => tariff.name)}
-                    value={
-                      selectedRoomKind &&
-                      hotelTariff.find(
-                        (tariff) =>
-                          tariff && tariff.name === selectedRoomKind.name
-                      )?.name
-                    }
-                    onChange={(event, newValue) => {
-                      const tariff = hotelTariff.find(
-                        (tariff) => tariff && tariff.name === newValue
-                      );
-                      setSelectedRoomKind(tariff);
-                    }}
-                    isDisabled={!isEditing}
-                  />
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Квота или резерв
+                    </div>
+                    {isEditing ? (
+                      <div className={classes.dropdown}>
+                        <MUIAutocomplete
+                          dropdownWidth={"100%"}
+                          label={"Выберите тип"}
+                          options={["Квота", "Резерв"]}
+                          value={formData.reserve === true ? "Резерв" : "Квота"}
+                          onChange={(event, newValue) => {
+                            setIsEdited(true);
+                            setFormData((prev) => ({
+                              ...prev,
+                              reserve: newValue === "Резерв",
+                            }));
+                          }}
+                          isDisabled={false}
+                        />
+                      </div>
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.reserve ? "Резерв" : "Квота"}
+                      </div>
+                    )}
+                  </div>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>Тариф</div>
+                    {isEditing ? (
+                      <div className={classes.dropdown}>
+                        <MUIAutocomplete
+                          dropdownWidth={"100%"}
+                          label={"Выберите тариф"}
+                          options={(hotelTariff || []).map((t) => t?.name)}
+                          value={
+                            selectedRoomKind
+                              ? (hotelTariff || []).find(
+                                  (t) => t?.name === selectedRoomKind.name,
+                                )?.name
+                              : ""
+                          }
+                          onChange={(event, newValue) => {
+                            setIsEdited(true);
+                            const tariff = (hotelTariff || []).find(
+                              (t) => t?.name === newValue,
+                            );
+                            setSelectedRoomKind(tariff || null);
+                          }}
+                          isDisabled={false}
+                        />
+                      </div>
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {selectedRoomKind?.name || "—"}
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
-              <label>Название номера</label>
-              <input
-                type="text"
-                name="nomerName"
-                value={
-                  formData.nomerName.includes("резерв")
-                    ? formData.nomerName.split(" (резерв)")[0]
-                    : `${formData.nomerName}`
-                }
-                onChange={handleChange}
-                placeholder="Пример: № 151"
-                disabled={!isEditing}
-              />
 
-              <label>Дополнительная информация</label>
-              <input
-                type="text"
-                name="descriptionSecond"
-                value={formData.descriptionSecond}
-                onChange={handleChange}
-                placeholder="Пример: Снимает Сам Иванов"
-                disabled={!isEditing}
-              />
-
-              <label>Количество кроватей</label>
-              <MUIAutocomplete
-                dropdownWidth={"100%"}
-                label={"Выберите категорию"}
-                options={bedsCategories.map((category) => category.label)}
-                value={
-                  bedsCategories.find(
-                    (category) => category.value === formData.beds
-                  ) || ""
-                }
-                onChange={(event, newValue) => {
-                  const selectedCategory = bedsCategories.find(
-                    (category) => category.label === newValue
-                  );
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    beds: selectedCategory?.value,
-                  }));
-                  setIsEdited(true);
-                }}
-                isDisabled={!isEditing}
-              />
-
-              <label>Состояние</label>
-              <select
-                name="active"
-                value={
-                  formData.active === true
-                    ? "true"
-                    : formData.active === false
-                      ? "false"
-                      : ""
-                }
-                onChange={(e) => {
-                  const value = e.target.value === "true";
-                  setIsEdited(true);
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    active: value,
-                  }));
-                }}
-                disabled={!isEditing}
-              >
-                <option value="" disabled>
-                  Выберите состояние
-                </option>
-                <option value="false">Не работает</option>
-                <option value="true">Работает</option>
-              </select>
-
-              {type === "apartment" ? (
-                <>
-                  <label>Категория</label>
-                  <MUIAutocomplete
-                    dropdownWidth={"100%"}
-                    label={"Выберите категорию"}
-                    options={useCategories.map((category) => category.label)}
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Название номера
+                </div>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="nomerName"
                     value={
-                      useCategories.find(
-                        (category) => category.value === formData.category
-                      ) || ""
+                      formData.nomerName?.includes("резерв")
+                        ? formData.nomerName.split(" (резерв)")[0]
+                        : formData.nomerName || ""
                     }
-                    onChange={(event, newValue) => {
-                      const selectedCategory = useCategories.find(
-                        (category) => category.label === newValue
-                      );
-                      setFormData((prevFormData) => ({
-                        ...prevFormData,
-                        category: selectedCategory?.value,
-                      }));
-                      setIsEdited(true);
-                    }}
-                    isDisabled={!isEditing}
-                  />
-
-                  <label>Цена</label>
-                  <input
-                    type="number"
-                    name="price"
-                    value={formData.price || 0}
                     onChange={handleChange}
-                    disabled={!isEditing}
+                    placeholder="Пример: № 151"
                   />
-                  <label>Описание</label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                  ></textarea>
-
-                  <label>Изображения</label>
-                  <input
-                    type="file"
-                    name="roomImages"
-                    onChange={handleFileChange}
-                    multiple
-                    disabled={!isEditing}
-                  />
-                  {/* список новых файлов (локальные файлы) */}
-                  <div className={classes.imageList}>
-                    {formData?.roomImages?.map((image, index) => (
-                      <div
-                        key={`${image.name}-${index}`}
-                        className={`${classes.imageItem} ${coverImage2 === image ? classes.selected : ""
-                          }`}
-                      >
-                        <img
-                          src={URL.createObjectURL(image)}
-                          alt={`Image ${index + 1}`}
-                        // onClick={() => handleCoverImageChange2(image)}
-                        />
-                        {/* кнопка удалить локальный файл */}
-                        {isEditing && (
-                          <button
-                            className={classes.deleteImageBtn}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeNewFile(index);
-                            }}
-                            title="Удалить"
-                          >
-                            {/* ✕ */}
-                          </button>
-                        )}
-                      </div>
-                    ))}
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.nomerName
+                      ?.replace(/\s*\(?\s*резерв\s*\)?/i, "")
+                      .trim() ||
+                      formData.nomerName ||
+                      "—"}
                   </div>
+                )}
+              </div>
 
-                  {/* список изображений с сервера */}
-                  <div className={classes.imageList}>
-                    {nomer?.images?.map((image, index) => {
-                      const isMarked = deletedImages.includes(image);
-                      return (
-                        <div
-                          key={`${image}-${index}`}
-                          className={`${classes.imageItem} 
-                          ${coverImage === image ? classes.selected : ""
-                            } ${!isEditing && classes.disImage} ${isMarked ? classes.toDelete : ""
-                            }
-                          `}
-                        // onClick={() => {
-                        //   if (!isMarked) {
-                        //     handleCoverImageChange(image);
-                        //   }
-                        // }}
-                        >
-                          <img
-                            src={getMediaUrl(image)}
-                            alt={`Image ${index + 1}`}
-                          />
-                          {/* {isEditing && (
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Дополнительная информация
+                </div>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="descriptionSecond"
+                    value={formData.descriptionSecond || ""}
+                    onChange={handleChange}
+                    placeholder="Пример: Снимает Сам Иванов"
+                  />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.descriptionSecond || "—"}
+                  </div>
+                )}
+              </div>
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Количество кроватей
+                </div>
+                {isEditing ? (
+                  <div className={classes.dropdown}>
+                    <MUIAutocomplete
+                      dropdownWidth={"100%"}
+                      label={"Выберите категорию"}
+                      options={bedsCategories.map((c) => c.label)}
+                      value={
+                        bedsCategories.find((c) => c.value === formData.beds)
+                          ?.label ?? ""
+                      }
+                      onChange={(event, newValue) => {
+                        setIsEdited(true);
+                        const selected = bedsCategories.find(
+                          (c) => c.label === newValue,
+                        );
+                        setFormData((prev) => ({
+                          ...prev,
+                          beds: selected?.value,
+                        }));
+                      }}
+                      isDisabled={false}
+                    />
+                  </div>
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {bedsCategories.find((c) => c.value === formData.beds)
+                      ?.label || "—"}
+                  </div>
+                )}
+              </div>
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Состояние</div>
+                {isEditing ? (
+                  <select
+                    name="active"
+                    value={
+                      formData.active === true
+                        ? "true"
+                        : formData.active === false
+                          ? "false"
+                          : ""
+                    }
+                    onChange={(e) => {
+                      setIsEdited(true);
+                      setFormData((prev) => ({
+                        ...prev,
+                        active: e.target.value === "true",
+                      }));
+                    }}
+                  >
+                    <option value="" disabled>
+                      Выберите состояние
+                    </option>
+                    <option value="false">Не работает</option>
+                    <option value="true">Работает</option>
+                  </select>
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.active === true
+                      ? "Работает"
+                      : formData.active === false
+                        ? "Не работает"
+                        : "—"}
+                  </div>
+                )}
+              </div>
+
+              {type === "apartment" && (
+                <>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Категория
+                    </div>
+                    {isEditing ? (
+                      <div className={classes.dropdown}>
+                        <MUIAutocomplete
+                          dropdownWidth={"100%"}
+                          label={"Выберите категорию"}
+                          options={useCategories.map((c) => c.label)}
+                          value={
+                            useCategories.find(
+                              (c) => c.value === formData.category,
+                            )?.label ?? ""
+                          }
+                          onChange={(event, newValue) => {
+                            setIsEdited(true);
+                            const selected = useCategories.find(
+                              (c) => c.label === newValue,
+                            );
+                            setFormData((prev) => ({
+                              ...prev,
+                              category: selected?.value,
+                            }));
+                          }}
+                          isDisabled={false}
+                        />
+                      </div>
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {useCategories.find(
+                          (c) => c.value === formData.category,
+                        )?.label || "—"}
+                      </div>
+                    )}
+                  </div>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>Цена</div>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        name="price"
+                        value={formData.price ?? ""}
+                        onChange={handleChange}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.price != null && formData.price !== ""
+                          ? formData.price
+                          : "—"}
+                      </div>
+                    )}
+                  </div>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Описание
+                    </div>
+                    {isEditing ? (
+                      <textarea
+                        name="description"
+                        value={formData.description || ""}
+                        onChange={handleChange}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.description || "—"}
+                      </div>
+                    )}
+                  </div>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Изображения
+                    </div>
+                    {isEditing ? (
+                      <input
+                        type="file"
+                        name="roomImages"
+                        onChange={handleFileChange}
+                        multiple
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {nomerImages.length ? `${nomerImages.length} шт.` : "—"}
+                      </div>
+                    )}
+                  </div>
+                  {isEditing && (
+                    <>
+                      <div className={classes.imageList}>
+                        {formData?.roomImages?.map((image, index) => (
+                          <div
+                            key={`${image.name}-${index}`}
+                            className={classes.imageItem}
+                          >
+                            <img
+                              src={URL.createObjectURL(image)}
+                              alt={`Image ${index + 1}`}
+                            />
                             <button
                               className={classes.deleteImageBtn}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                toggleDeleteServerImage(image);
+                                removeNewFile(index);
                               }}
-                              title={isMarked ? "Отменить удаление" : "Удалить"}
-                            >
-                            </button>
-                          )} */}
-                        </div>
-                      );
-                    })}
-                  </div>
+                              title="Удалить"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                      <div className={classes.imageList}>
+                        {nomerImages.map((image, index) => (
+                          <div
+                            key={`${image}-${index}`}
+                            className={classes.imageItem}
+                          >
+                            <img
+                              src={getMediaUrl(image)}
+                              alt={`Image ${index + 1}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </>
-              ) : null}
+              )}
             </div>
           </div>
 
-          <div className={classes.requestButton}>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className={classes.requestButton}>
+              <Button
+                type="button"
+                onClick={handleCancelEdit}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                backgroundcolor="#0057C3"
+                color="#fff"
+              >
+                Сохранить <img src="/saveDispatcher.png" alt="" />
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

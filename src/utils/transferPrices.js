@@ -14,6 +14,7 @@ export const DEFAULT_TRANSFER_PRICES = {
  */
 export function createEmptyTransferPriceInput() {
   return {
+    name: '',
     prices: { ...DEFAULT_TRANSFER_PRICES },
     airportIds: [],
     cityIds: [],
@@ -29,6 +30,7 @@ export function transferPriceToInput(tp) {
   if (!tp) return createEmptyTransferPriceInput();
   return {
     ...(tp.id ? { id: tp.id } : {}),
+    name: tp.name ?? '',
     prices: {
       threeSeater: tp.prices?.threeSeater ?? null,
       fiveSeater: tp.prices?.fiveSeater ?? null,
@@ -62,6 +64,7 @@ export function transferPriceInputsToPayload(list) {
   if (!Array.isArray(list)) return [];
   return list.map((item) => {
     const payload = {
+      name: item.name != null ? String(item.name).trim() : '',
       prices: {
         threeSeater: toRoutePricesInput(item.prices?.threeSeater),
         fiveSeater: toRoutePricesInput(item.prices?.fiveSeater),

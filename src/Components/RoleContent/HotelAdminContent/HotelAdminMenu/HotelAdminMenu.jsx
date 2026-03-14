@@ -42,8 +42,8 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
               />
             </svg>
           </div>
-          {/* {menuOpen ? "Пассажиры" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Пассажиры</DelayedText>
+          {/* {menuOpen ? "ФАП" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >ФАП</DelayedText>
           {allCreatedReserves > 0 && (
             <div
               className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""
@@ -52,7 +52,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
               {allCreatedReserves}
             </div>
           )}
-          {!menuOpen && <span className={classes.tooltip}>Пассажиры</span>}
+          {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
         </Link>
         <Link
           to={"/hotelChess"}

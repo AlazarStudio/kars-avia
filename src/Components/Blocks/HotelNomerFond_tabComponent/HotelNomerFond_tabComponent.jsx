@@ -403,6 +403,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
             addTarif={addTarif}
             setAddTarif={setAddTarif}
             addNotification={addNotification}
+            openDeleteNomerComponent={openDeleteNomerComponent}
           />
           <EditRequestCategory
             id={id}

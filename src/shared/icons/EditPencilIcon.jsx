@@ -1,7 +1,7 @@
 import React from "react";
 
 export default function EditPencilIcon({ onClick, ...props }) {
-  const strokeWidth = props.strokeWidth ?? "1";
+  const strokeWidth = props.strokeWidth ?? "var(--svg-stroke-width)";
   return (
     <svg
       width="19"

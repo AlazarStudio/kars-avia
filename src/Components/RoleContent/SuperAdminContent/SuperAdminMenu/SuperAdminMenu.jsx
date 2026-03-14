@@ -56,9 +56,9 @@ const SuperAdminMenu = ({
           {!menuOpen && <span className={classes.tooltip}>Эскадрилья</span>}
         </Link>
         <Link
-          to={"/reserve"}
+          to={"/representativeRequests"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "reserve" && classes.menu_items__activeElem}`}
+            } ${id == "representativeRequests" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -82,8 +82,8 @@ const SuperAdminMenu = ({
               />
             </svg>
           </div>
-          {/* {menuOpen ? "Пассажиры" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Пассажиры</DelayedText>
+          {/* {menuOpen ? "ФАП" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >ФАП</DelayedText>
           {allCreatedReserves > 0 && (
             <div
               className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""
@@ -92,7 +92,7 @@ const SuperAdminMenu = ({
               {allCreatedReserves}
             </div>
           )}
-          {!menuOpen && <span className={classes.tooltip}>Пассажиры</span>}
+          {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
         </Link>
         <Link
           to={"/orders"}

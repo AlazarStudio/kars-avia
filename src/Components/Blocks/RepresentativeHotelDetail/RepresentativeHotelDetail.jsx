@@ -40,11 +40,11 @@ export function HotelDetailToolbar({
         onChange={(e) => onSearchChange(e.target.value)}
       />
       <div className={classes.actionsWrap}>
-        {/* {onIssueLink && (
+        {onIssueLink && (
           <Button onClick={onIssueLink} type="button">
             Выдать ссылку для гостиницы
           </Button>
-        )} */}
+        )}
         <Button onClick={onGenerateReport}>Сформировать отчет</Button>
         {showAddBookingButton && (
           <Button onClick={onAddBooking}>Добавить бронь</Button>

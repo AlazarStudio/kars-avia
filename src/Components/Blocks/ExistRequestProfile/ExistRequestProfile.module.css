@@ -23,15 +23,21 @@
 }
 
 .requestTitle_close {
-    cursor: pointer;
     display: flex;
     align-items: center;
+    gap: 15px;
 }
 
 .requestTitle_close img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.closeIconWrapper {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .tabs {
@@ -156,6 +162,15 @@
 
 .requestDataInfo input {
     width: 60%;
+}
+
+.requestDataInfo_inputWrap {
+    position: relative;
+    width: 60%;
+}
+
+.requestDataInfo_inputWrap input {
+    width: 100%;
 }
 
 .requestData_messages {

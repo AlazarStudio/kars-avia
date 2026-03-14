@@ -30,8 +30,11 @@ export default function PowerSupplyTab({
   const rawStatus = ms?.status ?? "NEW";
   const statusText = statusToLabel[rawStatus] ?? "Принята";
   const canMarkDelivered = rawStatus === "NEW";
+  const requestCancelled = request?.status === "CANCELLED";
   const canEarlyComplete =
-    rawStatus !== "COMPLETED" && rawStatus !== "CANCELLED";
+    !requestCancelled &&
+    rawStatus !== "COMPLETED" &&
+    rawStatus !== "CANCELLED";
 
   const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
   const [earlyCompleteReason, setEarlyCompleteReason] = useState("");
@@ -123,8 +126,8 @@ export default function PowerSupplyTab({
       </div>
       <ServiceFooter
         statusText={statusText}
-        ctaLabel="Питание доставлено"
-        onCta={() => mutate()}
+        ctaLabel={requestCancelled ? undefined : "Питание доставлено"}
+        onCta={requestCancelled ? undefined : () => mutate()}
         disabled={loading || !canMarkDelivered}
         earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
         onEarlyCompleteClick={

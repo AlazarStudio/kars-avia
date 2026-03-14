@@ -524,7 +524,7 @@ function HotelSettings_tabComponent({ id }) {
                   setDisplayInfo("settings");
                 }}
               >
-                <SettingsIcon width={18} height={18} />
+                <SettingsIcon width={18} height={18} strokeWidth={1.5}/>
                 Настройки
               </button>
 

@@ -2,7 +2,7 @@ import React from "react";
 import Svg from "./Svg.jsx";
 
 export default function DeleteIcon({ onClick, ...props }) {
-  const strokeWidth = props.strokeWidth ?? "1";
+  const strokeWidth = props.strokeWidth ?? "var(--svg-stroke-width)";
   return (
     <svg
       width="19"

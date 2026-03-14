@@ -30,8 +30,11 @@ export default function WaterSupplyTab({
   const rawStatus = ws?.status ?? "NEW";
   const statusText = statusToLabel[rawStatus] ?? "Принята";
   const canMarkDelivered = rawStatus === "NEW";
+  const requestCancelled = request?.status === "CANCELLED";
   const canEarlyComplete =
-    rawStatus !== "COMPLETED" && rawStatus !== "CANCELLED";
+    !requestCancelled &&
+    rawStatus !== "COMPLETED" &&
+    rawStatus !== "CANCELLED";
 
   const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
   const [earlyCompleteReason, setEarlyCompleteReason] = useState("");
@@ -125,8 +128,8 @@ export default function WaterSupplyTab({
 
       <ServiceFooter
         statusText={statusText}
-        ctaLabel="Вода доставлена"
-        onCta={() => mutate()}
+        ctaLabel={requestCancelled ? undefined : "Вода доставлена"}
+        onCta={requestCancelled ? undefined : () => mutate()}
         disabled={loading || !canMarkDelivered}
         earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
         onEarlyCompleteClick={

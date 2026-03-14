@@ -522,24 +522,28 @@ function CreateRepresentativeRequest({
                   </div>
                 ) : null}
 
-                <label>Введите авиакомпанию</label>
-                <MUIAutocomplete
-                  dropdownWidth={"100%"}
-                  label={"Введите авиакомпанию"}
-                  options={airlines?.map((airline) => airline.name)}
-                  value={selectedAirline ? selectedAirline?.name : ""}
-                  onChange={(event, newValue) => {
-                    const selected = airlines.find(
-                      (airline) => airline.name === newValue
-                    );
-                    setSelectedAirline(selected || null);
-                    setFormData((prevFormData) => ({
-                      ...prevFormData,
-                      airlineId: selected?.id || "",
-                    }));
-                    setIsEdited(true);
-                  }}
-                />
+                {!user?.airlineId && (
+                  <>
+                    <label>Введите авиакомпанию</label>
+                    <MUIAutocomplete
+                      dropdownWidth={"100%"}
+                      label={"Введите авиакомпанию"}
+                      options={airlines?.map((airline) => airline.name)}
+                      value={selectedAirline ? selectedAirline?.name : ""}
+                      onChange={(event, newValue) => {
+                        const selected = airlines.find(
+                          (airline) => airline.name === newValue
+                        );
+                        setSelectedAirline(selected || null);
+                        setFormData((prevFormData) => ({
+                          ...prevFormData,
+                          airlineId: selected?.id || "",
+                        }));
+                        setIsEdited(true);
+                      }}
+                    />
+                  </>
+                )}
 
                 <label>Выберите аэропорт</label>
                 <MUIAutocompleteColor

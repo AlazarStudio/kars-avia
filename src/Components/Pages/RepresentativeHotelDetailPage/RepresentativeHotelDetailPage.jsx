@@ -15,7 +15,7 @@ import {
   GET_AIRLINE_DEPARTMENT,
   GET_DISPATCHER_DEPARTMENTS,
   getCookie,
-  ADMIN_ISSUE_PASSENGER_REQUEST_EXTERNAL_USER_MAGIC_LINK,
+  CREATE_EXTERNAL_AUTH_LINK,
 } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
@@ -30,8 +30,8 @@ import {
 } from "../../../utils/access";
 import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
 
-const ACCOUNT_TYPE_CRM = "CRM";
-const ACCOUNT_TYPE_PVA = "PVA";
+const ACCESS_TYPE_CRM = "CRM";
+const ACCESS_TYPE_PWA = "PWA";
 const ISSUE_LINK_COOLDOWN_MS = 60000;
 
 function RepresentativeHotelDetailPage({ user }) {
@@ -121,29 +121,28 @@ function RepresentativeHotelDetailPage({ user }) {
   }, [request?.livingService?.hotels, decodedHotelId]);
 
   const isExternalUser = isExternalPassengerRequestUser(user);
-  const restrictedHotelItemId = user?.passengerServiceHotelItemId;
+  const externalHotelId = user?.scope === "HOTEL" ? user?.hotelId : null;
 
   useEffect(() => {
     if (!request || !isExternalUser) return;
-    if (user?.passengerRequestId && request.id !== user.passengerRequestId) {
-      navigate(`/${id}/representativeRequestsPlacement/${user.passengerRequestId}`, { replace: true });
-      return;
+    if (user?.scope === "HOTEL" && externalHotelId) {
+      const allowedHotel = (request?.livingService?.hotels ?? []).find(
+        (h) => String(h.hotelId) === String(externalHotelId)
+      );
+      if (!allowedHotel) {
+        navigate(`/${id}/representativeRequestsPlacement/${idRequest}`, { replace: true, state: { tab: "habitation" } });
+        return;
+      }
+      if (hotel?.hotelId != null && String(hotel.hotelId) !== String(externalHotelId)) {
+        const hotelIdEnc = encodeURIComponent(allowedHotel.hotelId ?? allowedHotel.name ?? "");
+        navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${hotelIdEnc}`, { replace: true });
+      }
     }
-    if (!restrictedHotelItemId) return;
-    const hotels = request?.livingService?.hotels ?? [];
-    const allowedHotel = hotels.find((h) => h.itemId === restrictedHotelItemId);
-    if (hotel?.itemId === restrictedHotelItemId) return;
-    if (allowedHotel) {
-      const hotelId = allowedHotel.hotelId ?? allowedHotel.name ?? hotels.findIndex((h) => h.itemId === restrictedHotelItemId);
-      navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`, { replace: true });
-    } else {
-      navigate(`/${id}/representativeRequestsPlacement/${idRequest}`, { replace: true, state: { tab: "habitation" } });
-    }
-  }, [request, isExternalUser, restrictedHotelItemId, hotel?.itemId, user?.passengerRequestId, id, idRequest, navigate]);
+  }, [request, isExternalUser, externalHotelId, hotel?.hotelId, id, idRequest, navigate, user?.scope]);
 
   const [showAddBooking, setShowAddBooking] = useState(false);
   const [showIssueLinkModal, setShowIssueLinkModal] = useState(false);
-  const [issueLinkAccountType, setIssueLinkAccountType] = useState(ACCOUNT_TYPE_CRM);
+  const [issueLinkAccessType, setIssueLinkAccessType] = useState(ACCESS_TYPE_CRM);
   const [issueLinkEmail, setIssueLinkEmail] = useState("");
   const [issueLinkName, setIssueLinkName] = useState("");
   const [issueLinkResult, setIssueLinkResult] = useState(null);
@@ -158,8 +157,8 @@ function RepresentativeHotelDetailPage({ user }) {
     }, fullNotifyTime);
   };
 
-  const [issueMagicLink, { loading: issueLinkLoading }] = useMutation(
-    ADMIN_ISSUE_PASSENGER_REQUEST_EXTERNAL_USER_MAGIC_LINK,
+  const [createExternalAuthLink, { loading: issueLinkLoading }] = useMutation(
+    CREATE_EXTERNAL_AUTH_LINK,
     {
       context: { headers: { Authorization: `Bearer ${token}` } },
     }
@@ -167,23 +166,27 @@ function RepresentativeHotelDetailPage({ user }) {
 
   const handleIssueLink = async () => {
     const email = issueLinkEmail?.trim() || null;
-    if (issueLinkAccountType === ACCOUNT_TYPE_CRM && !email) {
-      addNotification("Укажите email (обязательно для CRM).", "error");
+    if (!email) {
+      addNotification("Укажите email (обязательно).", "error");
+      return;
+    }
+    if (!hotel?.hotelId) {
+      addNotification("Не удалось определить отель. Обновите страницу.", "error");
       return;
     }
     try {
-      const res = await issueMagicLink({
+      const res = await createExternalAuthLink({
         variables: {
           input: {
-            accountType: issueLinkAccountType,
-            email: email || null,
+            scope: "HOTEL",
+            accessType: issueLinkAccessType,
+            email,
             name: issueLinkName?.trim() || null,
-            passengerRequestId: request?.id,
-            passengerServiceHotelItemId: hotel?.itemId || null,
+            hotelId: hotel.hotelId,
           },
         },
       });
-      const data = res?.data?.adminIssuePassengerRequestExternalUserMagicLink;
+      const data = res?.data?.createExternalAuthLink;
       if (data?.success) {
         if (data.emailed) {
           addNotification("Ссылка отправлена на email.", "success");
@@ -213,7 +216,7 @@ function RepresentativeHotelDetailPage({ user }) {
     setIssueLinkEmail("");
     setIssueLinkName("");
     setIssueLinkResult(null);
-    setIssueLinkAccountType(ACCOUNT_TYPE_CRM);
+    setIssueLinkAccessType(ACCESS_TYPE_CRM);
   };
 
   const handleCloseIssueLinkModal = () => {
@@ -396,25 +399,25 @@ function RepresentativeHotelDetailPage({ user }) {
                     <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                       <input
                         type="radio"
-                        name="accountType"
-                        checked={issueLinkAccountType === ACCOUNT_TYPE_CRM}
-                        onChange={() => setIssueLinkAccountType(ACCOUNT_TYPE_CRM)}
+                        name="accessType"
+                        checked={issueLinkAccessType === ACCESS_TYPE_CRM}
+                        onChange={() => setIssueLinkAccessType(ACCESS_TYPE_CRM)}
                       />
                       CRM
                     </label>
                     <label style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
                       <input
                         type="radio"
-                        name="accountType"
-                        checked={issueLinkAccountType === ACCOUNT_TYPE_PVA}
-                        onChange={() => setIssueLinkAccountType(ACCOUNT_TYPE_PVA)}
+                        name="accessType"
+                        checked={issueLinkAccessType === ACCESS_TYPE_PWA}
+                        onChange={() => setIssueLinkAccessType(ACCESS_TYPE_PWA)}
                       />
-                      PVA
+                      PWA
                     </label>
                   </div>
                 </div>
                 <MUITextField
-                  label={issueLinkAccountType === ACCOUNT_TYPE_PVA ? "Email (необязательно для PVA)" : "Email *"}
+                  label="Email *"
                   value={issueLinkEmail}
                   onChange={(e) => setIssueLinkEmail(e.target.value)}
                   placeholder="email@example.com"

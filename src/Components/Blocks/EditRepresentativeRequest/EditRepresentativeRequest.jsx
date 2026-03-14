@@ -65,7 +65,7 @@ const initialFormState = {
   baggagePlannedAt: "",
 };
 
-function EditRepresentativeRequest({ show, onClose, request, addNotification }) {
+function EditRepresentativeRequest({ show, onClose, request, addNotification, onOpenCancelConfirm, cancellingRequest = false }) {
   const token = getCookie("token");
   const [formData, setFormData] = useState(initialFormState);
   const [isEdited, setIsEdited] = useState(false);
@@ -392,7 +392,20 @@ function EditRepresentativeRequest({ show, onClose, request, addNotification }) 
           </div>
 
           <div className={classes.requestButton}>
-            <Button onClick={handleSubmit}>Сохранить</Button>
+            {request?.status !== "CANCELLED" && onOpenCancelConfirm && (
+              <Button
+                type="button"
+                onClick={onOpenCancelConfirm}
+                disabled={cancellingRequest || isLoading}
+                backgroundcolor="var(--red)"
+                color="#FFFFFF"
+              >
+                {cancellingRequest ? "Отмена…" : "Отменить заявку"}
+              </Button>
+            )}
+            <Button onClick={handleSubmit} disabled={isLoading}>
+              Сохранить
+            </Button>
           </div>
         </>
       )}

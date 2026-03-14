@@ -40,7 +40,6 @@ function InfoTableDataDispatcherCompany({
                     />
                     <SettingsIcon
                       cursor={"pointer"}
-                      strokeWidth={1}
                       onClick={() => onOpenAccess?.(group)}
                     />
                     <DeleteIcon

@@ -1,15 +1,54 @@
-import React from "react";
+import React, { useState } from "react";
 import classes from "./HabitationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
-import { convertToDate } from "../../../../graphQL_requests";
+import { convertToDate, COMPLETE_PASSENGER_REQUEST_LIVING_EARLY, getCookie } from "../../../../graphQL_requests";
+import { useMutation } from "@apollo/client";
+import Button from "../../Standart/Button/Button";
 
 const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
 
-export default function HabitationTab({ id, request, searchQuery = "", addNotification, onHotelSelect }) {
+export default function HabitationTab({ id, request, searchQuery = "", addNotification, onHotelSelect, onStatusChanged }) {
+  const token = getCookie("token");
   const ls = request?.livingService;
   const statusText = statusToLabel[ls?.status] ?? "Принята";
+
+  const requestCancelled = request?.status === "CANCELLED";
+  const canEarlyComplete =
+    !requestCancelled &&
+    ls?.status !== "COMPLETED" &&
+    ls?.status !== "CANCELLED";
+
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [completeReason, setCompleteReason] = useState("");
+
+  const [completeEarly, { loading: completingEarly }] = useMutation(
+    COMPLETE_PASSENGER_REQUEST_LIVING_EARLY,
+    {
+      context: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+      onCompleted: () => {
+        addNotification?.("Услуга «Проживание» завершена", "success");
+        setShowCompleteModal(false);
+        setCompleteReason("");
+        onStatusChanged?.();
+      },
+      onError: (err) => {
+        addNotification?.(err?.message || "Ошибка", "error");
+      },
+    }
+  );
+
+  const handleComplete = () => {
+    const reason = completeReason?.trim();
+    if (!reason) {
+      addNotification?.("Укажите причину завершения", "error");
+      return;
+    }
+    completeEarly({
+      variables: { requestId: request?.id, reason },
+    });
+  };
   const allHotels = request?.livingService?.hotels ?? [];
   const q = (searchQuery || "").trim().toLowerCase();
   const hotelsWithIndex = q
@@ -93,6 +132,9 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
       </div>
       <ServiceFooter
         statusText={statusText}
+        earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
+        onEarlyCompleteClick={canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
+        earlyCompleteDisabled={completingEarly}
         history={[
           {
             label: "Принята",
@@ -111,6 +153,42 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
           },
         ]}
       />
+
+      {showCompleteModal && (
+        <div
+          className={classes.modalOverlay}
+          onClick={() => !completingEarly && setShowCompleteModal(false)}
+        >
+          <div
+            className={classes.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Завершить услугу «Проживание»</h3>
+            <p>Укажите причину завершения (обязательно):</p>
+            <textarea
+              className={classes.modalReasonInput}
+              value={completeReason}
+              onChange={(e) => setCompleteReason(e.target.value)}
+              rows={4}
+              placeholder="Причина"
+            />
+            <div className={classes.modalActions}>
+              <Button
+                onClick={() => {
+                  setShowCompleteModal(false);
+                  setCompleteReason("");
+                }}
+                disabled={completingEarly}
+              >
+                Отмена
+              </Button>
+              <Button onClick={handleComplete} disabled={completingEarly}>
+                {completingEarly ? "Сохранение…" : "Завершить"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

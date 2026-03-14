@@ -130,6 +130,55 @@
   color: #545873;
 }
 
+/* Модалка досрочного завершения */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+}
+.modalContent {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+.modalContent h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+.modalContent p {
+  margin: 0 0 12px 0;
+  color: var(--main-gray, #545873);
+  font-size: 14px;
+}
+.modalReasonInput {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+.modalReasonInput:focus {
+  border-color: var(--primary, #2A6EF5);
+  outline: none;
+}
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
 @media (min-width: 0px) and (max-width: 1499px) {
 
   .tableHead,

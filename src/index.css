@@ -41,6 +41,8 @@ a {
     --log-img-height: 30px;
     --log-text-padding: 25px 0;
     --log-text-align-items: none;
+
+    --svg-stroke-width: 0.5;
 }
 
 .blueText {

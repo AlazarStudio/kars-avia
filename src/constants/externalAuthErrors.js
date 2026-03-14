@@ -13,8 +13,14 @@ export const EXTERNAL_AUTH_ERROR_MESSAGES = {
   "Email is required": "Укажите email.",
   "Only admins can issue magic links": "Выдавать ссылки могут только администраторы.",
   "Only admins can reissue magic links": "Перевыдавать ссылки могут только администраторы.",
-  "Invalid accountType": "Укажите тип учётной записи: CRM или PVA.",
   "External user not found": "Внешний пользователь не найден.",
+  "Exactly one of hotelId or driverId must be provided": "Укажите ровно одно: hotelId или driverId.",
+  "hotelId is required for HOTEL scope": "Для scope HOTEL обязателен hotelId.",
+  "driverId is required for DRIVER scope": "Для scope DRIVER обязателен driverId.",
+  "Invalid scope": "Укажите scope: HOTEL или DRIVER.",
+  "Invalid accessType": "Укажите accessType: PWA или CRM.",
+  "Hotel not found": "Отель не найден.",
+  "Driver not found": "Водитель не найден.",
 };
 
 /**

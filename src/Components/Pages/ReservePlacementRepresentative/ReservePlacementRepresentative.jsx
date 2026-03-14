@@ -29,6 +29,7 @@ import {
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
   getCookie,
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
+  SET_PASSENGER_REQUEST_STATUS,
 } from "../../../../graphQL_requests";
 import {
   isAirlineRole as isAirlineRoleCheck,
@@ -224,16 +225,16 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   const isDispatcherRole = isDispatcherRoleCheck(user);
   const isAirlineRole = isAirlineRoleCheck(user);
   const isExternalUser = isExternalPassengerRequestUser(user);
-  const restrictedToHotelItemId = user?.passengerServiceHotelItemId;
+  const restrictedToHotelId = user?.scope === "HOTEL" ? user?.hotelId : null;
   const dispatcherDepartmentId = user?.dispatcherDepartmentId;
 
   const habitationRequest = useMemo(() => {
-    if (!request || !isExternalUser || !restrictedToHotelItemId) return request;
+    if (!request || !isExternalUser || restrictedToHotelId == null) return request;
     const hotels = request.livingService?.hotels ?? [];
-    const allowed = hotels.filter((h) => h.itemId === restrictedToHotelItemId);
+    const allowed = hotels.filter((h) => String(h.hotelId) === String(restrictedToHotelId));
     if (allowed.length === 0) return request;
     return { ...request, livingService: { ...request.livingService, hotels: allowed } };
-  }, [request, isExternalUser, restrictedToHotelItemId]);
+  }, [request, isExternalUser, restrictedToHotelId]);
 
   const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
     useQuery(GET_AIRLINE_DEPARTMENT, {
@@ -314,18 +315,15 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   useEffect(() => {
     if (!request || !isExternalUser) return;
-    if (user?.passengerRequestId && request.id !== user.passengerRequestId) {
-      navigate(`/${id}/representativeRequestsPlacement/${user.passengerRequestId}`, { replace: true });
-      return;
+    if (user?.scope === "HOTEL" && restrictedToHotelId && !location.pathname.includes("/hotel/")) {
+      const hotels = request.livingService?.hotels ?? [];
+      const allowed = hotels.find((h) => String(h.hotelId) === String(restrictedToHotelId));
+      if (allowed) {
+        const hotelId = allowed.hotelId ?? allowed.name ?? "";
+        navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`, { replace: true });
+      }
     }
-    if (!restrictedToHotelItemId) return;
-    if (location.pathname.includes("/hotel/")) return;
-    const hotels = request.livingService?.hotels ?? [];
-    const allowed = hotels.find((h) => h.itemId === restrictedToHotelItemId);
-    if (!allowed) return;
-    const hotelId = allowed.hotelId ?? allowed.name ?? String(hotels.findIndex((h) => h.itemId === restrictedToHotelItemId));
-    navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`, { replace: true });
-  }, [request, isExternalUser, restrictedToHotelItemId, user?.passengerRequestId, location.pathname, id, idRequest, navigate]);
+  }, [request, isExternalUser, restrictedToHotelId, user?.scope, location.pathname, id, idRequest, navigate]);
 
   // console.log(dataHotel);
 
@@ -406,6 +404,28 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   const [showAddBaggageDriverSidebar, setShowAddBaggageDriverSidebar] = useState(false);
   const toggleAddBaggageDriverSidebar = () => {
     setShowAddBaggageDriverSidebar((prev) => !prev);
+  };
+
+  const [showCancelRequestConfirm, setShowCancelRequestConfirm] = useState(false);
+  const [setRequestStatus, { loading: cancellingRequest }] = useMutation(SET_PASSENGER_REQUEST_STATUS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    refetchQueries: [{ query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: request?.id } }],
+    awaitRefetchQueries: false,
+    onCompleted: () => {
+      setShowEditRequestSidebar(false);
+      addNotification?.("Заявка отменена.", "success");
+    },
+  });
+  const handleConfirmCancelRequest = () => {
+    if (!request?.id) return;
+    setShowCancelRequestConfirm(false);
+    setRequestStatus({
+      variables: { id: request.id, status: "CANCELLED" },
+    });
   };
 
   const canAddTransferRequest = useMemo(() => {
@@ -584,7 +604,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 </svg>
               </button>
             )}
-            {!isExternalUser && (
+            {!isExternalUser && request?.status !== "CANCELLED" && (
               <Button onClick={() => setShowEditRequestSidebar(true)}>Редактировать</Button>
             )}
             {/* {!isExternalUser && filters.length < 5 && (
@@ -694,20 +714,24 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                   Расселение
                   <DownloadIcon />
                 </button>
-                {!isExternalUser && canAddHabitationRequest && (
-                  <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
-                )}
+                {!isExternalUser &&
+                  canAddHabitationRequest &&
+                  request?.status !== "CANCELLED" && (
+                    <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
+                  )}
               </>
             )}
             {filter === "transferAccommodation" &&
               request?.transferService?.plan?.enabled &&
               !isExternalUser &&
-              canAddTransferRequest && (
+              canAddTransferRequest &&
+              request?.status !== "CANCELLED" && (
                 <Button onClick={toggleAddDriverSidebar}>Создать заявку на трансфер</Button>
               )}
             {filter === "baggageDelivery" &&
               request?.baggageDeliveryService?.plan?.enabled &&
-              !isExternalUser && (
+              !isExternalUser &&
+              request?.status !== "CANCELLED" && (
                 <Button onClick={toggleAddBaggageDriverSidebar}>Создать заявку на трансфер багажа</Button>
               )}
             {canCompleteEarly && (
@@ -820,6 +844,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       request={habitationRequest}
                       searchQuery={habitationSearchQuery}
                       addNotification={addNotification}
+                      onStatusChanged={() => refetch()}
                       onHotelSelect={(h, i) => {
                         const hotelId = h.hotelId ?? h.name ?? String(i);
                         navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`);
@@ -876,7 +901,19 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               onClose={() => setShowEditRequestSidebar(false)}
               request={request}
               addNotification={addNotification}
+              onOpenCancelConfirm={() => setShowCancelRequestConfirm(true)}
+              cancellingRequest={cancellingRequest}
             />
+
+            {showCancelRequestConfirm && (
+              <DeleteComponent
+                title="Вы уверены, что хотите отменить заявку?"
+                isCancel
+                close={() => setShowCancelRequestConfirm(false)}
+                remove={() => handleConfirmCancelRequest()}
+                index={null}
+              />
+            )}
 
             <AddRepresentativeHotel
               show={showAddHotelSidebar}

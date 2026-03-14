@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./ExistRequestProfile.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { getCookie, getMediaUrl, UPDATE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
@@ -27,76 +28,84 @@ function ExistRequestProfile({
     },
   });
 
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
-  const [formData, setFormData] = useState({
-    id: user?.id || "",
-    images: null,
-    name: user?.name || "",
-    email: user?.email || "",
-    login: user?.login || "",
-    oldPassword: "",
-    password: user?.password || "",
-  });
-
-  const sidebarRef = useRef();
-
-  const [index, setIndex] = useState(null);
-  const [showIMG, setShowIMG] = useState();
-
-  useEffect(() => {
-    if (show && user) {
-      setFormData({
-        id: user?.id || "",
-        images: null,
-        name: user?.name || "",
-        email: user?.email || "",
-        login: user?.login || "",
-        oldPassword: "",
-        password: user?.password || "",
-      });
-      setShowIMG(user?.images[0] ? user?.images[0] : []);
-      setIndex(user?.index);
-    }
-  }, [show, user]);
-
-  const resetForm = useCallback(() => {
-    setFormData({
-      id: "",
+  const getInitialFormData = useCallback(
+    () => ({
+      id: user?.id || "",
       images: null,
-      name: "",
-      email: "",
-      login: "",
+      name: user?.name || "",
+      email: user?.email || "",
+      login: user?.login || "",
       oldPassword: "",
       password: "",
-    });
-    setIsEdited(false); // Сброс флага изменений
-    setShowOldPassword(false);
-    setShowNewPassword(false);
-  }, []);
+    }),
+    [user]
+  );
 
+  const [isEdited, setIsEdited] = useState(false);
+  const [formData, setFormData] = useState(() => ({
+    id: "",
+    images: null,
+    name: "",
+    email: "",
+    login: "",
+    oldPassword: "",
+    password: "",
+  }));
+
+  const sidebarRef = useRef();
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [index, setIndex] = useState(null);
+  const [showIMG, setShowIMG] = useState();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
+  useEffect(() => {
+    if (show && user) {
+      setFormData(getInitialFormData());
+      setShowIMG(user?.images?.[0] ? user.images[0] : []);
+      setIndex(user?.index);
+      setIsEdited(false);
+    }
+  }, [show, user, getInitialFormData]);
+
+  const resetForm = useCallback(() => {
+    setFormData(getInitialFormData());
+    setIsEdited(false);
+    setShowOldPassword(false);
+    setShowNewPassword(false);
+  }, [getInitialFormData]);
+
   const closeButton = useCallback(() => {
+    setAnchorEl(null);
     if (!isEdited) {
-      resetForm();
       onClose();
       setIsEditing(false);
       return;
     }
-
     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, isEditing, onClose]);
+  }, [isEdited, onClose, resetForm]);
+
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => {
+    handleMenuClose();
+    setIsEditing(true);
+  };
+  const handleCancelEdit = () => {
+    resetForm();
+    setIsEditing(false);
+  };
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -170,6 +179,7 @@ function ExistRequestProfile({
         }
         resetForm();
         onClose();
+        setIsEditing(false);
         addNotification("Редактирование профиля прошло успешно.", "success");
       } catch (error) {
         console.error("Ошибка обновления пользователя:", error);
@@ -198,37 +208,43 @@ function ExistRequestProfile({
         }));
       }
     }
-    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
-      }
-
+      if (anchorEl && menuRef.current?.contains(event.target)) return;
+      if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
+    if (show) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [show, closeButton, anchorEl]);
 
-    if (show) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [show, closeButton]);
+  const eyeIconStyle = {
+    width: "20px",
+    height: "20px",
+    objectFit: "contain",
+    position: "absolute",
+    right: "10px",
+    top: "10px",
+    cursor: "pointer",
+  };
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <CloseIcon />
+        <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleEditFromMenu}
+          />
+          <div className={classes.closeIconWrapper} onClick={closeButton}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
       {isLoading ? (
@@ -254,14 +270,19 @@ function ExistRequestProfile({
 
                   <div className={classes.requestDataInfo}>
                     <div className={classes.requestDataInfo_title}>ФИО</div>
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="Иванов Иван Иванович"
-                      value={formData.name}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Иванов Иван Иванович"
+                        value={formData.name}
+                        onChange={handleChange}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.name || "—"}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -270,128 +291,127 @@ function ExistRequestProfile({
                 <>
                   <div className={classes.requestDataInfo}>
                     <div className={classes.requestDataInfo_title}>Почта</div>
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="example@mail.ru"
-                      value={formData.email}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
+                    {isEditing ? (
+                      <input
+                        type="email"
+                        name="email"
+                        placeholder="example@mail.ru"
+                        value={formData.email}
+                        onChange={handleChange}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.email || "—"}
+                      </div>
+                    )}
                   </div>
 
                   <div className={classes.requestDataInfo}>
                     <div className={classes.requestDataInfo_title}>Логин</div>
-                    <input
-                      type="text"
-                      name="login"
-                      placeholder="Логин"
-                      value={formData.login}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name="login"
+                        placeholder="Логин"
+                        value={formData.login}
+                        onChange={handleChange}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.login || "—"}
+                      </div>
+                    )}
                   </div>
                   <div className={classes.requestDataInfo}>
                     <div className={classes.requestDataInfo_title}>
                       Старый пароль
                     </div>
-                    <input
-                      type={showOldPassword ? "text" : "password"}
-                      name="oldPassword"
-                      placeholder="Старый пароль"
-                      value={formData.oldPassword}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                    <img
-                      src={showOldPassword ? "/eyeOpen.png" : "/eyeClose.png"}
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        objectFit: "contain",
-                        position: "absolute",
-                        right: "40px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() =>
-                        isEditing ? setShowOldPassword((prev) => !prev) : null
-                      }
-                      alt=""
-                    />
+                    {isEditing ? (
+                      <div className={classes.requestDataInfo_inputWrap}>
+                        <input
+                          type={showOldPassword ? "text" : "password"}
+                          name="oldPassword"
+                          placeholder="Старый пароль"
+                          value={formData.oldPassword}
+                          onChange={handleChange}
+                          autoComplete="off"
+                        />
+                        <img
+                          src={
+                            showOldPassword ? "/eyeOpen.png" : "/eyeClose.png"
+                          }
+                          style={eyeIconStyle}
+                          onClick={() => setShowOldPassword((prev) => !prev)}
+                          alt=""
+                        />
+                      </div>
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>—</div>
+                    )}
                   </div>
                   <div className={classes.requestDataInfo}>
                     <div className={classes.requestDataInfo_title}>
                       Новый пароль
                     </div>
-                    <input
-                      type={showNewPassword ? "text" : "password"}
-                      name="password"
-                      placeholder="Новый пароль"
-                      value={formData.password}
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                    />
-                    <img
-                      src={showNewPassword ? "/eyeOpen.png" : "/eyeClose.png"}
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        objectFit: "contain",
-                        position: "absolute",
-                        right: "40px",
-                        cursor: "pointer",
-                      }}
-                      onClick={() =>
-                        isEditing ? setShowNewPassword((prev) => !prev) : null
-                      }
-                      alt=""
-                    />
+                    {isEditing ? (
+                      <div className={classes.requestDataInfo_inputWrap}>
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          name="password"
+                          placeholder="Новый пароль"
+                          value={formData.password}
+                          onChange={handleChange}
+                          autoComplete="off"
+                        />
+                        <img
+                          src={
+                            showNewPassword ? "/eyeOpen.png" : "/eyeClose.png"
+                          }
+                          style={eyeIconStyle}
+                          onClick={() => setShowNewPassword((prev) => !prev)}
+                          alt=""
+                        />
+                      </div>
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>—</div>
+                    )}
                   </div>
                 </>
               )}
 
-              {(mode === "profile" || mode === null) && (
+              {(mode === "profile" || mode === null) && isEditing && (
                 <div className={classes.requestDataInfo}>
                   <div className={classes.requestDataInfo_title}>Аватар</div>
                   <input
                     type="file"
                     name="images"
                     onChange={handleFileChange}
-                    disabled={!isEditing}
                   />
                 </div>
               )}
             </div>
           </div>
 
-          <div className={classes.requestButton}>
-            {/* <Button
-          onClick={() => openDeleteComponent(index, formData.id)}
-          backgroundcolor={"#FF9C9C"}
-        >
-          Удалить{" "}
-          <img
-            style={{ width: "fit-content", height: "fit-content" }}
-            src="/delete.png"
-            alt=""
-          />
-        </Button> */}
-            <Button
-              onClick={handleUpdate}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className={classes.requestButton}>
+              <Button
+                type="button"
+                onClick={handleCancelEdit}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+              <Button
+                type="button"
+                onClick={handleUpdate}
+                backgroundcolor="#0057C3"
+                color="#fff"
+              >
+                Сохранить <img src="/saveDispatcher.png" alt="" />
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestTarifCategory.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import CloseIcon from "../../../shared/icons/CloseIcon";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 
 import {
   getCookie,
@@ -24,14 +26,16 @@ function EditRequestTarifCategory({
   user,
   type,
   addNotification,
+  openDeleteComponent,
 }) {
   const token = getCookie("token");
-// console.log(tarif);
+  // console.log(tarif);
 
   const [formData, setFormData] = useState({
     images: null,
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [isEdited, setIsEdited] = useState(false);
 
   const [coverImage, setCoverImage] = useState(tarif && tarif?.images[0]);
   const [coverImage2, setCoverImage2] = useState(null);
@@ -40,6 +44,8 @@ function EditRequestTarifCategory({
   // console.log(tarif);
 
   const sidebarRef = useRef();
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
     context: {
@@ -58,27 +64,59 @@ function EditRequestTarifCategory({
   // }, [show, tarif]);
 
   useEffect(() => {
-  if (show && tarif && !isEditing) {
-    setFormData({ ...tarif, images: null });
-    setCoverImage(tarif?.images[0] || null);
-    setCoverImage2(null);
-    setDeletedImages([]);
-  }
-}, [show, tarif, isEditing]);
+    if (show && tarif && !isEditing) {
+      setFormData({ ...tarif, images: null });
+      setCoverImage(tarif?.images[0] || null);
+      setCoverImage2(null);
+      setDeletedImages([]);
+    }
+  }, [show, tarif, isEditing]);
 
   //   console.log(formData);
 
-  const closeButton = () => {
-    let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-    if (success) {
+  const resetForm = useCallback(() => {
+    if (!tarif) return;
+    setFormData({ ...tarif, images: null });
+    setCoverImage(tarif?.images?.[0] || null);
+    setCoverImage2(null);
+    setDeletedImages([]);
+    setIsEdited(false);
+  }, [tarif]);
+
+  const closeButton = useCallback(() => {
+    setAnchorEl(null);
+    if (!isEdited) {
       onClose();
-      setCoverImage(tarif && tarif?.images[0]);
+      setIsEditing(false);
+      return;
+    }
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+      onClose();
       setIsEditing(false);
     }
+  }, [isEdited, onClose]);
+
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => {
+    handleMenuClose();
+    setIsEditing(true);
+  };
+  const handleDeleteFromMenu = () => {
+    handleMenuClose();
+    if (openDeleteComponent && tarif?.id) {
+      onClose();
+      openDeleteComponent(null, tarif.id);
+    }
+  };
+  const handleCancelEdit = () => {
+    resetForm();
+    setIsEditing(false);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -163,7 +201,7 @@ function EditRequestTarifCategory({
     ? [
         coverImage,
         ...tarif?.images.filter(
-          (img) => img !== coverImage && !deletedImages.includes(img)
+          (img) => img !== coverImage && !deletedImages.includes(img),
         ),
       ]
     : tarif?.images?.filter((img) => !deletedImages.includes(img));
@@ -287,6 +325,7 @@ function EditRequestTarifCategory({
         setCoverImage2(null);
         setDeletedImages([]);
         setFormData((prev) => ({ ...prev, images: null }));
+        setIsEditing(false);
         addNotification("Редактирование тарифа прошло успешно.", "success");
       } catch (error) {
         setIsLoading(false);
@@ -294,7 +333,6 @@ function EditRequestTarifCategory({
         addNotification("Не удалось обновить тариф.", "error");
       }
     }
-    setIsEditing(!isEditing);
   };
 
   // const [tarifNames, setTarifNames] = useState([]);
@@ -305,19 +343,16 @@ function EditRequestTarifCategory({
   // }, [addTarif]);
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (anchorEl && menuRef.current?.contains(event.target)) return;
+      if (sidebarRef.current?.contains(event.target)) return;
+      closeButton();
+    };
     if (show) {
-      const handleClickOutside = (event) => {
-        if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-          closeButton();
-        }
-      };
       document.addEventListener("mousedown", handleClickOutside);
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
     }
-  }, [show]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [show, closeButton, anchorEl]);
 
   const categories = [
     {
@@ -375,8 +410,18 @@ function EditRequestTarifCategory({
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать тариф</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="close" />
+        <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleEditFromMenu}
+            onDelete={openDeleteComponent ? handleDeleteFromMenu : undefined}
+          />
+          <div className={classes.closeIconWrapper} onClick={closeButton}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
 
@@ -384,207 +429,315 @@ function EditRequestTarifCategory({
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div
+            className={classes.requestMiddle}
+            style={
+              isEditing
+                ? { height: "calc(100vh - 161px)" }
+                : { height: "calc(100vh - 81px)" }
+            }
+          >
             <div className={classes.requestData}>
-              <label>Выберите категорию</label>
-              <MUIAutocomplete
-                isDisabled={!isEditing}
-                dropdownWidth={"100%"}
-                label={"Выберите категорию"}
-                options={useCategories.map((category) => category.label)}
-                value={
-                  useCategories.find(
-                    (category) => category.value === formData?.category
-                  ) || ""
-                }
-                onChange={(event, newValue) => {
-                  const selectedCategory = useCategories.find(
-                    (category) => category.label === newValue
-                  );
-                  setFormData((prevFormData) => ({
-                    ...prevFormData,
-                    category: selectedCategory.value,
-                  }));
-                  //   setIsEdited(true);
-                }}
-              />
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Категория</div>
+                {isEditing ? (
+                  <div className={classes.dropdown}>
+                    <MUIAutocomplete
+                      dropdownWidth={"100%"}
+                      label={"Выберите категорию"}
+                      options={useCategories.map((category) => category.label)}
+                      value={
+                        useCategories.find(
+                          (category) => category.value === formData?.category,
+                        )?.label ?? ""
+                      }
+                      onChange={(event, newValue) => {
+                        setIsEdited(true);
+                        const selectedCategory = useCategories.find(
+                          (category) => category.label === newValue,
+                        );
+                        setFormData((prevFormData) => ({
+                          ...prevFormData,
+                          category: selectedCategory?.value ?? "",
+                        }));
+                      }}
+                      isDisabled={false}
+                    />
+                  </div>
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {useCategories.find((c) => c.value === formData?.category)
+                      ?.label ||
+                      formData?.category ||
+                      "—"}
+                  </div>
+                )}
+              </div>
 
-              <label>Название тарифа</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name || ""}
-                onChange={handleChange}
-                placeholder="Например: Стандарт, Люкс"
-                disabled={!isEditing}
-              />
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Название тарифа
+                </div>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name || ""}
+                    onChange={handleChange}
+                    placeholder="Например: Стандарт, Люкс"
+                  />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.name || "—"}
+                  </div>
+                )}
+              </div>
 
-              <label>Стоимость</label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price || 0}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              {!user?.hotelId && (
-                <>
-                  <label>Стоимость для авиакомпании</label>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Стоимость</div>
+                {isEditing ? (
                   <input
                     type="number"
-                    name="priceForAirline"
-                    value={formData.priceForAirline || 0}
+                    name="price"
+                    value={formData.price ?? ""}
                     onChange={handleChange}
                     placeholder="Введите стоимость"
-                    disabled={!isEditing}
                   />
-                  <label className={classes.checkboxLabel}>
-<input
-  type="checkbox"
-  checked={Boolean(formData.priceForAirReq)}
-  onChange={(e) => {
-    const newValue = e.target.checked;
-    // console.log("Setting priceForAirReq to:", newValue);
-    setFormData(prev => ({
-      ...prev,
-      priceForAirReq: newValue
-    }));
-  }}
-  disabled={!isEditing}
-/>
-                    <span style={{ marginLeft: 8 }}>Стоимость по запросу</span>
-                  </label>
-                </>
-              )}
-              <label>Квадратура</label>
-              <input
-                type="text"
-                name="square"
-                value={formData.square || ""}
-                onChange={handleChange}
-                placeholder="м²"
-                disabled={!isEditing}
-              />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.price != null && formData.price !== ""
+                      ? formData.price
+                      : "—"}
+                  </div>
+                )}
+              </div>
 
-              <label>Описание</label>
-              <TextEditor
-                hotel={null}
-                anotherDescription={formData.description || ""}
-                isEditing={isEditing}
-                onChange={(newDescription) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: newDescription,
-                  }))
-                }
-              />
-              {/* <textarea
-                id="description"
-                name="description"
-                value={formData.description || ""}
-                onChange={handleChange}
-                disabled={!isEditing}
-              ></textarea> */}
-
-              <label>Изображения</label>
-              <input
-                type="file"
-                name="images"
-                onChange={handleFileChange}
-                disabled={!isEditing}
-                multiple
-              />
-              {/* список новых файлов (локальные файлы) */}
-              <div className={classes.imageList}>
-                {formData?.images?.map((image, index) => (
-                  <div
-                    key={`${image.name}-${index}`}
-                    className={`${classes.imageItem} ${
-                      coverImage2 === image ? classes.selected : ""
-                    }`}
-                  >
-                    <img
-                      src={URL.createObjectURL(image)}
-                      alt={`Image ${index + 1}`}
-                      onClick={() => type === "apartment" ? null : handleCoverImageChange2(image)}
-                    />
-                    {/* кнопка удалить локальный файл */}
-                    {isEditing && (
-                      <button
-                        className={classes.deleteImageBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeNewFile(index);
-                        }}
-                        title="Удалить"
-                      >
-                        {/* ✕ */}
-                      </button>
+              {!user?.hotelId && (
+                <>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Стоимость для авиакомпании
+                    </div>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        name="priceForAirline"
+                        value={formData.priceForAirline ?? ""}
+                        onChange={handleChange}
+                        placeholder="Введите стоимость"
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.priceForAirline != null &&
+                        formData.priceForAirline !== ""
+                          ? formData.priceForAirline
+                          : "—"}
+                      </div>
                     )}
                   </div>
-                ))}
+                  <div className={classes.requestDataInfo}>
+                    {isEditing ? (
+                      <label className={classes.checkboxLabelFull}>
+                        <input
+                          type="checkbox"
+                          checked={Boolean(formData.priceForAirReq)}
+                          onChange={(e) => {
+                            setIsEdited(true);
+                            setFormData((prev) => ({
+                              ...prev,
+                              priceForAirReq: e.target.checked,
+                            }));
+                          }}
+                        />
+                        <span style={{ marginLeft: 8 }}>
+                          Стоимость по запросу
+                        </span>
+                      </label>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Стоимость по запросу
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.priceForAirReq ? "Да" : "Нет"}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Квадратура</div>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="square"
+                    value={formData.square || ""}
+                    onChange={handleChange}
+                    placeholder="м²"
+                  />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.square || "—"}
+                  </div>
+                )}
               </div>
 
-              {/* список изображений с сервера */}
-              <div className={classes.imageList}>
-                {tarif?.images?.map((image, index) => {
-                  const isMarked = deletedImages.includes(image);
-                  return (
-                    <div
-                      key={`${image}-${index}`}
-                      className={`${classes.imageItem} ${
-                        coverImage === image ? classes.selected : ""
-                      } ${!isEditing && classes.disImage} ${
-                        isMarked ? classes.toDelete : ""
-                      }`}
-                      onClick={() => {
-                        if (!isMarked) {
-                          handleCoverImageChange(image);
-                        }
-                      }}
-                    >
-                      <img
-                        src={getMediaUrl(image)}
-                        alt={`Image ${index + 1}`}
-                      />
-                      {isEditing && (
-                        <button
-                          className={classes.deleteImageBtn}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleDeleteServerImage(image);
-                          }}
-                          title={isMarked ? "Отменить удаление" : "Удалить"}
-                        >
-                          {/* {isMarked ? "↺" : "✕"} */}
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+              <div className={classes.requestDataInfo_block}>
+                <div className={classes.requestDataInfo_title}>Описание</div>
+                {isEditing ? (
+                  <TextEditor
+                    hotel={null}
+                    anotherDescription={formData.description || ""}
+                    isEditing={true}
+                    onChange={(newDescription) => {
+                      setIsEdited(true);
+                      setFormData((prev) => ({
+                        ...prev,
+                        description: newDescription,
+                      }));
+                    }}
+                  />
+                ) : (
+                  <div
+                    className={classes.requestDataInfo_descBlock}
+                    dangerouslySetInnerHTML={{
+                      __html: formData.description || "—",
+                    }}
+                  />
+                )}
               </div>
+
+              <div className={classes.requestDataInfo_block}>
+                <div className={classes.requestDataInfo_title}>Изображения</div>
+                {isEditing ? (
+                  <input
+                    type="file"
+                    name="images"
+                    onChange={handleFileChange}
+                    multiple
+                  />
+                ) : (
+                  <div className={classes.imageList}>
+                    {tarif?.images?.length ? (
+                      tarif.images.map((image, index) => (
+                        <div
+                          key={`${image}-${index}`}
+                          className={classes.imageItem}
+                        >
+                          <img
+                            src={getMediaUrl(image)}
+                            alt={`Изображение ${index + 1}`}
+                          />
+                        </div>
+                      ))
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>—</div>
+                    )}
+                  </div>
+                )}
+              </div>
+              {isEditing && (
+                <>
+                  {/* список новых файлов (локальные файлы) */}
+                  <div className={classes.imageList}>
+                    {formData?.images?.map((image, index) => (
+                      <div
+                        key={`${image.name}-${index}`}
+                        className={`${classes.imageItem} ${
+                          coverImage2 === image ? classes.selected : ""
+                        }`}
+                      >
+                        <img
+                          src={URL.createObjectURL(image)}
+                          alt={`Image ${index + 1}`}
+                          onClick={() =>
+                            type === "apartment"
+                              ? null
+                              : handleCoverImageChange2(image)
+                          }
+                        />
+                        {/* кнопка удалить локальный файл */}
+                        {isEditing && (
+                          <button
+                            className={classes.deleteImageBtn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeNewFile(index);
+                            }}
+                            title="Удалить"
+                          >
+                            {/* ✕ */}
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* список изображений с сервера */}
+                  <div className={classes.imageList}>
+                    {tarif?.images?.map((image, index) => {
+                      const isMarked = deletedImages.includes(image);
+                      return (
+                        <div
+                          key={`${image}-${index}`}
+                          className={`${classes.imageItem} ${
+                            coverImage === image ? classes.selected : ""
+                          } ${!isEditing && classes.disImage} ${
+                            isMarked ? classes.toDelete : ""
+                          }`}
+                          onClick={() => {
+                            if (!isMarked) {
+                              handleCoverImageChange(image);
+                            }
+                          }}
+                        >
+                          <img
+                            src={getMediaUrl(image)}
+                            alt={`Image ${index + 1}`}
+                          />
+                          {isEditing && (
+                            <button
+                              className={classes.deleteImageBtn}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleDeleteServerImage(image);
+                              }}
+                              title={isMarked ? "Отменить удаление" : "Удалить"}
+                            >
+                              {/* {isMarked ? "↺" : "✕"} */}
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          <div className={classes.requestButton}>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className={classes.requestButton}>
+              <Button
+                type="button"
+                onClick={handleCancelEdit}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                backgroundcolor="#0057C3"
+                color="#fff"
+              >
+                Сохранить <img src="/saveDispatcher.png" alt="" />
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>
