@@ -125,7 +125,19 @@ export default function TransferAccommodationTab({
                 {d.peopleCount ?? "—"}
               </div>
               <div className={`${classes.w10} ${classes.jcEnd}`}>
-                {d.link ? (
+                {d.linkPWA ? (
+                  <button
+                    type="button"
+                    className={classes.link}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      copyLink(d.linkPWA);
+                    }}
+                    title="Скопировать PWA-ссылку"
+                  >
+                    PWA <CopyIcon />
+                  </button>
+                ) : d.link ? (
                   <button
                     type="button"
                     className={classes.link}

@@ -1379,6 +1379,8 @@ export const REQUEST_MESSAGES_SUBSCRIPTION = gql`
     messageSent(chatId: $chatId) {
       id
       text
+      senderExternalUserId
+      senderName
       sender {
         id
         name
@@ -1922,6 +1924,7 @@ export const COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY = gql`
           fullName
           phone
           link
+          linkPWA
           addressFrom
           addressTo
           description
@@ -2000,7 +2003,7 @@ export const ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
     addPassengerRequestBaggageDriver(requestId: $requestId, driver: $driver) {
       id
       baggageDeliveryService {
-        drivers { fullName phone pickupAt link addressFrom addressTo description }
+        drivers { fullName phone pickupAt link linkPWA addressFrom addressTo description }
       }
     }
   }
@@ -2163,6 +2166,56 @@ export const GET_MESSAGES_HOTEL = gql`
           }
         }
       }
+    }
+  }
+`;
+
+export const GET_PASSENGER_REQUEST_CHATS = gql`
+  query PassengerRequestChats($passengerRequestId: ID!) {
+    chats(passengerRequestId: $passengerRequestId) {
+      id
+      passengerRequestId
+      unreadMessagesCount
+      messages {
+        id
+        text
+        createdAt
+        senderExternalUserId
+        senderName
+        sender {
+          id
+          name
+          role
+          position {
+            id
+            name
+          }
+          images
+        }
+        readBy {
+          user {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const SEND_FAP_MESSAGE = gql`
+  mutation SendFapMessage($chatId: ID!, $senderId: ID, $text: String!) {
+    sendMessage(chatId: $chatId, senderId: $senderId, text: $text) {
+      id
+      text
+      senderExternalUserId
+      senderName
+      sender {
+        id
+        name
+        role
+      }
+      createdAt
     }
   }
 `;
@@ -2793,6 +2846,9 @@ export const GET_PASSENGER_REQUESTS = gql`
           peopleCount
           plannedAt
         }
+        hotels {
+          hotelId
+        }
       }
       transferService {
         status
@@ -2997,6 +3053,8 @@ export const GET_PASSENGER_REQUEST = gql`
           peopleCount
           address
           link
+          linkCRM
+          linkPWA
           people {
             fullName
             phone
@@ -3039,6 +3097,7 @@ export const GET_PASSENGER_REQUEST = gql`
           peopleCount
           pickupAt
           link
+          linkPWA
           addressFrom
           addressTo
           people {
@@ -3066,6 +3125,7 @@ export const GET_PASSENGER_REQUEST = gql`
           peopleCount
           pickupAt
           link
+          linkPWA
           addressFrom
           addressTo
           description

@@ -123,17 +123,18 @@
 .requestData_message_firstRow {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   width: 100%;
 }
 
 .requestData_message_avatar {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  min-height: 30px;
   border-radius: 50%;
+  border: 1px solid var(--no-active);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -203,7 +204,7 @@
 
 .bubbleIncomingFirstRow {
   width: 100%;
-  padding: 0 15px 10px 0;
+  padding: 0 15px 17px 0;
 }
 
 .bubbleIncomingFirstRow::before {
@@ -243,13 +244,13 @@
 
 .requestData_message_timeBlock {
   position: absolute;
-  bottom: 12px;
-  right: 12px;
+  bottom: 10px;
+  right: 10px;
   font-family: Nunito Sans;
   font-size: 11px;
   font-weight: 400;
   line-height: 16px;
-  color: #54587399;
+  color: #545873;
 }
 
 .requestData_message_full {

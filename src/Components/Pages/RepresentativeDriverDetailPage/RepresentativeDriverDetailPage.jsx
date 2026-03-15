@@ -394,9 +394,9 @@ function RepresentativeDriverDetailPage({ user }) {
                       className={classes.driverPassengersColId}
                       style={{ gridColumn: "1 / -1", padding: 16, textAlign: "center" }}
                     >
-                      {people.length === 0
+                      {/* {people.length === 0
                         ? "Нет пассажиров"
-                        : "Нет совпадений по поиску"}
+                        : "Нет совпадений по поиску"} */}
                     </div>
                   </div>
                 ) : (
@@ -568,25 +568,6 @@ function RepresentativeDriverDetailPage({ user }) {
                 </div>
                 <div className={confirmDriverClasses.requestDataInfo_desc}>
                   {driver.peopleCount ?? "—"}
-                </div>
-              </div>
-              <div className={confirmDriverClasses.requestDataInfo}>
-                <div className={confirmDriverClasses.requestDataInfo_title}>
-                  Ссылка
-                </div>
-                <div className={confirmDriverClasses.requestDataInfo_desc}>
-                  {driver.link ? (
-                    <a
-                      href={driver.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="blueText"
-                    >
-                      {driver.link}
-                    </a>
-                  ) : (
-                    "—"
-                  )}
                 </div>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useSubscription } from "@apollo/client";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -16,6 +16,7 @@ import {
   GET_DISPATCHER_DEPARTMENTS,
   getCookie,
   CREATE_EXTERNAL_AUTH_LINK,
+  PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
@@ -47,6 +48,14 @@ function RepresentativeHotelDetailPage({ user }) {
       },
     },
     variables: { passengerRequestId: idRequest },
+  });
+
+  useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
+    onData: ({ data: subData }) => {
+      if (subData?.data?.passengerRequestUpdated?.id === idRequest) {
+        refetch();
+      }
+    },
   });
 
   const request = data?.passengerRequest ?? null;
@@ -106,9 +115,10 @@ function RepresentativeHotelDetailPage({ user }) {
     const hotels = request?.livingService?.hotels ?? [];
     const byMatch = hotels.findIndex(
       (h, i) =>
-        String(h.hotelId) === decodedHotelId ||
-        h.name === decodedHotelId ||
-        String(i) === decodedHotelId
+        h != null &&
+        (String(h.hotelId) === decodedHotelId ||
+          (h.name != null && h.name === decodedHotelId) ||
+          String(i) === decodedHotelId)
     );
     const byNum =
       decodedHotelId !== "" && !Number.isNaN(Number(decodedHotelId))
@@ -127,7 +137,7 @@ function RepresentativeHotelDetailPage({ user }) {
     if (!request || !isExternalUser) return;
     if (user?.scope === "HOTEL" && externalHotelId) {
       const allowedHotel = (request?.livingService?.hotels ?? []).find(
-        (h) => String(h.hotelId) === String(externalHotelId)
+        (h) => h != null && String(h.hotelId) === String(externalHotelId)
       );
       if (!allowedHotel) {
         navigate(`/${id}/representativeRequestsPlacement/${idRequest}`, { replace: true, state: { tab: "habitation" } });
@@ -183,6 +193,7 @@ function RepresentativeHotelDetailPage({ user }) {
             email,
             name: issueLinkName?.trim() || null,
             hotelId: hotel.hotelId,
+            ...(issueLinkAccessType === "PWA" && request?.id && { passengerRequestId: request.id }),
           },
         },
       });
@@ -271,7 +282,7 @@ function RepresentativeHotelDetailPage({ user }) {
   if (error) {
     return (
       <div className={classes.main}>
-        <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />
+        {!isExternalUser && <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />}
         <div className={classes.section}>
           <p>Error: {error.message}</p>
         </div>
@@ -285,16 +296,18 @@ function RepresentativeHotelDetailPage({ user }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />
+      {!isExternalUser && <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />}
       {isInitialized && !cookiesAccepted && (
         <CookiesNotice onAccept={acceptCookies} />
       )}
       <div className={classes.section}>
-        <Header>
+        <Header isExternalUser={isExternalUser}>
           <div className={classes.titleHeader}>
-            <Link to={backUrl} state={backState} className={classes.backButton}>
-              <img src="/arrow.png" alt="" />
-            </Link>
+            {!isExternalUser && (
+              <Link to={backUrl} state={backState} className={classes.backButton}>
+                <img src="/arrow.png" alt="" />
+              </Link>
+            )}
             Заявка {request.flightNumber}
           </div>
         </Header>
@@ -307,7 +320,7 @@ function RepresentativeHotelDetailPage({ user }) {
               `/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}/report`
             )
           }
-          onIssueLink={!isExternalUser ? () => setShowIssueLinkModal(true) : undefined}
+          onIssueLink={undefined}
           className={classes.section_searchAndFilter}
           showAddBookingButton={
             hotel == null ||
@@ -329,6 +342,7 @@ function RepresentativeHotelDetailPage({ user }) {
               hideToolbar
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
+              isExternalUser={isExternalUser}
             />
           </div>
           <div className={classes.chatWrapper}>
@@ -336,15 +350,12 @@ function RepresentativeHotelDetailPage({ user }) {
               activeTab="Комментарий"
               setIsHaveTwoChats={() => { }}
               setHotelChats={() => { }}
-              chooseRequestID=""
-              chooseReserveID={request.id}
+              passengerRequestId={request.id}
               filteredPlacement={[]}
               token={token}
               user={user}
               chatPadding="0"
               chatHeight={"calc(100vh - 295px)"}
-              separator="airline"
-              hotelChatId={null}
             />
           </div>
         </div>

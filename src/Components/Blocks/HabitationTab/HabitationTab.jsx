@@ -110,15 +110,35 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
             >
               {h.address ?? "—"}
             </div>
-            <div className={`${classes.w20} ${classes.jcEnd}`}>
-              {h.link ? (
+            <div className={`${classes.w20} ${classes.jcEnd} ${classes.linkCol}`}>
+              {(h.linkCRM || h.linkPWA) ? (
+                <div className={classes.linkGroup}>
+                  {h.linkCRM && (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => { e.stopPropagation(); copyLink(h.linkCRM); }}
+                      title="Скопировать CRM-ссылку"
+                    >
+                      CRM <CopyIcon />
+                    </button>
+                  )}
+                  {h.linkPWA && (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => { e.stopPropagation(); copyLink(h.linkPWA); }}
+                      title="Скопировать PWA-ссылку"
+                    >
+                      PWA <CopyIcon />
+                    </button>
+                  )}
+                </div>
+              ) : h.link ? (
                 <button
                   type="button"
                   className={classes.link}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    copyLink(h.link);
-                  }}
+                  onClick={(e) => { e.stopPropagation(); copyLink(h.link); }}
                   title="Скопировать ссылку"
                 >
                   Ссылка <CopyIcon />

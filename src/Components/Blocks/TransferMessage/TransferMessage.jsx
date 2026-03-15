@@ -11,6 +11,7 @@ import {
   SEND_TRANSFER_MESSAGE,
   TRANSFER_MESSAGE_SENT_SUBSCRIPTION,
   getMediaUrl,
+  convertToDateNew,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
@@ -585,7 +586,7 @@ function TransferMessage({
                             <span className={classes.requestData_message_body}>{message.text}</span>
                           </div>
                           <span className={classes.requestData_message_timeBlock}>
-                            {convertToDate(message.createdAt, true)}
+                            {convertToDateNew(message.createdAt, true)}
                           </span>
                         </div>
                       ) : (
@@ -596,7 +597,7 @@ function TransferMessage({
                           >
                             <span className={classes.requestData_message_body}>{message.text}</span>
                             <span className={classes.requestData_message_time}>
-                              {convertToDate(message.createdAt, true)}
+                              {convertToDateNew(message.createdAt, true)}
                             </span>
                           </div>
                         </div>
@@ -610,7 +611,7 @@ function TransferMessage({
                     >
                       <span className={classes.requestData_message_body}>{message.text}</span>
                       <span className={classes.requestData_message_time}>
-                        {convertToDate(message.createdAt, true)}
+                        {convertToDateNew(message.createdAt, true)}
                       </span>
                     </div>
                   )}

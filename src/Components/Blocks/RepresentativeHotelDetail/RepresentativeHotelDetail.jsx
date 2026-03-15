@@ -68,6 +68,7 @@ export default function RepresentativeHotelDetail({
   hideToolbar,
   searchQuery,
   onSearchChange,
+  isExternalUser = false,
 }) {
   const [internalSearch, setInternalSearch] = useState("");
   const [internalShowAddBooking, setInternalShowAddBooking] = useState(false);
@@ -328,24 +329,26 @@ export default function RepresentativeHotelDetail({
           <span className={classes.selectionBarLabel}>
             Выбрано броней: {selectedPersonIndices.length} —
           </span>
-          <Button
-            onClick={() => {
-              if (otherHotelsWithIndex.length === 0) {
-                addNotification?.(
-                  "Переселение недоступно: в заявке только одна гостиница. Добавьте ещё одну гостиницу, чтобы переселять пассажиров.",
-                  "warning"
-                );
-                return;
-              }
-              setRelocateModal({
-                personIndices: [...selectedPersonIndices],
-                toHotelIndex: otherHotelsWithIndex[0]?.originalIndex,
-              });
-            }}
-            disabled={relocating}
-          >
-            Переселить
-          </Button>
+          {!isExternalUser && (
+            <Button
+              onClick={() => {
+                if (otherHotelsWithIndex.length === 0) {
+                  addNotification?.(
+                    "Переселение недоступно: в заявке только одна гостиница. Добавьте ещё одну гостиницу, чтобы переселять пассажиров.",
+                    "warning"
+                  );
+                  return;
+                }
+                setRelocateModal({
+                  personIndices: [...selectedPersonIndices],
+                  toHotelIndex: otherHotelsWithIndex[0]?.originalIndex,
+                });
+              }}
+              disabled={relocating}
+            >
+              Переселить
+            </Button>
+          )}
           <Button
             onClick={() => setEvictModal({ personIndices: [...selectedPersonIndices] })}
             disabled={evicting}

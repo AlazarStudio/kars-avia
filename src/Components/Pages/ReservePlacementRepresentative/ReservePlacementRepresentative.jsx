@@ -861,10 +861,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       activeTab={"Комментарий"}
                       setIsHaveTwoChats={setIsHaveTwoChats}
                       setHotelChats={setHotelChats}
-                      // setTitle={setOrgName}
-                      // setMessageCount={setMessageCount}
-                      chooseRequestID={""}
-                      chooseReserveID={request.id}
+                      passengerRequestId={request.id}
                       filteredPlacement={filteredPlacement}
                       token={token}
                       user={user}
@@ -875,8 +872,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                           ? "calc(100vh - 364px)"
                           : "calc(100vh - 280px)"
                       }
-                      separator={separator}
-                      hotelChatId={selectedHotelChatId}
                     />
                   </div>
                 </>

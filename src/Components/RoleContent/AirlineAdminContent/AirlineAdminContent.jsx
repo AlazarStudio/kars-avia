@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import AirlinePage from "../../Blocks/AirlinePage/AirlinePage";
@@ -10,8 +10,14 @@ import Reports from "../../Blocks/Reports/Reports";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
-import TransferOrders from "../../Blocks/TransferOrders/TransferOrders";
-import TransferOrder from "../../Blocks/TransferOrder/TransferOrder";
+import MUILoader from "../../Blocks/MUILoader/MUILoader";
+
+const TransferOrders = lazy(() =>
+  import("../../Blocks/TransferOrders/TransferOrders")
+);
+const TransferOrder = lazy(() =>
+  import("../../Blocks/TransferOrder/TransferOrder")
+);
 
 import {
   hasAccessMenu,
@@ -147,7 +153,11 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
   // 2) Спец-случаи по URL (item-страницы), до общих правил
   // Детальная страница трансфера
   if (orderId) {
-    return <TransferOrder user={user} accessMenu={safeAccessMenu} />;
+    return (
+      <Suspense fallback={<MUILoader fullHeight="100%" />}>
+        <TransferOrder user={user} accessMenu={safeAccessMenu} />
+      </Suspense>
+    );
   }
 
   if (!id && hotelID) return <HotelPage id={hotelID} user={user} />;
@@ -174,7 +184,11 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
 
     const allowed = hasAccessMenu(accessMenu, rule?.guardKey);
     const Comp = allowed ? rule.Comp : NoAccess;
-    return <Comp {...(rule.props ? rule.props() : { user })} />;
+    return (
+      <Suspense fallback={<MUILoader fullHeight="100%" />}>
+        <Comp {...(rule.props ? rule.props() : { user })} />
+      </Suspense>
+    );
   }
 
   // На всякий

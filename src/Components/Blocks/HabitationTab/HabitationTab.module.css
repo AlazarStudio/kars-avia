@@ -55,6 +55,17 @@
   text-decoration: underline;
 }
 
+.linkCol {
+  flex-direction: column;
+}
+
+.linkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
 .tableCard {
   background: #fff;
   /* border: 1px solid #E8EDF4; */

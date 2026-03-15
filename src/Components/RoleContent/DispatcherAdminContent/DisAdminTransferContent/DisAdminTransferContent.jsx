@@ -19,7 +19,7 @@ const DisAdminTransferContent = ({ user, accessMenu }) => {
 
   if (isOrderDetails) {
     return (
-      <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+      <Suspense fallback={<MUILoader fullHeight="100%" />}>
         <TransferOrder user={user} accessMenu={accessMenu} />
       </Suspense>
     );
@@ -33,7 +33,7 @@ const DisAdminTransferContent = ({ user, accessMenu }) => {
         </Header>
       </div>
       <div className={classes.content}>
-        <Suspense fallback={<MUILoader fullHeight={"100vh"} />}>
+        <Suspense fallback={<MUILoader fullHeight="100vh" />}>
           <TransferOrders user={user} disAdmin={true} accessMenu={accessMenu} />
         </Suspense>
       </div>

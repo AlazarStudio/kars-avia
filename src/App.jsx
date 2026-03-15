@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import {
   ApolloProvider,
@@ -35,8 +35,11 @@ import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementR
 import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHotelDetailPage/RepresentativeHotelDetailPage";
 import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
 import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDriverDetailPage/RepresentativeDriverDetailPage";
-import TransferOrder from "./Components/Blocks/TransferOrder/TransferOrder";
 import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
+
+const TransferOrder = lazy(() =>
+  import("./Components/Blocks/TransferOrder/TransferOrder")
+);
 
 function App() {
   const { user } = useAuth();
@@ -145,7 +148,11 @@ function App() {
 
             {/* <Route
               path="/orders/:id"
-              element={<TransferOrder user={user} />}
+              element={
+                <Suspense fallback={<div style={{ padding: 24 }}>Загрузка…</div>}>
+                  <TransferOrder user={user} />
+                </Suspense>
+              }
             /> */}
 
             <Route path="/newPlacement/:idHotel" element={<NewPlacement />} />

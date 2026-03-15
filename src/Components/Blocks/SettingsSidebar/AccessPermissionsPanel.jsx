@@ -133,7 +133,7 @@ export default function AccessPermissionsPanel({
         </SectionCard>
 
         {/* Пассажиры */}
-        <SectionCard title="Пассажиры">
+        <SectionCard title="ФАП">
           <RowSwitch
             label="Доступ к разделу"
             checked={state.passengers.access}

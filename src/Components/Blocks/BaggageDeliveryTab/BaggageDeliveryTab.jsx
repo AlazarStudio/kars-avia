@@ -114,7 +114,16 @@ export default function BaggageDeliveryTab({
                 {d.description ?? "—"}
               </div>
               <div className={`${classes.w10} ${classes.jcEnd}`}>
-                {d.link ? (
+                {d.linkPWA ? (
+                  <button
+                    type="button"
+                    className={classes.link}
+                    onClick={(e) => copyLink(d.linkPWA, e)}
+                    title="Скопировать PWA-ссылку"
+                  >
+                    PWA <CopyIcon />
+                  </button>
+                ) : d.link ? (
                   <button
                     type="button"
                     className={classes.link}
@@ -124,7 +133,7 @@ export default function BaggageDeliveryTab({
                     Ссылка <CopyIcon />
                   </button>
                 ) : (
-                  "—"
+                  <span className={classes.link}>—</span>
                 )}
               </div>
             </div>

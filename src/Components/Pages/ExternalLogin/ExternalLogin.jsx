@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useMutation } from "@apollo/client";
+import { useMutation, useApolloClient } from "@apollo/client";
 import {
   Box,
   Typography,
@@ -8,15 +8,17 @@ import {
   Alert,
 } from "@mui/material";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
-import { AUTHORIZE_EXTERNAL_AUTH } from "../../../../graphQL_requests";
+import { AUTHORIZE_EXTERNAL_AUTH, GET_PASSENGER_REQUESTS } from "../../../../graphQL_requests";
 import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
+
+const ID_REPRESENTATIVE_REQUESTS = "representativeRequests";
 
 function ExternalLogin() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const apolloClient = useApolloClient();
   const [error, setError] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | success | error
-  console.log(searchParams.get("token")?.trim());
 
   const [authorizeExternalAuth] = useMutation(AUTHORIZE_EXTERNAL_AUTH);
 
@@ -49,6 +51,7 @@ function ExternalLogin() {
         }
 
         const extUser = data.externalUser;
+        console.log(extUser);
         if (extUser) {
           const payload = JSON.stringify({
             scope: extUser.scope,
@@ -59,6 +62,30 @@ function ExternalLogin() {
         }
 
         setStatus("success");
+
+        if (extUser?.scope === "HOTEL" && extUser?.hotelId) {
+          try {
+            const { data: requestsData } = await apolloClient.query({
+              query: GET_PASSENGER_REQUESTS,
+              variables: { take: 100, skip: 0, filter: {} },
+              context: {
+                headers: { Authorization: `Bearer ${data.token}` },
+              },
+            });
+            const requests = requestsData?.passengerRequests ?? [];
+            const requestWithHotel = requests.find((req) =>
+              req?.livingService?.hotels?.some((h) => h?.hotelId === extUser.hotelId)
+            );
+            if (requestWithHotel?.id) {
+              const hotelIdEnc = encodeURIComponent(extUser.hotelId);
+              window.location.href = `/${ID_REPRESENTATIVE_REQUESTS}/representativeRequestsPlacement/${requestWithHotel.id}/hotel/${hotelIdEnc}`;
+              return;
+            }
+          } catch (_) {
+            // fallback to home if request list fails
+          }
+        }
+
         window.location.href = "/";
       } catch (err) {
         setError(getExternalAuthErrorMessage(err, "Ошибка входа по ссылке."));

@@ -162,7 +162,7 @@ function CreateRepresentativeRequest({
       },
     },
     refetchQueries: [GET_PASSENGER_REQUESTS],
-    awaitRefetchQueries: true,
+    awaitRefetchQueries: false,
   });
 
   const airlineForAirlineAdmin = data?.airlines?.airlines.find(

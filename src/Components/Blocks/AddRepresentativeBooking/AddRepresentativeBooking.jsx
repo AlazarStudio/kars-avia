@@ -62,7 +62,7 @@ function AddRepresentativeBooking({
           variables: { passengerRequestId: requestId },
         },
       ],
-      awaitRefetchQueries: true,
+      awaitRefetchQueries: false,
     }
   );
 
@@ -80,7 +80,7 @@ function AddRepresentativeBooking({
           variables: { passengerRequestId: requestId },
         },
       ],
-      awaitRefetchQueries: true,
+      awaitRefetchQueries: false,
     }
   );
 
@@ -132,8 +132,11 @@ function AddRepresentativeBooking({
       handleClose();
     } catch (error) {
       console.error(error);
+      const firstGql = error?.graphQLErrors?.[0];
       const message =
-        error?.graphQLErrors?.[0]?.message || error?.message || "Ошибка при сохранении брони.";
+        (typeof firstGql?.message === "string" && firstGql.message) ||
+        (typeof error?.message === "string" && error.message) ||
+        "Ошибка при сохранении брони.";
       addNotification?.(message, "error");
     }
   };

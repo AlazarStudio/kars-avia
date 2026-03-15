@@ -6,11 +6,14 @@ import Smiles from "../Smiles/Smiles";
 import { 
     convertToDate, 
     GET_MESSAGES_HOTEL, 
+    GET_PASSENGER_REQUEST_CHATS,
     MARK_ALL_MESSAGES_AS_READ, 
     MARK_MESSAGE_AS_READ, 
     REQUEST_MESSAGES_SUBSCRIPTION, 
     UPDATE_MESSAGE_BRON,
+    SEND_FAP_MESSAGE,
     getMediaUrl,
+    convertToDateNew,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
@@ -29,6 +32,7 @@ function Message({
     hotelChatId,
     chooseRequestID = "",
     chooseReserveID = "",
+    passengerRequestId = "",
     formData,
     token,
     user,
@@ -50,6 +54,7 @@ function Message({
     const [isUserMessage, setIsUserMessage] = useState(false);
 
     const userID = user?.userId ? user?.userId : user?.id;
+    const isExternal = user?.subjectType === "EXTERNAL_USER";
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -67,9 +72,12 @@ function Message({
         },
     });
 
-    // При клике помечаем все сообщения как прочитанные и обновляем данные
     const scrollToUnread = () => {
         if (!messages?.id) return;
+        if (isExternal) {
+            scrollToBottom();
+            return;
+        }
         markAllMessagesAsReadMutation({
             variables: { chatId: messages.id, userId: userID }
         })
@@ -86,19 +94,25 @@ function Message({
         return scrollHeight - scrollTop <= clientHeight + 10;
     };
 
-    const { loading, error, data, refetch } = useQuery(GET_MESSAGES_HOTEL, {
-        context: {
-            headers : {
-                Authorization: `Bearer ${token}`,
+    const isFapMode = !!passengerRequestId;
+
+    const { loading, error, data, refetch } = useQuery(
+        isFapMode ? GET_PASSENGER_REQUEST_CHATS : GET_MESSAGES_HOTEL,
+        {
+            context: {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             },
-        },
-        variables: {
-            requestId: chooseRequestID,
-            reserveId: chooseReserveID
-        },
-        fetchPolicy: "network-only",
-        skip: (chooseRequestID == "" && chooseReserveID == "") ? true: false
-    });
+            variables: isFapMode
+                ? { passengerRequestId }
+                : { requestId: chooseRequestID, reserveId: chooseReserveID },
+            fetchPolicy: "network-only",
+            skip: isFapMode
+                ? false
+                : (chooseRequestID == "" && chooseReserveID == ""),
+        }
+    );
 
 
     // Состояние для выбранного чата
@@ -124,17 +138,28 @@ function Message({
         }
     };
 
-    // Подписка на новые сообщения
     const { data: subscriptionData } = useSubscription(REQUEST_MESSAGES_SUBSCRIPTION, {
         variables: { chatId: messages?.id },
+        skip: !messages?.id,
         onData: () => {
             refetch();
         },
     });
 
 
-    // При загрузке/обновлении данных выбираем нужный чат и устанавливаем счётчик unreadMessagesCount
     useEffect(() => {
+        if (!data?.chats) return;
+
+        if (isFapMode) {
+            const fapChat = data.chats[0];
+            if (fapChat) {
+                setMessages(fapChat);
+                setNewMessagesCount(fapChat.unreadMessagesCount || 0);
+            }
+            setIsHaveTwoChats(false);
+            return;
+        }
+
         if ((data && data.chats) || (filteredPlacement && filteredPlacement.length !== 0)) {
             let selectedChats = [];
             if (user?.airlineId) {
@@ -148,7 +173,6 @@ function Message({
             if (selectedChats?.length > 0) {
                 const defaultChat = selectedChats[0];
                 setMessages(defaultChat);
-                // Устанавливаем локальный счётчик непрочитанных из сервера
                 setNewMessagesCount(defaultChat.unreadMessagesCount || 0);
             }
 
@@ -180,6 +204,7 @@ function Message({
         setIsHaveTwoChats,
         setHotelChats,
         setTitle,
+        isFapMode,
     ]);
 
 // console.log(messages);
@@ -191,11 +216,10 @@ function Message({
         }
     }, [messages, separator]);
 
-    // При первой инициализации ИЛИ при изменении separator — скроллим к первому непрочитанному (если есть) или вниз
     useEffect(() => {
         if (isInitialLoad && messages?.messages?.length) {
             const firstUnreadIndex = messages.messages.findIndex(
-                msg => msg.sender.id !== userID && !msg.readBy?.some(rb => rb.user.id === userID)
+                msg => !isOwnMessage(msg) && !msg.readBy?.some(rb => rb.user.id === userID)
             );
             if (firstUnreadIndex !== -1) {
                 const firstUnreadId = messages.messages[firstUnreadIndex].id;
@@ -207,30 +231,28 @@ function Message({
         }
     }, [isInitialLoad, messages?.messages, separator, userID]);
 
-    // Сбрасываем флаг isInitialLoad при смене separator, чтобы скролл произошёл вновь
     useEffect(() => {
         setIsInitialLoad(true);
-        if (chooseRequestID !== "" || chooseReserveID !== "") {
+        if (isFapMode || chooseRequestID !== "" || chooseReserveID !== "") {
             refetch();
         }
-    }, [separator, show, chooseRequestID, chooseReserveID]);
+    }, [separator, show, chooseRequestID, chooseReserveID, passengerRequestId]);
     
 
     useEffect(() => {
         setIsInitialLoad(true);
-        if (chooseRequestID !== "" || chooseReserveID !== "") {
+        if (isFapMode || chooseRequestID !== "" || chooseReserveID !== "") {
             refetch();
         }
       
         return () => {
-          // Очищаем все IntersectionObserver, чтобы при новом монтировании всё пересоздать
           Object.values(observers.current).forEach((observer) => {
             observer.disconnect();
           });
           observers.current = {};
           messageRefs.current = {};
         };
-    }, [separator, chooseRequestID, chooseReserveID]);
+    }, [separator, chooseRequestID, chooseReserveID, passengerRequestId]);
 
     // console.log(messages.messages.length);
 
@@ -252,9 +274,8 @@ function Message({
                 return prevMessages;
             });
 
-            // Если это чужое сообщение и оно не прочитано пользователем, увеличиваем локально счётчик
             if (
-                newMessage.sender.id !== userID &&
+                !isOwnMessage(newMessage) &&
                 !newMessage.readBy?.some(rb => rb.user.id === userID)
             ) {
                 setNewMessagesCount(prevCount => prevCount + 1);
@@ -309,10 +330,7 @@ function Message({
                 messageRefs.current[msg.id] = React.createRef();
             }
             const alreadyRead = msg.readBy?.some(rb => rb.user.id === userID);
-            // const isOwn = msg.sender.id === userID;
-            if (
-                // !isOwn &&
-                 !alreadyRead) {
+            if (!alreadyRead && !isExternal) {
                 if (!observers.current[msg.id]) {
                     const obs = new IntersectionObserver(([entry]) => {
                         if (entry.isIntersecting && entry.intersectionRatio >= 0.7) {
@@ -360,32 +378,40 @@ function Message({
         }));
     };
 
-    const [createRequest] = useMutation(UPDATE_MESSAGE_BRON, {
-        context: {
-            headers: {
-                Authorization: `Bearer ${token}`,
+    const [createRequest] = useMutation(
+        isFapMode ? SEND_FAP_MESSAGE : UPDATE_MESSAGE_BRON,
+        {
+            context: {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             },
-        },
-    });
+        }
+    );
 
     const handleSubmitMessage = async () => {
         if (messageText.text.trim()) {
             try {
+                const vars = {
+                    chatId: messageText.chatId,
+                    text: messageText.text
+                };
+                if (messageText.senderId) {
+                    vars.senderId = messageText.senderId;
+                }
                 let request = await createRequest({
-                    variables: {
-                        chatId: messageText.chatId,
-                        senderId: messageText.senderId,
-                        text: messageText.text
-                    }
+                    variables: vars
                 });
                 if (request) {
-                    markAllMessagesAsReadMutation({
-                        variables: { chatId: messages.id, userId: userID }
-                    })
-                    .then(() => {
-                        refetch();
-                        scrollToBottom();
-                    })
+                    if (!isExternal) {
+                        markAllMessagesAsReadMutation({
+                            variables: { chatId: messages.id, userId: userID }
+                        })
+                        .then(() => {
+                            refetch();
+                            scrollToBottom();
+                        })
+                    }
                     setMessageText({
                         text: '',
                         chatId: '',
@@ -414,7 +440,15 @@ function Message({
         setShowEmojiPicker(!showEmojiPicker);
     };
 
-    // Группировка сообщений по дате и определение "первого в серии" по отправителю
+    const isOwnMessage = (msg) => {
+        if (msg.sender?.id && msg.sender.id === userID) return true;
+        if (msg.senderExternalUserId && msg.senderExternalUserId === userID) return true;
+        if (isExternal && !msg.sender) return true;
+        return false;
+    };
+    const getSenderId = (msg) => msg.sender?.id || msg.senderExternalUserId || (isExternal && !msg.sender ? userID : null);
+    const getDisplayName = (msg) => msg.sender?.name || msg.senderName || "Пользователь";
+
     const getMessageItems = () => {
         if (!messages?.messages?.length) return [];
         const items = [];
@@ -434,8 +468,8 @@ function Message({
             }
             const prevMessage = messages.messages[index - 1];
             const isFirstInSenderGroup =
-                message.sender?.id !== userID &&
-                (!prevMessage || prevMessage.sender?.id !== message.sender?.id);
+                !isOwnMessage(message) &&
+                (!prevMessage || getSenderId(prevMessage) !== getSenderId(message));
             items.push({ type: 'message', message, isFirstInSenderGroup });
         });
         return items;
@@ -475,7 +509,7 @@ function Message({
                             if (!messageRefs.current[message.id]) {
                                 messageRefs.current[message.id] = React.createRef();
                             }
-                            const isOwn = message.sender?.id === userID;
+                            const isOwn = isOwnMessage(message);
                             const roleText = message.sender?.position?.name || message.sender?.role || '';
 
                             return (
@@ -504,20 +538,20 @@ function Message({
                                                                 {message.sender?.images?.[0] ? (
                                                                     <img
                                                                         src={getMediaUrl(message.sender.images[0])}
-                                                                        alt={message.sender?.name}
+                                                                        alt={getDisplayName(message)}
                                                                         className={classes.requestData_message_avatarImg}
                                                                     />
                                                                 ) : (
                                                                     <img
                                                                         src="/no-avatar.png"
-                                                                        alt={message.sender?.name}
+                                                                        alt={getDisplayName(message)}
                                                                         className={classes.requestData_message_avatarImg}
                                                                     />
                                                                 )}
                                                             </div>
                                                             <div className={classes.requestData_message_text__name}>
                                                                 <span className={classes.requestData_message_name}>
-                                                                    {message.sender?.name}
+                                                                    {getDisplayName(message)}
                                                                 </span>
                                                                 {roleText && (
                                                                     <span className={classes.requestData_message_post}>
@@ -537,7 +571,7 @@ function Message({
                                                             <span className={classes.requestData_message_body}>{message.text}</span>
                                                         </div>
                                                         <span className={classes.requestData_message_timeBlock}>
-                                                            {convertToDate(message.createdAt, true)}
+                                                            {convertToDateNew(message.createdAt, true)}
                                                         </span>
                                                     </div>
                                                 ) : (
@@ -552,7 +586,7 @@ function Message({
                                                         >
                                                             <span className={classes.requestData_message_body}>{message.text}</span>
                                                             <span className={classes.requestData_message_time}>
-                                                                {convertToDate(message.createdAt, true)}
+                                                                {convertToDateNew(message.createdAt, true)}
                                                             </span>
                                                         </div>
                                                     </div>
@@ -570,7 +604,7 @@ function Message({
                                             >
                                                 <span className={classes.requestData_message_body}>{message.text}</span>
                                                 <span className={classes.requestData_message_time}>
-                                                    {convertToDate(message.createdAt, true)}
+                                                    {convertToDateNew(message.createdAt, true)}
                                                 </span>
                                             </div>
                                         )}

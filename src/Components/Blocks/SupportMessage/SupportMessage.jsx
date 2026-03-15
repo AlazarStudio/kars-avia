@@ -13,6 +13,7 @@ import {
   RESOLVE_SUPPORT_TICKET,
   UPDATE_MESSAGE_BRON,
   getMediaUrl,
+  convertToDateNew,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
@@ -657,7 +658,7 @@ function SupportMessage({
                                 classes.requestData_message_timeBlock
                               }
                             >
-                              {convertToDate(message.createdAt, true)}
+                              {convertToDateNew(message.createdAt, true)}
                             </span>
                           </div>
                         ) : (
@@ -685,7 +686,7 @@ function SupportMessage({
                               <span
                                 className={classes.requestData_message_time}
                               >
-                                {convertToDate(message.createdAt, true)}
+                                {convertToDateNew(message.createdAt, true)}
                               </span>
                             </div>
                           </div>
@@ -712,7 +713,7 @@ function SupportMessage({
                         <span
                           className={classes.requestData_message_time}
                         >
-                          {convertToDate(message.createdAt, true)}
+                          {convertToDateNew(message.createdAt, true)}
                         </span>
                       </div>
                     )}
