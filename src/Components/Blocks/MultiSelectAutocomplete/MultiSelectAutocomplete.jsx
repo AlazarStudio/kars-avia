@@ -34,7 +34,7 @@ function MultiSelectAutocomplete({
     baseOptions.length > 0 &&
     typeof baseOptions[0] === "object" &&
     baseOptions[0] != null &&
-    "id" in baseOptions[0];
+    ("id" in baseOptions[0] || "value" in baseOptions[0]);
   const useSelectAll = showSelectAll && (isMultiple || false) && hasObjectOptions;
 
   const filterOptions = (optionsToFilter, state) => {
@@ -191,7 +191,7 @@ function MultiSelectAutocomplete({
               const label =
                 typeof option === "string" ? option : option?.label ?? "";
               return (
-                <li {...optionProps} key={option?.id ?? option?.label ?? label}>
+                <li {...optionProps} key={option?.id ?? option?.value ?? option?.label ?? label}>
                   <Checkbox
                     icon={icon}
                     checkedIcon={checkedIcon}

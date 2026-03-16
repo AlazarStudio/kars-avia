@@ -46,8 +46,8 @@ function EditRequestAirlineTarifCategory({
   const getInitialFormData = useCallback(() => {
     const airportIds = Array.isArray(tarif?.airports)
       ? tarif.airports
-          .map((a) => String(a?.airport?.id ?? a?.id ?? a))
-          .filter(Boolean)
+        .map((a) => String(a?.airport?.id ?? a?.id ?? a))
+        .filter(Boolean)
       : [];
     return {
       name: tarif?.name || "",
@@ -387,8 +387,8 @@ function EditRequestAirlineTarifCategory({
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MultiSelectAutocomplete
-                      showSelectAll={true}
                       isMultiple={true}
+                      showSelectAll={true}
                       dropdownWidth={"100%"}
                       label={"Выберите аэропорты"}
                       options={airportOptions}
