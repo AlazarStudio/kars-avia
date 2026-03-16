@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { decodeJWT, getCookie } from "../graphQL_requests";
+import { decodeJWT } from "../graphQL_requests";
+import { authService } from "./services/authService";
 import MUILoader from "./Components/Blocks/MUILoader/MUILoader";
 
 const AuthContext = createContext();
@@ -22,7 +23,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getCookie("token");
+    const token = authService.getAccessToken();
 
     if (token) {
       try {
@@ -37,12 +38,16 @@ export const AuthProvider = ({ children }) => {
         }
         setUser(decodedUser);
       } catch {
-        // Битый или невалидный токен — не считаем пользователя авторизованным
         setUser(null);
       }
     }
 
-    setLoading(false); // Завершение загрузки
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    const unsub = authService.addLogoutListener(() => setUser(null));
+    return unsub;
   }, []);
 
   if (loading) {

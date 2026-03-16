@@ -7,7 +7,6 @@ import {
   GET_DISPATCHER,
   GET_DISPATCHERS_SUBSCRIPTION,
   GET_USER_SUPPORT_CHAT,
-  getCookie,
   LOGOUT,
   MESSAGE_SENT_SUBSCRIPTION,
   NEW_UNREAD_MESSAGE_SUBSCRIPTION,
@@ -16,6 +15,7 @@ import {
   getMediaUrl,
   UNREAD_MESSAGES_COUNT,
 } from "../../../../graphQL_requests";
+// import { authService } from "../../../services/authService";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
@@ -28,10 +28,11 @@ import MUILoader from "../MUILoader/MUILoader";
 import NotificationsSidebar from "../NotificationsSidebar/NotificationsSidebar";
 import ProfileSidebar from "../ProfileSidebar/ProfileSidebar";
 import NotifyIcon from "../../../shared/icons/NotifyIcon";
+import { authService } from "../../../services/authService";
 
 function Header({ children, isExternalUser = false }) {
-  const token = getCookie("token");
-  const user = decodeJWT(token);
+  const token = authService.getAccessToken();
+  const user = token ? decodeJWT(token) : null;
 
   const navigate = useNavigate();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // Управляет отображением уведомлений
@@ -183,7 +184,9 @@ function Header({ children, isExternalUser = false }) {
   );
 
   const logout = async () => {
-    let result = confirm("Вы уверены что хотите выйти?");
+    const result = confirm("Вы уверены что хотите выйти?");
+    if (!result) return; // ← если отмена — просто выходим, НИЧЕГО не шлём на бэк
+  
     const { data } = await logoutMutation({
       context: {
         headers: {
@@ -191,10 +194,9 @@ function Header({ children, isExternalUser = false }) {
         },
       },
     });
-
-    if (result && data) {
-      document.cookie = "token=; Max-Age=0; Path=/";
-      document.cookie = "refreshToken=; Max-Age=0; Path=/";
+  
+    if (data) {
+      authService.clear();
       localStorage.removeItem("isAirline");
       navigate("/");
       window.location.reload();

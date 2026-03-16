@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 
 
-// export const path = import.meta.env.VITE_PRODUCTION_PATH;
-// export const server = import.meta.env.VITE_PRODUCTION_SERVER;
+export const path = import.meta.env.VITE_PRODUCTION_PATH;
+export const server = import.meta.env.VITE_PRODUCTION_SERVER;
 
 // export const path = import.meta.env.VITE_DEMO_PATH;
 // export const server = import.meta.env.VITE_DEMO_SERVER;
 
-export const path = import.meta.env.VITE_DEV_PATH;
-export const server = import.meta.env.VITE_DEV_SERVER;
+// export const path = import.meta.env.VITE_DEV_PATH;
+// export const server = import.meta.env.VITE_DEV_SERVER;
 
 
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
@@ -511,6 +511,8 @@ export const TRANSFER_SING_IN = gql`
   mutation TransferSignIn($input: TransferSignInInput!) {
     transferSignIn(input: $input) {
       token
+      refreshToken
+      subjectType
     }
   }
 `;

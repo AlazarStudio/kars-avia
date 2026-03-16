@@ -24,8 +24,10 @@ import NewPlacement from "./Components/PlacementDND/NewPlacement/NewPlacement";
 import NewPlacementV2 from "./Components/PlacementDNDV2/NewPlacementV2";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-import { server, path, getCookie } from "../graphQL_requests";
+import { server, path } from "../graphQL_requests";
 import { useAuth } from "./AuthContext";
+import { authService } from "./services/authService";
+import { createAuthErrorLink } from "./services/authErrorLink";
 import Login from "./Components/Pages/Login/Login";
 import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
@@ -45,7 +47,7 @@ function App() {
   const { user } = useAuth();
 
   const authLink = setContext((_, { context }) => {
-    const token = getCookie("token");
+    const token = authService.getAccessToken();
     return {
       ...context,
       headers: {
@@ -55,17 +57,20 @@ function App() {
     };
   });
 
+  const errorLink = createAuthErrorLink({
+    onLogout: () => window.location.replace("/login"),
+  });
+
   const uploadLink = createUploadLink({
     uri: `${server}/graphql`,
-    // credentials: 'include',
   });
 
   const wsLink = new GraphQLWsLink(
     createClient({
-      // url: `wss://${path}/graphql`,
-      url: `ws://${path}/graphql`,
+      url: `wss://${path}/graphql`,
+      // url: `ws://${path}/graphql`,
       connectionParams: () => {
-        const t = getCookie("token");
+        const t = authService.getAccessToken();
         return t ? { Authorization: `Bearer ${t}` } : {};
       },
     })
@@ -80,7 +85,7 @@ function App() {
       );
     },
     wsLink,
-    authLink.concat(uploadLink)
+    errorLink.concat(authLink).concat(uploadLink)
   );
 
   const client = new ApolloClient({
@@ -90,7 +95,7 @@ function App() {
 
   return (
     <ApolloProvider client={client}>
-      {/* <TokenRefresher /> */}
+      <TokenRefresher />
       {/* {user && <UserActivityTracker />} */}
       <Routes>
         {user ? (

@@ -10,6 +10,7 @@ import {
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import { AUTHORIZE_EXTERNAL_AUTH, GET_PASSENGER_REQUESTS } from "../../../../graphQL_requests";
 import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
+import { authService } from "../../../services/authService";
 
 const ID_REPRESENTATIVE_REQUESTS = "representativeRequests";
 
@@ -45,10 +46,10 @@ function ExternalLogin() {
           return;
         }
 
-        document.cookie = `token=${data.token}; SameSite=Lax; Max-Age=86400; Path=/`;
-        if (data.refreshToken) {
-          document.cookie = `refreshToken=${data.refreshToken}; SameSite=Lax; Max-Age=${30 * 24 * 3600}; Path=/`;
-        }
+        authService.setTokens({
+          token: data.token,
+          refreshToken: data.refreshToken || "",
+        });
 
         const extUser = data.externalUser;
         console.log(extUser);
