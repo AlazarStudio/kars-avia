@@ -34,6 +34,10 @@ function ExternalLogin() {
 
     const run = async () => {
       try {
+        // Всегда очищаем auth-куки перед входом по ссылке, затем ставим новые
+        authService.clear();
+        document.cookie = "externalUserContext=; Max-Age=0; Path=/";
+
         const res = await authorizeExternalAuth({
           variables: { token },
         });

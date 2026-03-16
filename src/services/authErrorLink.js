@@ -6,8 +6,19 @@
 import { onError } from "@apollo/client/link/error";
 import { print } from "graphql";
 import { authService } from "./authService";
-import { server } from "../../graphQL_requests";
+import { server, decodeJWT } from "../../graphQL_requests";
 import { REFRESH_TOKEN } from "../../graphQL_requests";
+
+function isExternalUser() {
+  try {
+    const token = authService.getAccessToken();
+    if (!token) return false;
+    const payload = decodeJWT(token);
+    return payload?.subjectType === "EXTERNAL_USER";
+  } catch {
+    return false;
+  }
+}
 
 const AUTH_CODES_NO_RETRY = ["MALFORMED_TOKEN", "INVALID_TOKEN", "MISSING_TOKEN"];
 const AUTH_CODES_REFRESH = [
@@ -114,6 +125,10 @@ export function createAuthErrorLink(options = {}) {
     return singleFlightRefresh()
       .then(() => forward(operation))
       .catch(() => {
+        // External users: backend refreshToken does not support EXTERNAL_USER — do not logout/redirect
+        if (isExternalUser()) {
+          return forward(operation);
+        }
         authService.clear();
         onLogout?.();
         return forward(operation);

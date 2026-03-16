@@ -46,7 +46,14 @@ const TransferOrder = lazy(() =>
 function App() {
   const { user } = useAuth();
 
-  const authLink = setContext((_, { context }) => {
+  const authLink = setContext((operation, { context }) => {
+    // External login must run without Bearer so backend gets empty context
+    if (operation?.operationName === "AuthorizeExternalAuth") {
+      return {
+        ...context,
+        headers: { ...(context?.headers || {}) },
+      };
+    }
     const token = authService.getAccessToken();
     return {
       ...context,
