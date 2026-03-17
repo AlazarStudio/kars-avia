@@ -287,162 +287,246 @@ function ExistRequestMyCompany({
         <>
           <div className={classes.requestMiddle} style={isEditing ? { height: "calc(100vh - 161px)" } : { height: "calc(100vh - 80px)" }}>
             <div className={classes.requestData}>
-              <label>Название</label>
-              <input
-                type="text"
-                name="name"
-                placeholder=""
-                value={formData.name}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
+              {isEditing ? (
+                <>
+                  <label>Название</label>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder=""
+                    value={formData.name}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>Название</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.name || "—"}</div>
+                </div>
+              )}
 
-              <label>Описание</label>
-              <textarea
-                id="description"
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                disabled={!isEditing}
-              ></textarea>
+              {isEditing ? (
+                <>
+                  <label>Описание</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={formData.description}
+                    onChange={handleChange}
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfoBlock}>
+                  <div className={classes.requestDataInfoBlock_title}>Описание</div>
+                  <div className={classes.requestDataInfoBlock_desc}>{formData.description || "—"}</div>
+                </div>
+              )}
 
-              <label>Страна</label>
-              <input
-                type="text"
-                name="country"
-                placeholder=""
-                value={formData.country}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
+              {isEditing ? (
+                <>
+                  <label>Страна</label>
+                  <input
+                    type="text"
+                    name="country"
+                    placeholder=""
+                    value={formData.country}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>Страна</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.country || "—"}</div>
+                </div>
+              )}
 
-              <label>Город</label>
-              <MUIAutocompleteColor
-                dropdownWidth="100%"
-                listboxHeight={"300px"}
-                isDisabled={!isEditing}
-                options={cities}
-                getOptionLabel={(option) =>
-                  option ? `${option.city} ${option.region}`.trim() : ""
-                }
-                renderOption={(optionProps, option) => {
-                  // Формируем строку для отображения
-                  const labelText = `${option.city} ${option.region}`.trim();
-                  // Разбиваем строку по пробелам
-                  const words = labelText.split(" ");
-                  return (
-                    <li {...optionProps} key={option.id}>
-                      {words.map((word, index) => (
-                        <span
-                          key={index}
-                          style={{
-                            color: index === 0 ? "black" : "gray",
-                            marginRight: "4px",
-                          }}
-                        >
-                          {word}
-                        </span>
-                      ))}
-                    </li>
-                  );
-                }}
-                value={
-                  cities.find((option) => option.city === formData.city) || null
-                }
-                onChange={(e, newValue) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    city: newValue.city || "",
-                  }));
-                }}
-              />
+              {isEditing ? (
+                <>
+                  <label>Город</label>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    listboxHeight={"300px"}
+                    isDisabled={false}
+                    options={cities}
+                    getOptionLabel={(option) =>
+                      option ? `${option.city} ${option.region}`.trim() : ""
+                    }
+                    renderOption={(optionProps, option) => {
+                      const labelText = `${option.city} ${option.region}`.trim();
+                      const words = labelText.split(" ");
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((word, index) => (
+                            <span
+                              key={index}
+                              style={{
+                                color: index === 0 ? "black" : "gray",
+                                marginRight: "4px",
+                              }}
+                            >
+                              {word}
+                            </span>
+                          ))}
+                        </li>
+                      );
+                    }}
+                    value={
+                      cities.find((option) => option.city === formData.city) || null
+                    }
+                    onChange={(e, newValue) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        city: newValue.city || "",
+                      }));
+                    }}
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>Город</div>
+                  <div className={classes.requestDataInfo_desc}>
+                    {(() => {
+                      const cityObj = cities.find((c) => c.city === formData.city);
+                      return cityObj ? `${cityObj.city}${cityObj.region ? `, ${cityObj.region}` : ""}` : (formData.city || "—");
+                    })()}
+                  </div>
+                </div>
+              )}
 
-              <label>E-mail</label>
-              <input
-                type="text"
-                name="email"
-                placeholder=""
-                value={formData.email}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
+              {isEditing ? (
+                <>
+                  <label>E-mail</label>
+                  <input
+                    type="text"
+                    name="email"
+                    placeholder=""
+                    value={formData.email}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>E-mail</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.email || "—"}</div>
+                </div>
+              )}
 
-              <label>ИНН</label>
-              <input
-                type="text"
-                name="inn"
-                placeholder=""
-                value={formData.inn}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
+              {isEditing ? (
+                <>
+                  <label>ИНН</label>
+                  <input
+                    type="text"
+                    name="inn"
+                    placeholder=""
+                    value={formData.inn}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>ИНН</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.inn || "—"}</div>
+                </div>
+              )}
 
-              <label>ОГРН</label>
-              <input
-                type="text"
-                name="ogrn"
-                placeholder=""
-                value={formData.ogrn}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
+              {isEditing ? (
+                <>
+                  <label>ОГРН</label>
+                  <input
+                    type="text"
+                    name="ogrn"
+                    placeholder=""
+                    value={formData.ogrn}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>ОГРН</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.ogrn || "—"}</div>
+                </div>
+              )}
 
-              <label>БИК</label>
-              <input
-                type="text"
-                name="bik"
-                placeholder=""
-                value={formData.bik}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
+              {isEditing ? (
+                <>
+                  <label>БИК</label>
+                  <input
+                    type="text"
+                    name="bik"
+                    placeholder=""
+                    value={formData.bik}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>БИК</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.bik || "—"}</div>
+                </div>
+              )}
 
-              <label>Р/С</label>
-              <input
-                type="text"
-                name="rs"
-                placeholder=""
-                value={formData.rs}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
+              {isEditing ? (
+                <>
+                  <label>Р/С</label>
+                  <input
+                    type="text"
+                    name="rs"
+                    placeholder=""
+                    value={formData.rs}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>Р/С</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.rs || "—"}</div>
+                </div>
+              )}
 
-              <label>В БАНКЕ</label>
-              <input
-                type="text"
-                name="bank"
-                placeholder=""
-                value={formData.bank}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
+              {isEditing ? (
+                <>
+                  <label>В БАНКЕ</label>
+                  <input
+                    type="text"
+                    name="bank"
+                    placeholder=""
+                    value={formData.bank}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>В БАНКЕ</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.bank || "—"}</div>
+                </div>
+              )}
 
-              <label>Индекс</label>
-              <input
-                type="text"
-                name="index"
-                placeholder=""
-                value={formData.index}
-                onChange={handleChange}
-                autoComplete="new-password"
-                disabled={!isEditing}
-              />
-
-              {/* <label>Аватар</label>
-              <input
-                type="file"
-                name="images"
-                onChange={handleFileChange}
-                ref={fileInputRef}
-              /> */}
+              {isEditing ? (
+                <>
+                  <label>Индекс</label>
+                  <input
+                    type="text"
+                    name="index"
+                    placeholder=""
+                    value={formData.index}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                  />
+                </>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>Индекс</div>
+                  <div className={classes.requestDataInfo_desc}>{formData.index || "—"}</div>
+                </div>
+              )}
             </div>
           </div>
 

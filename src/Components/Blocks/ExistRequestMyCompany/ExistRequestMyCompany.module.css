@@ -72,6 +72,74 @@
     gap: 15px;
 }
 
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    width: 40%;
+    color: #2B2B34;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-height: 37px;
+    color: #2B2B34;
+}
+
+/* Подпись сверху, контент под ней (для Описания) */
+.requestDataInfoBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.requestDataInfoBlock_title {
+    font-family: Nunito Sans, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #2B2B34;
+}
+
+.requestDataInfoBlock_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-height: 37px;
+    color: #2B2B34;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.requestDataItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.requestDataItem :first-child {
+    flex-basis: 40%;
+}
+
+.requestDataItem :last-child {
+    flex-basis: 59%;
+}
+
 .requestData label {
     display: flex;
     gap: 15px;
