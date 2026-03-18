@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@apollo/client'
 import { EditorContent, useEditor } from '@tiptap/react'
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded'
@@ -53,6 +53,23 @@ const MAX_ARTICLE_WIDTH = 2400
 
 function isDocJson(value) {
   return Boolean(value && typeof value === 'object' && value.type === 'doc')
+}
+
+function normalizeIncomingDocContent(rawContent) {
+  if (isDocJson(rawContent)) return rawContent
+
+  if (typeof rawContent === 'string' && rawContent.trim()) {
+    try {
+      const parsed = JSON.parse(rawContent)
+      if (isDocJson(parsed)) {
+        return parsed
+      }
+    } catch {
+      // ignore malformed JSON and fall back to an empty document
+    }
+  }
+
+  return EMPTY_DOC
 }
 
 function isSameDocContentSemantically(editor, nextContent) {
@@ -950,6 +967,16 @@ export default function DocumentListTiptapPanelContent({
       editable: canEdit,
       injectCSS: false,
 
+      editorProps: {
+        attributes: {
+          spellcheck: 'true',
+        },
+        handleKeyDown: (_view, event) => {
+          if (event.isComposing) return false
+          return false
+        },
+      },
+
       onUpdate: () => {
         // Content is saved manually via the "Сохранить" button.
         // Clear any legacy pending autosave timer just in case.
@@ -959,7 +986,7 @@ export default function DocumentListTiptapPanelContent({
         }
       },
     },
-    [activeDocId, canEdit, onDraftPersist]
+    [canEdit, onDraftPersist]
   )
 
   const handleBack = useCallback(() => {
@@ -1073,12 +1100,22 @@ export default function DocumentListTiptapPanelContent({
 
   useEffect(() => {
     if (!editor) return
-    if (!activeDocId) return
     if (!token) return
 
+    if (!activeDocId) {
+      hydrationKeyRef.current = ''
+      queueMicrotask(() => {
+        editor.commands.setContent(EMPTY_DOC, false)
+      })
+      return
+    }
+
     const article = articleData?.article
+    const activeIdStr = activeDocId != null ? String(activeDocId) : ''
+    const articleIdMatches =
+      article != null && activeIdStr !== '' && String(article.id) === activeIdStr
     const articleUpdatedAtKey =
-      article && article.id === activeDocId && article.updatedAt != null
+      article && articleIdMatches && article.updatedAt != null
         ? String(article.updatedAt)
         : ''
     const hydrationKey = `${activeDocId}:${draftHydrationVersion}:${articleUpdatedAtKey}`
@@ -1091,7 +1128,7 @@ export default function DocumentListTiptapPanelContent({
       return
     }
 
-    if (article && article.id !== activeDocId) {
+    if (article && !articleIdMatches) {
       skipAutosaveRef.current = false
       skipLayoutSaveRef.current = false
       return
@@ -1103,7 +1140,7 @@ export default function DocumentListTiptapPanelContent({
       return
     }
 
-    const content = isDocJson(article?.content) ? article.content : EMPTY_DOC
+    const content = normalizeIncomingDocContent(article?.content)
 
     // Prevent cursor jumps during local editing/autosave:
     // backend updates `updatedAt`, which changes hydrationKey, but content often stays identical.
@@ -1140,6 +1177,12 @@ export default function DocumentListTiptapPanelContent({
     skipAutosaveRef.current = false
     skipLayoutSaveRef.current = false
   }, [editor, activeDocId, draftHydrationVersion, articleData, token])
+
+  useEffect(() => {
+    if (!activeDocId) {
+      hydrationKeyRef.current = ''
+    }
+  }, [activeDocId])
 
   useEffect(() => {
     if (!canEdit) return

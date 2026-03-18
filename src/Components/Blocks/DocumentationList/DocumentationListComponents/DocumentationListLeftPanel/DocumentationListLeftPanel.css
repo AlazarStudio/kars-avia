@@ -19,7 +19,7 @@
 .doc-left-tree {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 4px 0 4px 48px;
   scroll-behavior: smooth;
 }
 
@@ -132,6 +132,7 @@
   gap: 8px;
   padding: 4px 12px;
   align-items: center;
+  flex-wrap: wrap;
   position: relative;
   z-index: 9;
 }
@@ -155,6 +156,11 @@
 .create-actions {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
+}
+
+.create-row-type {
+  min-width: 160px;
 }
 .create-section-btn{
   height: 26px;
@@ -289,7 +295,7 @@
   width: calc(100% - 24px);
   height: 26px;
   border-radius: 6px;
-  border: 1px dashed #d1d5db;
+  border: 1px solid #d1d5db;
   background: transparent;
   color: #6b7280;
   cursor: pointer;
@@ -1069,7 +1075,8 @@
   padding: 8px 0;
 }
 
-.search-info {
+.search-info,
+.search-results-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1394,10 +1401,10 @@
 }
 
 .doc-left-tree {
-  padding: 8px 0px 10px;
+  padding: 36px 0px 10px 8px;
   position: relative;
   overflow-x: hidden;
-  /* scrollbar-width: thin;
+  /* scrollbar-width: thin; 
   scrollbar-color: #356184 #f9f9fd; */
 }
 

@@ -11,13 +11,207 @@ import './audioBlock.css'
 import './imageBlockModal.css'
 import './fileEmpty.css'
 import './blockResize.css'
-import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
+import { blobFromDataUrl, blobFromUrl, getFileRecord } from '../storage/fileStore'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
 import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
+import { parseVideoUrl } from '../utils/videoEmbedParser'
+import { decodeJWT, getCookie } from '../../../../../../../../graphQL_requests'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
-const AUDIO_MIN_WIDTH = 280
+const AUDIO_MIN_WIDTH = 500
 const AUDIO_MODAL_ESTIMATED_SIZE = { width: 360, height: 260 }
+const YOUTUBE_IFRAME_API_SRC = 'https://www.youtube.com/iframe_api'
+const VK_VIDEO_API_SRC = 'https://vk.com/js/api/videoplayer.js'
+const SUPER_ADMIN_ROLE = 'SUPERADMIN'
+
+let youtubeIframeApiPromise = null
+let vkVideoApiPromise = null
+
+function loadYouTubeIframeApi() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return Promise.reject(new Error('YouTube API can only be loaded in the browser'))
+  }
+
+  if (window.YT?.Player) {
+    return Promise.resolve(window.YT)
+  }
+
+  if (youtubeIframeApiPromise) {
+    return youtubeIframeApiPromise
+  }
+
+  youtubeIframeApiPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(`script[src="${YOUTUBE_IFRAME_API_SRC}"]`)
+    const previousReady = window.onYouTubeIframeAPIReady
+    const timeoutId = window.setTimeout(() => {
+      reject(new Error('Timed out while loading YouTube IFrame API'))
+    }, 15000)
+
+    const finalize = () => {
+      window.clearTimeout(timeoutId)
+      if (window.YT?.Player) {
+        resolve(window.YT)
+      } else {
+        reject(new Error('YouTube IFrame API loaded without YT.Player'))
+      }
+    }
+
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof previousReady === 'function') {
+        previousReady()
+      }
+      finalize()
+    }
+
+    if (!existingScript) {
+      const script = document.createElement('script')
+      script.src = YOUTUBE_IFRAME_API_SRC
+      script.async = true
+      script.onerror = () => {
+        window.clearTimeout(timeoutId)
+        reject(new Error('Failed to load YouTube IFrame API'))
+      }
+      document.body.appendChild(script)
+    } else if (window.YT?.Player) {
+      finalize()
+    }
+  }).catch(error => {
+    youtubeIframeApiPromise = null
+    throw error
+  })
+
+  return youtubeIframeApiPromise
+}
+
+function loadVkVideoApi() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return Promise.reject(new Error('VK Video API can only be loaded in the browser'))
+  }
+
+  if (window.VK?.VideoPlayer) {
+    return Promise.resolve(window.VK)
+  }
+
+  if (vkVideoApiPromise) {
+    return vkVideoApiPromise
+  }
+
+  vkVideoApiPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(`script[src="${VK_VIDEO_API_SRC}"]`)
+    const timeoutId = window.setTimeout(() => {
+      reject(new Error('Timed out while loading VK Video API'))
+    }, 15000)
+
+    const finalize = () => {
+      window.clearTimeout(timeoutId)
+      if (window.VK?.VideoPlayer) {
+        resolve(window.VK)
+      } else {
+        reject(new Error('VK Video API loaded without VK.VideoPlayer'))
+      }
+    }
+
+    if (!existingScript) {
+      const script = document.createElement('script')
+      script.src = VK_VIDEO_API_SRC
+      script.async = true
+      script.onload = finalize
+      script.onerror = () => {
+        window.clearTimeout(timeoutId)
+        reject(new Error('Failed to load VK Video API'))
+      }
+      document.body.appendChild(script)
+    } else {
+      const poll = () => {
+        if (window.VK?.VideoPlayer) {
+          finalize()
+          return
+        }
+        window.setTimeout(poll, 100)
+      }
+      poll()
+    }
+  }).catch(error => {
+    vkVideoApiPromise = null
+    throw error
+  })
+
+  return vkVideoApiPromise
+}
+
+function detectEmbeddedAudioPlatform(rawUrl) {
+  if (typeof rawUrl !== 'string' || !rawUrl.trim()) return null
+
+  try {
+    const parsedUrl = new URL(rawUrl)
+    const host = parsedUrl.hostname.replace(/^www\./, '')
+    const pathname = parsedUrl.pathname || ''
+
+    if (
+      host === 'youtube.com' ||
+      host === 'm.youtube.com' ||
+      host === 'youtu.be' ||
+      host === 'youtube-nocookie.com'
+    ) {
+      return 'youtube'
+    }
+
+    if ((host === 'vk.com' || host === 'vkvideo.ru') && pathname.includes('video_ext.php')) {
+      return 'vk'
+    }
+  } catch {
+    // ignore malformed external URLs
+  }
+
+  return null
+}
+
+function getEmbeddedAudioSource(rawSrc) {
+  if (typeof rawSrc !== 'string' || !rawSrc.trim()) return null
+
+  const parsed = parseVideoUrl(rawSrc)
+  if (!parsed || parsed.type !== 'embed') return null
+
+  const rawEmbedUrl = parsed.embedUrl || parsed.url
+  if (!rawEmbedUrl) return null
+
+  const platform =
+    parsed.platform === 'youtube' || parsed.platform === 'vk'
+      ? parsed.platform
+      : detectEmbeddedAudioPlatform(rawEmbedUrl)
+
+  if (platform !== 'youtube' && platform !== 'vk') return null
+
+  let embedUrl = rawEmbedUrl
+  try {
+    const nextUrl = new URL(rawEmbedUrl)
+    if (platform === 'youtube') {
+      nextUrl.searchParams.set('enablejsapi', '1')
+      nextUrl.searchParams.set('playsinline', '1')
+      nextUrl.searchParams.set('rel', '0')
+      nextUrl.searchParams.set('modestbranding', '1')
+      nextUrl.searchParams.set('controls', '0')
+      if (typeof window !== 'undefined' && window.location?.origin) {
+        nextUrl.searchParams.set('origin', window.location.origin)
+      }
+    }
+    if (platform === 'vk') {
+      nextUrl.searchParams.set('js_api', '1')
+    }
+    embedUrl = nextUrl.toString()
+  } catch {
+    // keep raw embed url
+  }
+
+  return {
+    embedUrl,
+    platform,
+    label: platform === 'youtube' ? 'YouTube' : 'VK Видео',
+    originalUrl: rawSrc,
+    videoId: parsed.videoId,
+  }
+}
 
 const formatAudioTime = (seconds, { forceHours = false } = {}) => {
   const safeSeconds = Number.isFinite(Number(seconds)) && Number(seconds) > 0
@@ -124,8 +318,17 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   const { fileId, src, volume, loop } = node.attrs
 
   const docUpload = useDocumentationUpload()
-  const { uploadFile: docUploadFile, getMediaUrl } = docUpload || {}
+  const { uploadFile: docUploadFile, getMediaUrl, getMediaUrlCandidates } = docUpload || {}
   const canEdit = editor?.isEditable !== false
+  let isSuperAdminUser = false
+  try {
+    const token = getCookie('token')
+    const user = token ? decodeJWT(token) : null
+    isSuperAdminUser = user?.role === SUPER_ADMIN_ROLE
+  } catch {
+    isSuperAdminUser = false
+  }
+  const canManageAudioBlock = canEdit || isSuperAdminUser
   const width = typeof node.attrs.width === 'number' ? node.attrs.width : 520
   const textAlign = node.attrs.textAlign || 'left'
 
@@ -137,6 +340,13 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
         : { marginLeft: 0, marginRight: 'auto' }
 
   const audioRef = useRef(null)
+  const providerFrameRef = useRef(null)
+  const providerPlayerRef = useRef(null)
+  const providerPlatformRef = useRef(null)
+  const providerReadyRef = useRef(false)
+  const providerPollRef = useRef(null)
+  const providerProgressRef = useRef({ lastCurrent: 0 })
+  const loopRef = useRef(loop)
   const progressTrackRef = useRef(null)
   const seekDragRef = useRef({ active: false, wasPlaying: false })
   const idRef = useRef(Math.random().toString(36).slice(2))
@@ -157,14 +367,35 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   const [url, setUrl] = useState('')
   const [tab, setTab] = useState('upload')
   const [objectUrl, setObjectUrl] = useState(null)
-  const audioUrl = objectUrl || src
-  const displayUrl = objectUrl || (src && getMediaUrl ? getMediaUrl(src) : src)
+  const [displayUrlIndex, setDisplayUrlIndex] = useState(0)
+  const [isEmbeddedPlayerVisible, setIsEmbeddedPlayerVisible] = useState(false)
+  const [playerVolume, setPlayerVolume] = useState(Math.min(1, Math.max(0, Number(volume) || 0)))
+  const [isLoopEnabled, setIsLoopEnabled] = useState(Boolean(loop))
+  const embeddedAudioSource = !objectUrl ? getEmbeddedAudioSource(src) : null
+  const audioUrl = objectUrl || (embeddedAudioSource ? null : src)
+  const displayUrlCandidates =
+    objectUrl
+      ? [objectUrl]
+      : embeddedAudioSource
+        ? []
+        : src
+          ? (
+              getMediaUrlCandidates
+                ? getMediaUrlCandidates(src)
+                : [getMediaUrl ? getMediaUrl(src) : src]
+            ).filter(Boolean)
+          : []
+  const displayUrl =
+    displayUrlCandidates[
+      Math.min(displayUrlIndex, Math.max(0, displayUrlCandidates.length - 1))
+    ] || null
   const hasAudio = Boolean(audioUrl)
+  const hasEmbeddedAudio = Boolean(embeddedAudioSource?.embedUrl)
   const migrationRef = useRef({ running: false, doneFor: null })
   const lastVolumeBeforeMuteRef = useRef(
     Number.isFinite(Number(volume)) && Number(volume) > 0 ? Number(volume) : 1
   )
-  const normalizedVolume = Math.min(1, Math.max(0, Number(volume) || 0))
+  const normalizedVolume = Math.min(1, Math.max(0, Number(playerVolume) || 0))
   const isEffectivelyMuted = normalizedVolume <= 0.001
   const showDurationHours = duration >= 3600
   const currentTimeLabel = formatAudioTime(current, { forceHours: current >= 3600 })
@@ -182,14 +413,201 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
     }
   }
 
+  const stopProviderPolling = () => {
+    if (providerPollRef.current) {
+      window.clearInterval(providerPollRef.current)
+      providerPollRef.current = null
+    }
+  }
+
+  const destroyProviderPlayer = () => {
+    stopProviderPolling()
+
+    const player = providerPlayerRef.current
+    if (player && typeof player.destroy === 'function') {
+      try {
+        player.destroy()
+      } catch {
+        // ignore provider destroy failures
+      }
+    }
+
+    providerPlayerRef.current = null
+    providerPlatformRef.current = null
+    providerReadyRef.current = false
+    providerProgressRef.current = { lastCurrent: 0 }
+  }
+
+  const getProviderSnapshot = async () => {
+    const player = providerPlayerRef.current
+    const platform = providerPlatformRef.current
+
+    if (!player || !platform || !providerReadyRef.current) {
+      return null
+    }
+
+    if (platform === 'youtube') {
+      const YT = window.YT
+      const nextDuration = Number(player.getDuration?.() || 0)
+      const nextCurrent = Number(player.getCurrentTime?.() || 0)
+      const nextState = Number(player.getPlayerState?.())
+      const isPlayerActive =
+        nextState === YT?.PlayerState?.PLAYING || nextState === YT?.PlayerState?.BUFFERING
+
+      return {
+        current: nextCurrent,
+        duration: nextDuration,
+        isPlaying: isPlayerActive,
+        isEnded: nextState === YT?.PlayerState?.ENDED,
+      }
+    }
+
+    const nextDuration = Number((await Promise.resolve(player.getDuration?.())) || 0)
+    const nextCurrent = Number((await Promise.resolve(player.getCurrentTime?.())) || 0)
+    const stateValue = await Promise.resolve(player.getState?.())
+    const normalizedState =
+      typeof stateValue === 'string'
+        ? stateValue.toLowerCase()
+        : typeof stateValue === 'number'
+          ? String(stateValue)
+          : ''
+
+    const isPlayerActive =
+      normalizedState.includes('play') ||
+      normalizedState.includes('buffer') ||
+      normalizedState === '1'
+
+    const isEnded =
+      normalizedState.includes('end') ||
+      (nextDuration > 0 && nextCurrent >= Math.max(nextDuration - 0.35, 0))
+
+    return {
+      current: nextCurrent,
+      duration: nextDuration,
+      isPlaying: isPlayerActive,
+      isEnded,
+    }
+  }
+
+  const syncProviderSnapshot = async () => {
+    const snapshot = await getProviderSnapshot()
+    if (!snapshot) return
+
+    const nextDuration = Number.isFinite(snapshot.duration) ? snapshot.duration : 0
+    const nextCurrent = Number.isFinite(snapshot.current) ? snapshot.current : 0
+
+    setDuration(nextDuration)
+    setCurrent(nextCurrent)
+    setIsPlaying(Boolean(snapshot.isPlaying))
+
+    providerProgressRef.current.lastCurrent = nextCurrent
+
+    if (!snapshot.isEnded) return
+
+    if (loopRef.current) {
+      const player = providerPlayerRef.current
+      const platform = providerPlatformRef.current
+      try {
+        if (platform === 'youtube') {
+          player?.seekTo?.(0, true)
+          player?.playVideo?.()
+        } else {
+          await Promise.resolve(player?.seek?.(0))
+          await Promise.resolve(player?.play?.())
+        }
+        setIsPlaying(true)
+      } catch {
+        setIsPlaying(false)
+      }
+      return
+    }
+
+    setIsPlaying(false)
+  }
+
+  const syncProviderSettings = async () => {
+    const player = providerPlayerRef.current
+    const platform = providerPlatformRef.current
+
+    if (!player || !platform || !providerReadyRef.current) return
+
+    try {
+      if (platform === 'youtube') {
+        player?.setVolume?.(Math.round(normalizedVolume * 100))
+        if (normalizedVolume <= 0.001) {
+          player?.mute?.()
+        } else {
+          player?.unMute?.()
+        }
+        return
+      }
+
+      if (normalizedVolume <= 0.001) {
+        await Promise.resolve(player?.mute?.())
+      } else {
+        await Promise.resolve(player?.unmute?.())
+        await Promise.resolve(player?.setVolume?.(Number(normalizedVolume.toFixed(2))))
+      }
+    } catch {
+      // ignore transient provider sync failures
+    }
+  }
+
+  const playEmbeddedAudio = async () => {
+    const player = providerPlayerRef.current
+    const platform = providerPlatformRef.current
+    if (!player || !platform || !providerReadyRef.current) return
+
+    if (platform === 'youtube') {
+      player?.playVideo?.()
+    } else {
+      await Promise.resolve(player?.play?.())
+    }
+
+    setIsPlaying(true)
+    void syncProviderSnapshot()
+  }
+
+  const pauseEmbeddedAudio = async () => {
+    const player = providerPlayerRef.current
+    const platform = providerPlatformRef.current
+    if (!player || !platform || !providerReadyRef.current) return
+
+    if (platform === 'youtube') {
+      player?.pauseVideo?.()
+    } else {
+      await Promise.resolve(player?.pause?.())
+    }
+
+    setIsPlaying(false)
+  }
+
+  const seekEmbeddedAudio = async nextTime => {
+    const player = providerPlayerRef.current
+    const platform = providerPlatformRef.current
+    if (!player || !platform || !providerReadyRef.current) return
+
+    if (platform === 'youtube') {
+      player?.seekTo?.(nextTime, true)
+    } else {
+      await Promise.resolve(player?.seek?.(nextTime))
+    }
+
+    setCurrent(nextTime)
+  }
+
   /* ================= ONE AUDIO AT A TIME ================= */
 
   useEffect(() => {
     const stopOthers = e => {
-      if (e.detail !== idRef.current && audioRef.current) {
+      if (e.detail === idRef.current) return
+
+      if (audioRef.current) {
         audioRef.current.pause()
-        setIsPlaying(false)
       }
+
+      void pauseEmbeddedAudio()
+      setIsPlaying(false)
     }
     window.addEventListener('audio-play', stopOthers)
     return () => window.removeEventListener('audio-play', stopOthers)
@@ -198,17 +616,122 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   /* ================= SYNC ================= */
 
   useEffect(() => {
+    if (hasEmbeddedAudio) {
+      void syncProviderSettings()
+      return
+    }
+
     if (!audioRef.current) return
     audioRef.current.volume = normalizedVolume
-    audioRef.current.loop = loop
+    audioRef.current.loop = isLoopEnabled
     audioRef.current.muted = normalizedVolume <= 0.001
-  }, [normalizedVolume, loop])
+  }, [normalizedVolume, isLoopEnabled, hasEmbeddedAudio])
+
+  useEffect(() => {
+    setPlayerVolume(Math.min(1, Math.max(0, Number(volume) || 0)))
+  }, [volume])
+
+  useEffect(() => {
+    setIsLoopEnabled(Boolean(loop))
+  }, [loop])
 
   useEffect(() => {
     if (normalizedVolume > 0.001) {
       lastVolumeBeforeMuteRef.current = normalizedVolume
     }
   }, [normalizedVolume])
+
+  useEffect(() => {
+    loopRef.current = isLoopEnabled
+  }, [isLoopEnabled])
+
+  useEffect(() => {
+    setIsPlaying(false)
+    setCurrent(0)
+    setDuration(0)
+
+    if (!embeddedAudioSource?.embedUrl) {
+      destroyProviderPlayer()
+      return
+    }
+
+    let cancelled = false
+
+    const startPolling = () => {
+      stopProviderPolling()
+      providerPollRef.current = window.setInterval(() => {
+        void syncProviderSnapshot()
+      }, 500)
+    }
+
+    const initializeProvider = async () => {
+      const frame = providerFrameRef.current
+      if (!frame) return
+
+      destroyProviderPlayer()
+
+      try {
+        if (embeddedAudioSource.platform === 'youtube') {
+          const YT = await loadYouTubeIframeApi()
+          if (cancelled || !providerFrameRef.current) return
+
+          const player = new YT.Player(providerFrameRef.current, {
+            events: {
+              onReady: () => {
+                if (cancelled) return
+                providerPlayerRef.current = player
+                providerPlatformRef.current = 'youtube'
+                providerReadyRef.current = true
+                void syncProviderSettings()
+                void syncProviderSnapshot()
+                startPolling()
+              },
+              onStateChange: event => {
+                if (cancelled) return
+                const YTState = window.YT?.PlayerState
+                const isActive =
+                  event.data === YTState?.PLAYING || event.data === YTState?.BUFFERING
+                setIsPlaying(Boolean(isActive))
+
+                if (event.data === YTState?.ENDED) {
+                  void syncProviderSnapshot()
+                }
+              },
+            },
+          })
+
+          return
+        }
+
+        const VK = await loadVkVideoApi()
+        if (cancelled || !providerFrameRef.current) return
+
+        const createVkPlayer = VK?.VideoPlayer || window.VK?.VideoPlayer
+        if (typeof createVkPlayer !== 'function') {
+          throw new Error('VK.VideoPlayer is unavailable')
+        }
+
+        providerPlayerRef.current = createVkPlayer(providerFrameRef.current)
+        providerPlatformRef.current = 'vk'
+        providerReadyRef.current = true
+        await syncProviderSettings()
+        await syncProviderSnapshot()
+        startPolling()
+      } catch (error) {
+        console.error('Failed to initialize documentation audio provider:', error)
+      }
+    }
+
+    const rafId = window.requestAnimationFrame(() => {
+      void initializeProvider()
+    })
+
+    return () => {
+      cancelled = true
+      window.cancelAnimationFrame(rafId)
+      destroyProviderPlayer()
+    }
+  }, [embeddedAudioSource?.embedUrl, embeddedAudioSource?.platform])
 
   /* ================= RESOLVE LOCAL FILE ================= */
 
@@ -257,22 +780,14 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
 
     ;(async () => {
       try {
+        if (!docUploadFile) return
         const blob = src.startsWith('data:')
           ? await blobFromDataUrl(src)
           : await blobFromUrl(src)
-        if (docUploadFile) {
-          const file = new File([blob], 'audio', { type: blob.type })
-          const path = await docUploadFile(file)
-          if (path) {
-            updateAttributes({ src: path, fileId: null })
-            migrationRef.current.running = false
-            return
-          }
-        }
-        const id = await saveBlobAsFile({ blob, mimeType: blob.type })
-        updateAttributes({ fileId: id, src: null })
-      } catch {
-        // ignore
+        const file = new File([blob], 'audio', { type: blob.type })
+        await uploadAudioFile(file)
+      } catch (error) {
+        console.error('Failed to migrate documentation audio block to server upload:', error)
       } finally {
         migrationRef.current.running = false
       }
@@ -282,7 +797,7 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   /* ================= OPEN MODAL AT CURSOR ================= */
 
   const openAtEvent = e => {
-    if (!canEdit) return
+    if (!canManageAudioBlock) return
     e.stopPropagation()
     // Позиция рядом с курсором мыши
     const rect = modalRef.current?.getBoundingClientRect?.()
@@ -343,6 +858,10 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
     }
   }, [open])
 
+  useEffect(() => {
+    setDisplayUrlIndex(0)
+  }, [objectUrl, src])
+
   /* ================= DRAG MODAL ================= */
 
   const startDragModal = e => {
@@ -375,9 +894,40 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
     document.removeEventListener('mouseup', stopDragModal)
   }
 
+  const uploadAudioFile = async file => {
+    if (!docUploadFile) {
+      throw new Error('Documentation upload service is unavailable')
+    }
+
+    const path = await docUploadFile(file)
+    updateAttributes({ src: path, fileId: null })
+  }
+
+  const setAudioFromUrl = rawUrl => {
+    const cleanUrl = String(rawUrl || '').trim()
+    if (!cleanUrl) return
+
+    updateAttributes({ src: cleanUrl, fileId: null })
+    setOpen(false)
+    setUrl('')
+  }
+
   /* ================= CONTROLS ================= */
 
   const togglePlay = () => {
+    if (hasEmbeddedAudio) {
+      window.dispatchEvent(
+        new CustomEvent('audio-play', { detail: idRef.current })
+      )
+
+      if (isPlaying) {
+        void pauseEmbeddedAudio()
+      } else {
+        void playEmbeddedAudio()
+      }
+      return
+    }
+
     if (!audioRef.current) return
 
     if (audioRef.current.paused) {
@@ -402,12 +952,15 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   }
 
   const applySeekFromClientX = clientX => {
-    const audioEl = audioRef.current
     const trackEl = progressTrackRef.current
-    if (!audioEl || !trackEl) return
+    if (!trackEl) return
+
+    const audioEl = audioRef.current
 
     const activeDuration =
-      Number.isFinite(duration) && duration > 0 ? duration : Number(audioEl.duration || 0)
+      Number.isFinite(duration) && duration > 0
+        ? duration
+        : Number(audioEl?.duration || 0)
     if (!Number.isFinite(activeDuration) || activeDuration <= 0) return
 
     const rect = trackEl.getBoundingClientRect()
@@ -415,6 +968,13 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
 
     const percent = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
     const nextTime = percent * activeDuration
+
+    if (hasEmbeddedAudio) {
+      void seekEmbeddedAudio(nextTime)
+      return
+    }
+
+    if (!audioEl) return
 
     if (typeof audioEl.fastSeek === 'function') {
       audioEl.fastSeek(nextTime)
@@ -440,22 +1000,28 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
 
   const startSeekDrag = e => {
     if (e.button !== 0) return
-    if (!audioRef.current) return
+    if (!audioRef.current && !hasEmbeddedAudio) return
     e.preventDefault()
     e.stopPropagation()
 
     const audioEl = audioRef.current
     seekDragRef.current.active = true
-    seekDragRef.current.wasPlaying = !audioEl.paused || isPlaying
+    seekDragRef.current.wasPlaying = hasEmbeddedAudio
+      ? isPlaying
+      : (!audioEl?.paused || isPlaying)
 
     applySeekFromClientX(e.clientX)
 
     if (seekDragRef.current.wasPlaying) {
-      const playPromise = audioEl.play?.()
-      if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(() => {})
+      if (hasEmbeddedAudio) {
+        void playEmbeddedAudio()
+      } else {
+        const playPromise = audioEl?.play?.()
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {})
+        }
+        setIsPlaying(true)
       }
-      setIsPlaying(true)
     }
 
     document.addEventListener('mousemove', onSeekMouseMove)
@@ -471,28 +1037,24 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
   )
 
   const handleToggleMute = () => {
-    if (!canEdit) return
-
     if (isEffectivelyMuted) {
       const restored = Math.min(1, Math.max(0.05, lastVolumeBeforeMuteRef.current || 1))
-      updateAttributes({ volume: Number(restored.toFixed(2)) })
+      setPlayerVolume(Number(restored.toFixed(2)))
       return
     }
 
     if (normalizedVolume > 0.001) {
       lastVolumeBeforeMuteRef.current = normalizedVolume
     }
-    updateAttributes({ volume: 0 })
+    setPlayerVolume(0)
   }
 
   const handleVolumeChange = e => {
-    if (!canEdit) return
-
     const nextVolume = Math.min(1, Math.max(0, Number(e.target.value) || 0))
     if (nextVolume > 0.001) {
       lastVolumeBeforeMuteRef.current = nextVolume
     }
-    updateAttributes({ volume: Number(nextVolume.toFixed(2)) })
+    setPlayerVolume(Number(nextVolume.toFixed(2)))
   }
 
   /* ================= RESIZE ================= */
@@ -535,7 +1097,7 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
 
   /* ================= RENDER ================= */
 
-  if (!canEdit && !hasAudio) return null
+  if (!canEdit && !hasAudio && !hasEmbeddedAudio) return null
 
   return (
     <NodeViewWrapper
@@ -553,7 +1115,7 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
         </>
       )}
 
-      {!hasAudio && (
+      {!hasAudio && !hasEmbeddedAudio && (
         // <button className="audio-add" onClick={openAtEvent}>
         //   ＋ Добавить аудио
         // </button>
@@ -566,27 +1128,78 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
         </div>
       )}
 
-      {hasAudio && (
+      {false && hasEmbeddedAudio && (
+        <div className="audio-player audio-embed-card">
+          <div className="audio-embed-header">
+            <div className="audio-embed-copy">
+              <div className="audio-embed-provider">{embeddedAudioSource.label}</div>
+              <div className="audio-embed-note">
+                Воспроизведение через встроенный плеер
+              </div>
+            </div>
+
+            <div className="audio-embed-actions">
+              <button
+                type="button"
+                className="audio-embed-toggle"
+                onClick={() => setIsEmbeddedPlayerVisible(prev => !prev)}
+              >
+                {isEmbeddedPlayerVisible ? 'Скрыть' : 'Открыть'}
+              </button>
+
+              {canEdit && (
+                <button
+                  className="audio-more-btn"
+                  onClick={openAtEvent}
+                  title="Audio settings"
+                >
+                  <IconMore className="audio-btn-icon" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {isEmbeddedPlayerVisible && (
+            <div className="audio-embed-frame-wrap">
+              <iframe
+                src={embeddedAudioSource.embedUrl}
+                title={`${embeddedAudioSource.label} audio`}
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+          )}
+        </div>
+      )}
+
+      {(hasAudio || hasEmbeddedAudio) && (
         <div className="audio-player">
-          <audio
-            ref={audioRef}
-            src={displayUrl}
-            preload="auto"
-            onTimeUpdate={onTime}
-            onLoadedMetadata={onLoaded}
-            onSeeking={onTime}
-            onSeeked={onTime}
-            onEnded={() => setIsPlaying(false)}
-          />
+          {hasAudio && (
+            <audio
+              ref={audioRef}
+              src={displayUrl}
+              onError={() => {
+                setDisplayUrlIndex(prev =>
+                  prev + 1 < displayUrlCandidates.length ? prev + 1 : prev
+                )
+              }}
+              preload="auto"
+              onTimeUpdate={onTime}
+              onLoadedMetadata={onLoaded}
+              onSeeking={onTime}
+              onSeeked={onTime}
+              onEnded={() => setIsPlaying(false)}
+            />
+          )}
 
           <button onClick={togglePlay} className="audio-play-btn">
             {isPlaying ? <IconPause className="audio-btn-icon" /> : <IconPlay className="audio-btn-icon" />}
           </button>
 
           <button
-            className={`audio-loop-btn ${loop ? 'active' : ''}`}
-            onClick={canEdit ? () => updateAttributes({ loop: !loop }) : undefined}
-            disabled={!canEdit}
+            className={`audio-loop-btn ${isLoopEnabled ? 'active' : ''}`}
+            onClick={() => setIsLoopEnabled(prev => !prev)}
             title={loop ? 'Повтор выключен' : 'Повтор включен'}
           >
             <IconLoop className="audio-btn-icon" />
@@ -615,7 +1228,6 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
             <button
               className={`audio-volume-btn ${isEffectivelyMuted ? 'active' : ''}`}
               onClick={handleToggleMute}
-              disabled={!canEdit}
               title={isEffectivelyMuted ? 'Включить звук' : 'Выключить звук'}
             >
               {isEffectivelyMuted
@@ -631,7 +1243,6 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
               step="0.01"
               value={normalizedVolume}
               onChange={handleVolumeChange}
-              disabled={!canEdit}
               title="Громкость"
               aria-label="Громкость"
             />
@@ -642,7 +1253,7 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
           </div>
           
           {/* Кнопка для открытия меню */}
-          {canEdit && (
+          {canManageAudioBlock && (
             <button
               className="audio-more-btn"
               onClick={openAtEvent}
@@ -651,6 +1262,20 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
               <IconMore className="audio-btn-icon" />
             </button>
           )}
+        </div>
+      )}
+
+      {hasEmbeddedAudio && (
+        <div className="audio-provider-frame" aria-hidden="true">
+          <iframe
+            ref={providerFrameRef}
+            src={embeddedAudioSource.embedUrl}
+            title={`${embeddedAudioSource.label} provider player`}
+            allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
+            allowFullScreen
+            tabIndex={-1}
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
         </div>
       )}
 
@@ -758,7 +1383,7 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
 
 
 
-      {canEdit && open && renderModalPortal(
+      {canManageAudioBlock && open && renderModalPortal(
         <div
           ref={modalRef}
           className="image-modal"
@@ -798,17 +1423,11 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
                   onChange={e => {
                     const file = e.target.files?.[0]
                     if (!file) return
-                    ;(async () => {
+                    void (async () => {
                       try {
-                        if (docUploadFile) {
-                          const path = await docUploadFile(file)
-                          if (path) updateAttributes({ src: path, fileId: null })
-                        } else {
-                          const saved = await saveFile(file)
-                          updateAttributes({ fileId: saved.id, src: null })
-                        }
-                      } catch {
-                        // ignore
+                        await uploadAudioFile(file)
+                      } catch (error) {
+                        notifyDocumentationUploadFailure(error, 'аудио')
                       } finally {
                         setOpen(false)
                       }
@@ -821,23 +1440,24 @@ export default function AudioBlockView({ editor, node, updateAttributes }) {
             {tab === 'url' && (
               <>
                 <input
-                  placeholder="https://..."
+                  placeholder="https://... / YouTube / VK"
                   value={url}
                   onChange={e => setUrl(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      setAudioFromUrl(url)
+                    }
+                  }}
                 />
                 <button
-                  onClick={() => {
-                    if (!url) return
-                    updateAttributes({ src: url, fileId: null })
-                    setOpen(false)
-                  }}
+                  onClick={() => setAudioFromUrl(url)}
                 >
                   Вставить
                 </button>
               </>
             )}
 
-            {hasAudio && (
+            {(hasAudio || hasEmbeddedAudio) && (
               <button
                 className="image-delete-btn"
                 onClick={() => {

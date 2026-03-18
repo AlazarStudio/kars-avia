@@ -6,8 +6,9 @@ import './imageBlockModal.css'
 import './galleryBlock.css'
 import './fileEmpty.css'
 import './blockResize.css'
-import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
+import { blobFromDataUrl, blobFromUrl, getFileRecord } from '../storage/fileStore'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
 import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
@@ -38,7 +39,7 @@ const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
 export default function GalleryBlockView({ editor, node, updateAttributes, getPos }) {
   const docUpload = useDocumentationUpload()
-  const { uploadImage: docUploadImage, getMediaUrl } = docUpload || {}
+  const { uploadImage: docUploadImage, getMediaUrl, getMediaUrlCandidates } = docUpload || {}
   const canEdit = editor?.isEditable !== false
 
   const images = useMemo(() => {
@@ -81,6 +82,7 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
   const [url, setUrl] = useState('')
   const [replaceTargetIndex, setReplaceTargetIndex] = useState(null)
   const [objectUrls, setObjectUrls] = useState(() => new Map())
+  const [fallbackIndexes, setFallbackIndexes] = useState({})
   const [draggedImageIndex, setDraggedImageIndex] = useState(null)
   const [dropInsertIndex, setDropInsertIndex] = useState(null)
   const [dropEdgeHint, setDropEdgeHint] = useState(null)
@@ -101,6 +103,10 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
 
   useEffect(() => {
     imagesRef.current = images
+  }, [images])
+
+  useEffect(() => {
+    setFallbackIndexes({})
   }, [images])
 
   useEffect(() => {
@@ -334,20 +340,13 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
     if (!file || !file.type.startsWith('image/')) return
     ;(async () => {
       try {
-        if (docUploadImage) {
-          const path = await docUploadImage(file)
-          if (path) {
-            addImage({ src: path }, replaceIndex)
-          } else {
-            const saved = await saveFile(file)
-            addImage({ fileId: saved.id }, replaceIndex)
-          }
-        } else {
-          const saved = await saveFile(file)
-          addImage({ fileId: saved.id }, replaceIndex)
+        if (!docUploadImage) {
+          throw new Error('Documentation upload service is unavailable')
         }
-      } catch {
-        addImage({ src: URL.createObjectURL(file) }, replaceIndex)
+        const path = await docUploadImage(file)
+        addImage({ src: path }, replaceIndex)
+      } catch (error) {
+        notifyDocumentationUploadFailure(error, 'изображение')
       }
     })()
   }
@@ -409,19 +408,15 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
     if (droppedUrl.startsWith('data:')) {
       void (async () => {
         try {
-          const blob = await blobFromDataUrl(droppedUrl)
-          if (docUploadImage) {
-            const file = new File([blob], 'image', { type: blob.type })
-            const path = await docUploadImage(file)
-            if (path) {
-              addImage({ src: path }, null)
-              return
-            }
+          if (!docUploadImage) {
+            throw new Error('Documentation upload service is unavailable')
           }
-          const id = await saveBlobAsFile({ blob, mimeType: blob.type })
-          addImage({ fileId: id }, null)
-        } catch {
-          addImage({ src: droppedUrl }, null)
+          const blob = await blobFromDataUrl(droppedUrl)
+          const file = new File([blob], 'image', { type: blob.type })
+          const path = await docUploadImage(file)
+          addImage({ src: path }, null)
+        } catch (error) {
+          notifyDocumentationUploadFailure(error, 'изображение')
         }
       })()
       return
@@ -430,19 +425,15 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
     if (droppedUrl.startsWith('blob:')) {
       void (async () => {
         try {
-          const blob = await blobFromUrl(droppedUrl)
-          if (docUploadImage) {
-            const file = new File([blob], 'image', { type: blob.type })
-            const path = await docUploadImage(file)
-            if (path) {
-              addImage({ src: path }, null)
-              return
-            }
+          if (!docUploadImage) {
+            throw new Error('Documentation upload service is unavailable')
           }
-          const id = await saveBlobAsFile({ blob, mimeType: blob.type })
-          addImage({ fileId: id }, null)
-        } catch {
-          addImage({ src: droppedUrl }, null)
+          const blob = await blobFromUrl(droppedUrl)
+          const file = new File([blob], 'image', { type: blob.type })
+          const path = await docUploadImage(file)
+          addImage({ src: path }, null)
+        } catch (error) {
+          notifyDocumentationUploadFailure(error, 'изображение')
         }
       })()
       return
@@ -512,10 +503,40 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
     })
   }
 
-  const displayedSrcFor = img => {
+  const displayedSrcFor = (img, index = -1) => {
     if (img?.fileId && objectUrls.has(img.fileId)) return objectUrls.get(img.fileId)
     const rawSrc = img?.src ?? null
-    return rawSrc && getMediaUrl ? getMediaUrl(rawSrc) : rawSrc
+    if (!rawSrc) return rawSrc
+
+    const candidates = getMediaUrlCandidates
+      ? getMediaUrlCandidates(rawSrc)
+      : [getMediaUrl ? getMediaUrl(rawSrc) : rawSrc]
+    const safeCandidates = Array.isArray(candidates) ? candidates.filter(Boolean) : [rawSrc]
+    const fallbackIndex = Number.isInteger(fallbackIndexes[index]) ? fallbackIndexes[index] : 0
+    return safeCandidates[Math.min(fallbackIndex, Math.max(0, safeCandidates.length - 1))] || rawSrc
+  }
+
+  const advanceFallbackIndex = index => {
+    if (!Number.isInteger(index)) return
+
+    const img = imagesRef.current[index]
+    const rawSrc = img?.src ?? null
+    if (!rawSrc || img?.fileId) return
+
+    const candidates = getMediaUrlCandidates
+      ? getMediaUrlCandidates(rawSrc)
+      : [getMediaUrl ? getMediaUrl(rawSrc) : rawSrc]
+    const safeCandidates = Array.isArray(candidates) ? candidates.filter(Boolean) : []
+    if (safeCandidates.length < 2) return
+
+    setFallbackIndexes(prev => {
+      const currentIndex = Number.isInteger(prev[index]) ? prev[index] : 0
+      if (currentIndex + 1 >= safeCandidates.length) return prev
+      return {
+        ...prev,
+        [index]: currentIndex + 1,
+      }
+    })
   }
 
   useEffect(() => {
@@ -578,27 +599,19 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
 
       ;(async () => {
         try {
+          if (!docUploadImage) return
           const blob = img.src.startsWith('data:')
             ? await blobFromDataUrl(img.src)
             : await blobFromUrl(img.src)
-          if (docUploadImage) {
-            const file = new File([blob], 'image', { type: blob.type })
-            const path = await docUploadImage(file)
-            if (path) {
-              const nextImages = [...images]
-              nextImages[index] = { ...nextImages[index], src: path }
-              delete nextImages[index].fileId
-              updateAttributes({ images: nextImages })
-              return
-            }
-          }
-          const id = await saveBlobAsFile({ blob, mimeType: blob.type })
+
+          const file = new File([blob], 'image', { type: blob.type })
+          const path = await docUploadImage(file)
           const nextImages = [...images]
-          nextImages[index] = { ...nextImages[index], fileId: id }
-          delete nextImages[index].src
+          nextImages[index] = { ...nextImages[index], src: path }
+          delete nextImages[index].fileId
           updateAttributes({ images: nextImages })
-        } catch {
-          // ignore
+        } catch (error) {
+          console.error('Failed to migrate documentation gallery image to server upload:', error)
         }
       })()
     })
@@ -813,7 +826,7 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
         onDrop={canEdit ? e => handleDrop(e, imagesRef.current.length) : undefined}
       >
         {images.map((img, i) => {
-          const displaySrc = displayedSrcFor(img)
+          const displaySrc = displayedSrcFor(img, i)
           const isDragging = draggedImageIndex === i
           const dropEdge = dropEdgeHint?.index === i ? dropEdgeHint.edge : null
           const dropEdgeClass = dropEdge ? ` is-drop-${dropEdge}` : ''
@@ -833,6 +846,7 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
                       alt=""
                       aria-hidden="true"
                       draggable={false}
+                      onError={() => advanceFallbackIndex(i)}
                     />
                     <img
                       className="gallery-image-main"
@@ -858,8 +872,9 @@ export default function GalleryBlockView({ editor, node, updateAttributes, getPo
                       onDragEnd={() => {
                         clearGalleryDragState()
                       }}
+                      onError={() => advanceFallbackIndex(i)}
                       onClick={() => {
-                        const displayImages = images.map(displayedSrcFor).filter(Boolean)
+                        const displayImages = images.map((item, itemIndex) => displayedSrcFor(item, itemIndex)).filter(Boolean)
                         if (!displaySrc) return
                         window.dispatchEvent(
                           new CustomEvent('open-viewer', {

@@ -4,8 +4,9 @@ import { createPortal } from 'react-dom'
 import './imageBlockModal.css'
 import './fileEmpty.css'
 import './blockResize.css'
-import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
+import { blobFromDataUrl, blobFromUrl, getFileRecord } from '../storage/fileStore'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
 import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
@@ -26,7 +27,7 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
   } = node.attrs
 
   const docUpload = useDocumentationUpload()
-  const { uploadImage: docUploadImage, getMediaUrl } = docUpload || {}
+  const { uploadImage: docUploadImage, getMediaUrl, getMediaUrlCandidates } = docUpload || {}
   const canEdit = editor?.isEditable !== false
 
   const alignMargins =
@@ -39,13 +40,26 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState('upload')
   const [url, setUrl] = useState('')
+  const [displaySrcIndex, setDisplaySrcIndex] = useState(0)
   const [objectUrl, setObjectUrl] = useState(() => {
     if (!fileId) return null
     return IMAGE_FILE_URL_CACHE.get(fileId) || null
   })
 
   const hasImage = Boolean(objectUrl || src)
-  const displaySrc = objectUrl || (src && getMediaUrl ? getMediaUrl(src) : src)
+  const displaySrcCandidates = objectUrl
+    ? [objectUrl]
+    : src
+      ? (
+          getMediaUrlCandidates
+            ? getMediaUrlCandidates(src)
+            : [getMediaUrl ? getMediaUrl(src) : src]
+        ).filter(Boolean)
+      : []
+  const displaySrc =
+    displaySrcCandidates[
+      Math.min(displaySrcIndex, Math.max(0, displaySrcCandidates.length - 1))
+    ] || null
 
   const migrationRef = useRef({ running: false, doneFor: null })
 
@@ -127,6 +141,10 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
   }, [open])
 
   useEffect(() => {
+    setDisplaySrcIndex(0)
+  }, [objectUrl, src])
+
+  useEffect(() => {
     if (!open) return
 
     const clampModalToViewport = () => {
@@ -190,24 +208,15 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     if (!file || !file.type.startsWith('image/')) return
     ;(async () => {
       try {
-        if (docUploadImage) {
-          const path = await docUploadImage(file)
-          if (path) {
-            updateAttributes({ src: path, fileId: null })
-          } else {
-            const saved = await saveFile(file)
-            updateAttributes({ fileId: saved.id, src: null })
-          }
-        } else {
-          const saved = await saveFile(file)
-          updateAttributes({ fileId: saved.id, src: null })
+        if (!docUploadImage) {
+          throw new Error('Documentation upload service is unavailable')
         }
-      } catch {
-        const blobUrl = URL.createObjectURL(file)
-        updateAttributes({ src: blobUrl, fileId: null })
-      } finally {
+        const path = await docUploadImage(file)
+        updateAttributes({ src: path, fileId: null })
         setOpen(false)
         setUrl('')
+      } catch (error) {
+        notifyDocumentationUploadFailure(error, 'изображение')
       }
     })()
   }
@@ -236,19 +245,15 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     if (url.startsWith('data:')) {
       ;(async () => {
         try {
-          const blob = await blobFromDataUrl(url)
-          if (docUploadImage) {
-            const file = new File([blob], 'image', { type: blob.type })
-            const path = await docUploadImage(file)
-            if (path) {
-              updateAttributes({ src: path, fileId: null })
-              return
-            }
+          if (!docUploadImage) {
+            throw new Error('Documentation upload service is unavailable')
           }
-          const id = await saveBlobAsFile({ blob, mimeType: blob.type })
-          updateAttributes({ fileId: id, src: null })
-        } catch {
-          setImage(url)
+          const blob = await blobFromDataUrl(url)
+          const file = new File([blob], 'image', { type: blob.type })
+          const path = await docUploadImage(file)
+          updateAttributes({ src: path, fileId: null })
+        } catch (error) {
+          notifyDocumentationUploadFailure(error, 'изображение')
         }
       })()
       return
@@ -257,19 +262,15 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
     if (url.startsWith('blob:')) {
       ;(async () => {
         try {
-          const blob = await blobFromUrl(url)
-          if (docUploadImage) {
-            const file = new File([blob], 'image', { type: blob.type })
-            const path = await docUploadImage(file)
-            if (path) {
-              updateAttributes({ src: path, fileId: null })
-              return
-            }
+          if (!docUploadImage) {
+            throw new Error('Documentation upload service is unavailable')
           }
-          const id = await saveBlobAsFile({ blob, mimeType: blob.type })
-          updateAttributes({ fileId: id, src: null })
-        } catch {
-          setImage(url)
+          const blob = await blobFromUrl(url)
+          const file = new File([blob], 'image', { type: blob.type })
+          const path = await docUploadImage(file)
+          updateAttributes({ src: path, fileId: null })
+        } catch (error) {
+          notifyDocumentationUploadFailure(error, 'изображение')
         }
       })()
       return
@@ -329,23 +330,16 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
 
     ;(async () => {
       try {
+        if (!docUploadImage) return
         const blob = src.startsWith('data:')
           ? await blobFromDataUrl(src)
           : await blobFromUrl(src)
 
-        if (docUploadImage) {
-          const file = new File([blob], 'image', { type: blob.type })
-          const path = await docUploadImage(file)
-          if (path) {
-            updateAttributes({ src: path, fileId: null })
-            migrationRef.current.running = false
-            return
-          }
-        }
-        const id = await saveBlobAsFile({ blob, mimeType: blob.type })
-        updateAttributes({ fileId: id, src: null })
-      } catch {
-        // ignore
+        const file = new File([blob], 'image', { type: blob.type })
+        const path = await docUploadImage(file)
+        updateAttributes({ src: path, fileId: null })
+      } catch (error) {
+        console.error('Failed to migrate documentation image block to server upload:', error)
       } finally {
         migrationRef.current.running = false
       }
@@ -493,6 +487,11 @@ export default function ImageBlockView({ editor, node, updateAttributes, getPos 
         >
           <img
             src={displaySrc}
+            onError={() => {
+              setDisplaySrcIndex(prev =>
+                prev + 1 < displaySrcCandidates.length ? prev + 1 : prev
+              )
+            }}
             draggable
             onDragStart={e => {
               e.stopPropagation()

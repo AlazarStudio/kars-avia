@@ -1,6 +1,5 @@
 import { Plugin } from 'prosemirror-state'
-import { saveFile } from '../storage/fileStore'
-import { getDocumentationUploadImage } from '../DocumentationUploadStore'
+import { getDocumentationUploadImage, notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
 
 export const imageDropPlugin = new Plugin({
   props: {
@@ -13,21 +12,17 @@ export const imageDropPlugin = new Plugin({
       ;(async () => {
         try {
           const docUploadImage = getDocumentationUploadImage()
-          let attrs = { width: 400 }
-          if (docUploadImage) {
-            const path = await docUploadImage(file)
-            if (path) attrs = { ...attrs, src: path, fileId: null }
+          if (!docUploadImage) {
+            throw new Error('Documentation upload service is unavailable')
           }
-          if (!attrs.src) {
-            const saved = await saveFile(file)
-            attrs = { ...attrs, fileId: saved.id, src: null }
-          }
+          const path = await docUploadImage(file)
+          const attrs = { width: 400, src: path, fileId: null }
           const { state, dispatch } = view
           const pos = state.selection.from
           const imageNode = state.schema.nodes.imageBlock.create(attrs)
           dispatch(state.tr.insert(pos, imageNode))
-        } catch {
-          // ignore
+        } catch (error) {
+          notifyDocumentationUploadFailure(error, 'изображение')
         }
       })()
       return true

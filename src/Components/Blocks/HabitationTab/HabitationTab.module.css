@@ -139,6 +139,7 @@
   gap: 6px;
   align-items: center;
   color: #545873;
+  margin-left: auto;
 }
 
 /* Модалка досрочного завершения */

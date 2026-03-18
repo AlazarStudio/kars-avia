@@ -7,9 +7,10 @@ import './imageBlockModal.css'
 import './videoBlock.css'
 import './fileEmpty.css'
 import './blockResize.css'
-import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
+import { blobFromDataUrl, blobFromUrl, getFileRecord } from '../storage/fileStore'
 import { parseVideoUrl } from '../utils/videoEmbedParser'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
 import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
@@ -26,13 +27,14 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   } = node.attrs
 
   const docUpload = useDocumentationUpload()
-  const { uploadFile: docUploadFile, getMediaUrl } = docUpload || {}
+  const { uploadFile: docUploadFile, getMediaUrl, getMediaUrlCandidates } = docUpload || {}
   const canEdit = editor?.isEditable !== false
 
   const videoRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState('upload')
   const [url, setUrl] = useState('')
+  const [displayVideoSrcIndex, setDisplayVideoSrcIndex] = useState(0)
   const [objectUrl, setObjectUrl] = useState(null)
   const migrationRef = useRef({ running: false, doneFor: null })
 
@@ -64,7 +66,19 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
       ? parsedRemote.embedUrl
       : null
   const videoUrl = objectUrl || (embedUrl ? null : src)
-  const displayVideoSrc = objectUrl || (src && getMediaUrl ? getMediaUrl(src) : src)
+  const displayVideoSrcCandidates = objectUrl
+    ? [objectUrl]
+    : src
+      ? (
+          getMediaUrlCandidates
+            ? getMediaUrlCandidates(src)
+            : [getMediaUrl ? getMediaUrl(src) : src]
+        ).filter(Boolean)
+      : []
+  const displayVideoSrc =
+    displayVideoSrcCandidates[
+      Math.min(displayVideoSrcIndex, Math.max(0, displayVideoSrcCandidates.length - 1))
+    ] || null
   const hasVideo = Boolean(videoUrl || embedUrl)
 
   const alignMargins =
@@ -133,6 +147,10 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
   }, [open])
+
+  useEffect(() => {
+    setDisplayVideoSrcIndex(0)
+  }, [objectUrl, src])
 
   useEffect(() => {
     if (!open) return
@@ -211,25 +229,23 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     setUrl('')
   }
 
+  const uploadVideoFile = async file => {
+    if (!docUploadFile) {
+      throw new Error('Documentation upload service is unavailable')
+    }
+
+    const path = await docUploadFile(file)
+    updateAttributes({ src: path, fileId: null })
+  }
+
   const onUpload = file => {
     if (!canEdit) return
     if (!file || !file.type.startsWith('video/')) return
-    ;(async () => {
+    void (async () => {
       try {
-        if (docUploadFile) {
-          const path = await docUploadFile(file)
-          if (path) {
-            updateAttributes({ src: path, fileId: null })
-          } else {
-            const saved = await saveFile(file)
-            updateAttributes({ fileId: saved.id, src: null })
-          }
-        } else {
-          const saved = await saveFile(file)
-          updateAttributes({ fileId: saved.id, src: null })
-        }
-      } catch {
-        updateAttributes({ src: URL.createObjectURL(file), fileId: null })
+        await uploadVideoFile(file)
+      } catch (error) {
+        notifyDocumentationUploadFailure(error, 'видео')
       } finally {
         setOpen(false)
         setUrl('')
@@ -299,22 +315,14 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
 
     ;(async () => {
       try {
+        if (!docUploadFile) return
         const blob = src.startsWith('data:')
           ? await blobFromDataUrl(src)
           : await blobFromUrl(src)
-        if (docUploadFile) {
-          const file = new File([blob], 'video', { type: blob.type })
-          const path = await docUploadFile(file)
-          if (path) {
-            updateAttributes({ src: path, fileId: null })
-            migrationRef.current.running = false
-            return
-          }
-        }
-        const id = await saveBlobAsFile({ blob, mimeType: blob.type })
-        updateAttributes({ fileId: id, src: null })
-      } catch {
-        // ignore
+        const file = new File([blob], 'video', { type: blob.type })
+        await uploadVideoFile(file)
+      } catch (error) {
+        console.error('Failed to migrate documentation video block to server upload:', error)
       } finally {
         migrationRef.current.running = false
       }
@@ -465,6 +473,11 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
               <video
                 ref={videoRef}
                 src={displayVideoSrc}
+                onError={() => {
+                  setDisplayVideoSrcIndex(prev =>
+                    prev + 1 < displayVideoSrcCandidates.length ? prev + 1 : prev
+                  )
+                }}
                 draggable={false}
                 onDragStart={preventNativeDrag}
                 controls

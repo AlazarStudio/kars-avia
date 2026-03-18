@@ -5164,14 +5164,14 @@ export const UPDATE_DOCUMENTATION = gql`
 
 // Queries для Section
 export const GET_SECTIONS_WITH_HIERARCHY = gql`
-  query SectionsWithHierarhy {
-    sectionsWithHierarhy
+  query SectionsWithHierarhy($type: Type) {
+    sectionsWithHierarhy(type: $type)
   }
 `;
 
 export const GET_SECTIONS = gql`
-  query Sections {
-    sections {
+  query Sections($type: Type) {
+    sections(type: $type) {
       id
       title
       createdAt
@@ -5192,6 +5192,7 @@ export const GET_SECTION = gql`
       children {
         id
         title
+        parentId
       }
       articles {
         id

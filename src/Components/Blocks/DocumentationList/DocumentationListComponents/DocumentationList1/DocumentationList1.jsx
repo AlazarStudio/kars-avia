@@ -1,23 +1,26 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client'
 import PropTypes from 'prop-types'
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded'
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import {
-  CREATE_SECTION,
-  CREATE_ARTICLE,
-  UPDATE_SECTION,
-  UPDATE_ARTICLE,
   GET_SECTIONS_WITH_HIERARCHY,
+  UPDATE_ARTICLE,
   GET_ARTICLE,
   getCookie,
 } from '../../../../../../graphQL_requests'
-import { roles } from '../../../../../roles'
 import { findDocById } from '../docTreeUtils'
 import DocumentationListLeftPanel from '../DocumentationListLeftPanel/DocumentationListLeftPanel'
 import DocumentListTiptapPanelContent from '../DocumentationListPanelContent/DocumentListTiptapPanelContent'
 import DocumentationListRightPanel from '../DocumentationListRightPanel/DocumentationListRightPanel'
+import {
+  DEFAULT_DOCUMENTATION_FILTER,
+  isDocumentationManageRole,
+  mapDocumentationFilterToApiType,
+  normalizeDocumentationFilter,
+  resolveDocumentationFilterForUser,
+} from '../../documentationFilters'
 import { loadTree } from './tree'
 import classes from './DocumentationList1.module.css'
 
@@ -33,11 +36,6 @@ const DOC_REALTIME_REFRESH_MS = 5000
 const DOC_META_KEY = '__doclist_meta'
 const DOC_META_VERSION = 1
 const DOC_SECTION_OPEN_STATE_KEY = 'doclist_section_open_state_v1'
-const DEFAULT_DOCUMENTATION_FILTER = 'dispatcher'
-const DOC_MANAGE_ROLES = new Set([
-  String(roles.superAdmin || '').toUpperCase(),
-  'SUPER_ADMIN',
-])
 const cn = (...parts) => parts.filter(Boolean).join(' ')
 const BODY_RESIZING_CLASS =
   classes['is-resizing-left-panel'] || 'is-resizing-left-panel'
@@ -141,131 +139,55 @@ function getNodeOrderValue(node) {
   return null
 }
 
-function normalizeDocumentationFilter(rawValue) {
-  if (rawValue == null) return null
-  const value = String(rawValue).trim().toLowerCase()
-  if (!value) return null
-
-  if (
-    value === 'dispatcher' ||
-    value === 'dispatch' ||
-    value === 'dispetcher' ||
-    value.includes('dispatch')
-  ) {
-    return 'dispatcher'
-  }
-
-  if (value === 'hotel' || value === 'hotels' || value.includes('hotel')) {
-    return 'hotel'
-  }
-
-  if (
-    value === 'airline' ||
-    value === 'aviacompany' ||
-    value === 'aircompany' ||
-    value.includes('airline') ||
-    value.includes('avia')
-  ) {
-    return 'airline'
-  }
-
-  return null
+function hasOwnKey(value, key) {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      Object.prototype.hasOwnProperty.call(value, key)
+  )
 }
 
-function extractNodeDocumentationFilter(node) {
-  if (!isPlainObject(node)) return null
+function normalizeHierarchyNodes(rawValue) {
+  if (Array.isArray(rawValue)) return rawValue
 
-  const candidateKeys = [
-    'filter',
-    '__docFilter',
-    '__doc_filter',
-    'docFilter',
-    'documentationFilter',
-    'categoryFilter',
-    'scope',
-    'audience',
-    'target',
-    'category',
-  ]
-
-  for (const key of candidateKeys) {
-    const candidate = node[key]
-    if (candidate == null) continue
-
-    if (isPlainObject(candidate)) {
-      const nested = normalizeDocumentationFilter(
-        candidate.value ?? candidate.name ?? candidate.key ?? candidate.type
-      )
-      if (nested) return nested
-      continue
-    }
-
-    const normalized = normalizeDocumentationFilter(candidate)
-    if (normalized) return normalized
+  if (isPlainObject(rawValue)) {
+    return [rawValue]
   }
 
-  if (typeof node.description === 'string' && node.description.trim()) {
+  if (typeof rawValue === 'string' && rawValue.trim()) {
     try {
-      const parsedDescription = JSON.parse(node.description)
-      if (isPlainObject(parsedDescription)) {
-        const nested = extractNodeDocumentationFilter(parsedDescription)
-        if (nested) return nested
-      }
+      const parsed = JSON.parse(rawValue)
+      if (Array.isArray(parsed)) return parsed
+      if (isPlainObject(parsed)) return [parsed]
     } catch {
-      // ignore non-JSON descriptions
+      return []
     }
   }
 
-  return null
+  return []
 }
 
-function filterHierarchyByDocumentationFilter(nodes, requestedFilter) {
-  if (!Array.isArray(nodes) || !requestedFilter) {
-    return { nodes: Array.isArray(nodes) ? nodes : [], hasFilterMarkers: false }
+function detectServerNodeKind(rawNode) {
+  if (!isPlainObject(rawNode)) return 'article'
+
+  const rawType = String(rawNode.type || '').trim().toLowerCase()
+  if (rawType === 'section' || rawType === 'folder') return 'section'
+  if (rawType === 'article' || rawType === 'document') return 'article'
+
+  if (hasOwnKey(rawNode, 'sectionId') || hasOwnKey(rawNode, 'content')) {
+    return 'article'
   }
 
-  let hasFilterMarkers = false
-  const filteredNodes = []
-
-  for (const rawNode of nodes) {
-    if (!isPlainObject(rawNode)) continue
-
-    let nextNode = rawNode
-    let hasMatchingChildren = false
-
-    if (Array.isArray(rawNode.childrens)) {
-      const nestedSections = filterHierarchyByDocumentationFilter(
-        rawNode.childrens,
-        requestedFilter
-      )
-      hasFilterMarkers = hasFilterMarkers || nestedSections.hasFilterMarkers
-      nextNode = { ...nextNode, childrens: nestedSections.nodes }
-      hasMatchingChildren = hasMatchingChildren || nestedSections.nodes.length > 0
-    }
-
-    if (Array.isArray(rawNode.articles)) {
-      const nestedArticles = filterHierarchyByDocumentationFilter(
-        rawNode.articles,
-        requestedFilter
-      )
-      hasFilterMarkers = hasFilterMarkers || nestedArticles.hasFilterMarkers
-      nextNode = { ...nextNode, articles: nestedArticles.nodes }
-      hasMatchingChildren = hasMatchingChildren || nestedArticles.nodes.length > 0
-    }
-
-    const nodeFilter = extractNodeDocumentationFilter(rawNode)
-    if (nodeFilter) {
-      hasFilterMarkers = true
-    }
-
-    const resolvedNodeFilter = nodeFilter || DEFAULT_DOCUMENTATION_FILTER
-    const nodeMatchesFilter = resolvedNodeFilter === requestedFilter
-    if (nodeMatchesFilter || hasMatchingChildren) {
-      filteredNodes.push(nextNode)
-    }
+  if (
+    hasOwnKey(rawNode, 'parentId') ||
+    hasOwnKey(rawNode, 'childrens') ||
+    hasOwnKey(rawNode, 'children') ||
+    hasOwnKey(rawNode, 'articles')
+  ) {
+    return 'section'
   }
 
-  return { nodes: filteredNodes, hasFilterMarkers }
+  return 'article'
 }
 
 function toLocalTreeNode(serverNode, options = {}) {
@@ -273,20 +195,31 @@ function toLocalTreeNode(serverNode, options = {}) {
   const safeId = safeNode.id ? String(safeNode.id) : `${Date.now()}-${Math.random()}`
   const title = typeof safeNode.title === 'string' ? safeNode.title : ''
   const useMixedOrdering = Boolean(options?.useMixedOrdering)
+  const isRoot = Boolean(options?.isRoot)
+  const nestedOptions = { ...options, isRoot: false }
+  const serverNodeKind = detectServerNodeKind(safeNode)
+  const documentationApiType =
+    typeof safeNode.sType === 'string' && safeNode.sType.trim()
+      ? safeNode.sType.trim()
+      : typeof safeNode.documentationApiType === 'string' &&
+          safeNode.documentationApiType.trim()
+        ? safeNode.documentationApiType.trim()
+        : null
   
   const childrens = Array.isArray(safeNode.childrens) ? safeNode.childrens : []
   const articles = Array.isArray(safeNode.articles) ? safeNode.articles : []
   
-  if (safeNode.type === 'article') {
+  if (serverNodeKind === 'article') {
     return {
       id: safeId,
       type: 'article',
       title,
       editor: 'tiptap',
+      documentationApiType,
     }
   }
 
-  if (safeNode.type === 'section' || childrens.length > 0 || articles.length > 0) {
+  if (serverNodeKind === 'section' || childrens.length > 0 || articles.length > 0) {
     let children = []
     if (useMixedOrdering) {
       const sectionEntries = childrens.map((childSection, order) => ({
@@ -315,7 +248,7 @@ function toLocalTreeNode(serverNode, options = {}) {
 
       children = mergedEntries.map(entry => {
         if (entry.kind === 'section') {
-          return toLocalTreeNode(entry.node, options)
+          return toLocalTreeNode(entry.node, nestedOptions)
         }
         const article = entry.node
         return {
@@ -323,17 +256,31 @@ function toLocalTreeNode(serverNode, options = {}) {
           type: 'article',
           title: typeof article.title === 'string' ? article.title : '',
           editor: 'tiptap',
+          documentationApiType:
+            typeof article.sType === 'string' && article.sType.trim()
+              ? article.sType.trim()
+              : typeof article.documentationApiType === 'string' &&
+                  article.documentationApiType.trim()
+                ? article.documentationApiType.trim()
+                : null,
         }
       })
     } else {
       const sectionChildren = childrens.map(childSection =>
-        toLocalTreeNode(childSection, options)
+        toLocalTreeNode(childSection, nestedOptions)
       )
       const articleChildren = articles.map(article => ({
         id: String(article.id),
         type: 'article',
         title: typeof article.title === 'string' ? article.title : '',
         editor: 'tiptap',
+        documentationApiType:
+          typeof article.sType === 'string' && article.sType.trim()
+            ? article.sType.trim()
+            : typeof article.documentationApiType === 'string' &&
+                article.documentationApiType.trim()
+              ? article.documentationApiType.trim()
+              : null,
       }))
       children = [...sectionChildren, ...articleChildren]
     }
@@ -344,6 +291,8 @@ function toLocalTreeNode(serverNode, options = {}) {
       title,
       isOpen: true,
       children,
+      documentationApiType,
+      isDocumentationTypeRoot: isRoot && Boolean(documentationApiType),
     }
   }
   
@@ -467,6 +416,9 @@ function DocumentationList1({
   showFilterSwitcher = false,
   filterOptions = [],
   onFilterValueChange,
+  searchQuery = '',
+  onSearchQueryChange,
+  controlsAtTop = false,
 }) {
   const token = getCookie('token')
   const [tree, setTree] = useState(loadTree)
@@ -490,16 +442,18 @@ function DocumentationList1({
   const reloadInFlightRef = useRef(false)
   const queuedManualReloadRef = useRef(false)
   const apolloClient = useApolloClient()
-  const canManageDocs = useMemo(() => {
-    const normalizedRole = String(user?.role || '').trim().toUpperCase()
-    return DOC_MANAGE_ROLES.has(normalizedRole)
-  }, [user?.role])
-
+  const canManageDocs = useMemo(() => isDocumentationManageRole(user), [user])
   const effectiveFilter = useMemo(() => {
-    if (user?.role === roles.hotelAdmin) return 'hotel'
-    if (user?.role === roles.airlineAdmin) return 'airline'
-    return filterValue || 'dispatcher'
-  }, [filterValue, user?.role])
+    return (
+      normalizeDocumentationFilter(filterValue) ||
+      normalizeDocumentationFilter(resolveDocumentationFilterForUser(user)) ||
+      DEFAULT_DOCUMENTATION_FILTER
+    )
+  }, [filterValue, user])
+  const apiDocumentationType = useMemo(
+    () => mapDocumentationFilterToApiType(effectiveFilter),
+    [effectiveFilter]
+  )
 
   const requestContext = useMemo(
     () => ({
@@ -521,24 +475,17 @@ function DocumentationList1({
   )
 
   const {
-    data: allDocsData,
-    loading: allDocsLoading,
-    error: allDocsError,
-    refetch: refetchAllDocs,
+    data: hierarchyData,
+    loading: hierarchyLoading,
+    error: hierarchyError,
+    refetch: refetchHierarchy,
   } = useQuery(GET_SECTIONS_WITH_HIERARCHY, {
-    skip: !token,
+    skip: !token || !apiDocumentationType,
     fetchPolicy: 'network-only',
     context: requestContext,
-  })
-
-  const [createSection] = useMutation(CREATE_SECTION, {
-    context: mutationContext,
-  })
-  const [createArticle] = useMutation(CREATE_ARTICLE, {
-    context: mutationContext,
-  })
-  const [updateSection] = useMutation(UPDATE_SECTION, {
-    context: mutationContext,
+    variables: {
+      type: apiDocumentationType,
+    },
   })
   const [updateArticle] = useMutation(UPDATE_ARTICLE, {
     context: mutationContext,
@@ -549,9 +496,13 @@ function DocumentationList1({
     [tree, activeDocId]
   )
 
-  const hydrateTreeFromHierarchy = useCallback(
-    async (hierarchyData, isCancelled = () => false) => {
-      if (!hierarchyData) {
+  const hydrateTreeFromSections = useCallback(
+    async (serverData, isCancelled = () => false) => {
+      const hierarchyNodes = normalizeHierarchyNodes(
+        serverData?.sectionsWithHierarhy
+      )
+
+      if (!hierarchyNodes.length) {
         if (isCancelled()) return
         skipNextTreeSyncRef.current = true
         setTree([])
@@ -559,58 +510,14 @@ function DocumentationList1({
         return
       }
 
+      const rootItems = hierarchyNodes
+        .map(node => toLocalTreeNode(node, { useMixedOrdering: true, isRoot: true }))
+        .filter(Boolean)
+
       if (isCancelled()) return
 
-      let parsedData
-      
-      // РџР°СЂСЃРёРј JSON РµСЃР»Рё РЅСѓР¶РЅРѕ
-      try {
-        parsedData = typeof hierarchyData === 'string' ? JSON.parse(hierarchyData) : hierarchyData
-      } catch {
-        parsedData = hierarchyData
-      }
-      
-      // РџСЂРµРѕР±СЂР°Р·СѓРµРј РІ РјР°СЃСЃРёРІ РµСЃР»Рё СЌС‚Рѕ РЅРµ РјР°СЃСЃРёРІ
-      const dataArray = Array.isArray(parsedData) ? parsedData : [parsedData]
-
-      // Source of truth for documentation filter bindings is backend fields
-      // (filter/documentationFilter/docFilter in hierarchy payload).
-      const hydratedHierarchy = dataArray
-
-      // РџСЂРµРѕР±СЂР°Р·СѓРµРј РєР°Р¶РґС‹Р№ РєРѕСЂРЅРµРІРѕР№ СѓР·РµР»
-      let rootItems = hydratedHierarchy
-        .filter(item => item && item.id)
-
-      const normalizedFilter = normalizeDocumentationFilter(effectiveFilter)
-      if (normalizedFilter) {
-        const filteredHierarchy = filterHierarchyByDocumentationFilter(
-          rootItems,
-          normalizedFilter
-        )
-        rootItems = filteredHierarchy.nodes
-      }
-
-      if (canManageDocs) {
-        rootItems = rootItems
-          .map((node, order) => ({
-            node,
-            order,
-            index: getNodeOrderValue(node),
-          }))
-          .sort((a, b) => {
-            const ai = a.index == null ? Number.MAX_SAFE_INTEGER : a.index
-            const bi = b.index == null ? Number.MAX_SAFE_INTEGER : b.index
-            if (ai !== bi) return ai - bi
-            return a.order - b.order
-          })
-          .map(entry => entry.node)
-      }
-
-      const nextTree = rootItems.map(item =>
-        toLocalTreeNode(item, { useMixedOrdering: canManageDocs })
-      )
       const nextTreeWithOpenState = applySectionOpenState(
-        nextTree,
+        rootItems,
         sectionOpenStateRef.current
       )
 
@@ -620,7 +527,7 @@ function DocumentationList1({
       setTree(nextTreeWithOpenState)
       setDraftHydrationVersion(prev => prev + 1)
     },
-    [canManageDocs, effectiveFilter]
+    []
   )
 
   useEffect(() => {
@@ -642,7 +549,7 @@ function DocumentationList1({
         return
       }
 
-      if (allDocsLoading) {
+      if (hierarchyLoading) {
         syncReadyRef.current = false
         return
       }
@@ -652,15 +559,14 @@ function DocumentationList1({
         clearTimeout(syncTimerRef.current)
       }
 
-      if (allDocsError) {
-        console.error('Failed to load documentation roots', allDocsError)
+      if (hierarchyError) {
+        console.error('Failed to load documentation roots', hierarchyError)
         syncReadyRef.current = true
         return
       }
 
-      const hierarchyData = allDocsData?.sectionsWithHierarhy
       try {
-        await hydrateTreeFromHierarchy(hierarchyData, () => cancelled)
+        await hydrateTreeFromSections(hierarchyData, () => cancelled)
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to hydrate documentation tree', error)
@@ -677,7 +583,13 @@ function DocumentationList1({
     return () => {
       cancelled = true
     }
-  }, [allDocsData, allDocsError, allDocsLoading, hydrateTreeFromHierarchy, token])
+  }, [
+    hierarchyData,
+    hierarchyError,
+    hierarchyLoading,
+    hydrateTreeFromSections,
+    token,
+  ])
 
   const syncTreeToServer = useCallback(async () => {
     // Note: Tree synchronization is now handled individually through
@@ -720,18 +632,24 @@ function DocumentationList1({
     if (!content || typeof content !== 'object' || content.type !== 'doc') return
 
     try {
+      const input = {
+        content,
+      }
+
+      if (apiDocumentationType) {
+        input.type = apiDocumentationType
+      }
+
       await updateArticle({
         variables: {
           id: docId,
-          input: {
-            content,
-          },
+          input,
         },
       })
     } catch (error) {
       console.error('Failed to persist article content:', error)
     }
-  }, [canManageDocs, updateArticle])
+  }, [apiDocumentationType, canManageDocs, updateArticle])
 
   useEffect(() => {
     if (!activeDocId) return
@@ -888,9 +806,8 @@ function DocumentationList1({
         }
         syncReadyRef.current = false
 
-        const result = await refetchAllDocs()
-        const hierarchyData = result?.data?.sectionsWithHierarhy
-        await hydrateTreeFromHierarchy(hierarchyData)
+        const result = await refetchHierarchy()
+        await hydrateTreeFromSections(result?.data)
         if (activeDocId) {
           await apolloClient.refetchQueries({
             include: [GET_ARTICLE],
@@ -910,7 +827,13 @@ function DocumentationList1({
         }
       }
     },
-    [activeDocId, apolloClient, hydrateTreeFromHierarchy, refetchAllDocs, token]
+    [
+      activeDocId,
+      apolloClient,
+      hydrateTreeFromSections,
+      refetchHierarchy,
+      token,
+    ]
   )
 
   const handleReloadArticles = useCallback(() => {
@@ -930,7 +853,7 @@ function DocumentationList1({
     }
   }, [activeDocId, canManageDocs, refreshDocumentationTree, token])
 
-  const isReloadButtonBusy = allDocsLoading || isReloadingArticles
+  const isReloadButtonBusy = hierarchyLoading || isReloadingArticles
   const shouldRenderInlineHeaderPanelControls = hasOpenedContent && !isRightPanelOpen
   const shouldRenderInlineHeaderLeftPanelToggle = hasOpenedContent && !isLeftPanelOpen
 
@@ -1091,6 +1014,9 @@ function DocumentationList1({
             documentationFilters={filterOptions}
             documentationFilterValue={filterValue}
             onDocumentationFilterChange={onFilterValueChange}
+            searchQuery={searchQuery}
+            onSearchQueryChange={onSearchQueryChange}
+            controlsAtTop={controlsAtTop}
           />
         </div>
 
@@ -1198,4 +1124,7 @@ DocumentationList1.propTypes = {
     })
   ),
   onFilterValueChange: PropTypes.func,
+  searchQuery: PropTypes.string,
+  onSearchQueryChange: PropTypes.func,
+  controlsAtTop: PropTypes.bool,
 }

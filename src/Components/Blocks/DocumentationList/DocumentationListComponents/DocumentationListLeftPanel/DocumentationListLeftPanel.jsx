@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation } from '@apollo/client'
 import { 
@@ -14,6 +14,11 @@ import {
 import { useLazyQuery } from '@apollo/client'
 import './DocumentationListLeftPanel.css'
 import MUIAutocomplete from '../../../MUIAutocomplete/MUIAutocomplete'
+import {
+  DEFAULT_DOCUMENTATION_FILTER,
+  mapDocumentationFilterToApiType,
+  normalizeDocumentationFilter,
+} from '../../documentationFilters'
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -39,61 +44,6 @@ const DELETE_MODAL_BOTTOM_OFFSET = 16
 const DELETE_MODAL_ESTIMATED_WIDTH = 340
 const DELETE_MODAL_ESTIMATED_HEIGHT = 210
 const COPY_TITLE_SUFFIX = ' (\u043a\u043e\u043f\u0438\u044f)'
-const DEFAULT_DOCUMENTATION_FILTER = 'dispatcher'
-const DOC_FILTER_INPUT_FIELD_CANDIDATES = ['filter', 'documentationFilter', 'docFilter']
-const DOC_FILTER_DESCRIPTION_META_KEY = '__docFilter'
-
-function buildDescriptionWithFilterMeta(rawDescription, rawFilter) {
-  const normalizedFilter =
-    normalizeDocumentationFilter(rawFilter) || DEFAULT_DOCUMENTATION_FILTER
-
-  let parsed = null
-  if (typeof rawDescription === 'string' && rawDescription.trim()) {
-    try {
-      const maybeJson = JSON.parse(rawDescription)
-      if (maybeJson && typeof maybeJson === 'object' && !Array.isArray(maybeJson)) {
-        parsed = maybeJson
-      }
-    } catch {
-      parsed = null
-    }
-  }
-
-  const nextMeta = parsed && typeof parsed === 'object' ? { ...parsed } : {}
-  nextMeta[DOC_FILTER_DESCRIPTION_META_KEY] = normalizedFilter
-  return JSON.stringify(nextMeta)
-}
-
-function normalizeDocumentationFilter(rawValue) {
-  if (rawValue == null) return null
-  const value = String(rawValue).trim().toLowerCase()
-  if (!value) return null
-
-  if (
-    value === 'dispatcher' ||
-    value === 'dispatch' ||
-    value === 'dispetcher' ||
-    value.includes('dispatch')
-  ) {
-    return 'dispatcher'
-  }
-
-  if (value === 'hotel' || value === 'hotels' || value.includes('hotel')) {
-    return 'hotel'
-  }
-
-  if (
-    value === 'airline' ||
-    value === 'aviacompany' ||
-    value === 'aircompany' ||
-    value.includes('airline') ||
-    value.includes('avia')
-  ) {
-    return 'airline'
-  }
-
-  return null
-}
 
 function isUnsupportedInputFieldError(error, fieldName) {
   const message = [
@@ -203,6 +153,9 @@ function DocumentationListLeftPanel({
   documentationFilters = [],
   documentationFilterValue = DEFAULT_DOCUMENTATION_FILTER,
   onDocumentationFilterChange,
+  searchQuery: searchQueryProp,
+  onSearchQueryChange,
+  controlsAtTop = false,
 }) {
   const [creating, setCreating] = useState(null)
   const [hovered, setHovered] = useState(false)
@@ -233,20 +186,28 @@ function DocumentationListLeftPanel({
   
   // Р СњР С•Р Р†РЎвЂ№Р Вµ РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—Р С•Р С‘РЎРѓР С”Р В°
   const [showSearch, setShowSearch] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQueryLocal, setSearchQueryLocal] = useState('')
+  const searchQuery = controlsAtTop && typeof searchQueryProp === 'string' ? searchQueryProp : searchQueryLocal
+  const setSearchQuery = controlsAtTop && typeof onSearchQueryChange === 'function' ? onSearchQueryChange : setSearchQueryLocal
   const [filterType, setFilterType] = useState('all') // 'all', 'section', 'article'
   const [showSaveIndicator, setShowSaveIndicator] = useState(false)
   const normalizedDocFilter =
     normalizeDocumentationFilter(activeFilter) || DEFAULT_DOCUMENTATION_FILTER
   const availableDocumentationFilters = Array.isArray(documentationFilters)
     ? documentationFilters.filter(
-        option => option && typeof option.value === 'string' && typeof option.label === 'string'
+        option =>
+          option &&
+          typeof option.value === 'string' &&
+          typeof option.label === 'string' &&
+          option.value !== 'representation'
       )
     : []
   const currentDocumentationFilterLabel =
     availableDocumentationFilters.find(option => option.value === documentationFilterValue)?.label ||
     availableDocumentationFilters[0]?.label ||
     ''
+  const canAssignRootDocumentationType =
+    canManage && showDocumentationFilter && availableDocumentationFilters.length > 0
   const saveIndicatorTimerRef = useRef(null)
 
   // GraphQL РјСѓС‚Р°С†РёРё
@@ -273,36 +234,53 @@ function DocumentationListLeftPanel({
   const [deleteArticleMutation] = useMutation(DELETE_ARTICLE, mutationContext)
 
   const createSectionWithFilter = useCallback(
-    async (input) => {
+    async (input, rawDocumentationType = null) => {
       const safeInput = { ...input }
-      for (const fieldName of DOC_FILTER_INPUT_FIELD_CANDIDATES) {
+      const nextDocumentationFilter =
+        normalizeDocumentationFilter(rawDocumentationType) ||
+        normalizedDocFilter ||
+        null
+      const apiDocumentationType = mapDocumentationFilterToApiType(
+        nextDocumentationFilter
+      )
+
+      if (apiDocumentationType) {
         try {
-          return await createSectionMutation({
+          const result = await createSectionMutation({
             variables: {
-              input: { ...safeInput, [fieldName]: normalizedDocFilter },
+              input: { ...safeInput, type: apiDocumentationType },
             },
           })
-        } catch (error) {
-          if (!isUnsupportedInputFieldError(error, fieldName)) {
-            throw error
-          }
-        }
-      }
 
-      try {
-        return await createSectionMutation({
-          variables: {
-            input: {
-              ...safeInput,
-              description: buildDescriptionWithFilterMeta(
-                safeInput.description,
-                normalizedDocFilter
-              ),
-            },
-          },
-        })
-      } catch (error) {
-        if (!isUnsupportedInputFieldError(error, 'description')) {
+          const createdSection = result?.data?.createSection
+          if (createdSection?.id) {
+            try {
+              await updateSectionMutation({
+                variables: {
+                  id: createdSection.id,
+                  input: {
+                    title: createdSection.title ?? safeInput.title ?? '',
+                    parentId:
+                      createdSection.parentId ?? safeInput.parentId ?? null,
+                    type: apiDocumentationType,
+                  },
+                },
+              })
+            } catch (persistTypeError) {
+              if (!isUnsupportedInputFieldError(persistTypeError, 'type')) {
+                console.error(
+                  'Failed to persist documentation type for section:',
+                  persistTypeError
+                )
+              }
+            }
+          }
+
+          return result
+        } catch (error) {
+          if (isUnsupportedInputFieldError(error, 'type')) {
+            throw new Error('Backend createSection does not support documentation type')
+          }
           throw error
         }
       }
@@ -311,40 +289,63 @@ function DocumentationListLeftPanel({
         variables: { input: safeInput },
       })
     },
-    [createSectionMutation, normalizedDocFilter]
+    [createSectionMutation, normalizedDocFilter, updateSectionMutation]
   )
 
   const createArticleWithFilter = useCallback(
-    async (input) => {
+    async (input, rawDocumentationType = null) => {
       const safeInput = { ...input }
-      for (const fieldName of DOC_FILTER_INPUT_FIELD_CANDIDATES) {
+      const nextDocumentationFilter =
+        normalizeDocumentationFilter(rawDocumentationType) ||
+        normalizedDocFilter ||
+        null
+      const apiDocumentationType = mapDocumentationFilterToApiType(
+        nextDocumentationFilter
+      )
+
+      if (apiDocumentationType) {
         try {
-          return await createArticleMutation({
+          const result = await createArticleMutation({
             variables: {
-              input: { ...safeInput, [fieldName]: normalizedDocFilter },
+              input: { ...safeInput, type: apiDocumentationType },
             },
           })
-        } catch (error) {
-          if (!isUnsupportedInputFieldError(error, fieldName)) {
-            throw error
-          }
-        }
-      }
 
-      try {
-        return await createArticleMutation({
-          variables: {
-            input: {
-              ...safeInput,
-              description: buildDescriptionWithFilterMeta(
-                safeInput.description,
-                normalizedDocFilter
-              ),
-            },
-          },
-        })
-      } catch (error) {
-        if (!isUnsupportedInputFieldError(error, 'description')) {
+          const createdArticle = result?.data?.createArticle
+          if (createdArticle?.id) {
+            try {
+              const followUpInput = {
+                title: createdArticle.title ?? safeInput.title ?? '',
+                sectionId:
+                  createdArticle.sectionId ?? safeInput.sectionId ?? null,
+                type: apiDocumentationType,
+              }
+
+              if (Object.prototype.hasOwnProperty.call(safeInput, 'content')) {
+                followUpInput.content = safeInput.content ?? null
+              }
+
+              await updateArticleMutation({
+                variables: {
+                  id: createdArticle.id,
+                  input: followUpInput,
+                },
+              })
+            } catch (persistTypeError) {
+              if (!isUnsupportedInputFieldError(persistTypeError, 'type')) {
+                console.error(
+                  'Failed to persist documentation type for article:',
+                  persistTypeError
+                )
+              }
+            }
+          }
+
+          return result
+        } catch (error) {
+          if (isUnsupportedInputFieldError(error, 'type')) {
+            throw new Error('Backend createArticle does not support documentation type')
+          }
           throw error
         }
       }
@@ -353,42 +354,34 @@ function DocumentationListLeftPanel({
         variables: { input: safeInput },
       })
     },
-    [createArticleMutation, normalizedDocFilter]
+    [createArticleMutation, normalizedDocFilter, updateArticleMutation]
   )
 
   const updateSectionWithFilter = useCallback(
-    async (id, input) => {
+    async (id, input, rawDocumentationType = normalizedDocFilter) => {
       const safeInput = { ...input }
-      for (const fieldName of DOC_FILTER_INPUT_FIELD_CANDIDATES) {
+      const nextDocumentationFilter =
+        normalizeDocumentationFilter(rawDocumentationType) ||
+        normalizedDocFilter ||
+        null
+      const apiDocumentationType = mapDocumentationFilterToApiType(
+        nextDocumentationFilter
+      )
+
+      if (apiDocumentationType) {
         try {
           return await updateSectionMutation({
             variables: {
               id,
-              input: { ...safeInput, [fieldName]: normalizedDocFilter },
+              input: { ...safeInput, type: apiDocumentationType },
             },
           })
         } catch (error) {
-          if (!isUnsupportedInputFieldError(error, fieldName)) {
-            throw error
+          if (isUnsupportedInputFieldError(error, 'type')) {
+            return updateSectionMutation({
+              variables: { id, input: safeInput },
+            })
           }
-        }
-      }
-
-      try {
-        return await updateSectionMutation({
-          variables: {
-            id,
-            input: {
-              ...safeInput,
-              description: buildDescriptionWithFilterMeta(
-                safeInput.description,
-                normalizedDocFilter
-              ),
-            },
-          },
-        })
-      } catch (error) {
-        if (!isUnsupportedInputFieldError(error, 'description')) {
           throw error
         }
       }
@@ -401,38 +394,30 @@ function DocumentationListLeftPanel({
   )
 
   const updateArticleWithFilter = useCallback(
-    async (id, input) => {
+    async (id, input, rawDocumentationType = normalizedDocFilter) => {
       const safeInput = { ...input }
-      for (const fieldName of DOC_FILTER_INPUT_FIELD_CANDIDATES) {
+      const nextDocumentationFilter =
+        normalizeDocumentationFilter(rawDocumentationType) ||
+        normalizedDocFilter ||
+        null
+      const apiDocumentationType = mapDocumentationFilterToApiType(
+        nextDocumentationFilter
+      )
+
+      if (apiDocumentationType) {
         try {
           return await updateArticleMutation({
             variables: {
               id,
-              input: { ...safeInput, [fieldName]: normalizedDocFilter },
+              input: { ...safeInput, type: apiDocumentationType },
             },
           })
         } catch (error) {
-          if (!isUnsupportedInputFieldError(error, fieldName)) {
-            throw error
+          if (isUnsupportedInputFieldError(error, 'type')) {
+            return updateArticleMutation({
+              variables: { id, input: safeInput },
+            })
           }
-        }
-      }
-
-      try {
-        return await updateArticleMutation({
-          variables: {
-            id,
-            input: {
-              ...safeInput,
-              description: buildDescriptionWithFilterMeta(
-                safeInput.description,
-                normalizedDocFilter
-              ),
-            },
-          },
-        })
-      } catch (error) {
-        if (!isUnsupportedInputFieldError(error, 'description')) {
           throw error
         }
       }
@@ -444,10 +429,9 @@ function DocumentationListLeftPanel({
     [normalizedDocFilter, updateArticleMutation]
   )
 
-  const persistNodeFilterById = useCallback(
-    (_nodeId, _filter = normalizedDocFilter) => {},
-    [normalizedDocFilter]
-  )
+  const persistNodeFilterById = useCallback((_nodeId, _filter = normalizedDocFilter) => {}, [
+    normalizedDocFilter,
+  ])
 
   const persistNodeFilterIds = useCallback(
     (_nodeIds, _filter = normalizedDocFilter) => {},
@@ -574,7 +558,9 @@ function DocumentationListLeftPanel({
 
   const isFormFieldTarget = (target) => {
     if (!(target instanceof Element)) return false
-    return Boolean(target.closest('input, textarea, select, button'))
+    return Boolean(
+      target.closest('input, textarea, select, button, [contenteditable="true"]')
+    )
   }
 
   const getVisibleTreeItemIds = useCallback(() => {
@@ -799,12 +785,13 @@ function DocumentationListLeftPanel({
       const content = data?.article?.content ?? null
 
       const sectionId = findParentSectionId(tree, article.id) ?? null
+      if (!sectionId) return
 
       const result = await createArticleWithFilter({
         title: buildCopiedTitle(article.title),
         sectionId,
         content: content && typeof content === 'object' && content.type === 'doc' ? content : null,
-      })
+      }, normalizedDocFilter)
 
       const createdArticle = result?.data?.createArticle
       if (!createdArticle) return
@@ -814,7 +801,6 @@ function DocumentationListLeftPanel({
         type: 'article',
         title: createdArticle.title,
         editor: 'tiptap',
-        filter: normalizedDocFilter,
       }
       persistNodeFilterById(createdArticle.id)
 
@@ -830,10 +816,14 @@ function DocumentationListLeftPanel({
   }
 
   const copySectionBranch = async (section, targetParentId, withChildren, isRootCopy = false) => {
-    const sectionResult = await createSectionWithFilter({
-      title: isRootCopy ? buildCopiedTitle(section.title) : section.title,
-      parentId: targetParentId,
-    })
+    const branchDocumentationType = normalizedDocFilter
+    const sectionResult = await createSectionWithFilter(
+      {
+        title: isRootCopy ? buildCopiedTitle(section.title) : section.title,
+        parentId: targetParentId,
+      },
+      branchDocumentationType
+    )
 
     const createdSection = sectionResult?.data?.createSection
     if (!createdSection?.id) {
@@ -846,7 +836,7 @@ function DocumentationListLeftPanel({
       title: createdSection.title,
       children: [],
       isOpen: true,
-      filter: normalizedDocFilter,
+      filter: branchDocumentationType,
     }
     persistNodeFilterById(createdSection.id)
 
@@ -882,7 +872,7 @@ function DocumentationListLeftPanel({
           title: child.title,
           sectionId: createdSection.id,
           content: childContent,
-        })
+        }, branchDocumentationType)
 
         const createdArticle = createdArticleResult?.data?.createArticle
         if (!createdArticle?.id) continue
@@ -892,7 +882,7 @@ function DocumentationListLeftPanel({
           type: 'article',
           title: createdArticle.title,
           editor: 'tiptap',
-          filter: normalizedDocFilter,
+          filter: branchDocumentationType,
         })
         persistNodeFilterById(createdArticle.id)
       }
@@ -996,8 +986,9 @@ function DocumentationListLeftPanel({
   }, [])
 
   // Р СџР С•Р В»РЎС“РЎвЂЎР В°Р ВµР С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°
-  const searchResults = searchQuery.trim() 
-    ? searchTree(tree, searchQuery, filterType !== 'all' ? filterType : 'all')
+  // Поиск только по статьям (секции не ищем)
+  const searchResults = searchQuery.trim()
+    ? searchTree(tree, searchQuery, 'article')
     : null
 
   const handleLeftTreeLassoMouseDownCapture = useCallback((event) => {
@@ -1223,7 +1214,13 @@ function DocumentationListLeftPanel({
 
   const startCreate = (parentId) => {
     if (!canManage) return
-    setCreating({ parentId, name: '', type: 'section' })
+    setLeftTreeLassoSelectedIds([])
+    setCreating({
+      parentId,
+      name: '',
+      type: 'section',
+      documentationType: documentationFilterValue || normalizedDocFilter,
+    })
   }
 
   const commitCreate = async (forcedType) => {
@@ -1239,14 +1236,27 @@ function DocumentationListLeftPanel({
     const type = forcedType ?? creating.type
     const title = creating.name.trim()
     const parentId = creating.parentId === 'root' ? null : creating.parentId
+    const inheritedDocumentationType =
+      creating.parentId === 'root'
+        ? normalizeDocumentationFilter(
+            creating.documentationType || documentationFilterValue || normalizedDocFilter
+          ) || normalizedDocFilter
+        : normalizedDocFilter
 
     try {
+      if (lastDeleted) {
+        await commitDelete(lastDeleted.toastId)
+      }
+
       let result
       if (type === 'section') {
-        result = await createSectionWithFilter({
-          title,
-          parentId,
-        })
+        result = await createSectionWithFilter(
+          {
+            title,
+            parentId,
+          },
+          inheritedDocumentationType
+        )
         const createdSection = result?.data?.createSection
         if (createdSection) {
           const newItem = {
@@ -1255,11 +1265,19 @@ function DocumentationListLeftPanel({
             title: createdSection.title,
             children: [],
             isOpen: true,
-            filter: normalizedDocFilter,
+            filter: inheritedDocumentationType,
+            documentationApiType: mapDocumentationFilterToApiType(inheritedDocumentationType),
+            isDocumentationTypeRoot: creating.parentId === 'root',
           }
           persistNodeFilterById(createdSection.id)
           
           setTree(prev => {
+            if (
+              creating.parentId === 'root' &&
+              inheritedDocumentationType !== normalizedDocFilter
+            ) {
+              return prev
+            }
             if (creating.parentId === 'root') {
               return [...prev, newItem]
             }
@@ -1276,12 +1294,20 @@ function DocumentationListLeftPanel({
           markSaveSuccess()
         }
       } else {
+        if (!parentId) {
+          setCreating(null)
+          return
+        }
+
         // Article
-        result = await createArticleWithFilter({
-          title,
-          sectionId: parentId,
-          content: null,
-        })
+        result = await createArticleWithFilter(
+          {
+            title,
+            sectionId: parentId,
+            content: null,
+          },
+          inheritedDocumentationType
+        )
         const createdArticle = result?.data?.createArticle
         if (createdArticle) {
           const newItem = {
@@ -1289,7 +1315,7 @@ function DocumentationListLeftPanel({
             type: 'article',
             title: createdArticle.title,
             editor: 'tiptap',
-            filter: normalizedDocFilter,
+            filter: inheritedDocumentationType,
           }
           persistNodeFilterById(createdArticle.id)
           
@@ -1577,6 +1603,32 @@ function DocumentationListLeftPanel({
     await deleteItemsBulk(selectedIdsInput)
   }, [canManage, deleteItemsBulk])
 
+  const persistNodeRelationForLeftTree = useCallback(async (
+    node,
+    nextNodeParentId
+  ) => {
+    if (!node?.id) return
+
+    if (node.type === 'section') {
+      await updateSectionWithFilter(node.id, {
+        title: String(node.title || '').trim(),
+        parentId: nextNodeParentId,
+      })
+      persistNodeFilterById(node.id)
+      return
+    }
+
+    await updateArticleWithFilter(node.id, {
+      title: String(node.title || '').trim(),
+      sectionId: nextNodeParentId,
+    })
+    persistNodeFilterById(node.id)
+  }, [
+    persistNodeFilterById,
+    updateArticleWithFilter,
+    updateSectionWithFilter,
+  ])
+
   const persistNodePlacementForLeftTree = useCallback(async (
     node,
     nextNodeParentId,
@@ -1664,8 +1716,7 @@ function DocumentationListLeftPanel({
           throw orderFieldError
         }
 
-        await updateSectionWithFilter(node.id, baseInput)
-        persistNodeFilterById(node.id)
+        await persistNodeRelationForLeftTree(node, nextNodeParentId)
         return false
       }
     }
@@ -1688,11 +1739,11 @@ function DocumentationListLeftPanel({
         throw orderFieldError
       }
 
-      await updateArticleWithFilter(node.id, baseInput)
-      persistNodeFilterById(node.id)
+      await persistNodeRelationForLeftTree(node, nextNodeParentId)
       return false
     }
   }, [
+    persistNodeRelationForLeftTree,
     persistNodeFilterById,
     updateArticleWithFilter,
     updateSectionWithFilter,
@@ -1718,6 +1769,8 @@ function DocumentationListLeftPanel({
   }, [persistNodePlacementForLeftTree])
 
   const createArticleCopyNodeForPaste = useCallback(async (article, targetParentId) => {
+    if (!targetParentId) return null
+
     const { data } = await fetchArticle({
       variables: { id: article.id },
     })
@@ -1731,7 +1784,7 @@ function DocumentationListLeftPanel({
       title: buildCopiedTitle(article.title),
       sectionId: targetParentId,
       content,
-    })
+    }, normalizedDocFilter)
 
     const createdArticle = result?.data?.createArticle
     if (!createdArticle?.id) return null
@@ -1742,12 +1795,10 @@ function DocumentationListLeftPanel({
       type: 'article',
       title: createdArticle.title,
       editor: 'tiptap',
-      filter: normalizedDocFilter,
     }
   }, [
     createArticleWithFilter,
     fetchArticle,
-    normalizedDocFilter,
     persistNodeFilterById,
   ])
 
@@ -1946,161 +1997,49 @@ function DocumentationListLeftPanel({
       return
     }
 
+    if (removed.item?.type === 'article' && parentId === 'root') {
+      setDragState(null)
+      setDropHint(null)
+      return
+    }
+
     let insertIndex = targetIndex
     if (removed.parentId === parentId && dragging.index < targetIndex) {
       insertIndex -= 1
     }
 
-    insertAt(nextTree, parentId, insertIndex, removed.item)
+    const nextMovedItem =
+      removed.item?.type === 'section'
+        ? {
+            ...removed.item,
+            isDocumentationTypeRoot:
+              parentId === 'root'
+                ? Boolean(
+                    removed.item?.isDocumentationTypeRoot ||
+                      removed.item?.documentationApiType ||
+                      removed.item?.filter
+                  )
+                : false,
+          }
+        : removed.item
+
+    insertAt(nextTree, parentId, insertIndex, nextMovedItem)
     setTree(nextTree)
     setDragState(null)
     setDropHint(null)
 
     const nextParentId = parentId === 'root' ? null : parentId
 
-    const isUnsupportedOrderFieldError = (error, fieldName) => {
-      const messages = [
-        error?.message,
-        ...(Array.isArray(error?.graphQLErrors)
-          ? error.graphQLErrors.map(gqlError => gqlError?.message)
-          : []),
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-
-      return (
-        messages.includes(fieldName) &&
-        (messages.includes('not defined') ||
-          messages.includes('unknown field') ||
-          messages.includes('cannot query field') ||
-          messages.includes('validation'))
-      )
-    }
-
-    const saveSectionPlacement = async (id, baseInput, nodeIndex) => {
-      try {
-        await updateSectionWithFilter(id, {
-          ...baseInput,
-          index: nodeIndex,
-        })
-        return true
-      } catch (errorWithIndex) {
-        if (!isUnsupportedOrderFieldError(errorWithIndex, 'index')) {
-          throw errorWithIndex
-        }
-      }
-
-      await updateSectionWithFilter(id, {
-        ...baseInput,
-        order: nodeIndex,
-      })
-      return true
-    }
-
-    const saveArticlePlacement = async (id, baseInput, nodeIndex) => {
-      try {
-        await updateArticleWithFilter(id, {
-          ...baseInput,
-          index: nodeIndex,
-        })
-        return true
-      } catch (errorWithIndex) {
-        if (!isUnsupportedOrderFieldError(errorWithIndex, 'index')) {
-          throw errorWithIndex
-        }
-      }
-
-      await updateArticleWithFilter(id, {
-        ...baseInput,
-        order: nodeIndex,
-      })
-      return true
-    }
-
-    const persistNodePlacement = async (
-      node,
-      nextNodeParentId,
-      nodeIndex,
-      fallbackWithoutIndex = false
-    ) => {
-      if (!node?.id) return true
-
-      if (node.type === 'section') {
-        const baseInput = {
-          title: String(node.title || '').trim(),
-          parentId: nextNodeParentId,
-        }
-
-        try {
-          await saveSectionPlacement(node.id, baseInput, nodeIndex)
-          persistNodeFilterById(node.id)
-          return true
-        } catch (orderFieldError) {
-          if (
-            !fallbackWithoutIndex ||
-            (!isUnsupportedOrderFieldError(orderFieldError, 'index') &&
-              !isUnsupportedOrderFieldError(orderFieldError, 'order'))
-          ) {
-            throw orderFieldError
-          }
-
-          await updateSectionWithFilter(node.id, baseInput)
-          persistNodeFilterById(node.id)
-          return false
-        }
-      }
-
-      const baseInput = {
-        title: String(node.title || '').trim(),
-        sectionId: nextNodeParentId,
-      }
-
-      try {
-        await saveArticlePlacement(node.id, baseInput, nodeIndex)
-        persistNodeFilterById(node.id)
-        return true
-      } catch (orderFieldError) {
-        if (
-          !fallbackWithoutIndex ||
-          (!isUnsupportedOrderFieldError(orderFieldError, 'index') &&
-            !isUnsupportedOrderFieldError(orderFieldError, 'order'))
-        ) {
-          throw orderFieldError
-        }
-
-        await updateArticleWithFilter(node.id, baseInput)
-        persistNodeFilterById(node.id)
-        return false
-      }
-    }
-
     try {
-      const movedNodeIndexSaved = await persistNodePlacement(
-        removed.item,
-        nextParentId,
-        insertIndex,
-        true
-      )
+      await persistNodeRelationForLeftTree(removed.item, nextParentId)
 
-      if (movedNodeIndexSaved) {
-        const affectedParentIds = Array.from(new Set([removed.parentId, parentId]))
+      const affectedParentIds = Array.from(new Set([removed.parentId, parentId]))
 
-        for (const affectedParentId of affectedParentIds) {
-          const siblings = getChildrenByParentId(nextTree, affectedParentId)
-          if (!Array.isArray(siblings)) continue
-
-          const siblingParentId =
-            affectedParentId === 'root' ? null : affectedParentId
-
-          for (let siblingIndex = 0; siblingIndex < siblings.length; siblingIndex += 1) {
-            await persistNodePlacement(
-              siblings[siblingIndex],
-              siblingParentId,
-              siblingIndex,
-              false
-            )
-          }
+      for (const affectedParentId of affectedParentIds) {
+        try {
+          await persistSiblingOrderingForParent(nextTree, affectedParentId)
+        } catch (orderError) {
+          console.warn('Failed to persist documentation sibling ordering:', orderError)
         }
       }
 
@@ -2156,6 +2095,7 @@ function DocumentationListLeftPanel({
       onMouseDownCapture={handleDocLeftMouseDownCapture}
       onClickCapture={handleDocLeftClickCapture}
     >
+      {!controlsAtTop && (
       <div className="doc-left-header">
         <div className="header-content">
           <span></span>
@@ -2170,7 +2110,7 @@ function DocumentationListLeftPanel({
             {showDocumentationFilter && availableDocumentationFilters.length > 0 && (
               <div className="doc-filter-switcher">
                 <MUIAutocomplete
-                  dropdownWidth={'136px'}
+                  dropdownWidth={'180px'}
                   label={''}
                   hideLabelOnFocus={true}
                   disableClearable={true}
@@ -2198,6 +2138,7 @@ function DocumentationListLeftPanel({
           </div>
         </div>
       </div>
+      )}
 
       <div
         ref={leftTreeRef}
@@ -2212,10 +2153,11 @@ function DocumentationListLeftPanel({
         )}
         {searchResults ? (
             // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°
-            <div className="search-results">
-              <div className="search-info">
+            <>
+              <div className="search-results-info">
                 {'\u041d\u0430\u0439\u0434\u0435\u043d\u043e'}: {searchResults.length} {'\u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432'}
-                <button 
+                <button
+                  type="button"
                   className="clear-search-btn"
                   onClick={clearSearch}
                   title={'\u041e\u0447\u0438\u0441\u0442\u0438\u0442\u044c \u043f\u043e\u0438\u0441\u043a'}
@@ -2223,32 +2165,53 @@ function DocumentationListLeftPanel({
                   <IconX size={12} />
                 </button>
               </div>
-              {searchResults.map((result, index) => (
-                <div 
-                  key={`search-${result.id}-${index}`}
-                  className="search-result-item"
-                  onClick={() => navigateToItem(result)}
-                >
-                  <div className="search-result-type">
-                    {result.type === 'section' ? (
-                      <IconFolder size={16} />
-                    ) : (
-                      <IconFile size={16} />
-                    )}
-                  </div>
-                  <div className="search-result-content">
-                    <div className="search-result-title">
-                      {result.title}
-                    </div>
-                    {result.path && result.path !== result.title && (
-                      <div className="search-result-path">
-                        {result.path}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+              {searchResults.map((result, index) => {
+                const itemForTree = {
+                  id: result.id,
+                  type: result.type,
+                  title: result.title,
+                  children: result.type === 'section' ? [] : undefined,
+                }
+                return (
+                  <TreeItem
+                    key={result.id}
+                    item={itemForTree}
+                    index={index}
+                    parentId="root"
+                    activeDocId={activeDocId}
+                    onSelectFile={onSelectFile}
+                    toggleSection={toggleSection}
+                    startCreate={startCreate}
+                    renameItem={renameItem}
+                    deleteItem={deleteItem}
+                    creating={creating}
+                    setCreating={setCreating}
+                    commitCreate={commitCreate}
+                    setTree={setTree}
+                    openCopyModal={openCopyModal}
+                    openDeleteConfirm={openDeleteConfirm}
+                    copySectionOnServer={copySectionOnServer}
+                    copyArticleWithContent={copyArticleWithContent}
+                    copySelectedItems={copySelectedItems}
+                    deleteSelectedItems={deleteSelectedItems}
+                    dragState={dragState}
+                    setDragState={setDragState}
+                    handleDrop={handleDrop}
+                    dropHint={dropHint}
+                    setDropHint={setDropHint}
+                    isDescendant={isDescendant}
+                    tree={tree}
+                    canManage={canManage}
+                    lassoSelectedIds={leftTreeLassoSelectedIds}
+                    suppressTreeClickUntilRef={suppressTreeClickUntilRef}
+                    pasteHoverHint={leftTreePasteHoverHint}
+                    pasteTargetHint={leftTreePasteTargetHint}
+                    canAssignRootDocumentationType={canAssignRootDocumentationType}
+                    documentationFilters={availableDocumentationFilters}
+                  />
+                )
+              })}
+            </>
           ) : (
             // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С•Р Вµ Р Т‘Р ВµРЎР‚Р ВµР Р†Р С•
             <>
@@ -2286,6 +2249,8 @@ function DocumentationListLeftPanel({
                   suppressTreeClickUntilRef={suppressTreeClickUntilRef}
                   pasteHoverHint={leftTreePasteHoverHint}
                   pasteTargetHint={leftTreePasteTargetHint}
+                  canAssignRootDocumentationType={canAssignRootDocumentationType}
+                  documentationFilters={availableDocumentationFilters}
                 />
               ))}
 
@@ -2306,6 +2271,8 @@ function DocumentationListLeftPanel({
                   creating={creating}
                   setCreating={setCreating}
                   commitCreate={commitCreate}
+                  canAssignRootDocumentationType={canAssignRootDocumentationType}
+                  documentationFilters={availableDocumentationFilters}
                 />
               )}
 
@@ -2414,6 +2381,8 @@ function TreeItem({
   suppressTreeClickUntilRef,
   pasteHoverHint,
   pasteTargetHint,
+  canAssignRootDocumentationType,
+  documentationFilters,
 }) {
   const [editing, setEditing] = useState(false)
   const [flash, setFlash] = useState(false)
@@ -2684,10 +2653,6 @@ function TreeItem({
                   title={'\u0423\u0434\u0430\u043b\u0438\u0442\u044c'}
                   onMouseDown={preventToggle}
                   onClick={() => {
-                    if (isLassoSelected && hasMultiLassoSelection) {
-                      void deleteSelectedItems(lassoSelectedIds)
-                      return
-                    }
                     if (hasChildren) openDeleteConfirm({ id: item.id, title: item.title })
                     else deleteItem(item.id)
                   }}
@@ -2706,6 +2671,8 @@ function TreeItem({
           creating={creating}
           setCreating={setCreating}
           commitCreate={commitCreate}
+          canAssignRootDocumentationType={canAssignRootDocumentationType}
+          documentationFilters={documentationFilters}
         />
       )}
 
@@ -2746,6 +2713,8 @@ function TreeItem({
               suppressTreeClickUntilRef={suppressTreeClickUntilRef}
               pasteHoverHint={pasteHoverHint}
               pasteTargetHint={pasteTargetHint}
+              canAssignRootDocumentationType={canAssignRootDocumentationType}
+              documentationFilters={documentationFilters}
             />
           ))}
         </div>
@@ -3086,9 +3055,24 @@ function DeleteConfirm({ title, onCancel, onConfirm }) {
   )
 }
 
-function CreateRow({ creating, setCreating, commitCreate }) {
+function CreateRow({
+  creating,
+  setCreating,
+  commitCreate,
+  canAssignRootDocumentationType = false,
+  documentationFilters = [],
+}) {
   const ref = useRef(null)
   const [showError, setShowError] = useState(false)
+  const canSelectDocumentationType =
+    canAssignRootDocumentationType &&
+    creating?.parentId === 'root' &&
+    Array.isArray(documentationFilters) &&
+    documentationFilters.length > 0
+  const currentDocumentationTypeLabel =
+    documentationFilters.find(
+      option => option?.value === creating?.documentationType
+    )?.label || documentationFilters[0]?.label || ''
 
   useOutsideClose(ref, () => setCreating(null))
 
@@ -3124,9 +3108,11 @@ function CreateRow({ creating, setCreating, commitCreate }) {
         <button className="create-btn" onClick={() => tryCreate('section')}>
           Section
         </button>
-        <button className="create-btn" onClick={() => tryCreate('article')}>
-          Article
-        </button>
+        {creating?.parentId !== 'root' && (
+          <button className="create-btn" onClick={() => tryCreate('article')}>
+            Article
+          </button>
+        )}
       </div>
     </div>
   )

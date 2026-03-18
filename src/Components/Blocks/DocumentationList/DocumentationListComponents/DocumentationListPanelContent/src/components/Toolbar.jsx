@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+﻿import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import './toolbar.css'
 import { useReducer } from 'react'
@@ -20,8 +20,7 @@ import LinkModal from './LinkModal'
 import CustomStyleModal from './CustomStyleModal'
 import ExportModal from './ExportModal'
 import ImportModal from './ImportModal'
-import { saveFile } from '../storage/fileStore'
-import { getDocumentationUploadFile } from '../DocumentationUploadStore'
+import { getDocumentationUploadFile, notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
 import { BlockLassoSelectionKey } from '../extensions/blockLassoSelection'
 import {
   buildExcelHtmlDocument,
@@ -34,39 +33,39 @@ import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalVi
 const linkStyles = [
   {
     id: 'default',
-    label: 'Обычная ссылка',
+    label: 'РћР±С‹С‡РЅР°СЏ СЃСЃС‹Р»РєР°',
     icon: 'link',
-    description: 'Стандартное оформление ссылки.',
+    description: 'РЎС‚Р°РЅРґР°СЂС‚РЅРѕРµ РѕС„РѕСЂРјР»РµРЅРёРµ СЃСЃС‹Р»РєРё.',
   },
   {
     id: 'button',
-    label: 'Кнопка',
+    label: 'РљРЅРѕРїРєР°',
     icon: 'button',
-    description: 'Ссылка отображается как кнопка.',
+    description: 'РЎСЃС‹Р»РєР° РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РєР°Рє РєРЅРѕРїРєР°.',
   },
   {
     id: 'highlighted',
-    label: 'Выделенная',
+    label: 'Р’С‹РґРµР»РµРЅРЅР°СЏ',
     icon: 'highlight',
-    description: 'Ссылка с цветной подложкой.',
+    description: 'РЎСЃС‹Р»РєР° СЃ С†РІРµС‚РЅРѕР№ РїРѕРґР»РѕР¶РєРѕР№.',
   },
   {
     id: 'dashed',
-    label: 'Пунктирная',
+    label: 'РџСѓРЅРєС‚РёСЂРЅР°СЏ',
     icon: 'dashed',
-    description: 'Ссылка с пунктирным подчеркиванием.',
+    description: 'РЎСЃС‹Р»РєР° СЃ РїСѓРЅРєС‚РёСЂРЅС‹Рј РїРѕРґС‡РµСЂРєРёРІР°РЅРёРµРј.',
   },
   {
     id: 'no-underline',
-    label: 'Без подчеркивания',
+    label: 'Р‘РµР· РїРѕРґС‡РµСЂРєРёРІР°РЅРёСЏ',
     icon: 'no-underline',
-    description: 'Ссылка без подчеркивания.',
+    description: 'РЎСЃС‹Р»РєР° Р±РµР· РїРѕРґС‡РµСЂРєРёРІР°РЅРёСЏ.',
   },
   {
     id: 'colored',
-    label: 'Цветная',
+    label: 'Р¦РІРµС‚РЅР°СЏ',
     icon: 'colored',
-    description: 'Ссылка с акцентным цветом.',
+    description: 'РЎСЃС‹Р»РєР° СЃ Р°РєС†РµРЅС‚РЅС‹Рј С†РІРµС‚РѕРј.',
   },
 ]
 const BLOCK_ALIGN_NODE_TYPES = new Set([
@@ -158,7 +157,7 @@ function normalizeCustomLinkStyles(raw) {
     const nameCandidate = typeof item.name === 'string' ? item.name : item.label
     const name = typeof nameCandidate === 'string' && nameCandidate.trim()
       ? nameCandidate.trim()
-      : 'Пользовательский стиль'
+      : 'РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ СЃС‚РёР»СЊ'
 
     styles.push({
       id,
@@ -1040,7 +1039,7 @@ useEffect(() => {
       setJsonError(null)
     } catch {
       setJsonText('')
-      setJsonError('Не удалось получить JSON из редактора')
+      setJsonError('РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ JSON РёР· СЂРµРґР°РєС‚РѕСЂР°')
     }
   }
 
@@ -1135,13 +1134,13 @@ useEffect(() => {
     try {
       const parsed = JSON.parse(jsonText)
       if (!parsed || parsed.type !== 'doc') {
-        throw new Error('JSON должен содержать корневой объект документа ProseMirror с type="doc"')
+        throw new Error('JSON РґРѕР»Р¶РµРЅ СЃРѕРґРµСЂР¶Р°С‚СЊ РєРѕСЂРЅРµРІРѕР№ РѕР±СЉРµРєС‚ РґРѕРєСѓРјРµРЅС‚Р° ProseMirror СЃ type="doc"')
       }
 
       editor.commands.setContent(parsed)
       setJsonError(null)
     } catch (e) {
-      setJsonError(e?.message || 'Не удалось применить JSON')
+      setJsonError(e?.message || 'РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРёРјРµРЅРёС‚СЊ JSON')
     }
   }
 
@@ -1617,7 +1616,7 @@ useEffect(() => {
     let attrs = {
       fileId: null,
       url: null,
-      name: 'Документ',
+      name: 'Р”РѕРєСѓРјРµРЅС‚',
       size: '',
       mimeType: '',
     }
@@ -1625,40 +1624,22 @@ useEffect(() => {
     if (file) {
       try {
         const docUploadFile = getDocumentationUploadFile()
-        if (docUploadFile) {
-          const path = await docUploadFile(file)
-          if (path) {
-            attrs = {
-              ...attrs,
-              fileId: null,
-              url: path,
-              name: file.name || 'Документ',
-              size: file.size || '',
-              mimeType: file.type || '',
-            }
-          }
+        if (!docUploadFile) {
+          throw new Error('Documentation upload service is unavailable')
         }
-        if (!attrs.url) {
-          const saved = await saveFile(file)
-          attrs = {
-            ...attrs,
-            fileId: saved.id,
-            url: null,
-            name: saved.name || file.name || 'Документ',
-            size: saved.size || file.size || '',
-            mimeType: saved.mimeType || file.type || '',
-          }
-        }
-      } catch {
-        const blobUrl = URL.createObjectURL(file)
+
+        const path = await docUploadFile(file)
         attrs = {
           ...attrs,
           fileId: null,
-          url: blobUrl,
-          name: file.name || 'Документ',
+          url: path,
+          name: file.name || 'Р”РѕРєСѓРјРµРЅС‚',
           size: file.size || '',
           mimeType: file.type || '',
         }
+      } catch (error) {
+        notifyDocumentationUploadFailure(error, 'файл')
+        return
       }
     } else if (url) {
       attrs = {
@@ -1696,13 +1677,13 @@ useEffect(() => {
               ? parsed.content
               : null
         if (!doc) {
-          throw new Error('JSON не содержит документ ProseMirror с type="doc"')
+          throw new Error('JSON РЅРµ СЃРѕРґРµСЂР¶РёС‚ РґРѕРєСѓРјРµРЅС‚ ProseMirror СЃ type="doc"')
         }
         editor.commands.setContent(doc)
         return
       } catch (e) {
         if (fmt === 'json') {
-          throw new Error(`Не удалось импортировать JSON: ${e?.message || e}`)
+          throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ РёРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ JSON: ${e?.message || e}`)
         }
       }
     }
@@ -1721,7 +1702,7 @@ useEffect(() => {
   }
 
   const handleImportFile = async (file) => {
-    if (!file) throw new Error('Файл не выбран')
+    if (!file) throw new Error('Р¤Р°Р№Р» РЅРµ РІС‹Р±СЂР°РЅ')
 
     const name = String(file.name || '').toLowerCase()
 
@@ -1733,7 +1714,7 @@ useEffect(() => {
     if (name.endsWith('.docx')) {
       try {
         const ab = typeof file.arrayBuffer === 'function' ? await file.arrayBuffer() : null
-        if (!ab) throw new Error('Не удалось прочитать файл .docx')
+        if (!ab) throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ С„Р°Р№Р» .docx')
 
         const html = await docxArrayBufferToHtml(ab)
         editor.commands.setContent(normalizeHtmlForImport(html))
@@ -1751,7 +1732,7 @@ useEffect(() => {
       text = ''
     }
 
-    if (!text) throw new Error('Не удалось прочитать содержимое файла')
+    if (!text) throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ СЃРѕРґРµСЂР¶РёРјРѕРµ С„Р°Р№Р»Р°')
 
     if ((name.endsWith('.doc') || name.endsWith('.xls')) && !looksLikeHtml(text)) {
       await setDocumentToFileBlock({ file })
@@ -1762,7 +1743,7 @@ useEffect(() => {
   }
 
   const handleImportUrl = async (url) => {
-    if (!url) throw new Error('URL не указан')
+    if (!url) throw new Error('URL РЅРµ СѓРєР°Р·Р°РЅ')
 
     const hintName = fileNameFromUrl(url)
     const lowerHintName = String(hintName || '').toLowerCase()
@@ -1776,7 +1757,7 @@ useEffect(() => {
       try {
         const response = await fetch(url)
         if (!response.ok) {
-          throw new Error(`Не удалось загрузить DOCX по URL: ${response.status} ${response.statusText}`)
+          throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ DOCX РїРѕ URL: ${response.status} ${response.statusText}`)
         }
 
         const ab = await response.arrayBuffer()
@@ -1793,11 +1774,11 @@ useEffect(() => {
     try {
       response = await fetch(url)
     } catch (e) {
-      throw new Error(`Не удалось загрузить данные по URL: ${e?.message || e}`)
+      throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕ URL: ${e?.message || e}`)
     }
 
     if (!response.ok) {
-      throw new Error(`Не удалось загрузить данные по URL: ${response.status} ${response.statusText}`)
+      throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕ URL: ${response.status} ${response.statusText}`)
     }
 
     const text = await response.text()
@@ -2013,7 +1994,7 @@ useEffect(() => {
       
       return {
         title: domain,
-        description: `Ссылка на ${domain}`,
+        description: `РЎСЃС‹Р»РєР° РЅР° ${domain}`,
         favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
         url: url
       }
@@ -2031,7 +2012,7 @@ useEffect(() => {
     if (fragments.some(fragment => text.includes(fragment))) return ''
     const oddCyrillicCount = (text.match(/[\u0400-\u040f\u0450-\u045f]/g) || []).length
     if (oddCyrillicCount >= 3) return ''
-    const weirdMojibakeMarkers = (text.match(/(?:вЂ|РЋ|РЎ|С›|Сћ)/g) || []).length
+    const weirdMojibakeMarkers = (text.match(/(?:РІР‚|Р Р‹|Р РЋ|РЎвЂє|РЎС›)/g) || []).length
     const rCount = (text.match(/\u0420/g) || []).length
     const vCount = (text.match(/\u0412/g) || []).length
     if (weirdMojibakeMarkers >= 2 || (rCount >= 4 && vCount >= 4 && text.length > 20)) return ''
@@ -2282,25 +2263,25 @@ useEffect(() => {
             editor.isActive('bold'),
             toggleBoldAction,
             <span className="bold-icon">B</span>,
-            'Жирный',
+            'Р–РёСЂРЅС‹Р№',
           )}
           {btn(
             editor.isActive('italic'),
             toggleItalicAction,
             <span className="italic-icon">I</span>,
-            'Курсив',
+            'РљСѓСЂСЃРёРІ',
           )}
           {btn(
             editor.isActive('underline'),
             toggleUnderlineAction,
             <span className="underline-icon">U</span>,
-            'Подчеркнутый',
+            'РџРѕРґС‡РµСЂРєРЅСѓС‚С‹Р№',
           )}
           {btn(
             editor.isActive('strike'),
             toggleStrikeAction,
             <span style={{ textDecoration: 'line-through' }}>S</span>,
-            'Зачеркнутый',
+            'Р—Р°С‡РµСЂРєРЅСѓС‚С‹Р№',
           )}
         </div>
       )
@@ -2336,7 +2317,7 @@ useEffect(() => {
                 style={{ width: 16, height: 16, fontSize: 16 }}
               />
             </>,
-            'Выравнивание по левому краю',
+            'Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РїРѕ Р»РµРІРѕРјСѓ РєСЂР°СЋ',
           )}
           {btn(
             currentAlignmentValue === 'center',
@@ -2353,7 +2334,7 @@ useEffect(() => {
                 style={{ width: 16, height: 16, fontSize: 16 }}
               />
             </>,
-            'Выравнивание по центру',
+            'Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РїРѕ С†РµРЅС‚СЂСѓ',
           )}
           {btn(
             currentAlignmentValue === 'right',
@@ -2370,7 +2351,7 @@ useEffect(() => {
                 style={{ width: 16, height: 16, fontSize: 16 }}
               />
             </>,
-            'Выравнивание по правому краю',
+            'Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РїРѕ РїСЂР°РІРѕРјСѓ РєСЂР°СЋ',
           )}
           {btn(
             currentAlignmentValue === 'justify',
@@ -2387,7 +2368,7 @@ useEffect(() => {
                 style={{ width: 16, height: 16, fontSize: 16 }}
               />
             </>,
-            'Выравнивание по ширине',
+            'Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РїРѕ С€РёСЂРёРЅРµ',
           )}
         </div>
       )
@@ -2407,7 +2388,7 @@ useEffect(() => {
                 e.stopPropagation()
                 applyTextColor(textColor)
               }}
-              title="Применить цвет текста"
+              title="РџСЂРёРјРµРЅРёС‚СЊ С†РІРµС‚ С‚РµРєСЃС‚Р°"
             >
               A
             </button>
@@ -2418,7 +2399,7 @@ useEffect(() => {
                 e.stopPropagation()
                 openTextColorModal()
               }}
-              title="Выбрать цвет текста"
+              title="Р’С‹Р±СЂР°С‚СЊ С†РІРµС‚ С‚РµРєСЃС‚Р°"
             >
               <>
                 {/* Legacy SVG icon:
@@ -2455,8 +2436,8 @@ useEffect(() => {
               }}
               title={
                 isBgPaintingMode
-                  ? 'Выключить режим заливки фона'
-                  : 'Включить режим заливки фона'
+                  ? 'Р’С‹РєР»СЋС‡РёС‚СЊ СЂРµР¶РёРј Р·Р°Р»РёРІРєРё С„РѕРЅР°'
+                  : 'Р’РєР»СЋС‡РёС‚СЊ СЂРµР¶РёРј Р·Р°Р»РёРІРєРё С„РѕРЅР°'
               }
             >
               A
@@ -2468,7 +2449,7 @@ useEffect(() => {
                 e.stopPropagation()
                 openBgColorModal()
               }}
-              title="Выбрать цвет фона"
+              title="Р’С‹Р±СЂР°С‚СЊ С†РІРµС‚ С„РѕРЅР°"
             >
               <>
                 {/* Legacy SVG icon:
@@ -2499,7 +2480,7 @@ useEffect(() => {
               e.stopPropagation()
               openLinkModal()
             }}
-            title="Вставить или редактировать ссылку"
+            title="Р’СЃС‚Р°РІРёС‚СЊ РёР»Рё СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЃСЃС‹Р»РєСѓ"
           >
             <>
               {/* Legacy SVG icon:
@@ -2529,7 +2510,7 @@ useEffect(() => {
               e.stopPropagation()
               openImportModal()
             }}
-            title="Импорт"
+            title="РРјРїРѕСЂС‚"
           >
             <>
               {/* Legacy SVG icon:
@@ -2552,7 +2533,7 @@ useEffect(() => {
               e.stopPropagation()
               openExportModal()
             }}
-            title="Экспорт"
+            title="Р­РєСЃРїРѕСЂС‚"
           >
             <>
               {/* Legacy SVG icon:
@@ -2642,7 +2623,7 @@ useEffect(() => {
                 style={{ width: 16, height: 16, fontSize: 16 }}
               />
             </>,
-            'Сбросить форматирование',
+            'РЎР±СЂРѕСЃРёС‚СЊ С„РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ',
           )}
         </div>
       )
@@ -2683,7 +2664,7 @@ useEffect(() => {
               anchorModeEnabled,
               () => onToggleAnchorMode?.(),
               '#',
-              'Режим якорей',
+              'Р РµР¶РёРј СЏРєРѕСЂРµР№',
             )}
             {altSelectionModeActive ? (
               <button
@@ -3148,3 +3129,4 @@ useEffect(() => {
     </>
   )
 }
+

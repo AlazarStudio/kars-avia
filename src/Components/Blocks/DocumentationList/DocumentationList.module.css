@@ -21,7 +21,7 @@
  .section_searchAndFilter {
      display: flex;
      align-items: center;
-     justify-content: flex-start;
+     justify-content: space-between;
      gap: 20px;
      min-height: 40px;
  }
@@ -112,6 +112,7 @@
 
  .mainSearch {
     width: 500px;
+    flex: 1;
  }
 
  .hideAddArticleButton {
