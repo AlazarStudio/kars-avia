@@ -23,8 +23,22 @@ import MultiSelectAutocomplete from "../../../../Blocks/MultiSelectAutocomplete/
 import { useDebounce } from "../../../../../hooks/useDebounce";
 import MUILoader from "../../../../Blocks/MUILoader/MUILoader";
 
-const SERVICE_OPTIONS = ["LIVING", "MEAL", "TRANSFER"];
-const CREW_OPTIONS = ["ALL", "SQUADRON", "TECHNICIAN", "POSITIONS"];
+const SERVICE_OPTIONS = [
+  { id: "LIVING", label: "Проживание" },
+  { id: "MEAL", label: "Питание" },
+  { id: "TRANSFER", label: "Трансфер" },
+];
+const CREW_OPTIONS = [
+  { id: "ALL", label: "Все" },
+  { id: "SQUADRON", label: "Эскадрилья" },
+  { id: "TECHNICIAN", label: "Инженеры" },
+  // { id: "POSITIONS", label: "Должности" },
+];
+const SERVICE_LABEL_MAP = {
+  LIVING: "Проживание",
+  MEAL: "Питание",
+  TRANSFER: "Трансфер",
+};
 
 const formatInt = (value) => new Intl.NumberFormat("ru-RU").format(Number(value) || 0);
 const formatRub = (value) =>
@@ -208,10 +222,7 @@ function AirlineAnalytics({ user, height }) {
   const rows = comparisonData?.analyticsAirlineServiceComparison || [];
   const allRegions = regionsData?.cityRegions || [];
   const period2Days = differenceInCalendarDays(period2.endDate, period2.startDate) + 1;
-  const serviceOptions = useMemo(
-    () => SERVICE_OPTIONS.map((service) => ({ id: service, label: service })),
-    []
-  );
+  const serviceOptions = useMemo(() => SERVICE_OPTIONS, []);
   const selectedServiceOptions = useMemo(
     () => serviceOptions.filter((item) => selectedServices.includes(item.id)),
     [selectedServices, serviceOptions]
@@ -232,7 +243,10 @@ function AirlineAnalytics({ user, height }) {
       map.set(row.service, current + (Number(row.period2?.budgetRub) || 0));
     });
 
-    return Array.from(map.entries()).map(([x, value]) => ({ x, value }));
+    return Array.from(map.entries()).map(([service, value]) => ({
+      x: SERVICE_LABEL_MAP[service] || service,
+      value,
+    }));
   }, [rows]);
 
   const peopleByRegionData = useMemo(() => {
@@ -363,12 +377,19 @@ function AirlineAnalytics({ user, height }) {
                   />
 
                   <div className={classes.positionsWrap}>
-                    <MUIAutocomplete
+                <MUIAutocomplete
                       dropdownWidth={220}
                       label="Состав"
-                      options={CREW_OPTIONS}
-                      value={crewMode}
-                      onChange={(_, newValue) => setCrewMode(newValue || "SQUADRON")}
+                  options={CREW_OPTIONS.map((item) => item.label)}
+                  value={
+                    CREW_OPTIONS.find((item) => item.id === crewMode)?.label || "Эскадрилья"
+                  }
+                  onChange={(_, newValue) => {
+                    const nextId =
+                      CREW_OPTIONS.find((item) => item.label === newValue)?.id ||
+                      "SQUADRON";
+                    setCrewMode(nextId);
+                  }}
                       hideLabelOnFocus={false}
                     />
                     {crewMode === "POSITIONS" ? (
@@ -494,7 +515,7 @@ function AirlineAnalytics({ user, height }) {
                     {rows.map((row, idx) => (
                       <tr key={`${row.region}-${row.service}-${idx}`}>
                         <td>{row.region}</td>
-                        <td>{row.service}</td>
+                        <td>{SERVICE_LABEL_MAP[row.service] || row.service}</td>
                         <td>
                           {formatInt(row.period1.peopleCount)} / {formatInt(row.period2.peopleCount)} /{" "}
                           {formatPct(row.diff.peopleDeltaPct)}
@@ -893,3 +914,4 @@ export default AirlineAnalytics;
 // }
 
 // export default AirlineAnalytics;
+
