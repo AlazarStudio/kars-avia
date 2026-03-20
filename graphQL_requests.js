@@ -5778,6 +5778,39 @@ export const GET_ANALYTICS_USERS = gql`
   }
 `;
 
+export const GET_CITY_REGIONS = gql`
+  query CityRegions {
+    cityRegions
+  }
+`;
+
+export const GET_ANALYTICS_AIRLINE_SERVICE_COMPARISON = gql`
+  query AirlineComparison($input: AnalyticsAirlineServiceComparisonInput!) {
+    analyticsAirlineServiceComparison(input: $input) {
+      region
+      service
+      period1 {
+        peopleCount
+        budgetRub
+        roomsUsed
+      }
+      period2 {
+        peopleCount
+        budgetRub
+        roomsUsed
+      }
+      diff {
+        peopleDelta
+        peopleDeltaPct
+        budgetDeltaRub
+        budgetDeltaPct
+        roomsDelta
+        roomsDeltaPct
+      }
+    }
+  }
+`;
+
 // ----- External Auth (unified API: createExternalAuthLink, authorizeExternalAuth, adminExtendExternalAuthSession) -----
 
 export const CREATE_EXTERNAL_AUTH_LINK = gql`

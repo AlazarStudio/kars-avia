@@ -22,6 +22,7 @@ function MultiSelectAutocomplete({
   isDisabled,
   isMultiple,
   listboxHeight,
+  limitTags,
   children,
   showSelectAll = false,
   ...props
@@ -82,7 +83,7 @@ function MultiSelectAutocomplete({
       filterOptions={filterOptions}
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={isOptionEqualToValue}
-      limitTags={2}
+      limitTags={limitTags || 2}
       disablePortal
       disabled={isDisabled || false}
       clearText="Очистить"
@@ -171,7 +172,21 @@ function MultiSelectAutocomplete({
           padding: "0 8px",
           fontSize: "14px",
           transition: "all 0.3s ease-in-out",
+          alignItems: "center",
         },
+        "& .MuiAutocomplete-inputRoot:not(.Mui-focused)": {
+          flexWrap: "nowrap !important",
+          overflow: "hidden",
+        },
+        "& .MuiAutocomplete-inputRoot:not(.Mui-focused) .MuiAutocomplete-input": {
+          minWidth: "0 !important",
+          width: "1px",
+          flexGrow: 0,
+          padding: "0 !important",
+        },
+        // "& .MuiAutocomplete-inputRoot:not(.Mui-focused) .MuiAutocomplete-tag": {
+        //   maxWidth: "calc(100% - 46px)",
+        // },
         "& .MuiSvgIcon-root": {
           fontSize: "18px",
         },

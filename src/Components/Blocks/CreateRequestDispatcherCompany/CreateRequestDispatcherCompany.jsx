@@ -126,7 +126,6 @@ function CreateRequestDispatcherCompany({
     const requiredFields = [
       "name",
       "email",
-      "role",
       "position",
       "login",
       "password",

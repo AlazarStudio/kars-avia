@@ -20,6 +20,36 @@ function AnalyticsChart({
   colors = ["#0057C3", "#2196f3", "#4CAF50", "#9575CD", "#ff9800", "#f44336", "#638EA4", "#3B653D"],
   height = 265
 }) {
+  const isValidDateValue = (value) => {
+    if (value === null || value === undefined) return false;
+    const date = new Date(value);
+    return !Number.isNaN(date.getTime());
+  };
+
+  const formatAxisLabel = (value) => {
+    if (!isValidDateValue(value)) {
+      return String(value ?? "");
+    }
+
+    const date = new Date(value);
+    return date.toLocaleDateString("ru-RU", {
+      day: "2-digit",
+      month: "2-digit",
+    });
+  };
+
+  const formatTooltipLabel = (label) => {
+    if (!isValidDateValue(label)) {
+      return String(label ?? "");
+    }
+
+    const date = new Date(label);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  };
+
   const renderChart = () => {
     if (!data || data.length === 0) return <p>Нет данных</p>;
 
@@ -30,13 +60,7 @@ function AnalyticsChart({
             <BarChart data={data}
               margin={{ top: 0, right: 0, left: -19, bottom: 0 }}
             >
-              <XAxis dataKey={xKey} tickFormatter={(tick) => {
-                const date = new Date(tick);
-                return date.toLocaleDateString('ru-RU', {
-                  day: '2-digit',
-                  month: '2-digit'
-                });
-              }} />
+              <XAxis dataKey={xKey} tickFormatter={formatAxisLabel} />
               <YAxis />
               <Tooltip
                 contentStyle={{ background: "#fff", border: "1px solid #aab0dd5c", borderRadius: "8px" }}
@@ -47,13 +71,7 @@ function AnalyticsChart({
                   if (name === 'hours') return [value, 'Часов'];
                   return [value, name];
                 }}
-                labelFormatter={(label) => {
-                  const date = new Date(label);
-                  const day = String(date.getDate()).padStart(2, '0');
-                  const month = String(date.getMonth() + 1).padStart(2, '0');
-                  const year = date.getFullYear();
-                  return `${day}.${month}.${year}`;
-                }}
+                labelFormatter={formatTooltipLabel}
               />
               <Bar dataKey={yKey} fill={colors[0]} />
 

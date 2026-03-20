@@ -102,7 +102,7 @@ function ChildrenPathPreview({ children }) {
   )
 }
 
-// Р С™Р С•Р СР С—Р С•Р Р…Р ВµР Р…РЎвЂљ Р Т‘Р В»РЎРЏ Р С•РЎвЂљР С•Р В±РЎР‚Р В°Р В¶Р ВµР Р…Р С‘РЎРЏ Р В·Р В°Р С–Р С•Р В»Р С•Р Р†Р С”Р В° РЎРѓ Р Р†Р С•Р В·Р СР С•Р В¶Р Р…Р С•РЎРѓРЎвЂљРЎРЉРЎР‹ РЎР‚Р В°РЎРѓРЎв‚¬Р С‘РЎР‚Р ВµР Р…Р С‘РЎРЏ
+// Компонент для отображения заголовка с возможностью расширения
 function ExpandableTitle({ title, onExpandChange, defaultExpanded = true }) {
   const [expanded, setExpanded] = useState(defaultExpanded)
 
@@ -184,7 +184,7 @@ function DocumentationListLeftPanel({
   const suppressTreeClickUntilRef = useRef(0)
   const leftTreeLassoLastClickedIdRef = useRef(null)
   
-  // Р СњР С•Р Р†РЎвЂ№Р Вµ РЎРѓР С•РЎРѓРЎвЂљР С•РЎРЏР Р…Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—Р С•Р С‘РЎРѓР С”Р В°
+  // Новые состояния для поиска
   const [showSearch, setShowSearch] = useState(false)
   const [searchQueryLocal, setSearchQueryLocal] = useState('')
   const searchQuery = controlsAtTop && typeof searchQueryProp === 'string' ? searchQueryProp : searchQueryLocal
@@ -210,7 +210,7 @@ function DocumentationListLeftPanel({
     canManage && showDocumentationFilter && availableDocumentationFilters.length > 0
   const saveIndicatorTimerRef = useRef(null)
 
-  // GraphQL РјСѓС‚Р°С†РёРё
+  // GraphQL мутации
   const token = getCookie('token')
   const mutationContext = {
     context: {
@@ -921,9 +921,9 @@ function DocumentationListLeftPanel({
     }
   }
 
-  // Р В¤РЎС“Р Р…Р С”РЎвЂ Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—РЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р С‘, Р Р…Р Вµ РЎРЏР Р†Р В»РЎРЏР ВµРЎвЂљРЎРѓРЎРЏ Р В»Р С‘ target Р Т‘Р С•РЎвЂЎР ВµРЎР‚Р Р…Р С‘Р С РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљР С•Р С draggingItem
+  // Функция проверки, не является ли target дочерним элементом draggingItem
   const isDescendant = useCallback((nodes, parentId, childId) => {
-    // Р РЋР Р…Р В°РЎвЂЎР В°Р В»Р В° Р Р…Р В°РЎвЂ¦Р С•Р Т‘Р С‘Р С РЎР‚Р С•Р Т‘Р С‘РЎвЂљР ВµР В»РЎРЉРЎРѓР С”Р С‘Р в„– РЎС“Р В·Р ВµР В»
+    // Сначала находим родительский узел
     const findNode = (nodes, id) => {
       for (const node of nodes) {
         if (node.id === id) return node
@@ -935,11 +935,11 @@ function DocumentationListLeftPanel({
       return null
     }
 
-    // Р СњР В°РЎвЂ¦Р С•Р Т‘Р С‘Р С РЎР‚Р С•Р Т‘Р С‘РЎвЂљР ВµР В»РЎРЉРЎРѓР С”РЎС“РЎР‹ Р Р…Р С•Р Т‘РЎС“
+    // Находим родительскую ноду
     const parentNode = findNode(nodes, parentId)
     if (!parentNode || !parentNode.children) return false
 
-    // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР ВµР С, Р ВµРЎРѓРЎвЂљРЎРЉ Р В»Р С‘ childId РЎРѓРЎР‚Р ВµР Т‘Р С‘ Р Т‘Р ВµРЎвЂљР ВµР в„– parentNode (РЎР‚Р ВµР С”РЎС“РЎР‚РЎРѓР С‘Р Р†Р Р…Р С•)
+    // Проверяем, есть ли childId среди детей parentNode (рекурсивно)
     const checkChildren = (children, targetId) => {
       for (const child of children) {
         if (child.id === targetId) return true
@@ -953,9 +953,9 @@ function DocumentationListLeftPanel({
     return checkChildren(parentNode.children, childId)
   }, [])
 
-  // Р В¤РЎС“Р Р…Р С”РЎвЂ Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—Р С•Р С‘РЎРѓР С”Р В° РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљР С•Р Р† Р Р† Р Т‘Р ВµРЎР‚Р ВµР Р†Р Вµ
+  // Функция для поиска элементов в дереве
   const searchTree = useCallback((nodes, query, typeFilter = 'all') => {
-    if (!query.trim()) return null // Р вЂ™Р С•Р В·Р Р†РЎР‚Р В°РЎвЂ°Р В°Р ВµР С null Р ВµРЎРѓР В»Р С‘ Р С—Р С•Р С‘РЎРѓР С” Р С—РЎС“РЎРѓРЎвЂљР С•Р в„–
+    if (!query.trim()) return null // Возвращаем null если поиск пустой
 
     const results = []
     
@@ -963,7 +963,7 @@ function DocumentationListLeftPanel({
       items.forEach(item => {
         const currentPath = path ? `${path} / ${item.title}` : item.title
         
-        // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР ВµР С РЎРѓР С•Р С•РЎвЂљР Р†Р ВµРЎвЂљРЎРѓРЎвЂљР Р†Р С‘Р Вµ РЎвЂћР С‘Р В»РЎРЉРЎвЂљРЎР‚РЎС“ РЎвЂљР С‘Р С—Р В° Р С‘ Р С—Р С•Р С‘РЎРѓР С”Р С•Р Р†Р С•Р СРЎС“ Р В·Р В°Р С—РЎР‚Р С•РЎРѓРЎС“
+        // Проверяем соответствие фильтру типа и поисковому запросу
         const matchesType = typeFilter === 'all' || item.type === typeFilter
         const matchesQuery = item.title.toLowerCase().includes(query.toLowerCase())
         
@@ -974,7 +974,7 @@ function DocumentationListLeftPanel({
           })
         }
         
-        // Р В Р ВµР С”РЎС“РЎР‚РЎРѓР С‘Р Р†Р Р…Р С• Р С‘РЎвЂ°Р ВµР С Р Р† Р Т‘Р ВµРЎвЂљРЎРЏРЎвЂ¦
+        // Рекурсивно ищем в детях
         if (item.children && item.children.length > 0) {
           searchNodes(item.children, currentPath)
         }
@@ -985,7 +985,7 @@ function DocumentationListLeftPanel({
     return results
   }, [])
 
-  // Р СџР С•Р В»РЎС“РЎвЂЎР В°Р ВµР С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°
+  // Получаем результаты поиска
   // Поиск только по статьям (секции не ищем)
   const searchResults = searchQuery.trim()
     ? searchTree(tree, searchQuery, 'article')
@@ -1364,7 +1364,7 @@ function DocumentationListLeftPanel({
     if (!canManage) return
     if (!newTitle.trim()) return
 
-    // РќР°Р№РґРµРј С‚РёРї СѓР·Р»Р°
+    // Найдем тип узла
     let nodeType = null
     const findType = (nodes) => {
       for (const n of nodes) {
@@ -1390,7 +1390,7 @@ function DocumentationListLeftPanel({
       }
       persistNodeFilterById(id)
 
-      // РћР±РЅРѕРІР»СЏРµРј Р»РѕРєР°Р»СЊРЅРѕРµ РґРµСЂРµРІРѕ
+      // Обновляем локальное дерево
       const rename = (nodes) =>
         nodes.map(n => {
           if (n.id === id) return { ...n, title: newTitle }
@@ -2075,13 +2075,13 @@ function DocumentationListLeftPanel({
     setDeleteConfirm({ id, title })
   }
 
-  // Р В¤РЎС“Р Р…Р С”РЎвЂ Р С‘РЎРЏ Р Т‘Р В»РЎРЏ Р С—Р ВµРЎР‚Р ВµРЎвЂ¦Р С•Р Т‘Р В° Р С” РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљРЎС“ Р Р† Р Т‘Р ВµРЎР‚Р ВµР Р†Р Вµ
+  // Функция для перехода к элементу из дерева
   const navigateToItem = (item) => {
     if (item.type === 'article') {
       onSelectFile(item.id)
     }
     
-    // Р вЂ”Р В°Р С”РЎР‚РЎвЂ№Р Р†Р В°Р ВµР С Р С—Р С•Р С‘РЎРѓР С” Р С—Р С•РЎРѓР В»Р Вµ Р Р†РЎвЂ№Р В±Р С•РЎР‚Р В°
+    // Закрываем поиск после выбора
     setShowSearch(false)
   }
 
@@ -2152,7 +2152,7 @@ function DocumentationListLeftPanel({
           <div className="doc-left-tree-lasso-rect" style={leftTreeLassoRectStyle} />
         )}
         {searchResults ? (
-            // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С РЎР‚Р ВµР В·РЎС“Р В»РЎРЉРЎвЂљР В°РЎвЂљРЎвЂ№ Р С—Р С•Р С‘РЎРѓР С”Р В°
+            // Показываем результаты поиска
             <>
               <div className="search-results-info">
                 {'\u041d\u0430\u0439\u0434\u0435\u043d\u043e'}: {searchResults.length} {'\u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u043e\u0432'}
@@ -2213,7 +2213,7 @@ function DocumentationListLeftPanel({
               })}
             </>
           ) : (
-            // Р СџР С•Р С”Р В°Р В·РЎвЂ№Р Р†Р В°Р ВµР С Р С•Р В±РЎвЂ№РЎвЂЎР Р…Р С•Р Вµ Р Т‘Р ВµРЎР‚Р ВµР Р†Р С•
+            // Показываем обычное дерево
             <>
               {tree.map((item, index) => (
                 <TreeItem
@@ -2288,7 +2288,7 @@ function DocumentationListLeftPanel({
           )}
       </div>
 
-      {/* Р СљР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р Вµ Р С•Р С”Р Р…Р С• Р С—Р С•Р С‘РЎРѓР С”Р В° */}
+      {/* Модальное окно поиска */}
       {showSearch && (
         <SearchModal
           searchQuery={searchQuery}
@@ -2488,15 +2488,15 @@ function TreeItem({
           if (!canManage) return
           if (!dropHint || dropHint.id !== item.id) return
 
-          // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°: Р Р…Р ВµР В»РЎРЉР В·РЎРЏ Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р В°РЎвЂљРЎРЉ РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљ Р Р†Р Р…РЎС“РЎвЂљРЎР‚РЎРЉ РЎРѓР В°Р СР С•Р С–Р С• РЎРѓР ВµР В±РЎРЏ
+          // Проверка: нельзя перемещать элемент внутрь самого себя
           if (dragState && dragState.id === item.id && dropHint.position === 'inside') {
             setDropHint(null)
             return
           }
 
-          // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚Р С”Р В°: Р Р…Р ВµР В»РЎРЉР В·РЎРЏ Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р В°РЎвЂљРЎРЉ РЎР‚Р С•Р Т‘Р С‘РЎвЂљР ВµР В»РЎРЏ Р Р† Р С—Р С•РЎвЂљР С•Р СР С”Р В°
+          // Проверка: нельзя перемещать родителя в потомка
           if (dropHint.position === 'inside' && item.type === 'section' && dragState) {
-            // Р СџРЎР‚Р С•Р Р†Р ВµРЎР‚РЎРЏР ВµР С, Р Р…Р Вµ РЎРЏР Р†Р В»РЎРЏР ВµРЎвЂљРЎРѓРЎРЏ Р В»Р С‘ РЎвЂљР ВµР С”РЎС“РЎвЂ°Р С‘Р в„– РЎРЊР В»Р ВµР СР ВµР Р…РЎвЂљ (item) Р С—Р С•РЎвЂљР С•Р СР С”Р С•Р С dragState
+            // Проверяем, не является ли текущий элемент (item) потомком dragState
             if (isDescendant && isDescendant(tree, dragState.id, item.id)) {
               setDropHint(null)
               return
@@ -2536,7 +2536,7 @@ function TreeItem({
           }
         }}
       >
-        {/* РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚ TOP ROW РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚РІвЂќР‚ */}
+        {/* Верхняя строка */}
         <div className="tree-row tree-row-title">
           <div
             className={`tree-row-left tree-row-left-title ${
@@ -2730,14 +2730,14 @@ function SearchModal({ searchQuery, setSearchQuery, filterType, setFilterType, o
   const [position, setPosition] = useState({ x: 100, y: 50 })
   const offsetRef = useRef({ x: 0, y: 0 })
 
-  // Р В¤Р С•Р С”РЎС“РЎРѓ Р Р…Р В° input Р С—РЎР‚Р С‘ Р С•РЎвЂљР С”РЎР‚РЎвЂ№РЎвЂљР С‘Р С‘
+  // Фокус на input при открытии
   useEffect(() => {
     if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [])
 
-  // Drag Р Т‘Р В»РЎРЏ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
+  // Drag для модального окна
   const handleMouseDown = (e) => {
     if (!e.target.closest('.modal-draggable-header')) return
     
@@ -2755,7 +2755,7 @@ function SearchModal({ searchQuery, setSearchQuery, filterType, setFilterType, o
       const newX = moveEvent.clientX - offsetRef.current.x
       const newY = moveEvent.clientY - offsetRef.current.y
       
-      // Р С›Р С–РЎР‚Р В°Р Р…Р С‘РЎвЂЎР С‘Р Р†Р В°Р ВµР С Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р ВµР Р…Р С‘Р Вµ Р Р† Р С—РЎР‚Р ВµР Т‘Р ВµР В»Р В°РЎвЂ¦ Р С•Р С”Р Р…Р В°
+      // Ограничиваем перемещение в пределах окна
       const boundedX = Math.max(10, Math.min(newX, window.innerWidth - rect.width - 10))
       const boundedY = Math.max(10, Math.min(newY, window.innerHeight - rect.height - 10))
       
@@ -2771,7 +2771,7 @@ function SearchModal({ searchQuery, setSearchQuery, filterType, setFilterType, o
     document.addEventListener('mouseup', handleMouseUp)
   }
 
-  // Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР С‘Р Вµ Р С—РЎР‚Р С‘ Р Р…Р В°Р В¶Р В°РЎвЂљР С‘Р С‘ Escape
+  // Закрытие при нажатии Escape
   useEffect(() => {
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
@@ -2872,7 +2872,7 @@ function CopyModal({ data, onClose, onOnlyFolder, onWithContent }) {
   const [titleExpanded, setTitleExpanded] = useState(false)
   const offsetRef = useRef({ x: 0, y: 0 })
 
-  // Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР С‘Р Вµ Р С—РЎР‚Р С‘ Р С”Р В»Р С‘Р С”Р Вµ Р Р†Р Р…Р Вµ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
+  // Закрытие при клике вне модального окна
   const handleClickOutside = useCallback((e) => {
     if (!ref.current) return
     if (ref.current.contains(e.target)) return
@@ -2884,7 +2884,7 @@ function CopyModal({ data, onClose, onOnlyFolder, onWithContent }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [handleClickOutside])
 
-  // Drag Р Т‘Р В»РЎРЏ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
+  // Drag для модального окна
   const handleMouseDown = (e) => {
     if (!e.target.closest('.copy-modal-header')) return
     
@@ -2902,7 +2902,7 @@ function CopyModal({ data, onClose, onOnlyFolder, onWithContent }) {
       const newX = moveEvent.clientX - offsetRef.current.x
       const newY = moveEvent.clientY - offsetRef.current.y
       
-      // Р С›Р С–РЎР‚Р В°Р Р…Р С‘РЎвЂЎР С‘Р Р†Р В°Р ВµР С Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р ВµР Р…Р С‘Р Вµ Р Р† Р С—РЎР‚Р ВµР Т‘Р ВµР В»Р В°РЎвЂ¦ Р С•Р С”Р Р…Р В°
+      // Ограничиваем перемещение в пределах окна
       const boundedX = Math.max(10, Math.min(newX, window.innerWidth - rect.width - 10))
       const boundedY = Math.max(10, Math.min(newY, window.innerHeight - rect.height - 10))
       
@@ -2964,7 +2964,7 @@ function DeleteConfirm({ title, onCancel, onConfirm }) {
   const [titleExpanded, setTitleExpanded] = useState(false)
   const offsetRef = useRef({ x: 0, y: 0 })
 
-  // Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР С‘Р Вµ Р С—РЎР‚Р С‘ Р С”Р В»Р С‘Р С”Р Вµ Р Р†Р Р…Р Вµ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
+  // Закрытие при клике вне модального окна
   const handleClickOutside = useCallback((e) => {
     if (!ref.current) return
     if (ref.current.contains(e.target)) return
@@ -2976,7 +2976,7 @@ function DeleteConfirm({ title, onCancel, onConfirm }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [handleClickOutside])
 
-  // Drag Р Т‘Р В»РЎРЏ Р СР С•Р Т‘Р В°Р В»РЎРЉР Р…Р С•Р С–Р С• Р С•Р С”Р Р…Р В°
+  // Drag для модального окна
   const handleMouseDown = (e) => {
     if (!e.target.closest('.delete-confirm-header')) return
     
@@ -2994,7 +2994,7 @@ function DeleteConfirm({ title, onCancel, onConfirm }) {
       const newX = moveEvent.clientX - offsetRef.current.x
       const newY = moveEvent.clientY - offsetRef.current.y
       
-      // Р С›Р С–РЎР‚Р В°Р Р…Р С‘РЎвЂЎР С‘Р Р†Р В°Р ВµР С Р С—Р ВµРЎР‚Р ВµР СР ВµРЎвЂ°Р ВµР Р…Р С‘Р Вµ Р Р† Р С—РЎР‚Р ВµР Т‘Р ВµР В»Р В°РЎвЂ¦ Р С•Р С”Р Р…Р В°
+      // Ограничиваем перемещение в пределах окна
       const boundedX = Math.max(10, Math.min(newX, window.innerWidth - rect.width - 10))
       const boundedY = Math.max(10, Math.min(newY, window.innerHeight - rect.height - 10))
       
