@@ -1374,7 +1374,7 @@ export default function DocumentListTiptapPanelContent({
     '--article-pad-left': `${articlePadding.left}px`,
     '--article-editor-extra-left': `${editorControlsGutterWidth}px`,
     '--editor-controls-gutter': `${editorControlsGutterWidth}px`,
-    '--editor-controls-bg': canEdit ? '#f3f4f6' : 'transparent',
+    // '--editor-controls-bg': canEdit ? '#f3f4f6' : 'white',
     '--editor-scope-left-offset': `${Math.max(0, overlayLeftShift - editorControlsGutterWidth)}px`,
     '--overlay-left-shift': `${shouldShowEditorSideControls ? overlayLeftShift : 0}px`,
     marginLeft: 0,
@@ -1395,7 +1395,7 @@ export default function DocumentListTiptapPanelContent({
             {emptyStateTopRightControls}
           </div>
         ) : null}
-        <div className="tiptap-panel-empty-message">Выберите документ</div>
+        <div className="tiptap-panel-empty-message">Выберите статью</div>
       </div>
     )
   }
@@ -1416,7 +1416,7 @@ export default function DocumentListTiptapPanelContent({
             fontSize="inherit"
             style={{ width: 16, height: 16, fontSize: 16 }}
           />
-          <span>Назад</span>
+          {/* <span>Назад</span> */}
         </button>
         <div className="tiptap-panel-title">{docTitle || 'Без названия'}</div>
         {(canEdit || headerTrailingControls) && (

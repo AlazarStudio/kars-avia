@@ -105,6 +105,7 @@ function App() {
       <TokenRefresher />
       {/* {user && <UserActivityTracker />} */}
       <Routes>
+        <Route path="/external-login" element={<ExternalLogin />} />
         {user ? (
           <Route path="/" element={<Layout />}>
             <Route index element={<Main_Page user={user} />} />
@@ -175,7 +176,6 @@ function App() {
         ) : (
           <>
             <Route path="/login" element={<Login />} />
-            <Route path="/external-login" element={<ExternalLogin />} />
             <Route path="/reset-to-email" element={<Email />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<Login />} />

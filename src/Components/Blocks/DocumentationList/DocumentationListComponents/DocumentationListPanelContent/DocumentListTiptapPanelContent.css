@@ -22,7 +22,7 @@
   margin-right: 0;
   margin-top: 0;
   margin-bottom: 10px;
-  padding: 0 16px;
+  /* padding: 0 16px; */
   background: transparent;
   box-sizing: border-box;
 }
@@ -32,9 +32,9 @@
   top: 0;
   z-index: 10;
   background: #ffffff;
-  padding-top: 10px;
+  /* padding-top: 10px;
   padding-bottom: 10px;
-  margin-bottom: 8px;
+  margin-bottom: 8px; */
 }
 
 .tiptap-panel .toolbar {
@@ -70,11 +70,10 @@
 }
 
 .tiptap-panel-save-btn {
-  border: 1px solid #2f6dd5;
   background: #2f6dd5;
   color: #ffffff;
-  border-radius: 8px;
-  padding: 6px 12px;
+  /* border-radius: 10px; */
+  /* padding: 7px 12px; */
   cursor: pointer;
   font-size: 12px;
   line-height: 1;
@@ -93,12 +92,13 @@
 }
 
 .tiptap-panel-back-btn {
-  border: 1px solid #e5e7eb;
+  /* border: 1px solid #e5e7eb; */
   background: #fff;
   color: #111827;
   border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .tiptap-panel-back-btn:hover {
@@ -109,15 +109,14 @@
 
 .tiptap-panel {
   padding: 0 0 24px;
-  background: transparent;
 }
 
 .tiptap-panel.tiptap-panel-empty {
   min-height: 240px;
-  height: calc(100% - 4px);
-  margin-top: 4px;
+  height: 100%;
+  /* margin-top: 4px; */
   box-sizing: border-box;
-  border-radius: 14px;
+  border-radius: 0 10px 10px 0;
   background: rgba(255, 255, 255, 0.82);
   color: var(--main-gray);
   font-size: 14px;
@@ -151,10 +150,10 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  background: var(--gray);
+  background: var(--white);
   padding-top: 0;
-  padding-bottom: 8px;
-  margin-bottom: 4px;
+  /* padding-bottom: 8px;
+  margin-bottom: 4px; */
 }
 
 .tiptap-panel-header {
@@ -163,11 +162,11 @@
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: var(--panel-top-controls-left-offset, 12px);
-  padding-right: var(--panel-top-controls-right-offset, 12px);
-  border: 1px solid rgba(53, 59, 85, 0.08);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 8px 20px rgba(53, 59, 85, 0.06);
+  /* padding-right: var(--panel-top-controls-right-offset, 12px); */
+  /* border: 1px solid rgba(53, 59, 85, 0.08); */
+  /* border-radius: 14px; */
+  /* background: rgba(255, 255, 255, 0.95); */
+  /* box-shadow: 0 8px 20px rgba(53, 59, 85, 0.06); */
 }
 
 .tiptap-panel-title {
@@ -183,18 +182,18 @@
 
 .tiptap-panel .toolbar {
   margin-top: 0;
-  border-color: rgba(53, 59, 85, 0.08);
+  /* border-color: rgba(53, 59, 85, 0.08);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 8px 20px rgba(53, 59, 85, 0.06);
+  box-shadow: 0 8px 20px rgba(53, 59, 85, 0.06); */
 }
 
 .tiptap-panel .ProseMirror {
   background-color: #ffffff;
-  background-image: linear-gradient(
+  /* background-image: linear-gradient(
     var(--editor-controls-bg, #f3f4f6),
     var(--editor-controls-bg, #f3f4f6)
-  );
+  ); */
   background-repeat: no-repeat;
   background-position: left top;
   background-size: var(--article-editor-extra-left, 0px) 100%;
@@ -252,9 +251,9 @@
   );
 }
 
-.tiptap-panel .editor-hover-scope.editor-controls-gutter-collapsed::before {
+/* .tiptap-panel .editor-hover-scope.editor-controls-gutter-collapsed::before {
   background: var(--editor-controls-bg, #f3f4f6);
-}
+} */
 
 .tiptap-panel-sticky-controls {
   min-height: 22px;
@@ -276,18 +275,19 @@
 }
 
 .tiptap-panel-save-btn {
-  border-color: var(--menu-bg);
-  background: var(--menu-bg);
+  /* border-color: var(--menu-bg); */
+  background: var(--dark-blue);
+  color: var(--white);
   border-radius: 10px;
-  padding: 7px 12px;
+  padding: 10px 20px;
   font-weight: 600;
-  box-shadow: 0 8px 16px rgba(53, 59, 85, 0.16);
+  /* box-shadow: 0 8px 16px rgba(53, 59, 85, 0.16); */
 }
 
-.tiptap-panel-save-btn:hover:not(:disabled) {
-  background: #2f344c;
-  border-color: #2f344c;
-}
+/* .tiptap-panel-save-btn:hover:not(:disabled) {
+  background: var(--light-blue);
+  border-color: var(--light-blue);
+} */
 
 /* Keep the editor gutter pseudo-elements behind the editable content.
    Otherwise the left gutter strip can visually cover the caret in nested blocks. */

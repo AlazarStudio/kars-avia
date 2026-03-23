@@ -30,7 +30,6 @@ const MAX_LEFT_PANEL_WIDTH = 860
 const RIGHT_PANEL_WIDTH = 350
 const MIN_CENTER_PANEL_WIDTH = 360
 
-const DOC_TYPE = 'documentation'
 const TREE_SYNC_DEBOUNCE_MS = 1200
 const DOC_REALTIME_REFRESH_MS = 5000
 const DOC_META_KEY = '__doclist_meta'
@@ -326,7 +325,7 @@ async function toServerTreeNode(localNode) {
     clientKey: nodeId,
     name: title,
     description: serializeDocMeta(nodeType, draft),
-    type: DOC_TYPE,
+    documentationType: 'documentation',
     children,
   }
 }
@@ -412,6 +411,7 @@ function applySectionOpenState(nodes, openStateMap) {
 
 function DocumentationList1({
   user,
+  documentationType = 'documentation',
   filterValue = 'dispatcher',
   showFilterSwitcher = false,
   filterOptions = [],
@@ -485,6 +485,7 @@ function DocumentationList1({
     context: requestContext,
     variables: {
       type: apiDocumentationType,
+      documentationType,
     },
   })
   const [updateArticle] = useMutation(UPDATE_ARTICLE, {
@@ -634,6 +635,7 @@ function DocumentationList1({
     try {
       const input = {
         content,
+        documentationType,
       }
 
       if (apiDocumentationType) {
@@ -649,7 +651,7 @@ function DocumentationList1({
     } catch (error) {
       console.error('Failed to persist article content:', error)
     }
-  }, [apiDocumentationType, canManageDocs, updateArticle])
+  }, [apiDocumentationType, canManageDocs, documentationType, updateArticle])
 
   useEffect(() => {
     if (!activeDocId) return
@@ -921,8 +923,8 @@ function DocumentationList1({
       )}
       type="button"
       onClick={handleRightPanelToggle}
-      aria-label={isRightPanelOpen ? 'Close navigation' : 'Open navigation'}
-      title={isRightPanelOpen ? 'Close navigation' : 'Open navigation'}
+      aria-label={isRightPanelOpen ? 'Закрыть навигацию' : 'Открыть навигацию'}
+      title={isRightPanelOpen ? 'Закрыть навигацию' : 'Открыть навигацию'}
     >
       {isRightPanelOpen ? (
         <ChevronRightRoundedIcon
@@ -973,7 +975,7 @@ function DocumentationList1({
 
   const inlineHeaderPanelControls = shouldRenderInlineHeaderPanelControls ? (
     <>
-      {renderReloadArticlesButton()}
+      {/* {renderReloadArticlesButton()} */}
       {renderRightPanelToggleButton({ inline: true })}
     </>
   ) : null
@@ -1014,13 +1016,14 @@ function DocumentationList1({
             documentationFilters={filterOptions}
             documentationFilterValue={filterValue}
             onDocumentationFilterChange={onFilterValueChange}
+            documentationType={documentationType}
             searchQuery={searchQuery}
             onSearchQueryChange={onSearchQueryChange}
             controlsAtTop={controlsAtTop}
           />
         </div>
 
-        <div
+        {/* <div
           className={cn(
             classes['left-panel-resizer'],
             isResizingLeftPanel && classes['is-resizing'],
@@ -1033,7 +1036,7 @@ function DocumentationList1({
           aria-valuemin={MIN_LEFT_PANEL_WIDTH}
           aria-valuemax={MAX_LEFT_PANEL_WIDTH}
           aria-valuenow={leftPanelWidth}
-        />
+        /> */}
 
         {isLeftPanelOpen && (
           <div
@@ -1115,6 +1118,7 @@ DocumentationList1.propTypes = {
   user: PropTypes.shape({
     role: PropTypes.string,
   }),
+  documentationType: PropTypes.oneOf(['documentation', 'update']),
   filterValue: PropTypes.string,
   showFilterSwitcher: PropTypes.bool,
   filterOptions: PropTypes.arrayOf(

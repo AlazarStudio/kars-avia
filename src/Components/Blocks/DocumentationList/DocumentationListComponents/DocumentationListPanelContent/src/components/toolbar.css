@@ -23,7 +23,7 @@ a {
   z-index: 9;
   display: flex;
   background: white;
-  border: 1px solid #e0e0e0;
+  /* border: 1px solid #e0e0e0; */
   border-radius: 6px;
   margin-bottom: 12px;
   flex-wrap: nowrap;

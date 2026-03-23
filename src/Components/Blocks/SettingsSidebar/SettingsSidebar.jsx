@@ -187,14 +187,37 @@ export default function SettingsSidebar({
 
   const buildNotificationPayload = (s) => ({
     requestCreate: !!s?.requestCreate,
+    emailRequestCreate: !!s?.requestCreate && !!s?.emailRequestCreate,
+    sitePushRequestCreate: !!s?.requestCreate && !!s?.sitePushRequestCreate,
     requestDatesChange: !!s?.requestDatesChange,
+    emailRequestDatesChange: !!s?.requestDatesChange && !!s?.emailRequestDatesChange,
+    sitePushRequestDatesChange: !!s?.requestDatesChange && !!s?.sitePushRequestDatesChange,
     requestPlacementChange: !!s?.requestPlacementChange,
+    emailRequestPlacementChange:
+      !!s?.requestPlacementChange && !!s?.emailRequestPlacementChange,
+    sitePushRequestPlacementChange:
+      !!s?.requestPlacementChange && !!s?.sitePushRequestPlacementChange,
     requestCancel: !!s?.requestCancel,
+    emailRequestCancel: !!s?.requestCancel && !!s?.emailRequestCancel,
+    sitePushRequestCancel: !!s?.requestCancel && !!s?.sitePushRequestCancel,
     reserveCreate: !!s?.reserveCreate,
+    emailReserveCreate: !!s?.reserveCreate && !!s?.emailReserveCreate,
+    sitePushReserveCreate: !!s?.reserveCreate && !!s?.sitePushReserveCreate,
     reserveDatesChange: !!s?.reserveDatesChange,
+    emailReserveDatesChange: !!s?.reserveDatesChange && !!s?.emailReserveDatesChange,
+    sitePushReserveDatesChange:
+      !!s?.reserveDatesChange && !!s?.sitePushReserveDatesChange,
     reserveUpdate: !!s?.reserveUpdate,
+    emailReserveUpdate: !!s?.reserveUpdate && !!s?.emailReserveUpdate,
+    sitePushReserveUpdate: !!s?.reserveUpdate && !!s?.sitePushReserveUpdate,
     reservePlacementChange: !!s?.reservePlacementChange,
+    emailReservePlacementChange:
+      !!s?.reservePlacementChange && !!s?.emailReservePlacementChange,
+    sitePushReservePlacementChange:
+      !!s?.reservePlacementChange && !!s?.sitePushReservePlacementChange,
     newMessage: !!s?.newMessage,
+    emailNewMessage: !!s?.newMessage && !!s?.emailNewMessage,
+    sitePushNewMessage: !!s?.newMessage && !!s?.sitePushNewMessage,
   });
 
   const handleSubmit = async () => {

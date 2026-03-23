@@ -3026,6 +3026,11 @@ export const GET_PASSENGER_REQUEST = gql`
         id
         name
       }
+      representativeLinks {
+        representativeDepartmentId
+        representativeDepartmentName
+        linkPWA
+      }
       airline {
         id
         name
@@ -4350,6 +4355,24 @@ export const GET_AIRLINE_COMPANY = gql`
           reserveUpdate
           reservePlacementChange
           newMessage
+          emailRequestCreate
+          emailRequestDatesChange
+          emailRequestPlacementChange
+          emailRequestCancel
+          emailReserveCreate
+          emailReserveDatesChange
+          emailReserveUpdate
+          emailReservePlacementChange
+          emailNewMessage
+          sitePushRequestCreate
+          sitePushRequestDatesChange
+          sitePushRequestPlacementChange
+          sitePushRequestCancel
+          sitePushReserveCreate
+          sitePushReserveDatesChange
+          sitePushReserveUpdate
+          sitePushReservePlacementChange
+          sitePushNewMessage
         }
       }
     }
@@ -4669,6 +4692,24 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           reserveUpdate
           reservePlacementChange
           newMessage
+          emailRequestCreate
+          emailRequestDatesChange
+          emailRequestPlacementChange
+          emailRequestCancel
+          emailReserveCreate
+          emailReserveDatesChange
+          emailReserveUpdate
+          emailReservePlacementChange
+          emailNewMessage
+          sitePushRequestCreate
+          sitePushRequestDatesChange
+          sitePushRequestPlacementChange
+          sitePushRequestCancel
+          sitePushReserveCreate
+          sitePushReserveDatesChange
+          sitePushReserveUpdate
+          sitePushReservePlacementChange
+          sitePushNewMessage
         }
         dispatchers {
           id
@@ -5164,8 +5205,8 @@ export const UPDATE_DOCUMENTATION = gql`
 
 // Queries для Section
 export const GET_SECTIONS_WITH_HIERARCHY = gql`
-  query SectionsWithHierarhy($type: Type) {
-    sectionsWithHierarhy(type: $type)
+  query SectionsWithHierarhy($type: Type, $documentationType: DocumentationType) {
+    sectionsWithHierarhy(type: $type, documentationType: $documentationType)
   }
 `;
 
@@ -5816,6 +5857,28 @@ export const GET_ANALYTICS_AIRLINE_SERVICE_COMPARISON = gql`
 export const CREATE_EXTERNAL_AUTH_LINK = gql`
   mutation CreateExternalAuthLink($input: CreateExternalAuthLinkInput!) {
     createExternalAuthLink(input: $input) {
+      success
+      emailed
+      link
+    }
+  }
+`;
+
+export const CREATE_REPRESENTATIVE_PWA_LINK = gql`
+  mutation CreateRepresentativePwaLink(
+    $email: String!
+    $name: String
+    $passengerRequestId: ID!
+  ) {
+    createExternalAuthLink(
+      input: {
+        email: $email
+        name: $name
+        scope: REPRESENTATIVE
+        accessType: PWA
+        passengerRequestId: $passengerRequestId
+      }
+    ) {
       success
       emailed
       link

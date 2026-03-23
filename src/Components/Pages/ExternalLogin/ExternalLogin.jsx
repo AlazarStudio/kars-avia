@@ -25,6 +25,7 @@ function ExternalLogin() {
 
   useEffect(() => {
     const token = searchParams.get("token")?.trim();
+    const passengerRequestId = searchParams.get("passengerRequestId")?.trim();
 
     if (!token) {
       setError("Ссылка недействительна: отсутствует токен.");
@@ -67,6 +68,15 @@ function ExternalLogin() {
         }
 
         setStatus("success");
+
+        if (extUser?.scope === "REPRESENTATIVE") {
+          if (passengerRequestId) {
+            window.location.href = `/${ID_REPRESENTATIVE_REQUESTS}/representativeRequestsPlacement/${passengerRequestId}`;
+            return;
+          }
+          window.location.href = `/${ID_REPRESENTATIVE_REQUESTS}`;
+          return;
+        }
 
         if (extUser?.scope === "HOTEL" && extUser?.hotelId) {
           try {

@@ -13,7 +13,13 @@ import {
   resolveDocumentationFilterForUser,
 } from "./documentationFilters";
 
-function DocumentationList({ children, user, ...props }) {
+function DocumentationList({
+  children,
+  user,
+  documentationType = "documentation",
+  title = "Инструкции",
+  ...props
+}) {
   const canSwitchTabs = hasDocumentationFilterSwitcherAccess(user);
   const defaultFilterValue = useMemo(
     () =>
@@ -58,7 +64,7 @@ function DocumentationList({ children, user, ...props }) {
 
   return (
     <div className={classes.section}>
-      <Header>{"\u0418\u043d\u0441\u0442\u0440\u0443\u043a\u0446\u0438\u0438"}</Header>
+      <Header>{title}</Header>
 
       <div className={classes.section_searchAndFilter}>
         {canSwitchTabs && availableFilters.length > 0 && (
@@ -86,8 +92,9 @@ function DocumentationList({ children, user, ...props }) {
 
       <div className={classes.documentationBlock}>
         <DocumentationList1
-          key={`doc-tab-${filterValue}`}
+          key={`doc-tab-${documentationType}-${filterValue}`}
           user={user}
+          documentationType={documentationType}
           filterValue={filterValue}
           showFilterSwitcher={canSwitchTabs}
           filterOptions={availableFilters}

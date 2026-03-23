@@ -13,7 +13,7 @@
   height: 100%;
   min-height: 0;
   position: relative;
-  border-radius: 16px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -106,7 +106,7 @@
 }
 
 .right-panel.open {
-  width: 350px;
+  width: 250px;
   border-left: 1px solid #e5e7eb;
   pointer-events: auto;
 }
@@ -336,9 +336,9 @@ body.is-resizing-left-panel .left-panel-resizer {
 }
 
 .panel-content {
-  background: var(--gray);
-  padding-right: 24px;
-  padding-left: 18px;
+  /* background: var(--gray); */
+  padding-right: 30px;
+  /* padding-left: 18px; */
   /* scrollbar-width: thin;
   scrollbar-color: #356184 #f9f9fd; */
 }

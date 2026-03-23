@@ -34,6 +34,38 @@
 .titleHeader {
     display: flex;
     gap: 10px;
+    align-items: center;
+    min-width: 0;
+}
+
+.titleText {
+    white-space: nowrap;
+}
+
+.representativeLinkActions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 10px;
+}
+
+.representativeLinkButton {
+    border: none;
+    background: transparent;
+    color: #545873;
+    border-radius: 0;
+    height: auto;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.representativeLinkButton:disabled {
+    opacity: .7;
+    cursor: default;
 }
 
 .backButton {
@@ -353,6 +385,11 @@
     .titleHeader {
         font-size: 28px;
         line-height: 34.73px;
+    }
+
+    .representativeLinkButton {
+        height: 30px;
+        font-size: 12px;
     }
 }
 

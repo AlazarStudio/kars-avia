@@ -63,6 +63,7 @@ import PassengerRequestLogs from "../../Blocks/LogsHistory/PassengerRequestLogs"
 import * as XLSX from "xlsx";
 import DownloadIcon from "../../../shared/icons/DownloadIcon";
 import WhiteEditIcon from "../../../shared/icons/WhiteEditIcon";
+import CopyIcon from "../../../shared/icons/CopyIcon";
 
 function ReservePlacementRepresentative({ children, user, ...props }) {
   const token = getCookie("token");
@@ -492,6 +493,37 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     }, fullNotifyTime);
   };
 
+  const representativePwaLink = useMemo(() => {
+    const links = request?.representativeLinks || [];
+    if (!Array.isArray(links) || links.length === 0) return "";
+    const byDepartment = user?.representativeDepartmentId
+      ? links.find(
+          (item) =>
+            String(item?.representativeDepartmentId) ===
+              String(user.representativeDepartmentId) && item?.linkPWA
+        )
+      : null;
+    if (byDepartment?.linkPWA) return byDepartment.linkPWA;
+    const firstWithPwa = links.find((item) => item?.linkPWA);
+    return firstWithPwa?.linkPWA || "";
+  }, [request?.representativeLinks, user?.representativeDepartmentId]);
+
+  const canCopyRepresentativeLink =
+    !isExternalUser && Boolean(representativePwaLink);
+
+  const handleCopyRepresentativeLink = async () => {
+    if (!representativePwaLink) {
+      addNotification("PWA-ссылка представительства не найдена.", "error");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(representativePwaLink);
+      addNotification("Ссылка представительства скопирована.", "success");
+    } catch (_) {
+      addNotification("Не удалось скопировать ссылку.", "error");
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [habitationSearchQuery, setHabitationSearchQuery] = useState("");
   const handleSearch = (e) => {
@@ -569,7 +601,20 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             <Link to={`/representativeRequests`} className={classes.backButton}>
               <img src="/arrow.png" alt="" />
             </Link>
-            Заявка {request.flightNumber}
+            <span className={classes.titleText}>Заявка {request.flightNumber}</span>
+            {canCopyRepresentativeLink && (
+              <div className={classes.representativeLinkActions}>
+                <button
+                  type="button"
+                  className={classes.representativeLinkButton}
+                  onClick={handleCopyRepresentativeLink}
+                  title="Скопировать representative ссылку"
+                >
+                  Ссылка{" "}
+                  <CopyIcon />
+                </button>
+              </div>
+            )}
           </div>
         </Header>
         <div className={classes.tabsRowWrapper}>

@@ -153,6 +153,7 @@ function DocumentationListLeftPanel({
   documentationFilters = [],
   documentationFilterValue = DEFAULT_DOCUMENTATION_FILTER,
   onDocumentationFilterChange,
+  documentationType = 'documentation',
   searchQuery: searchQueryProp,
   onSearchQueryChange,
   controlsAtTop = false,
@@ -248,7 +249,11 @@ function DocumentationListLeftPanel({
         try {
           const result = await createSectionMutation({
             variables: {
-              input: { ...safeInput, type: apiDocumentationType },
+              input: {
+                ...safeInput,
+                type: apiDocumentationType,
+                documentationType,
+              },
             },
           })
 
@@ -263,6 +268,7 @@ function DocumentationListLeftPanel({
                     parentId:
                       createdSection.parentId ?? safeInput.parentId ?? null,
                     type: apiDocumentationType,
+                    documentationType,
                   },
                 },
               })
@@ -286,10 +292,10 @@ function DocumentationListLeftPanel({
       }
 
       return createSectionMutation({
-        variables: { input: safeInput },
+        variables: { input: { ...safeInput, documentationType } },
       })
     },
-    [createSectionMutation, normalizedDocFilter, updateSectionMutation]
+    [createSectionMutation, documentationType, normalizedDocFilter, updateSectionMutation]
   )
 
   const createArticleWithFilter = useCallback(
@@ -307,7 +313,11 @@ function DocumentationListLeftPanel({
         try {
           const result = await createArticleMutation({
             variables: {
-              input: { ...safeInput, type: apiDocumentationType },
+              input: {
+                ...safeInput,
+                type: apiDocumentationType,
+                documentationType,
+              },
             },
           })
 
@@ -319,6 +329,7 @@ function DocumentationListLeftPanel({
                 sectionId:
                   createdArticle.sectionId ?? safeInput.sectionId ?? null,
                 type: apiDocumentationType,
+                documentationType,
               }
 
               if (Object.prototype.hasOwnProperty.call(safeInput, 'content')) {
@@ -351,10 +362,10 @@ function DocumentationListLeftPanel({
       }
 
       return createArticleMutation({
-        variables: { input: safeInput },
+        variables: { input: { ...safeInput, documentationType } },
       })
     },
-    [createArticleMutation, normalizedDocFilter, updateArticleMutation]
+    [createArticleMutation, documentationType, normalizedDocFilter, updateArticleMutation]
   )
 
   const updateSectionWithFilter = useCallback(
@@ -373,13 +384,20 @@ function DocumentationListLeftPanel({
           return await updateSectionMutation({
             variables: {
               id,
-              input: { ...safeInput, type: apiDocumentationType },
+              input: {
+                ...safeInput,
+                type: apiDocumentationType,
+                documentationType,
+              },
             },
           })
         } catch (error) {
           if (isUnsupportedInputFieldError(error, 'type')) {
             return updateSectionMutation({
-              variables: { id, input: safeInput },
+              variables: {
+                id,
+                input: { ...safeInput, documentationType },
+              },
             })
           }
           throw error
@@ -387,10 +405,13 @@ function DocumentationListLeftPanel({
       }
 
       return updateSectionMutation({
-        variables: { id, input: safeInput },
+        variables: {
+          id,
+          input: { ...safeInput, documentationType },
+        },
       })
     },
-    [normalizedDocFilter, updateSectionMutation]
+    [documentationType, normalizedDocFilter, updateSectionMutation]
   )
 
   const updateArticleWithFilter = useCallback(
@@ -409,13 +430,20 @@ function DocumentationListLeftPanel({
           return await updateArticleMutation({
             variables: {
               id,
-              input: { ...safeInput, type: apiDocumentationType },
+              input: {
+                ...safeInput,
+                type: apiDocumentationType,
+                documentationType,
+              },
             },
           })
         } catch (error) {
           if (isUnsupportedInputFieldError(error, 'type')) {
             return updateArticleMutation({
-              variables: { id, input: safeInput },
+              variables: {
+                id,
+                input: { ...safeInput, documentationType },
+              },
             })
           }
           throw error
@@ -423,10 +451,13 @@ function DocumentationListLeftPanel({
       }
 
       return updateArticleMutation({
-        variables: { id, input: safeInput },
+        variables: {
+          id,
+          input: { ...safeInput, documentationType },
+        },
       })
     },
-    [normalizedDocFilter, updateArticleMutation]
+    [documentationType, normalizedDocFilter, updateArticleMutation]
   )
 
   const persistNodeFilterById = useCallback((_nodeId, _filter = normalizedDocFilter) => {}, [
@@ -1219,7 +1250,7 @@ function DocumentationListLeftPanel({
       parentId,
       name: '',
       type: 'section',
-      documentationType: documentationFilterValue || normalizedDocFilter,
+      rootFilterValue: documentationFilterValue || normalizedDocFilter,
     })
   }
 
@@ -1239,7 +1270,7 @@ function DocumentationListLeftPanel({
     const inheritedDocumentationType =
       creating.parentId === 'root'
         ? normalizeDocumentationFilter(
-            creating.documentationType || documentationFilterValue || normalizedDocFilter
+            creating.rootFilterValue || documentationFilterValue || normalizedDocFilter
           ) || normalizedDocFilter
         : normalizedDocFilter
 
@@ -3071,7 +3102,7 @@ function CreateRow({
     documentationFilters.length > 0
   const currentDocumentationTypeLabel =
     documentationFilters.find(
-      option => option?.value === creating?.documentationType
+      option => option?.value === creating?.rootFilterValue
     )?.label || documentationFilters[0]?.label || ''
 
   useOutsideClose(ref, () => setCreating(null))
