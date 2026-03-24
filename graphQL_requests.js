@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 
 
-// export const path = import.meta.env.VITE_PRODUCTION_PATH;
-// export const server = import.meta.env.VITE_PRODUCTION_SERVER;
+export const path = import.meta.env.VITE_PRODUCTION_PATH;
+export const server = import.meta.env.VITE_PRODUCTION_SERVER;
 
 // export const path = import.meta.env.VITE_DEMO_PATH;
 // export const server = import.meta.env.VITE_DEMO_SERVER;
 
-export const path = import.meta.env.VITE_DEV_PATH;
-export const server = import.meta.env.VITE_DEV_SERVER;
+// export const path = import.meta.env.VITE_DEV_PATH;
+// export const server = import.meta.env.VITE_DEV_SERVER;
 
 
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
@@ -1132,6 +1132,17 @@ export const GET_DISPATCHER_POSITIONS = gql`
     }
   }
 `;
+
+export const CREATE_POSITION = gql`
+  mutation CreatePosition($input: PositionInput) {
+    createPosition(input: $input) {
+      id
+      name
+      separator
+      category
+    }
+  }
+`;
 //
 
 // Запросы к заявкам на эстафету
@@ -1755,6 +1766,14 @@ export const UPDATE_PASSENGER_REQUEST = gql`
 export const SET_PASSENGER_REQUEST_STATUS = gql`
   mutation SetPassengerRequestStatus($id: ID!, $status: PassengerRequestStatus!) {
     setPassengerRequestStatus(id: $id, status: $status) {
+      id
+    }
+  }
+`;
+
+export const CANCEL_PASSENGER_REQUEST = gql`
+  mutation CancelPassengerRequest($id: ID!, $cancelReason: String) {
+    cancelPassengerRequest(id: $id, cancelReason: $cancelReason) {
       id
     }
   }
@@ -4292,6 +4311,19 @@ export const GET_AIRLINE_COMPANY = gql`
     airline(id: $airlineId) {
       id
       name
+      users {
+        id
+        name
+        role
+        airlineDepartmentId
+        position {
+          id
+          name
+        }
+        images
+        email
+        login
+      }
       department {
         id
         name

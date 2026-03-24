@@ -12,6 +12,10 @@ function AdditionalMenu({
   menuRef,
   onEdit,
   onDelete,
+  editLabel = "Редактировать",
+  deleteLabel = "Удалить",
+  showEditIcon = true,
+  showDeleteIcon = true,
 }) {
   return (
     <>
@@ -37,8 +41,8 @@ function AdditionalMenu({
             onEdit();
           }}
         >
-          <EditIcon />
-          Редактировать
+          {showEditIcon && <EditIcon />}
+          {editLabel}
         </MenuItem>
         {onDelete && (
           <MenuItem
@@ -48,8 +52,8 @@ function AdditionalMenu({
               onDelete();
             }}
           >
-            <CancelIcon />
-            Удалить
+            {showDeleteIcon && <CancelIcon />}
+            {deleteLabel}
           </MenuItem>
         )}
       </Menu>

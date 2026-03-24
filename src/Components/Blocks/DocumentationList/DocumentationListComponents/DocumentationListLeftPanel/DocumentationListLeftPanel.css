@@ -1415,9 +1415,10 @@
 }
 
 .doc-left-tree {
-  padding: 36px 0px 10px 8px;
+  padding: 40px 0px 10px 8px;
   position: relative;
   overflow-x: hidden;
+  background-color: white;
   /* scrollbar-width: thin; 
   scrollbar-color: #356184 #f9f9fd; */
 }
@@ -1523,7 +1524,7 @@
 
 .tree-item.section,
 .tree-item.article {
-  margin-left: 4px;
+  margin-left: 0px;
 }
 
 .tree-item.article {
@@ -1606,7 +1607,7 @@
 }
 
 .tree-children {
-  background: rgba(53, 59, 85, 0.03);
+  background: white
 }
 
 .tree-children::before {

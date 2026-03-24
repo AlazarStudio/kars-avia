@@ -10,7 +10,6 @@ import InfoTableDataReserve_passengers from "../../Blocks/InfoTableDataReserve_p
 import { requestsReserve } from "../../../requests";
 import AddNewPassenger from "../../Blocks/AddNewPassenger/AddNewPassenger";
 import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
-import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
@@ -29,7 +28,7 @@ import {
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
   getCookie,
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
-  SET_PASSENGER_REQUEST_STATUS,
+  CANCEL_PASSENGER_REQUEST,
 } from "../../../../graphQL_requests";
 import {
   isAirlineRole as isAirlineRoleCheck,
@@ -408,7 +407,8 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   };
 
   const [showCancelRequestConfirm, setShowCancelRequestConfirm] = useState(false);
-  const [setRequestStatus, { loading: cancellingRequest }] = useMutation(SET_PASSENGER_REQUEST_STATUS, {
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelPassengerRequest, { loading: cancellingRequest }] = useMutation(CANCEL_PASSENGER_REQUEST, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -418,14 +418,20 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     awaitRefetchQueries: false,
     onCompleted: () => {
       setShowEditRequestSidebar(false);
+      setCancelReason("");
       addNotification?.("Заявка отменена.", "success");
     },
   });
   const handleConfirmCancelRequest = () => {
     if (!request?.id) return;
+    const reason = (cancelReason || "").trim();
+    if (!reason) {
+      addNotification?.("Укажите причину отмены заявки.", "error");
+      return;
+    }
     setShowCancelRequestConfirm(false);
-    setRequestStatus({
-      variables: { id: request.id, status: "CANCELLED" },
+    cancelPassengerRequest({
+      variables: { id: request.id, cancelReason: reason },
     });
   };
 
@@ -608,7 +614,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                   type="button"
                   className={classes.representativeLinkButton}
                   onClick={handleCopyRepresentativeLink}
-                  title="Скопировать representative ссылку"
+                  title="Скопировать ссылку для представительства"
                 >
                   Ссылка{" "}
                   <CopyIcon />
@@ -946,13 +952,39 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             />
 
             {showCancelRequestConfirm && (
-              <DeleteComponent
-                title="Вы уверены, что хотите отменить заявку?"
-                isCancel
-                close={() => setShowCancelRequestConfirm(false)}
-                remove={() => handleConfirmCancelRequest()}
-                index={null}
-              />
+              <div
+                className={classes.modalOverlay}
+                onClick={() => !cancellingRequest && setShowCancelRequestConfirm(false)}
+              >
+                <div
+                  className={classes.modalContent}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3>Отмена заявки</h3>
+                  <p>Укажите причину отмены (обязательно):</p>
+                  <textarea
+                    className={classes.modalReasonInput}
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    rows={4}
+                    placeholder="Причина отмены"
+                  />
+                  <div className={classes.modalActions}>
+                    <Button
+                      onClick={() => {
+                        setShowCancelRequestConfirm(false);
+                        setCancelReason("");
+                      }}
+                      disabled={cancellingRequest}
+                    >
+                      Отмена
+                    </Button>
+                    <Button onClick={handleConfirmCancelRequest} disabled={cancellingRequest}>
+                      {cancellingRequest ? "Сохранение..." : "Подтвердить"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             )}
 
             <AddRepresentativeHotel

@@ -126,8 +126,8 @@ export default function PowerSupplyTab({
       </div>
       <ServiceFooter
         statusText={statusText}
-        ctaLabel={requestCancelled ? undefined : "Питание доставлено"}
-        onCta={requestCancelled ? undefined : () => mutate()}
+        ctaLabel={!requestCancelled && canMarkDelivered ? "Питание доставлено" : undefined}
+        onCta={!requestCancelled && canMarkDelivered ? () => mutate() : undefined}
         disabled={loading || !canMarkDelivered}
         earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
         onEarlyCompleteClick={

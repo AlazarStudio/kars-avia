@@ -309,13 +309,12 @@ function AirlineAnalytics({ user, height }) {
               {filteredAirlines.map((airline) => (
                 <li
                   key={airline.id}
-                  className={`${classes.listItem} ${
-                    selectedAirline && selectedAirline.id === airline.id
+                  className={`${classes.listItem} ${selectedAirline && selectedAirline.id === airline.id
                       ? classes.active
                       : !selectedAirline && airline.id === airlines[0]?.id
-                      ? classes.active
-                      : ""
-                  }`}
+                        ? classes.active
+                        : ""
+                    }`}
                   onClick={() =>
                     setSelectedAirline({
                       id: airline.id,
@@ -363,8 +362,9 @@ function AirlineAnalytics({ user, height }) {
               <div className={classes.headerControls}>
                 <div className={classes.filtersRow}>
                   <MultiSelectAutocomplete
-                    dropdownWidth={220}
+                    dropdownWidth={"200px"}
                     label="Услуги"
+                    flexWrap={true}
                     options={serviceOptions}
                     value={selectedServiceOptions}
                     isMultiple
@@ -377,19 +377,20 @@ function AirlineAnalytics({ user, height }) {
                   />
 
                   <div className={classes.positionsWrap}>
-                <MUIAutocomplete
-                      dropdownWidth={220}
+                    <MUIAutocomplete
+                      dropdownWidth={"200px"}
                       label="Состав"
-                  options={CREW_OPTIONS.map((item) => item.label)}
-                  value={
-                    CREW_OPTIONS.find((item) => item.id === crewMode)?.label || "Эскадрилья"
-                  }
-                  onChange={(_, newValue) => {
-                    const nextId =
-                      CREW_OPTIONS.find((item) => item.label === newValue)?.id ||
-                      "SQUADRON";
-                    setCrewMode(nextId);
-                  }}
+                      flexWrap={true}
+                      options={CREW_OPTIONS.map((item) => item.label)}
+                      value={
+                        CREW_OPTIONS.find((item) => item.id === crewMode)?.label || "Эскадрилья"
+                      }
+                      onChange={(_, newValue) => {
+                        const nextId =
+                          CREW_OPTIONS.find((item) => item.label === newValue)?.id ||
+                          "SQUADRON";
+                        setCrewMode(nextId);
+                      }}
                       hideLabelOnFocus={false}
                     />
                     {crewMode === "POSITIONS" ? (
@@ -403,8 +404,9 @@ function AirlineAnalytics({ user, height }) {
                   </div>
 
                   <MultiSelectAutocomplete
-                    dropdownWidth={220}
+                    dropdownWidth={"200px"}
                     label="Регионы"
+                    flexWrap={true}
                     options={regionOptions}
                     value={selectedRegionOptions}
                     isMultiple
@@ -419,24 +421,24 @@ function AirlineAnalytics({ user, height }) {
                 </div>
 
                 <div className={classes.periodButtons}>
-                <button
-                  className={classes.periodButton}
-                  onClick={() => {
-                    setPickerTarget("period1");
-                    setShowPicker(true);
-                  }}
-                >
-                  Период 1
-                </button>
-                <button
-                  className={classes.periodButton}
-                  onClick={() => {
-                    setPickerTarget("period2");
-                    setShowPicker(true);
-                  }}
-                >
-                  Период 2
-                </button>
+                  <button
+                    className={classes.periodButton}
+                    onClick={() => {
+                      setPickerTarget("period1");
+                      setShowPicker(true);
+                    }}
+                  >
+                    Период 1
+                  </button>
+                  <button
+                    className={classes.periodButton}
+                    onClick={() => {
+                      setPickerTarget("period2");
+                      setShowPicker(true);
+                    }}
+                  >
+                    Период 2
+                  </button>
                 </div>
               </div>
             </div>
@@ -459,18 +461,18 @@ function AirlineAnalytics({ user, height }) {
           <div className={classes.contentWrapper}>
             <div className={classes.periodInfo}>
               <p>
-                P1: {formatISO(period1.startDate, { representation: "date" })} -{" "}
+                P1 (Период 1): {formatISO(period1.startDate, { representation: "date" })} -{" "}
                 {formatISO(period1.endDate, { representation: "date" })}
               </p>
               <p>
-                P2: {formatISO(period2.startDate, { representation: "date" })} -{" "}
+                P2 (Период 2): {formatISO(period2.startDate, { representation: "date" })} -{" "}
                 {formatISO(period2.endDate, { representation: "date" })} ({period2Days} дн.)
               </p>
-          </div>
+            </div>
 
             {comparisonLoading ? (
               <div className={classes.loaderWrap}>
-                <MUILoader />
+                <MUILoader fullHeight={"55vh"} />
               </div>
             ) : (
               <>
@@ -527,8 +529,8 @@ function AirlineAnalytics({ user, height }) {
                         <td>
                           {row.service === "LIVING"
                             ? `${formatInt(row.period1.roomsUsed)} / ${formatInt(
-                                row.period2.roomsUsed
-                              )} / ${formatPct(row.diff.roomsDeltaPct)}`
+                              row.period2.roomsUsed
+                            )} / ${formatPct(row.diff.roomsDeltaPct)}`
                             : "—"}
                         </td>
                       </tr>

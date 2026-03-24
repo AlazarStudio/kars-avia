@@ -130,6 +130,7 @@
 }
 
 .graphs {
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -180,6 +181,7 @@
 
 .headerControls {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   gap: 12px;
 }
@@ -283,4 +285,7 @@
     flex-direction: column;
     gap: 4px;
   }
+  /* .contentWrapper {
+    height: 500px;
+  } */
 }

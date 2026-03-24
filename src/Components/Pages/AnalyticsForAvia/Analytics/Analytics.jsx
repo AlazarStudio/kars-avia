@@ -35,7 +35,7 @@ function Analytics({user}) {
   ``;
   return (
     <div className={classes.analyticsContainer}>
-      <Header>Аналитика (в разработке)</Header>
+      <Header>Аналитика</Header>
       {user?.airlineId ? null : (
         <div className={classes.tabs}>
           {tabs.map((tab) => (

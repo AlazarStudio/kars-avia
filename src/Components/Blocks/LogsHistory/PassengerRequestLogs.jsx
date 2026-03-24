@@ -150,19 +150,24 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
                               Причина: {log.reason}
                             </div>
                           )}
+                          {log.cancelReason && (
+                            <div className={classes.historyLogReason}>
+                              Причина отмены: {log.cancelReason}
+                            </div>
+                          )}
                         </div>
                         <div
                           className={classes.logImg}
                           title={
                             log.user
                               ? [
-                                  log.user?.name,
-                                  roleLabels[log.user?.role] ??
-                                    roleLabels[log.user?.role?.toUpperCase()] ??
-                                    log.user?.role,
-                                ]
-                                    .filter(Boolean)
-                                    .join(", ") || undefined
+                                log.user?.name,
+                                roleLabels[log.user?.role] ??
+                                roleLabels[log.user?.role?.toUpperCase()] ??
+                                log.user?.role,
+                              ]
+                                .filter(Boolean)
+                                .join(", ") || undefined
                               : undefined
                           }
                         >

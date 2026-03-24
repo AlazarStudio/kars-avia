@@ -128,8 +128,8 @@ export default function WaterSupplyTab({
 
       <ServiceFooter
         statusText={statusText}
-        ctaLabel={requestCancelled ? undefined : "Вода доставлена"}
-        onCta={requestCancelled ? undefined : () => mutate()}
+        ctaLabel={!requestCancelled && canMarkDelivered ? "Вода доставлена" : undefined}
+        onCta={!requestCancelled && canMarkDelivered ? () => mutate() : undefined}
         disabled={loading || !canMarkDelivered}
         earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
         onEarlyCompleteClick={

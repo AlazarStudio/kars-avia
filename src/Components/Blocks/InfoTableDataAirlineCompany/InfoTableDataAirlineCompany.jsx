@@ -15,7 +15,7 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
         <InfoTable>
             <div className={classes.bottom} style={user?.airlineId && {height:"calc(100vh - 210px)"}}>
                 {requests.map((item, index) => (
-                    <div key={index}>
+                    <div key={item.id || index}>
                         <div
                             className={classes.InfoTable_data}
                         >
@@ -24,7 +24,7 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                             </div>
 
                             <div className={classes.infoTable_buttons}>
-                                {(!user?.airlineId || accessMenu.userUpdate) && 
+                                {(!user?.airlineId || accessMenu.userUpdate) && !item.isNoDepartment &&
                                 <><EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestSidebar(item)} />
                                 {/* <img src="/settings.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} /> */}
                                 {!representative && (<SettingsIcon cursor={"pointer"} onClick={() => onOpenSettings ? onOpenSettings(item) : navigate("/airlineAccess", { state:{ item: item, airlineId: airlineId } } )} />)}
@@ -37,7 +37,7 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                 <div className={`${classes.InfoTable_BottomInfo__item}`} key={employeeIndex}>
                                     <div className={`${classes.InfoTable_BottomInfo__item___elem}`}>
                                         <div className={classes.employeeImg}>
-                                            <img src={getMediaUrl(employee.images[0]) ?? '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
+                                            <img src={employee.images?.[0] ? getMediaUrl(employee.images[0]) : '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
                                         </div>
                                         <div className={classes.employeeInfo}>
                                             <div className={classes.employeeName}>{employee.name}</div>

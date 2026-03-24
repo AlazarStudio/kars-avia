@@ -144,6 +144,7 @@ function HotelAboutRoomBlock({
               <Swiper
                 spaceBetween={20}
                 slidesPerView={1}
+                loop={props.images.length > 1}
                 pagination={{ clickable: true }}
                 autoplay={{
                   delay: 4000,
@@ -178,14 +179,8 @@ function HotelAboutRoomBlock({
               </Swiper>
               {props.images.length > 1 && (
                 <div className={classes.swiperButtons}>
-                  <button
-                    onClick={() => swiper.slidePrev()}
-                    disabled={activeIndex === 0}
-                  />
-                  <button
-                    onClick={() => swiper.slideNext()}
-                    disabled={activeIndex === props.images.length - 1}
-                  />
+                  <button onClick={() => swiper?.slidePrev()} />
+                  <button onClick={() => swiper?.slideNext()} />
                 </div>
               )}
             </div>

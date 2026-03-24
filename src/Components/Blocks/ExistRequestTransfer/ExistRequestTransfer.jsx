@@ -14,7 +14,7 @@ import {
 } from "../../../../graphQL_requests";
 import { statusLabels } from "../../../roles";
 import TransferMessage from "../TransferMessage/TransferMessage";
-import Button from "../../Standart/Button/Button";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 
 function ExistRequestTransfer({
   show,
@@ -24,12 +24,16 @@ function ExistRequestTransfer({
   accessMenu,
   setChooseRequestID,
   canChat = true,
+  openDeleteComponent,
+  setRequestId,
 }) {
   const navigate = useNavigate();
   const token = getCookie("token");
   const sidebarRef = useRef();
+  const menuRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState("Общая");
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const { data, loading } = useQuery(GET_TRANSFER_REQUEST, {
     context: {
@@ -44,27 +48,40 @@ function ExistRequestTransfer({
   const transfer = data?.transfer || null;
 
   const closeButton = useCallback(() => {
+    setAnchorEl(null);
     setActiveTab("Общая");
     onClose();
     setChooseRequestID?.("");
   }, [onClose, setChooseRequestID]);
 
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
   // Клик вне боковой панели закрывает её (как в ExistRequest)
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (anchorEl && menuRef.current?.contains(event.target)) {
+        setAnchorEl(null);
+        return;
+      }
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         closeButton();
       }
     };
     if (show) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, anchorEl]);
 
   const handleGoToMap = () => {
     if (chooseRequestID) {
       closeButton();
       navigate(`/orders/${chooseRequestID}`);
     }
+  };
+
+  const handleCancelRequestFromMenu = () => {
+    setRequestId?.(chooseRequestID);
+    openDeleteComponent?.();
   };
 
   const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
@@ -82,6 +99,17 @@ function ExistRequestTransfer({
           Заявка
         </div>
         <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleGoToMap}
+            onDelete={handleCancelRequestFromMenu}
+            editLabel="Перейти на карту"
+            deleteLabel="Отменить заявку"
+            showEditIcon={false}
+          />
           <div onClick={closeButton} className={classes.closeIconWrapper}>
             <CloseIcon />
           </div>
@@ -254,18 +282,6 @@ function ExistRequestTransfer({
               />
             )}
           </div>
-
-          {activeTab !== "Комментарии" && (
-            <div className={classes.requestButton}>
-              <Button
-                type="button"
-                // className={classes.goToMapButton}
-                onClick={handleGoToMap}
-              >
-                Перейти на карту
-              </Button>
-            </div>
-          )}
         </>
       ) : (
         <div className={classes.requestData}>

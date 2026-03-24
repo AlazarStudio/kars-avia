@@ -8,8 +8,8 @@ import {
   GET_AIRLINE,
   GET_REQUESTS_ARCHIVED,
   getCookie,
-  CANCEL_REQUEST,
   GET_TRANSFER_REQUESTS,
+  UPDATE_TRANSFER_REQUEST_MUTATION,
   TRANSFER_CREATED_SUBSCRIPTION,
   TRANSFER_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests.js";
@@ -237,8 +237,8 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     setRequestId(id);
   };
 
-  // Запрос на отмену созданной, но не размещенной заявки
-  const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
+  // Отмена трансфера через updateTransfer (смена статуса)
+  const [updateTransferMutation] = useMutation(UPDATE_TRANSFER_REQUEST_MUTATION, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -248,13 +248,15 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
 
   const handleCancelRequest = async (id) => {
     try {
-      // Отправка запроса с правильным ID заявки
-      const response = await cancelRequestMutation({
+      await updateTransferMutation({
         variables: {
-          cancelRequestId: id,
+          updateTransferId: id,
+          input: {
+            status: "CANCELLED",
+          },
         },
       });
-      // console.log("Заявка успешно отменена", response);
+      await refetch();
     } catch (error) {
       console.error("Ошибка при отмене заявки:", JSON.stringify(error));
     }
@@ -494,6 +496,8 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
         accessMenu={accessMenu}
         setChooseRequestID={setChooseRequestID}
         canChat={canChatTransfer}
+        openDeleteComponent={openDeleteComponent}
+        setRequestId={setChooseRequestId}
       />
       {/* <ChooseHotel
         chooseCityRequest={chooseCityRequest}

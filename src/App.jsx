@@ -74,8 +74,8 @@ function App() {
 
   const wsLink = new GraphQLWsLink(
     createClient({
-      // url: `wss://${path}/graphql`,
-      url: `ws://${path}/graphql`,
+      url: `wss://${path}/graphql`,
+      // url: `ws://${path}/graphql`,
       connectionParams: () => {
         const t = authService.getAccessToken();
         return t ? { Authorization: `Bearer ${t}` } : {};
@@ -103,7 +103,7 @@ function App() {
   return (
     <ApolloProvider client={client}>
       <TokenRefresher />
-      {/* {user && <UserActivityTracker />} */}
+      {user && <UserActivityTracker />}
       <Routes>
         <Route path="/external-login" element={<ExternalLogin />} />
         {user ? (

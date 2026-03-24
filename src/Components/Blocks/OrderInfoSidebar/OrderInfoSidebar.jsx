@@ -37,7 +37,7 @@ function OrderInfoSidebar({
     <aside className={classes.sidebar}>
       <div className={classes.card}>
         <div className={classes.cardContent}>
-          <p className={classes.title}>Информация о заказе</p>
+          <p className={classes.title}>Информация о заявке</p>
           <div className={classes.clientBlock}>
             {!isEditing ? (
               <div className={classes.clientName}>{info.name}</div>
@@ -271,7 +271,7 @@ export default OrderInfoSidebar;
 //   return (
 //     <aside className={classes.sidebar}>
 //       <div className={classes.card}>
-//         <p className={classes.title}>Информация о заказе</p>
+//         <p className={classes.title}>Информация о заявке</p>
 
 //         {/* аватар + имя + рейтинг */}
 //         <div className={classes.clientBlock}>

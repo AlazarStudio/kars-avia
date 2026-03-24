@@ -80,6 +80,7 @@ function Company({ user, accessMenu }) {
     loading: positionsLoading,
     error: positionsError,
     data: positionsData,
+    refetch: refetchPositions,
   } = useQuery(GET_DISPATCHER_POSITIONS, {
     context: {
       headers: {
@@ -371,6 +372,14 @@ function Company({ user, accessMenu }) {
             onCreated={() => {
               refetchDispatchers();
               refetchDepartments();
+            }}
+            onPositionCreated={(newPosition) => {
+              setPositions((prev) =>
+                [...(prev || []), newPosition].sort((a, b) =>
+                  String(a?.name || "").localeCompare(String(b?.name || ""))
+                )
+              );
+              refetchPositions();
             }}
             positions={positions}
             departments={departments}

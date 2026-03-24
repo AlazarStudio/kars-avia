@@ -52,7 +52,7 @@
 .representativeLinkButton {
     border: none;
     background: transparent;
-    color: #545873;
+    color: var(--dark-blue);
     border-radius: 0;
     height: auto;
     padding: 0;
@@ -60,7 +60,8 @@
     align-items: center;
     gap: 6px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 16px;
+    font-weight: 500;
 }
 
 .representativeLinkButton:disabled {
@@ -425,6 +426,7 @@
 
 .modalReasonInput {
     margin-bottom: 16px;
+    width: 100%;
 }
 
 .modalActions {

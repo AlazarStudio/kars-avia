@@ -406,7 +406,11 @@ function ConfirmDriver({
                 <div className={classes.requestDataInfo}>
                   <div className={classes.requestDataInfo_title}>Доп. оборудование</div>
                   <div className={classes.requestDataInfo_desc}>
-                    {chooseObject?.extraEquipment || "—"}
+                    {Array.isArray(chooseObject?.extraEquipment)
+                      ? (chooseObject.extraEquipment.length > 0
+                        ? chooseObject.extraEquipment.join(", ")
+                        : "—")
+                      : (chooseObject?.extraEquipment || "—")}
                   </div>
                 </div>
               </div>
@@ -438,7 +442,7 @@ function ConfirmDriver({
                     <div className={classes.imageList}>
                       <div className={classes.imageItem}>
                         <img
-                          src={getMediaUrl(chooseObject.documents.driverPhoto)}
+                          src={getMediaUrl(chooseObject.documents.driverPhoto[0])}
                           alt="Фото водителя"
                           onClick={() => openImageModal(getMediaUrl(chooseObject.documents.driverPhoto))}
                           style={{ cursor: "pointer" }}

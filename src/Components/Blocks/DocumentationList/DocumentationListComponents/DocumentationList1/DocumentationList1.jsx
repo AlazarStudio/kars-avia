@@ -24,7 +24,7 @@ import {
 import { loadTree } from './tree'
 import classes from './DocumentationList1.module.css'
 
-const DEFAULT_LEFT_PANEL_WIDTH = 400
+const DEFAULT_LEFT_PANEL_WIDTH = 300
 const MIN_LEFT_PANEL_WIDTH = 300
 const MAX_LEFT_PANEL_WIDTH = 860
 const RIGHT_PANEL_WIDTH = 350
@@ -1064,8 +1064,8 @@ function DocumentationList1({
           className={cn(classes['panel-content'], 'panel-content')}
           style={{
             '--panel-top-controls-left-offset':
-              isLeftPanelOpen ? '10px' : hasOpenedContent ? '12px' : '64px',
-            '--panel-top-controls-right-offset': '12px',
+              isLeftPanelOpen ? '10px' : hasOpenedContent ? '10px' : '64px',
+            '--panel-top-controls-right-offset': '10px',
           }}
         >
           <DocumentListTiptapPanelContent

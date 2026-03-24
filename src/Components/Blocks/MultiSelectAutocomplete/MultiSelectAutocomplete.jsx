@@ -16,6 +16,7 @@ const defaultFilter = createFilterOptions();
 function MultiSelectAutocomplete({
   label,
   options,
+  flexWrap = false,
   value,
   onChange,
   dropdownWidth,
@@ -175,7 +176,7 @@ function MultiSelectAutocomplete({
           alignItems: "center",
         },
         "& .MuiAutocomplete-inputRoot:not(.Mui-focused)": {
-          flexWrap: "nowrap !important",
+          ...(flexWrap && { flexWrap: "nowrap !important" }),
           overflow: "hidden",
         },
         "& .MuiAutocomplete-inputRoot:not(.Mui-focused) .MuiAutocomplete-input": {
@@ -184,9 +185,9 @@ function MultiSelectAutocomplete({
           flexGrow: 0,
           padding: "0 !important",
         },
-        // "& .MuiAutocomplete-inputRoot:not(.Mui-focused) .MuiAutocomplete-tag": {
-        //   maxWidth: "calc(100% - 46px)",
-        // },
+        "& .MuiAutocomplete-inputRoot:not(.Mui-focused) .MuiAutocomplete-tag": {
+          maxWidth: "calc(100% - 26px)",
+        },
         "& .MuiSvgIcon-root": {
           fontSize: "18px",
         },

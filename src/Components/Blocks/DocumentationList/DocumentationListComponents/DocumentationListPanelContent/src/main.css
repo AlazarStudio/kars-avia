@@ -2,16 +2,17 @@
   width: 100%;
   /* leave a small gutter so the "+" button fits */
   max-width: 100%;
-  margin: 5px 0;
+  /* margin: 5px 0; */
   font-size: 16px;
   line-height: 1.6;
   outline: none;
   position: relative;
-  padding:
+  /* padding:
     var(--article-pad-top, 14px)
     var(--article-pad-right, 16px)
     var(--article-pad-bottom, 14px)
-    calc(var(--article-pad-left, 16px) + var(--article-editor-extra-left, 0px));
+    calc(var(--article-pad-left, 16px) + var(--article-editor-extra-left, 0px)); */
+  padding: 15px 25px;
   box-sizing: border-box;
 
   /* border: 1px solid #e5e7eb; */

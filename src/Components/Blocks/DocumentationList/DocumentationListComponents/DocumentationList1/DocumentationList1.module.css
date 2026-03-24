@@ -30,8 +30,8 @@
 }
 
 .left-panel > * {
-  width: var(--left-panel-content-width, 400px);
-  min-width: var(--left-panel-content-width, 400px);
+  width: var(--left-panel-content-width, 350px);
+  min-width: var(--left-panel-content-width, 350px);
   height: 100%;
 }
 

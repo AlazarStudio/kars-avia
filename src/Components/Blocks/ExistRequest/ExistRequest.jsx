@@ -923,6 +923,22 @@ function ExistRequest({
     setIsEditing(!isEditing);
   };
 
+  const handlePlaceClick = () => {
+    const hasPendingEmployeeSelection =
+      Boolean(selectedEmployee?.id) &&
+      selectedEmployee.id !== formData?.person?.id;
+
+    if (hasPendingEmployeeSelection) {
+      alert("Подтвердите выбор сотрудника.");
+      return;
+    }
+
+    onClose();
+    setShowChooseHotel(true);
+    setChooseCityRequest(formData?.airport?.city);
+    localStorage.setItem("selectedTab", 0);
+  };
+
   const [newStaffId, setNewStaffId] = useState(null);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const toggleAddStaff = () => setShowAddStaff((prev) => !prev);
@@ -1119,7 +1135,7 @@ function ExistRequest({
                           </div>
                           <MUIAutocompleteColor
                             dropdownWidth="60%"
-                            label="Введите сотрудника"
+                            label="Выберите сотрудника"
                             options={airlineStaff || []}
                             getOptionLabel={(option) =>
                               option
@@ -1160,7 +1176,7 @@ function ExistRequest({
                         </div>
                         {(formData.status === "created" || formData.status === "opened") && (
                           <Button onClick={handleSaveChanges}>
-                            Добавить сотрудника
+                            Подтвердите выбор сотрудника
                           </Button>
                         )}
                       </>
@@ -1793,12 +1809,7 @@ function ExistRequest({
                     {((isSuperAdmin(user) || isDispatcherAdmin(user)) &&
                       !formData.hotelId) && (
                         <Button
-                          onClick={() => {
-                            onClose();
-                            setShowChooseHotel(true);
-                            setChooseCityRequest(formData?.airport?.city);
-                            localStorage.setItem("selectedTab", 0);
-                          }}
+                          onClick={handlePlaceClick}
                         >
                           {/* {console.log(formData)} */}
                           Разместить

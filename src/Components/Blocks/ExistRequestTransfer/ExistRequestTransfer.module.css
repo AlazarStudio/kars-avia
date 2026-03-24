@@ -18,6 +18,7 @@
 
 .requestTitle_close {
   display: flex;
+  align-items: center;
   gap: 15px;
 }
 
@@ -27,6 +28,8 @@
 
 .closeIconWrapper {
   cursor: pointer;
+  display: flex;
+  align-items: center;
 }
 
 .requestData {
