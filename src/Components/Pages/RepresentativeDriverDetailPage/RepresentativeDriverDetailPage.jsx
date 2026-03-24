@@ -77,6 +77,12 @@ function RepresentativeDriverDetailPage({ user }) {
     },
     variables: { passengerRequestId: idRequest },
   });
+  
+  setInterval(() => {
+    console.log('refetch');
+    refetch();
+  }, 10000);
+
 
   const { data: airlineDepartmentData } = useQuery(GET_AIRLINE_DEPARTMENT, {
     context: {

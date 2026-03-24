@@ -23,6 +23,7 @@ import Button from "../../Standart/Button/Button";
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
+  isExternalPassengerRequestUser,
 } from "../../../utils/access";
 
 function toNum(v) {
@@ -102,6 +103,9 @@ function RepresentativeHotelReportPage({ user }) {
   const isDispatcherRole = isDispatcherRoleCheck(user);
   const isAirlineRole = isAirlineRoleCheck(user);
   const dispatcherDepartmentId = user?.dispatcherDepartmentId;
+
+  const isExternalUser = isExternalPassengerRequestUser(user);
+
 
   const { data: airlineDepartmentData } = useQuery(GET_AIRLINE_DEPARTMENT, {
     context: {
@@ -446,12 +450,12 @@ function RepresentativeHotelReportPage({ user }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />
+      {!isExternalUser && <MenuDispetcher id="representativeRequests" accessMenu={accessMenu} />}
       {isInitialized && !cookiesAccepted && (
         <CookiesNotice onAccept={acceptCookies} />
       )}
       <div className={`${classes.section} ${reportClasses.sectionReport}`}>
-        <Header>
+        <Header isExternalUser={isExternalUser}>
           <div className={classes.titleHeader}>
             <Link to={hotelDetailUrl} className={classes.backButton}>
               <img src="/arrow.png" alt="" />

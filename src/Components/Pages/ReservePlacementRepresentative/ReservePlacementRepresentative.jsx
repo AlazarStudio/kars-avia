@@ -184,6 +184,11 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     },
   });
 
+  setInterval(() => {
+    console.log('refetch');
+    refetch();
+  }, 10000);
+
   const [completeEarly, { loading: completingEarly }] = useMutation(
     COMPLETE_PASSENGER_REQUEST_EARLY,
     {

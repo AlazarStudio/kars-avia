@@ -57,6 +57,12 @@ function RepresentativeHotelDetailPage({ user }) {
       }
     },
   });
+  
+  setInterval(() => {
+    console.log('refetch');
+    refetch();
+  }, 10000);
+
 
   const request = data?.passengerRequest ?? null;
   const decodedHotelId = hotelId ? decodeURIComponent(hotelId) : "";

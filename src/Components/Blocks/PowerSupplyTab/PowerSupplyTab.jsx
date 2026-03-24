@@ -110,19 +110,21 @@ export default function PowerSupplyTab({
             )}
           </div>
         </div>
-        {people.map((p, idx) => (
-          <div key={p.id || idx} className={classes.tableRow}>
-            <div className={classes.w10}>
-              {String(idx + 1).padStart(4, "0")}
+        <div className={classes.tableBody}>
+          {people.map((p, idx) => (
+            <div key={p.id || idx} className={classes.tableRow}>
+              <div className={classes.w10}>
+                {String(idx + 1).padStart(4, "0")}
+              </div>
+              <div className={`${classes.w30} ${classes.jcCenter}`}>
+                {p.fullName ?? "—"}
+              </div>
+              <div className={`${classes.w20} ${classes.jcCenter}`}>
+                {p.issuedAt ? convertToDate(p.issuedAt, true).trim() : "—"}
+              </div>
             </div>
-            <div className={`${classes.w30} ${classes.jcCenter}`}>
-              {p.fullName ?? "—"}
-            </div>
-            <div className={`${classes.w20} ${classes.jcCenter}`}>
-              {p.issuedAt ? convertToDate(p.issuedAt, true).trim() : "—"}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       <ServiceFooter
         statusText={statusText}

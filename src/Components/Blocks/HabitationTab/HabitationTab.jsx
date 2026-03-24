@@ -91,64 +91,66 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
             </span>
           )}
         </div>
-        {hotelsWithIndex.map(({ h, originalIndex }, i) => (
-          <div
-            key={h.hotelId || h.name + originalIndex || i}
-            className={`${classes.tableRow} ${onHotelSelect ? classes.tableRowClickable : ""}`}
-            role={onHotelSelect ? "button" : undefined}
-            tabIndex={onHotelSelect ? 0 : undefined}
-            onClick={() => onHotelSelect?.(h, originalIndex)}
-            onKeyDown={(e) => onHotelSelect && (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onHotelSelect(h, originalIndex))}
-          >
-            <div className={`${classes.w20} ${classes.lineClamp2}`}>{h.name ?? "—"}</div>
-            <div className={`${classes.w25} ${classes.jcCenter}`}>
-              {h.peopleCount ?? "—"}
-            </div>
+        <div className={classes.tableBody}>
+          {hotelsWithIndex.map(({ h, originalIndex }, i) => (
             <div
-              className={`${classes.w20} ${classes.jcCenter} ${classes.lineClamp2}`}
-              title={h.address ?? undefined}
+              key={h.hotelId || h.name + originalIndex || i}
+              className={`${classes.tableRow} ${onHotelSelect ? classes.tableRowClickable : ""}`}
+              role={onHotelSelect ? "button" : undefined}
+              tabIndex={onHotelSelect ? 0 : undefined}
+              onClick={() => onHotelSelect?.(h, originalIndex)}
+              onKeyDown={(e) => onHotelSelect && (e.key === "Enter" || e.key === " ") && (e.preventDefault(), onHotelSelect(h, originalIndex))}
             >
-              {h.address ?? "—"}
+              <div className={`${classes.w20} ${classes.lineClamp2}`}>{h.name ?? "—"}</div>
+              <div className={`${classes.w25} ${classes.jcCenter}`}>
+                {h.peopleCount ?? "—"}
+              </div>
+              <div
+                className={`${classes.w20} ${classes.jcCenter} ${classes.lineClamp2}`}
+                title={h.address ?? undefined}
+              >
+                {h.address ?? "—"}
+              </div>
+              <div className={`${classes.w20} ${classes.jcEnd} ${classes.linkCol}`}>
+                {(h.linkCRM || h.linkPWA) ? (
+                  <div className={classes.linkGroup}>
+                    {h.linkCRM && (
+                      <button
+                        type="button"
+                        className={classes.link}
+                        onClick={(e) => { e.stopPropagation(); copyLink(h.linkCRM); }}
+                        title="Скопировать CRM-ссылку"
+                      >
+                        CRM <CopyIcon />
+                      </button>
+                    )}
+                    {h.linkPWA && (
+                      <button
+                        type="button"
+                        className={classes.link}
+                        onClick={(e) => { e.stopPropagation(); copyLink(h.linkPWA); }}
+                        title="Скопировать PWA-ссылку"
+                      >
+                        PWA <CopyIcon />
+                      </button>
+                    )}
+                  </div>
+                ) : h.link ? (
+                  <button
+                    type="button"
+                    className={classes.link}
+                    onClick={(e) => { e.stopPropagation(); copyLink(h.link); }}
+                    title="Скопировать ссылку"
+                  >
+                    Ссылка <CopyIcon />
+                  </button>
+                ) : (
+                  <span className={classes.link}>—</span>
+                )}
+              </div>
             </div>
-            <div className={`${classes.w20} ${classes.jcEnd} ${classes.linkCol}`}>
-              {(h.linkCRM || h.linkPWA) ? (
-                <div className={classes.linkGroup}>
-                  {h.linkCRM && (
-                    <button
-                      type="button"
-                      className={classes.link}
-                      onClick={(e) => { e.stopPropagation(); copyLink(h.linkCRM); }}
-                      title="Скопировать CRM-ссылку"
-                    >
-                      CRM <CopyIcon />
-                    </button>
-                  )}
-                  {h.linkPWA && (
-                    <button
-                      type="button"
-                      className={classes.link}
-                      onClick={(e) => { e.stopPropagation(); copyLink(h.linkPWA); }}
-                      title="Скопировать PWA-ссылку"
-                    >
-                      PWA <CopyIcon />
-                    </button>
-                  )}
-                </div>
-              ) : h.link ? (
-                <button
-                  type="button"
-                  className={classes.link}
-                  onClick={(e) => { e.stopPropagation(); copyLink(h.link); }}
-                  title="Скопировать ссылку"
-                >
-                  Ссылка <CopyIcon />
-                </button>
-              ) : (
-                <span className={classes.link}>—</span>
-              )}
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
       <ServiceFooter
         statusText={statusText}

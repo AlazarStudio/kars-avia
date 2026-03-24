@@ -679,7 +679,7 @@
     display: grid;
     grid-template-rows: auto 1fr;
     flex: 1;
-    min-height: 200px;
+    min-height: 0;
     overflow: hidden;
 }
 
@@ -739,6 +739,7 @@
     border-top: none;
     border-radius: 0 0 10px 10px;
     overflow-y: auto;
+    min-height: 0;
 }
 
 .driverPassengersTableRow {

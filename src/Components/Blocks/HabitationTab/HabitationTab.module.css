@@ -71,6 +71,16 @@
   /* border: 1px solid #E8EDF4; */
   border-radius: 10px 10px 0 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tableBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .tableHead,
@@ -87,6 +97,7 @@
   font-size: 16px;
   border-bottom: 1px solid #E4E4EF;
   height: 65px;
+  flex-shrink: 0;
 }
 
 .tableRow {
@@ -132,6 +143,7 @@
   height: calc(100vh - 272px);
   /* min-height: 420px */
   overflow: hidden;
+  min-height: 0;
 }
 
 .countChip {
