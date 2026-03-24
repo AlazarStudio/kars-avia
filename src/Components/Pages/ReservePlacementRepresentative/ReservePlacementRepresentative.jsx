@@ -126,51 +126,51 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   });
 
   // console.log(data);
-  
 
-  const {
-    loading: loadingHotel,
-    error: errorHotel,
-    data: dataHotel,
-    refetch: refetchHotel,
-  } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: { reservationHotelsId: idRequest },
-  });
 
-  const { data: subscriptionData } = useSubscription(
-    GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      onData: () => {
-        refetch();
-        refetchHotel();
-      },
-    }
-  );
+  // const {
+  //   loading: loadingHotel,
+  //   error: errorHotel,
+  //   data: dataHotel,
+  //   refetch: refetchHotel,
+  // } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   },
+  //   variables: { reservationHotelsId: idRequest },
+  // });
 
-  const { data: subscriptionDataPerson } = useSubscription(
-    GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      onData: () => {
-        refetch();
-        refetchHotel();
-      },
-    }
-  );
+  // const { data: subscriptionData } = useSubscription(
+  //   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
+  //   {
+  //     context: {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     },
+  //     onData: () => {
+  //       refetch();
+  //       refetchHotel();
+  //     },
+  //   }
+  // );
+
+  // const { data: subscriptionDataPerson } = useSubscription(
+  //   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
+  //   {
+  //     context: {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     },
+  //     onData: () => {
+  //       refetch();
+  //       refetchHotel();
+  //     },
+  //   }
+  // );
 
   useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
     context: {
@@ -178,9 +178,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    onData: () => {
+    onData: ({ data }) => {
+      console.log(data);
       refetch();
-      refetchHotel();
     },
   });
 
@@ -341,43 +341,43 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     }
   }, [data]);
 
-  useEffect(() => {
-    if (data && data.passengerRequest && dataHotel?.reservationHotels) {
-      const getClientInfo = (client, hotelChess, isPassenger) => {
-        const clientInfo = isPassenger
-          ? hotelChess.find((entry) => entry.passenger?.id === client)
-          : hotelChess.find((entry) => entry.client?.id === client);
-        return clientInfo;
-      };
+  // useEffect(() => {
+  //   if (data && data.passengerRequest) {
+  //     const getClientInfo = (client, hotelChess, isPassenger) => {
+  //       const clientInfo = isPassenger
+  //         ? hotelChess.find((entry) => entry.passenger?.id === client)
+  //         : hotelChess.find((entry) => entry.client?.id === client);
+  //       return clientInfo;
+  //     };
 
-      const transformedData = dataHotel.reservationHotels.map((item) => ({
-        hotel: {
-          reservationHotelId: item.id,
-          id: item.hotel?.id,
-          name: item.hotel?.name,
-          passengersCount: item.capacity?.toString?.() ?? "0",
-          city: item.hotel?.city,
-          requestId: item.reserve?.id,
-          passengers: (item.passengers ?? []).map((passenger, index) => ({
-            status: getClientInfo(passenger.id, item.hotelChess, true)
-              ? getClientInfo(passenger.id, item.hotelChess, true).status
-              : "waiting",
-            room: getClientInfo(passenger.id, item.hotelChess, true)
-              ? getClientInfo(passenger.id, item.hotelChess, true).room
-              : "-",
-            name: passenger?.name || "не указано",
-            gender: passenger?.gender || "не указано",
-            number: passenger?.number || "не указано",
-            type: passenger?.type || "не указано",
-            order: index + 1,
-            id: passenger?.id || `id-${index}`,
-          })),
-        },
-      }));
+  //     const transformedData = dataHotel.reservationHotels.map((item) => ({
+  //       hotel: {
+  //         reservationHotelId: item.id,
+  //         id: item.hotel?.id,
+  //         name: item.hotel?.name,
+  //         passengersCount: item.capacity?.toString?.() ?? "0",
+  //         city: item.hotel?.city,
+  //         requestId: item.reserve?.id,
+  //         passengers: (item.passengers ?? []).map((passenger, index) => ({
+  //           status: getClientInfo(passenger.id, item.hotelChess, true)
+  //             ? getClientInfo(passenger.id, item.hotelChess, true).status
+  //             : "waiting",
+  //           room: getClientInfo(passenger.id, item.hotelChess, true)
+  //             ? getClientInfo(passenger.id, item.hotelChess, true).room
+  //             : "-",
+  //           name: passenger?.name || "не указано",
+  //           gender: passenger?.gender || "не указано",
+  //           number: passenger?.number || "не указано",
+  //           type: passenger?.type || "не указано",
+  //           order: index + 1,
+  //           id: passenger?.id || `id-${index}`,
+  //         })),
+  //       },
+  //     }));
 
-      setPlacement(transformedData);
-    }
-  }, [data, dataHotel, subscriptionData, subscriptionDataPerson]);
+  //     setPlacement(transformedData);
+  //   }
+  // }, [data, dataHotel]);
 
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showServiceSidebar, setShowServiceSidebar] = useState(false);
@@ -504,10 +504,10 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     if (!Array.isArray(links) || links.length === 0) return "";
     const byDepartment = user?.representativeDepartmentId
       ? links.find(
-          (item) =>
-            String(item?.representativeDepartmentId) ===
-              String(user.representativeDepartmentId) && item?.linkPWA
-        )
+        (item) =>
+          String(item?.representativeDepartmentId) ===
+          String(user.representativeDepartmentId) && item?.linkPWA
+      )
       : null;
     if (byDepartment?.linkPWA) return byDepartment.linkPWA;
     const firstWithPwa = links.find((item) => item?.linkPWA);
@@ -536,50 +536,50 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     setSearchQuery(e.target.value);
   };
 
-  const filteredPlacement = placement
-    .map((item) => {
-      const filteredPassengers = item.hotel.passengers.filter((passenger) =>
-        passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  // const filteredPlacement = placement
+  //   .map((item) => {
+  //     const filteredPassengers = item.hotel.passengers.filter((passenger) =>
+  //       passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
+  //     );
 
-      // console.log(filteredPassengers);
+  //     // console.log(filteredPassengers);
 
-      // const filteredPersons = item.hotel.person.filter((person) =>
-      //     person.name.toLowerCase().includes(searchQuery.toLowerCase())
-      // );
+  //     // const filteredPersons = item.hotel.person.filter((person) =>
+  //     //     person.name.toLowerCase().includes(searchQuery.toLowerCase())
+  //     // );
 
-      const isHotelMatch = item.hotel.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+  //     const isHotelMatch = item.hotel.name
+  //       .toLowerCase()
+  //       .includes(searchQuery.toLowerCase());
 
-      if (filteredPassengers.length > 0 || isHotelMatch) {
-        return {
-          ...item,
-          hotel: {
-            ...item.hotel,
-            passengers: filteredPassengers,
-            // person: filteredPersons,
-          },
-        };
-      }
+  //     if (filteredPassengers.length > 0 || isHotelMatch) {
+  //       return {
+  //         ...item,
+  //         hotel: {
+  //           ...item.hotel,
+  //           passengers: filteredPassengers,
+  //           // person: filteredPersons,
+  //         },
+  //       };
+  //     }
 
-      return null;
-    })
-    .filter((item) => item !== null);
+  //     return null;
+  //   })
+  //   .filter((item) => item !== null);
 
   const toggleCreateSidebarHotel = () => {
     setShowCreateSidebarHotel(!showCreateSidebarHotel);
   };
 
-  const [showChooseHotels, setShowChooseHotels] = useState(0);
+  // const [showChooseHotels, setShowChooseHotels] = useState(0);
 
-  useEffect(() => {
-    const totalPassengers = placement.reduce(
-      (acc, item) => acc + Number(item.hotel.passengersCount),
-      0
-    );
-    setShowChooseHotels(totalPassengers);
-  }, [placement]);
+  // useEffect(() => {
+  //   const totalPassengers = placement.reduce(
+  //     (acc, item) => acc + Number(item.hotel.passengersCount),
+  //     0
+  //   );
+  //   setShowChooseHotels(totalPassengers);
+  // }, [placement]);
 
   const [file, setFile] = useState(null);
 
@@ -905,28 +905,24 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               </div>
 
               {/* Правый столбец с чатом и "Добавить услугу" — всегда */}
-              {filteredPlacement.length === 0 && user?.hotelId ? null : (
-                <>
-                  <div className={classes.chatWrapper}>
-                    <Message
-                      activeTab={"Комментарий"}
-                      setIsHaveTwoChats={setIsHaveTwoChats}
-                      setHotelChats={setHotelChats}
-                      passengerRequestId={request.id}
-                      filteredPlacement={filteredPlacement}
-                      token={token}
-                      user={user}
-                      chatPadding={"0"}
-                      chatHeight={
-                        user.role !== roles.hotelAdmin &&
-                          user.role !== roles.airlineAdmin
-                          ? "calc(100vh - 364px)"
-                          : "calc(100vh - 280px)"
-                      }
-                    />
-                  </div>
-                </>
-              )}
+              <div className={classes.chatWrapper}>
+                <Message
+                  activeTab={"Комментарий"}
+                  setIsHaveTwoChats={setIsHaveTwoChats}
+                  setHotelChats={setHotelChats}
+                  passengerRequestId={request.id}
+                  // filteredPlacement={filteredPlacement}
+                  token={token}
+                  user={user}
+                  chatPadding={"0"}
+                  chatHeight={
+                    user.role !== roles.hotelAdmin &&
+                      user.role !== roles.airlineAdmin
+                      ? "calc(100vh - 364px)"
+                      : "calc(100vh - 280px)"
+                  }
+                />
+              </div>
             </div>
 
             <CreateRequestHotelReserve
@@ -1008,7 +1004,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               addNotification={addNotification}
             />
 
-            <AddNewPassenger
+            {/* <AddNewPassenger
               show={showCreateSidebar}
               onClose={toggleCreateSidebar}
               request={request}
@@ -1024,7 +1020,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               onClose={toggleChooseHotel}
               chooseObject={placement}
               id={"reserve"}
-            />
+            /> */}
 
             <ManifestModal
               user={user}
