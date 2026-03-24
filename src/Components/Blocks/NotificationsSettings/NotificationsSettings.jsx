@@ -72,10 +72,11 @@ export default function NotificationsSettings({ user }) {
     requestDatesChange: !!s?.requestDatesChange,
     requestPlacementChange: !!s?.requestPlacementChange,
     requestCancel: !!s?.requestCancel,
-    reserveCreate: !!s?.reserveCreate,
-    reserveDatesChange: !!s?.reserveDatesChange,
-    reserveUpdate: !!s?.reserveUpdate,
-    reservePlacementChange: !!s?.reservePlacementChange,
+    passengerRequestCreate: !!s?.passengerRequestCreate,
+    passengerRequestDatesChange: !!s?.passengerRequestDatesChange,
+    passengerRequestUpdate: !!s?.passengerRequestUpdate,
+    passengerRequestPlacementChange: !!s?.passengerRequestPlacementChange,
+    passengerRequestCancel: !!s?.passengerRequestCancel,
     newMessage: !!s?.newMessage,
   });
 
@@ -203,10 +204,15 @@ function NotificationsPanel({ notificationMenu = {}, stateRef, isEditing }) {
       requestDatesChange: b(notificationMenu?.requestDatesChange),
       requestPlacementChange: b(notificationMenu?.requestPlacementChange),
       requestCancel: b(notificationMenu?.requestCancel),
-      reserveCreate: b(notificationMenu?.reserveCreate),
-      reserveDatesChange: b(notificationMenu?.reserveDatesChange),
-      reserveUpdate: b(notificationMenu?.reserveUpdate),
-      reservePlacementChange: b(notificationMenu?.reservePlacementChange),
+      passengerRequestCreate: b(notificationMenu?.passengerRequestCreate),
+      passengerRequestDatesChange: b(
+        notificationMenu?.passengerRequestDatesChange
+      ),
+      passengerRequestUpdate: b(notificationMenu?.passengerRequestUpdate),
+      passengerRequestPlacementChange: b(
+        notificationMenu?.passengerRequestPlacementChange
+      ),
+      passengerRequestCancel: b(notificationMenu?.passengerRequestCancel),
       newMessage: b(notificationMenu?.newMessage),
     }),
     [notificationMenu]
@@ -252,29 +258,35 @@ function NotificationsPanel({ notificationMenu = {}, stateRef, isEditing }) {
           />
         </SectionCard>
 
-        <SectionCard title="Брони">
+        <SectionCard title="ФАП">
           <RowSwitch
-            label="Создание брони"
-            checked={state.reserveCreate}
-            onChange={(v) => set("reserveCreate", v)}
+            label="Создание"
+            checked={state.passengerRequestCreate}
+            onChange={(v) => set("passengerRequestCreate", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Запрос на изменение дат брони"
-            checked={state.reserveDatesChange}
-            onChange={(v) => set("reserveDatesChange", v)}
+            label="Запрос на изменение дат"
+            checked={state.passengerRequestDatesChange}
+            onChange={(v) => set("passengerRequestDatesChange", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Обновление брони"
-            checked={state.reserveUpdate}
-            onChange={(v) => set("reserveUpdate", v)}
+            label="Обновление"
+            checked={state.passengerRequestUpdate}
+            onChange={(v) => set("passengerRequestUpdate", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Смена размещения брони"
-            checked={state.reservePlacementChange}
-            onChange={(v) => set("reservePlacementChange", v)}
+            label="Смена размещения"
+            checked={state.passengerRequestPlacementChange}
+            onChange={(v) => set("passengerRequestPlacementChange", v)}
+            disabled={!isEditing}
+          />
+          <RowSwitch
+            label="Отмена"
+            checked={state.passengerRequestCancel}
+            onChange={(v) => set("passengerRequestCancel", v)}
             disabled={!isEditing}
           />
         </SectionCard>

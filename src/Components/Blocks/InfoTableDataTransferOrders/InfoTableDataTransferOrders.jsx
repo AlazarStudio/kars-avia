@@ -81,7 +81,7 @@ function InfoTableDataTransferOrders({
             <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
               <div className={classes.InfoTable_data_elem_information}>
                 <div className={classes.InfoTable_data_elem_title}>
-                  № {index + 1}
+                  {item.requestNumber || index + 1}
                 </div>
                 <ReportTimer item={item} />
               </div>

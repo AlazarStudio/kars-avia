@@ -67,6 +67,18 @@ function Header({ children, isExternalUser = false }) {
   const toggleChooseHotel = () => setShowChooseHotel(!showChooseHotel);
 
   const handleNotificationClick = (notificationData) => {
+    if (notificationData.passengerRequestId) {
+      navigate(
+        `/representativeRequests/representativeRequestsPlacement/${notificationData.passengerRequestId}`
+      );
+      setIsNotificationsOpen(false);
+      return;
+    }
+    if (notificationData.reserveId) {
+      navigate(`/reserve/reservePlacement/${notificationData.reserveId}`);
+      setIsNotificationsOpen(false);
+      return;
+    }
     // Создаем `chooseObject` на основе пришедших данных
     // console.log(notificationData);
     const newChooseObject = [

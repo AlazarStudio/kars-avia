@@ -95,8 +95,7 @@ function ExistRequestTransfer({
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>
-          {/* {transfer ? `№ ${transfer.id}` : "Заявка"} */}
-          Заявка
+          {transfer?.requestNumber || transfer?.id || "Заявка"}
         </div>
         <div className={classes.requestTitle_close}>
           <AdditionalMenu

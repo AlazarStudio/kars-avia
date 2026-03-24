@@ -560,6 +560,7 @@ export const GET_TRANSFER_REQUESTS = gql`
       totalCount
       transfers {
         id
+        requestNumber
         fromAddress
         toAddress
         persons {
@@ -610,6 +611,7 @@ export const GET_TRANSFER_REQUEST = gql`
   query Transfer($transferId: ID!) {
     transfer(id: $transferId) {
       id
+      requestNumber
       fromAddress
       baggage
       toAddress
@@ -660,6 +662,8 @@ export const GET_TRANSFER_REQUEST = gql`
 export const CREATE_TRANSFER_REQUEST_MUTATION = gql`
   mutation CreateTransfer($input: TransferInput!) {
     createTransfer(input: $input) {
+      id
+      requestNumber
       createdAt
       fromAddress
     }
@@ -1410,13 +1414,14 @@ export const REQUEST_MESSAGES_SUBSCRIPTION = gql`
 `;
 
 export const QUERY_NOTIFICATIONS = gql`
-  query Notifications($pagination: PaginationInput) {
+  query Notifications($pagination: NotificationPaginationInput) {
     getAllNotifications(pagination: $pagination) {
       notifications {
         id
         createdAt
         requestId
         reserveId
+        passengerRequestId
         description {
           action
           description
@@ -1431,6 +1436,9 @@ export const QUERY_NOTIFICATIONS = gql`
         }
         reserve {
           reserveNumber
+        }
+        passengerRequest {
+          id
         }
         readBy {
           id
@@ -4382,28 +4390,31 @@ export const GET_AIRLINE_COMPANY = gql`
           requestDatesChange
           requestPlacementChange
           requestCancel
-          reserveCreate
-          reserveDatesChange
-          reserveUpdate
-          reservePlacementChange
+          passengerRequestCreate
+          passengerRequestDatesChange
+          passengerRequestUpdate
+          passengerRequestPlacementChange
+          passengerRequestCancel
           newMessage
           emailRequestCreate
           emailRequestDatesChange
           emailRequestPlacementChange
           emailRequestCancel
-          emailReserveCreate
-          emailReserveDatesChange
-          emailReserveUpdate
-          emailReservePlacementChange
+          emailPassengerRequestCreate
+          emailPassengerRequestDatesChange
+          emailPassengerRequestUpdate
+          emailPassengerRequestPlacementChange
+          emailPassengerRequestCancel
           emailNewMessage
           sitePushRequestCreate
           sitePushRequestDatesChange
           sitePushRequestPlacementChange
           sitePushRequestCancel
-          sitePushReserveCreate
-          sitePushReserveDatesChange
-          sitePushReserveUpdate
-          sitePushReservePlacementChange
+          sitePushPassengerRequestCreate
+          sitePushPassengerRequestDatesChange
+          sitePushPassengerRequestUpdate
+          sitePushPassengerRequestPlacementChange
+          sitePushPassengerRequestCancel
           sitePushNewMessage
         }
       }
@@ -4719,28 +4730,31 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           requestDatesChange
           requestPlacementChange
           requestCancel
-          reserveCreate
-          reserveDatesChange
-          reserveUpdate
-          reservePlacementChange
+          passengerRequestCreate
+          passengerRequestDatesChange
+          passengerRequestUpdate
+          passengerRequestPlacementChange
+          passengerRequestCancel
           newMessage
           emailRequestCreate
           emailRequestDatesChange
           emailRequestPlacementChange
           emailRequestCancel
-          emailReserveCreate
-          emailReserveDatesChange
-          emailReserveUpdate
-          emailReservePlacementChange
+          emailPassengerRequestCreate
+          emailPassengerRequestDatesChange
+          emailPassengerRequestUpdate
+          emailPassengerRequestPlacementChange
+          emailPassengerRequestCancel
           emailNewMessage
           sitePushRequestCreate
           sitePushRequestDatesChange
           sitePushRequestPlacementChange
           sitePushRequestCancel
-          sitePushReserveCreate
-          sitePushReserveDatesChange
-          sitePushReserveUpdate
-          sitePushReservePlacementChange
+          sitePushPassengerRequestCreate
+          sitePushPassengerRequestDatesChange
+          sitePushPassengerRequestUpdate
+          sitePushPassengerRequestPlacementChange
+          sitePushPassengerRequestCancel
           sitePushNewMessage
         }
         dispatchers {

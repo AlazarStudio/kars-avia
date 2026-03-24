@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import classes from "./NotificationsSidebar.module.css";
 import Sidebar from "../Sidebar/Sidebar";
 import {
@@ -6,7 +6,7 @@ import {
   NOTIFICATIONS_SUBSCRIPTION,
   QUERY_NOTIFICATIONS,
 } from "../../../../graphQL_requests";
-import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import { useNavigate } from "react-router-dom";
 import { NetworkStatus } from "@apollo/client";
@@ -15,6 +15,32 @@ import ExportIcon from "../../../shared/icons/ExportIcon";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 
 const TAKE = 50; // размер страницы
+
+function notificationDedupeKey(it) {
+  return (
+    it.id ??
+    `${it.createdAt}-${it.description?.action}-${
+      it.passengerRequestId ?? it.reserveId ?? it.requestId ?? ""
+    }`
+  );
+}
+
+function mergeNotificationsLists(prevList, nextList) {
+  const seen = new Set();
+  return [...prevList, ...nextList].filter((it) => {
+    const key = notificationDedupeKey(it);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+const separatorToType = {
+  All: undefined,
+  request: "request",
+  passengerRequest: "passengerRequest",
+  transfer: "transfer",
+};
 
 function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
   const sidebarRef = useRef();
@@ -49,16 +75,24 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
   const sentinelRef = useRef(null); // «якорь» внизу
   const lastLenRef = useRef(0); // guard от зацикливания
 
+  const selectedType = separatorToType[separator];
+
   const { loading, error, data, refetch, fetchMore, networkStatus } = useQuery(
     QUERY_NOTIFICATIONS,
     {
       context: { headers: { Authorization: `Bearer ${token}` } },
-      variables: { pagination: { skip: 0, take: TAKE } }, // страница 0
+      variables: {
+        pagination: {
+          skip: 0,
+          take: TAKE,
+          ...(selectedType ? { type: selectedType } : {}),
+        },
+      }, // страница 0
       notifyOnNetworkStatusChange: true,
     }
   );
 
-  // console.log(data)
+  // console.log(selectedType)
 
   // Показ «большого» лоадера только до первой отрисовки данных
   const isInitialLoading =
@@ -72,45 +106,68 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
     onData: () => {
       setCurrentPage(0);
       setHasMore(true);
-      refetch({ pagination: { skip: 0, take: TAKE } });
+      refetch({
+        pagination: {
+          skip: 0,
+          take: TAKE,
+          ...(selectedType ? { type: selectedType } : {}),
+        },
+      });
     },
   });
 
-  // Инициализация/рефетч — приводим локальное состояние к ответу
+  // Синхронизация с кэшем Apollo (первая страница, refetch, merge после fetchMore)
   useEffect(() => {
     const arr = data?.getAllNotifications?.notifications || [];
     setItems(arr);
     const tp = data?.getAllNotifications?.totalPages ?? null;
     setTotalPages(tp);
 
-    // текущая страница = 0 при первом запросе/рефетче
-    setCurrentPage(0);
-
-    // вычисляем hasMore
     if (typeof tp === "number") {
-      setHasMore(1 < tp); // следующая страница существует?
+      setHasMore(currentPage + 1 < tp);
     } else {
-      setHasMore(arr.length === TAKE); // fallback
+      const tc = data?.getAllNotifications?.totalCount;
+      if (typeof tc === "number") {
+        setHasMore(arr.length < tc);
+      } else {
+        setHasMore(arr.length === TAKE);
+      }
     }
     lastLenRef.current = arr.length;
-  }, [data]);
+  }, [data, currentPage]);
 
   // При раскрытии панели — обновить список с начала
   useEffect(() => {
     if (show) {
       setCurrentPage(0);
       setHasMore(true);
-      refetch({ pagination: { skip: 0, take: TAKE } });
+      refetch({
+        pagination: {
+          skip: 0,
+          take: TAKE,
+          ...(selectedType ? { type: selectedType } : {}),
+        },
+      });
     }
-  }, [show, refetch]);
+  }, [show, refetch, selectedType]);
 
-  // Клиентская фильтрация
-  const filtered = items.filter((n) => {
-    if (separator === "All") return true;
-    if (separator === "request") return n.reserveId === null;
-    if (separator === "reserve") return !!n.reserveId;
-    return true;
-  });
+  // Переключение вкладок фильтрует на бэкенде
+  useEffect(() => {
+    if (!show) return;
+    setCurrentPage(0);
+    setHasMore(true);
+    setItems([]);
+    refetch({
+      pagination: {
+        skip: 0,
+        take: TAKE,
+        ...(selectedType ? { type: selectedType } : {}),
+      },
+    });
+  }, [selectedType, refetch, show]);
+
+  // Данные уже отфильтрованы бэкендом
+  const filtered = items;
 
   // helpers (выше компонента/внутри)
   const dayKey = (s) => {
@@ -169,36 +226,48 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
         try {
           setLoadingMoreLocal(true);
           const nextPage = currentPage + 1; // страница 1,2,3...
+          let lastChunkLen = TAKE;
           const { data: more } = await fetchMore({
-            variables: { pagination: { skip: nextPage, take: TAKE } },
+            variables: {
+              pagination: {
+                skip: nextPage,
+                take: TAKE,
+                ...(selectedType ? { type: selectedType } : {}),
+              },
+            },
+            updateQuery: (prev, { fetchMoreResult }) => {
+              if (!fetchMoreResult?.getAllNotifications) return prev;
+              const chunk =
+                fetchMoreResult.getAllNotifications.notifications ?? [];
+              lastChunkLen = chunk.length;
+              const merged = mergeNotificationsLists(
+                prev?.getAllNotifications?.notifications ?? [],
+                chunk
+              );
+              return {
+                ...(prev || {}),
+                getAllNotifications: {
+                  ...(prev?.getAllNotifications || {}),
+                  ...fetchMoreResult.getAllNotifications,
+                  notifications: merged,
+                },
+              };
+            },
           });
 
-          const newItems = more?.getAllNotifications?.notifications || [];
+          const tp =
+            more?.getAllNotifications?.totalPages ?? totalPages ?? null;
+          if (typeof tp === "number") {
+            setHasMore(nextPage + 1 < tp);
+          } else {
+            setHasMore(lastChunkLen === TAKE);
+          }
 
-          // склеиваем без дублей
-          setItems((prev) => {
-            const seen = new Set();
-            const merged = [...prev, ...newItems].filter((it) => {
-              const key =
-                it.id ??
-                `${it.createdAt}-${it.description?.action}-${it.reserveId ?? it.requestId ?? ""
-                }`;
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            });
-            // если ничего не добавилось — дальше грузить бессмысленно
-            // if (merged.length === prev.length) setHasMore(false);
-            return merged;
-          });
-
-          // обновляем номер текущей страницы
           setCurrentPage(nextPage);
 
-          // стоп по размеру страницы (если сервер totalPages не отдаёт)
-          // if (newItems.length < TAKE) setHasMore(false);
-
-          lastLenRef.current = items.length + newItems.length;
+          lastLenRef.current =
+            (more?.getAllNotifications?.notifications?.length ?? 0) ||
+            items.length + lastChunkLen;
         } finally {
           setLoadingMoreLocal(false);
         }
@@ -222,6 +291,7 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
     currentPage,
     totalPages,
     fetchMore,
+    selectedType,
   ]);
 
   useEffect(() => {
@@ -272,8 +342,10 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                 Эскадрилья
               </button>
               <button
-                onClick={() => setSeparator("reserve")}
-                className={separator === "reserve" ? classes.active : null}
+                onClick={() => setSeparator("passengerRequest")}
+                className={
+                  separator === "passengerRequest" ? classes.active : null
+                }
               >
                 ФАП
               </button>
@@ -291,8 +363,11 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                   <p className={classes.notifyDate}>{fmtDay(dayTs)}</p>
                   {list.map((notify, index) => {
                     const isHotelAdmin = user?.role === roles.hotelAdmin;
-                    const isReserve = notify.reserveId !== null;
-                    const requestLink = `/reserve/reservePlacement/${notify.reserveId}`;
+                    const isPassengerRequest = notify.passengerRequestId != null;
+                    const isReserve =
+                      notify.reserveId != null && !isPassengerRequest;
+                    const passengerRequestLink = `/representativeRequests/representativeRequestsPlacement/${notify.passengerRequestId}`;
+                    const reserveLink = `/reserve/reservePlacement/${notify.reserveId}`;
                     return (
                       <div
                         className={classes.notifyMessageWrapper}
@@ -319,10 +394,17 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                               />
                             )}
                           </div>
-                          {isHotelAdmin && isReserve ? (
+                          {isHotelAdmin && isPassengerRequest ? (
                             <p
                               className={classes.toRequest}
-                              onClick={() => navigate(requestLink)}
+                              onClick={() => navigate(passengerRequestLink)}
+                            >
+                              <ExportIcon />
+                            </p>
+                          ) : isHotelAdmin && isReserve ? (
+                            <p
+                              className={classes.toRequest}
+                              onClick={() => navigate(reserveLink)}
                             >
                               <ExportIcon />
                             </p>
@@ -330,9 +412,11 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                             <p
                               className={classes.toRequest}
                               onClick={() =>
-                                isReserve
-                                  ? navigate(requestLink)
-                                  : onRequestClick(notify)
+                                isPassengerRequest
+                                  ? navigate(passengerRequestLink)
+                                  : isReserve
+                                    ? navigate(reserveLink)
+                                    : onRequestClick(notify)
                               }
                             >
                               <ExportIcon />

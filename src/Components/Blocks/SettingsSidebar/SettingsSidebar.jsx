@@ -200,21 +200,35 @@ export default function SettingsSidebar({
     requestCancel: !!s?.requestCancel,
     emailRequestCancel: !!s?.requestCancel && !!s?.emailRequestCancel,
     sitePushRequestCancel: !!s?.requestCancel && !!s?.sitePushRequestCancel,
-    reserveCreate: !!s?.reserveCreate,
-    emailReserveCreate: !!s?.reserveCreate && !!s?.emailReserveCreate,
-    sitePushReserveCreate: !!s?.reserveCreate && !!s?.sitePushReserveCreate,
-    reserveDatesChange: !!s?.reserveDatesChange,
-    emailReserveDatesChange: !!s?.reserveDatesChange && !!s?.emailReserveDatesChange,
-    sitePushReserveDatesChange:
-      !!s?.reserveDatesChange && !!s?.sitePushReserveDatesChange,
-    reserveUpdate: !!s?.reserveUpdate,
-    emailReserveUpdate: !!s?.reserveUpdate && !!s?.emailReserveUpdate,
-    sitePushReserveUpdate: !!s?.reserveUpdate && !!s?.sitePushReserveUpdate,
-    reservePlacementChange: !!s?.reservePlacementChange,
-    emailReservePlacementChange:
-      !!s?.reservePlacementChange && !!s?.emailReservePlacementChange,
-    sitePushReservePlacementChange:
-      !!s?.reservePlacementChange && !!s?.sitePushReservePlacementChange,
+    passengerRequestCreate: !!s?.passengerRequestCreate,
+    emailPassengerRequestCreate:
+      !!s?.passengerRequestCreate && !!s?.emailPassengerRequestCreate,
+    sitePushPassengerRequestCreate:
+      !!s?.passengerRequestCreate && !!s?.sitePushPassengerRequestCreate,
+    passengerRequestDatesChange: !!s?.passengerRequestDatesChange,
+    emailPassengerRequestDatesChange:
+      !!s?.passengerRequestDatesChange &&
+      !!s?.emailPassengerRequestDatesChange,
+    sitePushPassengerRequestDatesChange:
+      !!s?.passengerRequestDatesChange &&
+      !!s?.sitePushPassengerRequestDatesChange,
+    passengerRequestUpdate: !!s?.passengerRequestUpdate,
+    emailPassengerRequestUpdate:
+      !!s?.passengerRequestUpdate && !!s?.emailPassengerRequestUpdate,
+    sitePushPassengerRequestUpdate:
+      !!s?.passengerRequestUpdate && !!s?.sitePushPassengerRequestUpdate,
+    passengerRequestPlacementChange: !!s?.passengerRequestPlacementChange,
+    emailPassengerRequestPlacementChange:
+      !!s?.passengerRequestPlacementChange &&
+      !!s?.emailPassengerRequestPlacementChange,
+    sitePushPassengerRequestPlacementChange:
+      !!s?.passengerRequestPlacementChange &&
+      !!s?.sitePushPassengerRequestPlacementChange,
+    passengerRequestCancel: !!s?.passengerRequestCancel,
+    emailPassengerRequestCancel:
+      !!s?.passengerRequestCancel && !!s?.emailPassengerRequestCancel,
+    sitePushPassengerRequestCancel:
+      !!s?.passengerRequestCancel && !!s?.sitePushPassengerRequestCancel,
     newMessage: !!s?.newMessage,
     emailNewMessage: !!s?.newMessage && !!s?.emailNewMessage,
     sitePushNewMessage: !!s?.newMessage && !!s?.sitePushNewMessage,

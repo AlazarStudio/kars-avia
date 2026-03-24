@@ -248,11 +248,14 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
 
     try {
       const response = await createRequest({ variables: { input } });
+      const createdRequestNumber = response?.data?.createTransfer?.requestNumber;
       resetForm();
       onClose();
       addNotification
         ? addNotification(
-          "Создание заявки для экипажа прошло успешно.",
+          createdRequestNumber
+            ? `Заявка № ${createdRequestNumber} создана успешно.`
+            : "Создание заявки для экипажа прошло успешно.",
           "success"
         )
         : null;

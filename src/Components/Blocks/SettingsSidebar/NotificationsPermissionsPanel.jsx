@@ -50,41 +50,60 @@ export default function NotificationsPermissionsPanel({
         boolOrDefault(notificationMenu?.requestCancel),
         notificationMenu?.sitePushRequestCancel
       ),
-      reserveCreate: boolOrDefault(notificationMenu?.reserveCreate),
-      emailReserveCreate: channelOrDefault(
-        boolOrDefault(notificationMenu?.reserveCreate),
-        notificationMenu?.emailReserveCreate
+      passengerRequestCreate: boolOrDefault(
+        notificationMenu?.passengerRequestCreate
       ),
-      sitePushReserveCreate: channelOrDefault(
-        boolOrDefault(notificationMenu?.reserveCreate),
-        notificationMenu?.sitePushReserveCreate
+      emailPassengerRequestCreate: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestCreate),
+        notificationMenu?.emailPassengerRequestCreate
       ),
-      reserveDatesChange: boolOrDefault(notificationMenu?.reserveDatesChange),
-      emailReserveDatesChange: channelOrDefault(
-        boolOrDefault(notificationMenu?.reserveDatesChange),
-        notificationMenu?.emailReserveDatesChange
+      sitePushPassengerRequestCreate: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestCreate),
+        notificationMenu?.sitePushPassengerRequestCreate
       ),
-      sitePushReserveDatesChange: channelOrDefault(
-        boolOrDefault(notificationMenu?.reserveDatesChange),
-        notificationMenu?.sitePushReserveDatesChange
+      passengerRequestDatesChange: boolOrDefault(
+        notificationMenu?.passengerRequestDatesChange
       ),
-      reserveUpdate: boolOrDefault(notificationMenu?.reserveUpdate),
-      emailReserveUpdate: channelOrDefault(
-        boolOrDefault(notificationMenu?.reserveUpdate),
-        notificationMenu?.emailReserveUpdate
+      emailPassengerRequestDatesChange: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestDatesChange),
+        notificationMenu?.emailPassengerRequestDatesChange
       ),
-      sitePushReserveUpdate: channelOrDefault(
-        boolOrDefault(notificationMenu?.reserveUpdate),
-        notificationMenu?.sitePushReserveUpdate
+      sitePushPassengerRequestDatesChange: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestDatesChange),
+        notificationMenu?.sitePushPassengerRequestDatesChange
       ),
-      reservePlacementChange: boolOrDefault(notificationMenu?.reservePlacementChange),
-      emailReservePlacementChange: channelOrDefault(
-        boolOrDefault(notificationMenu?.reservePlacementChange),
-        notificationMenu?.emailReservePlacementChange
+      passengerRequestUpdate: boolOrDefault(
+        notificationMenu?.passengerRequestUpdate
       ),
-      sitePushReservePlacementChange: channelOrDefault(
-        boolOrDefault(notificationMenu?.reservePlacementChange),
-        notificationMenu?.sitePushReservePlacementChange
+      emailPassengerRequestUpdate: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestUpdate),
+        notificationMenu?.emailPassengerRequestUpdate
+      ),
+      sitePushPassengerRequestUpdate: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestUpdate),
+        notificationMenu?.sitePushPassengerRequestUpdate
+      ),
+      passengerRequestPlacementChange: boolOrDefault(
+        notificationMenu?.passengerRequestPlacementChange
+      ),
+      emailPassengerRequestPlacementChange: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestPlacementChange),
+        notificationMenu?.emailPassengerRequestPlacementChange
+      ),
+      sitePushPassengerRequestPlacementChange: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestPlacementChange),
+        notificationMenu?.sitePushPassengerRequestPlacementChange
+      ),
+      passengerRequestCancel: boolOrDefault(
+        notificationMenu?.passengerRequestCancel
+      ),
+      emailPassengerRequestCancel: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestCancel),
+        notificationMenu?.emailPassengerRequestCancel
+      ),
+      sitePushPassengerRequestCancel: channelOrDefault(
+        boolOrDefault(notificationMenu?.passengerRequestCancel),
+        notificationMenu?.sitePushPassengerRequestCancel
       ),
       newMessage: boolOrDefault(notificationMenu?.newMessage),
       emailNewMessage: channelOrDefault(
@@ -164,47 +183,66 @@ export default function NotificationsPermissionsPanel({
         <SectionCard title="ФАП">
           <NotificationRow
             label="Создание"
-            checked={state.reserveCreate}
-            emailChecked={state.emailReserveCreate}
-            sitePushChecked={state.sitePushReserveCreate}
-            onChange={(v) => set("reserveCreate", v)}
-            onEmailChange={(v) => set("emailReserveCreate", v)}
-            onSitePushChange={(v) => set("sitePushReserveCreate", v)}
+            checked={state.passengerRequestCreate}
+            emailChecked={state.emailPassengerRequestCreate}
+            sitePushChecked={state.sitePushPassengerRequestCreate}
+            onChange={(v) => set("passengerRequestCreate", v)}
+            onEmailChange={(v) => set("emailPassengerRequestCreate", v)}
+            onSitePushChange={(v) => set("sitePushPassengerRequestCreate", v)}
             disabled={!isEditing}
-            channelsDisabled={!isEditing || !state.reserveCreate}
+            channelsDisabled={!isEditing || !state.passengerRequestCreate}
           />
           <NotificationRow
             label="Запрос на изменение дат"
-            checked={state.reserveDatesChange}
-            emailChecked={state.emailReserveDatesChange}
-            sitePushChecked={state.sitePushReserveDatesChange}
-            onChange={(v) => set("reserveDatesChange", v)}
-            onEmailChange={(v) => set("emailReserveDatesChange", v)}
-            onSitePushChange={(v) => set("sitePushReserveDatesChange", v)}
+            checked={state.passengerRequestDatesChange}
+            emailChecked={state.emailPassengerRequestDatesChange}
+            sitePushChecked={state.sitePushPassengerRequestDatesChange}
+            onChange={(v) => set("passengerRequestDatesChange", v)}
+            onEmailChange={(v) => set("emailPassengerRequestDatesChange", v)}
+            onSitePushChange={(v) =>
+              set("sitePushPassengerRequestDatesChange", v)
+            }
             disabled={!isEditing}
-            channelsDisabled={!isEditing || !state.reserveDatesChange}
+            channelsDisabled={!isEditing || !state.passengerRequestDatesChange}
           />
           <NotificationRow
             label="Обновление"
-            checked={state.reserveUpdate}
-            emailChecked={state.emailReserveUpdate}
-            sitePushChecked={state.sitePushReserveUpdate}
-            onChange={(v) => set("reserveUpdate", v)}
-            onEmailChange={(v) => set("emailReserveUpdate", v)}
-            onSitePushChange={(v) => set("sitePushReserveUpdate", v)}
+            checked={state.passengerRequestUpdate}
+            emailChecked={state.emailPassengerRequestUpdate}
+            sitePushChecked={state.sitePushPassengerRequestUpdate}
+            onChange={(v) => set("passengerRequestUpdate", v)}
+            onEmailChange={(v) => set("emailPassengerRequestUpdate", v)}
+            onSitePushChange={(v) => set("sitePushPassengerRequestUpdate", v)}
             disabled={!isEditing}
-            channelsDisabled={!isEditing || !state.reserveUpdate}
+            channelsDisabled={!isEditing || !state.passengerRequestUpdate}
           />
           <NotificationRow
             label="Смена размещения"
-            checked={state.reservePlacementChange}
-            emailChecked={state.emailReservePlacementChange}
-            sitePushChecked={state.sitePushReservePlacementChange}
-            onChange={(v) => set("reservePlacementChange", v)}
-            onEmailChange={(v) => set("emailReservePlacementChange", v)}
-            onSitePushChange={(v) => set("sitePushReservePlacementChange", v)}
+            checked={state.passengerRequestPlacementChange}
+            emailChecked={state.emailPassengerRequestPlacementChange}
+            sitePushChecked={state.sitePushPassengerRequestPlacementChange}
+            onChange={(v) => set("passengerRequestPlacementChange", v)}
+            onEmailChange={(v) =>
+              set("emailPassengerRequestPlacementChange", v)
+            }
+            onSitePushChange={(v) =>
+              set("sitePushPassengerRequestPlacementChange", v)
+            }
             disabled={!isEditing}
-            channelsDisabled={!isEditing || !state.reservePlacementChange}
+            channelsDisabled={
+              !isEditing || !state.passengerRequestPlacementChange
+            }
+          />
+          <NotificationRow
+            label="Отмена"
+            checked={state.passengerRequestCancel}
+            emailChecked={state.emailPassengerRequestCancel}
+            sitePushChecked={state.sitePushPassengerRequestCancel}
+            onChange={(v) => set("passengerRequestCancel", v)}
+            onEmailChange={(v) => set("emailPassengerRequestCancel", v)}
+            onSitePushChange={(v) => set("sitePushPassengerRequestCancel", v)}
+            disabled={!isEditing}
+            channelsDisabled={!isEditing || !state.passengerRequestCancel}
           />
         </SectionCard>
 
