@@ -1,12 +1,12 @@
 /**
  * Единый слой работы с auth (playbook: authStore).
- * Хранит accessToken, refreshToken в cookie; fingerprint в sessionStorage.
+ * Хранит accessToken, refreshToken и fingerprint в cookie.
  * Логика logout: clear + уведомление подписчиков (редирект на логин).
  */
 
 const COOKIE_TOKEN = "token";
 const COOKIE_REFRESH = "refreshToken";
-const STORAGE_FINGERPRINT = "auth_fingerprint";
+const COOKIE_FINGERPRINT = "auth_fingerprint";
 const COOKIE_OPTS = "SameSite=Lax; Path=/";
 const TOKEN_MAX_AGE = 86400; // 24h
 const REFRESH_MAX_AGE = 30 * 24 * 3600;
@@ -40,18 +40,12 @@ export const authService = {
   },
 
   getFingerprint() {
-    try {
-      return sessionStorage.getItem(STORAGE_FINGERPRINT) || undefined;
-    } catch {
-      return undefined;
-    }
+    return getCookie(COOKIE_FINGERPRINT);
   },
 
   setFingerprint(fingerprint) {
-    try {
-      if (fingerprint) sessionStorage.setItem(STORAGE_FINGERPRINT, fingerprint);
-      else sessionStorage.removeItem(STORAGE_FINGERPRINT);
-    } catch (_) {}
+    if (fingerprint) setCookie(COOKIE_FINGERPRINT, fingerprint, REFRESH_MAX_AGE);
+    else clearCookie(COOKIE_FINGERPRINT);
   },
 
   /**
@@ -66,9 +60,7 @@ export const authService = {
   clear() {
     clearCookie(COOKIE_TOKEN);
     clearCookie(COOKIE_REFRESH);
-    try {
-      sessionStorage.removeItem(STORAGE_FINGERPRINT);
-    } catch (_) {}
+    clearCookie(COOKIE_FINGERPRINT);
     logoutListeners.forEach((cb) => {
       try {
         cb();
