@@ -38,8 +38,7 @@ import {
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles";
+import { roles } from "../../../roles";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import ManifestModal from "../../Blocks/ManifestModal/ManifestModal";
 import ManifestDropdown from "../../Blocks/ManifestDropdown/ManifestDropdown";
@@ -63,9 +62,11 @@ import * as XLSX from "xlsx";
 import DownloadIcon from "../../../shared/icons/DownloadIcon";
 import WhiteEditIcon from "../../../shared/icons/WhiteEditIcon";
 import CopyIcon from "../../../shared/icons/CopyIcon";
+import { useToast } from "../../../contexts/ToastContext";
 
 function ReservePlacementRepresentative({ children, user, ...props }) {
   const token = getCookie("token");
+  const { notify } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const { id, idRequest } = useParams();
@@ -185,7 +186,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   });
 
   setInterval(() => {
-    console.log('refetch');
     refetch();
   }, 10000);
 
@@ -493,15 +493,8 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     setShowChooseHotel(!showChooseHotel);
   };
 
-  const [notifications, setNotifications] = useState([]);
-
   const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
+    notify(text, status);
   };
 
   const representativePwaLink = useMemo(() => {
@@ -1009,24 +1002,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               addNotification={addNotification}
             />
 
-            {/* <AddNewPassenger
-              show={showCreateSidebar}
-              onClose={toggleCreateSidebar}
-              request={request}
-              placement={placement ? placement : []}
-              setPlacement={setPlacement}
-              user={user}
-              showChooseHotels={showChooseHotels}
-              setShowChooseHotels={setShowChooseHotels}
-            />
-
-            <ChooseHotel
-              show={showChooseHotel}
-              onClose={toggleChooseHotel}
-              chooseObject={placement}
-              id={"reserve"}
-            /> */}
-
             <ManifestModal
               user={user}
               open={openManifestModal}
@@ -1037,20 +1012,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               classes={classes}
             />
 
-            {notifications.map((n, index) => (
-              <Notification
-                key={n.id}
-                text={n.text}
-                status={n.status}
-                index={index}
-                time={notifyTime}
-                onClose={() => {
-                  setNotifications((prev) =>
-                    prev.filter((notif) => notif.id !== n.id)
-                  );
-                }}
-              />
-            ))}
           </>
         )}
       </div>

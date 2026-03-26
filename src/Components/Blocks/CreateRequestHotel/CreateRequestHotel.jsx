@@ -14,9 +14,13 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
-function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
+function CreateRequestHotel({ show, onClose, addHotel }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success } = useToast();
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
@@ -48,18 +52,23 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
     setIsEdited(false); // Сброс флага изменений
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, confirm, isDialogOpen]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -75,8 +84,8 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+    if (file && file.size > maxSizeInBytes) {
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: "",
@@ -122,13 +131,14 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
       !formData.airportId ||
       !formData.capacity
     ) {
-      alert("Пожалуйста, заполните все поля!");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
 
     if (!formData.images) {
-      alert("Пожалуйста, выберите файл для загрузки");
+      showAlert("Пожалуйста, выберите файл для загрузки");
+      setIsLoading(false);
       return;
     }
 
@@ -155,7 +165,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
         addHotel(response_create_hotel.data.createHotel);
         resetForm();
         onClose();
-        addNotification("Гостиница создана успешно.", "success");
+        success("Гостиница создана успешно.");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
@@ -192,6 +202,9 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         closeButton();
       }
@@ -204,7 +217,7 @@ function CreateRequestHotel({ show, onClose, addHotel, addNotification }) {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   let infoCities = useQuery(GET_CITIES, {
     context: {

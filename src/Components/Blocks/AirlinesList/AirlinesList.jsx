@@ -17,8 +17,6 @@ import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
 import InfoTableDataRepresentativeAirlines from "../InfoTableDataRepresentativeAirlines/InfoTableDataRepresentativeAirlines";
 
 function AirlinesList({ children, representative, ...props }) {
@@ -129,17 +127,6 @@ function AirlinesList({ children, representative, ...props }) {
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
-  };
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -279,22 +266,7 @@ function AirlinesList({ children, representative, ...props }) {
           representative={representative}
           onClose={toggleCreateSidebar}
           addHotel={addAirline}
-          addNotification={addNotification}
         />
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

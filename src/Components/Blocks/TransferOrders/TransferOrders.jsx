@@ -18,14 +18,11 @@ import ReactPaginate from "react-paginate";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import {
-  fullNotifyTime,
   menuAccess,
-  notifyTime,
   statusMapping,
   roles,
 } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
-import Notification from "../../Notification/Notification.jsx";
 import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import InfoTableDataTransferOrders from "../InfoTableDataTransferOrders/InfoTableDataTransferOrders.jsx";
 import Button from "../../Standart/Button/Button.jsx";
@@ -166,7 +163,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
-  const [notifications, setNotifications] = useState([]);
   const canCreateTransfer = accessMenu
     ? hasAccessMenu(accessMenu, "transferCreate")
     : true;
@@ -174,14 +170,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     ? hasAccessMenu(accessMenu, "transferChat")
     : true;
 
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const handleChange = (e) =>
     setFilterData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -486,7 +474,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
         onClose={toggleCreateSidebar}
         onMatchFound={handleOpenExistRequest}
         user={user}
-        addNotification={addNotification}
       />
       <ExistRequestTransfer
         show={showRequestSidebar}
@@ -521,21 +508,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
           isCancel={true}
         />
       )}
-
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </div>
   );
 }

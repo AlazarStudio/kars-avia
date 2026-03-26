@@ -25,10 +25,14 @@ import { AddressField } from "../AddressField/AddressField.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import { roles } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
 // Компонент для создания новой заявки
-function CreateTransferRequest({ show, onClose, user, addNotification }) {
+function CreateTransferRequest({ show, onClose, user }) {
   const token = getCookie("token");
+  const { showAlert, confirm, isDialogOpen } = useDialog();
+  const { success } = useToast();
   const [userID, setUserID] = useState();
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
@@ -169,7 +173,9 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
   }, [userID]);
 
   // Закрытие формы с проверкой на несохраненные изменения
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
@@ -177,12 +183,15 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setNewStaffId(null);
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, isDialogOpen, confirm]);
 
   // Рассчитываем минимальную дату прибытия как дату, начиная с месяца назад
   const minArrivalDate = useMemo(() => {
@@ -220,13 +229,13 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
     setIsLoading(true);
 
     if (!isFormValid()) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
 
     if (formData.scheduledPickupAt < today) {
-      alert("Дата прибытия не может быть раньше сегодняшнего дня.");
+      showAlert("Дата прибытия не может быть раньше сегодняшнего дня.");
       setFormData((prevFormData) => ({
         ...prevFormData,
         arrivalDate: "", // Очищаем дату прибытия
@@ -251,18 +260,15 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
       const createdRequestNumber = response?.data?.createTransfer?.requestNumber;
       resetForm();
       onClose();
-      addNotification
-        ? addNotification(
-          createdRequestNumber
-            ? `Заявка № ${createdRequestNumber} создана успешно.`
-            : "Создание заявки для экипажа прошло успешно.",
-          "success"
-        )
-        : null;
+      success(
+        createdRequestNumber
+          ? `Заявка № ${createdRequestNumber} создана успешно.`
+          : "Создание заявки для экипажа прошло успешно."
+      );
       // console.log(response);
     } catch (error) {
       console.error(error);
-      alert("Ошибка при создании заявки");
+      showAlert("Ошибка при создании заявки");
     } finally {
       // resetForm();
       setIsLoading(false);
@@ -272,6 +278,12 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
   // Клик вне боковой панели закрывает её
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+
+      if (event.target.closest(".MuiSnackbar-root")) {
+        return;
+      }
+
       if (
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
@@ -290,7 +302,7 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
 
     // Очистка эффекта при демонтировании компонента
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   useEffect(() => {
     if (newStaffId && !disableAutocomplete) {

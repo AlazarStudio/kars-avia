@@ -14,12 +14,11 @@ import {
   GET_CITIES,
   getCookie,
 } from "../../../../graphQL_requests";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles";
+import { roles } from "../../../roles";
 import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
 
 function HotelsList({ children, user, ...props }) {
   const token = getCookie("token");
@@ -153,17 +152,6 @@ function HotelsList({ children, user, ...props }) {
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
-  };
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
   };
 
   const handleFilterChange = (name, value) => {
@@ -360,22 +348,7 @@ function HotelsList({ children, user, ...props }) {
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
           addHotel={addHotel}
-          addNotification={addNotification}
         />
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

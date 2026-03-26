@@ -20,12 +20,12 @@ import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import MUIAutocompleteColor from "../../Blocks/MUIAutocompleteColor/MUIAutocompleteColor";
 import Button from "../../Standart/Button/Button";
-import Notification from "../../Notification/Notification";
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
   isExternalPassengerRequestUser,
 } from "../../../utils/access";
+import { useToast } from "../../../contexts/ToastContext";
 
 function toNum(v) {
   const n = Number(v);
@@ -66,6 +66,7 @@ const newGroup = () => ({
 
 function RepresentativeHotelReportPage({ user }) {
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
   const { id, idRequest, hotelId } = useParams();
   const navigate = useNavigate();
   const { cookiesAccepted, acceptCookies, isInitialized } = useCookies();
@@ -161,15 +162,6 @@ function RepresentativeHotelReportPage({ user }) {
   const [daysOverrides, setDaysOverrides] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("groups");
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = useCallback((text, status) => {
-    const notifyId = Date.now() + Math.random();
-    setNotifications((prev) => [...prev, { id: notifyId, text, status }]);
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== notifyId));
-    }, 4000);
-  }, []);
 
   const assignedPersonIndices = useMemo(
     () => new Set(groups.flatMap((g) => g.personIndices)),
@@ -294,10 +286,10 @@ function RepresentativeHotelReportPage({ user }) {
           })),
         },
       });
-      addNotification("Отчет сформирован", "success");
+      success("Отчет сформирован");
     } catch (err) {
       console.error(err);
-      // addNotification("Не удалось сформировать отчет", "error");
+      notifyError("Не удалось сформировать отчет");
     }
   };
 
@@ -745,18 +737,6 @@ function RepresentativeHotelReportPage({ user }) {
           </section>
         </div>
       </div>
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={4000}
-          onClose={() =>
-            setNotifications((prev) => prev.filter((x) => x.id !== n.id))
-          }
-        />
-      ))}
     </div>
   );
 }

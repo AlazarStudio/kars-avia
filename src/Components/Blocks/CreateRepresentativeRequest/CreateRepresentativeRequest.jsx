@@ -17,6 +17,8 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
 // Компонент для создания новой заявки
 function CreateRepresentativeRequest({
@@ -24,9 +26,10 @@ function CreateRepresentativeRequest({
   onClose,
   onMatchFound,
   user,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { showAlert, confirm, isDialogOpen } = useDialog();
+  const { success } = useToast();
   const [isEdited, setIsEdited] = useState(false); // Флаг изменений формы
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
@@ -202,7 +205,9 @@ function CreateRepresentativeRequest({
   }, [user, airlineForAirlineAdmin]);
 
   // Закрытие формы с проверкой несохранённых изменений
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       setMatchingRequest(null);
@@ -210,12 +215,15 @@ function CreateRepresentativeRequest({
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       setMatchingRequest(null);
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, isDialogOpen, confirm]);
 
   // const handleChange = useCallback((e) => {
   //   const { name, type, checked, value } = e.target;
@@ -376,7 +384,7 @@ function CreateRepresentativeRequest({
     setIsLoading(true);
 
     if (!isFormValid()) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
@@ -438,12 +446,7 @@ function CreateRepresentativeRequest({
       const response = await createRequest({ variables: { input } });
       resetForm();
       onClose();
-      if (addNotification) {
-        addNotification(
-          "Создание заявки для экипажа прошло успешно.",
-          "success"
-        );
-      }
+      success("Создание заявки для экипажа прошло успешно.");
       // console.log(response);
     } catch (error) {
       console.error(error);
@@ -456,7 +459,7 @@ function CreateRepresentativeRequest({
           setMatchingRequest(requestId);
         }
       } else {
-        alert("Ошибка при создании заявки");
+        showAlert("Ошибка при создании заявки");
       }
     } finally {
       setIsLoading(false);
@@ -468,6 +471,12 @@ function CreateRepresentativeRequest({
   // Клик вне боковой панели закрывает её
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+
+      if (event.target.closest(".MuiSnackbar-root")) {
+        return;
+      }
+
       if (sidebarRef.current?.contains(event.target)) {
         return;
       }
@@ -481,7 +490,7 @@ function CreateRepresentativeRequest({
     }
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   useEffect(() => {
     setMatchingRequest(null);

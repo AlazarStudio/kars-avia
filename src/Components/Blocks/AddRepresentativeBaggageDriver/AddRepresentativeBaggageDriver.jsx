@@ -14,9 +14,13 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { AddressField } from "../AddressField/AddressField.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
-function AddRepresentativeBaggageDriver({ show, onClose, request, addNotification }) {
+function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   const token = getCookie("token");
+  const { confirm, isDialogOpen, showAlert } = useDialog();
+  const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
   const [selectedDriver, setSelectedDriver] = useState(null);
@@ -91,17 +95,22 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
     setIsEdited(false);
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, isDialogOpen, confirm]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -124,7 +133,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
     const email = quickCreate.email?.trim();
     const password = quickCreate.password?.trim();
     if (!name || !number || !email || !password) {
-      addNotification?.("Заполните имя, телефон, email и пароль.", "error");
+      notifyError("Заполните имя, телефон, email и пароль.");
       return;
     }
     try {
@@ -154,16 +163,16 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
         setShowQuickCreate(false);
         setQuickCreate({ name: "", number: "", email: "", password: "" });
         await refetchDrivers();
-        addNotification?.("Водитель создан.", "success");
+        success("Водитель создан.");
       }
     } catch (err) {
-      addNotification?.(err?.message || "Ошибка при создании водителя", "error");
+      notifyError(err?.message || "Ошибка при создании водителя");
     }
   };
 
   const handleSubmit = async () => {
     if (!isFormValid()) {
-      addNotification?.("Заполните водителя и адреса отправления и прибытия.", "error");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       return;
     }
     const driver = {
@@ -185,17 +194,20 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
       });
       resetForm();
       onClose();
-      addNotification?.("Заявка на трансфер багажа добавлена.", "success");
+      success("Заявка на трансфер багажа добавлена.");
     } catch (err) {
-      addNotification?.(
-        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при добавлении заявки",
-        "error"
+      notifyError(
+        err?.graphQLErrors?.[0]?.message ||
+          err?.message ||
+          "Ошибка при добавлении заявки"
       );
     }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
       if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
@@ -205,7 +217,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request, addNotificatio
       document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

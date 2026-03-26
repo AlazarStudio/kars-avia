@@ -14,9 +14,13 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
-function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
+function AddRepresentativeHotel({ show, onClose, request }) {
   const token = getCookie("token");
+  const { showAlert, confirm, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
   const [selectedHotel, setSelectedHotel] = useState(null);
@@ -95,17 +99,22 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
     setIsEdited(false);
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, isDialogOpen, confirm]);
 
   const handleChange = useCallback(
     (e) => {
@@ -126,14 +135,12 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
         ) {
           numeric = remainingServicePeople;
           if (remainingServicePeople === 0) {
-            addNotification?.(
+            notifyError(
               "Все места по услуге проживания уже распределены.",
-              "error"
             );
           } else {
-            addNotification?.(
-              `Нельзя указать больше, чем осталось по услуге: ${remainingServicePeople}.`,
-              "error"
+            notifyError(
+              `Нельзя указать больше, чем осталось по услуге: ${remainingServicePeople}.`
             );
           }
         }
@@ -146,7 +153,7 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
 
       setFormData((prev) => ({ ...prev, [name]: value }));
     },
-    [addNotification, remainingServicePeople]
+    [notifyError, remainingServicePeople]
   );
 
   const isFormValid = () => {
@@ -163,7 +170,7 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
     if (creatingHotel) return;
     const name = quickCreate.name?.trim();
     if (!name) {
-      addNotification?.("Укажите название гостиницы.", "error");
+      notifyError("Укажите название гостиницы.");
       return;
     }
     try {
@@ -194,11 +201,11 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
         setShowQuickCreate(false);
         setQuickCreate({ name: "", city: "" });
         await refetchHotels();
-        addNotification?.("Гостиница создана.", "success");
+        success("Гостиница создана.");
       }
     } catch (err) {
       console.error(err);
-      addNotification?.(err?.message || "Ошибка при создании гостиницы", "error");
+      notifyError(err?.message || "Ошибка при создании гостиницы");
     }
   };
 
@@ -208,18 +215,18 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
         typeof remainingServicePeople === "number" &&
         remainingServicePeople <= 0
       ) {
-        alert(
+        showAlert(
           "Нельзя добавить новую гостиницу: все места по услуге проживания уже распределены."
         );
       } else if (
         typeof remainingServicePeople === "number" &&
         Number(formData.peopleCount) > remainingServicePeople
       ) {
-        alert(
+        showAlert(
           `Количество мест превышает доступное по услуге (${remainingServicePeople}).`
         );
       } else {
-        alert(
+        showAlert(
           "Выберите гостиницу из списка (или создайте новую) и укажите корректное количество мест."
         );
       }
@@ -243,17 +250,17 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
       });
       resetForm();
       onClose();
-      if (addNotification) {
-        addNotification("Гостиница добавлена.", "success");
-      }
+      success("Гостиница добавлена.");
     } catch (error) {
       console.error(error);
-      alert("Ошибка при добавлении гостиницы");
+      showAlert("Ошибка при добавлении гостиницы");
     }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
       if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
@@ -263,7 +270,7 @@ function AddRepresentativeHotel({ show, onClose, request, addNotification }) {
       document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

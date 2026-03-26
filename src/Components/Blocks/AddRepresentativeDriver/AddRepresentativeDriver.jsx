@@ -14,9 +14,13 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { AddressField } from "../AddressField/AddressField.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
-function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
+function AddRepresentativeDriver({ show, onClose, request }) {
   const token = getCookie("token");
+  const { confirm, isDialogOpen, showAlert } = useDialog();
+  const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
   const [selectedDriver, setSelectedDriver] = useState(null);
@@ -102,17 +106,22 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
     setIsEdited(false);
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, isDialogOpen, confirm]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -131,15 +140,9 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
       ) {
         numeric = remainingServicePeople;
         if (remainingServicePeople === 0) {
-          addNotification?.(
-            "Все места по услуге трансфера уже распределены.",
-            "error"
-          );
+          notifyError("Все места по услуге трансфера уже распределены.");
         } else {
-          addNotification?.(
-            `Максимум доступно мест: ${remainingServicePeople}.`,
-            "error"
-          );
+          notifyError(`Максимум доступно мест: ${remainingServicePeople}.`);
         }
       }
       setFormData((prev) => ({
@@ -149,7 +152,7 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
       return;
     }
     setFormData((prev) => ({ ...prev, [name]: value }));
-  }, [remainingServicePeople, addNotification]);
+  }, [remainingServicePeople, notifyError]);
 
   const isFormValid = () => {
     return (
@@ -170,7 +173,7 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
     const email = quickCreate.email?.trim();
     const password = quickCreate.password?.trim();
     if (!name || !number || !email || !password) {
-      addNotification?.("Заполните имя, телефон, email и пароль.", "error");
+      notifyError("Заполните имя, телефон, email и пароль.");
       return;
     }
     try {
@@ -200,10 +203,10 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
         setShowQuickCreate(false);
         setQuickCreate({ name: "", number: "", email: "", password: "" });
         await refetchDrivers();
-        addNotification?.("Водитель создан.", "success");
+        success("Водитель создан.");
       }
     } catch (err) {
-      addNotification?.(err?.message || "Ошибка при создании водителя", "error");
+      notifyError(err?.message || "Ошибка при создании водителя");
     }
   };
 
@@ -213,23 +216,18 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
         typeof remainingServicePeople === "number" &&
         remainingServicePeople <= 0
       ) {
-        addNotification?.(
-          "Нельзя добавить водителя: все места по услуге трансфера уже распределены.",
-          "error"
+        notifyError(
+          "Нельзя добавить водителя: все места по услуге трансфера уже распределены."
         );
       } else if (
         typeof remainingServicePeople === "number" &&
         Number(formData.peopleCount) > remainingServicePeople
       ) {
-        addNotification?.(
-          `Количество мест превышает доступное по услуге (${remainingServicePeople}).`,
-          "error"
+        notifyError(
+          `Количество мест превышает доступное по услуге (${remainingServicePeople}).`
         );
       } else {
-        addNotification?.(
-          "Заполните водителя, адреса и количество людей.",
-          "error"
-        );
+        showAlert("Пожалуйста, заполните все обязательные поля.");
       }
       return;
     }
@@ -251,17 +249,20 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
       });
       resetForm();
       onClose();
-      addNotification?.("Водитель добавлен.", "success");
+      success("Водитель добавлен.");
     } catch (err) {
-      addNotification?.(
-        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при добавлении водителя",
-        "error"
+      notifyError(
+        err?.graphQLErrors?.[0]?.message ||
+          err?.message ||
+          "Ошибка при добавлении водителя"
       );
     }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
       if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
@@ -271,7 +272,7 @@ function AddRepresentativeDriver({ show, onClose, request, addNotification }) {
       document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

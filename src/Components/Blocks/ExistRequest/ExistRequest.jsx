@@ -39,6 +39,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import ExistRequestAdditionalMenu from "./ExistRequestAdditionalMenu";
 import ExistRequestEditForm from "./ExistRequestEditForm";
 import { roles, roleLabels } from "../../../roles";
+import { useDialog } from "../../../contexts/DialogContext";
 
 function ExistRequest({
   show,
@@ -57,6 +58,7 @@ function ExistRequest({
   setRequestId,
 }) {
   const token = getCookie("token");
+  const { showAlert, isDialogOpen } = useDialog();
   const [totalPages, setTotalPages] = useState(1);
   const currentPageRelay = 0;
 
@@ -227,6 +229,8 @@ function ExistRequest({
 
   // Функция закрытия формы
   const closeButton = useCallback(() => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     resetForm();
     onClose();
@@ -248,7 +252,7 @@ function ExistRequest({
     setSelectedPlace(null);
     setSelectedAirportId(null);
     setSelectedReserve(null);
-  }, [onClose, setChooseRequestID]);
+  }, [onClose, setChooseRequestID, isDialogOpen]);
 
   const resetForm = useCallback(() => setActiveTab("Общая"), []);
 
@@ -419,7 +423,9 @@ function ExistRequest({
         // Добавляем изменения гостиницы/номера/места только при валидном выборе
         if (hotelRoomChangeAllowed && (hotelIdChanged || roomOrPlaceChanged)) {
           if (!canChangeHotel) {
-            alert("Невозможно сохранить изменения: дата заезда уже наступила.");
+            showAlert(
+              "Невозможно сохранить изменения: дата заезда уже наступила."
+            );
             setIsLoading(false);
             return;
           }
@@ -449,10 +455,11 @@ function ExistRequest({
           },
         });
 
-        alert(
+        showAlert(
           user?.airlineId && formData.status !== "created"
             ? "Запрос отправлен, можете посмотреть в комментариях."
-            : "Изменения сохранены"
+            : "Изменения сохранены",
+          "success"
         );
         setFormDataExtend((prev) => ({
           ...prev,
@@ -481,7 +488,7 @@ function ExistRequest({
             "ApolloError: Невозможно разместить заявку: пересечение с заявкой"
           )
         ) {
-          alert("Невозможно разместить заявку: пересечение с другой заявкой");
+          showAlert("Невозможно разместить заявку: пересечение с другой заявкой");
           setFormDataExtend((prev) => ({
             departureDate: formData.departure
               ? parseDateTime(formData.departure).date
@@ -501,7 +508,7 @@ function ExistRequest({
             "ApolloError: Error: Невозможно разместить заявку: свободных мест нет"
           )
         ) {
-          alert("Свободных мест в этом номере нет");
+          showAlert("Свободных мест в этом номере нет");
         }
       } finally {
         setIsLoading(false);
@@ -555,7 +562,10 @@ function ExistRequest({
   // Клик вне боковой панели закрывает её
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+
       if (showDelete) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
       // Клик по меню или его backdrop — закрываем только меню, не сайдбар
       if (anchorEl && menuRef.current?.contains(event.target)) {
         setAnchorEl(null);
@@ -570,7 +580,7 @@ function ExistRequest({
     else document.removeEventListener("mousedown", handleClickOutside);
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton, showDelete, anchorEl]);
+  }, [show, closeButton, showDelete, anchorEl, isDialogOpen]);
 
   // Вспомогательные функции для преобразования данных
   // const getJsonParce = (data) => JSON.parse(data);
@@ -667,11 +677,11 @@ function ExistRequest({
         });
         await refetch();
         if (!suppressAlert) {
-          alert("Изменения сохранены");
+          showAlert("Изменения сохранены", "success");
         }
       } catch (error) {
         console.error("Ошибка при сохранении:", error);
-        alert("Ошибка при сохранении");
+        showAlert("Ошибка при сохранении");
       } finally {
         setIsLoading(false);
       }
@@ -696,12 +706,12 @@ function ExistRequest({
           archivingRequstId: chooseRequestID,
         },
       });
-      alert("Изменения сохранены");
+      showAlert("Изменения сохранены", "success");
       await refetch();
       onClose();
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
-      alert("Ошибка при сохранении");
+      showAlert("Ошибка при сохранении");
     } finally {
       setIsLoading(false);
     }
@@ -881,7 +891,7 @@ function ExistRequest({
 
     const personToSave = selectedEmployee ?? formData?.person;
     if (!chooseRequestID || !personToSave) {
-      alert("Пожалуйста, выберите сотрудника.");
+      showAlert("Пожалуйста, выберите сотрудника.");
       setIsLoading(false);
       return;
     }
@@ -897,7 +907,7 @@ function ExistRequest({
     })
       .then((res) => {
         // console.log("Request updated:", res);
-        alert("Изменения сохранены");
+        showAlert("Изменения сохранены", "success");
         setSelectedEmployee(null);
         setNewStaffId(null);
         // При необходимости можно выполнить refetch() или обновить локальные данные
@@ -908,7 +918,7 @@ function ExistRequest({
         console.error("Ошибка обновления заявки:", err);
         // console.log(selectedEmployee);
 
-        alert("Ошибка обновления заявки");
+        showAlert("Ошибка обновления заявки");
         setSelectedEmployee(null);
         setNewStaffId(null);
         setIsLoading(false);
@@ -930,7 +940,7 @@ function ExistRequest({
       selectedEmployee.id !== formData?.person?.id;
 
     if (hasPendingEmployeeSelection) {
-      alert("Подтвердите выбор сотрудника.");
+      showAlert("Подтвердите выбор сотрудника.", "warning");
       return;
     }
 
