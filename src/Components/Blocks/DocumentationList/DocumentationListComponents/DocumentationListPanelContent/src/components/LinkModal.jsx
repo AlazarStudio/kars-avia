@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded'
 import { 
   LinkIcon, 
   ButtonIcon, 
@@ -37,6 +38,75 @@ const renderLinkIcon = (iconType, size = 20) => {
   }
 }
 
+const getLinkStylePreviewStyle = (styleItem) => {
+  if (!styleItem) return undefined
+  const styleId = String(styleItem.id || '')
+  if (styleId.startsWith('custom_')) {
+    const previewStyle = {
+      textUnderlineOffset: '2px',
+    }
+    if (styleItem.color) {
+      previewStyle.color = styleItem.color
+    }
+    if (styleItem.bgColor && styleItem.bgColor !== 'transparent') {
+      previewStyle.backgroundColor = styleItem.bgColor
+    }
+    if (styleItem.underline !== false) {
+      const underlineStyle = styleItem.underlineStyle || 'solid'
+      const underlineColor = styleItem.color || '#3b82f6'
+      previewStyle.textDecoration = `underline ${underlineStyle} ${underlineColor}`
+    } else {
+      previewStyle.textDecoration = 'none'
+    }
+    if (styleItem.bold) {
+      previewStyle.fontWeight = '700'
+    }
+    if (styleItem.italic) {
+      previewStyle.fontStyle = 'italic'
+    }
+    return previewStyle
+  }
+  switch (styleId) {
+    case 'button':
+      return {
+        color: '#ffffff',
+        backgroundColor: '#2563eb',
+        textDecoration: 'none',
+        fontWeight: '600',
+      }
+    case 'highlighted':
+      return {
+        color: '#1f2937',
+        backgroundColor: '#fef3c7',
+        textDecoration: 'none',
+      }
+    case 'dashed':
+      return {
+        color: '#2563eb',
+        textDecoration: 'underline dashed #2563eb',
+        textUnderlineOffset: '2px',
+      }
+    case 'no-underline':
+      return {
+        color: '#2563eb',
+        textDecoration: 'none',
+        fontWeight: '700',
+      }
+    case 'colored':
+      return {
+        color: '#0369a1',
+        backgroundColor: '#e0f2fe',
+        textDecoration: 'none',
+      }
+    default:
+      return {
+        color: '#2563eb',
+        textDecoration: 'underline',
+        textUnderlineOffset: '2px',
+      }
+  }
+}
+
 export default function LinkModal({
   editor,
   onClose,
@@ -50,13 +120,16 @@ export default function LinkModal({
   onOpenCustomStyleModal,
   applyLinkStyle,
   fetchLinkPreview,
-  onEditStyle
+  onEditStyle,
+  initialStyleId = 'default',
+  focusUrlInput = false,
 }) {
   const [url, setUrl] = useState('')
-  const [style, setStyle] = useState('default')
+  const [style, setStyle] = useState(initialStyleId || 'default')
   const [linkPreview, setLinkPreview] = useState(null)
   const [isLinkLoading, setIsLinkLoading] = useState(false)
   const [notification, setNotification] = useState(null)
+  const urlInputRef = useRef(null)
   
   useEffect(() => {
     const { from, to } = editor.state.selection
@@ -74,6 +147,24 @@ export default function LinkModal({
       }
     }
   }, [editor])
+
+  useEffect(() => {
+    if (!initialStyleId) return
+    setStyle(initialStyleId)
+  }, [initialStyleId])
+
+  useEffect(() => {
+    if (!focusUrlInput) return
+    const frame = requestAnimationFrame(() => {
+      const input = urlInputRef.current
+      if (!input) return
+      input.focus({ preventScroll: true })
+      const length = typeof input.value === 'string' ? input.value.length : 0
+      input.setSelectionRange(length, length)
+    })
+
+    return () => cancelAnimationFrame(frame)
+  }, [focusUrlInput])
   
   // Автоматическое скрытие уведомления через 3 секунды
   useEffect(() => {
@@ -216,6 +307,7 @@ export default function LinkModal({
           <h4>URL ссылки:</h4>
           <div className="link-input-container">
             <input
+              ref={urlInputRef}
               type="url"
               value={url}
               onChange={handleUrlChange}
@@ -236,10 +328,19 @@ export default function LinkModal({
               title="Проверить ссылку"
             >
               {isLinkLoading ? '...' : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="11" cy="11" r="8"/>
-                  <path d="m21 21-4.35-4.35"/>
-                </svg>
+                <>
+                  {/* Legacy SVG icon:
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <path d="m21 21-4.35-4.35"/>
+                  </svg>
+                  */}
+                  <SearchRoundedIcon
+                    aria-hidden="true"
+                    fontSize="inherit"
+                    style={{ width: 16, height: 16, fontSize: 16 }}
+                  />
+                </>
               )}
             </button>
           </div>
@@ -267,7 +368,7 @@ export default function LinkModal({
                   <span className="link-style-icon">
                     {renderLinkIcon(linkStyleItem.icon, 20)}
                   </span>
-                  <span className="link-style-label">{linkStyleItem.label}</span>
+                  <span className="link-style-label" style={getLinkStylePreviewStyle(linkStyleItem)}>{linkStyleItem.label}</span>
                 </button>
                 <button 
                   className="edit-style-btn"
@@ -292,7 +393,7 @@ export default function LinkModal({
                   <span className="link-style-icon">
                     {renderLinkIcon(customStyle.icon || 'link', 20)}
                   </span>
-                  <span className="link-style-label">{customStyle.name}</span>
+                  <span className="link-style-label" style={getLinkStylePreviewStyle(customStyle)}>{customStyle.name}</span>
                 </button>
                 <div className="style-actions">
                   <button 

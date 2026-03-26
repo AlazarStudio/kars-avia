@@ -2,7 +2,7 @@
   width: 100%;
   /* leave a small gutter so the "+" button fits */
   max-width: 100%;
-  margin: 5px 0;
+  /* margin: 5px 0; */
   font-size: 16px;
   line-height: 1.6;
   outline: none;
@@ -11,15 +11,17 @@
     var(--article-pad-top, 14px)
     var(--article-pad-right, 16px)
     var(--article-pad-bottom, 14px)
-    var(--article-pad-left, 16px);
+    calc(var(--article-pad-left, 16px) + var(--article-editor-extra-left, 0px));
+  /* padding: 15px 25px; */
   box-sizing: border-box;
 
-  border: 1px solid #e5e7eb;
+  /* border: 1px solid #e5e7eb; */
   border-radius: 8px;
 
-  /* ?? ВАЖНО: фикс белого текста */
+  /* ?? пїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ */
   color: #111;
   background: #fff;
+  transition: padding-left 0.16s ease;
 }
 
 @media (max-width: 720px) {
@@ -118,7 +120,7 @@
   animation: slideIn 0.15s ease-out;
 }
 
-/* ?? если нужно скрыть меню — делай ТОЛЬКО так */
+/* ?? пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ */
 .slash-menu-wrapper.hidden {
   opacity: 0;
   pointer-events: none;
@@ -184,10 +186,14 @@
   position: relative;
   --article-button-distance: 20px;
   --article-button-gap: 8px;
-  --article-button-shift-right: 0px;
+  --article-button-shift-right: 6px;
   --article-button-cluster-width: calc(48px + var(--article-button-gap, 8px));
-  left: calc(var(--overlay-left-shift, 0px) * -1);
-  width: calc(100% + var(--overlay-left-shift, 0px));
+  --doc-controls-fade-duration: 90ms;
+  --doc-controls-fade-ease: ease;
+  --doc-controls-follow-duration: 95ms;
+  --doc-controls-toggle-fade-duration: 0ms;
+  left: 0;
+  width: 100%;
 }
 
 .plus-overlay {
@@ -204,9 +210,10 @@
   );
   width: 24px;
   height: 24px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: white;
+  border-radius: 8px;
+  border: 1px solid #d6dbe4;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #1f2937;
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
@@ -214,29 +221,114 @@
   align-items: center;
   justify-content: center;
   z-index: 9;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-
-  will-change: transform;
-  transition: transform 160ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 120ms ease;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 3px 8px rgba(15, 23, 42, 0.08);
+  will-change: transform, translate, opacity;
+  transition:
+    transform var(--doc-controls-follow-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    translate var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    opacity var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease);
 }
 
 .plus-overlay:hover {
-  background: #f3f4f6;
-  transform: scale(1.1);
-  border-color: #9ca3af;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: #f3f6fb;
+  border-color: #aeb8c7;
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.1),
+    0 6px 12px rgba(15, 23, 42, 0.1);
 }
 
+.plus-handle-cluster {
+  position: absolute;
+  top: 0;
+  left: max(
+    0px,
+    calc(
+      (
+        var(--overlay-left-shift, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2 +
+      var(--article-button-shift-right, 0px)
+    )
+  );
+  width: 24px;
+  height: 76px;
+  z-index: 9;
+  pointer-events: auto;
+  will-change: transform, translate, opacity;
+  transition:
+    transform var(--doc-controls-follow-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    translate var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    opacity var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease);
+}
+
+.plus-handle-cluster .plus-overlay {
+  top: 0;
+  left: 0;
+}
+
+.plus-step-btn {
+  position: absolute;
+  left: 0;
+  width: 24px;
+  height: 18px;
+  border-radius: 8px;
+  border: 1px solid #d6dbe4;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+  transition: opacity 120ms ease, transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.plus-step-btn-up {
+  top: 12px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  transform: translateY(6px) scale(0.96);
+}
+
+.plus-step-btn-down {
+  top: 58px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+
+.plus-handle-cluster:hover .plus-step-btn-up,
+.plus-step-btn-up:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.plus-handle-cluster:hover .plus-step-btn-down,
+.plus-step-btn-down:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.plus-step-btn:hover:not(:disabled) {
+  background: #f3f6fb;
+  border-color: #aeb8c7;
+}
 /* ================= BLOCK DRAG HANDLE ================= */
 
 .block-dnd-handle {
   position: absolute;
   width: 24px;
   height: 24px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: white;
+  border-radius: 8px;
+  border: 1px solid #d6dbe4;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #4b5563;
   cursor: grab;
   font-size: 12px;
   line-height: 1;
@@ -258,9 +350,15 @@
     )
   );
 
-  will-change: transform;
-  transition: transform 160ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 120ms ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  will-change: transform, translate, opacity;
+  transition:
+    transform var(--doc-controls-follow-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    translate var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    opacity var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    border-radius 120ms ease;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 3px 8px rgba(15, 23, 42, 0.08);
 
   user-select: none;
   touch-action: none;
@@ -351,10 +449,11 @@
 }
 
 .block-dnd-handle:hover {
-  background: #f3f4f6;
-  transform: scale(1.1);
-  border-color: #9ca3af;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  background: #f3f6fb;
+  border-color: #aeb8c7;
+  box-shadow:
+    0 2px 4px rgba(15, 23, 42, 0.1),
+    0 6px 12px rgba(15, 23, 42, 0.1);
 }
 
 .block-dnd-handle:active {
@@ -386,7 +485,7 @@ body.dragging-blocks .plus-overlay {
   pointer-events: none !important;
 }
 
-/* ghost блока в DragOverlay (dnd-kit) */
+/* ghost пїЅпїЅпїЅпїЅпїЅ пїЅ DragOverlay (dnd-kit) */
 .block-dnd-ghost-scope {
   pointer-events: none;
 }
@@ -575,11 +674,18 @@ details[open] summary::before {
 /* ================= SELECTION ================= */
 
 .ProseMirror-selectednode {
-  outline: 2px solid #6366f1;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.ProseMirror-selectednode::before,
+.ProseMirror-selectednode::after {
+  display: none !important;
 }
 
 .ProseMirror-focused {
-  border-color: #6366f1;
+  border-color: #e5e7eb;
+  box-shadow: none;
 }
 
 /* ================= BLOCK LASSO ================= */
@@ -587,8 +693,8 @@ details[open] summary::before {
 .block-lasso-rect {
   position: fixed;
   z-index: 9;
-  border: 1px solid rgba(99, 102, 241, 0.9);
-  background: rgba(99, 102, 241, 0.16);
+  border: 1px solid rgba(107, 140, 186, 0.62);
+  background: rgba(107, 140, 186, 0.10);
   border-radius: 10px;
   pointer-events: none;
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
@@ -600,17 +706,17 @@ details[open] summary::before {
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: rgba(99, 102, 241, 0.95);
+  background: rgba(107, 140, 186, 0.82);
   box-shadow:
     0 0 0 2px rgba(255, 255, 255, 0.95),
-    0 0 0 3px rgba(99, 102, 241, 0.6);
+    0 0 0 3px rgba(107, 140, 186, 0.34);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
 .ProseMirror > *.block-lasso-selected {
   border-radius: 10px;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.85);
+  box-shadow: 0 0 0 2px rgba(107, 140, 186, 0.42);
 }
 
 /* ================= BLOCK DND ================= */
@@ -667,7 +773,7 @@ details[open] summary::before {
 
 .ProseMirror > *.block-dnd-active {
   border-radius: 10px;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 0 0 2px rgba(107, 140, 186, 0.18);
 }
 
 .ProseMirror > *.block-dnd-over {
@@ -676,14 +782,14 @@ details[open] summary::before {
 
 .ProseMirror > *.block-dnd-over-left {
   box-shadow:
-    inset 3px 0 0 rgba(59, 130, 246, 0.82),
-    0 0 0 2px rgba(59, 130, 246, 0.26);
+    inset 3px 0 0 rgba(107, 140, 186, 0.50),
+    0 0 0 2px rgba(107, 140, 186, 0.15);
 }
 
 .ProseMirror > *.block-dnd-over-right {
   box-shadow:
-    inset -3px 0 0 rgba(59, 130, 246, 0.82),
-    0 0 0 2px rgba(59, 130, 246, 0.26);
+    inset -3px 0 0 rgba(107, 140, 186, 0.50),
+    0 0 0 2px rgba(107, 140, 186, 0.15);
 }
 
 .ProseMirror.block-dnd-native-active > p.block-dnd-over-top::before,
@@ -862,7 +968,7 @@ details[open] summary::before {
   text-align: left;
 }
 
-/* Убираем "лишнюю строку" от margin у абзацев внутри ячеек */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅ "пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ" пїЅпїЅ margin пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ */
 .ProseMirror td p,
 .ProseMirror th p {
   margin: 0;
@@ -880,8 +986,12 @@ details[open] summary::before {
   z-index: 2;
 }
 
+.ProseMirror[contenteditable="false"] .selectedCell:after {
+  display: none;
+}
+
 .ProseMirror .column-resize-handle {
-  background-color: #3b82f6;
+  background-color: #64748b;
   bottom: -2px;
   position: absolute;
   right: -2px;
@@ -903,7 +1013,7 @@ details[open] summary::before {
 }
 
 .ProseMirror .row-resize-handle {
-  background-color: #3b82f6;
+  background-color: #64748b;
   bottom: -2px;
   position: absolute;
   left: 0;
@@ -929,7 +1039,7 @@ details[open] summary::before {
   right: 0;
   bottom: 0;
   height: 4px;
-  background-color: rgba(59, 130, 246, 0.7);
+  background-color: rgba(100, 116, 139, 0.72);
 }
 
 .ProseMirror .corner-resize-handle .corner-col-line {
@@ -938,7 +1048,7 @@ details[open] summary::before {
   bottom: 0;
   right: 0;
   width: 4px;
-  background-color: rgba(59, 130, 246, 0.7);
+  background-color: rgba(100, 116, 139, 0.72);
 }
 
 .ProseMirror .corner-resize-handle .corner-dot {
@@ -947,18 +1057,18 @@ details[open] summary::before {
   bottom: 0;
   width: 8px;
   height: 8px;
-  background-color: #3b82f6;
+  background-color: #64748b;
   border-radius: 2px;
 }
 
 .ProseMirror.corner-resize-cursor .corner-resize-handle .corner-row-line,
 .ProseMirror.corner-resize-cursor .corner-resize-handle .corner-col-line {
-  background-color: #3b82f6;
+  background-color: #64748b;
 }
 
 .ProseMirror .corner-resize-handle.active .corner-row-line,
 .ProseMirror .corner-resize-handle.active .corner-col-line {
-  background-color: #2563eb;
+  background-color: #475569;
 }
 
 /* ================= BULLET LIST ================= */
@@ -1009,7 +1119,7 @@ details[open] summary::before {
 @media (max-width: 768px) {
   .ProseMirror {
     max-width: 100%;
-    padding: 12px;
+    padding: 12px 12px 12px calc(12px + var(--article-editor-extra-left, 0px));
   }
 
   .ProseMirror [data-columns-layout] {
@@ -1024,7 +1134,7 @@ details[open] summary::before {
     grid-template-columns: repeat(auto-fill, minmax(12px, 1fr));
   }
 }
-/* Обновите раздел TOGGLE в src\main.css */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ TOGGLE пїЅ src\main.css */
 
 /* ================= TOGGLE ================= */
 
@@ -1070,13 +1180,13 @@ details[open] summary::before {
   margin-left: 6px;
 }
 
-/* Стили для вложенных toggle */
+/* пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ toggle */
 .toggle-content details {
   margin: 8px 0;
   background: white;
 }
 
-/* Стили для других элементов внутри toggle */
+/* пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ toggle */
 .toggle-content p {
   margin: 6px 0;
 }
@@ -1101,39 +1211,39 @@ details[open] summary::before {
   color: rgb(182, 182, 182);
   font-weight: 500px;
 }
-/* Добавьте в конец src\main.css */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ src\main.css */
 
-/* ================= ФИКСЫ ДЛЯ ПЕРЕТАСКИВАЕМОЙ МОДАЛКИ ================= */
+/* ================= пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ ================= */
 
-/* Гарантируем, что модалка поверх всего */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ */
 .table-controls-modal {
   position: fixed !important;
-  z-index: 9 !important; /* Максимальный z-index */
+  z-index: 9 !important; /* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ z-index */
 }
 
-/* Убираем все ограничения для модалки */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 body > .table-controls-modal {
   pointer-events: auto !important;
 }
 
-/* Фикс для Firefox */
+/* пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ Firefox */
 @-moz-document url-prefix() {
   .table-controls-modal {
     filter: none !important;
   }
 }
 
-/* Убираем outline при фокусе */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅ outline пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ */
 .table-controls-modal:focus {
   outline: none !important;
 }
 
-/* Эффект при активной модалке */
+/* пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 body.modal-open {
   overflow: auto !important;
 }
 
-/* Анимация закрытия */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 @keyframes modalClose {
   from {
     opacity: 1;
@@ -1149,7 +1259,7 @@ body.modal-open {
   animation: modalClose 0.2s ease forwards !important;
 }
 
-/* Фикс для мобильных */
+/* пїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 @media (hover: none) and (pointer: coarse) {
   .table-controls-modal {
     min-width: 320px !important;
@@ -1168,13 +1278,13 @@ body.modal-open {
   }
 }
 
-/* Скрываем стандартный скроллбар при перетаскивании */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 body.dragging-modal {
   cursor: grabbing !important;
   user-select: none !important;
 }
 
-/* Эффект для всей страницы при перетаскивании */
+/* пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 body.dragging-modal * {
   pointer-events: none !important;
 }
@@ -1182,9 +1292,9 @@ body.dragging-modal * {
 body.dragging-modal .table-controls-modal {
   pointer-events: auto !important;
 }
-/* Добавить в main.css */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ main.css */
 .table-operation-indicator {
-  /* для анимаций из tableAnimations.js */
+  /* пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ tableAnimations.js */
 }
 
 .new-cell {
@@ -1227,9 +1337,9 @@ body.dragging-modal .table-controls-modal {
 .block-duplicate-plus:hover {
   border-color: #111;
 }
-/* Добавьте в конец main.css */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ main.css */
 
-/* Курсор для кликабельных изображений */
+/* пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 .image-block-wrapper .image-preview img {
   cursor: pointer;
 }
@@ -1238,7 +1348,7 @@ body.dragging-modal .table-controls-modal {
   cursor: pointer;
 }
 
-/* Эффект при наведении на изображение */
+/* пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 .image-block-wrapper .image-preview img:hover,
 .gallery-block .gallery-item img:hover {
   opacity: 0.95;
@@ -1253,36 +1363,111 @@ body.dragging-modal .table-controls-modal {
 .position-plus-button .plus-overlay {
   opacity: 0;
   pointer-events: none;
-  transform: translateX(-4px);
-  transition: opacity 120ms ease, transform 120ms ease;
+  translate: -10px 0;
 }
 
 .position-plus-button.plus-visible .plus-overlay {
   opacity: 1;
   pointer-events: auto;
-  transform: translateX(0);
+  translate: 0 0;
 }
 
+.position-plus-button .plus-handle-cluster {
+  opacity: 0;
+  pointer-events: none;
+  translate: -10px 0;
+}
+
+.position-plus-button.plus-visible .plus-handle-cluster {
+  opacity: 1;
+  pointer-events: auto;
+  translate: 0 0;
+}
 .position-plus-button .block-dnd-handle {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 120ms ease, transform 120ms ease;
+  translate: -10px 0;
 }
 
 .position-plus-button.plus-visible .block-dnd-handle {
   opacity: 1;
   pointer-events: auto;
+  translate: 0 0;
+}
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-overlay,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-handle-cluster,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-step-btn,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-gutter-indicator,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-side-indicator {
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 .editor-hover-scope {
   --overlay-left-shift: 72px;
+  --editor-controls-gutter: 72px;
+  /* --editor-controls-bg: #f3f4f6; */
   position: relative;
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  margin-left: auto;
+  margin-left: 0;
   margin-right: 0;
   box-sizing: border-box;
 }
+
+.editor-controls-gutter-corner {
+  position: absolute;
+  top: -12px;
+  left: 6px;
+  z-index: 13;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+}
+.editor-controls-gutter-toggle {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: var(--gray);
+  color: #374151;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(17, 24, 39, 0.08);
+  opacity: 0;
+  transform: translateX(-4px);
+  transition:
+    opacity 0.14s ease,
+    transform 0.14s ease,
+    background-color 0.14s ease,
+    border-color 0.14s ease,
+    color 0.14s ease;
+}
+.editor-controls-gutter-corner:hover .editor-controls-gutter-toggle,
+.editor-hover-scope.editor-controls-gutter-open .editor-controls-gutter-toggle,
+.editor-hover-scope:focus-within .editor-controls-gutter-toggle {
+  opacity: 1;
+  transform: translateX(0);
+}
+.editor-controls-gutter-toggle:hover {
+  background: #e8edf7;
+  border-color: #9ca3af;
+  color: #111827;
+}
+.editor-controls-gutter-toggle.is-active {
+  border-color: #cfd7e3;
+  background: var(--gray);
+  color: #1f2937;
+}
+
 
 .editor-content-frame {
   position: relative;
@@ -1380,20 +1565,27 @@ body.dragging-modal .table-controls-modal {
 
 @media (max-width: 720px) {
   .editor-hover-scope {
-    --overlay-left-shift: 44px;
+    --overlay-left-shift: 72px;
   }
 }
 
-/* Левый "gutter" для hover: чтобы "+" и "??" не исчезали,
-   когда курсор чуть уходит левее редактора (например, после drag). */
+/* пїЅпїЅпїЅпїЅпїЅ "gutter" пїЅпїЅпїЅ hover: пїЅпїЅпїЅпїЅпїЅ "+" пїЅ "??" пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ,
+   пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ drag). */
 .editor-hover-scope::before {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  left: calc((var(--overlay-left-shift, 72px) + 40px) * -1);
-  width: calc(var(--overlay-left-shift, 72px) + 40px);
-  background: rgba(0, 0, 0, 0);
+  left: 0;
+  width: var(--editor-controls-gutter, 0px);
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+  pointer-events: none;
+  transition: width 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+.editor-hover-scope.editor-controls-gutter-collapsed::before {
+  border-right-color: transparent;
+  background: transparent;
 }
 
 .editor-hover-scope::after {
@@ -1401,7 +1593,7 @@ body.dragging-modal .table-controls-modal {
   position: absolute;
   top: 0;
   bottom: 0;
-  right: -56px;
+  right: -20px;
   width: 56px;
   background: rgba(0, 0, 0, 0);
 }
@@ -1460,7 +1652,7 @@ body.dragging-modal .table-controls-modal {
   opacity: 1;
 }
 
-/* Индикатор вставки при drag&drop */
+/* пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ drag&drop */
 .block-dnd-drop-indicator {
   position: fixed;
   height: 4px;
@@ -1477,15 +1669,205 @@ body.dragging-modal .table-controls-modal {
   50% { opacity: 0.7; }
 }
 
-/* Курсор во время перетаскивания */
+/* пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
 body.dragging-blocks {
   cursor: grabbing !important;
   user-select: none !important;
 }
 
 body.dragging-blocks .plus-overlay,
+body.dragging-blocks .plus-handle-cluster,
+body.dragging-blocks .plus-step-btn,
 body.dragging-blocks .block-dnd-handle {
   opacity: 0 !important;
   pointer-events: none !important;
 }
 
+
+.editor-hover-scope.alt-pick-cursor,
+.editor-hover-scope.alt-pick-cursor * {
+  cursor: pointer !important;
+}
+
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .plus-overlay,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle-cluster {
+  translate: -10px 0 !important;
+}
+
+
+.editor-hover-scope.alt-pick-cursor .plus-overlay {
+  cursor: pointer !important;
+}
+
+.editor-hover-scope.alt-pick-cursor .block-dnd-handle {
+  cursor: grab !important;
+}
+
+.editor-hover-scope.alt-pick-cursor .block-dnd-handle:active {
+  cursor: grabbing !important;
+}
+
+/* Lasso visibility fixes */
+.ProseMirror .block-lasso-selected.image-block-wrapper .image-preview img,
+.ProseMirror .block-lasso-selected .image-preview img {
+  box-shadow: 0 0 0 2px rgba(107, 140, 186, 0.55) !important;
+}
+
+.ProseMirror hr.block-lasso-selected {
+  outline: 2px solid rgba(107, 140, 186, 0.55);
+  outline-offset: 5px;
+  border-radius: 6px;
+  border-top-color: rgba(107, 140, 186, 0.82);
+}
+
+/* Block step move controls */
+.block-dnd-handle-cluster {
+  position: absolute;
+  top: 0;
+  left: max(
+    0px,
+    calc(
+      (
+        var(--overlay-left-shift, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2 +
+      24px +
+      var(--article-button-gap, 8px) +
+      var(--article-button-shift-right, 0px)
+    )
+  );
+  width: 24px;
+  height: 76px;
+  z-index: 9;
+  pointer-events: auto;
+  will-change: transform, translate, opacity;
+  transition:
+    transform var(--doc-controls-follow-duration) cubic-bezier(0.22, 1, 0.36, 1),
+    translate var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    opacity var(--doc-controls-toggle-fade-duration) var(--doc-controls-fade-ease),
+    border-radius 120ms ease;
+}
+
+.block-dnd-main-handle {
+  top: 0;
+  left: 0;
+}
+
+.block-dnd-step-btn {
+  position: absolute;
+  left: 0;
+  width: 24px;
+  height: 18px;
+  border-radius: 8px;
+  border: 1px solid #d6dbe4;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  color: #4b5563;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+  transition: opacity 120ms ease, transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.block-dnd-step-btn-up {
+  top: 12px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  transform: translateY(6px) scale(0.96);
+}
+
+.block-dnd-step-btn-down {
+  top: 58px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+
+.block-dnd-handle-cluster:hover .block-dnd-step-btn-up,
+.block-dnd-step-btn-up:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.block-dnd-handle-cluster:hover .block-dnd-step-btn-down,
+.block-dnd-step-btn-down:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.block-dnd-step-btn:hover:not(:disabled) {
+  background: #f3f6fb;
+  border-color: #aeb8c7;
+}
+
+.block-dnd-step-btn:disabled {
+  opacity: 0.42;
+  cursor: default;
+}
+
+.position-plus-button .block-dnd-handle-cluster {
+  opacity: 0;
+  pointer-events: none;
+  translate: -10px 0;
+}
+
+.position-plus-button.plus-visible .block-dnd-handle-cluster {
+  opacity: 1;
+  pointer-events: auto;
+  translate: 0 0;
+}
+
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-handle-cluster,
+.editor-hover-scope.editor-controls-gutter-collapsed .position-plus-button .block-dnd-step-btn {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.dragging-blocks .block-dnd-handle-cluster,
+body.dragging-blocks .block-dnd-step-btn {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+
+
+
+
+.block-dnd-handle-cluster:hover .block-dnd-main-handle,
+.block-dnd-handle-cluster:focus-within .block-dnd-main-handle {
+  border-radius: 0;
+}
+
+.editor-hover-scope.alt-lasso-cursor .plus-overlay,
+.editor-hover-scope.alt-lasso-cursor .position-plus-button,
+.editor-hover-scope.alt-lasso-cursor .block-dnd-handle,
+.editor-hover-scope.alt-lasso-cursor .anchor-hash-overlay .anchor-hash-btn,
+.editor-hover-scope.alt-pick-cursor .plus-overlay,
+.editor-hover-scope.alt-pick-cursor .position-plus-button,
+.editor-hover-scope.alt-pick-cursor .block-dnd-handle,
+.editor-hover-scope.alt-pick-cursor .anchor-hash-overlay .anchor-hash-btn {
+  pointer-events: none !important;
+}
+
+/* Alt block-selection mode: hide and disable all resize handles. */
+.editor-hover-scope.alt-lasso-cursor .block-resize,
+.editor-hover-scope.alt-lasso-cursor .column-resize-handle,
+.editor-hover-scope.alt-lasso-cursor .row-resize-handle,
+.editor-hover-scope.alt-lasso-cursor .corner-resize-handle,
+.editor-hover-scope.alt-pick-cursor .block-resize,
+.editor-hover-scope.alt-pick-cursor .column-resize-handle,
+.editor-hover-scope.alt-pick-cursor .row-resize-handle,
+.editor-hover-scope.alt-pick-cursor .corner-resize-handle {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.editor-hover-scope.editor-controls-toggle-animating .position-plus-button {
+  --doc-controls-toggle-fade-duration: var(--doc-controls-fade-duration);
+}

@@ -1,0 +1,102 @@
+.ProseMirror blockquote.quote-block {
+  --quote-line-left-default: 8px;
+  --quote-hover-btn-left: 5px;
+  --quote-btn-size: 28px;
+  --quote-gap-eq: 5px;
+  --quote-content-gap: 8px;
+  --quote-line-width: 5px;
+  --quote-hover-line-left: calc(var(--quote-hover-btn-left) + var(--quote-btn-size) + var(--quote-gap-eq));
+  --quote-hover-content-left: calc(var(--quote-hover-line-left) + var(--quote-line-width) + var(--quote-content-gap));
+  position: relative;
+  border: 1px solid var(--quote-border-color, #d1d5db);
+  margin: 1em 0;
+  padding: 5px 34px 5px calc(var(--quote-line-left-default) + var(--quote-line-width) + var(--quote-content-gap));
+  border-radius: 8px;
+  color: var(--quote-text-color, #d9ecff);
+  background: var(--quote-bg-color, #f9fafb);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: padding-left 0.14s ease;
+}
+
+.ProseMirror blockquote.quote-block::before {
+  content: '';
+  position: absolute;
+  left: var(--quote-line-left-default);
+  top: 6px;
+  bottom: 6px;
+  width: var(--quote-line-width);
+  border-radius: 999px;
+  background: var(--quote-accent-color, rgba(255, 255, 255, 0.35));
+  transition: left 0.14s ease;
+}
+
+.ProseMirror blockquote.quote-block::after {
+  content: '\201D';
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--quote-mark-color, #d9ecff);
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.ProseMirror blockquote.quote-block.quote-block--color-editable:hover {
+  padding-left: var(--quote-hover-content-left);
+}
+
+.ProseMirror blockquote.quote-block.quote-block--color-editable:hover::before {
+  left: var(--quote-hover-line-left);
+}
+
+.quote-color-btn {
+  position: absolute;
+  top: 50%;
+  left: -10px;
+  width: var(--quote-btn-size);
+  height: var(--quote-btn-size);
+  border-radius: 6px;
+  border: 1px solid var(--quote-border-color, #d1d5db);
+  background: var(--quote-bg-color, #f9fafb);
+  color: var(--quote-button-fg, #111827);
+  font-size: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%) scale(0.96);
+  transition: opacity 0.15s ease, border-color 0.15s ease, transform 0.15s ease, left 0.15s ease;
+  z-index: 7;
+}
+
+.quote-block.quote-block--color-editable:hover .quote-color-btn,
+.quote-color-btn:hover,
+.quote-color-btn:focus-visible {
+  left: var(--quote-hover-btn-left);
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) scale(1);
+}
+
+.quote-color-btn:hover {
+  filter: brightness(0.96);
+}
+
+.quote-block-content {
+  min-height: 1.2em;
+  position: relative;
+  z-index: 1;
+}
+
+.quote-block-content > p:first-child {
+  margin-top: 0;
+}
+
+.quote-block-content > p:last-child {
+  margin-bottom: 0;
+}

@@ -4,7 +4,7 @@ import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
   getCookie,
-  server,
+  getMediaUrl,
   UPDATE_DRIVER_MUTATION,
   convertToDate,
 } from "../../../../graphQL_requests";
@@ -29,6 +29,7 @@ function ConfirmDriver({
   addNotification,
   disAdmin, // для определения контекста: true - страница водителей, false/undefined - страница организации
   organizationId, // ID организации для страницы организации
+  canAccept = true, // право принять/отклонить водителя
 }) {
   const token = getCookie("token");
 
@@ -101,7 +102,7 @@ function ConfirmDriver({
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(selectedImageUrl);
+      const response = await fetch(getMediaUrl(selectedImageUrl));
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -405,7 +406,11 @@ function ConfirmDriver({
                 <div className={classes.requestDataInfo}>
                   <div className={classes.requestDataInfo_title}>Доп. оборудование</div>
                   <div className={classes.requestDataInfo_desc}>
-                    {chooseObject?.extraEquipment || "—"}
+                    {Array.isArray(chooseObject?.extraEquipment)
+                      ? (chooseObject.extraEquipment.length > 0
+                        ? chooseObject.extraEquipment.join(", ")
+                        : "—")
+                      : (chooseObject?.extraEquipment || "—")}
                   </div>
                 </div>
               </div>
@@ -437,9 +442,9 @@ function ConfirmDriver({
                     <div className={classes.imageList}>
                       <div className={classes.imageItem}>
                         <img
-                          src={`${server}${chooseObject.documents.driverPhoto}`}
+                          src={getMediaUrl(chooseObject.documents.driverPhoto[0])}
                           alt="Фото водителя"
-                          onClick={() => openImageModal(`${server}${chooseObject.documents.driverPhoto}`)}
+                          onClick={() => openImageModal(getMediaUrl(chooseObject.documents.driverPhoto))}
                           style={{ cursor: "pointer" }}
                         />
                       </div>
@@ -454,9 +459,9 @@ function ConfirmDriver({
                       {chooseObject.documents.licensePhoto.map((image, index) => (
                         <div key={`license-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`Водительское удостоверение ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -472,9 +477,9 @@ function ConfirmDriver({
                       {chooseObject.documents.stsPhoto.map((image, index) => (
                         <div key={`sts-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`СТС ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -490,9 +495,9 @@ function ConfirmDriver({
                       {chooseObject.documents.ptsPhoto.map((image, index) => (
                         <div key={`pts-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`ПТС ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -508,9 +513,9 @@ function ConfirmDriver({
                       {chooseObject.documents.osagoPhoto.map((image, index) => (
                         <div key={`osago-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`ОСАГО ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -526,9 +531,9 @@ function ConfirmDriver({
                       {chooseObject.documents.carPhotos.map((image, index) => (
                         <div key={`car-${index}`} className={classes.imageItem}>
                           <img
-                            src={`${server}${image}`}
+                            src={getMediaUrl(image)}
                             alt={`Фото машины ${index + 1}`}
-                            onClick={() => openImageModal(`${server}${image}`)}
+                            onClick={() => openImageModal(getMediaUrl(image))}
                             style={{ cursor: "pointer" }}
                           />
                         </div>
@@ -540,7 +545,7 @@ function ConfirmDriver({
             </div>
           </div>
 
-          {(confirm || (organizationId && chooseObject?.organization)) && (
+          {canAccept && (confirm || (organizationId && chooseObject?.organization)) && (
             <div className={classes.requestButton}>
               <Button
                 onClick={handleReject}
@@ -550,7 +555,7 @@ function ConfirmDriver({
                 Отклонить
               </Button>
 
-              {confirm && localDriverStatus !== "APPROVED" && (
+              {confirm && canAccept && localDriverStatus !== "APPROVED" && (
                 <Button
                   onClick={handleApprove}
                   backgroundcolor={"#3CBC6726"}

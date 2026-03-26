@@ -47,10 +47,15 @@ function CreateRepresentativeRequest({
     foodPlannedAt: "",
     habitation: false,
     habitationPeopleCount: "",
-    habitationPlannedAt: "",
+    habitationPlannedFromDate: "",
+    habitationPlannedFromTime: "",
+    habitationPlannedToDate: "",
+    habitationPlannedToTime: "",
     transferHabitation: false,
     transferHabitationPeopleCount: "",
     transferHabitationPlannedAt: "",
+    baggageDelivery: false,
+    baggageDeliveryPlannedAt: "",
     city: "",
   });
 
@@ -157,7 +162,7 @@ function CreateRepresentativeRequest({
       },
     },
     refetchQueries: [GET_PASSENGER_REQUESTS],
-    awaitRefetchQueries: true,
+    awaitRefetchQueries: false,
   });
 
   const airlineForAirlineAdmin = data?.airlines?.airlines.find(
@@ -181,10 +186,15 @@ function CreateRepresentativeRequest({
       foodPlannedAt: "",
       habitation: false,
       habitationPeopleCount: "",
-      habitationPlannedAt: "",
+      habitationPlannedFromDate: "",
+      habitationPlannedFromTime: "",
+      habitationPlannedToDate: "",
+      habitationPlannedToTime: "",
       transferHabitation: false,
       transferHabitationPeopleCount: "",
       transferHabitationPlannedAt: "",
+      baggageDelivery: false,
+      baggageDeliveryPlannedAt: "",
       city: "",
     });
     setIsEdited(false);
@@ -249,22 +259,16 @@ function CreateRepresentativeRequest({
 
     if (type === "checkbox") {
       setFormData((prev) => {
-        // взаимоисключающие флаги с полным сбросом полей
+        // независимые чекбоксы: при снятии сбрасываем только свои поля
         if (name === "habitation") {
           return {
             ...prev,
             habitation: checked,
-            // сбрасываем поля при снятии чекбокса
             habitationPeopleCount: checked ? prev.habitationPeopleCount : "",
-            habitationPlannedAt: checked ? prev.habitationPlannedAt : "",
-            // если включаем проживание - выключаем и сбрасываем трансфер+проживание
-            transferHabitation: checked ? false : prev.transferHabitation,
-            transferHabitationPeopleCount: checked
-              ? ""
-              : prev.transferHabitationPeopleCount,
-            transferHabitationPlannedAt: checked
-              ? ""
-              : prev.transferHabitationPlannedAt,
+            habitationPlannedFromDate: checked ? prev.habitationPlannedFromDate : "",
+            habitationPlannedFromTime: checked ? prev.habitationPlannedFromTime : "",
+            habitationPlannedToDate: checked ? prev.habitationPlannedToDate : "",
+            habitationPlannedToTime: checked ? prev.habitationPlannedToTime : "",
           };
         }
 
@@ -272,21 +276,23 @@ function CreateRepresentativeRequest({
           return {
             ...prev,
             transferHabitation: checked,
-            // сбрасываем поля при снятии чекбокса
             transferHabitationPeopleCount: checked
               ? prev.transferHabitationPeopleCount
               : "",
             transferHabitationPlannedAt: checked
               ? prev.transferHabitationPlannedAt
               : "",
-            // если включаем трансфер+проживание - выключаем и сбрасываем проживание
-            habitation: checked ? false : prev.habitation,
-            habitationPeopleCount: checked ? "" : prev.habitationPeopleCount,
-            habitationPlannedAt: checked ? "" : prev.habitationPlannedAt,
           };
         }
 
-        // для остальных чекбоксов сбрасываем поля при снятии
+        if (name === "baggageDelivery") {
+          return {
+            ...prev,
+            baggageDelivery: checked,
+            baggageDeliveryPlannedAt: checked ? prev.baggageDeliveryPlannedAt : "",
+          };
+        }
+
         if (name === "waterSupply") {
           return {
             ...prev,
@@ -316,30 +322,51 @@ function CreateRepresentativeRequest({
   }, []);
 
   const buildPlannedAt = (timeStr) => {
-    if (!timeStr) return null; // ничего не шлём
-
+    if (!timeStr) return null;
     const [hours, minutes] = timeStr.split(":").map(Number);
-
-    // можно взять сегодняшнюю дату
     const d = new Date();
     d.setHours(hours, minutes, 0, 0);
+    return d.toISOString();
+  };
 
-    return d.toISOString(); // ISO-строка для GraphQL DateTime
+  const buildPlannedFromTo = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return null;
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d, hours, minutes, 0, 0);
+    return date.toISOString();
   };
 
   const isFormValid = () => {
     const hasAnyService =
       formData.habitation ||
       formData.transferHabitation ||
+      formData.baggageDelivery ||
       formData.foodSupply ||
       formData.waterSupply;
 
-    return (
-      formData.airportId &&
-      formData.airlineId &&
-      formData.flightNumber &&
-      hasAnyService
-    );
+    if (
+      !formData.airportId ||
+      !formData.airlineId ||
+      !formData.flightNumber ||
+      !hasAnyService
+    ) {
+      return false;
+    }
+
+    // для каждой выбранной услуги — количество человек и время
+    if (formData.waterSupply && (!formData.waterPeopleCount || !formData.waterPlannedAt))
+      return false;
+    if (formData.foodSupply && (!formData.foodPeopleCount || !formData.foodPlannedAt))
+      return false;
+    if (formData.habitation && (!formData.habitationPeopleCount || !formData.habitationPlannedFromDate || !formData.habitationPlannedFromTime || !formData.habitationPlannedToDate || !formData.habitationPlannedToTime))
+      return false;
+    if (formData.transferHabitation && (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt))
+      return false;
+    if (formData.baggageDelivery && !formData.baggageDeliveryPlannedAt)
+      return false;
+
+    return true;
   };
 
   const [isLoading, setIsLoading] = useState(false);
@@ -358,38 +385,54 @@ function CreateRepresentativeRequest({
       airlineId: formData.airlineId,
       flightNumber: formData.flightNumber.trim(),
       airportId: formData.airportId || null,
-      livingService: {
-        plan: {
-          enabled:
-            formData.habitation || formData.transferHabitation ? true : false,
-          peopleCount:
-            Number(formData.habitationPeopleCount) ||
-            Number(formData.transferHabitationPeopleCount) ||
-            null,
-          plannedAt:
-            buildPlannedAt(formData.habitationPlannedAt) ||
-            buildPlannedAt(formData.transferHabitationPlannedAt) ||
-            null,
-        },
-        withTransfer: formData.transferHabitation || false,
-      },
-      mealService: {
-        plan: {
-          enabled: formData.foodSupply || false,
-          peopleCount: Number(formData.foodPeopleCount),
-          plannedAt: buildPlannedAt(formData.foodPlannedAt),
-        },
-      },
-      waterService: {
-        plan: {
-          enabled: formData.waterSupply || false,
-          peopleCount: Number(formData.waterPeopleCount),
-          plannedAt: buildPlannedAt(formData.waterPlannedAt),
-        },
-      },
+      waterService: formData.waterSupply
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.waterPeopleCount),
+              plannedAt: buildPlannedAt(formData.waterPlannedAt),
+            },
+          }
+        : undefined,
+      mealService: formData.foodSupply
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.foodPeopleCount),
+              plannedAt: buildPlannedAt(formData.foodPlannedAt),
+            },
+          }
+        : undefined,
+      livingService: formData.habitation
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.habitationPeopleCount),
+              plannedFromAt: buildPlannedFromTo(formData.habitationPlannedFromDate, formData.habitationPlannedFromTime),
+              plannedToAt: buildPlannedFromTo(formData.habitationPlannedToDate, formData.habitationPlannedToTime),
+            },
+          }
+        : undefined,
+      transferService: formData.transferHabitation
+        ? {
+            plan: {
+              enabled: true,
+              peopleCount: Number(formData.transferHabitationPeopleCount),
+              plannedAt: buildPlannedAt(formData.transferHabitationPlannedAt),
+            },
+          }
+        : undefined,
+      baggageDeliveryService: formData.baggageDelivery
+        ? {
+            plan: {
+              enabled: true,
+              plannedAt: buildPlannedAt(formData.baggageDeliveryPlannedAt),
+            },
+          }
+        : undefined,
     };
 
-    console.log(input);
+    // console.log(input);
 
     try {
       const response = await createRequest({ variables: { input } });
@@ -420,7 +463,7 @@ function CreateRepresentativeRequest({
     }
   };
 
-  console.log(formData);
+  // console.log(formData);
 
   // Клик вне боковой панели закрывает её
   useEffect(() => {
@@ -479,24 +522,28 @@ function CreateRepresentativeRequest({
                   </div>
                 ) : null}
 
-                <label>Введите авиакомпанию</label>
-                <MUIAutocomplete
-                  dropdownWidth={"100%"}
-                  label={"Введите авиакомпанию"}
-                  options={airlines?.map((airline) => airline.name)}
-                  value={selectedAirline ? selectedAirline?.name : ""}
-                  onChange={(event, newValue) => {
-                    const selected = airlines.find(
-                      (airline) => airline.name === newValue
-                    );
-                    setSelectedAirline(selected || null);
-                    setFormData((prevFormData) => ({
-                      ...prevFormData,
-                      airlineId: selected?.id || "",
-                    }));
-                    setIsEdited(true);
-                  }}
-                />
+                {!user?.airlineId && (
+                  <>
+                    <label>Введите авиакомпанию</label>
+                    <MUIAutocomplete
+                      dropdownWidth={"100%"}
+                      label={"Введите авиакомпанию"}
+                      options={airlines?.map((airline) => airline.name)}
+                      value={selectedAirline ? selectedAirline?.name : ""}
+                      onChange={(event, newValue) => {
+                        const selected = airlines.find(
+                          (airline) => airline.name === newValue
+                        );
+                        setSelectedAirline(selected || null);
+                        setFormData((prevFormData) => ({
+                          ...prevFormData,
+                          airlineId: selected?.id || "",
+                        }));
+                        setIsEdited(true);
+                      }}
+                    />
+                  </>
+                )}
 
                 <label>Выберите аэропорт</label>
                 <MUIAutocompleteColor
@@ -642,13 +689,32 @@ function CreateRepresentativeRequest({
                       onChange={handleChange}
                     />
 
-                    <label>Введите время</label>
+                    <label>Дата и время заезда</label>
+                    <input
+                      type="date"
+                      name="habitationPlannedFromDate"
+                      value={formData.habitationPlannedFromDate}
+                      onChange={handleChange}
+                    />
                     <input
                       type="time"
-                      name="habitationPlannedAt"
-                      value={formData.habitationPlannedAt}
+                      name="habitationPlannedFromTime"
+                      value={formData.habitationPlannedFromTime}
                       onChange={handleChange}
-                      placeholder="Время"
+                    />
+
+                    <label>Дата и время выезда</label>
+                    <input
+                      type="date"
+                      name="habitationPlannedToDate"
+                      value={formData.habitationPlannedToDate}
+                      onChange={handleChange}
+                    />
+                    <input
+                      type="time"
+                      name="habitationPlannedToTime"
+                      value={formData.habitationPlannedToTime}
+                      onChange={handleChange}
                     />
                   </>
                 )}
@@ -660,7 +726,7 @@ function CreateRepresentativeRequest({
                     checked={formData.transferHabitation}
                     onChange={handleChange}
                   />
-                  Трансфер+Проживание
+                  Трансфер
                 </label>
 
                 {formData.transferHabitation && (
@@ -678,6 +744,29 @@ function CreateRepresentativeRequest({
                       type="time"
                       name="transferHabitationPlannedAt"
                       value={formData.transferHabitationPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
+                  </>
+                )}
+
+                <label className={classes.checkBoxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="baggageDelivery"
+                    checked={formData.baggageDelivery}
+                    onChange={handleChange}
+                  />
+                  Доставка багажа
+                </label>
+
+                {formData.baggageDelivery && (
+                  <>
+                    <label>Введите время</label>
+                    <input
+                      type="time"
+                      name="baggageDeliveryPlannedAt"
+                      value={formData.baggageDeliveryPlannedAt}
                       onChange={handleChange}
                       placeholder="Время"
                     />

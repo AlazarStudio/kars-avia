@@ -25,10 +25,11 @@ function AddRepresentativeService({
   const sidebarRef = useRef();
 
   // Определяем, какие услуги уже есть в заявке
-  const hasWaterService = request?.waterService?.plan.enabled;
-  const hasMealService = request?.mealService?.plan.enabled;
-  const hasLivingService = request?.livingService?.plan.enabled;
-  const hasTransferHabitation = request?.livingService?.withTransfer;
+  const hasWaterService = request?.waterService?.plan?.enabled;
+  const hasMealService = request?.mealService?.plan?.enabled;
+  const hasLivingService = request?.livingService?.plan?.enabled;
+  const hasTransferService = request?.transferService?.plan?.enabled;
+  const hasBaggageDeliveryService = request?.baggageDeliveryService?.plan?.enabled;
 
   // Инициализируем форму только для услуг, которых еще нет
   const [formData, setFormData] = useState({
@@ -40,10 +41,15 @@ function AddRepresentativeService({
     foodPlannedAt: "",
     habitation: false,
     habitationPeopleCount: "",
-    habitationPlannedAt: "",
+    habitationPlannedFromDate: "",
+    habitationPlannedFromTime: "",
+    habitationPlannedToDate: "",
+    habitationPlannedToTime: "",
     transferHabitation: false,
     transferHabitationPeopleCount: "",
     transferHabitationPlannedAt: "",
+    baggageDelivery: false,
+    baggageDeliveryPlannedAt: "",
   });
 
   const [updatePassengerRequest] = useMutation(UPDATE_PASSENGER_REQUEST, {
@@ -66,10 +72,15 @@ function AddRepresentativeService({
       foodPlannedAt: "",
       habitation: false,
       habitationPeopleCount: "",
-      habitationPlannedAt: "",
+      habitationPlannedFromDate: "",
+      habitationPlannedFromTime: "",
+      habitationPlannedToDate: "",
+      habitationPlannedToTime: "",
       transferHabitation: false,
       transferHabitationPeopleCount: "",
       transferHabitationPlannedAt: "",
+      baggageDelivery: false,
+      baggageDeliveryPlannedAt: "",
     });
     setIsEdited(false);
   }, []);
@@ -93,20 +104,15 @@ function AddRepresentativeService({
 
     if (type === "checkbox") {
       setFormData((prev) => {
-        // взаимоисключающие флаги с полным сбросом полей
         if (name === "habitation") {
           return {
             ...prev,
             habitation: checked,
             habitationPeopleCount: checked ? prev.habitationPeopleCount : "",
-            habitationPlannedAt: checked ? prev.habitationPlannedAt : "",
-            transferHabitation: checked ? false : prev.transferHabitation,
-            transferHabitationPeopleCount: checked
-              ? ""
-              : prev.transferHabitationPeopleCount,
-            transferHabitationPlannedAt: checked
-              ? ""
-              : prev.transferHabitationPlannedAt,
+            habitationPlannedFromDate: checked ? prev.habitationPlannedFromDate : "",
+            habitationPlannedFromTime: checked ? prev.habitationPlannedFromTime : "",
+            habitationPlannedToDate: checked ? prev.habitationPlannedToDate : "",
+            habitationPlannedToTime: checked ? prev.habitationPlannedToTime : "",
           };
         }
 
@@ -120,9 +126,14 @@ function AddRepresentativeService({
             transferHabitationPlannedAt: checked
               ? prev.transferHabitationPlannedAt
               : "",
-            habitation: checked ? false : prev.habitation,
-            habitationPeopleCount: checked ? "" : prev.habitationPeopleCount,
-            habitationPlannedAt: checked ? "" : prev.habitationPlannedAt,
+          };
+        }
+
+        if (name === "baggageDelivery") {
+          return {
+            ...prev,
+            baggageDelivery: checked,
+            baggageDeliveryPlannedAt: checked ? prev.baggageDeliveryPlannedAt : "",
           };
         }
 
@@ -162,28 +173,35 @@ function AddRepresentativeService({
     return d.toISOString();
   };
 
+  const buildPlannedFromTo = (dateStr, timeStr) => {
+    if (!dateStr || !timeStr) return null;
+    const [hours, minutes] = timeStr.split(":").map(Number);
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d, hours, minutes, 0, 0);
+    return date.toISOString();
+  };
+
   const isFormValid = () => {
-    // Проверяем только те услуги, которых еще нет в заявке
-    const hasAnyNewService =
-      (!hasWaterService && formData.waterSupply) ||
-      (!hasMealService && formData.foodSupply) ||
-      (!hasLivingService && (formData.habitation || formData.transferHabitation));
+    // const hasAnyNewService =
+    //   (!hasWaterService && formData.waterSupply) ||
+    //   (!hasMealService && formData.foodSupply) ||
+    //   (!hasLivingService && formData.habitation) ||
+    //   (!hasTransferService && formData.transferHabitation);
 
-    if (!hasAnyNewService) return false;
+    // if (!hasAnyNewService) return false;
 
-    // Проверяем заполненность полей только для новых услуг
-    if (!hasWaterService && formData.waterSupply) {
-      if (!formData.waterPeopleCount || !formData.waterPlannedAt) return false;
-    }
-
-    if (!hasMealService && formData.foodSupply) {
-      if (!formData.foodPeopleCount || !formData.foodPlannedAt) return false;
-    }
-
-    if (!hasLivingService) {
-      if (formData.habitation && (!formData.habitationPeopleCount || !formData.habitationPlannedAt)) return false;
-      if (formData.transferHabitation && (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt)) return false;
-    }
+    // if (!hasWaterService && formData.waterSupply) {
+    //   if (!formData.waterPeopleCount || !formData.waterPlannedAt) return false;
+    // }
+    // if (!hasMealService && formData.foodSupply) {
+    //   if (!formData.foodPeopleCount || !formData.foodPlannedAt) return false;
+    // }
+    // if (!hasLivingService && formData.habitation) {
+    //   if (!formData.habitationPeopleCount || !formData.habitationPlannedAt) return false;
+    // }
+    // if (!hasTransferService && formData.transferHabitation) {
+    //   if (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt) return false;
+    // }
 
     return true;
   };
@@ -222,14 +240,33 @@ function AddRepresentativeService({
       };
     }
 
-    if (!hasLivingService && (formData.habitation || formData.transferHabitation)) {
+    if (!hasLivingService && formData.habitation) {
       input.livingService = {
         plan: {
           enabled: true,
-          peopleCount: Number(formData.habitationPeopleCount) || Number(formData.transferHabitationPeopleCount),
-          plannedAt: buildPlannedAt(formData.habitationPlannedAt) || buildPlannedAt(formData.transferHabitationPlannedAt),
+          peopleCount: Number(formData.habitationPeopleCount),
+          plannedFromAt: buildPlannedFromTo(formData.habitationPlannedFromDate, formData.habitationPlannedFromTime),
+          plannedToAt: buildPlannedFromTo(formData.habitationPlannedToDate, formData.habitationPlannedToTime),
         },
-        withTransfer: formData.transferHabitation,
+      };
+    }
+
+    if (!hasTransferService && formData.transferHabitation) {
+      input.transferService = {
+        plan: {
+          enabled: true,
+          peopleCount: Number(formData.transferHabitationPeopleCount),
+          plannedAt: buildPlannedAt(formData.transferHabitationPlannedAt),
+        },
+      };
+    }
+
+    if (!hasBaggageDeliveryService && formData.baggageDelivery) {
+      input.baggageDeliveryService = {
+        plan: {
+          enabled: true,
+          plannedAt: buildPlannedAt(formData.baggageDeliveryPlannedAt),
+        },
       };
     }
 
@@ -240,7 +277,7 @@ function AddRepresentativeService({
       return;
     }
 
-    console.log(input);
+    // console.log(input);
 
     try {
       const response = await updatePassengerRequest({
@@ -365,7 +402,6 @@ function AddRepresentativeService({
                   </>
                 )}
 
-                {/* Услуги проживания показываем только если их еще нет */}
                 {!hasLivingService && (
                   <>
                     <label className={classes.checkBoxWrapper}>
@@ -388,17 +424,40 @@ function AddRepresentativeService({
                           onChange={handleChange}
                         />
 
-                        <label>Введите время</label>
+                        <label>Дата и время заезда</label>
+                        <input
+                          type="date"
+                          name="habitationPlannedFromDate"
+                          value={formData.habitationPlannedFromDate}
+                          onChange={handleChange}
+                        />
                         <input
                           type="time"
-                          name="habitationPlannedAt"
-                          value={formData.habitationPlannedAt}
+                          name="habitationPlannedFromTime"
+                          value={formData.habitationPlannedFromTime}
                           onChange={handleChange}
-                          placeholder="Время"
+                        />
+
+                        <label>Дата и время выезда</label>
+                        <input
+                          type="date"
+                          name="habitationPlannedToDate"
+                          value={formData.habitationPlannedToDate}
+                          onChange={handleChange}
+                        />
+                        <input
+                          type="time"
+                          name="habitationPlannedToTime"
+                          value={formData.habitationPlannedToTime}
+                          onChange={handleChange}
                         />
                       </>
                     )}
+                  </>
+                )}
 
+                {!hasTransferService && (
+                  <>
                     <label className={classes.checkBoxWrapper}>
                       <input
                         type="checkbox"
@@ -406,7 +465,7 @@ function AddRepresentativeService({
                         checked={formData.transferHabitation}
                         onChange={handleChange}
                       />
-                      Трансфер+Проживание
+                      Трансфер
                     </label>
 
                     {formData.transferHabitation && (
@@ -432,8 +491,34 @@ function AddRepresentativeService({
                   </>
                 )}
 
-                {/* Сообщение, если все услуги уже добавлены */}
-                {hasWaterService && hasMealService && hasLivingService && (
+                {!hasBaggageDeliveryService && (
+                  <>
+                    <label className={classes.checkBoxWrapper}>
+                      <input
+                        type="checkbox"
+                        name="baggageDelivery"
+                        checked={formData.baggageDelivery}
+                        onChange={handleChange}
+                      />
+                      Доставка багажа
+                    </label>
+
+                    {formData.baggageDelivery && (
+                      <>
+                        <label>Введите время</label>
+                        <input
+                          type="time"
+                          name="baggageDeliveryPlannedAt"
+                          value={formData.baggageDeliveryPlannedAt}
+                          onChange={handleChange}
+                          placeholder="Время"
+                        />
+                      </>
+                    )}
+                  </>
+                )}
+
+                {hasWaterService && hasMealService && hasLivingService && hasTransferService && hasBaggageDeliveryService && (
                   <div className={classes.noServicesMessage}>
                     Все доступные услуги уже добавлены в заявку.
                   </div>

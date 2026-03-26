@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import classes from "./InfoTableDataHotels.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 
 function InfoTableDataHotels({
   children,
@@ -65,7 +65,7 @@ function InfoTableDataHotels({
                     loading="lazy"
                     src={
                       item.images.length != 0
-                        ? `${server}${item.images}`
+                        ? getMediaUrl(item.images)
                         : "/no-avatar.png"
                     }
                     alt=""

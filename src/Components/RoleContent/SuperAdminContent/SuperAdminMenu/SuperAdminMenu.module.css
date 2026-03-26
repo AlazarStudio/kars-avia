@@ -1,16 +1,40 @@
 .menuContainer {
-  height: 79vh;
+  height: 85vh;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
 .menuMain {
-  flex: 1;
+  flex: 8;
 }
 
 .bottomMenu {
   display: flex;
+  flex-direction: column;
   gap: 5px;
+}
+
+.alazar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--menu-gray);
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 21.79px;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+  position: relative;
+  overflow: visible;
+}
+
+.svgWrapper {
+  width: 30px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .menu_items__elem {
@@ -39,12 +63,21 @@
   font-size: 14px;
   font-weight: 600;
   /* line-height: 21.79px; */
-  padding: 5px 10px;
+  padding: 15px 20px;
   cursor: pointer;
   border-radius: 10px;
   transition: all 0.1s ease-in-out;
   position: relative;
   overflow: visible;
+}
+
+.menuLink {
+  color: var(--menu-gray);
+  text-decoration: underline;
+}
+
+.menuLink:hover {
+  color: #fff;
 }
 
 /* Класс для подсказки */
@@ -114,7 +147,7 @@
 
 .jcc {
   justify-content: center;
-  padding: 15px 5px;
+  /* padding: 15px 5px; */
 }
 
 .menu_items__elem svg path {
@@ -242,7 +275,26 @@
 }
 
 @media (min-width: 0px) and (max-width: 1399px) {
-  .menu_items__elem {
+  .menu_items__elem,
+  .menu_items__elem___fill {
     font-size: 14px;
+  }
+}
+
+@media (min-height: 0px) and (max-height: 900px) {
+  .menuContainer {
+    height: 80vh;
+  }
+
+  .menu_items__elem,
+  .menu_items__elem___fill {
+    padding: 10px;
+    font-size: 14px;
+  }
+}
+
+@media (max-height: 750px) {
+  .menuContainer {
+    height: 60vh;
   }
 }

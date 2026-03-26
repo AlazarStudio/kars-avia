@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import classes from './InfoTableDataSupport.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 
 function InfoTableDataSupport({ children, toggleRequestSidebar, user, requests, pageInfo, onSelectId, ...props }) {
     const statusLabelMap = {
@@ -66,7 +66,7 @@ function InfoTableDataSupport({ children, toggleRequestSidebar, user, requests, 
                             <div className={classes.InfoTable_data_elem_userInfo}>
                                 <div className={classes.InfoTable_data_elem_avatar}>
                                     {/* <img src={`${server}${otherParticipant?.images[0]}`} alt="" /> */}
-                                    <img src={`${otherParticipant?.images[0] ? `${server}${otherParticipant?.images[0]}` : '/no-avatar.png'}`} alt="" style={{ userSelect: "none" }} />
+                                    <img src={getMediaUrl(otherParticipant?.images[0]) ?? '/no-avatar.png'} alt="" style={{ userSelect: "none" }} />
                                 </div>
                                 <div className={classes.InfoTable_data_elem_title}>{otherParticipant?.name}</div>
                             </div>

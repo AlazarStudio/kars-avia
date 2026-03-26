@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestAirlineTarifCategory.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu.jsx";
 
 import {
   GET_AIRPORTS_RELAY,
@@ -29,6 +30,7 @@ function EditRequestAirlineTarifCategory({
   user,
   type,
   addNotification,
+  onDelete,
 }) {
   const token = getCookie("token");
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
@@ -41,29 +43,56 @@ function EditRequestAirlineTarifCategory({
 
   // console.log(tarif);
 
-  const [formData, setFormData] = useState({
-    name: tarif?.name || "",
-    // В tarif.airports обычно лежит массив объектов вида { id, airport: { ... } }
-    // Но иногда бывает, что сам ID хранится внутри. Уточните структуру, если нужно.
-    airportIds: tarif?.airports?.map((a) => String(a.airport.id)) || [],
-    // Если цены хранятся внутри tarif.prices, берём оттуда
-    priceOneCategory: tarif?.prices?.priceOneCategory ?? 0,
-    priceTwoCategory: tarif?.prices?.priceTwoCategory ?? 0,
-    priceThreeCategory: tarif?.prices?.priceThreeCategory ?? 0,
-    priceFourCategory: tarif?.prices?.priceFourCategory ?? 0,
-    priceFiveCategory: tarif?.prices?.priceFiveCategory ?? 0,
-    priceSixCategory: tarif?.prices?.priceSixCategory ?? 0,
-    priceSevenCategory: tarif?.prices?.priceSevenCategory ?? 0,
-    priceEightCategory: tarif?.prices?.priceEightCategory ?? 0,
-    priceLuxe: tarif?.prices?.priceLuxe ?? 0,
-    priceApartment: tarif?.prices?.priceApartment ?? 0,
-    priceStudio: tarif?.prices?.priceStudio ?? 0,
-    breakfast: tarif?.mealPrice?.breakfast ?? 0,
-    dinner: tarif?.mealPrice?.dinner ?? 0,
-    lunch: tarif?.mealPrice?.lunch ?? 0,
-  });
+  const getInitialFormData = useCallback(() => {
+    const airportIds = Array.isArray(tarif?.airports)
+      ? tarif.airports
+        .map((a) => String(a?.airport?.id ?? a?.id ?? a))
+        .filter(Boolean)
+      : [];
+    return {
+      name: tarif?.name || "",
+      airportIds,
+      priceOneCategory: tarif?.prices?.priceOneCategory ?? 0,
+      priceTwoCategory: tarif?.prices?.priceTwoCategory ?? 0,
+      priceThreeCategory: tarif?.prices?.priceThreeCategory ?? 0,
+      priceFourCategory: tarif?.prices?.priceFourCategory ?? 0,
+      priceFiveCategory: tarif?.prices?.priceFiveCategory ?? 0,
+      priceSixCategory: tarif?.prices?.priceSixCategory ?? 0,
+      priceSevenCategory: tarif?.prices?.priceSevenCategory ?? 0,
+      priceEightCategory: tarif?.prices?.priceEightCategory ?? 0,
+      priceLuxe: tarif?.prices?.priceLuxe ?? 0,
+      priceApartment: tarif?.prices?.priceApartment ?? 0,
+      priceStudio: tarif?.prices?.priceStudio ?? 0,
+      breakfast: tarif?.mealPrice?.breakfast ?? 0,
+      dinner: tarif?.mealPrice?.dinner ?? 0,
+      lunch: tarif?.mealPrice?.lunch ?? 0,
+    };
+  }, [tarif]);
+
+  const [formData, setFormData] = useState(() => ({
+    name: "",
+    airportIds: [],
+    priceOneCategory: 0,
+    priceTwoCategory: 0,
+    priceThreeCategory: 0,
+    priceFourCategory: 0,
+    priceFiveCategory: 0,
+    priceSixCategory: 0,
+    priceSevenCategory: 0,
+    priceEightCategory: 0,
+    priceLuxe: 0,
+    priceApartment: 0,
+    priceStudio: 0,
+    breakfast: 0,
+    dinner: 0,
+    lunch: 0,
+  }));
+  const [isEdited, setIsEdited] = useState(false);
 
   const [airports, setAirports] = useState([]); // Список аэропортов
+  const sidebarRef = useRef();
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const [updateAirlineTariff] = useMutation(UPDATE_AIRLINE_TARIF, {
     context: {
@@ -93,47 +122,55 @@ function EditRequestAirlineTarifCategory({
     city: airport.city,
   }));
 
-  // const [tarifNames, setTarifNames] = useState([]);
-  const sidebarRef = useRef();
-
-  const resetForm = () => {
-    setFormData({
-      name: tarif?.name || "",
-      // В tarif.airports обычно лежит массив объектов вида { id, airport: { ... } }
-      // Но иногда бывает, что сам ID хранится внутри. Уточните структуру, если нужно.
-      airportIds: tarif?.airports?.map((a) => String(a.airport.id)) || [],
-      // Если цены хранятся внутри tarif.prices, берём оттуда
-      priceOneCategory: tarif?.prices?.priceOneCategory ?? 0,
-      priceTwoCategory: tarif?.prices?.priceTwoCategory ?? 0,
-      priceThreeCategory: tarif?.prices?.priceThreeCategory ?? 0,
-      priceFourCategory: tarif?.prices?.priceFourCategory ?? 0,
-      priceFiveCategory: tarif?.prices?.priceFiveCategory ?? 0,
-      priceSixCategory: tarif?.prices?.priceSixCategory ?? 0,
-      priceSevenCategory: tarif?.prices?.priceSevenCategory ?? 0,
-      priceEightCategory: tarif?.prices?.priceEightCategory ?? 0,
-      priceLuxe: tarif?.prices?.priceLuxe ?? 0,
-      priceApartment: tarif?.prices?.priceApartment ?? 0,
-      priceStudio: tarif?.prices?.priceStudio ?? 0,
-      breakfast: tarif?.mealPrice?.breakfast ?? 0,
-      dinner: tarif?.mealPrice?.dinner ?? 0,
-      lunch: tarif?.mealPrice?.lunch ?? 0,
-    });
-  };
-
   const [isEditing, setIsEditing] = useState(false);
 
-  const closeButton = () => {
-    let success = confirm(
-      "Вы уверены, все несохраненные данные будут удалены?"
-    );
-    if (success) {
+  useEffect(() => {
+    if (show && tarif) {
+      setFormData(getInitialFormData());
+      setIsEdited(false);
+    }
+  }, [show, tarif?.id, getInitialFormData]);
+
+  const resetForm = useCallback(() => {
+    setFormData(getInitialFormData());
+    setIsEdited(false);
+  }, [getInitialFormData]);
+
+  const closeButton = useCallback(() => {
+    setAnchorEl(null);
+    if (!isEdited) {
+      onClose();
+      setIsEditing(false);
+      return;
+    }
+    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
       resetForm();
       onClose();
+      setIsEditing(false);
     }
+  }, [isEdited, onClose, resetForm]);
+
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => {
+    handleMenuClose();
+    setIsEditing(true);
+  };
+  const handleDeleteFromMenu = () => {
+    handleMenuClose();
+    if (onDelete && tarif?.id) {
+      onClose();
+      onDelete(tarif);
+    }
+  };
+  const handleCancelEdit = () => {
+    resetForm();
+    setIsEditing(false);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -210,32 +247,27 @@ function EditRequestAirlineTarifCategory({
         resetForm();
         onClose();
         setIsLoading(false);
+        setIsEditing(false);
         addNotification("Изменение соглашения прошло успешно.", "success");
-        // refetchAllCategories();
       } catch (error) {
         setIsLoading(false);
         alert("Произошло ошибка при изменении соглашения.");
         console.error("Произошла ошибка при выполнении запроса:", error);
       }
     }
-    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (anchorEl && menuRef.current?.contains(event.target)) return;
+      if (sidebarRef.current?.contains(event.target)) return;
+      closeButton();
+    };
     if (show) {
-      resetForm();
-      const handleClickOutside = (event) => {
-        if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-          closeButton();
-        }
-      };
       document.addEventListener("mousedown", handleClickOutside);
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
     }
-  }, [show]);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [show, closeButton, anchorEl]);
 
   // useEffect(() => {
   //   const names = addTarif.map((tarif) => ({
@@ -303,8 +335,18 @@ function EditRequestAirlineTarifCategory({
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Изменить договор</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <CloseIcon />
+        <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleEditFromMenu}
+            onDelete={onDelete ? handleDeleteFromMenu : undefined}
+          />
+          <div className={classes.closeIconWrapper} onClick={closeButton}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
 
@@ -312,185 +354,141 @@ function EditRequestAirlineTarifCategory({
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div
+            className={classes.requestMiddle}
+            style={
+              isEditing
+                ? { height: "calc(100vh - 161px)" }
+                : { height: "calc(100vh - 81px)" }
+            }
+          >
             <div className={classes.requestData}>
-              <label>Название договора</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Например: Договор №1"
-                disabled={!isEditing}
-              />
-
-              <label>Аэропорты</label>
-              <MultiSelectAutocomplete
-                isDisabled={!isEditing}
-                isMultiple={true}
-                dropdownWidth={"100%"}
-                label={"Выберите аэропорты"}
-                options={airportOptions}
-                // Фильтруем options, используя значение поля value (которое совпадает с id)
-                value={airportOptions.filter((option) =>
-                  formData.airportIds.includes(option.value)
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Название договора
+                </div>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Например: Договор №1"
+                  />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.name || "—"}
+                  </div>
                 )}
-                onChange={(event, newValue) => {
-                  setFormData((prevState) => ({
-                    ...prevState,
-                    airportIds: newValue.map((option) => option.value),
-                  }));
-                }}
-              />
+              </div>
 
-              <label>Стоимость одноместного</label>
-              <input
-                type="number"
-                name="priceOneCategory"
-                value={formData.priceOneCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
+              <div className={classes.requestDataInfo_block}>
+                <div className={classes.requestDataInfo_title}>Аэропорты</div>
+                {isEditing ? (
+                  <div className={classes.dropdown}>
+                    <MultiSelectAutocomplete
+                      isMultiple={true}
+                      showSelectAll={true}
+                      dropdownWidth={"100%"}
+                      label={"Выберите аэропорты"}
+                      options={airportOptions}
+                      value={airportOptions.filter((opt) =>
+                        formData.airportIds.includes(opt.value),
+                      )}
+                      onChange={(event, newValue) => {
+                        setIsEdited(true);
+                        setFormData((prev) => ({
+                          ...prev,
+                          airportIds: (newValue || []).map((opt) => opt.value),
+                        }));
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className={classes.requestDataInfo_descBlock}>
+                    {airportOptions.filter((opt) =>
+                      formData.airportIds.includes(opt.value),
+                    ).length ? (
+                      <div className={classes.requestDataInfo_airportList}>
+                        {airportOptions
+                          .filter((opt) =>
+                            formData.airportIds.includes(opt.value),
+                          )
+                          .map((opt) => (
+                            <div key={opt.value}>{opt.label}</div>
+                          ))}
+                      </div>
+                    ) : (
+                      "—"
+                    )}
+                  </div>
+                )}
+              </div>
 
-              <label>Стоимость двухместного</label>
-              <input
-                type="number"
-                name="priceTwoCategory"
-                value={formData.priceTwoCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-
-              <label>Стоимость трехместного</label>
-              <input
-                type="number"
-                name="priceThreeCategory"
-                value={formData.priceThreeCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Стоимость четырехместного</label>
-              <input
-                type="number"
-                name="priceFourCategory"
-                value={formData.priceFourCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Стоимость пятиместного</label>
-              <input
-                type="number"
-                name="priceFiveCategory"
-                value={formData.priceFiveCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Стоимость шестиместного</label>
-              <input
-                type="number"
-                name="priceSixCategory"
-                value={formData.priceSixCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Стоимость семиместного</label>
-              <input
-                type="number"
-                name="priceSevenCategory"
-                value={formData.priceSevenCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Стоимость восьмиместного</label>
-              <input
-                type="number"
-                name="priceEightCategory"
-                value={formData.priceEightCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Стоимость люкса</label>
-              <input
-                type="number"
-                name="priceLuxe"
-                value={formData.priceLuxe}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Стоимость апартаментов</label>
-              <input
-                type="number"
-                name="priceApartment"
-                value={formData.priceApartment}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Стоимость студии</label>
-              <input
-                type="number"
-                name="priceStudio"
-                value={formData.priceStudio}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              <label>Завтрак</label>
-              <input
-                type="number"
-                name="breakfast"
-                value={formData.breakfast}
-                onChange={handleChange}
-                placeholder="Завтрак"
-                disabled={!isEditing}
-              />
-              <label>Обед</label>
-              <input
-                type="number"
-                name="lunch"
-                value={formData.lunch}
-                onChange={handleChange}
-                placeholder="Обед"
-                disabled={!isEditing}
-              />
-              <label>Ужин</label>
-              <input
-                type="number"
-                name="dinner"
-                value={formData.dinner}
-                onChange={handleChange}
-                placeholder="Ужин"
-                disabled={!isEditing}
-              />
+              {[
+                { key: "priceOneCategory", title: "Стоимость одноместного" },
+                { key: "priceTwoCategory", title: "Стоимость двухместного" },
+                { key: "priceThreeCategory", title: "Стоимость трехместного" },
+                {
+                  key: "priceFourCategory",
+                  title: "Стоимость четырехместного",
+                },
+                { key: "priceFiveCategory", title: "Стоимость пятиместного" },
+                { key: "priceSixCategory", title: "Стоимость шестиместного" },
+                { key: "priceSevenCategory", title: "Стоимость семиместного" },
+                {
+                  key: "priceEightCategory",
+                  title: "Стоимость восьмиместного",
+                },
+                { key: "priceLuxe", title: "Стоимость люкса" },
+                { key: "priceApartment", title: "Стоимость апартаментов" },
+                { key: "priceStudio", title: "Стоимость студии" },
+                { key: "breakfast", title: "Завтрак" },
+                { key: "lunch", title: "Обед" },
+                { key: "dinner", title: "Ужин" },
+              ].map(({ key, title }) => (
+                <div key={key} className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>{title}</div>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      name={key}
+                      value={formData[key] ?? ""}
+                      onChange={handleChange}
+                      placeholder="Введите стоимость"
+                    />
+                  ) : (
+                    <div className={classes.requestDataInfo_desc}>
+                      {formData[key] != null && formData[key] !== ""
+                        ? formData[key]
+                        : "—"}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
-          <div className={classes.requestButton}>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+
+          {isEditing && (
+            <div className={classes.requestButton}>
+              <Button
+                type="button"
+                onClick={handleCancelEdit}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                backgroundcolor="#0057C3"
+                color="#fff"
+              >
+                Сохранить <img src="/saveDispatcher.png" alt="" />
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

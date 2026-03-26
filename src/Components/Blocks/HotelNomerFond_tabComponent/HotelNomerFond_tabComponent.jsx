@@ -21,8 +21,28 @@ import {
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { fullNotifyTime, notifyTime } from "../../../roles.js";
+
+const CATEGORY_LABELS = {
+  onePlace: "Одноместный",
+  twoPlace: "Двухместный",
+  threePlace: "Трехместный",
+  fourPlace: "Четырехместный",
+  fivePlace: "Пятиместный",
+  sixPlace: "Шестиместный",
+  sevenPlace: "Семиместный",
+  eightPlace: "Восьмиместный",
+  ninePlace: "Девятиместный",
+  tenPlace: "Десятиместный",
+  apartment: "Апартаменты",
+  studio: "Студия",
+  luxe: "Люкс",
+};
+
+const getCategoryLabel = (category) =>
+  CATEGORY_LABELS[category] ?? category;
 
 function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const token = getCookie("token");
@@ -105,30 +125,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
         data.hotel.rooms.reduce((acc, room) => {
           if (!acc[room.category]) {
             acc[room.category] = {
-              name:
-                room.category === "onePlace"
-                  ? "Одноместный"
-                  : room.category === "twoPlace"
-                  ? "Двухместный"
-                  : room.category === "threePlace"
-                  ? "Трехместный"
-                  : room.category === "fourPlace"
-                  ? "Четырехместный"
-                  : room.category === "fivePlace"
-                  ? "Пятиместный"
-                  : room.category === "sixPlace"
-                  ? "Шестиместный"
-                  : room.category === "sevenPlace"
-                  ? "Семиместный"
-                  : room.category === "eightPlace"
-                  ? "Восьмиместный"
-                  : room.category === "apartment"
-                  ? "Апартаменты"
-                  : room.category === "studio"
-                  ? "Студия"
-                  : room.category === "luxe"
-                  ? "Люкс"
-                  : "",
+              name: getCategoryLabel(room.category),
               origName: room.category,
               rooms: [],
             };
@@ -298,7 +295,13 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     })
     .filter((request) => request !== null); // Убираем пустые категории
 
-  const [filter, setFilter] = useState("quote");
+  const [filter, setFilter] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState(null);
+
+  const categoryOptions = Object.values(CATEGORY_LABELS);
+  const categoryFilteredRequests = categoryFilter
+    ? filteredRequestsTarif.filter((item) => item.name === categoryFilter)
+    : filteredRequestsTarif;
 
   // console.log(filteredRequestsTarif);
 
@@ -310,42 +313,62 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
       {!loading && !error && addTarif && (
         <>
           <div className={classes.section_searchAndFilter}>
-            {/* <input
-                            type="text"
-                            placeholder="Поиск по номеру"
-                            style={{ 'width': '500px' }}
-                            value={searchTarif}
-                            onChange={handleSearchTarif}
-                        /> */}
-            <MUITextField
-              label={"Поиск по номеру"}
-              className={classes.mainSearch}
-              value={searchTarif}
-              onChange={handleSearchTarif}
-            />
             <div className={classes.section_searchAndFilter_filter}>
-              {/* <select onChange={handleSelect}>
-                                <option value="">Показать все</option>
-                                {uniqueCategories.map(category => (
-                                    <option key={category} value={category}>{category}</option>
-                                ))}
-                            </select> */}
-              <Filter
-                toggleSidebar={toggleTarifs}
-                handleChange={""}
-                buttonTitle={"Добавить номер"}
+              <MUIAutocomplete
+                dropdownWidth="170px"
+                hideLabelOnFocus={false}
+                label="Категория"
+                options={categoryOptions}
+                value={categoryFilter}
+                onChange={(e, newValue) => {
+                  setCategoryFilter(newValue);
+                }}
+              />
+              {type !== "apartment" && (
+                <MUIAutocomplete
+                  dropdownWidth="170px"
+                  hideLabelOnFocus={false}
+                  label="Квота / Резерв"
+                  options={["Квота", "Резерв"]}
+                  value={
+                    filter === "quote"
+                      ? "Квота"
+                      : filter === "reserve"
+                        ? "Резерв"
+                        : null
+                  }
+                  onChange={(e, newValue) => {
+                    setFilter(
+                      newValue === "Резерв"
+                        ? "reserve"
+                        : newValue === "Квота"
+                          ? "quote"
+                          : null
+                    );
+                  }}
+                />
+              )}
+              <MUITextField
+                label={"Поиск по номеру"}
+                className={classes.mainSearch}
+                value={searchTarif}
+                onChange={handleSearchTarif}
               />
             </div>
+            <Filter
+              toggleSidebar={toggleTarifs}
+              handleChange={""}
+              buttonTitle={"Добавить номер"}
+            />
           </div>
 
           <InfoTableDataNomerFond
             type={type}
             filter={filter}
             user={user}
-            setFilter={setFilter}
             toggleRequestSidebar={toggleEditCategory}
             toggleRequestEditNumber={toggleEditNomer}
-            requests={filteredRequestsTarif}
+            requests={categoryFilteredRequests}
             openDeleteComponent={openDeleteComponent}
             openDeleteNomerComponent={openDeleteNomerComponent}
           />
@@ -380,6 +403,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
             addTarif={addTarif}
             setAddTarif={setAddTarif}
             addNotification={addNotification}
+            openDeleteNomerComponent={openDeleteNomerComponent}
           />
           <EditRequestCategory
             id={id}
@@ -398,9 +422,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                   : () => deleteTarif(deleteIndex)
               }
               close={closeDeleteComponent}
-              title={`Вы действительно хотите удалить ${
-                deleteNomer ? "номер" : "категорию"
-              }?`}
+              title={`Вы действительно хотите удалить ${deleteNomer ? "номер" : "категорию"
+                }?`}
             />
           )}
           {notifications.map((n, index) => (

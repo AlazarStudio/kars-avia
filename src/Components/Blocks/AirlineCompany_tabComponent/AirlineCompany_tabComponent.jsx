@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./AirlineCompany_tabComponent.module.css";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import Filter from "../Filter/Filter";
@@ -131,6 +131,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
   const [selectedDepartmentForSettings, setSelectedDepartmentForSettings] = useState(null);
   const settingsSidebarRef = useRef(null);
+  const airlineUsers = data?.airline?.users || [];
 
   useEffect(() => {
     if (data && id) {
@@ -250,6 +251,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
 
       setShowDelete(false);
       setDeleteNomer(null);
+      refetch();
     }
   };
 
@@ -295,29 +297,54 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
   //     return matchesCategory && matchesSearch;
   // });
 
-  const filteredRequestsEmployees = addTarif
-    .map((request) => {
-      // Фильтруем сотрудников внутри отдела
-      const filteredUsers = request.users.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchTarif.toLowerCase()) ||
-          user.role.toLowerCase().includes(searchTarif.toLowerCase())
-      );
+  const filteredRequestsEmployees = useMemo(() => {
+    const query = searchTarif.trim().toLowerCase();
+    const baseDepartments = addTarif.map((department) => ({
+      ...department,
+      users: [...(department.users || [])],
+    }));
 
-      // Если есть подходящие сотрудники или отдел соответствует запросу, возвращаем объект
-      if (
-        filteredUsers.length > 0 ||
-        request.name.toLowerCase().includes(searchTarif.toLowerCase())
-      ) {
-        return {
-          ...request,
-          users: filteredUsers.length > 0 ? filteredUsers : request.users, // Оставляем всех сотрудников, если отдел совпадает
-        };
-      }
+    const departmentIds = new Set(baseDepartments.map((department) => department.id));
+    const noDepartmentUsers = (airlineUsers || []).filter((airlineUser) => {
+      const departmentId = airlineUser?.airlineDepartmentId;
+      return !departmentId || !departmentIds.has(departmentId);
+    });
 
-      return null;
-    })
-    .filter((request) => request !== null); // Убираем пустые отделы
+    if (noDepartmentUsers.length > 0) {
+      baseDepartments.push({
+        id: "no-department",
+        name: "Без отдела",
+        isNoDepartment: true,
+        users: noDepartmentUsers,
+      });
+    }
+
+    if (!query) {
+      return baseDepartments;
+    }
+
+    return baseDepartments
+      .map((department) => {
+        const filteredUsers = (department.users || []).filter(
+          (departmentUser) =>
+            departmentUser?.name?.toLowerCase().includes(query) ||
+            departmentUser?.role?.toLowerCase().includes(query)
+        );
+
+        if (
+          filteredUsers.length > 0 ||
+          department?.name?.toLowerCase().includes(query)
+        ) {
+          return {
+            ...department,
+            users: filteredUsers.length > 0 ? filteredUsers : department.users,
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+  }, [addTarif, airlineUsers, searchTarif]);
 
   // console.log(filteredRequestsEmployees);
 
@@ -368,6 +395,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
             id={id}
             show={showAddTarif}
             onClose={toggleTarifs}
+            onCreated={() => refetch()}
             addTarif={addTarif}
             setAddTarif={setAddTarif}
             positions={positions}
@@ -395,8 +423,8 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         onSubmit={handleEditNomer}
         addTarif={addTarif}
         positions={positions}
-        // uniqueCategories={uniqueCategories}
         addNotification={addNotification}
+        openDeleteComponent={openDeleteNomerComponent}
       />
       {(!user?.airlineId || accessMenu.userUpdate) && (
         <>

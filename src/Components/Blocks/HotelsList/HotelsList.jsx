@@ -4,11 +4,14 @@ import Filter from "../Filter/Filter";
 import CreateRequestHotel from "../CreateRequestHotel/CreateRequestHotel";
 import Header from "../Header/Header";
 import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
+import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
   GET_HOTELS,
   GET_HOTELS_SUBSCRIPTION,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
+  GET_CITIES,
   getCookie,
 } from "../../../../graphQL_requests";
 import { fullNotifyTime, notifyTime, roles } from "../../../roles";
@@ -23,7 +26,12 @@ function HotelsList({ children, user, ...props }) {
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
-  const [filterData, setFilterData] = useState({ filterSelect: "" });
+  const [filterData, setFilterData] = useState({
+    filterStars: "",
+    filterUsStars: "",
+  });
+  const [cities, setCities] = useState([]);
+  const [selectedCity, setSelectedCity] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
@@ -47,14 +55,40 @@ function HotelsList({ children, user, ...props }) {
 
   const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
 
+  const hotelFilter = useMemo(
+    () => ({
+      ...(selectedCity?.id && { cityId: selectedCity.id }),
+      ...(filterData.filterStars && { stars: filterData.filterStars }),
+      ...(filterData.filterUsStars && { usStars: filterData.filterUsStars }),
+    }),
+    [selectedCity?.id, filterData.filterStars, filterData.filterUsStars]
+  );
+
+  const { data: citiesData } = useQuery(GET_CITIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (citiesData?.citys) {
+      setCities(citiesData.citys);
+    }
+  }, [citiesData]);
+
   const { loading, error, data, refetch } = useQuery(GET_HOTELS, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
-    skip: isSearching
+    variables: {
+      pagination: { skip: pageInfo.skip, take: pageInfo.take },
+      filter: Object.keys(hotelFilter).length > 0 ? hotelFilter : undefined,
+    },
+    skip: isSearching,
   });
 
   // в этой версии проблема с дублированием
@@ -132,12 +166,16 @@ function HotelsList({ children, user, ...props }) {
     }, fullNotifyTime);
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilterData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
+  const handleFilterChange = (name, value) => {
+    setFilterData((prev) => ({ ...prev, [name]: value }));
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1");
+  };
+
+  const handleCityChange = (_, newValue) => {
+    setSelectedCity(newValue || null);
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1");
   };
 
   const handleSearch = async (e) => {
@@ -145,23 +183,24 @@ function HotelsList({ children, user, ...props }) {
     setSearchQuery(query);
 
     if (query.trim() == "") {
-      // Если строка поиска пуста, возвращаемся к стандартному режиму
       setIsSearching(false);
       refetch({
-        pagination: { skip: currentPage, take: 20 }, // Загрузить большое количество данных для поиска
-      }); // Запускаем повторный запрос с пагинацией
+        pagination: { skip: currentPage, take: 20 },
+        filter: Object.keys(hotelFilter).length > 0 ? hotelFilter : undefined,
+      });
       return;
     }
 
-    setIsSearching(true); // Активируем режим поиска
+    setIsSearching(true);
 
     try {
       const { data } = await refetch({
-        pagination: { all: true }, // Загрузить большое количество данных для поиска
+        pagination: { all: true },
+        filter: Object.keys(hotelFilter).length > 0 ? hotelFilter : undefined,
       });
 
       if (data && data.hotels?.hotels) {
-        setAllFilteredData(data.hotels.hotels); // Сохраняем все данные для локального поиска
+        setAllFilteredData(data.hotels.hotels);
       }
     } catch (err) {
       console.error("Ошибка при поиске:", err);
@@ -169,22 +208,21 @@ function HotelsList({ children, user, ...props }) {
   };
 
   const filteredRequests = useMemo(() => {
-    const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
+    const dataSource = isSearching ? allFilteredData : companyData;
 
-    return dataSource.filter((request) => {
-      return (
-        (filterData.filterSelect === "" ||
-          request.information?.city.includes(filterData.filterSelect)) &&
-        (request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          request?.information?.city
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          request.information?.address
-            ?.toLowerCase()
-            .includes(searchQuery.toLowerCase()))
-      );
-    });
-  }, [isSearching, allFilteredData, companyData, filterData, searchQuery]);
+    if (!searchQuery.trim()) return dataSource;
+
+    return dataSource.filter(
+      (request) =>
+        request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request?.information?.city
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        request.information?.address
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase())
+    );
+  }, [isSearching, allFilteredData, companyData, searchQuery]);
 
   // Пагинация: общее количество страниц
   const totalPages = data?.hotels?.totalPages;
@@ -205,7 +243,8 @@ function HotelsList({ children, user, ...props }) {
     navigate(`?page=${selectedPage + 1}`);
   };
 
-  let filterList = ["Москва", "Санкт-Петербург"];
+  const starsOptions = ["1", "2", "3", "4", "5"];
+  const usStarsOptions = ["1", "2", "3", "4", "5"];
 
   return (
     <>
@@ -213,13 +252,60 @@ function HotelsList({ children, user, ...props }) {
         <Header>Гостиницы</Header>
 
         <div className={classes.section_searchAndFilter}>
-          {/* <input
-                        type="text"
-                        placeholder="Поиск"
-                        style={{ width: '500px' }}
-                        value={searchQuery}
-                        onChange={handleSearch}
-                    /> */}
+          <div className={classes.filter}>
+            <MUIAutocompleteColor
+              dropdownWidth="170px"
+              label="Город"
+              hideLabelOnFocus={false}
+              options={cities}
+              getOptionLabel={(option) => option?.city ?? ""}
+              renderOption={(optionProps, option) => {
+                const cityPart =
+                  option.city && option.city !== option.region
+                    ? `, регион: ${option.region}`
+                    : "";
+                const labelText = `${option.city}${cityPart}`.trim();
+                const words = labelText.split(" ");
+                return (
+                  <li {...optionProps} key={option.id}>
+                    {words.map((word, index) => (
+                      <span
+                        key={index}
+                        style={{
+                          color: index === 0 ? "black" : "gray",
+                          marginRight: 4,
+                        }}
+                      >
+                        {word}
+                      </span>
+                    ))}
+                  </li>
+                );
+              }}
+              value={selectedCity}
+              onChange={handleCityChange}
+            />
+            <MUIAutocomplete
+              dropdownWidth="170px"
+              hideLabelOnFocus={false}
+              label="Оценка"
+              options={starsOptions}
+              value={filterData.filterStars || ""}
+              onChange={(_, newValue) =>
+                handleFilterChange("filterStars", newValue || "")
+              }
+            />
+            <MUIAutocomplete
+              dropdownWidth="170px"
+              hideLabelOnFocus={false}
+              label="Звёздность"
+              options={usStarsOptions}
+              value={filterData.filterUsStars || ""}
+              onChange={(_, newValue) =>
+                handleFilterChange("filterUsStars", newValue || "")
+              }
+            />
+          </div>
           <MUITextField
             label={"Поиск"}
             className={classes.mainSearch}
@@ -228,15 +314,14 @@ function HotelsList({ children, user, ...props }) {
           />
           {(user.role === roles.superAdmin ||
             user.role === roles.dispatcerAdmin) && (
-            <Filter
-              toggleSidebar={toggleCreateSidebar}
-              handleChange={handleChange}
-              filterData={filterData}
-              buttonTitle={"Добавить гостиницу"}
-              filterList={filterList}
-              needDate={false}
-            />
-          )}
+              <Filter
+                toggleSidebar={toggleCreateSidebar}
+                handleChange={() => { }}
+                filterData={filterData}
+                buttonTitle={"Добавить гостиницу"}
+                needDate={false}
+              />
+            )}
         </div>
         {loading && <MUILoader />}
         {error && <p>Error: {error.message}</p>}

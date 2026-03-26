@@ -11,6 +11,7 @@ export const HiddenSlashDecoration = () => {
         
         // Прячем "/" только если он был вставлен через "+"
         if (!slashState?.fromPlus) return null
+        return null
 
         const decorations = []
 

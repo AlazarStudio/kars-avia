@@ -1,0 +1,98 @@
+.requestTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 20px 30px;
+  border-bottom: 1px solid #54587380;
+}
+
+.requestTitle_name {
+  font-family: Inter;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 38.73px;
+  color: var(--text);
+}
+
+.requestTitle_close {
+  cursor: pointer;
+}
+
+.requestMiddle {
+  height: calc(100vh - 80px - 81px);
+  overflow: hidden;
+  overflow-y: auto;
+}
+
+.requestData {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 30px;
+  gap: 15px;
+}
+
+.requestData label {
+  display: flex;
+  gap: 15px;
+}
+
+.requestData input {
+  height: 40px;
+  outline: none;
+  padding: 0 10px;
+}
+
+.requestButton {
+  padding: 20px 20px 20px 30px;
+  border-top: 1px solid #54587380;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.requestButton button {
+  flex-basis: 50%;
+}
+
+.quickCreateWrap {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.quickCreateLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  color: var(--primary, #2A6EF5);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.quickCreateLink:hover {
+  color: var(--primary-dark, #1a5ad4);
+}
+
+.quickCreateForm {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.quickCreateInput {
+  height: 40px;
+  outline: none;
+  padding: 0 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+.linkHint {
+  font-size: 12px;
+  color: #545873;
+  margin: 0;
+}

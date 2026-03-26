@@ -1,18 +1,222 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import InsertDriveFileOutlinedIcon from '@mui/icons-material/InsertDriveFileOutlined'
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import './imageBlockModal.css'
 import './fileEmpty.css'
 import './fileBlockView.css'
 import './blockResize.css'
-import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
+import { blobFromDataUrl, blobFromUrl, getFileRecord } from '../storage/fileStore'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
+import { parseVideoUrl } from '../utils/videoEmbedParser'
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
 const FILE_BLOCK_MIN_HEIGHT = 120
 const FILE_BLOCK_MIN_WIDTH = 200
+const FILE_MODAL_ESTIMATED_SIZE = { width: 360, height: 260 }
+const DEFAULT_BLOCK_TARGET = 'auto'
+const BLOCK_TARGET_OPTIONS = [
+  { value: 'auto', label: 'Авто' },
+  { value: 'file', label: 'Файл' },
+  { value: 'image', label: 'Изображение' },
+  { value: 'video', label: 'Видео' },
+  { value: 'audio', label: 'Аудио' },
+]
+
+const getFileExtension = (filename = '') => {
+  if (typeof filename !== 'string') return ''
+  const trimmed = filename.trim()
+  const lastDotIndex = trimmed.lastIndexOf('.')
+  if (lastDotIndex < 0) return ''
+  return trimmed.slice(lastDotIndex + 1).toLowerCase()
+}
+
+const getOfficePreviewUrl = (url) => {
+  if (!url || typeof url !== 'string') return null
+  if (url.startsWith('blob:') || url.startsWith('data:')) return null
+
+  try {
+    const resolved = new URL(url, window.location.origin)
+    if (!/^https?:$/i.test(resolved.protocol)) return null
+    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resolved.toString())}`
+  } catch {
+    return null
+  }
+}
+
+const getPreviewKind = ({ fileType, filename, url }) => {
+  if (!url) return null
+
+  if (fileType === 'image' || fileType === 'pdf') return fileType
+  if (fileType === 'text' || fileType === 'code') return 'text'
+
+  if (fileType === 'document') {
+    const extension = getFileExtension(filename)
+    if (extension === 'doc' || extension === 'docx') {
+      return getOfficePreviewUrl(url) ? 'office' : null
+    }
+  }
+
+  return null
+}
+
+const TEXT_FILE_EXTENSIONS = [
+  'txt', 'text', 'log', 'out', 'err',
+  'md', 'markdown', 'rst', 'adoc', 'asciidoc',
+  'json', 'jsonl', 'ndjson', 'geojson',
+  'xml', 'xsd', 'xsl', 'xslt',
+  'html', 'htm', 'xhtml',
+  'css', 'scss', 'sass', 'less',
+  'csv', 'tsv', 'psv',
+  'yaml', 'yml', 'toml', 'ini', 'cfg', 'conf', 'config', 'properties', 'prop',
+  'env', 'editorconfig', 'gitignore', 'gitattributes', 'gitmodules', 'npmrc', 'yarnrc',
+  'babelrc', 'prettierrc', 'eslintrc',
+  'sql', 'graphql', 'gql', 'proto',
+  'rtf',
+]
+
+const CODE_FILE_EXTENSIONS = [
+  'js', 'mjs', 'cjs', 'jsx',
+  'ts', 'mts', 'cts', 'tsx',
+  'vue', 'svelte', 'astro',
+  'py', 'pyw',
+  'java',
+  'c', 'h', 'hpp', 'hh', 'hxx', 'cpp', 'cc', 'cxx',
+  'cs',
+  'php', 'phtml',
+  'rb',
+  'go',
+  'rs',
+  'swift',
+  'kt', 'kts',
+  'scala',
+  'lua',
+  'r',
+  'pl', 'pm',
+  'dart',
+  'sh', 'bash', 'zsh', 'fish',
+  'bat', 'cmd',
+  'ps1', 'psm1', 'psd1',
+  'dockerfile', 'makefile',
+]
+
+const TEXT_FILENAMES = [
+  'readme',
+  'license',
+  'licence',
+  'dockerfile',
+  'makefile',
+  'jenkinsfile',
+]
+
+const isLikelyTextMimeType = (mimeType = '') => {
+  const normalizedMime = String(mimeType || '').toLowerCase()
+  if (!normalizedMime) return false
+
+  if (
+    normalizedMime.includes('officedocument') ||
+    normalizedMime.includes('msword') ||
+    normalizedMime.includes('spreadsheetml') ||
+    normalizedMime.includes('presentationml') ||
+    normalizedMime.includes('application/vnd.ms-')
+  ) {
+    return false
+  }
+
+  return (
+    normalizedMime.startsWith('text/') ||
+    normalizedMime.includes('json') ||
+    normalizedMime.includes('xml') ||
+    normalizedMime.includes('yaml') ||
+    normalizedMime.includes('yml') ||
+    normalizedMime.includes('javascript') ||
+    normalizedMime.includes('ecmascript') ||
+    normalizedMime.includes('typescript') ||
+    normalizedMime.includes('csv') ||
+    normalizedMime.includes('tab-separated-values') ||
+    normalizedMime.includes('sql') ||
+    normalizedMime.includes('graphql') ||
+    normalizedMime.includes('x-sh') ||
+    normalizedMime.includes('x-shellscript') ||
+    normalizedMime.includes('x-python') ||
+    normalizedMime.includes('x-httpd-php') ||
+    normalizedMime.includes('x-ruby') ||
+    normalizedMime.includes('x-c') ||
+    normalizedMime.includes('x-c++') ||
+    normalizedMime.includes('x-java') ||
+    normalizedMime.includes('x-rust') ||
+    normalizedMime.includes('x-go') ||
+    normalizedMime.includes('x-kotlin') ||
+    normalizedMime.includes('toml') ||
+    normalizedMime.includes('rtf')
+  )
+}
+
+const isKnownTextFilename = (filename = '') => {
+  const normalizedName = String(filename || '').trim().toLowerCase()
+  if (!normalizedName) return false
+
+  return (
+    TEXT_FILENAMES.includes(normalizedName) ||
+    /^\.env(\..+)?$/i.test(normalizedName) ||
+    /^\.eslint/i.test(normalizedName) ||
+    /^\.prettier/i.test(normalizedName) ||
+    /^\.babel/i.test(normalizedName)
+  )
+}
+
+const getFilenameFromUrl = (inputUrl = '') => {
+  const raw = String(inputUrl || '').trim()
+  if (!raw) return ''
+
+  try {
+    const parsed = new URL(raw, window.location.origin)
+    const lastSegment = parsed.pathname.split('/').filter(Boolean).pop()
+    return lastSegment ? decodeURIComponent(lastSegment) : ''
+  } catch {
+    const withoutHash = raw.split('#')[0]
+    const withoutQuery = withoutHash.split('?')[0]
+    const lastSegment = withoutQuery.split('/').filter(Boolean).pop()
+    return lastSegment ? decodeURIComponent(lastSegment) : ''
+  }
+}
+
+const inferTargetBlock = ({ fileType, url }) => {
+  if (fileType === 'image') return 'image'
+  if (fileType === 'video') return 'video'
+  if (fileType === 'audio') return 'audio'
+
+  if (typeof url === 'string' && url.trim()) {
+    const parsedVideo = parseVideoUrl(url)
+    if (parsedVideo) {
+      return 'video'
+    }
+  }
+
+  return 'file'
+}
+
+const resolveTargetBlock = ({ preferredTarget, fileType, url }) => {
+  if (preferredTarget && preferredTarget !== DEFAULT_BLOCK_TARGET) {
+    return preferredTarget
+  }
+  return inferTargetBlock({ fileType, url })
+}
+
+const getTargetBlockLabel = (target) => {
+  const match = BLOCK_TARGET_OPTIONS.find(option => option.value === target)
+  return match?.label || 'Файл'
+}
 
 // Определяем тип файла по расширению или MIME-типу
 const getFileType = (filename, mimeType = '') => {
-  const extension = filename.split('.').pop().toLowerCase();
+  const extension = getFileExtension(filename)
 
   // Изображения
   const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'svg', 'ico', 'tiff', 'tif'];
@@ -24,13 +228,7 @@ const getFileType = (filename, mimeType = '') => {
   if (extension === 'pdf' || mimeType === 'application/pdf') {
     return 'pdf';
   }
-  
-  // Текстовые файлы
-  const textExtensions = ['txt', 'md', 'json', 'xml', 'html', 'htm', 'css', 'js', 'jsx', 'ts', 'tsx', 'csv'];
-  if (textExtensions.includes(extension) || mimeType.startsWith('text/')) {
-    return 'text';
-  }
-  
+
   // Документы
   const documentExtensions = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp'];
   if (documentExtensions.includes(extension) || 
@@ -39,6 +237,15 @@ const getFileType = (filename, mimeType = '') => {
       mimeType.includes('presentationml') ||
       mimeType.includes('officedocument')) {
     return 'document';
+  }
+
+  // Текстовые файлы
+  if (
+    TEXT_FILE_EXTENSIONS.includes(extension) ||
+    isKnownTextFilename(filename) ||
+    isLikelyTextMimeType(mimeType)
+  ) {
+    return 'text';
   }
   
   // Аудио
@@ -63,8 +270,7 @@ const getFileType = (filename, mimeType = '') => {
   }
   
   // Код
-  const codeExtensions = ['py', 'java', 'cpp', 'c', 'h', 'php', 'rb', 'go', 'rs', 'swift', 'kt'];
-  if (codeExtensions.includes(extension)) {
+  if (CODE_FILE_EXTENSIONS.includes(extension)) {
     return 'code';
   }
   
@@ -95,58 +301,92 @@ const getFileIconClass = (fileType) => {
 };
 
 const FileTypeIcon = ({ fileType, className }) => (
-  <svg
-    className={`file-type-icon ${getFileIconClass(fileType)} ${className || ''}`}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M7 3h6l4 4v14H7z" />
-    <path d="M13 3v4h4" />
-    <path d="M9 13h6" />
-    <path d="M9 17h6" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg
+      className={`file-type-icon ${getFileIconClass(fileType)} ${className || ''}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M7 3h6l4 4v14H7z" />
+      <path d="M13 3v4h4" />
+      <path d="M9 13h6" />
+      <path d="M9 17h6" />
+    </svg>
+    */}
+    <InsertDriveFileOutlinedIcon
+      className={`file-type-icon ${getFileIconClass(fileType)} ${className || ''}`}
+      aria-hidden="true"
+      fontSize="inherit"
+    />
+  </>
 );
 
 const IconDownload = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M12 3v12" />
-    <path d="M7 10l5 5 5-5" />
-    <path d="M5 21h14" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3v12" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M5 21h14" />
+    </svg>
+    */}
+    <DownloadRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 const IconEye = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+    */}
+    <VisibilityOutlinedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 const IconLink = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 1 0-7.07-7.07L10 4" />
-    <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L14 20" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 1 0-7.07-7.07L10 4" />
+      <path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L14 20" />
+    </svg>
+    */}
+    <LinkRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 const IconMore = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <circle cx="12" cy="5" r="1.6" />
-    <circle cx="12" cy="12" r="1.6" />
-    <circle cx="12" cy="19" r="1.6" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <circle cx="12" cy="5" r="1.6" />
+      <circle cx="12" cy="12" r="1.6" />
+      <circle cx="12" cy="19" r="1.6" />
+    </svg>
+    */}
+    <MoreVertRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 const IconClose = ({ className }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M6 6l12 12" />
-    <path d="M18 6l-12 12" />
-  </svg>
+  <>
+    {/* Legacy SVG icon:
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 6l12 12" />
+      <path d="M18 6l-12 12" />
+    </svg>
+    */}
+    <CloseRoundedIcon className={className} aria-hidden="true" fontSize="inherit" />
+  </>
 );
 
 // Форматирование размера файла
@@ -190,16 +430,17 @@ const TextPreview = ({ url }) => {
   useEffect(() => {
     const loadText = async () => {
       try {
+        if (!url || typeof url !== 'string') throw new Error('Empty text URL');
         // Для blob-ссылок и data URLs
         if (url.startsWith('blob:') || url.startsWith('data:')) {
           const response = await fetch(url);
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
           const text = await response.text();
           // Ограничиваем длину текста для превью
           setContent(text.length > 10000 ? text.substring(0, 10000) + '\n...' : text);
         } else {
           // Для внешних ссылок - используем прокси через CORS proxy
-          const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-          const response = await fetch(proxyUrl);
+          const response = await fetch(url);
           if (!response.ok) throw new Error('Network response was not ok');
           const text = await response.text();
           setContent(text.length > 10000 ? text.substring(0, 10000) + '\n...' : text);
@@ -227,11 +468,16 @@ const TextPreview = ({ url }) => {
   );
 };
 
-export default function FileBlockView({ node, updateAttributes }) {
+const advanceMediaCandidate = (setIndex, candidatesLength) => {
+  setIndex(prev => (prev + 1 < candidatesLength ? prev + 1 : prev));
+};
+
+export default function FileBlockView({ editor, node, updateAttributes, getPos }) {
   const { fileId, url: rawUrl, name, size, type: _type, mimeType } = node.attrs;
 
   const docUpload = useDocumentationUpload();
-  const { uploadFile: docUploadFile, getMediaUrl } = docUpload || {};
+  const { uploadFile: docUploadFile, getMediaUrl, getMediaUrlCandidates } = docUpload || {};
+  const canEdit = editor?.isEditable !== false;
   const width = typeof node.attrs.width === 'number' ? node.attrs.width : 520;
   const height = typeof node.attrs.height === 'number' ? node.attrs.height : null;
   const textAlign = node.attrs.textAlign || 'left';
@@ -247,9 +493,11 @@ export default function FileBlockView({ node, updateAttributes }) {
   const [tab, setTab] = useState('upload');
   const [fileName, setFileName] = useState(name || '');
   const [fileUrl, setFileUrl] = useState('');
+  const [blockTarget, setBlockTarget] = useState(DEFAULT_BLOCK_TARGET);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [objectUrl, setObjectUrl] = useState(null);
+  const [displayUrlIndex, setDisplayUrlIndex] = useState(0);
   const migrationRef = useRef({ running: false, doneFor: null });
 
   const modalRef = useRef(null);
@@ -257,6 +505,11 @@ export default function FileBlockView({ node, updateAttributes }) {
   const fileInputRef = useRef(null);
   const [modalPos, setModalPos] = useState({ x: 0, y: 0 });
   const dragOffset = useRef({ x: 0, y: 0 });
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null;
+  const renderModalPortal = (node) => {
+    if (!node) return null;
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node;
+  };
 
   const announceModalOpen = () => {
     try {
@@ -270,10 +523,45 @@ export default function FileBlockView({ node, updateAttributes }) {
     }
   };
 
+  const safeSetNodeSelectionHere = (e) => {
+    if (e?.button != null && e.button !== 0) return;
+
+    const t = e?.target;
+    if (t instanceof Element && t.closest('input, textarea, select, button, a')) return;
+
+    const pos = typeof getPos === 'function' ? getPos() : null;
+    if (typeof pos === 'number' && editor?.commands?.setNodeSelection) {
+      editor.commands.setNodeSelection(pos);
+    }
+  };
+
   const url = objectUrl || rawUrl;
-  const displayUrl = objectUrl || (rawUrl && getMediaUrl ? getMediaUrl(rawUrl) : rawUrl);
+  const displayUrlCandidates = objectUrl
+    ? [objectUrl]
+    : rawUrl
+      ? (
+          getMediaUrlCandidates
+            ? getMediaUrlCandidates(rawUrl)
+            : [getMediaUrl ? getMediaUrl(rawUrl) : rawUrl]
+        ).filter(Boolean)
+      : [];
+  const displayUrl =
+    displayUrlCandidates[
+      Math.min(displayUrlIndex, Math.max(0, displayUrlCandidates.length - 1))
+    ] || null;
   const hasFile = Boolean(url);
   const fileType = getFileType(name || '', mimeType);
+  const previewKind = getPreviewKind({
+    fileType,
+    filename: name || '',
+    url: displayUrl,
+  });
+  const canPreview = Boolean(previewKind);
+  const draftName = fileName.trim() || getFilenameFromUrl(fileUrl)
+  const draftFileType = fileUrl.trim() ? getFileType(draftName || 'file', '') : 'file'
+  const predictedTargetBlock = fileUrl.trim()
+    ? inferTargetBlock({ fileType: draftFileType, url: fileUrl.trim() })
+    : 'file'
 
   /* ================= RESOLVE LOCAL FILE ================= */
 
@@ -307,6 +595,10 @@ export default function FileBlockView({ node, updateAttributes }) {
     };
   }, [fileId]);
 
+  useEffect(() => {
+    setDisplayUrlIndex(0);
+  }, [objectUrl, rawUrl]);
+
   /* ================= MIGRATE data:/blob: ================= */
 
   useEffect(() => {
@@ -322,31 +614,18 @@ export default function FileBlockView({ node, updateAttributes }) {
 
     (async () => {
       try {
+        if (!docUploadFile) return
         const blob = rawUrl.startsWith('data:')
           ? await blobFromDataUrl(rawUrl)
           : await blobFromUrl(rawUrl);
 
-        if (docUploadFile) {
-          const ext = (name || '').split('.').pop() || '';
-          const fileName = name || `file.${ext}`;
-          const file = new File([blob], fileName, { type: blob.type });
-          const path = await docUploadFile(file);
-          if (path) {
-            updateAttributes({ fileId: null, url: path });
-            migrationRef.current.running = false;
-            return;
-          }
-        }
-        const id = await saveBlobAsFile({
-          blob,
-          name: name || '',
-          mimeType: blob.type,
-          size: typeof size === 'number' ? size : 0,
-        });
-
-        updateAttributes({ fileId: id, url: null });
-      } catch {
-        // ignore
+        const ext = (name || '').split('.').pop() || '';
+        const fileName = name || `file.${ext}`;
+        const file = new File([blob], fileName, { type: blob.type });
+        const path = await docUploadFile(file);
+        updateAttributes({ fileId: null, url: path });
+      } catch (error) {
+        console.error('Failed to migrate documentation file block to server upload:', error)
       } finally {
         migrationRef.current.running = false;
       }
@@ -366,10 +645,17 @@ export default function FileBlockView({ node, updateAttributes }) {
   };
 
   const onDragModal = (e) => {
-    setModalPos({
-      x: e.clientX - dragOffset.current.x,
-      y: e.clientY - dragOffset.current.y,
-    });
+    const rect = modalRef.current?.getBoundingClientRect?.();
+    setModalPos(
+      clampFixedModalPosition(
+        {
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y,
+        },
+        rect || FILE_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    );
   };
 
   const stopDragModal = () => {
@@ -379,16 +665,22 @@ export default function FileBlockView({ node, updateAttributes }) {
 
   /* ================= OPEN MODAL ================= */
   const openAtEvent = (e) => {
+    if (!canEdit) return;
     e.stopPropagation();
-    setModalPos({
-      x: e.clientX + 10,
-      y: e.clientY - 10,
-    });
+    const rect = modalRef.current?.getBoundingClientRect?.();
+    setModalPos(
+      clampFixedModalPosition(
+        { x: e.clientX + 10, y: e.clientY - 10 },
+        rect || FILE_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    );
     announceModalOpen();
     setPreviewOpen(false);
     setOpen(true);
     setFileUrl('');
     setFileName('');
+    setBlockTarget(DEFAULT_BLOCK_TARGET);
   };
 
   useEffect(() => {
@@ -416,64 +708,190 @@ export default function FileBlockView({ node, updateAttributes }) {
     return () => document.removeEventListener('mousedown', close);
   }, [open]);
 
-  /* ================= ADD FILE ================= */
-  const addFile = (inputUrl, fileName, fileSize, fileType, mimeType) => {
-    if (!inputUrl || !inputUrl.trim()) return;
+  useEffect(() => {
+    if (!open) return;
 
-    const url = inputUrl.trim();
-    const finalName = fileName || url.split('/').pop() || 'Файл';
+    const clampModalToViewport = () => {
+      const rect = modalRef.current?.getBoundingClientRect?.();
+      if (!rect) return;
+      setModalPos((prev) => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN);
+        if (next.x === prev.x && next.y === prev.y) return prev;
+        return next;
+      });
+    };
 
-    updateAttributes({
-      fileId: null,
-      url: url,
-      name: finalName,
-      size: fileSize || '',
-      type: fileType,
-      mimeType: mimeType || '',
-    });
+    const rafId = window.requestAnimationFrame(clampModalToViewport);
+    window.addEventListener('resize', clampModalToViewport);
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', clampModalToViewport);
+    };
+  }, [open]);
 
+  const resetModalDrafts = () => {
     setOpen(false);
     setFileUrl('');
     setFileName('');
+    setBlockTarget(DEFAULT_BLOCK_TARGET);
   };
 
-  const onUpload = (file) => {
+  const replaceFileBlockNode = ({ targetBlock, sourceUrl }) => {
+    const pos = typeof getPos === 'function' ? getPos() : null;
+    if (typeof pos !== 'number' || !editor?.view?.state?.schema) return false;
+
+    const targetNodeName = {
+      image: 'imageBlock',
+      video: 'videoBlock',
+      audio: 'audioBlock',
+    }[targetBlock];
+
+    if (!targetNodeName) return false;
+
+    const nodeType = editor.view.state.schema.nodes[targetNodeName];
+    if (!nodeType) return false;
+
+    const sharedWidth =
+      typeof node.attrs.width === 'number' && Number.isFinite(node.attrs.width)
+        ? node.attrs.width
+        : 520;
+    const sharedTextAlign = node.attrs.textAlign || null;
+
+    let nextAttrs = null;
+
+    if (targetBlock === 'image') {
+      nextAttrs = {
+        fileId: null,
+        src: sourceUrl,
+        caption: '',
+        showCaption: false,
+        width: sharedWidth,
+        height: null,
+        textAlign: sharedTextAlign,
+      };
+    }
+
+    if (targetBlock === 'video') {
+      nextAttrs = {
+        fileId: null,
+        src: sourceUrl,
+        width: sharedWidth,
+        height: Math.max(180, Math.round(sharedWidth * 9 / 16)),
+        caption: '',
+        textAlign: sharedTextAlign,
+      };
+    }
+
+    if (targetBlock === 'audio') {
+      nextAttrs = {
+        fileId: null,
+        src: sourceUrl,
+        volume: 1,
+        loop: false,
+        width: sharedWidth,
+        height: null,
+        textAlign: sharedTextAlign,
+      };
+    }
+
+    if (!nextAttrs) return false;
+
+    const nextNode = nodeType.create(nextAttrs);
+    const tr = editor.view.state.tr.replaceWith(pos, pos + node.nodeSize, nextNode);
+    editor.view.dispatch(tr.scrollIntoView());
+    resetModalDrafts();
+    return true;
+  };
+
+  const applyResolvedTarget = ({
+    sourceUrl,
+    fileName: incomingFileName,
+    fileSize = '',
+    mimeType: nextMimeType = '',
+    fileType: incomingFileType,
+    preferredTarget = DEFAULT_BLOCK_TARGET,
+  }) => {
+    const normalizedUrl = String(sourceUrl || '').trim();
+    if (!normalizedUrl) return;
+
+    const finalName = incomingFileName || getFilenameFromUrl(normalizedUrl) || 'Файл';
+    const normalizedFileType = incomingFileType || getFileType(finalName || 'file', nextMimeType);
+    const targetBlock = resolveTargetBlock({
+      preferredTarget,
+      fileType: normalizedFileType,
+      url: normalizedUrl,
+    });
+
+    if (targetBlock === 'file') {
+      updateAttributes({
+        fileId: null,
+        url: normalizedUrl,
+        name: finalName,
+        size: fileSize || '',
+        type: normalizedFileType,
+        mimeType: nextMimeType || '',
+      });
+      resetModalDrafts();
+      return;
+    }
+
+    const replaced = replaceFileBlockNode({
+      targetBlock,
+      sourceUrl: normalizedUrl,
+    });
+
+    if (!replaced) {
+      updateAttributes({
+        fileId: null,
+        url: normalizedUrl,
+        name: finalName,
+        size: fileSize || '',
+        type: normalizedFileType,
+        mimeType: nextMimeType || '',
+      });
+      resetModalDrafts();
+    }
+  };
+
+  /* ================= ADD FILE ================= */
+  const addFile = (inputUrl, fileName, fileSize, fileType, mimeType) => {
+    if (!canEdit) return;
+    if (!inputUrl || !inputUrl.trim()) return;
+
+    applyResolvedTarget({
+      sourceUrl: inputUrl.trim(),
+      fileName,
+      fileSize,
+      fileType,
+      mimeType,
+      preferredTarget: blockTarget,
+    });
+  };
+
+  const onUpload = (file, preferredTarget = DEFAULT_BLOCK_TARGET) => {
+    if (!canEdit) return;
     if (!file) return;
 
     const fileType = getFileType(file.name, file.type);
 
     (async () => {
       try {
-        if (docUploadFile) {
-          const path = await docUploadFile(file);
-          if (path) {
-            updateAttributes({
-              fileId: null,
-              url: path,
-              name: file.name,
-              size: file.size || '',
-              type: fileType,
-              mimeType: file.type || '',
-            });
-          }
-        } else {
-          const saved = await saveFile(file);
-          updateAttributes({
-            fileId: saved.id,
-            url: null,
-            name: saved.name || file.name,
-            size: saved.size || file.size,
-            type: fileType,
-            mimeType: saved.mimeType || file.type,
-          });
+        if (!docUploadFile) {
+          throw new Error('Documentation upload service is unavailable')
         }
-      } catch {
-        const blobUrl = URL.createObjectURL(file);
-        addFile(blobUrl, file.name, file.size, fileType, file.type);
+
+        const path = await docUploadFile(file);
+        applyResolvedTarget({
+          sourceUrl: path,
+          fileName: file.name,
+          fileSize: file.size || '',
+          fileType,
+          mimeType: file.type || '',
+          preferredTarget,
+        });
+      } catch (error) {
+        notifyDocumentationUploadFailure(error, 'файл')
       } finally {
-        setOpen(false);
-        setFileUrl('');
-        setFileName('');
         if (fileInputRef.current) fileInputRef.current.value = '';
       }
     })();
@@ -481,19 +899,33 @@ export default function FileBlockView({ node, updateAttributes }) {
 
   /* ================= DRAG & DROP ================= */
   const handleDrop = (e) => {
+    if (!canEdit) return;
     e.preventDefault();
     e.currentTarget.classList.remove('drag-over');
 
     const dt = e.dataTransfer;
     if (dt.files && dt.files.length) {
       const file = dt.files[0];
-      onUpload(file);
+      onUpload(file, DEFAULT_BLOCK_TARGET);
+      return;
     }
 
     // Также пробуем получить URL из перетаскиваемого текста
     const urlFromText = dt.getData('text/plain');
     if (urlFromText) {
-      addFile(urlFromText, '', '', 'file', '');
+      const trimmedUrl = urlFromText.trim();
+      if (!trimmedUrl) return;
+      const inferredName = getFilenameFromUrl(trimmedUrl);
+      const inferredType = getFileType(inferredName || 'file', '');
+
+      applyResolvedTarget({
+        sourceUrl: trimmedUrl,
+        fileName: inferredName,
+        fileSize: '',
+        fileType: inferredType,
+        mimeType: '',
+        preferredTarget: DEFAULT_BLOCK_TARGET,
+      });
     }
   };
 
@@ -503,8 +935,9 @@ export default function FileBlockView({ node, updateAttributes }) {
     return url.trim().length > 0;
   };
 
-  /* ================= КНОПКА ВСТАВКИ ================= */
+  /* ================= РљРќРћРџРљРђ Р’РЎРўРђР’РљР ================= */
   const handleInsertFile = () => {
+    if (!canEdit) return;
     if (!fileUrl.trim()) {
       alert('Введите ссылку на файл');
       return;
@@ -515,23 +948,26 @@ export default function FileBlockView({ node, updateAttributes }) {
       return;
     }
 
-    addFile(fileUrl, fileName, '', 'file', '');
+    const normalizedUrl = fileUrl.trim();
+    const resolvedName = fileName.trim() || getFilenameFromUrl(normalizedUrl);
+    const resolvedType = getFileType(resolvedName || 'file', '');
+
+    addFile(normalizedUrl, resolvedName, '', resolvedType, '');
   };
 
-  /* ================= ОТКРЫТЬ ПРЕВЬЮ ================= */
+  /* ================= РћРўРљР Р«РўР¬ РџР Р•Р’Р¬Р® ================= */
   const openPreview = () => {
     if (!displayUrl) return;
 
-    // Проверяем, можно ли показать превью для этого типа файла
-    const previewableTypes = ['pdf', 'text', 'image'];
-    if (previewableTypes.includes(fileType)) {
+    if (previewKind) {
       announceModalOpen();
       setOpen(false);
       setSelectedFile({
         url: displayUrl,
         name,
-        type: fileType,
+        type: previewKind,
         mimeType,
+        officeUrl: previewKind === 'office' ? getOfficePreviewUrl(displayUrl) : null,
       });
       setPreviewOpen(true);
     } else {
@@ -540,7 +976,7 @@ export default function FileBlockView({ node, updateAttributes }) {
     }
   };
 
-  /* ================= ПРЕВЬЮ ИЗОБРАЖЕНИЯ ================= */
+  /* ================= РџР Р•Р’Р¬Р® РР—РћР‘Р РђР–Р•РќРРЇ ================= */
   const handleImageClick = (e) => {
     e.stopPropagation();
     window.dispatchEvent(
@@ -562,7 +998,7 @@ export default function FileBlockView({ node, updateAttributes }) {
     };
   }, [url]);
 
-  /* ================= ГЕНЕРАЦИЯ ПРЕВЬЮ ================= */
+  /* ================= Р“Р•РќР•Р РђР¦РРЇ РџР Р•Р’Р¬Р® ================= */
   const renderPreview = () => {
     if (!displayUrl) return null;
 
@@ -570,7 +1006,11 @@ export default function FileBlockView({ node, updateAttributes }) {
       case 'image':
         return (
           <div className="file-image-preview" onClick={handleImageClick}>
-            <img src={displayUrl} alt={name} />
+            <img
+              src={displayUrl}
+              alt={name}
+              onError={() => advanceMediaCandidate(setDisplayUrlIndex, displayUrlCandidates.length)}
+            />
             <div className="file-preview-overlay">
               <span>Просмотр</span>
             </div>
@@ -606,17 +1046,56 @@ export default function FileBlockView({ node, updateAttributes }) {
           </div>
         );
 
+      case 'document':
+        if (previewKind === 'office') {
+          return (
+            <div className="file-doc-preview">
+              <div className="pdf-preview-simple">
+                <div className="pdf-icon">
+                  <FileTypeIcon fileType="document" />
+                </div>
+                <div className="pdf-info">
+                  <div className="pdf-name">{name}</div>
+                  <div className="pdf-size">{formatFileSize(parseInt(size) || 0)}</div>
+                </div>
+              </div>
+              <div className="file-preview-overlay" onClick={openPreview}>
+                <span>{`Открыть ${(getFileExtension(name || '') || 'doc').toUpperCase()}`}</span>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="file-generic-preview">
+            <div className="generic-icon">
+              <FileTypeIcon fileType={fileType} />
+            </div>
+            <div className="generic-info">
+              <div className="generic-name">{name}</div>
+              <div className="generic-type">{fileType.toUpperCase()}</div>
+            </div>
+          </div>
+        );
+
       case 'audio':
         return (
           <div className="file-audio-preview">
-            <audio controls src={displayUrl} />
+            <audio
+              controls
+              src={displayUrl}
+              onError={() => advanceMediaCandidate(setDisplayUrlIndex, displayUrlCandidates.length)}
+            />
           </div>
         );
 
       case 'video':
         return (
           <div className="file-video-preview">
-            <video controls src={displayUrl} />
+            <video
+              controls
+              src={displayUrl}
+              onError={() => advanceMediaCandidate(setDisplayUrlIndex, displayUrlCandidates.length)}
+            />
           </div>
         );
 
@@ -646,6 +1125,7 @@ export default function FileBlockView({ node, updateAttributes }) {
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
   const startResize = (e, side) => {
+    if (!canEdit) return;
     e.preventDefault();
     e.stopPropagation();
 
@@ -659,22 +1139,26 @@ export default function FileBlockView({ node, updateAttributes }) {
     const startRect = wrapperEl?.getBoundingClientRect?.();
     const startWidth = width;
     const startHeight = typeof height === 'number' ? height : Math.round(startRect?.height || 120);
+    const isLeft = side.includes('left');
+    const isRight = side.includes('right');
+    const isTop = side.includes('top');
+    const isBottom = side.includes('bottom');
 
     const move = ev => {
       let deltaX = 0;
       let deltaY = 0;
 
-      if (side === 'right') deltaX = ev.clientX - startX;
-      if (side === 'left') deltaX = startX - ev.clientX;
-      if (side === 'bottom') deltaY = ev.clientY - startY;
-      if (side === 'top') deltaY = startY - ev.clientY;
+      if (isRight) deltaX = ev.clientX - startX;
+      if (isLeft) deltaX = startX - ev.clientX;
+      if (isBottom) deltaY = ev.clientY - startY;
+      if (isTop) deltaY = startY - ev.clientY;
 
       const nextWidth = clamp(startWidth + deltaX, FILE_BLOCK_MIN_WIDTH, maxWidth);
       const nextHeight = clamp(startHeight + deltaY, FILE_BLOCK_MIN_HEIGHT, 900);
 
       const nextAttrs = {};
-      if (side === 'left' || side === 'right') nextAttrs.width = Math.round(nextWidth);
-      if (side === 'top' || side === 'bottom') nextAttrs.height = Math.round(nextHeight);
+      if (isLeft || isRight) nextAttrs.width = Math.round(nextWidth);
+      if (isTop || isBottom) nextAttrs.height = Math.round(nextHeight);
       updateAttributes(nextAttrs);
     };
 
@@ -687,10 +1171,13 @@ export default function FileBlockView({ node, updateAttributes }) {
     document.addEventListener('mouseup', up);
   };
 
+  if (!canEdit && !hasFile) return null;
+
   return (
     <>
       <NodeViewWrapper
         className="file-block-wrapper block-resizable"
+        onMouseDown={safeSetNodeSelectionHere}
         style={{
           width,
           ...alignMargins,
@@ -701,12 +1188,20 @@ export default function FileBlockView({ node, updateAttributes }) {
         }}
       >
         {/* RESIZE HANDLES */}
-        <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
-        <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
-        {url && (
+        {canEdit && (
           <>
-            <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
-            <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+            <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left')} />
+            <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right')} />
+            {url && (
+              <>
+                <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top')} />
+                <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom')} />
+                <div className="block-resize corner top-left" contentEditable={false} onMouseDown={e => startResize(e, 'top-left')} />
+                <div className="block-resize corner top-right" contentEditable={false} onMouseDown={e => startResize(e, 'top-right')} />
+                <div className="block-resize corner bottom-left" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-left')} />
+                <div className="block-resize corner bottom-right" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-right')} />
+              </>
+            )}
           </>
         )}
 
@@ -714,13 +1209,13 @@ export default function FileBlockView({ node, updateAttributes }) {
         {!hasFile && (
           <div
             className="file-empty"
-            onClick={openAtEvent}
-            onDragOver={(e) => {
+            onClick={canEdit ? openAtEvent : undefined}
+            onDragOver={canEdit ? (e) => {
               e.preventDefault();
               e.currentTarget.classList.add('drag-over');
-            }}
-            onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')}
-            onDrop={handleDrop}
+            } : undefined}
+            onDragLeave={canEdit ? (e) => e.currentTarget.classList.remove('drag-over') : undefined}
+            onDrop={canEdit ? handleDrop : undefined}
           >
             + Добавить файл
           </div>
@@ -739,7 +1234,7 @@ export default function FileBlockView({ node, updateAttributes }) {
                   className="file-compact-btn"
                   onClick={openPreview}
                   title="Просмотр"
-                  disabled={!['pdf', 'text', 'image', 'code'].includes(fileType)}
+                  disabled={!canPreview}
                 >
                   <IconEye className="file-btn-icon" />
                 </button>
@@ -764,6 +1259,7 @@ export default function FileBlockView({ node, updateAttributes }) {
                 </button>
                 <button
                   className="file-compact-btn"
+                  style={{ display: canEdit ? undefined : 'none' }}
                   onClick={openAtEvent}
                   title="Настройки"
                 >
@@ -811,7 +1307,7 @@ export default function FileBlockView({ node, updateAttributes }) {
                   className="file-action-btn preview-btn"
                   onClick={openPreview}
                   title="Просмотр"
-                  disabled={!['pdf', 'text', 'image', 'code'].includes(fileType)}
+                  disabled={!canPreview}
                 >
                   <IconEye className="file-btn-icon" />
                   <span className="sr-only">Просмотр</span>
@@ -819,6 +1315,7 @@ export default function FileBlockView({ node, updateAttributes }) {
 
                 <button
                   className="file-action-btn more-btn"
+                  style={{ display: canEdit ? undefined : 'none' }}
                   onClick={openAtEvent}
                   title="Настройки"
                 >
@@ -848,14 +1345,13 @@ export default function FileBlockView({ node, updateAttributes }) {
       </NodeViewWrapper>
 
       {/* MODAL ДЛЯ ДОБАВЛЕНИЯ ФАЙЛА */}
-      {open && (
+      {canEdit && open && renderModalPortal(
         <div
           ref={modalRef}
           className="image-modal"
           style={{
             top: modalPos.y,
             left: modalPos.x,
-            width: '500px',
           }}
         >
           <div className="image-modal-header" onMouseDown={startDragModal}>
@@ -877,6 +1373,27 @@ export default function FileBlockView({ node, updateAttributes }) {
           </div>
 
           <div className="image-modal-content">
+            <div className="file-block-target-panel">
+              <div className="file-block-target-title">Формат блока</div>
+              <div className="file-block-target-list">
+                {BLOCK_TARGET_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`file-block-target-btn ${blockTarget === option.value ? 'active' : ''}`}
+                    onClick={() => setBlockTarget(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              <div className="file-block-target-hint">
+                {blockTarget === DEFAULT_BLOCK_TARGET
+                  ? `Автоопределение: ${getTargetBlockLabel(predictedTargetBlock)}`
+                  : `Будет создан блок: ${getTargetBlockLabel(blockTarget)}`}
+              </div>
+            </div>
+
             {tab === 'upload' && (
               <div className="upload-section">
                 <label
@@ -890,7 +1407,7 @@ export default function FileBlockView({ node, updateAttributes }) {
                     padding: '24px',
                   }}
                 >
-                  {/* <div style={{ fontSize: '48px', marginBottom: '12px' }}>📁</div> */}
+                  {/* <div style={{ fontSize: '48px', marginBottom: '12px' }}>рџ“Ѓ</div> */}
                   {/* <div style={{ fontSize: '16px', fontWeight: '500' }}>
                     Кликните для выбора файла
                   </div> */}
@@ -904,7 +1421,7 @@ export default function FileBlockView({ node, updateAttributes }) {
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
-                        onUpload(file);
+                        onUpload(file, blockTarget);
                       }
                     }}
                   />
@@ -946,11 +1463,11 @@ export default function FileBlockView({ node, updateAttributes }) {
                     <br />
                     <strong>Примеры:</strong>
                     <br />
-                    • https://example.com/document.pdf
+                    вЂў https://example.com/document.pdf
                     <br />
-                    • https://example.com/data.xlsx
+                    вЂў https://example.com/data.xlsx
                     <br />
-                    • https://example.com/image.jpg
+                    вЂў https://example.com/image.jpg
                   </div> */}
                 </div>
 
@@ -985,7 +1502,7 @@ export default function FileBlockView({ node, updateAttributes }) {
                     note: '',
                   });
                   setObjectUrl(null);
-                  setOpen(false);
+                  resetModalDrafts();
                 }}
                 style={{ marginTop: '12px' }}
               >
@@ -997,7 +1514,7 @@ export default function FileBlockView({ node, updateAttributes }) {
       )}
 
       {/* Notes in file block are disabled */}
-      {previewOpen && selectedFile && (
+      {previewOpen && selectedFile && renderModalPortal(
         <div className="file-preview-modal" onClick={() => setPreviewOpen(false)}>
           <div
             className="file-preview-content"
@@ -1036,6 +1553,16 @@ export default function FileBlockView({ node, updateAttributes }) {
                   <img src={selectedFile.url} alt={selectedFile.name} />
                 </div>
               )}
+
+              {selectedFile.type === 'office' && selectedFile.officeUrl && (
+                <div className="office-full-preview">
+                  <iframe
+                    src={selectedFile.officeUrl}
+                    title={selectedFile.name}
+                    style={{ width: '100%', height: '70vh', border: 'none' }}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="file-preview-footer">
@@ -1061,6 +1588,3 @@ export default function FileBlockView({ node, updateAttributes }) {
     </>
   );
 }
-
-
-

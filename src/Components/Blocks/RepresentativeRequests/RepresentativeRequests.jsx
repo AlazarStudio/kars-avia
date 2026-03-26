@@ -12,8 +12,8 @@ import {
   GET_PASSENGER_REQUESTS,
   GET_RESERVE_REQUESTS,
   getCookie,
-  REQUEST_RESERVE_CREATED_SUBSCRIPTION,
-  REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
+  PASSENGER_REQUEST_CREATED_SUBSCRIPTION,
+  PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -72,10 +72,8 @@ function RepresentativeRequests({
       },
     },
     variables: {
-      pagination: {
-        skip: pageInfo.skip,
-        take: pageInfo.take,
-      },
+      skip: pageInfo.skip,
+      take: pageInfo.take,
       filter: {
         status: statusFilter === "all" ? null : statusFilter,
         search: debouncedSearch,
@@ -91,33 +89,27 @@ function RepresentativeRequests({
     localStorage.setItem("statusFilterPassenger", value);
   };
 
-  // Подписки на создание и обновление заявок
-  const { data: subscriptionData } = useSubscription(
-    REQUEST_RESERVE_CREATED_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  // Подписки на создание и обновление заявок (passenger)
+  useSubscription(PASSENGER_REQUEST_CREATED_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      onData: () => {
-        refetch();
+    },
+    onData: () => {
+      refetch();
+    },
+  });
+  useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-    }
-  );
-  const { data: subscriptionUpdateData } = useSubscription(
-    REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      onComplete: () => {
-        refetch();
-      },
-    }
-  );
+    },
+    onData: () => {
+      refetch();
+    },
+  });
 
   const [newRequests, setNewRequests] = useState([]);
   const [requests, setRequests] = useState([]);

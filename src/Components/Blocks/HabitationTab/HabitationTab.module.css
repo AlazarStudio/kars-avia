@@ -44,6 +44,26 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  color: #0057C3;
+  font-size: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.linkCol {
+  flex-direction: column;
+}
+
+.linkGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
 }
 
 .tableCard {
@@ -51,6 +71,16 @@
   /* border: 1px solid #E8EDF4; */
   border-radius: 10px 10px 0 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.tableBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .tableHead,
@@ -58,7 +88,7 @@
   display: flex;
   align-items: center;
   padding: 20px;
-  gap: 30px;
+  gap: 10px;
 }
 
 .tableHead {
@@ -67,11 +97,29 @@
   font-size: 16px;
   border-bottom: 1px solid #E4E4EF;
   height: 65px;
+  flex-shrink: 0;
 }
 
 .tableRow {
   border-bottom: 1px solid #E4E4EF;
   color: var(--main-gray);
+}
+
+.tableRowClickable {
+  cursor: pointer;
+}
+
+.tableRowClickable:hover {
+  background-color: #F6F8FC;
+}
+
+.lineClamp2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
 }
 
 .actionBtn {
@@ -95,6 +143,7 @@
   height: calc(100vh - 272px);
   /* min-height: 420px */
   overflow: hidden;
+  min-height: 0;
 }
 
 .countChip {
@@ -102,6 +151,56 @@
   gap: 6px;
   align-items: center;
   color: #545873;
+  margin-left: auto;
+}
+
+/* Модалка досрочного завершения */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+}
+.modalContent {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  min-width: 400px;
+  max-width: 90vw;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+.modalContent h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+.modalContent p {
+  margin: 0 0 12px 0;
+  color: var(--main-gray, #545873);
+  font-size: 14px;
+}
+.modalReasonInput {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+.modalReasonInput:focus {
+  border-color: var(--primary, #2A6EF5);
+  outline: none;
+}
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
 }
 
 @media (min-width: 0px) and (max-width: 1499px) {
@@ -109,6 +208,5 @@
   .tableHead,
   .tableRow {
     font-size: 14px;
-    gap: 15px;
   }
 }

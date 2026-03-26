@@ -3,6 +3,7 @@ import classes from "./CreateRequestDispatcherCompany.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
+  CREATE_POSITION,
   CREATE_DISPATCHER_USER,
   getCookie,
 } from "../../../../graphQL_requests";
@@ -16,6 +17,7 @@ function CreateRequestDispatcherCompany({
   show,
   onClose,
   onCreated,
+  onPositionCreated,
   addNotification,
   positions,
   departments,
@@ -23,6 +25,9 @@ function CreateRequestDispatcherCompany({
   const token = getCookie("token");
 
   const [isEdited, setIsEdited] = useState(false);
+  const [isCreatingPosition, setIsCreatingPosition] = useState(false);
+  const [newPositionName, setNewPositionName] = useState("");
+  const [localPositions, setLocalPositions] = useState(positions || []);
   const [formData, setFormData] = useState({
     images: null,
     name: "",
@@ -48,6 +53,8 @@ function CreateRequestDispatcherCompany({
       departmentId: "",
     });
     setIsEdited(false);
+    setIsCreatingPosition(false);
+    setNewPositionName("");
   }, []);
 
   const closeButton = useCallback(() => {
@@ -106,7 +113,77 @@ function CreateRequestDispatcherCompany({
     },
   });
 
+  const [createPosition] = useMutation(CREATE_POSITION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    setLocalPositions(positions || []);
+  }, [positions]);
+
+  const handleCreatePosition = useCallback(async () => {
+    const trimmedName = newPositionName.trim();
+    if (!trimmedName) {
+      alert("Введите название должности.");
+      return;
+    }
+
+    const isDuplicate = (localPositions || []).some(
+      (position) =>
+        String(position?.name || "").trim().toLowerCase() ===
+        trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      alert("Такая должность уже существует.");
+      return;
+    }
+
+    try {
+      const response = await createPosition({
+        variables: {
+          input: {
+            name: trimmedName,
+            separator: "dispatcher",
+          },
+        },
+      });
+
+      const createdPosition = response?.data?.createPosition;
+      if (!createdPosition) {
+        throw new Error("Пустой ответ createPosition");
+      }
+
+      setLocalPositions((prev) =>
+        [...(prev || []), createdPosition].sort((a, b) =>
+          String(a?.name || "").localeCompare(String(b?.name || ""))
+        )
+      );
+      setFormData((prevData) => ({
+        ...prevData,
+        position: createdPosition.name,
+      }));
+      setIsEdited(true);
+      setNewPositionName("");
+      setIsCreatingPosition(false);
+      onPositionCreated?.(createdPosition);
+      addNotification?.("Должность добавлена успешно.", "success");
+    } catch (error) {
+      console.error("Ошибка при создании должности:", error);
+      addNotification?.("Не удалось создать должность.", "error");
+    }
+  }, [
+    newPositionName,
+    localPositions,
+    createPosition,
+    onPositionCreated,
+    addNotification,
+  ]);
 
   const departmentOptions = useMemo(
     () => [
@@ -126,7 +203,6 @@ function CreateRequestDispatcherCompany({
     const requiredFields = [
       "name",
       "email",
-      "role",
       "position",
       "login",
       "password",
@@ -155,7 +231,7 @@ function CreateRequestDispatcherCompany({
     }
 
     try {
-      const selectedPosition = positions.find(
+      const selectedPosition = localPositions.find(
         (position) => position.name === formData.position
       );
       const response = await uploadFile({
@@ -299,11 +375,20 @@ function CreateRequestDispatcherCompany({
                 }}
               />
 
-              <label>Должность</label>
+              <div className={classes.fieldHeader}>
+                <label>Должность</label>
+                <div
+                  className={classes.addPosition}
+                  onClick={() => setIsCreatingPosition((prev) => !prev)}
+                  title="Добавить должность"
+                >
+                  <img src="/plus.png" alt="Добавить должность" />
+                </div>
+              </div>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={positions.map((position) => position.name)}
+                options={localPositions.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setIsEdited(true);
@@ -313,6 +398,26 @@ function CreateRequestDispatcherCompany({
                   }));
                 }}
               />
+              {isCreatingPosition && (
+                <div className={classes.inlineCreateRow}>
+                  <input
+                    type="text"
+                    value={newPositionName}
+                    placeholder="Введите должность"
+                    onChange={(e) => setNewPositionName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleCreatePosition();
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleCreatePosition}>
+                    {/* Добавить должность */}
+                    +
+                  </Button>
+                </div>
+              )}
 
               <label>Логин</label>
               <input

@@ -3,7 +3,7 @@ import classes from "./DraggableRequest.module.css";
 import ReactDOM from "react-dom";
 import { Box, Tooltip, Typography } from "@mui/material";
 import { useDraggable } from "@dnd-kit/core";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 import { differenceInMilliseconds, startOfMonth } from "date-fns";
 import { ConstructionOutlined } from "@mui/icons-material";
 
@@ -439,9 +439,7 @@ const DraggableRequest = ({
             >
               {request.airline && duration > 35 || request.status === "Ожидает" ? (
                 <img
-                  src={`${server}${
-                    request.airline ? request.airline.images[0] : "null"
-                  }`}
+                  src={getMediaUrl(request.airline ? request.airline.images[0] : null)}
                   alt=""
                   style={{
                     height: request.status === "Ожидает" ? "30px" : "25px",
@@ -551,9 +549,7 @@ const DraggableRequest = ({
             >
               {request.airline && duration > 25 ? (
                 <img
-                  src={`${server}${
-                    request.airline ? request.airline.images[0] : "null"
-                  }`}
+                  src={getMediaUrl(request.airline ? request.airline.images[0] : null)}
                   alt=""
                   style={{
                     height: "25px",
@@ -601,9 +597,7 @@ const DraggableRequest = ({
             >
               {request.airline ? (
                 <img
-                  src={`${server}${
-                    request.airline ? request.airline.images[0] : "null"
-                  }`}
+                  src={getMediaUrl(request.airline ? request.airline.images[0] : null)}
                   alt=""
                   style={{
                     height: "25px",

@@ -2,54 +2,90 @@ import React, { useMemo, useState } from "react";
 import classes from "./PowerSupplyTab.module.css";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { gql, useMutation } from "@apollo/client";
-import { exampleData } from "../../../roles";
+import Button from "../../Standart/Button/Button";
+import { useMutation } from "@apollo/client";
+import {
+  convertToDate,
+  SET_PASSENGER_SERVICE_STATUS,
+  COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
+} from "../../../../graphQL_requests";
 
-const UPDATE_SERVICE_STATUS = gql`
-  mutation UpdateServiceStatus(
-    $reserveId: ID!
-    $service: ServiceType!
-    $status: ServiceStatus!
-  ) {
-    updateReserveServiceStatus(
-      reserveId: $reserveId
-      service: $service
-      status: $status
-    ) {
-      service
-      status
-    }
-  }
-`;
+const statusToLabel = {
+  NEW: "Принята",
+  ACCEPTED: "Принята",
+  IN_PROGRESS: "Выполняется",
+  COMPLETED: "Поставка завершена",
+  CANCELLED: "Отменена",
+};
 
 export default function PowerSupplyTab({
   id,
   request,
   onStatusChanged,
   addNotification,
+  token,
 }) {
-  const drivers = useMemo(() => request?.foodSupply?.drivers ?? [], [request]);
-  const initialStatus = request?.waterSupply?.status ?? "Принята";
-  const [status, setStatus] = useState(initialStatus);
+  const people = useMemo(() => request?.mealService?.people ?? [], [request]);
+  const ms = request?.mealService;
+  const rawStatus = ms?.status ?? "NEW";
+  const statusText = statusToLabel[rawStatus] ?? "Принята";
+  const canMarkDelivered = rawStatus === "NEW";
+  const requestCancelled = request?.status === "CANCELLED";
+  const canEarlyComplete =
+    !requestCancelled &&
+    rawStatus !== "COMPLETED" &&
+    rawStatus !== "CANCELLED";
 
-  const [mutate, { loading }] = useMutation(UPDATE_SERVICE_STATUS, {
+  const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
+  const [earlyCompleteReason, setEarlyCompleteReason] = useState("");
+
+  const [mutate, { loading }] = useMutation(SET_PASSENGER_SERVICE_STATUS, {
     variables: {
-      reserveId: request?.id,
-      service: "WATER",
-      status: "DELIVERED",
+      id: request?.id,
+      service: "MEAL",
+      status: "ACCEPTED",
     },
+    context: token
+      ? { headers: { Authorization: `Bearer ${token}` } }
+      : undefined,
     onCompleted: () => {
-      addNotification("Поставка завершена", "success");
-      setStatus("Поставка завершена");
+      addNotification("Питание доставлено (услуга принята)", "success");
       onStatusChanged?.();
     },
-    onError: () => {
-      /* оставим локально, чтобы не падало */ setStatus("Поставка завершена");
+    onError: (err) => {
+      addNotification(err?.message || "Ошибка", "error");
       onStatusChanged?.();
-      addNotification("Поставка завершена", "success");
     },
   });
-// console.log(request);
+
+  const [completeEarly, { loading: completingEarly }] = useMutation(
+    COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
+    {
+      context: token
+        ? { headers: { Authorization: `Bearer ${token}` } }
+        : undefined,
+      onCompleted: () => {
+        addNotification("Услуга «Поставка питания» досрочно завершена", "success");
+        setShowEarlyCompleteModal(false);
+        setEarlyCompleteReason("");
+        onStatusChanged?.();
+      },
+      onError: (err) => {
+        addNotification(err?.message || "Ошибка", "error");
+      },
+    }
+  );
+
+  const handleEarlyComplete = () => {
+    const reason = earlyCompleteReason?.trim();
+    if (!reason) {
+      addNotification("Укажите причину досрочного завершения", "error");
+      return;
+    }
+    completeEarly({
+      variables: { requestId: request?.id, reason },
+    });
+  };
 
   return (
     <div className={classes.cardWrap}>
@@ -74,45 +110,88 @@ export default function PowerSupplyTab({
             )}
           </div>
         </div>
-        {(drivers.length ? drivers : request?.drivers ?? exampleData).map(
-          (d, idx) => (
-            <div key={d.id || idx} className={classes.tableRow}>
+        <div className={classes.tableBody}>
+          {people.map((p, idx) => (
+            <div key={p.id || idx} className={classes.tableRow}>
               <div className={classes.w10}>
-                {String(d.code ?? d.id ?? idx).padStart(4, "0")}
+                {String(idx + 1).padStart(4, "0")}
               </div>
               <div className={`${classes.w30} ${classes.jcCenter}`}>
-                {d.name ?? d.fullName ?? "—"}
+                {p.fullName ?? "—"}
               </div>
               <div className={`${classes.w20} ${classes.jcCenter}`}>
-                {d.time ?? d.issueTime ?? "—"}
+                {p.issuedAt ? convertToDate(p.issuedAt, true).trim() : "—"}
               </div>
             </div>
-          )
-        )}
+          ))}
+        </div>
       </div>
       <ServiceFooter
-        statusText={status}
-        ctaLabel="Питание доставлена"
-        onCta={() => mutate()}
-        disabled={loading || status === "Поставка завершена"}
+        statusText={statusText}
+        ctaLabel={!requestCancelled && canMarkDelivered ? "Питание доставлено" : undefined}
+        onCta={!requestCancelled && canMarkDelivered ? () => mutate() : undefined}
+        disabled={loading || !canMarkDelivered}
+        earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
+        onEarlyCompleteClick={
+          canEarlyComplete ? () => setShowEarlyCompleteModal(true) : undefined
+        }
+        earlyCompleteDisabled={completingEarly}
         history={[
           {
             label: "Принята",
             dot: "#C4CBD6",
-            time: request?.waterSupply?.acceptedAt ?? "14:30",
+            time: ms?.times?.acceptedAt ? convertToDate(ms.times.acceptedAt, true).trim() : "—",
           },
           {
             label: "Выполняется",
             dot: "#2A6EF5",
-            time: request?.waterSupply?.inProgressAt ?? "14:40",
+            time: ms?.times?.inProgressAt ? convertToDate(ms.times.inProgressAt, true).trim() : "—",
           },
           {
             label: "Поставка завершена",
             dot: "#2ABF46",
-            time: request?.waterSupply?.finishedAt ?? "15:00",
+            time: ms?.times?.finishedAt ? convertToDate(ms.times.finishedAt, true).trim() : "—",
           },
         ]}
       />
+
+      {showEarlyCompleteModal && (
+        <div
+          className={classes.modalOverlay}
+          onClick={() => !completingEarly && setShowEarlyCompleteModal(false)}
+        >
+          <div
+            className={classes.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Досрочно завершить услугу «Поставка питания»</h3>
+            <p>Укажите причину досрочного завершения (обязательно):</p>
+            {/* <label className={classes.modalReasonLabel} htmlFor="meal-early-reason">Причина</label> */}
+            <textarea
+              id="meal-early-reason"
+              className={classes.modalReasonInput}
+              value={earlyCompleteReason}
+              onChange={(e) => setEarlyCompleteReason(e.target.value)}
+              rows={4}
+              placeholder="Причина"
+            />
+            <div className={classes.modalActions}>
+              <Button
+                onClick={() => {
+                  setShowEarlyCompleteModal(false);
+                  setEarlyCompleteReason("");
+                }}
+                disabled={completingEarly}
+              >
+                Отмена
+              </Button>
+              <Button onClick={handleEarlyComplete} disabled={completingEarly}>
+                {completingEarly ? "Сохранение…" : "Завершить"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

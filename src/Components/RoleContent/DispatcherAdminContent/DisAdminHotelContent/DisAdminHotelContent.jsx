@@ -78,7 +78,7 @@ const DisAdminHotelContent = ({
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-            <HotelRegisterOfContracts id={id} user={user} />
+            <HotelRegisterOfContracts id={id} user={user} accessMenu={accessMenu} />
           </Suspense>
         </TabPanel>
 

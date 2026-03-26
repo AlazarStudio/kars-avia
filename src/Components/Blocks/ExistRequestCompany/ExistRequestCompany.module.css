@@ -23,13 +23,21 @@
 }
 
 .requestTitle_close {
-    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .requestTitle_close img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.closeIconWrapper {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .tabs {
@@ -155,6 +163,7 @@
     width: 60%;
     padding: 10px 15px;
     border-radius: 10px;
+    min-height: 37px;
 }
 
 .requestDataInfo input {
@@ -326,11 +335,6 @@
         line-height: 34.73px;
     }
     
-    .requestTitle_close {
-        width: 20px;
-        height: 20px;
-    }
-
     .requestData label, 
     .requestData input {
         font-size: 14px;

@@ -12,6 +12,29 @@ export const TableWrapper = Node.create({
   addAttributes() {
     return {
       textAlign: { default: null },
+      headerRowEnabled: {
+        default: false,
+        parseHTML: element => element.getAttribute('data-header-row-enabled') === 'true',
+        renderHTML: attributes => (
+          attributes.headerRowEnabled ? { 'data-header-row-enabled': 'true' } : {}
+        ),
+      },
+      headerColumnEnabled: {
+        default: false,
+        parseHTML: element => element.getAttribute('data-header-column-enabled') === 'true',
+        renderHTML: attributes => (
+          attributes.headerColumnEnabled ? { 'data-header-column-enabled': 'true' } : {}
+        ),
+      },
+      headerBgColor: {
+        default: '#E2E8F0',
+        parseHTML: element => element.getAttribute('data-header-bg-color') || '#E2E8F0',
+        renderHTML: attributes => (
+          typeof attributes.headerBgColor === 'string' && attributes.headerBgColor.trim()
+            ? { 'data-header-bg-color': attributes.headerBgColor.trim() }
+            : {}
+        ),
+      },
     }
   },
 

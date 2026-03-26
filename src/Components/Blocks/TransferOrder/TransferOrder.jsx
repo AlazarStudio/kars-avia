@@ -115,7 +115,7 @@ function RouteHint({ ymaps, map, points }) {
     if (routeRef.current) {
       try {
         map.geoObjects.remove(routeRef.current);
-      } catch (_) {}
+      } catch (_) { }
       routeRef.current = null;
     }
 
@@ -141,7 +141,7 @@ function RouteHint({ ymaps, map, points }) {
       if (routeRef.current) {
         try {
           map.geoObjects.remove(routeRef.current);
-        } catch (_) {}
+        } catch (_) { }
         routeRef.current = null;
       }
     };
@@ -286,16 +286,16 @@ function TransferOrder({ user, token, accessMenu }) {
     const filtered = !q
       ? onlineOnly
       : onlineOnly.filter((d) =>
-          [
-            d.name,
-            d.vehicleNumber,
-            d.car,
-            d.organization?.name,
-            String(d.number || ""),
-          ]
-            .filter(Boolean)
-            .some((x) => String(x).toLowerCase().includes(q))
-        );
+        [
+          d.name,
+          d.vehicleNumber,
+          d.car,
+          d.organization?.name,
+          String(d.number || ""),
+        ]
+          .filter(Boolean)
+          .some((x) => String(x).toLowerCase().includes(q))
+      );
 
     filtered.sort((a, b) => a.activeTransfersCount - b.activeTransfersCount);
     return filtered;
@@ -395,38 +395,38 @@ function TransferOrder({ user, token, accessMenu }) {
   //   return null;
   // }, [status, driverCoords, fromCoords, toCoords]);
   // --- 5) маршрут по статусу ---
-// ✅ COMPLETED: from -> to
-// ✅ ARRIVED / IN_PROGRESS_TO_HOTEL: driver -> to
-// ✅ ACCEPTED / IN_PROGRESS_TO_CLIENT: driver -> from
-const routePoints = useMemo(() => {
-  // 1) Водитель едет к клиенту
-  if (
-    // (status === "ACCEPTED" || status === "IN_PROGRESS_TO_CLIENT") &&
-    (status === "IN_PROGRESS_TO_CLIENT" || status === "CANCELLED") &&
-    driverCoords &&
-    fromCoords
-  ) {
-    return [driverCoords, fromCoords];
-  }
+  // ✅ COMPLETED: from -> to
+  // ✅ ARRIVED / IN_PROGRESS_TO_HOTEL: driver -> to
+  // ✅ ACCEPTED / IN_PROGRESS_TO_CLIENT: driver -> from
+  const routePoints = useMemo(() => {
+    // 1) Водитель едет к клиенту
+    if (
+      // (status === "ACCEPTED" || status === "IN_PROGRESS_TO_CLIENT") &&
+      (status === "IN_PROGRESS_TO_CLIENT" || status === "CANCELLED") &&
+      driverCoords &&
+      fromCoords
+    ) {
+      return [driverCoords, fromCoords];
+    }
 
-  // 2) Начиная с ARRIVED (и дальше до завершения поездки) показываем водитель -> КУДА
-  // (если у тебя статусы другие — добавь их сюда же)
-  if (
-    (status === "IN_PROGRESS_TO_HOTEL" || status === "CANCELLED") &&
-    // (status === "ARRIVED" || status === "IN_PROGRESS_TO_HOTEL") &&
-    driverCoords &&
-    toCoords
-  ) {
-    return [driverCoords, toCoords];
-  }
+    // 2) Начиная с ARRIVED (и дальше до завершения поездки) показываем водитель -> КУДА
+    // (если у тебя статусы другие — добавь их сюда же)
+    if (
+      (status === "IN_PROGRESS_TO_HOTEL" || status === "CANCELLED") &&
+      // (status === "ARRIVED" || status === "IN_PROGRESS_TO_HOTEL") &&
+      driverCoords &&
+      toCoords
+    ) {
+      return [driverCoords, toCoords];
+    }
 
-  // 3) Только когда COMPLETED — показываем from -> to
-  if ((status === "COMPLETED" || status === "CANCELLED") && fromCoords && toCoords) {
-    return [fromCoords, toCoords];
-  }
+    // 3) Только когда COMPLETED — показываем from -> to
+    if ((status === "COMPLETED" || status === "CANCELLED") && fromCoords && toCoords) {
+      return [fromCoords, toCoords];
+    }
 
-  return null;
-}, [status, driverCoords, fromCoords, toCoords]);
+    return null;
+  }, [status, driverCoords, fromCoords, toCoords]);
 
 
   // --- 6) мутации ---
@@ -559,7 +559,7 @@ const routePoints = useMemo(() => {
     };
   }, [transfer]);
 
-    const { data: subscriptionUpdateData } = useSubscription(
+  const { data: subscriptionUpdateData } = useSubscription(
     TRANSFER_UPDATED_SUBSCRIPTION,
     {
       onData: () => {
@@ -585,8 +585,12 @@ const routePoints = useMemo(() => {
 
       <section className={classes.layout}>
         <div className={classes.mapAndList}>
-          <div className={classes.mapWrapper} style={(status !== "PENDING" && status !== "ASSIGNED" && status !== "ACCEPTED") ? {height:"100%"} : {}}>
-            <YMaps query={{ apikey: YMAPS_KEY, lang: "ru_RU", load: "package.full" }}>
+          <div className={classes.mapWrapper} style={(status !== "PENDING" && status !== "ASSIGNED" && status !== "ACCEPTED") ? { height: "100%" } : {}}>
+            <YMaps query={{
+              apikey: YMAPS_KEY,
+              lang: "ru_RU",
+              // load: "package.full"
+            }}>
               <Map
                 state={{ center: mapCenter, zoom: 13 }}
                 width="100%"
@@ -639,33 +643,33 @@ const routePoints = useMemo(() => {
             </YMaps>
           </div>
 
-            {status === "PENDING" || status === "ASSIGNED" || status === "ACCEPTED" ? (
-          <>
-          <div className={classes.nearestHeader}>
-            <span>Ближайшие машины ({drivers.length})</span>
-            <MUITextField
-              className={classes.search}
-              placeholder="Поиск"
-              size="small"
-              value={driversSearch}
-              onChange={(e) => setDriversSearch(e.target.value)}
-            />
-          </div>
+          {status === "PENDING" || status === "ASSIGNED" || status === "ACCEPTED" ? (
+            <>
+              <div className={classes.nearestHeader}>
+                <span>Ближайшие машины ({drivers.length})</span>
+                <MUITextField
+                  className={classes.search}
+                  placeholder="Поиск"
+                  size="small"
+                  value={driversSearch}
+                  onChange={(e) => setDriversSearch(e.target.value)}
+                />
+              </div>
 
-          <div className={classes.driversList}>
-            {drivers.map((driver) => (
-              <DriverItem
-                key={driver.id}
-                {...driver}
-                activeTransfersCount={driver.activeTransfersCount}
-                handleObject={() => openConfirm(driver)}
-                btnTitle={driver.id === assignedDriverId ? "Назначен" : "Назначить"}
-                disabled={assigning || driver.id === assignedDriverId || !canUpdate}
-              />
-            ))}
-          </div>
-</>
-) : null}
+              <div className={classes.driversList}>
+                {drivers.map((driver) => (
+                  <DriverItem
+                    key={driver.id}
+                    {...driver}
+                    activeTransfersCount={driver.activeTransfersCount}
+                    handleObject={() => openConfirm(driver)}
+                    btnTitle={driver.id === assignedDriverId ? "Назначен" : "Назначить"}
+                    disabled={assigning || driver.id === assignedDriverId || !canUpdate}
+                  />
+                ))}
+              </div>
+            </>
+          ) : null}
         </div>
 
         <div className={classes.sidebar}>

@@ -295,7 +295,15 @@
 /* Иконки действий (редактирование и т.п.) */
 .contractRowActions {
     display: flex;
+    align-items: center;
     gap: 10px;
+    cursor: pointer;
+}
+
+.contractRowActions img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
     cursor: pointer;
 }
 

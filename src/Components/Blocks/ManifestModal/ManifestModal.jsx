@@ -9,6 +9,7 @@ import {
 
 import classes from "./ManifestModal.module.css";
 import { roles } from "../../../roles";
+import { getMediaUrl } from "../../../../graphQL_requests";
 
 function ManifestModal({
   user,
@@ -17,7 +18,6 @@ function ManifestModal({
   handleFileChange,
   file,
   request,
-  server,
 }) {
   const fileInputRef = useRef(null);
 
@@ -58,7 +58,7 @@ function ManifestModal({
           {/* Ссылка для скачивания манифеста */}
           {request?.files && (
             <a
-              href={request.files ? `${server}${request.files[0]}` : ""}
+              href={getMediaUrl(request.files?.[0]) ?? ""}
               target="_blank"
               className={classes.downloadsButton}
               rel="noopener noreferrer"

@@ -331,18 +331,18 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
     <>
       <div className={classes.section_searchAndFilter}>
         <div className={classes.section_searchAndFilter}>
-          <MUITextField
-            label={"Поиск по ФИО сотрудника или должности"}
-            className={classes.mainSearch}
-            value={searchQuery}
-            onChange={handleSearch}
-          />
           <MUIAutocomplete
             dropdownWidth={"160px"}
             label={"Должность"}
             options={positions.map((position) => position.name)}
             value={selectedPosition}
             onChange={handlePositionChange}
+          />
+          <MUITextField
+            label={"Поиск по ФИО сотрудника или должности"}
+            className={classes.mainSearch}
+            value={searchQuery}
+            onChange={handleSearch}
           />
         </div>
         <div className={classes.section_searchAndFilter_filter}>

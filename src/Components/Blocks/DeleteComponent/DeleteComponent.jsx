@@ -9,9 +9,15 @@ function DeleteComponent({
   isCancel,
   ...props
 }) {
+  const handleOverlayClick = (event) => {
+    if (event.target === event.currentTarget) {
+      close?.();
+    }
+  };
+
   return (
-    <div className={classes.deleteCenter}>
-      <div className={classes.delete}>
+    <div className={classes.deleteCenter} onClick={handleOverlayClick}>
+      <div className={classes.delete} onClick={(event) => event.stopPropagation()}>
         <div className={classes.delete_title}>{props.title}</div>
         <div className={classes.delete_btns}>
           <div className={classes.delete_btns_cancel} onClick={close}>

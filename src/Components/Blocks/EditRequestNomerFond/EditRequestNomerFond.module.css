@@ -23,13 +23,61 @@
 }
 
 .requestTitle_close {
-    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .requestTitle_close img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.closeIconWrapper {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 40%;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-height: 37px;
+}
+
+.requestDataInfo .dropdown {
+    width: 60%;
+    height: 40px;
+    outline: none;
+    cursor: pointer;
+}
+
+.requestDataInfo .dropdown input {
+    width: 100%;
+}
+
+.requestDataInfo input,
+.requestDataInfo select {
+    width: 60%;
 }
 
 .tabs {
@@ -115,10 +163,11 @@ select {
 .requestButton {
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
 }
 
 .requestButton button {
-    width: 49%;
+    width: 50%;
 }
 
 .titleLabel {

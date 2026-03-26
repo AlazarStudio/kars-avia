@@ -43,6 +43,17 @@ export const statusMappingTransfer = {
   earlyStart: "Ранний заезд",
 };
 
+/** Русские подписи ролей (для подсказок, списков и т.д.) */
+export const roleLabels = {
+  [roles.hotelAdmin]: "Администратор гостиницы",
+  [roles.airlineAdmin]: "Администратор авиакомпании",
+  [roles.superAdmin]: "Супер-администратор",
+  [roles.dispatcerAdmin]: "Диспетчер",
+  [roles.dispatcherModerator]: "Модератор диспетчера",
+  [roles.hotelModerator]: "Модератор гостиницы",
+  [roles.airlineModerator]: "Модератор авиакомпании",
+};
+
 export const rolesObject = {
   dispatcher: [
     {

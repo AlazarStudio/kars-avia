@@ -112,7 +112,7 @@ function CreateRequestNomerFond({
     if (show) {
       setFormData((prevState) => ({
         ...prevState,
-        reserve: filter === "quote" ? false : true,
+        reserve: filter === "reserve" ? true : false,
       }));
     }
   }, [show, filter]);

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 
 import AirlinePage from "../../Blocks/AirlinePage/AirlinePage";
@@ -10,30 +10,45 @@ import Reports from "../../Blocks/Reports/Reports";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
-import TransferOrders from "../../Blocks/TransferOrders/TransferOrders";
-import TransferOrder from "../../Blocks/TransferOrder/TransferOrder";
+import MUILoader from "../../Blocks/MUILoader/MUILoader";
 
-import { hasAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
+const TransferOrders = lazy(() =>
+  import("../../Blocks/TransferOrders/TransferOrders")
+);
+const TransferOrder = lazy(() =>
+  import("../../Blocks/TransferOrder/TransferOrder")
+);
+
+import {
+  hasAccessMenu,
+  safeAccessMenu as getSafeAccessMenu,
+} from "../../../utils/access";
 import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import { useQuery, useSubscription } from "@apollo/client";
-import { GET_AIRLINE_DEPARTMENT, GET_AIRLINES_UPDATE_SUBSCRIPTION, getCookie } from "../../../../graphQL_requests";
+import {
+  GET_AIRLINE_DEPARTMENT,
+  GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  getCookie,
+} from "../../../../graphQL_requests";
 import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
+import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 
 // Универсальная заглушка «нет доступа» (по желанию — замени на свой экран)
-const NoAccess = () => 
-  <div 
-    style={{ 
-      height:"100vh", 
-      width: "100%", 
-      display:'flex', 
-      justifyContent:'center', 
-      alignItems:'center', 
-      fontSize:"40px",
-      color:"var(--main-gray)"
+const NoAccess = () => (
+  <div
+    style={{
+      height: "100vh",
+      width: "100%",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      fontSize: "40px",
+      color: "var(--main-gray)",
     }}
-  > 
+  >
     {/* 404 Не найдено */}
-  </div>;
+  </div>
+);
 
 const AirlineAdminContent = ({ user, accessMenu }) => {
   const { id, hotelID, airlineID, orderId } = useParams();
@@ -42,53 +57,114 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
   // 1) Мапа «секция → какой компонент и какое право нужно»
   // guardKey === null => доступ открыт без проверки
   const CONFIG = useMemo(
-    () => ([
-      { ids: ["relay"],               guardKey: "requestMenu",   Comp: Estafeta,    props: () => ({ user, accessMenu: safeAccessMenu }) },
-      { ids: ["reserve"],             guardKey: "reserveMenu",   Comp: Reserve,     props: () => ({ user, accessMenu: safeAccessMenu }) },
-      { ids: ["orders"],              guardKey: "transferMenu",  Comp: TransferOrders, props: () => ({ user, accessMenu: safeAccessMenu, disAdmin: false }) },
-      { ids: ["hotels"],              guardKey: null,            Comp: HotelsList,  props: () => ({ user }) },
+    () => [
+      {
+        ids: ["relay"],
+        guardKey: "requestMenu",
+        Comp: Estafeta,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["representativeRequests"],
+        guardKey: "reserveMenu",
+        Comp: RepresentativeRequests,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["orders"],
+        guardKey: "transferMenu",
+        Comp: TransferOrders,
+        props: () => ({ user, accessMenu: safeAccessMenu, disAdmin: false }),
+      },
+      {
+        ids: ["hotels"],
+        guardKey: null,
+        Comp: HotelsList,
+        props: () => ({ user }),
+      },
 
-      { ids: ["analytics"],           guardKey: "analyticsMenu", Comp: Analytics,   props: () => ({ user, accessMenu: safeAccessMenu }) },
+      {
+        ids: ["analytics"],
+        guardKey: "analyticsMenu",
+        Comp: Analytics,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
 
-      { ids: ["reports"],             guardKey: "reportMenu",    Comp: Reports,               props: () => ({ user, accessMenu: safeAccessMenu }) },
-      { ids: ["access", "airlineAccess"], guardKey: "userUpdate", Comp: AccessSettings,        props: () => ({ user }) },
-      { ids: ["notifications"],       guardKey: "userUpdate",    Comp: NotificationsSettings, props: () => ({ }) },
-      { ids: ["updates"],             guardKey: null,            Comp: UpdatesList,           props: () => ({ user }) },
-      { ids: ["documentation"],       guardKey: null,            Comp: DocumentationList,     props: () => ({ user }) },
+      {
+        ids: ["reports"],
+        guardKey: "reportMenu",
+        Comp: Reports,
+        props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["access", "airlineAccess"],
+        guardKey: "userUpdate",
+        Comp: AccessSettings,
+        props: () => ({ user }),
+      },
+      {
+        ids: ["notifications"],
+        guardKey: "userUpdate",
+        Comp: NotificationsSettings,
+        props: () => ({}),
+      },
+      {
+        ids: ["updates"],
+        guardKey: null,
+        Comp: UpdatesList,
+        props: () => ({ user }),
+      },
+      {
+        ids: ["documentation"],
+        guardKey: null,
+        Comp: DocumentationList,
+        props: () => ({ user }),
+      },
 
       // Группа страниц авиакомпании — одно право
-      { ids: ["airlineCompany"],
+      {
+        ids: ["airlineCompany"],
         guardKey: "userMenu",
         Comp: AirlinePage,
-        props: () => ({ id: user.airlineId, user, accessMenu:safeAccessMenu })
+        props: () => ({ id: user.airlineId, user, accessMenu: safeAccessMenu }),
       },
-      { ids: ["airlineStaff"],
+      {
+        ids: ["airlineStaff"],
         guardKey: "personalMenu",
         Comp: AirlinePage,
-        props: () => ({ id: user.airlineId, user, accessMenu:safeAccessMenu })
+        props: () => ({ id: user.airlineId, user, accessMenu: safeAccessMenu }),
       },
-      { ids: ["airlineAbout"],
+      {
+        ids: ["airlineAbout"],
         guardKey: "airlineMenu",
         Comp: AirlinePage,
-        props: () => ({ id: user.airlineId, user, accessMenu:safeAccessMenu })
+        props: () => ({ id: user.airlineId, user, accessMenu: safeAccessMenu }),
       },
-      { ids: ["airlineRegisterOfContracts"],
+      {
+        ids: ["airlineRegisterOfContracts"],
         guardKey: "contracts",
         Comp: AirlinePage,
-        props: () => ({ id: user.airlineId, user })
+        props: () => ({ id: user.airlineId, user, accessMenu: safeAccessMenu }),
       },
-    ]),
-    [user, safeAccessMenu]
+    ],
+    [user, safeAccessMenu],
   );
 
   // 2) Спец-случаи по URL (item-страницы), до общих правил
   // Детальная страница трансфера
   if (orderId) {
-    return <TransferOrder user={user} accessMenu={safeAccessMenu} />;
+    return (
+      <Suspense fallback={<MUILoader fullHeight="100%" />}>
+        <TransferOrder user={user} accessMenu={safeAccessMenu} />
+      </Suspense>
+    );
   }
-  
-  if (!id && hotelID)   return <HotelPage id={hotelID} user={user} />;
-  if (!id && airlineID) return <AirlinePage id={airlineID} user={user} accessMenu={safeAccessMenu} />;
+
+  if (!id && hotelID) return <HotelPage id={hotelID} user={user} />;
+  if (!id && airlineID)
+    return (
+      <AirlinePage id={airlineID} user={user} accessMenu={safeAccessMenu} />
+    );
 
   // 3) Главная (когда нет id/hotelID/airlineID): показываем Estafeta, если есть requestMenu, иначе Reserve
   if (!id && !hotelID && !airlineID) {
@@ -103,12 +179,16 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
 
   // 4) По id — ищем правило и проверяем доступ
   if (id) {
-    const rule = CONFIG?.find(r => r.ids.includes(id));
+    const rule = CONFIG?.find((r) => r.ids.includes(id));
     if (!rule) return <NoAccess />;
 
     const allowed = hasAccessMenu(accessMenu, rule?.guardKey);
     const Comp = allowed ? rule.Comp : NoAccess;
-    return <Comp {...(rule.props ? rule.props() : { user })} />;
+    return (
+      <Suspense fallback={<MUILoader fullHeight="100%" />}>
+        <Comp {...(rule.props ? rule.props() : { user })} />
+      </Suspense>
+    );
   }
 
   // На всякий
@@ -116,7 +196,6 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
 };
 
 export default AirlineAdminContent;
-
 
 // import React from "react";
 // import { useParams } from "react-router-dom";
@@ -134,7 +213,6 @@ export default AirlineAdminContent;
 // const AirlineAdminContent = ({ user }) => {
 //   const { id, hotelID, airlineID } = useParams();
 //   // console.log(user);
-  
 
 //   return (
 //     <>

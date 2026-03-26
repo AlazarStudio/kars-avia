@@ -12,7 +12,7 @@ import {
   GET_AIRPORTS_RELAY,
   GET_ALL_COMPANIES,
   getCookie,
-  server,
+  getMediaUrl,
   UPDATE_AIRLINE_CONTRACT,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
@@ -25,6 +25,9 @@ import CreateAdditionalAgreement from "../CreateAdditionalAgreement/CreateAdditi
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
 
 /**
  * Компонент редактирования договора авиакомпании.
@@ -42,6 +45,7 @@ function EditRequestAirlineContract({
   tarif, // тут приходит airlineContractId
   addNotification,
   canEdit = false, // Флаг для разрешения редактирования
+  onRequestDelete, // колбэк: закрыть сайдбар и открыть модал удаления договора
 }) {
   const token = getCookie("token");
 
@@ -99,6 +103,8 @@ function EditRequestAirlineContract({
   // Управление режимом редактирования (как в исходнике)
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState("Общая");
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuRef = useRef(null);
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
   const [airports, setAirports] = useState([]); // Список аэропортов
@@ -137,13 +143,13 @@ function EditRequestAirlineContract({
       files: [],
       additionalAgreements: Array.isArray(c.additionalAgreements)
         ? c.additionalAgreements.map((a) => ({
-          id: a.id,
-          contractNumber: a.contractNumber || "",
-          date: a.date || "",
-          itemAgreement: a.itemAgreement || "",
-          notes: a.notes || "",
-          files: Array.isArray(a.files) ? a.files : [],
-        }))
+            id: a.id,
+            contractNumber: a.contractNumber || "",
+            date: a.date || "",
+            itemAgreement: a.itemAgreement || "",
+            notes: a.notes || "",
+            files: Array.isArray(a.files) ? a.files : [],
+          }))
         : [],
     });
     setFiles(Array.isArray(c.files) ? c.files : []);
@@ -396,16 +402,21 @@ function EditRequestAirlineContract({
   // console.log(formData);
 
   useEffect(() => {
+    if (!show) setAnchorEl(null);
+  }, [show]);
+
+  useEffect(() => {
     if (!show) return;
 
     const handleClickOutside = (event) => {
       const clickedOutsideMain =
         sidebarRef.current && !sidebarRef.current.contains(event.target);
       const clickedOutsideAgreement = !agreementSidebarRef.current?.contains(
-        event.target
+        event.target,
       );
+      const clickedInsideMenu = event.target.closest('[role="menu"]');
 
-      if (clickedOutsideMain && clickedOutsideAgreement) {
+      if (clickedOutsideMain && clickedOutsideAgreement && !clickedInsideMenu) {
         closeButton();
       }
     };
@@ -419,31 +430,48 @@ function EditRequestAirlineContract({
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>
-            {canEdit ? "Изменить договор" : formData?.contractNumber}
+            {formData?.contractNumber}
+            {/* {canEdit ? "Изменить договор" : formData?.contractNumber} */}
           </div>
-          <div className={classes.requestTitle_close} onClick={closeButton}>
-            <CloseIcon />
+          <div className={classes.requestTitle_close}>
+            {canEdit && (
+              <EditContractAdditionalMenu
+                anchorEl={anchorEl}
+                onOpen={(e) => setAnchorEl(e?.currentTarget ?? e)}
+                onClose={() => setAnchorEl(null)}
+                menuRef={menuRef}
+                canEdit={canEdit}
+                onEdit={() => setIsEditing(true)}
+                onDelete={() => onRequestDelete?.()}
+              />
+            )}
+            <div onClick={closeButton} className={classes.closeIconWrapper}>
+              <CloseIcon />
+            </div>
           </div>
         </div>
 
         <div className={classes.tabs}>
           <div
-            className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
-              }`}
+            className={`${classes.tab} ${
+              activeTab === "Общая" ? classes.activeTab : ""
+            }`}
             onClick={() => handleTabChange("Общая")}
           >
             Общая
           </div>
           <div
-            className={`${classes.tab} ${activeTab === "ДС" ? classes.activeTab : ""
-              }`}
+            className={`${classes.tab} ${
+              activeTab === "ДС" ? classes.activeTab : ""
+            }`}
             onClick={() => handleTabChange("ДС")}
           >
             ДС
           </div>
           <div
-            className={`${classes.tab} ${activeTab === "Файлы" ? classes.activeTab : ""
-              }`}
+            className={`${classes.tab} ${
+              activeTab === "Файлы" ? classes.activeTab : ""
+            }`}
             onClick={() => handleTabChange("Файлы")}
           >
             Файлы
@@ -457,117 +485,237 @@ function EditRequestAirlineContract({
             {activeTab === "Общая" ? (
               <div
                 className={classes.requestMiddle}
-                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
+                style={
+                  !canEdit
+                    ? { height: "calc(100% - 148px)" }
+                    : isEditing
+                      ? { height: "calc(100vh - 198px)" }
+                      : { height: "calc(100vh - 117px)" }
+                }
               >
                 <div className={classes.requestData}>
                   {/* Договор: основные поля */}
-                  <div className={classes.requestDataItem}>
-                    <label>№ Договора</label>
-                    <input
-                      type="text"
-                      name="contractNumber"
-                      value={formData.contractNumber}
-                      onChange={handleChange}
-                      placeholder="Например: Договор №1"
-                      disabled={!isEditing}
-                    />
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
+                    {isEditing ? (
+                      <>
+                        <label>№ Договора</label>
+                        <input
+                          type="text"
+                          name="contractNumber"
+                          value={formData.contractNumber}
+                          onChange={handleChange}
+                          placeholder="Например: Договор №1"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          № Договора
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.contractNumber || "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Дата заключения</label>
-                    <input
-                      type="date"
-                      name="date"
-                      value={formData.date ? formData.date.slice(0, 10) : ""}
-                      onChange={handleChange}
-                      placeholder="Дата"
-                      disabled={!isEditing}
-                    />
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
+                    {isEditing ? (
+                      <>
+                        <label>Дата заключения</label>
+                        <input
+                          type="date"
+                          name="date"
+                          value={
+                            formData.date ? formData.date.slice(0, 10) : ""
+                          }
+                          onChange={handleChange}
+                          placeholder="Дата"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Дата заключения
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.date ? convertToDate(formData.date) : "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>ГК КАРС</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"59%"}
-                      label={"Введите компанию"}
-                      options={companies?.map((item) => item.name)}
-                      value={
-                        companies.find((item) => item.id === formData.companyId)
-                          ?.name || null
-                      }
-                      onChange={(event, newValue) => {
-                        const selectedCompany = companies.find(
-                          (item) => item.name === newValue
-                        );
-                        // setSelectedCompany(selectedCompany);
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          companyId: selectedCompany?.id || "",
-                        }));
-                        setIsEdited(true);
-                      }}
-                      isDisabled={!isEditing}
-                    />
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
+                    {isEditing ? (
+                      <>
+                        <label>ГК КАРС</label>
+                        <MUIAutocomplete
+                          dropdownWidth={"59%"}
+                          label={"Введите компанию"}
+                          options={companies?.map((item) => item.name)}
+                          value={
+                            companies.find(
+                              (item) => item.id === formData.companyId,
+                            )?.name || null
+                          }
+                          onChange={(event, newValue) => {
+                            const selectedCompany = companies.find(
+                              (item) => item.name === newValue,
+                            );
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              companyId: selectedCompany?.id || "",
+                            }));
+                            setIsEdited(true);
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          ГК КАРС
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {companies?.find(
+                            (item) => item.id === formData.companyId,
+                          )?.name || "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Авиакомпания</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"59%"}
-                      label={"Выберите авиакомпанию"}
-                      isDisabled={!isEditing}
-                      options={airlines?.map((airline) => airline.name)}
-                      value={
-                        airlines?.find(
-                          (airline) => airline.id === formData.airlineId
-                        )?.name || null
-                      }
-                      onChange={(event, newValue) => {
-                        const selectedAirline = airlines.find(
-                          (airline) => airline.name === newValue
-                        );
-                        setSelectedAirline(selectedAirline);
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          airlineId: selectedAirline?.id || "",
-                        }));
-                        setIsEdited(true);
-                      }}
-                    />
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
+                    {isEditing ? (
+                      <>
+                        <label>Авиакомпания</label>
+                        <MUIAutocomplete
+                          dropdownWidth={"59%"}
+                          label={"Выберите авиакомпанию"}
+                          options={airlines?.map((airline) => airline.name)}
+                          value={
+                            airlines?.find(
+                              (airline) => airline.id === formData.airlineId,
+                            )?.name || null
+                          }
+                          onChange={(event, newValue) => {
+                            const selectedAirline = airlines.find(
+                              (airline) => airline.name === newValue,
+                            );
+                            setSelectedAirline(selectedAirline);
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              airlineId: selectedAirline?.id || "",
+                            }));
+                            setIsEdited(true);
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Авиакомпания
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {airlines?.find(
+                            (airline) => airline.id === formData.airlineId,
+                          )?.name || "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Регион</label>
-                    <input
-                      type="text"
-                      name="region"
-                      value={formData.region}
-                      onChange={handleChange}
-                      placeholder="Введите регион"
-                      disabled={!isEditing}
-                    />
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
+                    {isEditing ? (
+                      <>
+                        <label>Регион</label>
+                        <input
+                          type="text"
+                          name="region"
+                          value={formData.region}
+                          onChange={handleChange}
+                          placeholder="Введите регион"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Регион
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.region || "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
-                  <div className={classes.requestDataItem}>
-                    <label>Вид приложения</label>
-                    <MUIAutocomplete
-                      dropdownWidth={"59%"}
-                      label={"Выберите вид приложения"}
-                      isDisabled={!isEditing}
-                      options={action}
-                      value={
-                        action.find(
-                          (option) => option === formData.applicationType
-                        ) || null
-                      }
-                      onChange={(event, newValue) => {
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          applicationType: newValue ? newValue : "",
-                        }));
-                        setIsEdited(true);
-                      }}
-                    />
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
+                    {isEditing ? (
+                      <>
+                        <label>Вид приложения</label>
+                        <MUIAutocomplete
+                          dropdownWidth={"59%"}
+                          label={"Выберите вид приложения"}
+                          options={action}
+                          value={
+                            action.find(
+                              (option) => option === formData.applicationType,
+                            ) || null
+                          }
+                          onChange={(event, newValue) => {
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              applicationType: newValue ? newValue : "",
+                            }));
+                            setIsEdited(true);
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Вид приложения
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.applicationType || "—"}
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {isEditing ? (
@@ -598,7 +746,7 @@ function EditRequestAirlineContract({
                     multiple
                     disabled={!isEditing}
                   /> */}
-                  {canEdit && (
+                  {canEdit && isEditing && (
                     <div
                       ref={dropRef}
                       className={classes.fileDrop}
@@ -671,15 +819,13 @@ function EditRequestAirlineContract({
 
                       {canEdit && (
                         <>
-                          <img
-                            src="/edit.svg.png"
-                            alt="edit"
+                          <EditPencilIcon
+                            cursor="pointer"
                             onClick={() => openAgreement(ag, index)}
                             style={{ justifySelf: "end", cursor: "pointer" }}
                           />
-                          <img
-                            src="/deleteReport.png"
-                            alt="delete"
+                          <DeleteIcon
+                            cursor="pointer"
                             onClick={() => deleteAgreement(ag, index)}
                             style={{ cursor: "pointer" }}
                           />
@@ -698,7 +844,7 @@ function EditRequestAirlineContract({
                   {files?.map((i, index) => (
                     <a
                       key={index}
-                      href={`${server}${i}`}
+                      href={getMediaUrl(i)}
                       target="_blank"
                       className={classes.downloadsButton}
                       rel="noopener noreferrer"
@@ -713,23 +859,22 @@ function EditRequestAirlineContract({
               </div>
             )}
 
-            {activeTab === "Общая" && canEdit && (
+            {activeTab === "Общая" && canEdit && isEditing && (
               <div className={classes.requestButton}>
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  backgroundcolor="var(--hover-gray)"
+                  color="#000"
+                >
+                  Отмена
+                </Button>
                 <Button
                   type="submit"
                   onClick={handleSubmit}
-                  backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-                  color={!isEditing ? "#3B6C54" : "#fff"}
+                  backgroundcolor="#0057C3"
+                  color="#fff"
                 >
-                  {isEditing ? (
-                    <>
-                      Сохранить <img src="/saveDispatcher.png" alt="" />
-                    </>
-                  ) : (
-                    <>
-                      Изменить <img src="/editDispetcher.png" alt="" />
-                    </>
-                  )}
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
                 </Button>
               </div>
             )}
@@ -746,7 +891,17 @@ function EditRequestAirlineContract({
         onSave={saveAgreement}
         refetch={refetch}
         token={token}
-        agreementSidebarRef={agreementSidebarRef} // Pass the ref here
+        agreementSidebarRef={agreementSidebarRef}
+        onRequestDelete={
+          canEdit && selectedAgreement != null
+            ? () => {
+                const ag = selectedAgreement.data;
+                const idx = selectedAgreement.index;
+                closeAgreement();
+                if (ag != null && idx != null) deleteAgreement(ag, idx);
+              }
+            : undefined
+        }
       />
 
       <CreateAdditionalAgreement

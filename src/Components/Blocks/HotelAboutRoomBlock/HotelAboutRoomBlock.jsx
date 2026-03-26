@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 import classes from "./HotelAboutRoomBlock.module.css";
 import "swiper/css";
 import "swiper/css/pagination";
@@ -81,7 +81,7 @@ function HotelAboutRoomBlock({
         <div className={classes.roomImages_wrapper}>
           <img
             src={
-              props.images[0] ? `${server}${props.images[0]}` : "/no-image.png"
+              getMediaUrl(props.images[0]) ?? "/no-image.png"
             }
             alt="Room"
             className={classes.roomImage}
@@ -144,6 +144,7 @@ function HotelAboutRoomBlock({
               <Swiper
                 spaceBetween={20}
                 slidesPerView={1}
+                loop={props.images.length > 1}
                 pagination={{ clickable: true }}
                 autoplay={{
                   delay: 4000,
@@ -157,12 +158,12 @@ function HotelAboutRoomBlock({
                   props.images.map((img, i) => (
                     <SwiperSlide key={i}>
                       <img
-                        src={`${server}${img}`}
+                        src={getMediaUrl(img)}
                         alt={`slide ${i}`}
                         className={classes.modalImageAbs}
                       />
                       <img
-                        src={`${server}${img}`}
+                        src={getMediaUrl(img)}
                         alt={`slide ${i}`}
                         className={classes.modalImage}
                       />
@@ -178,14 +179,8 @@ function HotelAboutRoomBlock({
               </Swiper>
               {props.images.length > 1 && (
                 <div className={classes.swiperButtons}>
-                  <button
-                    onClick={() => swiper.slidePrev()}
-                    disabled={activeIndex === 0}
-                  />
-                  <button
-                    onClick={() => swiper.slideNext()}
-                    disabled={activeIndex === props.images.length - 1}
-                  />
+                  <button onClick={() => swiper?.slidePrev()} />
+                  <button onClick={() => swiper?.slideNext()} />
                 </div>
               )}
             </div>

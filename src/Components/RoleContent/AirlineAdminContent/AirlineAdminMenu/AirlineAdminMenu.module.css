@@ -34,18 +34,44 @@
 }
 
 .menuContainer {
-  height: 79vh;
+  height: 85vh;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
 }
 
 .menuMain {
-  flex: 1;
+  flex: 8;
 }
 
 .bottomMenu {
   display: flex;
+  flex-direction: column;
   gap: 5px;
+}
+
+.alazar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--menu-gray);
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 21.79px;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+  position: relative;
+  overflow: visible;
+}
+
+.menuLink {
+  color: var(--menu-gray);
+  text-decoration: underline;
+}
+
+.menuLink:hover {
+  color: #fff;
 }
 
 .svgWrapper {

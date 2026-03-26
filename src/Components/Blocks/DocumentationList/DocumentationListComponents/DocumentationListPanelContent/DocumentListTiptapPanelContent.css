@@ -1,5 +1,5 @@
 .tiptap-panel {
-  padding: 24px 32px 24px 8px;
+  padding: 16px 0 24px;
   min-height: 100%;
   background: #ffffff;
 }
@@ -10,31 +10,51 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  position: relative;
 }
 
 .tiptap-panel-header {
+  min-height: 44px;
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-left: var(--panel-top-controls-left-offset, 56px);
-  margin-right: var(--panel-top-controls-right-offset, 72px);
-  margin-top: -14px;
-  margin-bottom: 12px;
-  transition: margin-left 0.2s ease, margin-right 0.2s ease;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0;
+  margin-bottom: 10px;
+  /* padding: 0 16px; */
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.tiptap-panel-top-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #ffffff;
+  /* padding-top: 10px;
+  padding-bottom: 10px;
+  margin-bottom: 8px; */
 }
 
 .tiptap-panel .toolbar {
-  margin-left: var(--panel-top-controls-left-offset, 56px);
-  margin-right: var(--panel-top-controls-right-offset, 72px);
-  transition: margin-left 0.2s ease, margin-right 0.2s ease;
+  position: static;
+  top: auto;
+  z-index: auto;
+  margin-left: 0;
+  margin-right: 0;
+  margin-bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .tiptap-panel .editor-hover-scope {
-  width: calc(100% - 128px);
+  width: 100%;
   max-width: 100%;
   min-width: 0;
-  margin-left: auto;
-  margin-right: auto;
+  margin-left: 0;
+  margin-right: 0;
+  box-sizing: border-box;
 }
 
 .tiptap-panel-title {
@@ -50,11 +70,10 @@
 }
 
 .tiptap-panel-save-btn {
-  border: 1px solid #2f6dd5;
   background: #2f6dd5;
   color: #ffffff;
-  border-radius: 8px;
-  padding: 6px 12px;
+  /* border-radius: 10px; */
+  /* padding: 7px 12px; */
   cursor: pointer;
   font-size: 12px;
   line-height: 1;
@@ -73,14 +92,362 @@
 }
 
 .tiptap-panel-back-btn {
-  border: 1px solid #e5e7eb;
+  /* border: 1px solid #e5e7eb; */
   background: #fff;
   color: #111827;
   border-radius: 8px;
   padding: 6px 10px;
   cursor: pointer;
+  transition: all 0.3s ease-in-out;
 }
 
 .tiptap-panel-back-btn:hover {
   background: #f9fafb;
+}
+
+/* ===== Theme alignment overrides ===== */
+
+.tiptap-panel {
+  padding: 0 0 24px;
+}
+
+.tiptap-panel.tiptap-panel-empty {
+  min-height: 240px;
+  height: 100%;
+  /* margin-top: 4px; */
+  box-sizing: border-box;
+  border-radius: 0 10px 10px 0;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--main-gray);
+  font-size: 14px;
+}
+
+.tiptap-panel-empty-top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.tiptap-panel-empty-top-left {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+.tiptap-panel-empty-message {
+  padding: 0 56px;
+}
+
+.tiptap-panel-top-sticky {
+  top: 0;
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--white);
+  padding-top: 0;
+  /* padding-bottom: 8px;
+  margin-bottom: 4px; */
+}
+
+.tiptap-panel-header {
+  min-height: 50px;
+  margin-bottom: 0;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: var(--panel-top-controls-left-offset, 10px);
+  /* padding-right: var(--panel-top-controls-right-offset, 12px); */
+  /* border: 1px solid rgba(53, 59, 85, 0.08); */
+  /* border-radius: 14px; */
+  /* background: rgba(255, 255, 255, 0.95); */
+  /* box-shadow: 0 8px 20px rgba(53, 59, 85, 0.06); */
+}
+
+.tiptap-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--main-gray);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tiptap-panel .toolbar {
+  margin-top: 0;
+  /* border-color: rgba(53, 59, 85, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 8px 20px rgba(53, 59, 85, 0.06); */
+}
+
+.tiptap-panel .ProseMirror {
+  background-color: #ffffff;
+  /* background-image: linear-gradient(
+    var(--editor-controls-bg, #f3f4f6),
+    var(--editor-controls-bg, #f3f4f6)
+  ); */
+  background-repeat: no-repeat;
+  background-position: left top;
+  background-size: var(--article-editor-extra-left, 0px) 100%;
+  transition: padding-left 0.16s ease, background-size 0.16s ease;
+}
+
+.tiptap-panel .position-plus-button {
+  --article-button-shift-right: 0px;
+}
+
+.tiptap-panel .plus-overlay {
+  left: max(
+    0px,
+    calc(
+      (
+        var(--editor-controls-gutter, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2
+    )
+  );
+}
+
+.tiptap-panel .plus-handle-cluster {
+  left: max(
+    0px,
+    calc(
+      (
+        var(--editor-controls-gutter, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2
+    )
+  );
+}
+
+.tiptap-panel .plus-handle-cluster .plus-overlay {
+  left: 0;
+}
+
+.tiptap-panel .plus-handle-cluster:hover .plus-overlay,
+.tiptap-panel .plus-handle-cluster:focus-within .plus-overlay {
+  border-radius: 0;
+}
+
+.tiptap-panel .block-dnd-handle-cluster {
+  left: max(
+    0px,
+    calc(
+      (
+        var(--editor-controls-gutter, 0px) -
+        var(--article-button-cluster-width, 56px)
+      ) / 2 +
+      24px +
+      var(--article-button-gap, 8px)
+    )
+  );
+}
+
+/* .tiptap-panel .editor-hover-scope.editor-controls-gutter-collapsed::before {
+  background: var(--editor-controls-bg, #f3f4f6);
+} */
+
+.tiptap-panel-sticky-controls {
+  min-height: 22px;
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+}
+
+.tiptap-panel-gutter-toggle-btn {
+  opacity: 1;
+  transform: none;
+  background: var(--gray);
+  border-color: #d1d5db;
+}
+
+.tiptap-panel-header-actions {
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.tiptap-panel-save-btn {
+  /* border-color: var(--menu-bg); */
+  background: var(--dark-blue);
+  color: var(--white);
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  /* box-shadow: 0 8px 16px rgba(53, 59, 85, 0.16); */
+}
+
+/* .tiptap-panel-save-btn:hover:not(:disabled) {
+  background: var(--light-blue);
+  border-color: var(--light-blue);
+} */
+
+/* Keep the editor gutter pseudo-elements behind the editable content.
+   Otherwise the left gutter strip can visually cover the caret in nested blocks. */
+.tiptap-panel .editor-content-frame {
+  z-index: 1;
+}
+
+.tiptap-panel .editor-hover-scope::before,
+.tiptap-panel .editor-hover-scope::after {
+  z-index: 0;
+}
+
+.tiptap-panel-back-btn {
+  border-color: rgba(53, 59, 85, 0.12);
+  color: var(--menu-bg);
+  padding: 7px 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tiptap-panel-back-btn:hover {
+  background: var(--hover-gray);
+}
+
+/* Header actions layout + adaptive save button */
+.tiptap-panel-header {
+  overflow: hidden;
+}
+
+.tiptap-panel-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  min-width: 0;
+  position: relative;
+}
+
+.tiptap-panel-header-actions.has-trailing-controls {
+  /* Reserve space for inline reload + right-panel toggle group when right panel is closed. */
+  padding-right: 84px;
+}
+
+.tiptap-panel-header-actions > * {
+  flex-shrink: 0;
+}
+
+.tiptap-panel-header-trailing-controls {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tiptap-panel-header-trailing-controls > * {
+  flex-shrink: 0;
+}
+
+.tiptap-panel-save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.tiptap-panel-save-btn-icon {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.tiptap-panel-save-btn-icon svg {
+  display: block;
+}
+
+.tiptap-panel-save-btn.is-saving {
+  cursor: progress;
+}
+
+.tiptap-panel-save-btn.is-saving .tiptap-panel-save-btn-icon {
+  display: inline-flex;
+}
+
+.tiptap-panel-save-btn.is-saving .tiptap-panel-save-btn-icon svg {
+  animation: tiptap-panel-save-spin 0.9s linear infinite;
+}
+
+.tiptap-panel-save-btn.is-saving::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    rgba(255, 255, 255, 0) 18%,
+    rgba(255, 255, 255, 0.16) 46%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.16) 54%,
+    rgba(255, 255, 255, 0) 82%
+  );
+  transform: translateX(-130%);
+  animation: tiptap-panel-save-sheen 1.2s ease-in-out infinite;
+}
+
+.tiptap-panel-save-btn.is-icon-only {
+  width: 36px;
+  min-width: 36px;
+  padding-left: 0;
+  padding-right: 0;
+  gap: 0;
+}
+
+.tiptap-panel-save-btn.is-icon-only .tiptap-panel-save-btn-icon {
+  display: inline-flex;
+}
+
+.tiptap-panel-save-btn.is-icon-only .tiptap-panel-save-btn-label {
+  display: none;
+}
+
+.tiptap-panel-save-btn-measure {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@keyframes tiptap-panel-save-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tiptap-panel-save-sheen {
+  from {
+    transform: translateX(-130%);
+  }
+  to {
+    transform: translateX(130%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tiptap-panel-save-btn.is-saving .tiptap-panel-save-btn-icon svg,
+  .tiptap-panel-save-btn.is-saving::after {
+    animation: none;
+  }
 }

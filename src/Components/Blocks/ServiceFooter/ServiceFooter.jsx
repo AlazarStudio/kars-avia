@@ -5,12 +5,17 @@ import Button from "../../Standart/Button/Button";
 
 export default function ServiceFooter({
   statusText,
+  statusDotColor,
   onHistory,
   ctaLabel,
   onCta,
   disabled,
   history = [],
+  earlyCompleteLabel,
+  onEarlyCompleteClick,
+  earlyCompleteDisabled,
 }) {
+  const dotColor = statusDotColor ?? (history.find((h) => h.label === statusText)?.dot);
   const [show, setShow] = useState(false);
   const bottomRef = useRef();
 
@@ -40,15 +45,29 @@ export default function ServiceFooter({
         >
           {/* История <TimeIcon /> */}
         <div className={classes.statusLine}>
-          <span className={classes.statusDot} />
+          <span
+            className={classes.statusDot}
+            style={dotColor ? { background: dotColor } : undefined}
+          />
           Статус услуги: {statusText}
         </div>
         </div>
-        {ctaLabel && (
-          <Button onClick={onCta} disabled={disabled}>
-            {ctaLabel}
-          </Button>
-        )}
+        <div className={classes.footerActions}>
+          {earlyCompleteLabel && onEarlyCompleteClick && (
+            <Button
+              onClick={onEarlyCompleteClick}
+              disabled={earlyCompleteDisabled}
+              // className={classes.earlyCompleteBtn}
+            >
+              {earlyCompleteLabel}
+            </Button>
+          )}
+          {ctaLabel && (
+            <Button onClick={onCta} disabled={disabled}>
+              {ctaLabel}
+            </Button>
+          )}
+        </div>
       </div>
       {history.length > 0 && (
         <div

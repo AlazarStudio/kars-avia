@@ -1,48 +1,110 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import classes from "./DocumentationList.module.css";
 import Header from "../Header/Header";
-import {
-  FILTER_OPTIONS,
-  roles,
-} from "../../../roles";
+import MUITextField from "../MUITextField/MUITextField";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
-import DocumentationList1 from "./DocumentationListComponents/DocumentationList1/DocumentationList1"
+import DocumentationList1 from "./DocumentationListComponents/DocumentationList1/DocumentationList1";
+import {
+  DEFAULT_DOCUMENTATION_FILTER,
+  DOCUMENTATION_FILTER_OPTIONS,
+  getDocumentationFilterOption,
+  hasDocumentationFilterSwitcherAccess,
+  normalizeDocumentationFilter,
+  resolveDocumentationFilterForUser,
+} from "./documentationFilters";
 
-function DocumentationList({ children, user, ...props }) {
-  const [filterValue, setFilterValue] = useState("dispatcher");
+function DocumentationList({
+  children,
+  user,
+  documentationType = "documentation",
+  title = "Инструкции",
+  ...props
+}) {
+  const canSwitchTabs = hasDocumentationFilterSwitcherAccess(user);
+  const defaultFilterValue = useMemo(
+    () =>
+      normalizeDocumentationFilter(resolveDocumentationFilterForUser(user)) ||
+      DEFAULT_DOCUMENTATION_FILTER,
+    [user]
+  );
+
+  const availableFilters = useMemo(() => {
+    if (canSwitchTabs) {
+      return DOCUMENTATION_FILTER_OPTIONS;
+    }
+    const currentOption =
+      getDocumentationFilterOption(defaultFilterValue) ||
+      getDocumentationFilterOption(DEFAULT_DOCUMENTATION_FILTER);
+    return currentOption ? [currentOption] : [];
+  }, [canSwitchTabs, defaultFilterValue]);
+
+  const [filterValue, setFilterValue] = useState(
+    () => availableFilters[0]?.value || defaultFilterValue
+  );
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    if (!availableFilters.length) return;
+    if (!canSwitchTabs) {
+      if (filterValue !== defaultFilterValue) {
+        setFilterValue(defaultFilterValue);
+      }
+      return;
+    }
+    const hasCurrentFilter = availableFilters.some(
+      option => option.value === filterValue
+    );
+    if (!hasCurrentFilter) {
+      setFilterValue(availableFilters[0].value);
+    }
+  }, [availableFilters, canSwitchTabs, defaultFilterValue, filterValue]);
 
   const currentFilterLabel =
-    FILTER_OPTIONS.find((o) => o.value === filterValue)?.label ||
-    FILTER_OPTIONS[0].label;
+    availableFilters.find((opt) => opt.value === filterValue)?.label ?? "";
 
   return (
-    <>
-      <div className={classes.section}>
-        <Header>Инструкции</Header>
+    <div className={classes.section}>
+      <Header>{title}</Header>
 
-        <div className={classes.section_searchAndFilter}>
-          {(user?.role === roles.dispatcerAdmin ||
-            user?.role === roles.superAdmin) && (
-            <MUIAutocomplete
-              dropdownWidth={"200px"}
-              label={"Категория"}
-              options={FILTER_OPTIONS.map((o) => o.label)}
-              value={currentFilterLabel}
-              onChange={(event, newLabel) => {
-                const found =
-                  FILTER_OPTIONS.find((o) => o.label === newLabel) ||
-                  FILTER_OPTIONS[0];
-                setFilterValue(found.value);
-              }}
-            />
-          )}
-        </div>
-
-        <div className={classes.documentationBlock}>
-          <DocumentationList1 user={user} filterValue={filterValue} />
-        </div>
+      <div className={classes.section_searchAndFilter}>
+        {canSwitchTabs && availableFilters.length > 0 && (
+          <MUIAutocomplete
+            dropdownWidth="170px"
+            label="Раздел"
+            hideLabelOnFocus={false}
+            disableClearable
+            options={availableFilters.map((opt) => opt.label)}
+            value={currentFilterLabel}
+            onChange={(event, newLabel) => {
+              const option = availableFilters.find((opt) => opt.label === newLabel);
+              if (option?.value != null) setFilterValue(option.value);
+            }}
+          />
+        )}
+        <MUITextField
+          label="Поиск"
+          className={classes.mainSearch}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value ?? "")}
+          inputProps={{ "aria-label": "Поиск по инструкциям" }}
+        />
       </div>
-    </>
+
+      <div className={classes.documentationBlock}>
+        <DocumentationList1
+          key={`doc-tab-${documentationType}-${filterValue}`}
+          user={user}
+          documentationType={documentationType}
+          filterValue={filterValue}
+          showFilterSwitcher={canSwitchTabs}
+          filterOptions={availableFilters}
+          onFilterValueChange={setFilterValue}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          controlsAtTop
+        />
+      </div>
+    </div>
   );
 }
 

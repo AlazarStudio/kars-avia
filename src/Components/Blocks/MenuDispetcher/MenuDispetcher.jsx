@@ -16,6 +16,7 @@ import {
   isAirlineAdmin,
   isDispatcherAdmin,
   isSuperAdmin,
+  isExternalPassengerRequestUser as checkExternalPassengerRequestUser,
 } from "../../../utils/access";
 
 import HotelAdminMenu from "../../RoleContent/HotelAdminContent/HotelAdminMenu/HotelAdminMenu";
@@ -37,6 +38,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
       setUser(decodeJWT(token));
     }
   }, [token]);
+
+  const isExternalPassengerRequestUser = checkExternalPassengerRequestUser(user);
 
   // Получаем состояние из localStorage или по умолчанию true
   const storedMenuState = JSON.parse(localStorage.getItem("menuOpen"));
@@ -83,7 +86,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { hotelId: user.hotelId },
+    variables: { hotelId: user?.hotelId },
+    skip: !user?.hotelId,
   });
 
   useEffect(() => {
@@ -104,7 +108,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { airlineId: user.airlineId },
+    variables: { airlineId: user?.airlineId },
+    skip: !user?.airlineId,
   });
 
   useEffect(() => {
@@ -125,6 +130,7 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
     variables: {
       pagination: { skip: 0, take: 999999999, status: "created" },
     },
+    skip: isExternalPassengerRequestUser,
   });
 
   const {
@@ -141,13 +147,16 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
     variables: {
       pagination: { skip: 0, take: 999999999, status: "created" },
     },
+    skip: isExternalPassengerRequestUser,
   });
 
   const { data: subscriptionData } = useSubscription(
-    REQUEST_RESERVE_CREATED_SUBSCRIPTION
+    REQUEST_RESERVE_CREATED_SUBSCRIPTION,
+    { skip: isExternalPassengerRequestUser }
   );
   const { data: subscriptionDataRequest } = useSubscription(
-    REQUEST_CREATED_SUBSCRIPTION
+    REQUEST_CREATED_SUBSCRIPTION,
+    { skip: isExternalPassengerRequestUser }
   );
 
   useEffect(() => {

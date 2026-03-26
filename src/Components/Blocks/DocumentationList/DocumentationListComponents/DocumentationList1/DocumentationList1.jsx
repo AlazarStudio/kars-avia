@@ -1,34 +1,43 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useApolloClient, useMutation, useQuery } from '@apollo/client'
 import PropTypes from 'prop-types'
+import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded'
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
 import {
-  CREATE_SECTION,
-  CREATE_ARTICLE,
-  UPDATE_SECTION,
-  UPDATE_ARTICLE,
   GET_SECTIONS_WITH_HIERARCHY,
+  UPDATE_ARTICLE,
+  GET_ARTICLE,
   getCookie,
 } from '../../../../../../graphQL_requests'
-import { roles } from '../../../../../roles'
 import { findDocById } from '../docTreeUtils'
 import DocumentationListLeftPanel from '../DocumentationListLeftPanel/DocumentationListLeftPanel'
 import DocumentListTiptapPanelContent from '../DocumentationListPanelContent/DocumentListTiptapPanelContent'
 import DocumentationListRightPanel from '../DocumentationListRightPanel/DocumentationListRightPanel'
+import {
+  DEFAULT_DOCUMENTATION_FILTER,
+  isDocumentationManageRole,
+  mapDocumentationFilterToApiType,
+  normalizeDocumentationFilter,
+  resolveDocumentationFilterForUser,
+} from '../../documentationFilters'
 import { loadTree } from './tree'
-import './DocumentationList1.css'
+import classes from './DocumentationList1.module.css'
 
-const DEFAULT_LEFT_PANEL_WIDTH = 400
-const MIN_LEFT_PANEL_WIDTH = 240
+const DEFAULT_LEFT_PANEL_WIDTH = 300
+const MIN_LEFT_PANEL_WIDTH = 300
 const MAX_LEFT_PANEL_WIDTH = 860
 const RIGHT_PANEL_WIDTH = 350
 const MIN_CENTER_PANEL_WIDTH = 360
 
-const DOC_TYPE = 'documentation'
 const TREE_SYNC_DEBOUNCE_MS = 1200
 const DOC_REALTIME_REFRESH_MS = 5000
 const DOC_META_KEY = '__doclist_meta'
 const DOC_META_VERSION = 1
-const DOC_MANAGE_ROLES = new Set([roles.superAdmin])
+const DOC_SECTION_OPEN_STATE_KEY = 'doclist_section_open_state_v1'
+const cn = (...parts) => parts.filter(Boolean).join(' ')
+const BODY_RESIZING_CLASS =
+  classes['is-resizing-left-panel'] || 'is-resizing-left-panel'
 
 function clampLeftPanelWidth(rawWidth) {
   const safeWidth = Number(rawWidth)
@@ -113,42 +122,176 @@ function legacyDescriptionToDoc(rawDescription) {
   }
 }
 
-function toLocalTreeNode(serverNode) {
+function getNodeOrderValue(node) {
+  const candidates = [
+    node?.index,
+    node?.order,
+    node?.position,
+    node?.sortOrder,
+  ]
+
+  for (const candidate of candidates) {
+    const parsed = Number(candidate)
+    if (Number.isFinite(parsed)) return parsed
+  }
+
+  return null
+}
+
+function hasOwnKey(value, key) {
+  return Boolean(
+    value &&
+      typeof value === 'object' &&
+      Object.prototype.hasOwnProperty.call(value, key)
+  )
+}
+
+function normalizeHierarchyNodes(rawValue) {
+  if (Array.isArray(rawValue)) return rawValue
+
+  if (isPlainObject(rawValue)) {
+    return [rawValue]
+  }
+
+  if (typeof rawValue === 'string' && rawValue.trim()) {
+    try {
+      const parsed = JSON.parse(rawValue)
+      if (Array.isArray(parsed)) return parsed
+      if (isPlainObject(parsed)) return [parsed]
+    } catch {
+      return []
+    }
+  }
+
+  return []
+}
+
+function detectServerNodeKind(rawNode) {
+  if (!isPlainObject(rawNode)) return 'article'
+
+  const rawType = String(rawNode.type || '').trim().toLowerCase()
+  if (rawType === 'section' || rawType === 'folder') return 'section'
+  if (rawType === 'article' || rawType === 'document') return 'article'
+
+  if (hasOwnKey(rawNode, 'sectionId') || hasOwnKey(rawNode, 'content')) {
+    return 'article'
+  }
+
+  if (
+    hasOwnKey(rawNode, 'parentId') ||
+    hasOwnKey(rawNode, 'childrens') ||
+    hasOwnKey(rawNode, 'children') ||
+    hasOwnKey(rawNode, 'articles')
+  ) {
+    return 'section'
+  }
+
+  return 'article'
+}
+
+function toLocalTreeNode(serverNode, options = {}) {
   const safeNode = isPlainObject(serverNode) ? serverNode : {}
   const safeId = safeNode.id ? String(safeNode.id) : `${Date.now()}-${Math.random()}`
   const title = typeof safeNode.title === 'string' ? safeNode.title : ''
+  const useMixedOrdering = Boolean(options?.useMixedOrdering)
+  const isRoot = Boolean(options?.isRoot)
+  const nestedOptions = { ...options, isRoot: false }
+  const serverNodeKind = detectServerNodeKind(safeNode)
+  const documentationApiType =
+    typeof safeNode.sType === 'string' && safeNode.sType.trim()
+      ? safeNode.sType.trim()
+      : typeof safeNode.documentationApiType === 'string' &&
+          safeNode.documentationApiType.trim()
+        ? safeNode.documentationApiType.trim()
+        : null
   
   const childrens = Array.isArray(safeNode.childrens) ? safeNode.childrens : []
   const articles = Array.isArray(safeNode.articles) ? safeNode.articles : []
   
-  if (safeNode.type === 'article') {
+  if (serverNodeKind === 'article') {
     return {
       id: safeId,
       type: 'article',
       title,
       editor: 'tiptap',
+      documentationApiType,
     }
   }
 
-  if (safeNode.type === 'section' || childrens.length > 0 || articles.length > 0) {
-    const children = []
-    childrens.forEach(childSection => {
-      children.push(toLocalTreeNode(childSection))
-    })
-    articles.forEach(article => {
-      children.push({
+  if (serverNodeKind === 'section' || childrens.length > 0 || articles.length > 0) {
+    let children = []
+    if (useMixedOrdering) {
+      const sectionEntries = childrens.map((childSection, order) => ({
+        kind: 'section',
+        node: childSection,
+        order,
+        index: getNodeOrderValue(childSection),
+      }))
+      const articleEntries = articles.map((article, order) => ({
+        kind: 'article',
+        node: article,
+        order,
+        index: getNodeOrderValue(article),
+      }))
+
+      let mergedEntries = [...sectionEntries, ...articleEntries]
+      const hasServerIndex = mergedEntries.some(entry => entry.index != null)
+      if (hasServerIndex) {
+        mergedEntries.sort((a, b) => {
+          const ai = a.index == null ? Number.MAX_SAFE_INTEGER : a.index
+          const bi = b.index == null ? Number.MAX_SAFE_INTEGER : b.index
+          if (ai !== bi) return ai - bi
+          return a.order - b.order
+        })
+      }
+
+      children = mergedEntries.map(entry => {
+        if (entry.kind === 'section') {
+          return toLocalTreeNode(entry.node, nestedOptions)
+        }
+        const article = entry.node
+        return {
+          id: String(article.id),
+          type: 'article',
+          title: typeof article.title === 'string' ? article.title : '',
+          editor: 'tiptap',
+          documentationApiType:
+            typeof article.sType === 'string' && article.sType.trim()
+              ? article.sType.trim()
+              : typeof article.documentationApiType === 'string' &&
+                  article.documentationApiType.trim()
+                ? article.documentationApiType.trim()
+                : null,
+        }
+      })
+    } else {
+      const sectionChildren = childrens.map(childSection =>
+        toLocalTreeNode(childSection, nestedOptions)
+      )
+      const articleChildren = articles.map(article => ({
         id: String(article.id),
         type: 'article',
         title: typeof article.title === 'string' ? article.title : '',
         editor: 'tiptap',
-      })
-    })
+        documentationApiType:
+          typeof article.sType === 'string' && article.sType.trim()
+            ? article.sType.trim()
+            : typeof article.documentationApiType === 'string' &&
+                article.documentationApiType.trim()
+              ? article.documentationApiType.trim()
+              : null,
+      }))
+      children = [...sectionChildren, ...articleChildren]
+    }
+
     return {
       id: safeId,
       type: 'section',
       title,
       isOpen: true,
       children,
+      documentationApiType,
+      isDocumentationTypeRoot: isRoot && Boolean(documentationApiType),
     }
   }
   
@@ -182,7 +325,7 @@ async function toServerTreeNode(localNode) {
     clientKey: nodeId,
     name: title,
     description: serializeDocMeta(nodeType, draft),
-    type: DOC_TYPE,
+    documentationType: 'documentation',
     children,
   }
 }
@@ -206,7 +349,77 @@ function extractRootNodes(documents) {
   return unique
 }
 
-function DocumentationList1({ user, filterValue = 'dispatcher' }) {
+function loadSectionOpenState() {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(DOC_SECTION_OPEN_STATE_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    if (!isPlainObject(parsed)) return {}
+    return parsed
+  } catch {
+    return {}
+  }
+}
+
+function saveSectionOpenState(openStateMap) {
+  if (typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(
+      DOC_SECTION_OPEN_STATE_KEY,
+      JSON.stringify(openStateMap)
+    )
+  } catch {
+    // ignore storage errors
+  }
+}
+
+function collectSectionOpenState(nodes, acc = {}) {
+  if (!Array.isArray(nodes)) return acc
+  for (const node of nodes) {
+    if (!isPlainObject(node)) continue
+    if (node.type === 'section' && node.id != null) {
+      acc[String(node.id)] = Boolean(node.isOpen)
+    }
+    if (Array.isArray(node.children) && node.children.length) {
+      collectSectionOpenState(node.children, acc)
+    }
+  }
+  return acc
+}
+
+function applySectionOpenState(nodes, openStateMap) {
+  if (!Array.isArray(nodes)) return []
+  const safeMap = isPlainObject(openStateMap) ? openStateMap : {}
+  return nodes.map(node => {
+    if (!isPlainObject(node)) return node
+
+    const nextNode = { ...node }
+    if (Array.isArray(node.children) && node.children.length) {
+      nextNode.children = applySectionOpenState(node.children, safeMap)
+    }
+
+    if (node.type === 'section') {
+      const key = node.id == null ? '' : String(node.id)
+      const hasSavedState = key && Object.prototype.hasOwnProperty.call(safeMap, key)
+      nextNode.isOpen = hasSavedState ? Boolean(safeMap[key]) : Boolean(node.isOpen)
+    }
+
+    return nextNode
+  })
+}
+
+function DocumentationList1({
+  user,
+  documentationType = 'documentation',
+  filterValue = 'dispatcher',
+  showFilterSwitcher = false,
+  filterOptions = [],
+  onFilterValueChange,
+  searchQuery = '',
+  onSearchQueryChange,
+  controlsAtTop = false,
+}) {
   const token = getCookie('token')
   const [tree, setTree] = useState(loadTree)
   const [activeDocId, setActiveDocId] = useState(null)
@@ -218,6 +431,7 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
   const [isReloadingArticles, setIsReloadingArticles] = useState(false)
   const [draftHydrationVersion, setDraftHydrationVersion] = useState(0)
   const treeRef = useRef(tree)
+  const sectionOpenStateRef = useRef(loadSectionOpenState())
   const resizeStateRef = useRef(null)
   const rootServerIdMapRef = useRef(new Map())
   const syncTimerRef = useRef(null)
@@ -228,16 +442,18 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
   const reloadInFlightRef = useRef(false)
   const queuedManualReloadRef = useRef(false)
   const apolloClient = useApolloClient()
-  const canManageDocs = useMemo(
-    () => DOC_MANAGE_ROLES.has(user?.role),
-    [user?.role]
-  )
-
+  const canManageDocs = useMemo(() => isDocumentationManageRole(user), [user])
   const effectiveFilter = useMemo(() => {
-    if (user?.role === roles.hotelAdmin) return 'hotel'
-    if (user?.role === roles.airlineAdmin) return 'airline'
-    return filterValue || 'dispatcher'
-  }, [filterValue, user?.role])
+    return (
+      normalizeDocumentationFilter(filterValue) ||
+      normalizeDocumentationFilter(resolveDocumentationFilterForUser(user)) ||
+      DEFAULT_DOCUMENTATION_FILTER
+    )
+  }, [filterValue, user])
+  const apiDocumentationType = useMemo(
+    () => mapDocumentationFilterToApiType(effectiveFilter),
+    [effectiveFilter]
+  )
 
   const requestContext = useMemo(
     () => ({
@@ -259,24 +475,18 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
   )
 
   const {
-    data: allDocsData,
-    loading: allDocsLoading,
-    error: allDocsError,
-    refetch: refetchAllDocs,
+    data: hierarchyData,
+    loading: hierarchyLoading,
+    error: hierarchyError,
+    refetch: refetchHierarchy,
   } = useQuery(GET_SECTIONS_WITH_HIERARCHY, {
-    skip: !token,
+    skip: !token || !apiDocumentationType,
     fetchPolicy: 'network-only',
     context: requestContext,
-  })
-
-  const [createSection] = useMutation(CREATE_SECTION, {
-    context: mutationContext,
-  })
-  const [createArticle] = useMutation(CREATE_ARTICLE, {
-    context: mutationContext,
-  })
-  const [updateSection] = useMutation(UPDATE_SECTION, {
-    context: mutationContext,
+    variables: {
+      type: apiDocumentationType,
+      documentationType,
+    },
   })
   const [updateArticle] = useMutation(UPDATE_ARTICLE, {
     context: mutationContext,
@@ -287,9 +497,13 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     [tree, activeDocId]
   )
 
-  const hydrateTreeFromHierarchy = useCallback(
-    async (hierarchyData, isCancelled = () => false) => {
-      if (!hierarchyData) {
+  const hydrateTreeFromSections = useCallback(
+    async (serverData, isCancelled = () => false) => {
+      const hierarchyNodes = normalizeHierarchyNodes(
+        serverData?.sectionsWithHierarhy
+      )
+
+      if (!hierarchyNodes.length) {
         if (isCancelled()) return
         skipNextTreeSyncRef.current = true
         setTree([])
@@ -297,29 +511,21 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
         return
       }
 
+      const rootItems = hierarchyNodes
+        .map(node => toLocalTreeNode(node, { useMixedOrdering: true, isRoot: true }))
+        .filter(Boolean)
+
       if (isCancelled()) return
 
-      let parsedData
-      
-      // Парсим JSON если нужно
-      try {
-        parsedData = typeof hierarchyData === 'string' ? JSON.parse(hierarchyData) : hierarchyData
-      } catch {
-        parsedData = hierarchyData
-      }
-      
-      // Преобразуем в массив если это не массив
-      const dataArray = Array.isArray(parsedData) ? parsedData : [parsedData]
-      
-      // Преобразуем каждый корневой узел
-      const nextTree = dataArray
-        .filter(item => item && item.id)
-        .map(item => toLocalTreeNode(item))
+      const nextTreeWithOpenState = applySectionOpenState(
+        rootItems,
+        sectionOpenStateRef.current
+      )
 
       if (isCancelled()) return
 
       skipNextTreeSyncRef.current = true
-      setTree(nextTree)
+      setTree(nextTreeWithOpenState)
       setDraftHydrationVersion(prev => prev + 1)
     },
     []
@@ -327,6 +533,12 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
 
   useEffect(() => {
     treeRef.current = tree
+  }, [tree])
+
+  useEffect(() => {
+    const nextOpenState = collectSectionOpenState(tree)
+    sectionOpenStateRef.current = nextOpenState
+    saveSectionOpenState(nextOpenState)
   }, [tree])
 
   useEffect(() => {
@@ -338,7 +550,7 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
         return
       }
 
-      if (allDocsLoading) {
+      if (hierarchyLoading) {
         syncReadyRef.current = false
         return
       }
@@ -348,15 +560,14 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
         clearTimeout(syncTimerRef.current)
       }
 
-      if (allDocsError) {
-        console.error('Failed to load documentation roots', allDocsError)
+      if (hierarchyError) {
+        console.error('Failed to load documentation roots', hierarchyError)
         syncReadyRef.current = true
         return
       }
 
-      const hierarchyData = allDocsData?.sectionsWithHierarhy
       try {
-        await hydrateTreeFromHierarchy(hierarchyData, () => cancelled)
+        await hydrateTreeFromSections(hierarchyData, () => cancelled)
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to hydrate documentation tree', error)
@@ -373,7 +584,13 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     return () => {
       cancelled = true
     }
-  }, [allDocsData, allDocsError, allDocsLoading, hydrateTreeFromHierarchy, token])
+  }, [
+    hierarchyData,
+    hierarchyError,
+    hierarchyLoading,
+    hydrateTreeFromSections,
+    token,
+  ])
 
   const syncTreeToServer = useCallback(async () => {
     // Note: Tree synchronization is now handled individually through
@@ -416,18 +633,25 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     if (!content || typeof content !== 'object' || content.type !== 'doc') return
 
     try {
+      const input = {
+        content,
+        documentationType,
+      }
+
+      if (apiDocumentationType) {
+        input.type = apiDocumentationType
+      }
+
       await updateArticle({
         variables: {
           id: docId,
-          input: {
-            content,
-          },
+          input,
         },
       })
     } catch (error) {
       console.error('Failed to persist article content:', error)
     }
-  }, [canManageDocs, updateArticle])
+  }, [apiDocumentationType, canManageDocs, documentationType, updateArticle])
 
   useEffect(() => {
     if (!activeDocId) return
@@ -457,7 +681,7 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
 
   useEffect(() => {
     return () => {
-      document.body.classList.remove('is-resizing-left-panel')
+      document.body.classList.remove(BODY_RESIZING_CLASS)
 
       const resizeState = resizeStateRef.current
       resizeStateRef.current = null
@@ -492,7 +716,7 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     resizeStateRef.current = resizeState
 
     setIsResizingLeftPanel(true)
-    document.body.classList.add('is-resizing-left-panel')
+    document.body.classList.add(BODY_RESIZING_CLASS)
     document.body.style.cursor = 'col-resize'
     document.body.style.userSelect = 'none'
 
@@ -512,7 +736,7 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
       window.removeEventListener('pointercancel', stopResize)
 
       setIsResizingLeftPanel(false)
-      document.body.classList.remove('is-resizing-left-panel')
+      document.body.classList.remove(BODY_RESIZING_CLASS)
 
       if (!state) {
         document.body.style.cursor = ''
@@ -549,6 +773,20 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     setIsRightPanelOpen(prev => !prev)
   }
 
+  const handleAnchorsChange = useCallback((nextBlocks) => {
+    const normalizedBlocks = Array.isArray(nextBlocks) ? nextBlocks : []
+    setRightPanelBlocks(normalizedBlocks)
+
+    if (normalizedBlocks.length === 0) {
+      setIsRightPanelOpen(false)
+    }
+  }, [])
+
+  const handleAnchorActivated = useCallback(() => {
+    if (!activeDocId) return
+    setIsRightPanelOpen(true)
+  }, [activeDocId])
+
   const refreshDocumentationTree = useCallback(
     async ({ showLoading = false } = {}) => {
       if (!token) return
@@ -570,9 +808,13 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
         }
         syncReadyRef.current = false
 
-        const result = await refetchAllDocs()
-        const hierarchyData = result?.data?.sectionsWithHierarhy
-        await hydrateTreeFromHierarchy(hierarchyData)
+        const result = await refetchHierarchy()
+        await hydrateTreeFromSections(result?.data)
+        if (activeDocId) {
+          await apolloClient.refetchQueries({
+            include: [GET_ARTICLE],
+          })
+        }
       } catch (error) {
         console.error('Failed to reload documentation roots', error)
       } finally {
@@ -587,7 +829,13 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
         }
       }
     },
-    [hydrateTreeFromHierarchy, refetchAllDocs, token]
+    [
+      activeDocId,
+      apolloClient,
+      hydrateTreeFromSections,
+      refetchHierarchy,
+      token,
+    ]
   )
 
   const handleReloadArticles = useCallback(() => {
@@ -607,13 +855,151 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
     }
   }, [activeDocId, canManageDocs, refreshDocumentationTree, token])
 
-  const isReloadButtonBusy = allDocsLoading || isReloadingArticles
+  const isReloadButtonBusy = hierarchyLoading || isReloadingArticles
+  const shouldRenderInlineHeaderPanelControls = hasOpenedContent && !isRightPanelOpen
+  const shouldRenderInlineHeaderLeftPanelToggle = hasOpenedContent && !isLeftPanelOpen
+
+  const renderReloadArticlesButton = () => (
+    <button
+      className={cn(
+        classes['reload-articles-btn'],
+        isReloadButtonBusy && classes['is-loading']
+      )}
+      type="button"
+      onClick={handleReloadArticles}
+      disabled={isReloadButtonBusy}
+      aria-label={'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u044c\u0438'}
+      title={'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0441\u0442\u0430\u0442\u044c\u0438'}
+    >
+      <>
+        {/* Legacy SVG icon:
+        <svg
+          className={classes['reload-articles-icon']}
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            d="M20 4V9H15"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M4 20V15H9"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M6.5 9.5C7.05 7.96 8.26 6.72 9.78 6.13C11.3 5.55 13 5.65 14.44 6.41C15.88 7.17 16.92 8.5 17.31 10.07M6.69 13.93C7.08 15.5 8.12 16.83 9.56 17.59C11 18.35 12.7 18.45 14.22 17.87C15.74 17.28 16.95 16.04 17.5 14.5"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        */}
+        <AutorenewRoundedIcon
+          className={classes['reload-articles-icon']}
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      </>
+    </button>
+  )
+
+  const renderRightPanelToggleButton = ({ inline = false } = {}) => (
+    <button
+      className={cn(
+        classes['right-panel-toggle-btn'],
+        inline && classes['header-inline-panel-btn']
+      )}
+      type="button"
+      onClick={handleRightPanelToggle}
+      aria-label={isRightPanelOpen ? 'Закрыть навигацию' : 'Открыть навигацию'}
+      title={isRightPanelOpen ? 'Закрыть навигацию' : 'Открыть навигацию'}
+    >
+      {isRightPanelOpen ? (
+        <ChevronRightRoundedIcon
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      ) : (
+        <ChevronLeftRoundedIcon
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      )}
+    </button>
+  )
+
+  const renderLeftPanelToggleButton = ({ inline = false } = {}) => (
+    <button
+      className={cn(
+        classes['left-panel-toggle-btn'],
+        inline && classes['header-inline-panel-btn']
+      )}
+      type="button"
+      onClick={handleLeftPanelToggle}
+      aria-label={isLeftPanelOpen ? 'Close left panel' : 'Open left panel'}
+      title={isLeftPanelOpen ? 'Close left panel' : 'Open left panel'}
+    >
+      {isLeftPanelOpen ? (
+        <ChevronLeftRoundedIcon
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      ) : (
+        <ChevronRightRoundedIcon
+          aria-hidden="true"
+          fontSize="inherit"
+          style={{ width: 16, height: 16, fontSize: 16 }}
+        />
+      )}
+    </button>
+  )
+
+  const inlineHeaderLeftControls = shouldRenderInlineHeaderLeftPanelToggle
+    ? renderLeftPanelToggleButton({ inline: true })
+    : null
+
+  const inlineHeaderPanelControls = shouldRenderInlineHeaderPanelControls ? (
+    <>
+      {/* {renderReloadArticlesButton()} */}
+      {renderRightPanelToggleButton({ inline: true })}
+    </>
+  ) : null
+
+  const emptyPanelTopRightControls = !hasOpenedContent && !isRightPanelOpen
+    ? renderReloadArticlesButton()
+    : null
+  const emptyPanelTopLeftControls = !hasOpenedContent && !isLeftPanelOpen
+    ? renderLeftPanelToggleButton()
+    : null
 
   return (
-    <div className="doc-page">
-      <div className={`doc-list ${isLeftPanelOpen ? 'left-panel-open' : 'left-panel-collapsed'}`}>
+    <div className={classes['doc-page']}>
+      <div
+        className={cn(
+          classes['doc-list'],
+          isLeftPanelOpen ? 'left-panel-open' : 'left-panel-collapsed'
+        )}
+      >
         <div
-          className={`left-panel ${isLeftPanelOpen ? 'open' : 'collapsed'}`}
+          className={cn(
+            classes['left-panel'],
+            isLeftPanelOpen ? classes.open : classes.collapsed
+          )}
           style={{
             width: `${leftPanelVisualWidth}px`,
             '--left-panel-content-width': `${leftPanelWidth}px`,
@@ -624,13 +1010,25 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
             setTree={setTree}
             onSelectFile={setActiveDocId}
             canManage={canManageDocs}
+            activeFilter={effectiveFilter}
+            activeDocId={activeDocId}
+            showDocumentationFilter={showFilterSwitcher}
+            documentationFilters={filterOptions}
+            documentationFilterValue={filterValue}
+            onDocumentationFilterChange={onFilterValueChange}
+            documentationType={documentationType}
+            searchQuery={searchQuery}
+            onSearchQueryChange={onSearchQueryChange}
+            controlsAtTop={controlsAtTop}
           />
         </div>
 
-        <div
-          className={`left-panel-resizer ${isResizingLeftPanel ? 'is-resizing' : ''} ${
-            isLeftPanelOpen ? '' : 'hidden'
-          }`}
+        {/* <div
+          className={cn(
+            classes['left-panel-resizer'],
+            isResizingLeftPanel && classes['is-resizing'],
+            !isLeftPanelOpen && classes.hidden
+          )}
           onPointerDown={handleLeftPanelResizeStart}
           role="separator"
           aria-orientation="vertical"
@@ -638,97 +1036,73 @@ function DocumentationList1({ user, filterValue = 'dispatcher' }) {
           aria-valuemin={MIN_LEFT_PANEL_WIDTH}
           aria-valuemax={MAX_LEFT_PANEL_WIDTH}
           aria-valuenow={leftPanelWidth}
-        />
+        /> */}
 
-        <div className={`left-panel-toggle-zone ${isLeftPanelOpen ? 'open' : ''}`}>
-          <button
-            className="left-panel-toggle-btn"
-            type="button"
-            onClick={handleLeftPanelToggle}
-            aria-label={isLeftPanelOpen ? 'Close left panel' : 'Open left panel'}
-            title={isLeftPanelOpen ? 'Close left panel' : 'Open left panel'}
+        {isLeftPanelOpen && (
+          <div
+            className={cn(
+              classes['left-panel-toggle-zone'],
+              isLeftPanelOpen && classes.open
+            )}
           >
-            {isLeftPanelOpen ? '<' : '>'}
-          </button>
-        </div>
+            {renderLeftPanelToggleButton()}
+          </div>
+        )}
 
-        <div className={`reload-articles-zone ${hasOpenedContent ? 'with-right-toggle' : ''}`}>
-          <button
-            className={`reload-articles-btn ${isReloadButtonBusy ? 'is-loading' : ''}`}
-            type="button"
-            onClick={handleReloadArticles}
-            disabled={isReloadButtonBusy}
-            aria-label="Обновить статьи"
-            title="Обновить статьи"
+        {hasOpenedContent && isRightPanelOpen && (
+          <div
+            className={cn(
+              classes['reload-articles-zone'],
+              hasOpenedContent && isRightPanelOpen && classes['with-right-toggle']
+            )}
           >
-            <svg
-              className="reload-articles-icon"
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M20 4V9H15"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M4 20V15H9"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M6.5 9.5C7.05 7.96 8.26 6.72 9.78 6.13C11.3 5.55 13 5.65 14.44 6.41C15.88 7.17 16.92 8.5 17.31 10.07M6.69 13.93C7.08 15.5 8.12 16.83 9.56 17.59C11 18.35 12.7 18.45 14.22 17.87C15.74 17.28 16.95 16.04 17.5 14.5"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
+            {renderReloadArticlesButton()}
+          </div>
+        )}
 
         <div
-          className="panel-content"
+          className={cn(classes['panel-content'], 'panel-content')}
           style={{
-            '--panel-top-controls-left-offset': isLeftPanelOpen ? '10px' : '64px',
-            '--panel-top-controls-right-offset': hasOpenedContent ? '140px' : '64px',
+            '--panel-top-controls-left-offset':
+              isLeftPanelOpen ? '10px' : hasOpenedContent ? '10px' : '64px',
+            '--panel-top-controls-right-offset': '10px',
           }}
         >
           <DocumentListTiptapPanelContent
             activeDocId={activeDocId}
             docTitle={activeDoc?.title}
             setActiveDocId={setActiveDocId}
-            onAnchorsChange={setRightPanelBlocks}
+            onAnchorsChange={handleAnchorsChange}
+            onAnchorActivated={handleAnchorActivated}
             onDraftPersist={handleDraftPersist}
             onForceSync={syncTreeToServer}
             draftHydrationVersion={draftHydrationVersion}
             canEdit={canManageDocs}
+            headerLeadingControls={inlineHeaderLeftControls}
+            headerTrailingControls={inlineHeaderPanelControls}
+            emptyStateTopLeftControls={emptyPanelTopLeftControls}
+            emptyStateTopRightControls={emptyPanelTopRightControls}
           />
         </div>
 
-        {hasOpenedContent && (
-          <div className={`right-panel-toggle-zone ${isRightPanelOpen ? 'open' : ''}`}>
-            <button
-              className="right-panel-toggle-btn"
-              type="button"
-              onClick={handleRightPanelToggle}
-              aria-label={isRightPanelOpen ? 'Close navigation' : 'Open navigation'}
-              title={isRightPanelOpen ? 'Close navigation' : 'Open navigation'}
-            >
-              {isRightPanelOpen ? '>' : '<'}
-            </button>
+        {hasOpenedContent && isRightPanelOpen && (
+          <div
+            className={cn(
+              classes['right-panel-toggle-zone'],
+              isRightPanelOpen && classes.open
+            )}
+          >
+            {renderRightPanelToggleButton()}
           </div>
         )}
 
-        <div className={`right-panel ${isRightPanelOpen && hasOpenedContent ? 'open' : ''}`}>
+        <div
+          className={cn(
+            classes['right-panel'],
+            'right-panel',
+            isRightPanelOpen && hasOpenedContent && classes.open
+          )}
+        >
           {isRightPanelOpen && hasOpenedContent ? (
             <DocumentationListRightPanel blocks={rightPanelBlocks} />
           ) : null}
@@ -744,5 +1118,17 @@ DocumentationList1.propTypes = {
   user: PropTypes.shape({
     role: PropTypes.string,
   }),
+  documentationType: PropTypes.oneOf(['documentation', 'update']),
   filterValue: PropTypes.string,
+  showFilterSwitcher: PropTypes.bool,
+  filterOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string,
+      label: PropTypes.string,
+    })
+  ),
+  onFilterValueChange: PropTypes.func,
+  searchQuery: PropTypes.string,
+  onSearchQueryChange: PropTypes.func,
+  controlsAtTop: PropTypes.bool,
 }

@@ -3,6 +3,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 20px 20px 30px;
+    border-bottom: 1px solid #54587380;
 }
 
 .requestButton {
@@ -78,7 +79,7 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100vh - 79px - 67px - 81px);
+    height: calc(100vh - 160px);
     overflow: hidden;
     overflow-y: auto;
 }

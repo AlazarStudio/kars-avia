@@ -34,9 +34,9 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
-import { roles } from "../../../roles.js";
+import { isSuperAdmin, isDispatcherAdmin, hasAccessMenu } from "../../../utils/access";
 
-function HotelRegisterOfContracts({ children, id, user, ...props }) {
+function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
@@ -66,8 +66,12 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
 
-  // Проверка прав доступа: только dispatcherAdmin и superAdmin могут редактировать
-  const canEdit = user?.role === roles.dispatcerAdmin || user?.role === roles.superAdmin;
+  const canCreate =
+    isSuperAdmin(user) ||
+    (isDispatcherAdmin(user) && hasAccessMenu(accessMenu, "contractCreate"));
+  const canEdit =
+    isSuperAdmin(user) ||
+    (isDispatcherAdmin(user) && hasAccessMenu(accessMenu, "contractUpdate"));
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_CONTRACTS, {
     context: {
@@ -247,7 +251,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
     setEditShowAddTarif(false);
   };
 
-  // NEW: открыть модал удаления договора
+  // NEW: открыть модал удаления договора (из таблицы — закрывает сайдбар)
   const openDeleteContract = (contract) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -255,6 +259,15 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
       data: { contract },
     });
     setEditShowAddTarif(false);
+  };
+
+  // Открыть модал удаления без закрытия сайдбара (из меню договора)
+  const openDeleteContractFromMenu = (contract) => {
+    setShowDelete(true);
+    setDeleteIndex({
+      type: "deleteContract",
+      data: { contract },
+    });
   };
 
   // NEW: удалить договор (авиа/гостиница)
@@ -273,6 +286,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
       setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
       await refetch();
       setShowDelete(false);
+      setEditShowAddTarif(false);
       addNotification?.("Договор удалён.", "success");
     } catch (e) {
       console.error(e);
@@ -320,12 +334,6 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
-        <MUITextField
-          className={classes.mainSearch}
-          label={"Поиск по договорам"}
-          value={searchTarif}
-          onChange={handleSearchTarif}
-        />
 
         <DateRangeModalSelector
           width={"170px"}
@@ -337,6 +345,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
 
         <MUIAutocompleteColor
           dropdownWidth={"170px"}
+          hideLabelOnFocus={false}
           label={"Город"}
           options={[
             {
@@ -402,6 +411,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
 
         <MUIAutocomplete
           dropdownWidth={"170px"}
+          hideLabelOnFocus={false}
           label={"ГК Карс"}
           options={["Все компании", ...companies?.map((item) => item.name)]}
           value={selectedCompany ? selectedCompany?.name : ""}
@@ -416,7 +426,14 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
             }
           }}
         />
-        {canEdit && (
+
+        <MUITextField
+          className={classes.mainSearch}
+          label={"Поиск по договорам"}
+          value={searchTarif}
+          onChange={handleSearchTarif}
+        />
+        {canCreate && (
           <Filter
             toggleSidebar={toggleTarifsCategory}
             handleChange={""}
@@ -464,7 +481,7 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
         </>
       )}
 
-      {canEdit && (
+      {canCreate && (
         <CreateRequestHotelContract
           user={user}
           id={id}
@@ -493,6 +510,14 @@ function HotelRegisterOfContracts({ children, id, user, ...props }) {
         addTarif={addTarif}
         tarif={selectedTarif}
         addNotification={addNotification}
+        onRequestDelete={
+          canEdit
+            ? () => {
+                const contract = addTarif.find((x) => x.id === selectedTarif);
+                if (contract) openDeleteContractFromMenu(contract);
+              }
+            : undefined
+        }
       />
 
       {canEdit && showDelete && (

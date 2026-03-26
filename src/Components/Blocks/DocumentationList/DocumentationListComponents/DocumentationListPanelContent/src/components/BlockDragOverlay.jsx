@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { NodeSelection, TextSelection } from '@tiptap/pm/state'
+import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded'
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
 
 const AUTO_SCROLL_EDGE_PX = 52
 const AUTO_SCROLL_MAX_STEP_PX = 18
@@ -1214,8 +1216,6 @@ export default function BlockDragOverlay({
       const t = e?.target
       if (t instanceof Element) {
         if (editorDom.contains(t)) return
-        if (t.closest('.plus-overlay')) return
-        if (t.closest('.block-dnd-handle')) return
         if (t.closest('.slash-menu-wrapper')) return
       }
 
@@ -1592,12 +1592,76 @@ export default function BlockDragOverlay({
     })
   }
 
+  const moveBlockByStep = (fromId, direction) => {
+    if (typeof fromId !== 'number') return
+    if (direction !== 'up' && direction !== 'down') return
+
+    const view = getEditorViewSafe(editor)
+    if (!view) return
+
+    const starts = getTopLevelStartPositions(view.state.doc)
+    const fromIndex = starts.indexOf(fromId)
+    if (fromIndex < 0) return
+
+    const targetIndex = direction === 'up' ? fromIndex - 1 : fromIndex + 1
+    if (targetIndex < 0 || targetIndex >= starts.length) return
+
+    const targetId = starts[targetIndex]
+    if (typeof targetId !== 'number') return
+
+    moveSelectionToTopLevelBlock(view, fromId)
+
+    moveTopLevelBlock(
+      {
+        fromId,
+        fromKind: 'top',
+        fromChildIndex: null,
+      },
+      {
+        id: targetId,
+        position: direction === 'up' ? 'before' : 'after',
+      }
+    )
+  }
+
+  const onStepHandlePointerDown = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const onStepMoveClick = (e, direction) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (dragRef.current.active) return
+    if (!canDrag || typeof handleId !== 'number') return
+    moveBlockByStep(handleId, direction)
+  }
+
   const baseY = typeof activeId === 'number' ? startHandleY : hoverY
   const handleY = typeof baseY === 'number' ? baseY + dragDy : null
+  const handleClusterY = typeof handleY === 'number' ? handleY - 32 : null
   const handleTransform =
     typeof handleY === 'number'
       ? `translate3d(0px, ${handleY}px, 0)`
       : null
+  const handleClusterTransform =
+    typeof handleClusterY === 'number'
+      ? `translate3d(0px, ${handleClusterY}px, 0)`
+      : null
+
+  const moveAvailability = (() => {
+    if (typeof handleId !== 'number') return { canMoveUp: false, canMoveDown: false }
+    const view = getEditorViewSafe(editor)
+    if (!view) return { canMoveUp: false, canMoveDown: false }
+
+    const starts = getTopLevelStartPositions(view.state.doc)
+    const index = starts.indexOf(handleId)
+    if (index < 0) return { canMoveUp: false, canMoveDown: false }
+    return {
+      canMoveUp: index > 0,
+      canMoveDown: index < starts.length - 1,
+    }
+  })()
 
   return (
     <>
@@ -1664,18 +1728,61 @@ export default function BlockDragOverlay({
       typeof handleId === 'number' &&
       typeof handleY === 'number'
         ? createPortal(
-            <button
-              type="button"
-              className={`block-dnd-handle ${canDrag ? '' : 'is-disabled'}`.trim()}
-              style={handleTransform ? { transform: handleTransform } : undefined}
-              onPointerDown={onHandlePointerDown}
-              aria-label="Переместить блок"
-              aria-disabled={!canDrag}
-              disabled={!canDrag}
-              title={canDrag ? 'Перетащить блок' : 'Наведи на блок'}
+            <div
+              className={`block-dnd-handle-cluster ${canDrag ? '' : 'is-disabled'}`.trim()}
+              style={handleClusterTransform ? { transform: handleClusterTransform } : undefined}
             >
-              ⋮⋮
-            </button>,
+              {moveAvailability.canMoveUp ? (
+                <button
+                  type="button"
+                  className="block-dnd-step-btn block-dnd-step-btn-up"
+                  onPointerDown={onStepHandlePointerDown}
+                  onClick={(e) => onStepMoveClick(e, 'up')}
+                  aria-label={'\u041f\u0435\u0440\u0435\u043c\u0435\u0441\u0442\u0438\u0442\u044c \u0431\u043b\u043e\u043a \u0432\u0432\u0435\u0440\u0445'}
+                  title={'\u041f\u0435\u0440\u0435\u043c\u0435\u0441\u0442\u0438\u0442\u044c \u0431\u043b\u043e\u043a \u0432\u0432\u0435\u0440\u0445'}
+                >
+                  <KeyboardArrowUpRoundedIcon
+                    aria-hidden="true"
+                    fontSize="inherit"
+                    style={{ width: 12, height: 12, fontSize: 12 }}
+                  />
+                </button>
+              ) : null}
+
+              <button
+                type="button"
+                className={`block-dnd-handle block-dnd-main-handle ${canDrag ? '' : 'is-disabled'}`.trim()}
+                style={
+                  handleTransform
+                    ? { left: '0px', transform: 'translate3d(0px, 32px, 0px)' }
+                    : { left: '0px' }
+                }
+                onPointerDown={onHandlePointerDown}
+                aria-label={'\u041f\u0435\u0440\u0435\u043c\u0435\u0441\u0442\u0438\u0442\u044c \u0431\u043b\u043e\u043a'}
+                aria-disabled={!canDrag}
+                disabled={!canDrag}
+                title={canDrag ? '\u041f\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u044c \u0431\u043b\u043e\u043a' : '\u041d\u0430\u0432\u0435\u0434\u0438 \u043d\u0430 \u0431\u043b\u043e\u043a'}
+              >
+                ⋮⋮
+              </button>
+
+              {moveAvailability.canMoveDown ? (
+                <button
+                  type="button"
+                  className="block-dnd-step-btn block-dnd-step-btn-down"
+                  onPointerDown={onStepHandlePointerDown}
+                  onClick={(e) => onStepMoveClick(e, 'down')}
+                  aria-label={'\u041f\u0435\u0440\u0435\u043c\u0435\u0441\u0442\u0438\u0442\u044c \u0431\u043b\u043e\u043a \u0432\u043d\u0438\u0437'}
+                  title={'\u041f\u0435\u0440\u0435\u043c\u0435\u0441\u0442\u0438\u0442\u044c \u0431\u043b\u043e\u043a \u0432\u043d\u0438\u0437'}
+                >
+                  <KeyboardArrowDownRoundedIcon
+                    aria-hidden="true"
+                    fontSize="inherit"
+                    style={{ width: 12, height: 12, fontSize: 12 }}
+                  />
+                </button>
+              ) : null}
+            </div>,
             handleLayerEl
           )
         : null}
@@ -1687,3 +1794,5 @@ export default function BlockDragOverlay({
     </>
   )
 }
+
+

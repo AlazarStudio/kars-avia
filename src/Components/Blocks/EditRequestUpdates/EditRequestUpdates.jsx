@@ -6,7 +6,7 @@ import {
   GET_DOCUMENTATION_TREE,
   UPDATE_DOCUMENTATION,
   getCookie,
-  server,
+  getMediaUrl,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
@@ -113,7 +113,7 @@ function BlockItem({ node, disabled, onChange, onAddChild, onRemove }) {
         <div className={classes.files}>
           {node.existingImages.map((url, i) => (
             <div key={`${url}-${i}`} className={classes.thumb}>
-              <img src={`${server}${url}`} alt="" loading="lazy" />
+              <img src={getMediaUrl(url)} alt="" loading="lazy" />
             </div>
           ))}
         </div>
@@ -346,7 +346,7 @@ function EditRequestUpdates({
                 <div className={classes.files}>
                   {root.existingImages.map((url, i) => (
                     <div key={`${url}-${i}`} className={classes.thumb}>
-                      <img src={`${server}${url}`} alt="" loading="lazy" />
+                      <img src={getMediaUrl(url)} alt="" loading="lazy" />
                     </div>
                   ))}
                 </div>

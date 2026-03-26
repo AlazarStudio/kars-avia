@@ -13,7 +13,7 @@
   height: 100%;
   min-height: 0;
   position: relative;
-  border-radius: 16px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -24,14 +24,14 @@
   border-right: none;
   background: #ffffff;
   position: relative;
-  z-index: 2;
+  z-index: 0;
   overflow: hidden;
   transition: width 0.2s ease;
 }
 
 .left-panel > * {
-  width: var(--left-panel-content-width, 400px);
-  min-width: var(--left-panel-content-width, 400px);
+  width: var(--left-panel-content-width, 350px);
+  min-width: var(--left-panel-content-width, 350px);
   height: 100%;
 }
 
@@ -99,14 +99,14 @@
   border-left: 0;
   background: #ffffff;
   position: relative;
-  z-index: 2;
+  z-index: 0;
   overflow: hidden;
   pointer-events: none;
   transition: width 0.2s ease, border-left-color 0.2s ease;
 }
 
 .right-panel.open {
-  width: 350px;
+  width: 250px;
   border-left: 1px solid #e5e7eb;
   pointer-events: auto;
 }
@@ -117,7 +117,7 @@
   right: 20px;
   width: 56px;
   height: 29px;
-  z-index: 9;
+  z-index: 2;
   display: flex;
   align-items: stretch;
   justify-content: flex-end;
@@ -130,7 +130,7 @@
   left: 8px;
   width: 56px;
   height: 29px;
-  z-index: 9;
+  z-index: 2;
   display: flex;
   align-items: stretch;
   justify-content: flex-start;
@@ -141,14 +141,14 @@
   position: absolute;
   top: 10px;
   right: 20px;
-  z-index: 9;
+  z-index: 2;
   display: flex;
   align-items: center;
   pointer-events: auto;
 }
 
 .reload-articles-zone.with-right-toggle {
-  right: 84px;
+  right: 68px;
 }
 
 .reload-articles-btn {
@@ -164,6 +164,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 1;
   transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease;
 }
 
@@ -202,6 +204,8 @@
   cursor: pointer;
   opacity: 0.55;
   transform: translateX(0);
+  position: relative;
+  z-index: 1;
   transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
   pointer-events: auto;
 }
@@ -217,8 +221,18 @@
   cursor: pointer;
   opacity: 0.55;
   transform: translateX(0);
+  position: relative;
+  z-index: 1;
   transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
   pointer-events: auto;
+}
+
+.left-panel-toggle-btn,
+.right-panel-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 .left-panel-toggle-zone:hover .left-panel-toggle-btn {
@@ -242,6 +256,11 @@
 .right-panel-toggle-btn:hover {
   background: #f3f4f6;
   color: #111827;
+}
+
+.header-inline-panel-btn {
+  opacity: 1;
+  transform: none;
 }
 
 .left-panel *,
@@ -285,5 +304,143 @@ body.is-resizing-left-panel .left-panel-resizer {
   transition: none !important;
 }
 
+/* ===== Theme alignment overrides ===== */
 
+.doc-list {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
 
+.left-panel {
+  background: linear-gradient(180deg, #fbfcff 0%, #ffffff 100%);
+  border-right: 1px solid rgba(53, 59, 85, 0.05);
+}
+
+.left-panel-resizer::before {
+  left: 1px;
+  right: 1px;
+  width: auto;
+  transform: none;
+  background: rgba(53, 59, 85, 0.1);
+}
+
+.left-panel-resizer:hover::before,
+.left-panel-resizer.is-resizing::before {
+  width: auto;
+  background: rgba(53, 59, 85, 0.2);
+}
+
+.left-panel-resizer.is-resizing::before {
+  background: rgba(53, 59, 85, 0.28);
+}
+
+.panel-content {
+  /* background: var(--gray); */
+  padding-right: 30px;
+  /* padding-left: 18px; */
+  /* scrollbar-width: thin;
+  scrollbar-color: #356184 #f9f9fd; */
+}
+
+/* .panel-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.panel-content::-webkit-scrollbar-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+} */
+
+/* .panel-content::-webkit-scrollbar-button:vertical,
+.panel-content::-webkit-scrollbar-button:single-button:vertical:decrement,
+.panel-content::-webkit-scrollbar-button:single-button:vertical:increment,
+.panel-content::-webkit-scrollbar-button:vertical:start:decrement,
+.panel-content::-webkit-scrollbar-button:vertical:end:increment,
+.panel-content::-webkit-scrollbar-button:double-button:vertical:start:decrement,
+.panel-content::-webkit-scrollbar-button:double-button:vertical:end:increment {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: block !important;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+} */
+
+/* .panel-content::-webkit-scrollbar-track {
+  -webkit-box-shadow: 5px 5px 5px -5px rgba(34, 60, 80, 0.2) inset;
+  box-shadow: 5px 5px 5px -5px rgba(34, 60, 80, 0.2) inset;
+  background-color: #f9f9fd;
+}
+
+.panel-content::-webkit-scrollbar-thumb {
+  background-color: #356184;
+  background-image: -webkit-gradient(
+    linear,
+    0 0,
+    0 100%,
+    color-stop(.5, rgba(255, 255, 255, .25)),
+    color-stop(.5, transparent),
+    to(transparent)
+  );
+}
+
+.panel-content::-webkit-scrollbar-thumb:hover {
+  background-color: #315978;
+}
+
+.panel-content::-webkit-scrollbar-thumb:active {
+  background-color: #2c506b;
+}
+
+.panel-content::-webkit-scrollbar-corner {
+  background: transparent;
+} */
+
+.right-panel {
+  background: linear-gradient(180deg, #fbfcff 0%, #ffffff 100%);
+}
+
+.right-panel.open {
+  border-left-color: rgba(53, 59, 85, 0.08);
+}
+
+.reload-articles-btn,
+.left-panel-toggle-btn,
+.right-panel-toggle-btn {
+  border: 1px solid rgba(53, 59, 85, 0.12);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--main-gray);
+  box-shadow: 0 8px 18px rgba(53, 59, 85, 0.08);
+}
+
+.left-panel-toggle-btn,
+.right-panel-toggle-btn {
+  opacity: 0.72;
+}
+
+.reload-articles-btn:hover:not(:disabled),
+.left-panel-toggle-btn:hover,
+.right-panel-toggle-btn:hover {
+  background: var(--hover-gray);
+  border-color: rgba(53, 59, 85, 0.2);
+  color: var(--menu-bg);
+}

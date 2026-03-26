@@ -6,11 +6,14 @@ const formatTimeRemaining = (ms) => {
   if (ms < 0) return null; // Время уже прошло
   
   const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
+  const days = Math.floor(totalSeconds / (24 * 3600));
+  const hours = Math.floor((totalSeconds % (24 * 3600)) / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
   
-  if (hours > 0) {
+  if (days > 0) {
+    return `${days}д ${hours}ч ${minutes}м ${seconds}с`;
+  } else if (hours > 0) {
     return `${hours}ч ${minutes}м ${seconds}с`;
   } else if (minutes > 0) {
     return `${minutes}м ${seconds}с`;

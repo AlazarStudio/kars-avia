@@ -12,6 +12,25 @@ import MUILoader from "../MUILoader/MUILoader";
 
 const TAKE = 25; // размер страницы
 
+function notificationDedupeKey(it) {
+  return (
+    it.id ??
+    `${it.createdAt}-${it.description?.action}-${
+      it.passengerRequestId ?? it.reserveId ?? it.requestId ?? ""
+    }`
+  );
+}
+
+function mergeNotificationsLists(prevList, nextList) {
+  const seen = new Set();
+  return [...prevList, ...nextList].filter((it) => {
+    const key = notificationDedupeKey(it);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function Notifications({
   onRequestClick,
   user,
@@ -56,24 +75,25 @@ function Notifications({
     },
   });
 
-  // Инициализация/рефетч — приводим локальное состояние к ответу
+  // Синхронизация с кэшем Apollo (первая страница, refetch, merge после fetchMore)
   useEffect(() => {
     const arr = data?.getAllNotifications?.notifications || [];
     setItems(arr);
     const tp = data?.getAllNotifications?.totalPages ?? null;
     setTotalPages(tp);
 
-    // текущая страница = 0 при первом запросе/рефетче
-    setCurrentPage(0);
-
-    // вычисляем hasMore
     if (typeof tp === "number") {
-      setHasMore(1 < tp); // следующая страница существует?
+      setHasMore(currentPage + 1 < tp);
     } else {
-      setHasMore(arr.length === TAKE); // fallback
+      const tc = data?.getAllNotifications?.totalCount;
+      if (typeof tc === "number") {
+        setHasMore(arr.length < tc);
+      } else {
+        setHasMore(arr.length === TAKE);
+      }
     }
     lastLenRef.current = arr.length;
-  }, [data]);
+  }, [data, currentPage]);
 
   // При раскрытии панели — обновить список с начала
   useEffect(() => {
@@ -87,8 +107,9 @@ function Notifications({
   // Клиентская фильтрация
   const filtered = items.filter((n) => {
     if (separator === "All") return true;
-    if (separator === "request") return n.reserveId === null;
-    if (separator === "reserve") return !!n.reserveId;
+    if (separator === "request")
+      return !!n.requestId && !n.passengerRequestId;
+    if (separator === "passengerRequest") return !!n.passengerRequestId;
     return true;
   });
 
@@ -117,37 +138,42 @@ function Notifications({
         try {
           setLoadingMoreLocal(true);
           const nextPage = currentPage + 1; // страница 1,2,3...
+          let lastChunkLen = TAKE;
           const { data: more } = await fetchMore({
             variables: { pagination: { skip: nextPage, take: TAKE } },
+            updateQuery: (prev, { fetchMoreResult }) => {
+              if (!fetchMoreResult?.getAllNotifications) return prev;
+              const chunk =
+                fetchMoreResult.getAllNotifications.notifications ?? [];
+              lastChunkLen = chunk.length;
+              const merged = mergeNotificationsLists(
+                prev?.getAllNotifications?.notifications ?? [],
+                chunk
+              );
+              return {
+                ...(prev || {}),
+                getAllNotifications: {
+                  ...(prev?.getAllNotifications || {}),
+                  ...fetchMoreResult.getAllNotifications,
+                  notifications: merged,
+                },
+              };
+            },
           });
 
-          const newItems = more?.getAllNotifications?.notifications || [];
+          const tp =
+            more?.getAllNotifications?.totalPages ?? totalPages ?? null;
+          if (typeof tp === "number") {
+            setHasMore(nextPage + 1 < tp);
+          } else {
+            setHasMore(lastChunkLen === TAKE);
+          }
 
-          // склеиваем без дублей
-          setItems((prev) => {
-            const seen = new Set();
-            const merged = [...prev, ...newItems].filter((it) => {
-              const key =
-                it.id ??
-                `${it.createdAt}-${it.description?.action}-${
-                  it.reserveId ?? it.requestId ?? ""
-                }`;
-              if (seen.has(key)) return false;
-              seen.add(key);
-              return true;
-            });
-            // если ничего не добавилось — дальше грузить бессмысленно
-            // if (merged.length === prev.length) setHasMore(false);
-            return merged;
-          });
-
-          // обновляем номер текущей страницы
           setCurrentPage(nextPage);
 
-          // стоп по размеру страницы (если сервер totalPages не отдаёт)
-          // if (newItems.length < TAKE) setHasMore(false);
-
-          lastLenRef.current = items.length + newItems.length;
+          lastLenRef.current =
+            (more?.getAllNotifications?.notifications?.length ?? 0) ||
+            items.length + lastChunkLen;
         } finally {
           setLoadingMoreLocal(false);
         }
@@ -198,8 +224,10 @@ function Notifications({
               Эскадрилья
             </button>
             <button
-              onClick={() => setSeparator("reserve")}
-              className={separator === "reserve" ? classes.active : null}
+              onClick={() => setSeparator("passengerRequest")}
+              className={
+                separator === "passengerRequest" ? classes.active : null
+              }
             >
               Пассажиры
             </button>
@@ -207,8 +235,11 @@ function Notifications({
 
           {filtered.map((notify, index) => {
             const isHotelAdmin = user?.role === roles.hotelAdmin;
-            const isReserve = notify.reserveId !== null;
-            const requestLink = `/reserve/reservePlacement/${notify.reserveId}`;
+            const isPassengerRequest = notify.passengerRequestId != null;
+            const isReserve =
+              notify.reserveId != null && !isPassengerRequest;
+            const passengerRequestLink = `/representativeRequests/representativeRequestsPlacement/${notify.passengerRequestId}`;
+            const reserveLink = `/reserve/reservePlacement/${notify.reserveId}`;
 
             return (
               <div
@@ -220,10 +251,17 @@ function Notifications({
                     <p>{convertToDate(notify.createdAt)}</p>
                     <p>{convertToDate(notify.createdAt, true)}</p>
                   </div>
-                  {isHotelAdmin && isReserve ? (
+                  {isHotelAdmin && isPassengerRequest ? (
                     <p
                       className={classes.toRequest}
-                      onClick={() => navigate(requestLink)}
+                      onClick={() => navigate(passengerRequestLink)}
+                    >
+                      Перейти к заявке
+                    </p>
+                  ) : isHotelAdmin && isReserve ? (
+                    <p
+                      className={classes.toRequest}
+                      onClick={() => navigate(reserveLink)}
                     >
                       Перейти к заявке
                     </p>
@@ -231,9 +269,11 @@ function Notifications({
                     <p
                       className={classes.toRequest}
                       onClick={() =>
-                        isReserve
-                          ? navigate(requestLink)
-                          : onRequestClick(notify)
+                        isPassengerRequest
+                          ? navigate(passengerRequestLink)
+                          : isReserve
+                            ? navigate(reserveLink)
+                            : onRequestClick(notify)
                       }
                     >
                       Перейти к заявке

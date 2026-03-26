@@ -1,0 +1,111 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.recordCard {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.recordHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.recordIndex {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.removeBtn {
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  background: transparent;
+  cursor: pointer;
+  color: #d32f2f;
+}
+
+.removeBtn:hover {
+  background: rgba(211, 47, 47, 0.08);
+}
+
+.pricesRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.priceGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.priceLabel {
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.7);
+  min-width: 90px;
+}
+
+.priceInput {
+  width: 100px;
+  padding: 8px 12px;
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.priceInput:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.seaterBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selectsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.selectWrap {
+  flex: 1;
+  min-width: 200px;
+}
+
+.addBtn {
+  align-self: flex-start;
+  padding: 10px 20px;
+  font-size: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  background: transparent;
+  cursor: pointer;
+}
+
+.addBtn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}

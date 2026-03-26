@@ -12,6 +12,11 @@ const AirlineTarifsTab = lazy(() =>
     "../../../Blocks/AirlineTarifs_tabComponent/AirlineTarifs_tabComponent"
   )
 );
+const AirlineTransferPricesTab = lazy(() =>
+  import(
+    "../../../Blocks/AirlineTransferPrices_tabComponent/AirlineTransferPrices_tabComponent"
+  )
+);
 const AirlineRegisterOfContracts = lazy(() =>
   import(
     "../../../Blocks/AirlineRegisterOfContracts/AirlineRegisterOfContracts"
@@ -29,7 +34,7 @@ const AirlineAboutTab = lazy(() =>
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
 import classes from "./DisAdminAirlineContent.module.css";
 
-const DisAdminAirlineContent = ({ id, user, selectedTab, handleTabSelect }) => (
+const DisAdminAirlineContent = ({ id, user, accessMenu, selectedTab, handleTabSelect }) => (
   <Tabs
     className={classes.tabs}
     selectedIndex={selectedTab}
@@ -39,6 +44,7 @@ const DisAdminAirlineContent = ({ id, user, selectedTab, handleTabSelect }) => (
     <TabList className={classes.tabList}>
       <Tab className={classes.tab}>Пользователи</Tab>
       <Tab className={classes.tab}>Цены</Tab>
+      <Tab className={classes.tab}>Цены на трансфер</Tab>
       <Tab className={classes.tab}>Реестр договоров</Tab>
       <Tab className={classes.tab}>Сотрудники</Tab>
       <Tab className={classes.tab}>Об авиакомпании</Tab>
@@ -59,7 +65,13 @@ const DisAdminAirlineContent = ({ id, user, selectedTab, handleTabSelect }) => (
 
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineRegisterOfContracts id={id} user={user} />
+        <AirlineTransferPricesTab id={id} user={user} accessMenu={accessMenu} />
+      </Suspense>
+    </TabPanel>
+
+    <TabPanel className={classes.tabPanel} forceRender={false}>
+      <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
+        <AirlineRegisterOfContracts id={id} user={user} accessMenu={accessMenu} />
       </Suspense>
     </TabPanel>
 

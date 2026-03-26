@@ -161,6 +161,33 @@
   background-color: #f5f5fb;
 }
 
+.buttonsWrapper {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.buttonsWrapper button {
+  flex-basis: 50%;
+}
+
+.cancelButton {
+  border-radius: 10px;
+  border: 1px solid #E8EDF1;
+  padding: 10px 12px;
+  background: var(--hover-gray);
+  cursor: pointer;
+  color: #000;
+  font-size: 14px;
+  font-weight: 400;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.cancelButton:hover {
+  opacity: 1;
+}
+
 
 @media (max-width: 1499px) {
   .routeText {

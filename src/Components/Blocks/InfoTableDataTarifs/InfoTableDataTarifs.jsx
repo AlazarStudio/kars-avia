@@ -3,6 +3,8 @@ import classes from "./InfoTableDataTarifs.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { roles } from "../../../roles";
 import Button from "../../Standart/Button/Button";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
 
 const categoryMap = {
   luxe: "Люкс",
@@ -106,16 +108,14 @@ function InfoTableDataTarifs({
                             } */}
 
               <div className={classes.infoTable_buttons}>
-                <img
-                  src="/editPassenger.png"
-                  alt=""
+                <EditPencilIcon
+                  cursor="pointer"
                   onClick={() => {
                     toggleRequestSidebar(item);
                   }}
                 />
-                <img
-                  src="/deletePassenger.png"
-                  alt=""
+                <DeleteIcon
+                  cursor="pointer"
                   onClick={() => openDeleteComponent(index, item.id)}
                 />
               </div>
@@ -167,9 +167,8 @@ function InfoTableDataTarifs({
                   )}
 
                   <div className={classes.infoTable_buttons}>
-                    <img
-                      src="/editPassenger.png"
-                      alt=""
+                    <EditPencilIcon
+                      cursor="pointer"
                       onClick={() => {
                         toggleEditMealPrices(item);
                       }}
@@ -229,9 +228,8 @@ function InfoTableDataTarifs({
               )}
 
               <div className={classes.infoTable_buttons}>
-                <img
-                  src="/editPassenger.png"
-                  alt=""
+                <EditPencilIcon
+                  cursor="pointer"
                   onClick={() => {
                     toggleAdditionalServices(item);
                   }}

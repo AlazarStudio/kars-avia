@@ -6,6 +6,7 @@ import {
   getCookie,
   DELETE_AIRLINE_CATEGORY,
   DELETE_AIRLINE_TARIFF,
+  DELETE_AIRLINE_PRICE,
   GET_ALL_TARIFFS,
   PRICE_CATEGORY_CHANGE_SUBSCRIPTION,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
@@ -22,6 +23,7 @@ import EditRequestAirlineTarifCategory from "../EditRequestAirlineTarifCategory/
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import CreateRequestAllTarifCategory from "../CreateRequestAirlineTarifCategory copy/CreateRequestAllTarifCategory.jsx";
 import EditRequestAllTarifCategory from "../EditRequestAllTarifCategory/EditRequestAllTarifCategory.jsx";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 
 function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const token = getCookie("token");
@@ -98,6 +100,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const [showDelete, setShowDelete] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
   const [searchTarif, setSearchTarif] = useState("");
+  const [deleteConfirmContract, setDeleteConfirmContract] = useState(null);
 
   const [selectedContract, setSelectedContract] = useState(null);
 
@@ -126,6 +129,12 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         Authorization: `Bearer ${token}`,
         // 'Apollo-Require-Preflight': 'true',
       },
+    },
+  });
+
+  const [deleteAirlinePrice] = useMutation(DELETE_AIRLINE_PRICE, {
+    context: {
+      headers: { Authorization: `Bearer ${token}` },
     },
   });
 
@@ -291,6 +300,30 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     // setEditShowAddTarif(true);
   };
 
+  const openDeleteContractConfirm = (item) => {
+    if (item?.id) setDeleteConfirmContract(item);
+  };
+
+  const handleConfirmDeleteContract = async () => {
+    if (!deleteConfirmContract?.id) return;
+    try {
+      const res = await deleteAirlinePrice({
+        variables: { id: deleteConfirmContract.id },
+      });
+      if (res?.data?.deleteAirlinePrice) {
+        addNotification("Договор удалён.", "success");
+        refetch();
+      } else {
+        addNotification("Не удалось удалить договор.", "error");
+      }
+    } catch (err) {
+      console.error(err);
+      addNotification(err?.message || "Не удалось удалить договор.", "error");
+    } finally {
+      setDeleteConfirmContract(null);
+    }
+  };
+
   const openDeleteComponentCategory = (category, tarif) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -437,6 +470,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         <InfoTableAirlineDataTarifs
           user={user}
           toggleEditTarifsCategory={toggleEditTarifs}
+          onDeleteTarifsCategory={openDeleteContractConfirm}
           requests={filteredRequestsTarif}
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
@@ -506,9 +540,11 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         addTarif={addTarif}
         selectedContract={selectedContract}
         tarif={selectedTarif}
-        // onSubmit={handleEditTarifCategory}
         addNotification={addNotification}
-        // refetchAllCategories={refetch}
+        onDelete={() => {
+          setEditShowAddTarif(false);
+          openDeleteContractConfirm(selectedTarif);
+        }}
       />
 
       {/* <EditRequestAllTarifCategory
@@ -524,14 +560,13 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         // refetchAllCategories={refetch}
       /> */}
 
-      {/* {showDelete && (
-                <DeleteComponent
-                    ref={deleteComponentRef}
-                    remove={() => deleteIndex.type == "deleteTarif" ? deleteTarif(deleteIndex.data.index, deleteIndex.data.tarifID) : deleteTarifCategory(deleteIndex.data.category, deleteIndex.data.tarif)}
-                    close={closeDeleteComponent}
-                    title={`Вы действительно хотите удалить ${deleteIndex.type == "deleteTarif" ? 'тариф' : 'категорию'}?`}
-                />
-            )} */}
+      {deleteConfirmContract && (
+        <DeleteComponent
+          title="Вы действительно хотите удалить договор?"
+          remove={handleConfirmDeleteContract}
+          close={() => setDeleteConfirmContract(null)}
+        />
+      )}
       {notifications.map((n, index) => (
         <Notification
           key={n.id}

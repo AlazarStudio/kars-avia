@@ -24,8 +24,9 @@ import { fullNotifyTime, notifyTime } from "../../../roles";
 import InfoTableDataRepresentativeAirlines from "../InfoTableDataRepresentativeAirlines/InfoTableDataRepresentativeAirlines";
 import CreateRequestDriversCompany from "../CreateRequestDriversCompany/CreateRequestDriversCompany";
 import InfoTableDataDriversCompanies from "../InfoTableDataDriversCompanies/InfoTableDataDriversCompanies";
+import { hasAccessMenu } from "../../../utils/access";
 
-function DriversCompanyList({ children, representative, disAdmin, ...props }) {
+function DriversCompanyList({ children, representative, disAdmin, accessMenu, ...props }) {
   const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -184,7 +185,7 @@ function DriversCompanyList({ children, representative, disAdmin, ...props }) {
 
   return (
     <>
-      <div className={classes.section} style={disAdmin ? { padding: "0" } : {}}>
+      <div className={classes.section} style={disAdmin ? { padding: "0", overflow: "visible" } : {}}>
         {!disAdmin && <Header>Организации</Header>}
 
         <div className={classes.section_searchAndFilter}>
@@ -194,13 +195,15 @@ function DriversCompanyList({ children, representative, disAdmin, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          <Filter
-            toggleSidebar={toggleCreateSidebar}
-            handleChange={handleChange}
-            filterData={filterData}
-            buttonTitle={"Добавить организацию"}
-            needDate={false}
-          />
+          {(!disAdmin || hasAccessMenu(accessMenu, "organizationCreate")) && (
+            <Filter
+              toggleSidebar={toggleCreateSidebar}
+              handleChange={handleChange}
+              filterData={filterData}
+              buttonTitle={"Добавить организацию"}
+              needDate={false}
+            />
+          )}
         </div>
 
         {loading && <MUILoader fullHeight={"70vh"} />}

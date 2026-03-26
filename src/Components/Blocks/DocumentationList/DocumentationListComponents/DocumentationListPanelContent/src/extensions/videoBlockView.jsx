@@ -1,15 +1,20 @@
 // src/extensions/videoBlockView.jsx
 import { NodeViewWrapper } from '@tiptap/react'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded'
 import './imageBlockModal.css'
 import './videoBlock.css'
 import './fileEmpty.css'
 import './blockResize.css'
-import { blobFromDataUrl, blobFromUrl, getFileRecord, saveBlobAsFile, saveFile } from '../storage/fileStore'
+import { blobFromDataUrl, blobFromUrl, getFileRecord } from '../storage/fileStore'
 import { parseVideoUrl } from '../utils/videoEmbedParser'
 import { useDocumentationUpload } from '../DocumentationUploadContext'
+import { notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
+const VIDEO_MODAL_ESTIMATED_SIZE = { width: 360, height: 260 }
 
 export default function VideoBlockView({ editor, node, updateAttributes, getPos }) {
   const {
@@ -22,12 +27,14 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   } = node.attrs
 
   const docUpload = useDocumentationUpload()
-  const { uploadFile: docUploadFile, getMediaUrl } = docUpload || {}
+  const { uploadFile: docUploadFile, getMediaUrl, getMediaUrlCandidates } = docUpload || {}
+  const canEdit = editor?.isEditable !== false
 
   const videoRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState('upload')
   const [url, setUrl] = useState('')
+  const [displayVideoSrcIndex, setDisplayVideoSrcIndex] = useState(0)
   const [objectUrl, setObjectUrl] = useState(null)
   const migrationRef = useRef({ running: false, doneFor: null })
 
@@ -35,6 +42,11 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   const modalSourceRef = useRef(`video-block-${Math.random().toString(36).slice(2)}`)
   const [modalPos, setModalPos] = useState({ x: 0, y: 0 })
   const dragOffset = useRef({ x: 0, y: 0 })
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null
+  const renderModalPortal = (node) => {
+    if (!node) return null
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node
+  }
 
   const announceModalOpen = () => {
     try {
@@ -54,7 +66,19 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
       ? parsedRemote.embedUrl
       : null
   const videoUrl = objectUrl || (embedUrl ? null : src)
-  const displayVideoSrc = objectUrl || (src && getMediaUrl ? getMediaUrl(src) : src)
+  const displayVideoSrcCandidates = objectUrl
+    ? [objectUrl]
+    : src
+      ? (
+          getMediaUrlCandidates
+            ? getMediaUrlCandidates(src)
+            : [getMediaUrl ? getMediaUrl(src) : src]
+        ).filter(Boolean)
+      : []
+  const displayVideoSrc =
+    displayVideoSrcCandidates[
+      Math.min(displayVideoSrcIndex, Math.max(0, displayVideoSrcCandidates.length - 1))
+    ] || null
   const hasVideo = Boolean(videoUrl || embedUrl)
 
   const alignMargins =
@@ -76,16 +100,25 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     }
   }
 
+  const preventNativeDrag = e => {
+    e.preventDefault()
+  }
+
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
 
   /* ================= OPEN MODAL ================= */
 
   const openAtEvent = e => {
+    if (!canEdit) return
     e.stopPropagation()
-    setModalPos({
-      x: e.clientX + 10,
-      y: e.clientY - 10,
-    })
+    const rect = modalRef.current?.getBoundingClientRect?.()
+    setModalPos(
+      clampFixedModalPosition(
+        { x: e.clientX + 10, y: e.clientY - 10 },
+        rect || VIDEO_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
     announceModalOpen()
     setOpen(true)
   }
@@ -115,6 +148,31 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     return () => document.removeEventListener('mousedown', close)
   }, [open])
 
+  useEffect(() => {
+    setDisplayVideoSrcIndex(0)
+  }, [objectUrl, src])
+
+  useEffect(() => {
+    if (!open) return
+
+    const clampModalToViewport = () => {
+      const rect = modalRef.current?.getBoundingClientRect?.()
+      if (!rect) return
+      setModalPos(prev => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN)
+        if (next.x === prev.x && next.y === prev.y) return prev
+        return next
+      })
+    }
+
+    const rafId = window.requestAnimationFrame(clampModalToViewport)
+    window.addEventListener('resize', clampModalToViewport)
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', clampModalToViewport)
+    }
+  }, [open])
+
   /* ================= DRAG MODAL ================= */
 
   const startDragModal = e => {
@@ -128,10 +186,17 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   }
 
   const onDragModal = e => {
-    setModalPos({
-      x: e.clientX - dragOffset.current.x,
-      y: e.clientY - dragOffset.current.y,
-    })
+    const rect = modalRef.current?.getBoundingClientRect?.()
+    setModalPos(
+      clampFixedModalPosition(
+        {
+          x: e.clientX - dragOffset.current.x,
+          y: e.clientY - dragOffset.current.y,
+        },
+        rect || VIDEO_MODAL_ESTIMATED_SIZE,
+        MODAL_VIEWPORT_MARGIN
+      )
+    )
   }
 
   const stopDragModal = () => {
@@ -142,6 +207,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   /* ================= SET VIDEO ================= */
 
   const setVideo = videoSrc => {
+    if (!canEdit) return
     const clean = String(videoSrc || '').trim()
     if (!clean) return
 
@@ -163,21 +229,23 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     setUrl('')
   }
 
+  const uploadVideoFile = async file => {
+    if (!docUploadFile) {
+      throw new Error('Documentation upload service is unavailable')
+    }
+
+    const path = await docUploadFile(file)
+    updateAttributes({ src: path, fileId: null })
+  }
+
   const onUpload = file => {
+    if (!canEdit) return
     if (!file || !file.type.startsWith('video/')) return
-    ;(async () => {
+    void (async () => {
       try {
-        if (docUploadFile) {
-          const path = await docUploadFile(file)
-          if (path) {
-            updateAttributes({ src: path, fileId: null })
-          }
-        } else {
-          const saved = await saveFile(file)
-          updateAttributes({ fileId: saved.id, src: null })
-        }
-      } catch {
-        // ignore
+        await uploadVideoFile(file)
+      } catch (error) {
+        notifyDocumentationUploadFailure(error, 'видео')
       } finally {
         setOpen(false)
         setUrl('')
@@ -188,6 +256,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   /* ================= DROP (EMPTY) ================= */
 
   const handleDrop = e => {
+    if (!canEdit) return
     e.preventDefault()
     e.currentTarget.classList.remove('drag-over')
 
@@ -246,22 +315,14 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
 
     ;(async () => {
       try {
+        if (!docUploadFile) return
         const blob = src.startsWith('data:')
           ? await blobFromDataUrl(src)
           : await blobFromUrl(src)
-        if (docUploadFile) {
-          const file = new File([blob], 'video', { type: blob.type })
-          const path = await docUploadFile(file)
-          if (path) {
-            updateAttributes({ src: path, fileId: null })
-            migrationRef.current.running = false
-            return
-          }
-        }
-        const id = await saveBlobAsFile({ blob, mimeType: blob.type })
-        updateAttributes({ fileId: id, src: null })
-      } catch {
-        // ignore
+        const file = new File([blob], 'video', { type: blob.type })
+        await uploadVideoFile(file)
+      } catch (error) {
+        console.error('Failed to migrate documentation video block to server upload:', error)
       } finally {
         migrationRef.current.running = false
       }
@@ -271,6 +332,7 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
   /* ================= RESIZE ================= */
 
   const startResize = (e, side, shiftKey = false) => {
+    if (!canEdit) return
     e.preventDefault()
     e.stopPropagation()
 
@@ -331,20 +393,32 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     document.addEventListener('mouseup', up)
   }
 
+  if (!canEdit && !hasVideo) return null
+
   return (
     <>
       <NodeViewWrapper
         className="video-block-wrapper block-resizable"
+        draggable={false}
         onMouseDown={safeSetNodeSelectionHere}
+        onDragStartCapture={preventNativeDrag}
         style={{ width, maxWidth: '100%', ...alignMargins }}
       >
         {/* RESIZE HANDLES */}
-        <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left', e.shiftKey)} />
-        <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right', e.shiftKey)} />
-        {hasVideo && (
+        {canEdit && (
+          <>
+            <div className="block-resize left" contentEditable={false} onMouseDown={e => startResize(e, 'left', e.shiftKey)} />
+            <div className="block-resize right" contentEditable={false} onMouseDown={e => startResize(e, 'right', e.shiftKey)} />
+          </>
+        )}
+        {canEdit && hasVideo && (
           <>
             <div className="block-resize top" contentEditable={false} onMouseDown={e => startResize(e, 'top', e.shiftKey)} />
             <div className="block-resize bottom" contentEditable={false} onMouseDown={e => startResize(e, 'bottom', e.shiftKey)} />
+            <div className="block-resize corner top-left" contentEditable={false} onMouseDown={e => startResize(e, 'top-left', e.shiftKey)} />
+            <div className="block-resize corner top-right" contentEditable={false} onMouseDown={e => startResize(e, 'top-right', e.shiftKey)} />
+            <div className="block-resize corner bottom-left" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-left', e.shiftKey)} />
+            <div className="block-resize corner bottom-right" contentEditable={false} onMouseDown={e => startResize(e, 'bottom-right', e.shiftKey)} />
           </>
         )}
 
@@ -352,15 +426,21 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
         {!hasVideo && (
           <div
             className="file-empty"
-            onClick={openAtEvent}
-            onDragOver={e => {
-              e.preventDefault()
-              e.currentTarget.classList.add('drag-over')
-            }}
-            onDragLeave={e =>
-              e.currentTarget.classList.remove('drag-over')
+            onClick={canEdit ? openAtEvent : undefined}
+            onDragOver={
+              canEdit
+                ? e => {
+                    e.preventDefault()
+                    e.currentTarget.classList.add('drag-over')
+                  }
+                : undefined
             }
-            onDrop={handleDrop}
+            onDragLeave={
+              canEdit
+                ? e => e.currentTarget.classList.remove('drag-over')
+                : undefined
+            }
+            onDrop={canEdit ? handleDrop : undefined}
           >
             + Добавить видео
           </div>
@@ -371,11 +451,13 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
           <div
             className="video-preview"
             style={{ width: '100%', height }}
+            onDragStart={preventNativeDrag}
           >
             {embedUrl ? (
               <iframe
                 src={embedUrl}
                 title="Встроенное видео"
+                draggable={false}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 referrerPolicy="strict-origin-when-cross-origin"
@@ -391,6 +473,13 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
               <video
                 ref={videoRef}
                 src={displayVideoSrc}
+                onError={() => {
+                  setDisplayVideoSrcIndex(prev =>
+                    prev + 1 < displayVideoSrcCandidates.length ? prev + 1 : prev
+                  )
+                }}
+                draggable={false}
+                onDragStart={preventNativeDrag}
                 controls
                 style={{
                   width: '100%',
@@ -404,11 +493,16 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
 
             <button
               className="video-settings-btn"
+              style={{ display: canEdit ? undefined : 'none' }}
               onClick={openAtEvent}
-              title="Настройки видео"
-              aria-label="Настройки видео"
+              title="РќР°СЃС‚СЂРѕР№РєРё РІРёРґРµРѕ"
+              aria-label="РќР°СЃС‚СЂРѕР№РєРё РІРёРґРµРѕ"
             >
-              •
+              <MoreVertRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 18, height: 18, fontSize: 18 }}
+              />
             </button>
           </div>
         )}
@@ -419,14 +513,13 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
             className="video-caption"
             placeholder="Подпись"
             value={caption}
-            onChange={e =>
-              updateAttributes({ caption: e.target.value })
-            }
+            readOnly={!canEdit}
+            onChange={canEdit ? e => updateAttributes({ caption: e.target.value }) : undefined}
           />
         )}
 
         {/* MODAL */}
-        {open && (
+        {canEdit && open && renderModalPortal(
           <div
             ref={modalRef}
             className="image-modal"
@@ -502,3 +595,5 @@ export default function VideoBlockView({ editor, node, updateAttributes, getPos 
     </>
   )
 }
+
+

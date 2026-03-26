@@ -1,5 +1,14 @@
 import { roles } from "../roles.js";
 
+/** JWT subjectType for external user (scope HOTEL | DRIVER, accessType PWA | CRM). */
+export const SUBJECT_TYPE_EXTERNAL_USER = "EXTERNAL_USER";
+
+export const isExternalUser = (user) =>
+  user?.subjectType === SUBJECT_TYPE_EXTERNAL_USER;
+
+/** @deprecated Use isExternalUser. Kept for compatibility. */
+export const isExternalPassengerRequestUser = (user) => isExternalUser(user);
+
 export const safeAccessMenu = (accessMenu) => accessMenu || {};
 
 export const isSuperAdmin = (user) => user?.role === roles.superAdmin;

@@ -35,6 +35,14 @@ a {
     --blue: #007AFF;
     --dark-blue: #0057C3;
     --black: #000;
+
+
+    --log-img-width: 30px;
+    --log-img-height: 30px;
+    --log-text-padding: 25px 0;
+    --log-text-align-items: none;
+
+    --svg-stroke-width: 0.5;
 }
 
 .blueText {
@@ -370,6 +378,6 @@ textarea {
 }
 
 .historyLogTime {
-    color: #54587380;
-    padding-right: 8px;
+    color: var(--text);
+    /* padding-right: 8px; */
 }

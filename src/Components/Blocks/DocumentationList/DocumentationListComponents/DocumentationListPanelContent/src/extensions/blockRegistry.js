@@ -1,18 +1,156 @@
 // src/extensions/blockRegistry.js
+import { Selection, TextSelection } from '@tiptap/pm/state'
 
 // Удаляем "/" и выполняем действие
 const deleteSlashAndExecute = (editor, range, action) => {
-  editor.commands.focus()
-
   const { state, view } = editor
+  try {
+    view.focus()
+  } catch {
+    // ignore
+  }
   // `@tiptap/suggestion` range already includes the trigger char ("/").
   // Deleting `from - 1` can cross textblock/cell boundaries (tables) and break insertion position.
   const docSize = state.doc.content.size
   const from = Math.max(0, Math.min(range.from, docSize))
   const to = Math.max(from, Math.min(range.to, docSize))
   const tr = state.tr.deleteRange(from, to)
+  try {
+    const anchor = Math.max(0, Math.min(from, tr.doc.content.size))
+    tr.setSelection(Selection.near(tr.doc.resolve(anchor), 1))
+  } catch {
+    // ignore selection fallback errors (e.g. uncommon node boundaries)
+  }
   view.dispatch(tr)
+  try {
+    view.focus()
+  } catch {
+    // ignore
+  }
   action(editor)
+}
+
+const clampDocPos = (doc, pos) => {
+  const docSize = doc?.content?.size ?? 0
+  return Math.max(0, Math.min(Number.isFinite(pos) ? pos : 0, docSize))
+}
+
+const getFirstTextCursorPosInNode = (node, nodePos) => {
+  if (!node || typeof nodePos !== 'number') return null
+  if (node.isTextblock) return nodePos + 1
+
+  let cursorPos = null
+  node.descendants((child, offset) => {
+    if (cursorPos != null) return false
+    if (child.isTextblock) {
+      cursorPos = nodePos + offset + 2
+      return false
+    }
+    return true
+  })
+
+  return cursorPos
+}
+
+const getMatchingAncestorFromSelection = (state, matchNode) => {
+  const $from = state?.selection?.$from
+  if (!$from || typeof matchNode !== 'function') return null
+
+  for (let depth = $from.depth; depth > 0; depth -= 1) {
+    let pos = null
+    try {
+      pos = $from.before(depth)
+    } catch {
+      continue
+    }
+
+    const node = $from.node(depth)
+    if (!node) continue
+    if (!matchNode(node, pos)) continue
+
+    return { node, pos }
+  }
+
+  return null
+}
+
+const placeCursorInsideNearestNode = (editor, anchorPos, matchNode) => {
+  if (!editor || typeof matchNode !== 'function') return false
+
+  let view
+  try {
+    view = editor.view
+  } catch {
+    return false
+  }
+
+  const { state } = view
+  const doc = state.doc
+  const safeAnchor = clampDocPos(doc, anchorPos)
+  const selectionMatch = getMatchingAncestorFromSelection(state, matchNode)
+  const searchFrom = Math.max(0, safeAnchor - 64)
+  const searchTo = Math.min(doc.content.size, safeAnchor + 4096)
+
+  let best = selectionMatch
+  if (!best) {
+    doc.nodesBetween(searchFrom, searchTo, (node, pos) => {
+      if (!matchNode(node, pos)) return true
+
+      const containsAnchor =
+        Number.isFinite(node?.nodeSize) &&
+        safeAnchor >= pos &&
+        safeAnchor <= pos + node.nodeSize
+      const distance = Math.abs(pos - safeAnchor)
+
+      if (!best) {
+        best = { node, pos, distance, containsAnchor }
+        return true
+      }
+
+      if (containsAnchor && !best.containsAnchor) {
+        best = { node, pos, distance, containsAnchor }
+        return true
+      }
+
+      if (Boolean(containsAnchor) === Boolean(best.containsAnchor) && distance < best.distance) {
+        best = { node, pos, distance, containsAnchor }
+      }
+      return true
+    })
+  }
+
+  if (!best) return false
+
+  try {
+    const tr = state.tr
+    const textPos = getFirstTextCursorPosInNode(best.node, best.pos)
+
+    if (typeof textPos === 'number') {
+      tr.setSelection(TextSelection.create(doc, clampDocPos(doc, textPos)))
+    } else {
+      tr.setSelection(Selection.near(doc.resolve(clampDocPos(doc, best.pos + 1)), 1))
+    }
+
+    tr.scrollIntoView()
+    view.dispatch(tr)
+    view.focus()
+    return true
+  } catch {
+    return false
+  }
+}
+
+const schedulePlaceCursorInsideNearestNode = (editor, anchorPos, matchNode) => {
+  if (typeof requestAnimationFrame === 'function') {
+    requestAnimationFrame(() => {
+      placeCursorInsideNearestNode(editor, anchorPos, matchNode)
+    })
+    return
+  }
+
+  setTimeout(() => {
+    placeCursorInsideNearestNode(editor, anchorPos, matchNode)
+  }, 0)
 }
 
 export const blockRegistry = [
@@ -38,13 +176,18 @@ Aa
   icon: `H${level}`,
   keywords: [`h${level}`, 'heading', 'заголовок'],
   command: ({ editor, range }) =>
-    deleteSlashAndExecute(editor, range, e =>
+    deleteSlashAndExecute(editor, range, e => {
       e.chain()
-        .focus()
         .unsetFontSize()        // 🔥 сброс липкого fontSize
         .setHeading({ level })  // делаем заголовок
         .run()
-    ),
+
+      schedulePlaceCursorInsideNearestNode(
+        e,
+        range.from,
+        node => node.type?.name === 'heading' && Number(node.attrs?.level || 1) === level
+      )
+    }),
 })),
 
 
@@ -104,9 +247,10 @@ Aa
 </svg>`,
     keywords: ['toggle', 'details', 'раскрываемый'],
     command: ({ editor, range }) =>
-      deleteSlashAndExecute(editor, range, e =>
+      deleteSlashAndExecute(editor, range, e => {
         e.chain().insertToggle().run()
-      ),
+        schedulePlaceCursorInsideNearestNode(e, range.from, node => node.type?.name === 'toggle')
+      }),
   },
 
   /* ================= TABLE ================= */
@@ -146,38 +290,11 @@ Aa
           })
           .run()
 
-        const { state, view } = e
-        const doc = state.doc
-        const from = Math.max(0, range.from - 2)
-        const to = Math.min(doc.content.size, range.from + 2000)
-
-        let wrapperPos = null
-        doc.nodesBetween(from, to, (node, pos) => {
-          if (node.type.name === 'tableWrapper') {
-            wrapperPos = pos
-            return false
-          }
-          return true
-        })
-
-        if (wrapperPos == null) return
-        const wrapperNode = doc.nodeAt(wrapperPos)
-        if (!wrapperNode) return
-
-        // Position inside first cell paragraph, before the single space.
-        let textPos = wrapperPos + 5
-        try {
-          view.dispatch(
-            state.tr.setSelection(
-              state.selection.constructor.near(
-                doc.resolve(textPos),
-                1
-              )
-            )
-          )
-        } catch {
-          // ignore
-        }
+        schedulePlaceCursorInsideNearestNode(
+          e,
+          range.from,
+          node => node.type?.name === 'tableWrapper'
+        )
       }),
   },
 
@@ -211,9 +328,10 @@ Aa
 </svg>`,
     keywords: ['quote', 'цитата'],
     command: ({ editor, range }) =>
-      deleteSlashAndExecute(editor, range, e =>
+      deleteSlashAndExecute(editor, range, e => {
         e.chain().setBlockquote().run()
-      ),
+        schedulePlaceCursorInsideNearestNode(e, range.from, node => node.type?.name === 'blockquote')
+      }),
   },
 
   {
@@ -227,9 +345,10 @@ Aa
 </svg>`,
     keywords: ['frame', 'callout', 'рамка'],
     command: ({ editor, range }) =>
-      deleteSlashAndExecute(editor, range, e =>
+      deleteSlashAndExecute(editor, range, e => {
         e.chain().insertFrameBlock().run()
-      ),
+        schedulePlaceCursorInsideNearestNode(e, range.from, node => node.type?.name === 'frameBlock')
+      }),
   },
 
   /* ================= MEDIA ================= */

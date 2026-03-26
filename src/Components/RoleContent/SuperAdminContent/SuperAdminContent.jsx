@@ -7,6 +7,7 @@ import HotelPage from '../../Blocks/HotelPage/HotelPage'
 import HotelsList from '../../Blocks/HotelsList/HotelsList'
 import Reports from '../../Blocks/Reports/Reports'
 import Reserve from '../../Blocks/Reserve/Reserve'
+import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 import Company from '../../Blocks/Сompany/Сompany'
 import SupportPage from '../../Blocks/SupportPage/SupportPage'
 import PatchNotesList from '../../Blocks/PatchNotesList/PatchNotesList'
@@ -17,6 +18,7 @@ import Analytics from '../../Pages/AnalyticsForAvia/Analytics/Analytics'
 import RegisterOfContracts from '../../Blocks/RegisterOfContracts/RegisterOfContracts'
 import AccessSettings from '../../Blocks/AccessSettings/AccessSettings'
 import DisAdminTransferContent from '../DispatcherAdminContent/DisAdminTransferContent/DisAdminTransferContent'
+import DisAdminAutoparkContent from '../DispatcherAdminContent/DisAdminAutoparkContent/DisAdminAutoparkContent'
 import DispatcherAccessSettings from '../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings'
 import NotificationsSettings from '../../Blocks/NotificationsSettings/NotificationsSettings'
 import DispatcherNotificationsSettings from '../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings'
@@ -25,19 +27,20 @@ const SuperAdminContent = ({ user }) => {
   const { id, hotelID, airlineID, orderId, driversCompanyID } = useParams()
 
   const isTransfer =
-    id === 'orders' ||
+    id === 'orders' || !!orderId;
+
+  const isAutopark =
     id === 'driversCompany' ||
     id === 'driversList' ||
-    id === 'transerDispatchers' ||
-    !!orderId ||
-    (!!driversCompanyID && !id)
+    (!!driversCompanyID && !id);
 
   return (
     <>
       {(id === 'relay' || (!id && !hotelID && !airlineID && !orderId && !driversCompanyID)) && (
         <Estafeta user={user} />
       )}
-      {id === 'reserve' && <Reserve user={user} />}
+      {id === 'representativeRequests' && <RepresentativeRequests user={user} />}
+      {/* {id === 'reserve' && <Reserve user={user} />} */}
       {id === 'company' && <Company user={user} />}
       {id === 'hotels' && <HotelsList user={user} />}
       {id === 'airlines' && <AirlinesList user={user} />}
@@ -56,6 +59,7 @@ const SuperAdminContent = ({ user }) => {
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
       {isTransfer && <DisAdminTransferContent user={user} />}
+      {isAutopark && <DisAdminAutoparkContent user={user} />}
     </>
   )
 }

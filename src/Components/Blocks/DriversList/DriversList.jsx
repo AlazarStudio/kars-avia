@@ -15,8 +15,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import InfoTableDataDriversCompany from "../InfoTableDataDriversCompany/InfoTableDataDriversCompany";
 import ConfirmDriver from "../ConfirmDriver/ConfirmDriver";
+import { hasAccessMenu } from "../../../utils/access";
 
-function DriversList({ children, user, disAdmin, ...props }) {
+function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
@@ -147,7 +148,7 @@ function DriversList({ children, user, disAdmin, ...props }) {
 
   return (
     <>
-      <div className={classes.section} style={disAdmin ? { padding: "0" } : {}}>
+      <div className={classes.section} style={disAdmin ? { padding: "0", overflow: "visible" } : {}}>
         {!disAdmin && <Header>Водители</Header>}
 
         <div className={classes.section_searchAndFilter}>
@@ -174,6 +175,7 @@ function DriversList({ children, user, disAdmin, ...props }) {
               setChooseObject={setChooseObject}
               choosePersonId={chooseObject?.id}
               disAdmin={disAdmin}
+              canAcceptDrivers={!disAdmin || hasAccessMenu(accessMenu, "organizationAcceptDrivers")}
             />
 
             {totalPages > 0 && (
@@ -200,6 +202,7 @@ function DriversList({ children, user, disAdmin, ...props }) {
           show={showRequestSidebar}
           confirm={true}
           disAdmin={disAdmin}
+          canAccept={!disAdmin || hasAccessMenu(accessMenu, "organizationAcceptDrivers")}
           onClose={toggleRequestSidebar}
           chooseObject={chooseObject}
           updateDriver={updateDriver}

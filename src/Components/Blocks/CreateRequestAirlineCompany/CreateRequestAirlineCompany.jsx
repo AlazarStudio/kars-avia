@@ -18,6 +18,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 function CreateRequestAirlineCompany({
   show,
   onClose,
+  onCreated,
   representative,
   id,
   addTarif,
@@ -123,8 +124,7 @@ function CreateRequestAirlineCompany({
       // formData.role &&
       formData.position &&
       formData.login &&
-      formData.password &&
-      formData.department
+      formData.password
     );
   };
 
@@ -231,6 +231,7 @@ function CreateRequestAirlineCompany({
           });
 
           setAddTarif(updatedTarifs);
+          onCreated?.(newUser);
           resetForm();
           onClose();
           setIsLoading(false);
@@ -324,7 +325,7 @@ function CreateRequestAirlineCompany({
                     placeholder="Введите email"
                   // autoComplete="new-password"
                   />
-
+{/* 
                   <label>Роль</label>
                   <MUIAutocomplete
                     dropdownWidth={"100%"}
@@ -342,7 +343,7 @@ function CreateRequestAirlineCompany({
                       }));
                       setIsEdited(true);
                     }}
-                  />
+                  /> */}
                 </>
               )}
 
@@ -385,13 +386,13 @@ function CreateRequestAirlineCompany({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите отдел"}
-                options={addTarif.map((department) => department.name)}
-                value={formData.department}
+                options={["Без отдела", ...addTarif.map((department) => department.name)]}
+                value={formData.department || "Без отдела"}
                 onChange={(event, newValue) => {
                   setIsEdited(true);
                   setFormData((prevData) => ({
                     ...prevData,
-                    department: newValue,
+                    department: newValue === "Без отдела" ? "" : newValue || "",
                   }));
                 }}
               />

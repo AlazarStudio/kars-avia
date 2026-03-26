@@ -1,6 +1,6 @@
+import { lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 
-import TransferOrders from "../../Blocks/TransferOrders/TransferOrders";
 import AirlinePage from "../../Blocks/AirlinePage/AirlinePage";
 import AirlinesList from "../../Blocks/AirlinesList/AirlinesList";
 import HotelPage from "../../Blocks/HotelPage/HotelPage";
@@ -14,10 +14,17 @@ import MyCompany from "../../Blocks/MyCompany/MyCompany";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
 import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
-import TransferOrder from "../../Blocks/TransferOrder/TransferOrder";
 import DriversCompanyList from "../../Blocks/DriversCompanyList/DriversCompanyList";
 import DriversCompanyPage from "../../Blocks/DriversCompanyPage/DriversCompanyPage";
 import DriversList from "../../Blocks/DriversList/DriversList";
+import MUILoader from "../../Blocks/MUILoader/MUILoader";
+
+const TransferOrders = lazy(() =>
+  import("../../Blocks/TransferOrders/TransferOrders")
+);
+const TransferOrder = lazy(() =>
+  import("../../Blocks/TransferOrder/TransferOrder")
+);
 
 const TransferAdminContent = ({ user }) => {
   const { id, hotelID, airlineID, orderId, driversCompanyID } = useParams();
@@ -25,11 +32,17 @@ const TransferAdminContent = ({ user }) => {
   return (
     <>
       {(id === "orders" || (!id && !hotelID && !airlineID && !orderId && !driversCompanyID)) && (
-        <TransferOrders user={user} />
+        <Suspense fallback={<MUILoader fullHeight="100vh" />}>
+          <TransferOrders user={user} />
+        </Suspense>
       )}
 
       {/* детальная страница заказа */}
-      {orderId && <TransferOrder user={user} />}
+      {orderId && (
+        <Suspense fallback={<MUILoader fullHeight="100vh" />}>
+          <TransferOrder user={user} />
+        </Suspense>
+      )}
 
       {id === "driversCompany" && <DriversCompanyList user={user} />}
       {id === "driversList" && <DriversList user={user} />}

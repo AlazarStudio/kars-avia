@@ -3,7 +3,7 @@ import classes from "./InfoTableDataUpdates.module.css";
 import { Modal, Box, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useQuery } from "@apollo/client";
-import { GET_DOCUMENTATION_TREE, server } from "../../../../graphQL_requests";
+import { GET_DOCUMENTATION_TREE, getMediaUrl } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import { roles } from "../../../roles";
 
@@ -21,10 +21,10 @@ function DocNode({ node, openModal }) {
           {node.images.map((i, index) => (
             <img
               key={index}
-              src={`${server}${i}`}
+              src={getMediaUrl(i)}
               alt=""
               loading="lazy"
-              onClick={() => openModal(`${server}${i}`)}
+              onClick={() => openModal(getMediaUrl(i))}
             />
           ))}
         </div>
@@ -243,10 +243,10 @@ function InfoTableDataUpdates({
                 {data.documentationTree.images.map((i, index) => (
                   <img
                     key={index}
-                    src={`${server}${i}`}
+                    src={getMediaUrl(i)}
                     alt=""
                     loading="lazy"
-                    onClick={() => openModal(`${server}${i}`)}
+                    onClick={() => openModal(getMediaUrl(i))}
                   />
                 ))}
               </div>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import {
   ApolloProvider,
@@ -7,6 +7,7 @@ import {
   split,
   HttpLink,
 } from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
@@ -23,40 +24,62 @@ import NewPlacement from "./Components/PlacementDND/NewPlacement/NewPlacement";
 import NewPlacementV2 from "./Components/PlacementDNDV2/NewPlacementV2";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
-import { server, path, getCookie } from "../graphQL_requests";
+import { server, path } from "../graphQL_requests";
 import { useAuth } from "./AuthContext";
+import { authService } from "./services/authService";
+import { createAuthErrorLink } from "./services/authErrorLink";
 import Login from "./Components/Pages/Login/Login";
 import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
 import { TokenRefresher } from "./TokenRefresher";
+import { UserActivityTracker } from "./UserActivityTracker";
 import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementRepresentative/ReservePlacementRepresentative";
-import TransferOrder from "./Components/Blocks/TransferOrder/TransferOrder";
+import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHotelDetailPage/RepresentativeHotelDetailPage";
+import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
+import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDriverDetailPage/RepresentativeDriverDetailPage";
+import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
+
+const TransferOrder = lazy(() =>
+  import("./Components/Blocks/TransferOrder/TransferOrder")
+);
 
 function App() {
   const { user } = useAuth();
 
-  const token = getCookie("token");
+  const authLink = setContext((operation, { context }) => {
+    // External login must run without Bearer so backend gets empty context
+    if (operation?.operationName === "AuthorizeExternalAuth") {
+      return {
+        ...context,
+        headers: { ...(context?.headers || {}) },
+      };
+    }
+    const token = authService.getAccessToken();
+    return {
+      ...context,
+      headers: {
+        ...(context?.headers || {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    };
+  });
+
+  const errorLink = createAuthErrorLink({
+    onLogout: () => window.location.replace("/login"),
+  });
 
   const uploadLink = createUploadLink({
     uri: `${server}/graphql`,
-    // credentials: 'include',
   });
 
   const wsLink = new GraphQLWsLink(
     createClient({
       // url: `wss://${path}/graphql`,
       url: `ws://${path}/graphql`,
-      connectionParams: {
-        Authorization: `Bearer ${token}`,
+      connectionParams: () => {
+        const t = authService.getAccessToken();
+        return t ? { Authorization: `Bearer ${t}` } : {};
       },
-      // connectionParams: () => {
-      // if (!token) {
-      //   return {};
-      // }
-      // return {
-      //   Authorization: `Bearer ${token}`,
-      // };
-      // },
     })
   );
 
@@ -69,7 +92,7 @@ function App() {
       );
     },
     wsLink,
-    uploadLink
+    errorLink.concat(authLink).concat(uploadLink)
   );
 
   const client = new ApolloClient({
@@ -79,8 +102,10 @@ function App() {
 
   return (
     <ApolloProvider client={client}>
-      {/* <TokenRefresher /> */}
+      <TokenRefresher />
+      {user && <UserActivityTracker />}
       <Routes>
+        <Route path="/external-login" element={<ExternalLogin />} />
         {user ? (
           <Route path="/" element={<Layout />}>
             <Route index element={<Main_Page user={user} />} />
@@ -107,14 +132,26 @@ function App() {
             />
 
             {/* Резерв внутри заявки */}
-            <Route
+            {/* <Route
               path="/:id/reservePlacement/:idRequest"
               element={<ReservePlacement user={user} />}
-            />
-            {/* <Route
+            /> */}
+            <Route
               path="/:id/representativeRequestsPlacement/:idRequest"
               element={<ReservePlacementRepresentative user={user} />}
-            /> */}
+            />
+            <Route
+              path="/:id/representativeRequestsPlacement/:idRequest/hotel/:hotelId"
+              element={<RepresentativeHotelDetailPage user={user} />}
+            />
+            <Route
+              path="/:id/representativeRequestsPlacement/:idRequest/hotel/:hotelId/report"
+              element={<RepresentativeHotelReportPage user={user} />}
+            />
+            <Route
+              path="/:id/representativeRequestsPlacement/:idRequest/driver/:driverIndex"
+              element={<RepresentativeDriverDetailPage user={user} />}
+            />
 
             {/* Шахматка */}
             {/* <Route
@@ -124,7 +161,11 @@ function App() {
 
             {/* <Route
               path="/orders/:id"
-              element={<TransferOrder user={user} />}
+              element={
+                <Suspense fallback={<div style={{ padding: 24 }}>Загрузка…</div>}>
+                  <TransferOrder user={user} />
+                </Suspense>
+              }
             /> */}
 
             <Route path="/newPlacement/:idHotel" element={<NewPlacement />} />

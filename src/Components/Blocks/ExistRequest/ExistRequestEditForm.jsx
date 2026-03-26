@@ -2,7 +2,7 @@ import React from "react";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import MUILoader from "../MUILoader/MUILoader";
-import { convertToDate } from "../../../../graphQL_requests";
+import { convertToDateNew } from "../../../../graphQL_requests";
 import classes from "./ExistRequest.module.css";
 
 function ExistRequestEditForm({
@@ -19,6 +19,8 @@ function ExistRequestEditForm({
   onHotelChange,
   onRoomChange,
   onReserveChange,
+  formDataExtend,
+  onExtendChange,
 }) {
   if (formData.status === "created" || formData.status === "opened") {
     return null;
@@ -35,7 +37,7 @@ function ExistRequestEditForm({
       </div>
       <div className={classes.requestDataInfo}>
         <div className={classes.requestDataInfo_title}>Тип заявки</div>
-        {isEditing ? (
+        {/* {isEditing ? (
           <MUIAutocomplete
             dropdownWidth="60%"
             label="Тип заявки"
@@ -49,7 +51,10 @@ function ExistRequestEditForm({
           <div className={classes.requestDataInfo_desc}>
             {formData.reserve ? "Резерв" : "Квота"}
           </div>
-        )}
+        )} */}
+        <div className={classes.requestDataInfo_desc}>
+          {formData.reserve ? "Резерв" : "Квота"}
+        </div>
       </div>
       <div className={classes.requestDataInfo}>
         <div className={classes.requestDataInfo_title}>
@@ -162,17 +167,55 @@ function ExistRequestEditForm({
       )}
       <div className={classes.requestDataInfo}>
         <div className={classes.requestDataInfo_title}>Заезд</div>
-        <div className={classes.requestDataInfo_desc}>
-          {convertToDate(formData.arrival)} -{" "}
-          {convertToDate(formData.arrival, true)}
-        </div>
+        {isEditing && formDataExtend && onExtendChange ? (
+          <div className={classes.reis_info} style={{ width: "60%" }}>
+            <input
+              type="date"
+              name="arrivalDate"
+              value={formDataExtend.arrivalDate || ""}
+              onChange={onExtendChange}
+              placeholder="Дата"
+            />
+            <input
+              type="time"
+              name="arrivalTime"
+              value={formDataExtend.arrivalTime || ""}
+              onChange={onExtendChange}
+              placeholder="Время"
+            />
+          </div>
+        ) : (
+          <div className={classes.requestDataInfo_desc}>
+            {convertToDateNew(formData.arrival)} -{" "}
+            {convertToDateNew(formData.arrival, true)}
+          </div>
+        )}
       </div>
       <div className={classes.requestDataInfo}>
         <div className={classes.requestDataInfo_title}>Выезд</div>
-        <div className={classes.requestDataInfo_desc}>
-          {convertToDate(formData.departure)} -{" "}
-          {convertToDate(formData.departure, true)}
-        </div>
+        {isEditing && formDataExtend && onExtendChange ? (
+          <div className={classes.reis_info} style={{ width: "60%" }}>
+            <input
+              type="date"
+              name="departureDate"
+              value={formDataExtend.departureDate || ""}
+              onChange={onExtendChange}
+              placeholder="Дата"
+            />
+            <input
+              type="time"
+              name="departureTime"
+              value={formDataExtend.departureTime || ""}
+              onChange={onExtendChange}
+              placeholder="Время"
+            />
+          </div>
+        ) : (
+          <div className={classes.requestDataInfo_desc}>
+            {convertToDateNew(formData.departure)} -{" "}
+            {convertToDateNew(formData.departure, true)}
+          </div>
+        )}
       </div>
     </>
   );

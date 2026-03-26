@@ -4,7 +4,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Button from "../../Standart/Button/Button.jsx";
 import HotelAboutRoomBlock from "../HotelAboutRoomBlock/HotelAboutRoomBlock.jsx";
 import {
-  server,
+  getMediaUrl,
   getCookie,
   GET_HOTEL,
   decodeJWT,
@@ -250,7 +250,7 @@ function HotelAbout_tabComponent({ id }) {
                       <img
                         src={
                           hotel.images.length !== 0
-                            ? `${server}${hotel.images[0]}`
+                            ? getMediaUrl(hotel.images[0])
                             : "/no-avatar.png"
                         }
                         alt={hotel.name}
@@ -340,7 +340,7 @@ function HotelAbout_tabComponent({ id }) {
                           >
                             {/* <div className={classes.hotelAboutImage}> */}
                             <img
-                              src={`${server}${img}`}
+                              src={getMediaUrl(img)}
                               alt=""
                               // onClick={() =>
                               //   user?.role === roles.dispatcerAdmin ||

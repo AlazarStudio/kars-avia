@@ -11,7 +11,7 @@ import {
   GET_ORGANIZATION,
   getCookie,
   ORGANIZATION_CREATED_SUBSCRIPTION,
-  server,
+  getMediaUrl,
   UPDATE_AIRLINE,
   UPDATE_ORGANIZATION,
 } from "../../../../graphQL_requests.js";
@@ -32,6 +32,7 @@ import RequisitesIcon from "../../../shared/icons/RequisitesIcon.jsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
 import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
+import { hasAccessMenu } from "../../../utils/access";
 
 function OrganizationAbout_tabComponent({ id, accessMenu, ...props }) {
   const token = getCookie("token");
@@ -271,8 +272,7 @@ function OrganizationAbout_tabComponent({ id, accessMenu, ...props }) {
                     src={
                       newImage
                         ? URL.createObjectURL(newImage)
-                        : organization.images && organization.images.length > 0 ? `${server}${organization?.images?.[0]}`
-                        : "/no-avatar.png"
+                        : getMediaUrl(organization?.images?.[0]) ?? "/no-avatar.png"
                     }
                     alt={organization.name}
                   />
@@ -299,7 +299,8 @@ function OrganizationAbout_tabComponent({ id, accessMenu, ...props }) {
                         История
                       </button>
                     </div> */}
-                    {(!user?.airlineId || accessMenu?.airlineUpdate) && (
+                    {((!user?.airlineId || accessMenu?.airlineUpdate) &&
+                      (user?.role !== roles.dispatcerAdmin || !accessMenu || hasAccessMenu(accessMenu, "organizationUpdate"))) && (
                       <Button onClick={handleEditClick}>
                         <img
                           src={isEditing ? "/save.png" : "/editIcon.png"}

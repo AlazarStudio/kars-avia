@@ -34,6 +34,39 @@
 .titleHeader {
     display: flex;
     gap: 10px;
+    align-items: center;
+    min-width: 0;
+}
+
+.titleText {
+    white-space: nowrap;
+}
+
+.representativeLinkActions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 10px;
+}
+
+.representativeLinkButton {
+    border: none;
+    background: transparent;
+    color: var(--dark-blue);
+    border-radius: 0;
+    height: auto;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.representativeLinkButton:disabled {
+    opacity: .7;
+    cursor: default;
 }
 
 .backButton {
@@ -55,6 +88,20 @@
 }
 
 
+.tabsRowWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.tabsRowActions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
 .section_searchAndFilter {
     min-height: 42px;
     display: flex;
@@ -63,6 +110,82 @@
 }
 
 .filter_wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    padding: 0;
+    list-style-type: none;
+    /* gap: 10px; */
+    align-items: center;
+}
+
+.filter_wrapper::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--no-active);
+    z-index: 1;
+}
+
+.filter_wrapper button {
+    position: relative;
+    font-size: 16px;
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--no-active);
+    transition: all 0.3s ease-in-out;
+    outline: none;
+    border: none;
+}
+
+.filter_wrapper button:hover {
+    color: var(--text);
+}
+
+.activeButton {
+    color: var(--text) !important;
+    background-color: transparent;
+}
+
+.activeButton::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--dark-blue);
+    z-index: 2;
+}
+
+.historyButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 30px;
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #545873;
+    background-color: var(--white);
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    text-transform: none;
+    width: auto;
+    justify-content: center;
+}
+/* .historyButton:hover {
+    background-color: #E4E4EF;
+    border-color: var(--text);
+} */
+
+/* .filter_wrapper {
     display: inline-flex;
     gap: 10px;
     border-radius: 10px;
@@ -92,7 +215,7 @@
     background-color: #E4E4EF !important;
     color: #545873 !important;
     opacity: 1 !important;
-}
+} */
 
 .filterCityAndHotel {
     display: flex;
@@ -145,6 +268,31 @@
     cursor: pointer;
 }
 
+.rasselenieBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 30px;
+    min-height: 40px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #545873;
+    background-color: var(--white);
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    text-transform: none;
+    width: auto;
+    justify-content: center;
+}
+
+.rasselenieBtn img {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
 .chatWrapper {
     /* width: 500px; */
     background-color: #fff;
@@ -158,10 +306,16 @@
     display: grid;
     grid-template-columns: 1fr 360px;
     gap: 20px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .tabContent {
     height: 100%;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .tableCard {
@@ -233,4 +387,372 @@
         font-size: 28px;
         line-height: 34.73px;
     }
+
+    .representativeLinkButton {
+        height: 30px;
+        font-size: 12px;
+    }
+}
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1300;
+}
+
+.modalContent {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    min-width: 400px;
+    max-width: 90vw;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modalContent h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+}
+
+.modalContent p {
+    margin: 0 0 12px 0;
+    color: var(--main-gray, #545873);
+    font-size: 14px;
+}
+
+.modalReasonInput {
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* История заявки — боковая панель */
+.historySidebarInner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+}
+
+.historySidebarInner .historyModalHeader {
+    flex-shrink: 0;
+}
+
+.historySidebarInner .historyModalBody {
+    flex: 1;
+    min-height: 0;
+}
+
+.historySidebarTitle {
+    margin: 0;
+    font-size: 18px;
+}
+
+.historyModalContent {
+    background: #fff;
+    border-radius: 10px;
+    min-width: 420px;
+    max-width: 560px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.historyModalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #E8EDF4;
+}
+
+.historyModalHeader h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.historyModalClose {
+    background: none;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: #788190;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.historyModalClose:hover {
+    color: #000;
+}
+
+.historyModalBody {
+    overflow-y: auto;
+    padding: 16px 20px;
+}
+
+.historyLoading,
+.historyEmpty {
+    color: var(--main-gray, #545873);
+    padding: 20px 0;
+}
+
+.historySection {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.historyDate {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text, #545873);
+    margin-bottom: 8px;
+}
+
+.logText {
+    width: 100%;
+    padding: var(--log-text-padding);
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    border-bottom: 1px solid #EEF2F7;
+}
+
+.logText:last-child {
+    border-bottom: none;
+}
+
+.logInfo {
+    display: flex;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.logInfoText {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.historyLogReason {
+    font-size: 12px;
+    color: var(--main-gray, #788190);
+}
+
+.historyLogTime {
+    flex-shrink: 0;
+    color: var(--main-gray, #788190);
+    font-size: 14px;
+}
+
+.historyLog {
+    color: var(--text, #333);
+    font-size: 14px;
+}
+
+.logImg {
+    min-width: var(--log-img-width) !important;
+    max-width: var(--log-img-width) !important;
+    height: var(--log-img-height);
+    flex-shrink: 0;
+}
+
+.logImg img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.historyPagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 20px;
+    border-top: 1px solid #E8EDF4;
+    list-style: none;
+    margin: 0;
+}
+
+.historyPagination li {
+    margin: 0;
+}
+
+.historyPagination a {
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.historyPaginationActive a {
+    background: #005EFF;
+    color: #fff;
+}
+
+.historyPaginationNumber {
+    color: #545873;
+}
+
+/* RepresentativeDriverDetailPage */
+.driverDetailCard {
+    background: #fff;
+    border: 1px solid #E4E4EF;
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.driverDetailRow {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+}
+
+.driverDetailLabel {
+    min-width: 180px;
+    color: var(--main-gray, #545873);
+    font-size: 14px;
+}
+
+.driverPassengersPlaceholder {
+    color: var(--main-gray, #788190);
+    font-size: 14px;
+    margin: 0;
+}
+
+.driverSummaryCard {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px;
+    background: #fff;
+    border: 1px solid #E4E4EF;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    max-width: 480px;
+}
+
+.driverSummaryCard:hover {
+    background: #f8f9fc;
+    border-color: var(--primary, #2A6EF5);
+}
+
+.driverSummaryName {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text, #333);
+}
+
+.driverSummaryPhone {
+    font-size: 14px;
+    color: var(--main-gray, #545873);
+}
+
+.driverSummaryHint {
+    font-size: 13px;
+    color: var(--main-gray, #788190);
+    margin-top: 4px;
+}
+
+.driverPassengersTableWrap {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.driverPassengersTableHead {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    gap: 20px;
+    background: #fff;
+    color: #9E9E9E;
+    font-size: 16px;
+    border-bottom: 1px solid #E4E4EF;
+    border-radius: 10px 10px 0 0;
+}
+
+.driverPassengersColId {
+    width: 60px;
+}
+
+.driverPassengersColFio {
+    flex: 2;
+}
+
+.driverPassengersColPhone {
+    flex: 1;
+}
+
+.driverPassengersColSeat {
+    width: 100px;
+}
+
+.driverPassengersColAddressFrom {
+    flex: 2;
+}
+
+.driverPassengersColAddressTo {
+    flex: 2;
+}
+
+.driverPassengersColActions {
+    width: 80px;
+    flex-shrink: 0;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.driverPassengersColActions button {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.driverPassengersTableCard {
+    background: #fff;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.driverPassengersTableRow {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    gap: 20px;
+    background: #fff;
+    color: var(--main-black, #1a1a1a);
+    font-size: 16px;
+    border-bottom: 1px solid #E4E4EF;
+}
+
+.driverPassengersTableRow:last-child {
+    border-bottom: none;
 }

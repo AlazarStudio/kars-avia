@@ -248,11 +248,14 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
 
     try {
       const response = await createRequest({ variables: { input } });
+      const createdRequestNumber = response?.data?.createTransfer?.requestNumber;
       resetForm();
       onClose();
       addNotification
         ? addNotification(
-          "Создание заявки для экипажа прошло успешно.",
+          createdRequestNumber
+            ? `Заявка № ${createdRequestNumber} создана успешно.`
+            : "Создание заявки для экипажа прошло успешно.",
           "success"
         )
         : null;
@@ -315,7 +318,7 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
           </div>
         </div>
 
-        <div className={classes.tabs}>
+        {/* <div className={classes.tabs}>
           <div
             className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""
               }`}
@@ -323,8 +326,8 @@ function CreateTransferRequest({ show, onClose, user, addNotification }) {
           >
             Общая
           </div>
-          {/* <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div> */}
-        </div>
+          <div className={`${classes.tab} ${activeTab === 'Доп. услуги' ? classes.activeTab : ''}`} onClick={() => handleTabChange('Доп. услуги')}>Доп. услуги</div>
+        </div> */}
 
         {isLoading ? (
           <MUILoader loadSize={"50px"} fullHeight={"75vh"} />

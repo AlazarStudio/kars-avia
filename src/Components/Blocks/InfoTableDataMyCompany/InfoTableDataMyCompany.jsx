@@ -4,6 +4,7 @@ import InfoTable from "../InfoTable/InfoTable.jsx";
 
 import { server } from '../../../../graphQL_requests.js';
 import { roles } from "../../../roles.js";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
 
 function InfoTableDataMyCompany({ children, user, toggleRequestSidebar, openDeleteComponent, requests, setChooseObject, id, ...props }) {
     const handleObject = (item, index) => {
@@ -46,9 +47,8 @@ function InfoTableDataMyCompany({ children, user, toggleRequestSidebar, openDele
                             </div>
                         </div>
                         <div className={`${classes.buttonsWrapper} ${classes.w20}`}>
-                            <img 
-                                src="/edit.svg.png" 
-                                alt="" 
+                            <EditPencilIcon
+                                cursor="pointer"
                                 style={{width:"fit-content", height:"fit-content"}}
                                 onClick={() => handleObject(item, index)}
                             />

@@ -146,6 +146,7 @@
     font-size: 14px;
     font-weight: 400;
     width: 40%;
+    color: var(--text);
 }
 
 .requestDataInfo_desc {
@@ -358,7 +359,7 @@
     font-size: 18px;
     font-weight: 700;
     line-height: 24.2px;
-    color: var(--main-gray);
+    color: var(--text);
     margin-bottom: 15px;
 }
 

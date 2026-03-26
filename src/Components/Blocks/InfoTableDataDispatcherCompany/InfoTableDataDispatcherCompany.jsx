@@ -1,8 +1,10 @@
 import React from "react";
 import classes from "./InfoTableDataDispatcherCompany.module.css";
 import InfoTable from "../InfoTable/InfoTable";
-import { server } from "../../../../graphQL_requests";
+import { getMediaUrl } from "../../../../graphQL_requests";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { canAccessMenu, isDispatcherAdmin } from "../../../utils/access";
 
 function InfoTableDataDispatcherCompany({
@@ -32,19 +34,16 @@ function InfoTableDataDispatcherCompany({
               <div className={classes.infoTable_buttons}>
                 {!group.isNoDepartment && canEdit && (
                   <>
-                    <img
-                      src="/editPassenger.png"
-                      alt="Edit"
+                    <EditPencilIcon
+                      cursor="pointer"
                       onClick={() => onEditDepartment?.(group)}
                     />
                     <SettingsIcon
                       cursor={"pointer"}
-                      strokeWidth={0.5}
                       onClick={() => onOpenAccess?.(group)}
                     />
-                    <img
-                      src="/deletePassenger.png"
-                      alt="Delete"
+                    <DeleteIcon
+                      cursor="pointer"
                       onClick={() => onDeleteDepartment?.(group)}
                     />
                   </>
@@ -66,7 +65,7 @@ function InfoTableDataDispatcherCompany({
                       <img
                         src={
                           dispatcher.images?.[0]
-                            ? `${server}${dispatcher.images[0]}`
+                            ? getMediaUrl(dispatcher.images[0])
                             : "/no-avatar.png"
                         }
                         alt="avatar"
@@ -83,19 +82,17 @@ function InfoTableDataDispatcherCompany({
                           : "Модератор"}
                       </div>
                       <div className={classes.employeePost}>
-                        {dispatcher.position?.name}
+                        {dispatcher?.position?.name}
                       </div>
                     </div>
                     {canEdit && (
                       <div className={classes.infoTable_buttons}>
-                        <img
-                          src="/editPassenger.png"
-                          alt="Edit"
+                        <EditPencilIcon
+                          cursor="pointer"
                           onClick={() => onEditDispatcher?.(dispatcher)}
                         />
-                        <img
-                          src="/deletePassenger.png"
-                          alt="Delete"
+                        <DeleteIcon
+                          cursor="pointer"
                           onClick={() => onDeleteDispatcher?.(dispatcher)}
                         />
                       </div>

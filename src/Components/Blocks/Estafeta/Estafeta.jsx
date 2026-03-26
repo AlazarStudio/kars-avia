@@ -428,7 +428,8 @@ function Estafeta({ user, accessMenu }) {
       const matchesDate =
         !filterData.filterDate ||
         convertToDate(Number(request.createdAt)) === filterData.filterDate;
-      const matchesSearch = searchQuery.toLowerCase();
+      // Поиск выполняется на бэке, фронтовый поиск временно отключен.
+      // const matchesSearch = searchQuery.toLowerCase();
 
       // Если выбрана авиакомпания, фильтруем по ней. Если "Все авиакомпании", не фильтруем.
       const matchesAirline = selectedAirline
@@ -443,29 +444,29 @@ function Estafeta({ user, accessMenu }) {
       // Получаем читаемое название статуса
       const statusDisplay = statusMapping[request.status] || request.status;
 
-      const searchFields = [
-        request.requestNumber,
-        request?.person?.name,
-        request?.person?.number,
-        request?.person?.position,
-        request?.person?.gender,
-        request.airline.name,
-        request.airport.name,
-        request.airport.code,
-        request.arrival,
-        request.departure,
-        request.status,
-        statusDisplay,
-      ];
+      // const searchFields = [
+      //   request.requestNumber,
+      //   request?.person?.name,
+      //   request?.person?.number,
+      //   request?.person?.position,
+      //   request?.person?.gender,
+      //   request.airline.name,
+      //   request.airport.name,
+      //   request.airport.code,
+      //   request.arrival,
+      //   request.departure,
+      //   request.status,
+      //   statusDisplay,
+      // ];
 
       return (
         // matchesAirline &&
         // matchesAirport &&
         matchesSelect &&
-        matchesDate &&
-        searchFields?.some((field) =>
-          String(field)?.toLowerCase().includes(matchesSearch)
-        )
+        matchesDate
+        // && searchFields?.some((field) =>
+        //   String(field)?.toLowerCase().includes(matchesSearch)
+        // )
       );
     });
   }, [

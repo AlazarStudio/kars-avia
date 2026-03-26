@@ -1,7 +1,7 @@
 /* ================= TABLE WRAPPER ================= */
 
 .table-wrapper {
-  margin: 12px 0;
+  margin: 12px 0 30px;
   max-width: 100%;
 }
 
@@ -10,6 +10,157 @@
   width: fit-content;
   max-width: 100%;
   overflow-x: auto;
+}
+
+.table-wrapper--header-row .table-container table tr:first-child > th,
+.table-wrapper--header-row .table-container table tr:first-child > td,
+.table-wrapper--header-column .table-container table tr > th:first-child,
+.table-wrapper--header-column .table-container table tr > td:first-child {
+  background-color: var(--table-header-bg, #e2e8f0);
+  font-weight: 600;
+}
+
+.table-header-tools {
+  position: fixed;
+  z-index: 12;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
+}
+
+.table-header-tools:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  box-shadow: 0 5px 14px rgba(15, 23, 42, 0.18);
+}
+
+.table-header-tool-btn {
+  width: 22px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: #374151;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
+}
+
+.table-header-tool-btn svg {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
+.table-header-tool-btn:hover {
+  background: #f1f5f9;
+  border-color: #d1d5db;
+}
+
+.table-header-tool-btn.active {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #111827;
+}
+
+.table-header-tool-btn-chevron svg {
+  width: 15px;
+  height: 15px;
+  font-size: 15px;
+}
+
+.table-header-color-modal {
+  position: fixed;
+  z-index: 20;
+  width: 248px;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+}
+
+.table-header-color-modal-title {
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.table-header-color-presets {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.table-header-color-swatch {
+  width: 22px;
+  height: 22px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.table-header-color-swatch.active {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.table-header-color-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.table-header-color-picker {
+  width: 34px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.table-header-color-hex {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #111827;
+}
+
+.table-header-color-hex:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+.table-header-color-reset {
+  margin-top: 10px;
+  width: 100%;
+  height: 30px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #374151;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.table-header-color-reset:hover {
+  background: #f1f5f9;
 }
 
 /* Таблица не должна растягиваться на всю ширину редактора */
@@ -103,3 +254,50 @@
   }
 }
 
+.table-drag-handle {
+  position: fixed;
+  z-index: 10;
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #6b7280;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.12);
+  cursor: grab;
+  user-select: none;
+}
+
+.table-drag-handle svg {
+  width: 14px;
+  height: 14px;
+  font-size: 14px;
+}
+
+.table-drag-handle-col svg {
+  transform: rotate(90deg);
+}
+
+.table-drag-handle:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4f46e5;
+}
+
+.table-drag-handle:active {
+  cursor: grabbing;
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+.table-drop-guide {
+  position: fixed;
+  z-index: 8;
+  pointer-events: none;
+  border-radius: 2px;
+  background: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
+}

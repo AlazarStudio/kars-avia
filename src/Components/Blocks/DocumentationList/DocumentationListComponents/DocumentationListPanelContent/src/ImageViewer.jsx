@@ -1,5 +1,16 @@
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
+import AddRoundedIcon from '@mui/icons-material/AddRounded'
+import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded'
+import RotateLeftRoundedIcon from '@mui/icons-material/RotateLeftRounded'
+import RotateRightRoundedIcon from '@mui/icons-material/RotateRightRounded'
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded'
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded'
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded'
 import './ImageViewer.css'
 
 const wrapIndex = (value, length) => {
@@ -13,6 +24,9 @@ export default function ImageViewer({
   index = 0,
   onClose,
 }) {
+  const iconBaseStyle = { width: 22, height: 22, fontSize: 22, flex: '0 0 auto' }
+  const navIconStyle = { width: 28, height: 28, fontSize: 28, flex: '0 0 auto' }
+
   const [current, setCurrent] = useState(() => wrapIndex(index, images.length))
   const [scale, setScale] = useState(1)
   const [rotate, setRotate] = useState(0)
@@ -111,7 +125,7 @@ export default function ImageViewer({
   }
 
   // Обработчики для перетаскивания
-  const handleMouseDown = (e) => {
+  const handleMouseDown = useCallback((e) => {
     if (!canDrag) return
     
     e.preventDefault()
@@ -125,9 +139,9 @@ export default function ImageViewer({
     if (imageRef.current) {
       imageRef.current.style.cursor = 'grabbing'
     }
-  }
+  }, [canDrag, position.x, position.y])
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!isDragging || !canDrag) return
     
     const newX = e.clientX - dragStart.x
@@ -149,14 +163,14 @@ export default function ImageViewer({
     } else {
       setPosition({ x: newX, y: newY })
     }
-  }
+  }, [canDrag, dragStart.x, dragStart.y, isDragging])
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setIsDragging(false)
     if (imageRef.current) {
       imageRef.current.style.cursor = canDrag ? 'grab' : 'default'
     }
-  }
+  }, [canDrag])
 
   // Добавляем обработчики для перетаскивания
   useEffect(() => {
@@ -168,7 +182,8 @@ export default function ImageViewer({
         document.removeEventListener('mouseup', handleMouseUp)
       }
     }
-  }, [isDragging, dragStart])
+    return undefined
+  }, [handleMouseMove, handleMouseUp, isDragging])
 
   // Обработчик клика на картинку для сброса позиции при double click
   const handleImageDoubleClick = (e) => {
@@ -233,7 +248,7 @@ export default function ImageViewer({
                 setCurrent(v => wrapIndex(v - 1, images.length))
               }}
             >
-              ‹
+              <ChevronLeftRoundedIcon aria-hidden="true" fontSize="inherit" style={navIconStyle} />
             </button>
             <button
               className="viewer-nav right"
@@ -242,7 +257,7 @@ export default function ImageViewer({
                 setCurrent(v => wrapIndex(v + 1, images.length))
               }}
             >
-              ›
+              <ChevronRightRoundedIcon aria-hidden="true" fontSize="inherit" style={navIconStyle} />
             </button>
           </>
         )}
@@ -277,7 +292,7 @@ export default function ImageViewer({
           title="Приблизить (50%)"
           disabled={scale >= 5}
         >
-          <span style={{ fontSize: '24px' }}>+</span>
+          <AddRoundedIcon aria-hidden="true" fontSize="inherit" style={{ ...iconBaseStyle, width: 24, height: 24, fontSize: 24 }} />
           {/* <span style={{ fontSize: '12px', opacity: 0.8 }}>Увеличить</span> */}
         </button>
         <button 
@@ -285,7 +300,7 @@ export default function ImageViewer({
           title="Отдалить (50%)"
           disabled={scale <= 0.1}
         >
-          <span style={{ fontSize: '24px' }}>−</span>
+          <RemoveRoundedIcon aria-hidden="true" fontSize="inherit" style={{ ...iconBaseStyle, width: 24, height: 24, fontSize: 24 }} />
           {/* <span style={{ fontSize: '12px', opacity: 0.8 }}>Уменьшить</span> */}
         </button>
         
@@ -294,7 +309,7 @@ export default function ImageViewer({
           onClick={() => setRotate(r => r - 90)} 
           title="Повернуть влево"
         >
-          <span style={{ fontSize: '20px' }}>↺</span>
+          <RotateLeftRoundedIcon aria-hidden="true" fontSize="inherit" style={iconBaseStyle} />
           {/* <span style={{ fontSize: '12px', opacity: 0.8 }}>Влево</span> */}
         </button>
         
@@ -302,7 +317,7 @@ export default function ImageViewer({
           onClick={() => setRotate(r => r + 90)} 
           title="Повернуть вправо"
         >
-          <span style={{ fontSize: '20px' }}>↻</span>
+          <RotateRightRoundedIcon aria-hidden="true" fontSize="inherit" style={iconBaseStyle} />
           {/* <span style={{ fontSize: '12px', opacity: 0.8 }}>Вправо</span> */}
         </button>
         
@@ -312,7 +327,7 @@ export default function ImageViewer({
           disabled={isDefaultScale}
           className={isDefaultScale ? 'disabled-btn' : ''}
         >
-          <span style={{ fontSize: '20px' }}>⟳</span>
+          <RestartAltRoundedIcon aria-hidden="true" fontSize="inherit" style={iconBaseStyle} />
           {/* <span style={{ fontSize: '12px', opacity: 0.8 }}>Сброс</span> */}
         </button>
         
@@ -322,7 +337,7 @@ export default function ImageViewer({
           onClick={download} 
           title="Скачать"
         >
-          <span style={{ fontSize: '20px' }}>⬇</span>
+          <DownloadRoundedIcon aria-hidden="true" fontSize="inherit" style={iconBaseStyle} />
           {/* <span style={{ fontSize: '12px', opacity: 0.8 }}>Скачать</span> */}
         </button>
         
@@ -334,7 +349,11 @@ export default function ImageViewer({
             color: copied ? '#4ade80' : 'white'
           }}
         >
-          <span style={{ fontSize: '20px' }}>{copied ? '✓' : '🔗'}</span>
+          {copied ? (
+            <CheckRoundedIcon aria-hidden="true" fontSize="inherit" style={iconBaseStyle} />
+          ) : (
+            <LinkRoundedIcon aria-hidden="true" fontSize="inherit" style={iconBaseStyle} />
+          )}
           <span style={{ fontSize: '12px', opacity: 0.8, marginLeft:'-8px'}}>
             {copied ? 'Скопировано' : ''
             // 'Ссылка'
@@ -349,7 +368,7 @@ export default function ImageViewer({
           title="Закрыть (ESC)"
           style={{ background: 'rgba(220, 38, 38, 0.3)' }}
         >
-          <span style={{ fontSize: '20px' }}>✕</span>
+          <CloseRoundedIcon aria-hidden="true" fontSize="inherit" style={iconBaseStyle} />
           {/* <span style={{ fontSize: '12px', opacity: 0.8 }}>Закрыть</span> */}
         </button>
       </div>

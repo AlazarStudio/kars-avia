@@ -23,13 +23,21 @@
 }
 
 .requestTitle_close {
-    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .requestTitle_close img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+}
+
+.closeIconWrapper {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
 }
 
 .tabs {
@@ -105,11 +113,11 @@ select {
 
 .requestButton {
     display: flex;
-    justify-content: flex-end;
+    gap: 10px;
 }
 
 .requestButton button {
-    width: 49%;
+    width: 50%;
 }
 
 .titleLabel {

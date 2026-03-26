@@ -45,6 +45,8 @@ export default function AccessPermissionsPanel({
       },
       contracts: {
         access: b(accessMenu?.contracts),
+        create: b(accessMenu?.contractCreate),
+        edit: b(accessMenu?.contractUpdate),
       },
       analytics: {
         access: b(accessMenu?.analyticsMenu),
@@ -57,6 +59,13 @@ export default function AccessPermissionsPanel({
       reports: {
         access: b(accessMenu?.reportMenu),
         create: b(accessMenu?.reportCreate),
+      },
+      organization: {
+        access: b(accessMenu?.organizationMenu),
+        create: b(accessMenu?.organizationCreate),
+        edit: b(accessMenu?.organizationUpdate),
+        addDrivers: b(accessMenu?.organizationAddDrivers),
+        acceptDrivers: b(accessMenu?.organizationAcceptDrivers),
       },
     }),
     [accessMenu]
@@ -123,6 +132,28 @@ export default function AccessPermissionsPanel({
           />
         </SectionCard>
 
+        {/* Пассажиры */}
+        <SectionCard title="ФАП">
+          <RowSwitch
+            label="Доступ к разделу"
+            checked={state.passengers.access}
+            onChange={(v) => set("passengers", "access", v)}
+            disabled={!isEditing}
+          />
+          <RowSwitch
+            label="Создание заявки"
+            checked={state.passengers.create}
+            onChange={(v) => set("passengers", "create", v)}
+            disabled={!isEditing || !state.passengers.access}
+          />
+          <RowSwitch
+            label="Редактирование заявки"
+            checked={state.passengers.edit}
+            onChange={(v) => set("passengers", "edit", v)}
+            disabled={!isEditing || !state.passengers.access}
+          />
+        </SectionCard>
+
         {/* Трансфер */}
         <SectionCard title="Трансфер">
           <RowSwitch
@@ -151,27 +182,41 @@ export default function AccessPermissionsPanel({
           />
         </SectionCard>
 
-        {/* Пассажиры */}
-        <SectionCard title="Пассажиры">
-          <RowSwitch
-            label="Доступ к разделу"
-            checked={state.passengers.access}
-            onChange={(v) => set("passengers", "access", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Создание заявки"
-            checked={state.passengers.create}
-            onChange={(v) => set("passengers", "create", v)}
-            disabled={!isEditing || !state.passengers.access}
-          />
-          <RowSwitch
-            label="Редактирование заявки"
-            checked={state.passengers.edit}
-            onChange={(v) => set("passengers", "edit", v)}
-            disabled={!isEditing || !state.passengers.access}
-          />
-        </SectionCard>
+        {/* Автопарк - только для диспетчеров */}
+        {type === "dispatcher" && (
+          <SectionCard title="Автопарк">
+            <RowSwitch
+              label="Доступ к разделу"
+              checked={state.organization.access}
+              onChange={(v) => set("organization", "access", v)}
+              disabled={!isEditing}
+            />
+            <RowSwitch
+              label="Создание организаций"
+              checked={state.organization.create}
+              onChange={(v) => set("organization", "create", v)}
+              disabled={!isEditing || !state.organization.access}
+            />
+            <RowSwitch
+              label="Редактирование организаций"
+              checked={state.organization.edit}
+              onChange={(v) => set("organization", "edit", v)}
+              disabled={!isEditing || !state.organization.access}
+            />
+            <RowSwitch
+              label="Добавление водителей"
+              checked={state.organization.addDrivers}
+              onChange={(v) => set("organization", "addDrivers", v)}
+              disabled={!isEditing || !state.organization.access}
+            />
+            <RowSwitch
+              label="Приём водителей"
+              checked={state.organization.acceptDrivers}
+              onChange={(v) => set("organization", "acceptDrivers", v)}
+              disabled={!isEditing || !state.organization.access}
+            />
+          </SectionCard>
+        )}
 
         {/* Пользователи */}
         <SectionCard title="Пользователи">
@@ -225,6 +270,21 @@ export default function AccessPermissionsPanel({
             onChange={(v) => set("contracts", "access", v)}
             disabled={!isEditing}
           />
+          {type === "dispatcher" &&
+            <>
+              <RowSwitch
+                label="Создание договоров"
+                checked={state.contracts.create}
+                onChange={(v) => set("contracts", "create", v)}
+                disabled={!isEditing || !state.contracts.access}
+              />
+              <RowSwitch
+                label="Редактирование"
+                checked={state.contracts.edit}
+                onChange={(v) => set("contracts", "edit", v)}
+                disabled={!isEditing || !state.contracts.access}
+              />
+            </>}
         </SectionCard>
 
         {/* Аналитика */}
@@ -235,14 +295,14 @@ export default function AccessPermissionsPanel({
             onChange={(v) => set("analytics", "access", v)}
             disabled={!isEditing}
           />
-          {type === "airline" && (
+          {/* {type === "airline" && (
             <RowSwitch
               label="Выгрузка аналитики"
               checked={state.analytics.export}
               onChange={(v) => set("analytics", "export", v)}
               disabled={!isEditing || !state.analytics.access}
             />
-          )}
+          )} */}
         </SectionCard>
 
         {/* Об авиакомпании */}

@@ -18,9 +18,11 @@ import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
 import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 import DisAdminTransferContent from "./DisAdminTransferContent/DisAdminTransferContent";
+import DisAdminAutoparkContent from "./DisAdminAutoparkContent/DisAdminAutoparkContent";
 import DispatcherAccessSettings from "../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings";
 import DispatcherNotificationsSettings from "../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings";
 import { canAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
+import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 
 const NoAccess = () => (
   <div
@@ -42,14 +44,12 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
   // console.log(safeAccessMenu)
 
   const isTransfer =
-    id === "orders" ||
+    id === "orders" || !!orderId;
+
+  const isAutopark =
     id === "driversCompany" ||
     id === "driversList" ||
-    id === "transerDispatchers" ||
-    !!orderId ||
-    (!!driversCompanyID && !id) 
-    // ||
-    // (!id && !hotelID && !airlineID && !orderId && !driversCompanyID); // если хочешь “заказы” по умолчанию
+    (!!driversCompanyID && !id); 
 
   const CONFIG = useMemo(
     () => [
@@ -60,9 +60,10 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
-        ids: ["reserve"],
+        ids: ["representativeRequests"],
         guardKey: "reserveMenu",
-        Comp: Reserve,
+        Comp: RepresentativeRequests,
+        // Comp: Reserve,
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
@@ -75,7 +76,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         ids: ["registerOfContracts"],
         guardKey: "contracts",
         Comp: RegisterOfContracts,
-        props: () => ({ user }),
+        props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
         ids: ["reports"],
@@ -145,8 +146,15 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
     return <DisAdminTransferContent user={user} accessMenu={safeAccessMenu} />;
   }
 
+  if (isAutopark) {
+    if (!canAccessMenu(accessMenu, "organizationMenu", user)) {
+      return <NoAccess />;
+    }
+    return <DisAdminAutoparkContent user={user} accessMenu={safeAccessMenu} />;
+  }
+
   if (!id && hotelID) return <HotelPage id={hotelID} user={user} accessMenu={safeAccessMenu} />;
-  if (!id && airlineID) return <AirlinePage id={airlineID} user={user} />;
+  if (!id && airlineID) return <AirlinePage id={airlineID} user={user} accessMenu={safeAccessMenu} />;
 
   if (!id && !hotelID && !airlineID && !orderId && !driversCompanyID) {
     if (canAccessMenu(accessMenu, "requestMenu", user)) {

@@ -3,19 +3,20 @@
     justify-content: space-between;
     align-items: center;
     padding: 20px 20px 20px 30px;
-    border-bottom: 1px solid #54587380;
+    /* border-bottom: 1px solid #54587380; */
 }
 
 .requestButton {
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
     align-items: center;
     padding: 20px 20px 20px 30px;
     border-top: 1px solid #54587380;
 }
 
 .requestButton button {
-    flex-basis: 49%;
+    flex-basis: 50%;
 }
 
 .requestTitle_name {
@@ -27,7 +28,9 @@
 }
 
 .requestTitle_close {
-    cursor: pointer;
+    display: flex;
+    gap: 15px;
+    align-items: center;
 }
 
 .requestTitle_close img {
@@ -36,24 +39,63 @@
     object-fit: contain;
 }
 
-.tabs {
+.closeIconWrapper {
+    cursor: pointer;
     display: flex;
-    gap: 30px;
-    padding: 20px 20px 20px 30px;
-    border-bottom: 1px solid #54587380;
+    align-items: center;
+}
+
+.tabs {
+    padding-left: 20px;
+    position: relative;
+    display: flex;
+    list-style-type: none;
+    gap: 20px;
+    align-items: center;
+    /* justify-content: space-evenly; */
+}
+
+.tabs::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--no-active);
+    z-index: 1;
 }
 
 .tab {
-    cursor: pointer;
-    font-family: Nunito Sans;
+    position: relative;
     font-size: 16px;
-    font-weight: 400;
-    line-height: 21.82px;
-    border-bottom: 5px solid transparent
+    padding: 10px;
+    cursor: pointer;
+    background-color: transparent;
+    color: var(--no-active);
+    transition: all 0.3s ease-in-out;
+    outline: none;
+    border: none;
+}
+
+.tab:hover {
+    color: var(--text);
 }
 
 .activeTab {
-    border-bottom: 5px solid #54587380;
+    color: var(--text) !important;
+    background-color: transparent !important;
+}
+
+.activeTab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--dark-blue);
+    z-index: 2;
 }
 
 .requestData {
@@ -102,7 +144,7 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100% - 157px - 71px);
+    height: calc(100% - 117px);
     overflow: hidden;
     overflow-y: auto;
 }
@@ -159,6 +201,30 @@ select {
 
 .notes {
     font-size: 14px;
+}
+
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 40%;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-height: 37px;
 }
 
 .downloadsButton {

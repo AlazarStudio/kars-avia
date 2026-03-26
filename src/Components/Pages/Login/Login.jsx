@@ -10,8 +10,9 @@ import {
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
 import { SINGIN, SINGUP, TRANSFER_SING_IN } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
+import { authService } from "../../../services/authService.js";
 
 function Login() {
   const [signIn] = useMutation(SINGIN);
@@ -77,15 +78,12 @@ function Login() {
       // console.log(response_signIn);
       
 
-      // let token = response_signIn && response_signIn.data.transferSignIn.token;
-      let token = response_signIn && response_signIn.data.signIn.token;
-      let refreshToken = response_signIn && response_signIn.data.signIn.refreshToken;
-      // console.log(refreshToken);
-      
+      const token = response_signIn?.data?.signIn?.token;
+      const refreshToken = response_signIn?.data?.signIn?.refreshToken;
+      if (!token || !refreshToken) throw new Error("No token in response");
 
-      // document.cookie = `token=${token}; HttpOnly; Secure; SameSite=Lax; Max-Age=3600`; // когда будет https и заливать куки из сервака
-      document.cookie = `token=${token}; SameSite=Lax; Max-Age=86400`;
-      document.cookie = `refreshToken=${refreshToken}; SameSite=Lax; Max-Age=${30 * 24 * 3600}`;
+      authService.setTokens({ token, refreshToken });
+      authService.setFingerprint(fpHash || "");
 
       navigate("/");
       window.location.reload();

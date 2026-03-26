@@ -469,6 +469,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         tarif={selectedTarif}
         onSubmit={handleEditTarifCategory}
         addNotification={addNotification}
+        openDeleteComponent={openDeleteComponent}
       />
 
       <EditRequestTarifAdditionalServices

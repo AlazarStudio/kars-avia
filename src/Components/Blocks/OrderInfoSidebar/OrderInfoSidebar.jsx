@@ -37,7 +37,7 @@ function OrderInfoSidebar({
     <aside className={classes.sidebar}>
       <div className={classes.card}>
         <div className={classes.cardContent}>
-          <p className={classes.title}>Информация о заказе</p>
+          <p className={classes.title}>Информация о заявке</p>
           <div className={classes.clientBlock}>
             {!isEditing ? (
               <div className={classes.clientName}>{info.name}</div>
@@ -217,27 +217,19 @@ function OrderInfoSidebar({
 
         {/* кнопки как в твоей логике */}
         {canEditByStatus && (
-          <div style={{ display: "flex", gap: 10 }}>
+          <div className={classes.buttonsWrapper}>
             {isEditing && (
               <button
                 type="button"
                 onClick={onCancelEditing}
                 disabled={isSaving}
-                style={{
-                  flex: 1,
-                  borderRadius: 10,
-                  border: "1px solid #E8EDF1",
-                  padding: "10px 12px",
-                  background: "#fff",
-                  cursor: "pointer",
-                }}
+                className={classes.cancelButton}
               >
                 Отмена
               </button>
             )}
             <Button
               type="button"
-              flex="1"
               onClick={onToggleEditOrSave}
               backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
               color={!isEditing ? "#3B6C54" : "#fff"}
@@ -279,7 +271,7 @@ export default OrderInfoSidebar;
 //   return (
 //     <aside className={classes.sidebar}>
 //       <div className={classes.card}>
-//         <p className={classes.title}>Информация о заказе</p>
+//         <p className={classes.title}>Информация о заявке</p>
 
 //         {/* аватар + имя + рейтинг */}
 //         <div className={classes.clientBlock}>

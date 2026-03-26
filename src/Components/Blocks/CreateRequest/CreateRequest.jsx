@@ -477,6 +477,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         ...prevFormData,
         arrivalDate: "", // Очищаем дату прибытия
       }));
+      setIsLoading(false);
       return;
     }
 
@@ -487,6 +488,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         ...prevFormData,
         departureDate: "", // Очищаем дату отъезда
       }));
+      setIsLoading(false);
       return;
     }
 
@@ -500,6 +502,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         ...prevFormData,
         departureTime: "",
       }));
+      setIsLoading(false);
       return;
     }
 
@@ -542,6 +545,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
         }
       } else {
         alert("Ошибка при создании заявки");
+        setIsLoading(false);
       }
     } finally {
       // resetForm();

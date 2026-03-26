@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import classes from './InfoTableRepresentativeData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDateNew, getMediaUrl } from "../../../../graphQL_requests";
 
 function InfoTableRepresentativeData({ children, requests, user, paginationHeight, pageInfo, ...props }) {
     // Ref для контейнера списка
@@ -51,10 +51,10 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                             ) && <div className={classes.newRequest}></div>}
 
 
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{convertToDate(item.createdAt)}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{convertToDateNew(item.createdAt)}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w18}`}>
                             <div className={classes.InfoTable_data_elem_img}>
-                                <img src={`${server}${item.airline?.images[0]}`} alt="" />
+                                <img src={item.airline?.images[0] ? getMediaUrl(item.airline?.images[0]) : '/no-avatar.png'} alt="" />
                             </div>
                             {item.airline?.name}
                         </div>
@@ -70,21 +70,23 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                         >
                             {item.flightNumber}
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.p0} ${classes.w18}`} style={{justifyContent:"center", textAlign:'center'}}>
-                                    {/* <span><img src="/calendar.png" alt="" /> {convertToDate(item.departure)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDate(item.departure, true)}</span> */}
-                                    {item.waterService?.plan?.enabled && <>Вода<br /></>}
-                                    {item.mealService?.plan?.enabled && <>Питание <br /></>}
-                                    {(item.livingService?.plan?.enabled && !item.livingService?.withTransfer) && <>Проживание <br /></>}
-                                    {item.livingService?.withTransfer && <>Трансфер+Проживание <br /></>}
+                        <div className={`${classes.InfoTable_data_elem} ${classes.p0} ${classes.w18} ${classes.serviceCell}`}>
+                            <div className={classes.serviceChips}>
+                                {item.waterService?.plan?.enabled && <span className={classes.serviceChip}>Вода</span>}
+                                {item.mealService?.plan?.enabled && <span className={classes.serviceChip}>Питание</span>}
+                                {item.livingService?.plan?.enabled && <span className={classes.serviceChip}>Проживание</span>}
+                                {item.transferService?.plan?.enabled && <span className={classes.serviceChip}>Трансфер</span>}
+                                {item.baggageDeliveryService?.plan?.enabled && <span className={classes.serviceChip}>Багаж</span>}
+                            </div>
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_position}>
                                 <div className={item.status?.toLowerCase()}></div>
+                                {/* {console.log(item.status)} */}
                                 {item.status?.toLowerCase() == 'created' && 'Создан'}
                                 {item.status?.toLowerCase() == 'opened' && 'В обработке'}
                                 {item.status?.toLowerCase() == 'cancelled' && 'Отменен'}
-                                {item.status?.toLowerCase() == 'done' && 'Размещен'}
+                                {item.status == 'COMPLETED' && 'Размещен'}
                             </div>
                         </div>
                     </Link>

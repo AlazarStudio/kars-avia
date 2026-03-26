@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import classes from "./ReservePlacementRepresentative.module.css";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Header from "../../Blocks/Header/Header";
 import Filter from "../../Blocks/Filter/Filter";
@@ -10,15 +10,16 @@ import InfoTableDataReserve_passengers from "../../Blocks/InfoTableDataReserve_p
 import { requestsReserve } from "../../../requests";
 import AddNewPassenger from "../../Blocks/AddNewPassenger/AddNewPassenger";
 import UpdatePassanger from "../../Blocks/UpdatePassanger/UpdatePassanger";
-import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import ChooseHotel from "../../Blocks/ChooseHotel/ChooseHotel";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import {
+  COMPLETE_PASSENGER_REQUEST_EARLY,
   CREATE_RESERVE_REPORT,
   DELETE_PASSENGER_FROM_HOTEL,
   DELETE_PERSON_FROM_HOTEL,
   GET_AIRLINE_DEPARTMENT,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
+  GET_DISPATCHER_DEPARTMENTS,
   GET_HOTELS_RELAY,
   GET_PASSENGER_REQUEST,
   GET_RESERVE_REQUEST,
@@ -26,9 +27,14 @@ import {
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
   getCookie,
-  REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
-  server,
+  PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
+  CANCEL_PASSENGER_REQUEST,
 } from "../../../../graphQL_requests";
+import {
+  isAirlineRole as isAirlineRoleCheck,
+  isDispatcherRole as isDispatcherRoleCheck,
+  isExternalPassengerRequestUser,
+} from "../../../utils/access";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
@@ -42,20 +48,30 @@ import ChatPanel from "./ChatPanel";
 import WaterSupplyTab from "../../Blocks/WaterSupplyTab/WaterSupplyTab";
 import PowerSupplyTab from "../../Blocks/PowerSupplyTab/PowerSupplyTab";
 import TransferAccommodationTab from "../../Blocks/TransferAccommodationTab/TransferAccommodationTab";
+import BaggageDeliveryTab from "../../Blocks/BaggageDeliveryTab/BaggageDeliveryTab";
 import HabitationTab from "../../Blocks/HabitationTab/HabitationTab";
 import Message from "../../Blocks/Message/Message";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import { useCookies } from "../../../hooks/useCookies";
 import AddRepresentativeService from "../../Blocks/AddRepresentativeService/AddRepresentativeService";
+import EditRepresentativeRequest from "../../Blocks/EditRepresentativeRequest/EditRepresentativeRequest";
+import AddRepresentativeHotel from "../../Blocks/AddRepresentativeHotel/AddRepresentativeHotel";
+import AddRepresentativeDriver from "../../Blocks/AddRepresentativeDriver/AddRepresentativeDriver";
+import AddRepresentativeBaggageDriver from "../../Blocks/AddRepresentativeBaggageDriver/AddRepresentativeBaggageDriver";
+import PassengerRequestLogs from "../../Blocks/LogsHistory/PassengerRequestLogs";
+import * as XLSX from "xlsx";
+import DownloadIcon from "../../../shared/icons/DownloadIcon";
+import WhiteEditIcon from "../../../shared/icons/WhiteEditIcon";
+import CopyIcon from "../../../shared/icons/CopyIcon";
 
 function ReservePlacementRepresentative({ children, user, ...props }) {
   const token = getCookie("token");
-
-  let { idRequest } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { id, idRequest } = useParams();
   const [request, setRequest] = useState([]);
   const [placement, setPlacement] = useState([]);
   const [filter, setFilter] = useState("waterSupply");
-  const [transferAccommodation, setTransferAccommodation] = useState("driver");
 
   const [isHaveTwoChats, setIsHaveTwoChats] = useState();
   const [separator, setSeparator] = useState("airline");
@@ -67,34 +83,38 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       {
         key: "waterSupply",
         label: "Поставка воды",
-        enabled: currentRequest.waterService?.plan.enabled,
+        enabled: currentRequest.waterService?.plan?.enabled,
       },
       {
         key: "powerSupply",
         label: "Поставка питания",
-        enabled: currentRequest.mealService?.plan.enabled,
+        enabled: currentRequest.mealService?.plan?.enabled,
       },
       {
         key: "transferAccommodation",
-        label: "Трансфер+проживание",
-        enabled:
-          currentRequest.livingService?.plan?.enabled &&
-          currentRequest.livingService?.withTransfer,
+        label: "Трансфер",
+        enabled: currentRequest.transferService?.plan?.enabled,
+      },
+      {
+        key: "baggageDelivery",
+        label: "Доставка багажа",
+        enabled: currentRequest.baggageDeliveryService?.plan?.enabled,
       },
       {
         key: "habitation",
         label: "Проживание",
-        enabled:
-          currentRequest.livingService?.plan?.enabled &&
-          !currentRequest.livingService?.withTransfer,
+        enabled: currentRequest.livingService?.plan?.enabled,
       },
-    ].filter((filter) => filter.enabled);
+    ].filter((f) => f.enabled);
   };
 
   // Используем useMemo для filters чтобы избежать лишних ререндеров
   const filters = useMemo(() => getAvailableFilters(request), [request]);
 
   const [showCreateSidebarHotel, setShowCreateSidebarHotel] = useState(false);
+  const [showEarlyCompleteModal, setShowEarlyCompleteModal] = useState(false);
+  const [earlyCompleteReason, setEarlyCompleteReason] = useState("");
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
 
   const { loading, error, data, refetch } = useQuery(GET_PASSENGER_REQUEST, {
     context: {
@@ -105,68 +125,137 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     variables: { passengerRequestId: idRequest },
   });
 
-  const {
-    loading: loadingHotel,
-    error: errorHotel,
-    data: dataHotel,
-    refetch: refetchHotel,
-  } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+  // console.log(data);
+
+
+  // const {
+  //   loading: loadingHotel,
+  //   error: errorHotel,
+  //   data: dataHotel,
+  //   refetch: refetchHotel,
+  // } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
+  //   context: {
+  //     headers: {
+  //       Authorization: `Bearer ${token}`,
+  //     },
+  //   },
+  //   variables: { reservationHotelsId: idRequest },
+  // });
+
+  // const { data: subscriptionData } = useSubscription(
+  //   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
+  //   {
+  //     context: {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     },
+  //     onData: () => {
+  //       refetch();
+  //       refetchHotel();
+  //     },
+  //   }
+  // );
+
+  // const { data: subscriptionDataPerson } = useSubscription(
+  //   GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
+  //   {
+  //     context: {
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     },
+  //     onData: () => {
+  //       refetch();
+  //       refetchHotel();
+  //     },
+  //   }
+  // );
+
+  useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { reservationHotelsId: idRequest },
+    onData: ({ data }) => {
+      console.log(data);
+      refetch();
+    },
   });
 
-  const { data: subscriptionData } = useSubscription(
-    GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION,
+  setInterval(() => {
+    console.log('refetch');
+    refetch();
+  }, 10000);
+
+  const [completeEarly, { loading: completingEarly }] = useMutation(
+    COMPLETE_PASSENGER_REQUEST_EARLY,
     {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      onData: () => {
-        refetch();
-        refetchHotel();
-      },
+      context: { headers: { Authorization: `Bearer ${token}` } },
+      refetchQueries: [
+        { query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: idRequest } },
+      ],
+      awaitRefetchQueries: true,
     }
   );
 
-  const { data: subscriptionDataPerson } = useSubscription(
-    GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      onData: () => {
-        refetch();
-        refetchHotel();
-      },
-    }
-  );
+  // Досрочное завершение всей заявки временно скрыто; доступно досрочное завершение услуг (вода, питание) в подвале каждой вкладки
+  const canCompleteEarly = false;
 
-  const { data: subscriptionDataUpdate } = useSubscription(
-    REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      onComplete: () => {
-        refetch();
-      },
+  const handleEarlyComplete = async () => {
+    const reason = (earlyCompleteReason || "").trim();
+    if (!reason) {
+      addNotification("Укажите причину досрочного завершения.", "error");
+      return;
     }
-  );
+    try {
+      await completeEarly({
+        variables: { id: request.id, reason },
+      });
+      setShowEarlyCompleteModal(false);
+      setEarlyCompleteReason("");
+      addNotification("Заявка досрочно завершена.", "success");
+      refetch();
+    } catch (err) {
+      addNotification(
+        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при завершении.",
+        "error"
+      );
+    }
+  };
 
   const [accessMenu, setAccessMenu] = useState({});
-  // console.log(user);
-  const { data: departmentData, refetch: departmentRefetch } = useQuery(
-    GET_AIRLINE_DEPARTMENT,
+
+  const isDispatcherRole = isDispatcherRoleCheck(user);
+  const isAirlineRole = isAirlineRoleCheck(user);
+  const isExternalUser = isExternalPassengerRequestUser(user);
+  const restrictedToHotelId = user?.scope === "HOTEL" ? user?.hotelId : null;
+  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
+
+  const habitationRequest = useMemo(() => {
+    if (!request || !isExternalUser || restrictedToHotelId == null) return request;
+    const hotels = request.livingService?.hotels ?? [];
+    const allowed = hotels.filter((h) => String(h.hotelId) === String(restrictedToHotelId));
+    if (allowed.length === 0) return request;
+    return { ...request, livingService: { ...request.livingService, hotels: allowed } };
+  }, [request, isExternalUser, restrictedToHotelId]);
+
+  const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
+    useQuery(GET_AIRLINE_DEPARTMENT, {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      variables: {
+        airlineDepartmentId: user?.airlineDepartmentId,
+      },
+      skip: !isAirlineRole || !user?.airlineDepartmentId,
+    });
+
+  const { data: dispatcherDepartmentsData } = useQuery(
+    GET_DISPATCHER_DEPARTMENTS,
     {
       context: {
         headers: {
@@ -174,88 +263,131 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
         },
       },
       variables: {
-        airlineDepartmentId: user?.departmentId,
+        pagination: { all: true },
       },
-      skip: !user?.departmentId,
+      // skip: !isDispatcherRole || !dispatcherDepartmentId,
     }
   );
 
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  //   console.log(user);
+  //   console.log(isDispatcherRole)
+  // console.log(isAirlineRole)
+  // console.log(dispatcherDepartmentId)
+  useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      onData: () => {
-        departmentRefetch();
-      },
-    }
-  );
+    },
+    skip: !isAirlineRole || !user?.airlineDepartmentId,
+    onData: () => {
+      refetchAirlineDepartment();
+    },
+  });
 
   useEffect(() => {
-    if (departmentData && departmentData.airlineDepartment.accessMenu) {
-      setAccessMenu(departmentData?.airlineDepartment?.accessMenu);
+    if (location.state?.tab === "habitation") {
+      setFilter("habitation");
     }
-  }, [departmentData, dataSubscriptionUpd]);
+    if (location.state?.tab === "transferAccommodation") {
+      setFilter("transferAccommodation");
+    }
+  }, [location.state?.tab]);
+
+  useEffect(() => {
+    if (isDispatcherRole) {
+      const department =
+        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
+          (item) => item.id === dispatcherDepartmentId
+        );
+      setAccessMenu(department?.accessMenu || {});
+      return;
+    }
+
+    if (isAirlineRole) {
+      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
+      return;
+    }
+
+    setAccessMenu({});
+  }, [
+    isDispatcherRole,
+    isAirlineRole,
+    dispatcherDepartmentId,
+    dispatcherDepartmentsData,
+    airlineDepartmentData,
+  ]);
+
+  useEffect(() => {
+    if (!request || !isExternalUser) return;
+    if (user?.scope === "HOTEL" && restrictedToHotelId && !location.pathname.includes("/hotel/")) {
+      const hotels = request.livingService?.hotels ?? [];
+      const allowed = hotels.find((h) => String(h.hotelId) === String(restrictedToHotelId));
+      if (allowed) {
+        const hotelId = allowed.hotelId ?? allowed.name ?? "";
+        navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`, { replace: true });
+      }
+    }
+  }, [request, isExternalUser, restrictedToHotelId, user?.scope, location.pathname, id, idRequest, navigate]);
 
   // console.log(dataHotel);
 
+  // Всегда обновлять request из данных заявки ФАП (в т.ч. после refetch при «Вода доставлена» / «Питание доставлено»)
   useEffect(() => {
-    if (data && data.passengerRequest && dataHotel) {
+    if (data?.passengerRequest) {
       setRequest(data.passengerRequest);
-
-      // Используем локальную переменную passengerRequest вместо request
       const availableFilters = getAvailableFilters(data.passengerRequest);
-
-      // console.log("Available filters:", availableFilters); // Теперь будет срабатывать только при реальном изменении
-
       if (
         availableFilters.length > 0 &&
         !availableFilters.some((f) => f.key === filter)
       ) {
         setFilter(availableFilters[0].key);
       }
-
-      const getClientInfo = (client, hotelChess, isPassenger) => {
-        const clientInfo = isPassenger
-          ? hotelChess.find((entry) => entry.passenger?.id === client)
-          : hotelChess.find((entry) => entry.client?.id === client);
-        return clientInfo;
-      };
-
-      const transformedData = dataHotel.reservationHotels.map((item) => ({
-        hotel: {
-          reservationHotelId: item.id,
-          id: item.hotel.id,
-          name: item.hotel.name,
-          passengersCount: item.capacity.toString(),
-          city: item.hotel.city,
-          requestId: item.reserve.id,
-          passengers: item.passengers.map((passenger, index) => ({
-            status: getClientInfo(passenger.id, item.hotelChess, true)
-              ? getClientInfo(passenger.id, item.hotelChess, true).status
-              : "waiting",
-            room: getClientInfo(passenger.id, item.hotelChess, true)
-              ? getClientInfo(passenger.id, item.hotelChess, true).room
-              : "-",
-            name: passenger.name || "не указано",
-            gender: passenger.gender || "не указано",
-            number: passenger.number || "не указано",
-            type: passenger.type || "не указано",
-            order: index + 1,
-            id: passenger.id || `id-${index}`,
-          })),
-        },
-      }));
-
-      setPlacement(transformedData);
     }
-  }, [data, dataHotel, subscriptionData, subscriptionDataPerson]);
+  }, [data]);
+
+  // useEffect(() => {
+  //   if (data && data.passengerRequest) {
+  //     const getClientInfo = (client, hotelChess, isPassenger) => {
+  //       const clientInfo = isPassenger
+  //         ? hotelChess.find((entry) => entry.passenger?.id === client)
+  //         : hotelChess.find((entry) => entry.client?.id === client);
+  //       return clientInfo;
+  //     };
+
+  //     const transformedData = dataHotel.reservationHotels.map((item) => ({
+  //       hotel: {
+  //         reservationHotelId: item.id,
+  //         id: item.hotel?.id,
+  //         name: item.hotel?.name,
+  //         passengersCount: item.capacity?.toString?.() ?? "0",
+  //         city: item.hotel?.city,
+  //         requestId: item.reserve?.id,
+  //         passengers: (item.passengers ?? []).map((passenger, index) => ({
+  //           status: getClientInfo(passenger.id, item.hotelChess, true)
+  //             ? getClientInfo(passenger.id, item.hotelChess, true).status
+  //             : "waiting",
+  //           room: getClientInfo(passenger.id, item.hotelChess, true)
+  //             ? getClientInfo(passenger.id, item.hotelChess, true).room
+  //             : "-",
+  //           name: passenger?.name || "не указано",
+  //           gender: passenger?.gender || "не указано",
+  //           number: passenger?.number || "не указано",
+  //           type: passenger?.type || "не указано",
+  //           order: index + 1,
+  //           id: passenger?.id || `id-${index}`,
+  //         })),
+  //       },
+  //     }));
+
+  //     setPlacement(transformedData);
+  //   }
+  // }, [data, dataHotel]);
 
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showServiceSidebar, setShowServiceSidebar] = useState(false);
+  const [showEditRequestSidebar, setShowEditRequestSidebar] = useState(false);
+  const [showAddHotelSidebar, setShowAddHotelSidebar] = useState(false);
 
   const toggleCreateSidebar = () => {
     setShowCreateSidebar(!showCreateSidebar);
@@ -263,6 +395,97 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   const toggleServiceSidebar = () => {
     setShowServiceSidebar(!showServiceSidebar);
+  };
+
+  const toggleAddHotelSidebar = () => {
+    setShowAddHotelSidebar((prev) => !prev);
+  };
+
+  const [showAddDriverSidebar, setShowAddDriverSidebar] = useState(false);
+  const toggleAddDriverSidebar = () => {
+    setShowAddDriverSidebar((prev) => !prev);
+  };
+
+  const [showAddBaggageDriverSidebar, setShowAddBaggageDriverSidebar] = useState(false);
+  const toggleAddBaggageDriverSidebar = () => {
+    setShowAddBaggageDriverSidebar((prev) => !prev);
+  };
+
+  const [showCancelRequestConfirm, setShowCancelRequestConfirm] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelPassengerRequest, { loading: cancellingRequest }] = useMutation(CANCEL_PASSENGER_REQUEST, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    refetchQueries: [{ query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: request?.id } }],
+    awaitRefetchQueries: false,
+    onCompleted: () => {
+      setShowEditRequestSidebar(false);
+      setCancelReason("");
+      addNotification?.("Заявка отменена.", "success");
+    },
+  });
+  const handleConfirmCancelRequest = () => {
+    if (!request?.id) return;
+    const reason = (cancelReason || "").trim();
+    if (!reason) {
+      addNotification?.("Укажите причину отмены заявки.", "error");
+      return;
+    }
+    setShowCancelRequestConfirm(false);
+    cancelPassengerRequest({
+      variables: { id: request.id, cancelReason: reason },
+    });
+  };
+
+  const canAddTransferRequest = useMemo(() => {
+    const planCount = request?.transferService?.plan?.peopleCount;
+    if (planCount == null) return true;
+    const usedPlaces = (request?.transferService?.drivers ?? []).reduce(
+      (sum, d) => sum + (d.peopleCount ?? 0),
+      0
+    );
+    return usedPlaces < planCount;
+  }, [request?.transferService?.plan?.peopleCount, request?.transferService?.drivers]);
+
+  const canAddHabitationRequest = useMemo(() => {
+    const planCount = request?.livingService?.plan?.peopleCount;
+    if (planCount == null) return true;
+    const usedPlaces = (request?.livingService?.hotels ?? []).reduce(
+      (sum, h) => sum + (h.peopleCount ?? 0),
+      0
+    );
+    return usedPlaces < planCount;
+  }, [request?.livingService?.plan?.peopleCount, request?.livingService?.hotels]);
+
+  const handleRasselenieExport = () => {
+    const hotels = request?.livingService?.hotels ?? [];
+    const rows = [];
+    const subHeaders = ["ФИО", "Номер комнаты", "Телефон", "Пол"];
+    for (const hotel of hotels) {
+      rows.push([hotel.name ?? ""]);
+      rows.push(subHeaders);
+      const people = hotel.people ?? [];
+      for (const person of people) {
+        rows.push([
+          person.fullName ?? "",
+          person.roomNumber ?? "",
+          person.phone ?? "",
+          person.gender ?? "",
+        ]);
+      }
+      rows.push([]);
+    }
+    const aoa = rows;
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Расселение");
+    const safe = (s) => String(s).replace(/[/\\?*\[\]:]/g, "_").slice(0, 100);
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const fileName = `rasselenie_${safe(request?.flightNumber ?? "")}_${dateStr}.xlsx`;
+    XLSX.writeFile(wb, fileName);
   };
 
   const [showChooseHotel, setShowChooseHotel] = useState(false);
@@ -281,55 +504,87 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     }, fullNotifyTime);
   };
 
+  const representativePwaLink = useMemo(() => {
+    const links = request?.representativeLinks || [];
+    if (!Array.isArray(links) || links.length === 0) return "";
+    const byDepartment = user?.representativeDepartmentId
+      ? links.find(
+        (item) =>
+          String(item?.representativeDepartmentId) ===
+          String(user.representativeDepartmentId) && item?.linkPWA
+      )
+      : null;
+    if (byDepartment?.linkPWA) return byDepartment.linkPWA;
+    const firstWithPwa = links.find((item) => item?.linkPWA);
+    return firstWithPwa?.linkPWA || "";
+  }, [request?.representativeLinks, user?.representativeDepartmentId]);
+
+  const canCopyRepresentativeLink =
+    !isExternalUser && Boolean(representativePwaLink);
+
+  const handleCopyRepresentativeLink = async () => {
+    if (!representativePwaLink) {
+      addNotification("PWA-ссылка представительства не найдена.", "error");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(representativePwaLink);
+      addNotification("Ссылка представительства скопирована.", "success");
+    } catch (_) {
+      addNotification("Не удалось скопировать ссылку.", "error");
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
+  const [habitationSearchQuery, setHabitationSearchQuery] = useState("");
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
 
-  const filteredPlacement = placement
-    .map((item) => {
-      const filteredPassengers = item.hotel.passengers.filter((passenger) =>
-        passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  // const filteredPlacement = placement
+  //   .map((item) => {
+  //     const filteredPassengers = item.hotel.passengers.filter((passenger) =>
+  //       passenger.name.toLowerCase().includes(searchQuery.toLowerCase())
+  //     );
 
-      // console.log(filteredPassengers);
+  //     // console.log(filteredPassengers);
 
-      // const filteredPersons = item.hotel.person.filter((person) =>
-      //     person.name.toLowerCase().includes(searchQuery.toLowerCase())
-      // );
+  //     // const filteredPersons = item.hotel.person.filter((person) =>
+  //     //     person.name.toLowerCase().includes(searchQuery.toLowerCase())
+  //     // );
 
-      const isHotelMatch = item.hotel.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+  //     const isHotelMatch = item.hotel.name
+  //       .toLowerCase()
+  //       .includes(searchQuery.toLowerCase());
 
-      if (filteredPassengers.length > 0 || isHotelMatch) {
-        return {
-          ...item,
-          hotel: {
-            ...item.hotel,
-            passengers: filteredPassengers,
-            // person: filteredPersons,
-          },
-        };
-      }
+  //     if (filteredPassengers.length > 0 || isHotelMatch) {
+  //       return {
+  //         ...item,
+  //         hotel: {
+  //           ...item.hotel,
+  //           passengers: filteredPassengers,
+  //           // person: filteredPersons,
+  //         },
+  //       };
+  //     }
 
-      return null;
-    })
-    .filter((item) => item !== null);
+  //     return null;
+  //   })
+  //   .filter((item) => item !== null);
 
   const toggleCreateSidebarHotel = () => {
     setShowCreateSidebarHotel(!showCreateSidebarHotel);
   };
 
-  const [showChooseHotels, setShowChooseHotels] = useState(0);
+  // const [showChooseHotels, setShowChooseHotels] = useState(0);
 
-  useEffect(() => {
-    const totalPassengers = placement.reduce(
-      (acc, item) => acc + Number(item.hotel.passengersCount),
-      0
-    );
-    setShowChooseHotels(totalPassengers);
-  }, [placement]);
+  // useEffect(() => {
+  //   const totalPassengers = placement.reduce(
+  //     (acc, item) => acc + Number(item.hotel.passengersCount),
+  //     0
+  //   );
+  //   setShowChooseHotels(totalPassengers);
+  // }, [placement]);
 
   const [file, setFile] = useState(null);
 
@@ -354,34 +609,68 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       <div className={classes.section}>
         <Header>
           <div className={classes.titleHeader}>
-            <Link to={-1} className={classes.backButton}>
+            <Link to={`/representativeRequests`} className={classes.backButton}>
               <img src="/arrow.png" alt="" />
             </Link>
-            Заявка {request.flightNumber}
+            <span className={classes.titleText}>Заявка {request.flightNumber}</span>
+            {canCopyRepresentativeLink && (
+              <div className={classes.representativeLinkActions}>
+                <button
+                  type="button"
+                  className={classes.representativeLinkButton}
+                  onClick={handleCopyRepresentativeLink}
+                  title="Скопировать ссылку для представительства"
+                >
+                  Ссылка{" "}
+                  <CopyIcon />
+                </button>
+              </div>
+            )}
           </div>
         </Header>
-        <div
-          className={classes.filter_wrapper}
-          role="tablist"
-          aria-label="Фильтры услуги"
-        >
-          {filters.map((i) => (
-            <button
-              key={i.key}
-              role="tab"
-              aria-selected={filter === i.key}
-              aria-controls={`panel-${i.key}`}
-              tabIndex={filter === i.key ? 0 : -1}
-              onClick={() => setFilter(i.key)}
-              className={filter === i.key ? classes.activeButton : undefined}
-            >
-              {i.label}
-            </button>
-          ))}
+        <div className={classes.tabsRowWrapper}>
+          <div
+            className={classes.filter_wrapper}
+            role="tablist"
+            aria-label="Фильтры услуги"
+          >
+            {filters.map((i) => (
+              <button
+                key={i.key}
+                role="tab"
+                aria-selected={filter === i.key}
+                aria-controls={`panel-${i.key}`}
+                tabIndex={filter === i.key ? 0 : -1}
+                onClick={() => setFilter(i.key)}
+                className={filter === i.key ? classes.activeButton : undefined}
+              >
+                {i.label}
+              </button>
+            ))}
+          </div>
+          <div className={classes.tabsRowActions}>
+            {!isExternalUser && (
+              <button
+                className={classes.historyButton}
+                onClick={() => setShowHistoryPanel(true)}
+                title="История изменений заявки"
+              >
+                История <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7.5 15C3.35786 15 0 11.6421 0 7.5C0 3.35786 3.35786 0 7.5 0C11.6421 0 15 3.35786 15 7.5C14.9955 11.6403 11.6403 14.9955 7.5 15ZM7.5 1.5C4.18629 1.5 1.5 4.18629 1.5 7.5C1.5 10.8137 4.18629 13.5 7.5 13.5C10.8137 13.5 13.5 10.8137 13.5 7.5C13.4963 4.18783 10.8122 1.50372 7.5 1.5ZM11.25 8.25H6.75V3.75H8.25V6.75H11.25V8.25Z" fill="#545873" />
+                </svg>
+              </button>
+            )}
+            {!isExternalUser && request?.status !== "CANCELLED" && (
+              <Button onClick={() => setShowEditRequestSidebar(true)}>Редактировать</Button>
+            )}
+            {/* {!isExternalUser && filters.length < 5 && (
+              <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
+            )} */}
+          </div>
         </div>
 
         <div className={classes.section_searchAndFilter}>
-          {filter !== "transferAccommodation" && filter !== "habitation" && (
+          {filter !== "habitation" && (
             <MUITextField
               className={classes.mainSearch}
               label={"Поиск"}
@@ -391,33 +680,12 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
           )}
 
           {filter === "habitation" && (
-            <p className={classes.title}>Гостиница</p>
-          )}
-
-          {filter === "transferAccommodation" && (
-            <div className={classes.filter_wrapper}>
-              {/* <p className={classes.title}>Водитель</p> */}
-              <button
-                onClick={() => setTransferAccommodation("driver")}
-                className={
-                  transferAccommodation === "driver"
-                    ? classes.activeButton
-                    : undefined
-                }
-              >
-                Водитель
-              </button>
-              <button
-                onClick={() => setTransferAccommodation("hotel")}
-                className={
-                  transferAccommodation === "hotel"
-                    ? classes.activeButton
-                    : undefined
-                }
-              >
-                Гостиница
-              </button>
-            </div>
+            <MUITextField
+              className={classes.mainSearch}
+              label="Поиск"
+              value={habitationSearchQuery}
+              onChange={(e) => setHabitationSearchQuery(e.target.value)}
+            />
           )}
 
           <div className={classes.downloadsButtonsWrapper}>
@@ -492,14 +760,82 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               </div>
             )} */}
 
-            {(transferAccommodation === "hotel" || filter === "habitation") && (
-              <Button onClick={toggleCreateSidebar}>Добавить гостиницу</Button>
+            {filter === "habitation" && (
+              <>
+                <button
+                  type="button"
+                  className={classes.rasselenieBtn}
+                  onClick={handleRasselenieExport}
+                >
+                  Расселение
+                  <DownloadIcon />
+                </button>
+                {!isExternalUser &&
+                  canAddHabitationRequest &&
+                  request?.status !== "CANCELLED" && (
+                    <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
+                  )}
+              </>
             )}
-            {filters.length < 3 && (
-              <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
+            {filter === "transferAccommodation" &&
+              request?.transferService?.plan?.enabled &&
+              !isExternalUser &&
+              canAddTransferRequest &&
+              request?.status !== "CANCELLED" && (
+                <Button onClick={toggleAddDriverSidebar}>Создать заявку на трансфер</Button>
+              )}
+            {filter === "baggageDelivery" &&
+              request?.baggageDeliveryService?.plan?.enabled &&
+              !isExternalUser &&
+              request?.status !== "CANCELLED" && (
+                <Button onClick={toggleAddBaggageDriverSidebar}>Создать заявку на трансфер багажа</Button>
+              )}
+            {canCompleteEarly && (
+              <Button
+                onClick={() => setShowEarlyCompleteModal(true)}
+                disabled={completingEarly}
+              >
+                Досрочно завершить
+              </Button>
             )}
           </div>
         </div>
+        <PassengerRequestLogs
+          show={showHistoryPanel}
+          onClose={() => setShowHistoryPanel(false)}
+          passengerRequestId={idRequest}
+        />
+        {showEarlyCompleteModal && (
+          <div className={classes.modalOverlay} onClick={() => !completingEarly && setShowEarlyCompleteModal(false)}>
+            <div className={classes.modalContent} onClick={(e) => e.stopPropagation()}>
+              <h3>Досрочно завершить заявку</h3>
+              <p>Укажите причину досрочного завершения (обязательно):</p>
+              <MUITextField
+                multiline
+                minRows={3}
+                label="Причина"
+                value={earlyCompleteReason}
+                onChange={(e) => setEarlyCompleteReason(e.target.value)}
+                fullWidth
+                className={classes.modalReasonInput}
+              />
+              <div className={classes.modalActions}>
+                <Button
+                  onClick={() => {
+                    setShowEarlyCompleteModal(false);
+                    setEarlyCompleteReason("");
+                  }}
+                  disabled={completingEarly}
+                >
+                  Отмена
+                </Button>
+                <Button onClick={handleEarlyComplete} disabled={completingEarly}>
+                  {completingEarly ? "Сохранение…" : "Завершить"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
         {loading && <MUILoader />}
         {error && <p>Error: {error.message}</p>}
 
@@ -515,6 +851,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       request={request}
                       onStatusChanged={() => refetch()}
                       addNotification={addNotification}
+                      token={token}
                     />
                   )}
                 {filter === "powerSupply" &&
@@ -524,65 +861,73 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       request={request}
                       onStatusChanged={() => refetch()}
                       addNotification={addNotification}
+                      token={token}
                     />
                   )}
                 {filter === "transferAccommodation" &&
-                  request.livingService?.plan?.enabled &&
-                  request.livingService?.withTransfer && (
+                  request.transferService?.plan?.enabled && (
                     <TransferAccommodationTab
                       id="panel-transferAccommodation"
                       request={request}
-                      hotels={placement} // уже собранные выше
-                      transferAccommodation={transferAccommodation}
                       onStatusChanged={() => {
                         refetch();
                         refetchHotel();
                       }}
-                      addHotel={toggleCreateSidebar}
+                      addNotification={addNotification}
+                      onDriverSelect={(d, idx) =>
+                        navigate(
+                          `/${id}/representativeRequestsPlacement/${idRequest}/driver/${idx}`
+                        )
+                      }
+                    />
+                  )}
+                {filter === "baggageDelivery" &&
+                  request.baggageDeliveryService?.plan?.enabled && (
+                    <BaggageDeliveryTab
+                      id="panel-baggageDelivery"
+                      request={request}
+                      onStatusChanged={() => {
+                        refetch();
+                        refetchHotel();
+                      }}
                       addNotification={addNotification}
                     />
                   )}
                 {filter === "habitation" &&
-                  request.livingService?.plan?.enabled &&
-                  !request.livingService?.withTransfer && (
+                  request.livingService?.plan?.enabled && (
                     <HabitationTab
                       id="panel-habitation"
-                      hotels={placement}
-                      request={request}
+                      request={habitationRequest}
+                      searchQuery={habitationSearchQuery}
                       addNotification={addNotification}
-                      // если хотите оставить вашу сложную таблицу — можно здесь подключить старую
+                      onStatusChanged={() => refetch()}
+                      onHotelSelect={(h, i) => {
+                        const hotelId = h.hotelId ?? h.name ?? String(i);
+                        navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`);
+                      }}
                     />
                   )}
               </div>
 
               {/* Правый столбец с чатом и "Добавить услугу" — всегда */}
-              {filteredPlacement.length === 0 && user?.hotelId ? null : (
-                <>
-                  <div className={classes.chatWrapper}>
-                    <Message
-                      activeTab={"Комментарий"}
-                      setIsHaveTwoChats={setIsHaveTwoChats}
-                      setHotelChats={setHotelChats}
-                      // setTitle={setOrgName}
-                      // setMessageCount={setMessageCount}
-                      chooseRequestID={""}
-                      chooseReserveID={request.id}
-                      filteredPlacement={filteredPlacement}
-                      token={token}
-                      user={user}
-                      chatPadding={"0"}
-                      chatHeight={
-                        user.role !== roles.hotelAdmin &&
-                        user.role !== roles.airlineAdmin
-                          ? "calc(100vh - 352px)"
-                          : "calc(100vh - 280px)"
-                      }
-                      separator={separator}
-                      hotelChatId={selectedHotelChatId}
-                    />
-                  </div>
-                </>
-              )}
+              <div className={classes.chatWrapper}>
+                <Message
+                  activeTab={"Комментарий"}
+                  setIsHaveTwoChats={setIsHaveTwoChats}
+                  setHotelChats={setHotelChats}
+                  passengerRequestId={request.id}
+                  // filteredPlacement={filteredPlacement}
+                  token={token}
+                  user={user}
+                  chatPadding={"0"}
+                  chatHeight={
+                    user.role !== roles.hotelAdmin &&
+                      user.role !== roles.airlineAdmin
+                      ? "calc(100vh - 364px)"
+                      : "calc(100vh - 280px)"
+                  }
+                />
+              </div>
             </div>
 
             <CreateRequestHotelReserve
@@ -595,9 +940,76 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               onClose={toggleServiceSidebar}
               request={request}
               user={user}
+              addNotification={addNotification}
             />
 
-            <AddNewPassenger
+            <EditRepresentativeRequest
+              show={showEditRequestSidebar}
+              onClose={() => setShowEditRequestSidebar(false)}
+              request={request}
+              addNotification={addNotification}
+              onOpenCancelConfirm={() => setShowCancelRequestConfirm(true)}
+              cancellingRequest={cancellingRequest}
+            />
+
+            {showCancelRequestConfirm && (
+              <div
+                className={classes.modalOverlay}
+                onClick={() => !cancellingRequest && setShowCancelRequestConfirm(false)}
+              >
+                <div
+                  className={classes.modalContent}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3>Отмена заявки</h3>
+                  <p>Укажите причину отмены (обязательно):</p>
+                  <textarea
+                    className={classes.modalReasonInput}
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    rows={4}
+                    placeholder="Причина отмены"
+                  />
+                  <div className={classes.modalActions}>
+                    <Button
+                      onClick={() => {
+                        setShowCancelRequestConfirm(false);
+                        setCancelReason("");
+                      }}
+                      disabled={cancellingRequest}
+                    >
+                      Отмена
+                    </Button>
+                    <Button onClick={handleConfirmCancelRequest} disabled={cancellingRequest}>
+                      {cancellingRequest ? "Сохранение..." : "Подтвердить"}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <AddRepresentativeHotel
+              show={showAddHotelSidebar}
+              onClose={toggleAddHotelSidebar}
+              request={request}
+              addNotification={addNotification}
+            />
+
+            <AddRepresentativeDriver
+              show={showAddDriverSidebar}
+              onClose={toggleAddDriverSidebar}
+              request={request}
+              addNotification={addNotification}
+            />
+
+            <AddRepresentativeBaggageDriver
+              show={showAddBaggageDriverSidebar}
+              onClose={toggleAddBaggageDriverSidebar}
+              request={request}
+              addNotification={addNotification}
+            />
+
+            {/* <AddNewPassenger
               show={showCreateSidebar}
               onClose={toggleCreateSidebar}
               request={request}
@@ -613,7 +1025,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               onClose={toggleChooseHotel}
               chooseObject={placement}
               id={"reserve"}
-            />
+            /> */}
 
             <ManifestModal
               user={user}
@@ -622,7 +1034,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               handleFileChange={handleFileChange}
               file={file}
               request={request}
-              server={server}
               classes={classes}
             />
 

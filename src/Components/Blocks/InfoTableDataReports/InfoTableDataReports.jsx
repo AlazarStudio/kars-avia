@@ -2,8 +2,10 @@ import React from "react";
 import classes from "./InfoTableDataReports.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import Button from "../../Standart/Button/Button";
-import { convertToDate, server } from "../../../../graphQL_requests";
+import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
+import DeleteIcon from "../../../shared/icons/DeleteIcon";
+import DownloadReportIcon from "../../../shared/icons/DownloadReportIcon";
 
 function InfoTableDataReports({
   children,
@@ -39,7 +41,14 @@ function InfoTableDataReports({
           </div>
         </div>
 
-        <div className={classes.bottom} style={(user?.airlineId || user?.hotelId) && {height:"calc(100vh - 270px)"}}>
+        <div
+          className={classes.bottom}
+          style={
+            (user?.airlineId || user?.hotelId) && {
+              height: "calc(100vh - 270px)",
+            }
+          }
+        >
           {requests?.map((item, index) => {
             const image = isAirline
               ? item?.airline?.images[0]
@@ -60,7 +69,7 @@ function InfoTableDataReports({
                   <div className={classes.InfoTable_data_elem_userInfo}>
                     <div className={classes.InfoTable_data_elem_avatar}>
                       <img
-                        src={image ? `${server}${image}` : "/no-avatar.png"}
+                        src={getMediaUrl(image) ?? "/no-avatar.png"}
                         alt=""
                         style={{ borderRadius: "50%", userSelect: "none" }}
                       />
@@ -74,7 +83,7 @@ function InfoTableDataReports({
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >
                   <div className={classes.InfoTable_data_elem_title}>
-                    {convertToDate(item?.createdAt)} {' '}
+                    {convertToDate(item?.createdAt)}{" "}
                     {convertToDate(item?.createdAt, true)}
                   </div>
                 </div>
@@ -87,13 +96,12 @@ function InfoTableDataReports({
                   </div>
                 </div>
                 <div className={classes.InfoTable_data_elem_download}>
-                  <a href={`${server}${item.url}`} target="_blank">
-                    {" "}
-                    <img src="/download.png" alt="" />{" "}
+                  <a href={getMediaUrl(item.url)} target="_blank">
+                    <DownloadReportIcon />
+
                   </a>
-                  <img
-                    src="/deleteReport.png"
-                    alt=""
+                  <DeleteIcon
+                    cursor="pointer"
                     onClick={() => openDeleteComponent(item.id)}
                   />
                 </div>

@@ -1,14 +1,26 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+﻿import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import './toolbar.css'
 import { useReducer } from 'react'
+import FormatAlignLeftRoundedIcon from '@mui/icons-material/FormatAlignLeftRounded'
+import FormatAlignCenterRoundedIcon from '@mui/icons-material/FormatAlignCenterRounded'
+import FormatAlignRightRoundedIcon from '@mui/icons-material/FormatAlignRightRounded'
+import FormatAlignJustifyRoundedIcon from '@mui/icons-material/FormatAlignJustifyRounded'
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded'
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded'
+import UploadRoundedIcon from '@mui/icons-material/UploadRounded'
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded'
+import DataObjectRoundedIcon from '@mui/icons-material/DataObjectRounded'
+import DesktopWindowsRoundedIcon from '@mui/icons-material/DesktopWindowsRounded'
+import RestartAltRoundedIcon from '@mui/icons-material/RestartAltRounded'
+import GestureRoundedIcon from '@mui/icons-material/GestureRounded'
 import FontSizeSelect from './FontSizeSelect'
 import ColorModal from './ColorModal'
 import LinkModal from './LinkModal'
 import CustomStyleModal from './CustomStyleModal'
 import ExportModal from './ExportModal'
 import ImportModal from './ImportModal'
-import { saveFile } from '../storage/fileStore'
-import { getDocumentationUploadFile } from '../DocumentationUploadStore'
+import { getDocumentationUploadFile, notifyDocumentationUploadFailure } from '../DocumentationUploadStore'
 import { BlockLassoSelectionKey } from '../extensions/blockLassoSelection'
 import {
   buildExcelHtmlDocument,
@@ -16,44 +28,45 @@ import {
   createDocxBlobFromPlainText,
 } from '../utils/officeExport'
 import { docxArrayBufferToHtml } from '../utils/docxImport'
+import { clampFixedModalPosition, MODAL_VIEWPORT_MARGIN } from '../utils/modalViewportClamp'
 
 const linkStyles = [
-  { 
-    id: 'default', 
-    label: 'Стандартная', 
+  {
+    id: 'default',
+    label: 'РћР±С‹С‡РЅР°СЏ СЃСЃС‹Р»РєР°',
     icon: 'link',
-    description: 'Обычная синяя ссылка'
+    description: 'РЎС‚Р°РЅРґР°СЂС‚РЅРѕРµ РѕС„РѕСЂРјР»РµРЅРёРµ СЃСЃС‹Р»РєРё.',
   },
-  { 
-    id: 'button', 
-    label: 'Кнопка', 
+  {
+    id: 'button',
+    label: 'РљРЅРѕРїРєР°',
     icon: 'button',
-    description: 'Стиль кнопки'
+    description: 'РЎСЃС‹Р»РєР° РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ РєР°Рє РєРЅРѕРїРєР°.',
   },
-  { 
-    id: 'highlighted', 
-    label: 'Выделенная', 
+  {
+    id: 'highlighted',
+    label: 'Р’С‹РґРµР»РµРЅРЅР°СЏ',
     icon: 'highlight',
-    description: 'Подсвеченная ссылка'
+    description: 'РЎСЃС‹Р»РєР° СЃ С†РІРµС‚РЅРѕР№ РїРѕРґР»РѕР¶РєРѕР№.',
   },
-  { 
-    id: 'dashed', 
-    label: 'Пунктир', 
+  {
+    id: 'dashed',
+    label: 'РџСѓРЅРєС‚РёСЂРЅР°СЏ',
     icon: 'dashed',
-    description: 'Пунктирное подчеркивание'
+    description: 'РЎСЃС‹Р»РєР° СЃ РїСѓРЅРєС‚РёСЂРЅС‹Рј РїРѕРґС‡РµСЂРєРёРІР°РЅРёРµРј.',
   },
-  { 
-    id: 'no-underline', 
-    label: 'Без линии', 
-       icon: 'no-underline',
-    description: 'Ссылка без подчеркивания'
+  {
+    id: 'no-underline',
+    label: 'Р‘РµР· РїРѕРґС‡РµСЂРєРёРІР°РЅРёСЏ',
+    icon: 'no-underline',
+    description: 'РЎСЃС‹Р»РєР° Р±РµР· РїРѕРґС‡РµСЂРєРёРІР°РЅРёСЏ.',
   },
-  { 
-    id: 'colored', 
-    label: 'Цветная', 
+  {
+    id: 'colored',
+    label: 'Р¦РІРµС‚РЅР°СЏ',
     icon: 'colored',
-    description: 'Ссылка с цветным фоном'
-  }
+    description: 'РЎСЃС‹Р»РєР° СЃ Р°РєС†РµРЅС‚РЅС‹Рј С†РІРµС‚РѕРј.',
+  },
 ]
 const BLOCK_ALIGN_NODE_TYPES = new Set([
   'imageBlock',
@@ -64,6 +77,7 @@ const BLOCK_ALIGN_NODE_TYPES = new Set([
   'toggle',
   'frameBlock',
   'tableWrapper',
+  'blockquote',
 ])
 
 const TEXT_ALIGN_NODE_TYPES = new Set(['paragraph', 'heading'])
@@ -71,21 +85,175 @@ const TEXT_ALIGN_NODE_TYPES = new Set(['paragraph', 'heading'])
 const SINGLE_MODAL_EVENT = 'doclist-single-modal-open'
 const ARTICLE_MIN_MANUAL_WIDTH = 320
 const ARTICLE_MAX_MANUAL_WIDTH = 2400
+const DEFAULT_JSON_MODAL_WIDTH = 600
 const ARTICLE_WIDTH_PRESETS = [
-  { id: 'level4', label: 'уровень 4', maxWidth: null },
-  { id: 'level3', label: 'уровень 3', maxWidth: 1080 },
-  { id: 'level2', label: 'уровень 2', maxWidth: 860 },
-  { id: 'level1', label: 'уровень 1', maxWidth: 720 },
+  { id: 'level4', label: '\u0423\u0440\u043e\u0432\u0435\u043d\u044c 4', maxWidth: null },
+  { id: 'level3', label: '\u0423\u0440\u043e\u0432\u0435\u043d\u044c 3', maxWidth: 1080 },
+  { id: 'level2', label: '\u0423\u0440\u043e\u0432\u0435\u043d\u044c 2', maxWidth: 860 },
+  { id: 'level1', label: '\u0423\u0440\u043e\u0432\u0435\u043d\u044c 1', maxWidth: 720 },
 ]
+const TOOLBAR_GROUP_ORDER = [
+  'text-style',
+  'font-size',
+  'alignment',
+  'text-color',
+  'bg-color',
+  'link',
+  'import-export',
+  'article-layout',
+  'reset',
+]
+const CUSTOM_COLOR_SLOT_COUNT = 10
+const DOC_TOOLBAR_TEXT_COLORS_KEY = 'doclist_toolbar_custom_text_colors_v1'
+const DOC_TOOLBAR_BG_COLORS_KEY = 'doclist_toolbar_custom_bg_colors_v1'
+const DOC_TOOLBAR_LINK_STYLES_KEY = 'doclist_toolbar_custom_link_styles_v1'
+
+function createEmptyColorSlots() {
+  return Array(CUSTOM_COLOR_SLOT_COUNT).fill(null)
+}
+
+function readToolbarStorageJSON(keys) {
+  if (typeof window === 'undefined' || !window.localStorage) return null
+
+  const keyList = Array.isArray(keys) ? keys : [keys]
+  for (const key of keyList) {
+    if (!key) continue
+    try {
+      const raw = window.localStorage.getItem(key)
+      if (!raw) continue
+      return JSON.parse(raw)
+    } catch {
+      // ignore malformed storage values
+    }
+  }
+
+  return null
+}
+
+function normalizeColorSlots(raw) {
+  const slots = createEmptyColorSlots()
+  if (!Array.isArray(raw)) return slots
+
+  const max = Math.min(CUSTOM_COLOR_SLOT_COUNT, raw.length)
+  for (let i = 0; i < max; i += 1) {
+    const value = raw[i]
+    slots[i] = typeof value === 'string' && value.trim() ? value : null
+  }
+
+  return slots
+}
+
+function normalizeCustomLinkStyles(raw) {
+  if (!Array.isArray(raw)) return []
+
+  const styles = []
+  for (let index = 0; index < raw.length; index += 1) {
+    const item = raw[index]
+    if (!item || typeof item !== 'object') continue
+
+    const rawId = typeof item.id === 'string' ? item.id.trim() : ''
+    const baseId = rawId || `${Date.now()}_${index}`
+    const id = baseId.startsWith('custom_') ? baseId : `custom_${baseId}`
+    const nameCandidate = typeof item.name === 'string' ? item.name : item.label
+    const name = typeof nameCandidate === 'string' && nameCandidate.trim()
+      ? nameCandidate.trim()
+      : 'РџРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёР№ СЃС‚РёР»СЊ'
+
+    styles.push({
+      id,
+      name,
+      color: typeof item.color === 'string' && item.color.trim() ? item.color : '#3b82f6',
+      bgColor: typeof item.bgColor === 'string' && item.bgColor.trim() ? item.bgColor : 'transparent',
+      underline: item.underline !== false,
+      underlineStyle: typeof item.underlineStyle === 'string' && item.underlineStyle.trim()
+        ? item.underlineStyle
+        : 'solid',
+      bold: Boolean(item.bold),
+      italic: Boolean(item.italic),
+      icon: typeof item.icon === 'string' && item.icon.trim() ? item.icon : 'custom',
+    })
+  }
+
+  return styles
+}
+
+function areStringArraysEqual(a, b) {
+  if (a === b) return true
+  if (!Array.isArray(a) || !Array.isArray(b)) return false
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i += 1) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
 
 function getArticleWidthPresetText(option) {
   return String(option?.label || '')
 }
 
+function parseColorToRgba(input) {
+  if (typeof input !== 'string') return null
+  const color = input.trim()
+  if (!color) return null
+
+  if (color[0] === '#') {
+    const hex = color.slice(1)
+    if (hex.length === 3 || hex.length === 4) {
+      const r = Number.parseInt(hex[0] + hex[0], 16)
+      const g = Number.parseInt(hex[1] + hex[1], 16)
+      const b = Number.parseInt(hex[2] + hex[2], 16)
+      const a = hex.length === 4 ? Number.parseInt(hex[3] + hex[3], 16) / 255 : 1
+      if ([r, g, b, a].some(Number.isNaN)) return null
+      return { r, g, b, a }
+    }
+    if (hex.length === 6 || hex.length === 8) {
+      const r = Number.parseInt(hex.slice(0, 2), 16)
+      const g = Number.parseInt(hex.slice(2, 4), 16)
+      const b = Number.parseInt(hex.slice(4, 6), 16)
+      const a = hex.length === 8 ? Number.parseInt(hex.slice(6, 8), 16) / 255 : 1
+      if ([r, g, b, a].some(Number.isNaN)) return null
+      return { r, g, b, a }
+    }
+    return null
+  }
+
+  const rgbMatch = color.match(
+    /^rgba?\(\s*([+-]?\d*\.?\d+)\s*[, ]\s*([+-]?\d*\.?\d+)\s*[, ]\s*([+-]?\d*\.?\d+)(?:\s*[,/ ]\s*([+-]?\d*\.?\d+))?\s*\)$/i
+  )
+  if (!rgbMatch) return null
+
+  const clamp255 = value => Math.max(0, Math.min(255, Math.round(Number(value))))
+  const clampAlpha = value => Math.max(0, Math.min(1, Number(value)))
+
+  const r = clamp255(rgbMatch[1])
+  const g = clamp255(rgbMatch[2])
+  const b = clamp255(rgbMatch[3])
+  const a = rgbMatch[4] == null ? 1 : clampAlpha(rgbMatch[4])
+
+  if ([r, g, b, a].some(Number.isNaN)) return null
+  return { r, g, b, a }
+}
+
+function getReadableTextColorForBackground(backgroundColor) {
+  const parsed = parseColorToRgba(backgroundColor)
+  if (!parsed) return '#111827'
+
+  // Assume button sits on a light toolbar backdrop for alpha compositing.
+  const alpha = Number.isFinite(parsed.a) ? parsed.a : 1
+  const r = Math.round(parsed.r * alpha + 255 * (1 - alpha))
+  const g = Math.round(parsed.g * alpha + 255 * (1 - alpha))
+  const b = Math.round(parsed.b * alpha + 255 * (1 - alpha))
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+  return luminance < 0.58 ? '#FFFFFF' : '#111827'
+}
+
 export default function Toolbar({
   editor,
   anchorModeEnabled = false,
+  altSelectionModeActive = false,
   onToggleAnchorMode,
+  onDisableAltSelectionMode,
   articleWidthMode = 'preset',
   articleWidthPreset = 'level4',
   articleManualWidth = 1080,
@@ -102,7 +270,7 @@ export default function Toolbar({
 }) {
   if (!editor) return null
 
-  // ????????? ??? ???????? ???????
+  // Color tool state
   const [textColor, setTextColor] = useState('#000000')
   const [bgColor, setBgColor] = useState('#FFFFFF')
   const [showTextColorModal, setShowTextColorModal] = useState(false)
@@ -113,36 +281,69 @@ export default function Toolbar({
   const [showImportModal, setShowImportModal] = useState(false)
   const [showJsonModal, setShowJsonModal] = useState(false)
   const [showArticleLayoutModal, setShowArticleLayoutModal] = useState(false)
+  const [showToolbarOverflowModal, setShowToolbarOverflowModal] = useState(false)
+  const [overflowGroupIds, setOverflowGroupIds] = useState([])
   const [articleLayoutTab, setArticleLayoutTab] = useState('width')
   const [articleManualWidthInput, setArticleManualWidthInput] = useState(
     String(articleManualWidth || 1080)
   )
   const [jsonText, setJsonText] = useState('')
   const [jsonError, setJsonError] = useState(null)
-  const [jsonModalWidth, setJsonModalWidth] = useState(250)
+  const [jsonModalWidth, setJsonModalWidth] = useState(DEFAULT_JSON_MODAL_WIDTH)
   const [isResizingJsonModal, setIsResizingJsonModal] = useState(false)
   const jsonResizeStateRef = useRef(null)
   const [modalPosition, setModalPosition] = useState({ x: 100, y: 100 })
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const draggedModalRef = useRef(null)
   
-  // ????????? ??? ???????????????? ??????
-  const [customTextColors, setCustomTextColors] = useState(() => Array(10).fill(null))
-  const [customBgColors, setCustomBgColors] = useState(() => Array(10).fill(null))
-  const [customLinkStyles, setCustomLinkStyles] = useState(() => [])
+  // Custom presets state
+  const [customTextColors, setCustomTextColors] = useState(() =>
+    normalizeColorSlots(
+      readToolbarStorageJSON([
+        DOC_TOOLBAR_TEXT_COLORS_KEY,
+        'doclist_toolbar_custom_text_colors',
+        'toolbar_custom_text_colors',
+        'customTextColors',
+      ])
+    )
+  )
+  const [customBgColors, setCustomBgColors] = useState(() =>
+    normalizeColorSlots(
+      readToolbarStorageJSON([
+        DOC_TOOLBAR_BG_COLORS_KEY,
+        'doclist_toolbar_custom_bg_colors',
+        'toolbar_custom_bg_colors',
+        'customBgColors',
+      ])
+    )
+  )
+  const [customLinkStyles, setCustomLinkStyles] = useState(() =>
+    normalizeCustomLinkStyles(
+      readToolbarStorageJSON([
+        DOC_TOOLBAR_LINK_STYLES_KEY,
+        'doclist_toolbar_custom_link_styles',
+        'toolbar_custom_link_styles',
+        'customLinkStyles',
+      ])
+    )
+  )
   
-  // ????????? ??? ?????????????? ?????
+  // State for editing a custom link style
   const [editingStyle, setEditingStyle] = useState(null)
   
-  // ????????? ??? ?????? "?????????" ????
+  // Background paint mode state
   const [isBgPaintingMode, setIsBgPaintingMode] = useState(false)
   
-  // ????????? ??? ?????????? select
+  // Selected value for font size select
   const [selectedFontSize, setSelectedFontSize] = useState('16')
+  const [linkModalInitialStyleId, setLinkModalInitialStyleId] = useState('default')
+  const [focusLinkModalUrlInput, setFocusLinkModalUrlInput] = useState(false)
   
-  // ???? ??? ?????????? ???????? ??? ?????? ?? input
+  // Guard for popup closing while interacting with inputs
   const [blockClose, setBlockClose] = useState(false)
-  const [, forceToolbarRefresh] = useReducer(v => v + 1, 0)
+  const [toolbarRefreshTick, forceToolbarRefresh] = useReducer(v => v + 1, 0)
+  const bgButtonTextColor = getReadableTextColorForBackground(bgColor)
   
   // Refs
   const textColorButtonRef = useRef(null)
@@ -154,7 +355,39 @@ export default function Toolbar({
   const importButtonRef = useRef(null)
   const jsonButtonRef = useRef(null)
   const articleLayoutButtonRef = useRef(null)
+  const toolbarRootRef = useRef(null)
+  const toolbarMainRef = useRef(null)
+  const toolbarOverflowTriggerRef = useRef(null)
+  const toolbarGroupRefs = useRef({})
   const backdropRef = useRef(null)
+  const linkStyleSelectionRef = useRef(null)
+  const modalPortalTarget = typeof document !== 'undefined' ? document.body : null
+  const renderModalPortal = (node) => {
+    if (!node) return null
+    return modalPortalTarget ? createPortal(node, modalPortalTarget) : node
+  }
+
+  const captureLinkStyleSelection = useCallback(({ preserveOnCollapsed = false } = {}) => {
+    if (!editor?.state?.selection) {
+      if (!preserveOnCollapsed) {
+        linkStyleSelectionRef.current = null
+      }
+      return linkStyleSelectionRef.current
+    }
+
+    const { from, to } = editor.state.selection
+    if (typeof from === 'number' && typeof to === 'number' && from !== to) {
+      const range = { from: Math.min(from, to), to: Math.max(from, to) }
+      linkStyleSelectionRef.current = range
+      return range
+    }
+
+    if (!preserveOnCollapsed) {
+      linkStyleSelectionRef.current = null
+    }
+
+    return linkStyleSelectionRef.current
+  }, [editor])
 
   const closeAllModals = useCallback((options = {}) => {
     const preserveWidthFrame = Boolean(options.preserveWidthFrame)
@@ -176,6 +409,8 @@ export default function Toolbar({
     setShowImportModal(false)
     setShowJsonModal(false)
     setShowArticleLayoutModal(false)
+    setShowToolbarOverflowModal(false)
+    setFocusLinkModalUrlInput(false)
     setArticleLayoutTab('width')
     setEditingStyle(null)
     if (hideWidthFrame) {
@@ -218,7 +453,7 @@ export default function Toolbar({
     setArticleManualWidthInput(String(articleManualWidth || 1080))
   }, [articleManualWidth, showArticleLayoutModal])
 
-  // ???????? ??????? ?????? ??????
+  // Sync toolbar state with current editor selection
 useEffect(() => {
   if (!editor) return
 
@@ -285,7 +520,6 @@ useEffect(() => {
   }, [editor, forceToolbarRefresh])
 
 
-  // Получаем текущий цвет текста и фона из редактора
   useEffect(() => {
     if (editor) {
       const textColorAttr = editor.getAttributes('textStyle').color
@@ -299,6 +533,33 @@ useEffect(() => {
       }
     }
   }, [editor])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return
+    try {
+      window.localStorage.setItem(DOC_TOOLBAR_TEXT_COLORS_KEY, JSON.stringify(customTextColors))
+    } catch {
+      // ignore storage quota / privacy mode failures
+    }
+  }, [customTextColors])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return
+    try {
+      window.localStorage.setItem(DOC_TOOLBAR_BG_COLORS_KEY, JSON.stringify(customBgColors))
+    } catch {
+      // ignore storage quota / privacy mode failures
+    }
+  }, [customBgColors])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.localStorage) return
+    try {
+      window.localStorage.setItem(DOC_TOOLBAR_LINK_STYLES_KEY, JSON.stringify(customLinkStyles))
+    } catch {
+      // ignore storage quota / privacy mode failures
+    }
+  }, [customLinkStyles])
 
   const getLassoSelectedPositions = () => {
     if (!editor) return []
@@ -410,7 +671,6 @@ useEffect(() => {
     editor.chain().focus().toggleStrike().run()
   }
 
-  // Функция сброса всех стилей
   const resetAllStyles = () => {
     if (!editor) return
 
@@ -568,7 +828,6 @@ useEffect(() => {
     return null
   }
 
-  // Проверяем, есть ли какие-либо стили у выделенного текста
   const hasAnyStyle = () => {
     return (
       editor.isActive('bold') ||
@@ -585,7 +844,6 @@ useEffect(() => {
     )
   }
 
-  // Применение цвета текста (режим перманентной кисти)
   const applyTextColor = (color) => {
     if (!editor) return
     if (!runForLassoTextRanges(chain => chain.setColor(color))) {
@@ -600,14 +858,11 @@ useEffect(() => {
     runForLassoTextRanges(chain => chain.setBackgroundColor(color))
   }
 
-  // Функция для применения цвета фона к выделенному тексту
   const applyBgColorToSelection = () => {
     if (!editor || !isBgPaintingMode) return
     
-    // Получаем текущее выделение
     const { from, to } = editor.state.selection
     
-    // Если есть выделение, применяем цвет фона
     if (from !== to) {
       editor.chain()
         .focus()
@@ -617,7 +872,6 @@ useEffect(() => {
     }
   }
 
-  // Обработчик для сохранения пользовательского цвета
   const saveCustomColor = (color, isTextColor) => {
     if (isTextColor) {
       const emptyIndex = customTextColors.findIndex(c => c === null)
@@ -646,7 +900,6 @@ useEffect(() => {
     }
   }
 
-  // Обработчик удаления пользовательского цвета
   const removeCustomColor = (index, isTextColor, e) => {
     e.stopPropagation()
     if (isTextColor) {
@@ -660,7 +913,6 @@ useEffect(() => {
     }
   }
 
-  // Удаление пользовательского стиля
   const removeCustomStyle = (index, e) => {
     e.stopPropagation()
     e.preventDefault()
@@ -669,7 +921,6 @@ useEffect(() => {
     setCustomLinkStyles(newStyles)
   }
 
-  // Обновление кастомного стиля
   const updateCustomStyle = (updatedStyle) => {
     setCustomLinkStyles(prevStyles => 
       prevStyles.map(style => 
@@ -678,7 +929,15 @@ useEffect(() => {
     )
   }
 
-  // Открытие модалки выбора цвета текста
+  const clampToolbarModalPosition = useCallback((position, modalSize = null) => {
+    return clampFixedModalPosition(position, modalSize || {}, MODAL_VIEWPORT_MARGIN)
+  }, [])
+
+  const setClampedToolbarModalPosition = useCallback((position, modalSize = null, extra = null) => {
+    const clamped = clampToolbarModalPosition(position, modalSize)
+    setModalPosition(extra ? { ...clamped, ...extra } : clamped)
+  }, [clampToolbarModalPosition])
+
   const openTextColorModal = () => {
     closeAllModals()
     announceModalOpen()
@@ -686,14 +945,13 @@ useEffect(() => {
     
     if (textSelectButtonRef.current) {
       const rect = textSelectButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 280),
-        y: rect.bottom + 10
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 280, height: 380 }
+      )
     }
   }
 
-  // Открытие модалки выбора цвета фона
   const openBgColorModal = () => {
     closeAllModals()
     announceModalOpen()
@@ -701,29 +959,36 @@ useEffect(() => {
     
     if (bgSelectButtonRef.current) {
       const rect = bgSelectButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 280),
-        y: rect.bottom + 10
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 280, height: 380 }
+      )
     }
   }
 
-  // Открытие модалки ссылки
-  const openLinkModal = () => {
+  const openLinkModal = (options = {}) => {
+    const initialStyleId = typeof options.initialStyleId === 'string' && options.initialStyleId.trim()
+      ? options.initialStyleId.trim()
+      : 'default'
+    const focusUrlInput = Boolean(options.focusUrlInput)
+    const preserveSelection = Boolean(options.preserveSelection)
+
+    captureLinkStyleSelection({ preserveOnCollapsed: preserveSelection })
     closeAllModals()
     announceModalOpen()
+    setLinkModalInitialStyleId(initialStyleId)
+    setFocusLinkModalUrlInput(focusUrlInput)
     setShowLinkModal(true)
     
     if (linkButtonRef.current) {
       const rect = linkButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 450),
-        y: rect.bottom + 10
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 340, height: 560 }
+      )
     }
   }
 
-  // Открытие модалки создания/редактирования кастомного стиля
   const openExportModal = () => {
     closeAllModals()
     announceModalOpen()
@@ -731,17 +996,17 @@ useEffect(() => {
 
     if (exportButtonRef.current) {
       const rect = exportButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 450),
-        y: rect.bottom + 10,
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 420, height: 420 }
+      )
       return
     }
 
-    setModalPosition({
-      x: window.innerWidth / 2 - 200,
-      y: window.innerHeight / 2 - 180,
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 180 },
+      { width: 420, height: 420 }
+    )
   }
 
   const openImportModal = () => {
@@ -751,17 +1016,17 @@ useEffect(() => {
 
     if (importButtonRef.current) {
       const rect = importButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(rect.left, window.innerWidth - 450),
-        y: rect.bottom + 10,
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 420, height: 460 }
+      )
       return
     }
 
-    setModalPosition({
-      x: window.innerWidth / 2 - 200,
-      y: window.innerHeight / 2 - 180,
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 180 },
+      { width: 420, height: 460 }
+    )
   }
 
   const refreshJsonFromEditor = () => {
@@ -774,7 +1039,7 @@ useEffect(() => {
       setJsonError(null)
     } catch {
       setJsonText('')
-      setJsonError('Не удалось получить JSON')
+      setJsonError('РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ JSON РёР· СЂРµРґР°РєС‚РѕСЂР°')
     }
   }
 
@@ -782,27 +1047,26 @@ useEffect(() => {
     closeAllModals()
     announceModalOpen()
     refreshJsonFromEditor()
-    setJsonModalWidth(250)
+    setJsonModalWidth(DEFAULT_JSON_MODAL_WIDTH)
     setIsResizingJsonModal(false)
     jsonResizeStateRef.current = null
     setShowJsonModal(true)
 
     if (jsonButtonRef.current) {
       const rect = jsonButtonRef.current.getBoundingClientRect()
-      const defaultJsonModalWidth = 250
-      const maxX = Math.max(20, window.innerWidth - defaultJsonModalWidth - 20)
-      setModalPosition({
-        x: Math.min(Math.max(20, rect.left), maxX),
-        y: rect.bottom + 10,
-      })
+      const defaultJsonModalWidth = DEFAULT_JSON_MODAL_WIDTH
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: defaultJsonModalWidth, height: 520 }
+      )
       return
     }
 
-    const defaultJsonModalWidth = 250
-    setModalPosition({
-      x: Math.max(20, window.innerWidth / 2 - defaultJsonModalWidth / 2),
-      y: window.innerHeight / 2 - 260,
-    })
+    const defaultJsonModalWidth = DEFAULT_JSON_MODAL_WIDTH
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - defaultJsonModalWidth / 2, y: window.innerHeight / 2 - 260 },
+      { width: defaultJsonModalWidth, height: 520 }
+    )
   }
 
   const switchArticleLayoutTab = (tab) => {
@@ -851,17 +1115,17 @@ useEffect(() => {
 
     if (articleLayoutButtonRef.current) {
       const rect = articleLayoutButtonRef.current.getBoundingClientRect()
-      setModalPosition({
-        x: Math.min(Math.max(20, rect.left), window.innerWidth - 320),
-        y: rect.bottom + 10,
-      })
+      setClampedToolbarModalPosition(
+        { x: rect.left, y: rect.bottom + 10 },
+        { width: 340, height: 380 }
+      )
       return
     }
 
-    setModalPosition({
-      x: Math.max(20, window.innerWidth / 2 - 150),
-      y: Math.max(20, window.innerHeight / 2 - 160),
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 160 },
+      { width: 340, height: 380 }
+    )
   }
 
   const applyJsonToEditor = () => {
@@ -870,13 +1134,13 @@ useEffect(() => {
     try {
       const parsed = JSON.parse(jsonText)
       if (!parsed || parsed.type !== 'doc') {
-        throw new Error('Ожидался документ TipTap/ProseMirror с type="doc"')
+        throw new Error('JSON РґРѕР»Р¶РµРЅ СЃРѕРґРµСЂР¶Р°С‚СЊ РєРѕСЂРЅРµРІРѕР№ РѕР±СЉРµРєС‚ РґРѕРєСѓРјРµРЅС‚Р° ProseMirror СЃ type="doc"')
       }
 
       editor.commands.setContent(parsed)
       setJsonError(null)
     } catch (e) {
-      setJsonError(e?.message || 'Неверный JSON')
+      setJsonError(e?.message || 'РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРёРјРµРЅРёС‚СЊ JSON')
     }
   }
 
@@ -906,30 +1170,81 @@ useEffect(() => {
   }
 
   const openCustomStyleModal = (style = null) => {
+    captureLinkStyleSelection({ preserveOnCollapsed: true })
     closeAllModals()
     announceModalOpen()
     setEditingStyle(style)
     setShowCustomStyleModal(true)
     
-    setModalPosition({
-      x: window.innerWidth / 2 - 200,
-      y: window.innerHeight / 2 - 250
-    })
+    setClampedToolbarModalPosition(
+      { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 250 },
+      { width: 400, height: 620 }
+    )
   }
 
-  // Обработчик редактирования стиля из LinkModal
   const handleEditStyle = (style) => {
     openCustomStyleModal(style)
   }
 
-  // Применение стиля ссылки
-  const applyLinkStyle = (styleId) => {
+  const handleCustomStyleModalClose = (options = {}) => {
+    const reopenLinkModal = Boolean(options?.reopenLinkModal)
+    const selectedLinkStyleId =
+      typeof options?.selectedLinkStyleId === 'string' && options.selectedLinkStyleId.trim()
+        ? options.selectedLinkStyleId.trim()
+        : 'default'
+    const focusUrlInput = Boolean(options?.focusUrlInput)
+
+    closeAllModals()
+    if (!reopenLinkModal) return
+
+    requestAnimationFrame(() => {
+      openLinkModal({
+        initialStyleId: selectedLinkStyleId,
+        focusUrlInput,
+        preserveSelection: true,
+      })
+    })
+  }
+
+  const applyLinkStyle = (styleId, options = {}) => {
     if (!editor) return
+
+    const normalizedStyleId = String(styleId || '')
+    if (!normalizedStyleId) return
+
+    const explicitSelection = options?.selection
+    let from = explicitSelection?.from
+    let to = explicitSelection?.to
+
+    const hasExplicitSelection =
+      typeof from === 'number' && typeof to === 'number' && Number.isFinite(from) && Number.isFinite(to) && from !== to
+
+    if (!hasExplicitSelection) {
+      from = editor.state.selection?.from
+      to = editor.state.selection?.to
+    }
+
+    if (
+      typeof from !== 'number' ||
+      typeof to !== 'number' ||
+      !Number.isFinite(from) ||
+      !Number.isFinite(to) ||
+      from === to
+    ) {
+      const fallbackRange = captureLinkStyleSelection({ preserveOnCollapsed: true })
+      if (!fallbackRange || fallbackRange.from === fallbackRange.to) return
+      from = fallbackRange.from
+      to = fallbackRange.to
+    }
+
+    if (from > to) {
+      const swap = from
+      from = to
+      to = swap
+    }
+
+    linkStyleSelectionRef.current = { from, to }
     
-    const { from, to } = editor.state.selection
-    if (from === to) return
-    
-    // Сначала сбрасываем все возможные стили ссылок
     editor.chain()
       .focus()
       .setTextSelection({ from, to })
@@ -937,19 +1252,21 @@ useEffect(() => {
       .unsetMark('textStyle')
       .run()
     
-    // Проверяем, является ли стиль кастомным
-    const isCustomStyle = styleId.startsWith('custom_')
+    const isCustomStyle = normalizedStyleId.startsWith('custom_')
     let styleConfig = null
     
     if (isCustomStyle) {
-      styleConfig = customLinkStyles.find(s => s.id === styleId)
+      if (options?.styleConfig && options.styleConfig.id === normalizedStyleId) {
+        styleConfig = options.styleConfig
+      } else {
+        styleConfig = customLinkStyles.find(s => s.id === normalizedStyleId)
+      }
     } else {
-      styleConfig = linkStyles.find(s => s.id === styleId)
+      styleConfig = linkStyles.find(s => s.id === normalizedStyleId)
     }
     
     if (!styleConfig) {
-      // Применяем предустановленный стиль
-      switch (styleId) {
+      switch (normalizedStyleId) {
         case 'button':
           editor.chain()
             .focus()
@@ -1001,7 +1318,6 @@ useEffect(() => {
           break
           
         default:
-          // Стандартная ссылка - синий цвет с подчеркиванием
           editor.chain()
             .focus()
             .setTextSelection({ from, to })
@@ -1015,7 +1331,6 @@ useEffect(() => {
       return
     }
     
-    // Применяем кастомный стиль
     if (isCustomStyle && styleConfig) {
       let styleProps = {}
       
@@ -1047,23 +1362,23 @@ useEffect(() => {
     }
   }
 
-  // Создание кастомного стиля
   const createCustomStyle = (newStyle) => {
-    setCustomLinkStyles([...customLinkStyles, newStyle])
+    if (!newStyle?.id) return
+
+    setCustomLinkStyles(prevStyles => [...prevStyles, newStyle])
+    applyLinkStyle(newStyle.id, {
+      styleConfig: newStyle,
+      selection: linkStyleSelectionRef.current,
+    })
   }
 
-  // Обработчик клика вне модалок
-  // Обработчик клика вне модалок
 useEffect(() => {
   const handleClickOutside = (event) => {
-    // Если блокировка активна (пользователь вводит текст) - не закрываем
     if (blockClose) return
     
-    // Проверяем, кликнули ли мы вне любой модалки
     const isModal = event.target.closest('.modal, .link-modal, .custom-style-modal')
     const isBackdrop = event.target === backdropRef.current
     
-    // Закрываем модалки при клике вне модалки ИЛИ на бэкдроп
     if (!isModal || isBackdrop) {
       closeAllModals()
     }
@@ -1301,7 +1616,7 @@ useEffect(() => {
     let attrs = {
       fileId: null,
       url: null,
-      name: 'Файл',
+      name: 'Р”РѕРєСѓРјРµРЅС‚',
       size: '',
       mimeType: '',
     }
@@ -1309,40 +1624,22 @@ useEffect(() => {
     if (file) {
       try {
         const docUploadFile = getDocumentationUploadFile()
-        if (docUploadFile) {
-          const path = await docUploadFile(file)
-          if (path) {
-            attrs = {
-              ...attrs,
-              fileId: null,
-              url: path,
-              name: file.name || 'Файл',
-              size: file.size || '',
-              mimeType: file.type || '',
-            }
-          }
+        if (!docUploadFile) {
+          throw new Error('Documentation upload service is unavailable')
         }
-        if (!attrs.url) {
-          const saved = await saveFile(file)
-          attrs = {
-            ...attrs,
-            fileId: saved.id,
-            url: null,
-            name: saved.name || file.name || 'Файл',
-            size: saved.size || file.size || '',
-            mimeType: saved.mimeType || file.type || '',
-          }
-        }
-      } catch {
-        const blobUrl = URL.createObjectURL(file)
+
+        const path = await docUploadFile(file)
         attrs = {
           ...attrs,
           fileId: null,
-          url: blobUrl,
-          name: file.name || 'Файл',
+          url: path,
+          name: file.name || 'Р”РѕРєСѓРјРµРЅС‚',
           size: file.size || '',
           mimeType: file.type || '',
         }
+      } catch (error) {
+        notifyDocumentationUploadFailure(error, 'файл')
+        return
       }
     } else if (url) {
       attrs = {
@@ -1380,13 +1677,13 @@ useEffect(() => {
               ? parsed.content
               : null
         if (!doc) {
-          throw new Error('Ожидался документ TipTap/ProseMirror с type="doc"')
+          throw new Error('JSON РЅРµ СЃРѕРґРµСЂР¶РёС‚ РґРѕРєСѓРјРµРЅС‚ ProseMirror СЃ type="doc"')
         }
         editor.commands.setContent(doc)
         return
       } catch (e) {
         if (fmt === 'json') {
-          throw new Error(`Не удалось импортировать JSON: ${e?.message || e}`)
+          throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ РёРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ JSON: ${e?.message || e}`)
         }
       }
     }
@@ -1405,7 +1702,7 @@ useEffect(() => {
   }
 
   const handleImportFile = async (file) => {
-    if (!file) throw new Error('Файл не выбран')
+    if (!file) throw new Error('Р¤Р°Р№Р» РЅРµ РІС‹Р±СЂР°РЅ')
 
     const name = String(file.name || '').toLowerCase()
 
@@ -1417,7 +1714,7 @@ useEffect(() => {
     if (name.endsWith('.docx')) {
       try {
         const ab = typeof file.arrayBuffer === 'function' ? await file.arrayBuffer() : null
-        if (!ab) throw new Error('Не удалось прочитать DOCX')
+        if (!ab) throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ С„Р°Р№Р» .docx')
 
         const html = await docxArrayBufferToHtml(ab)
         editor.commands.setContent(normalizeHtmlForImport(html))
@@ -1435,7 +1732,7 @@ useEffect(() => {
       text = ''
     }
 
-    if (!text) throw new Error('Не удалось прочитать файл (пустой или недоступен)')
+    if (!text) throw new Error('РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРѕС‡РёС‚Р°С‚СЊ СЃРѕРґРµСЂР¶РёРјРѕРµ С„Р°Р№Р»Р°')
 
     if ((name.endsWith('.doc') || name.endsWith('.xls')) && !looksLikeHtml(text)) {
       await setDocumentToFileBlock({ file })
@@ -1446,7 +1743,7 @@ useEffect(() => {
   }
 
   const handleImportUrl = async (url) => {
-    if (!url) throw new Error('URL пустой')
+    if (!url) throw new Error('URL РЅРµ СѓРєР°Р·Р°РЅ')
 
     const hintName = fileNameFromUrl(url)
     const lowerHintName = String(hintName || '').toLowerCase()
@@ -1460,7 +1757,7 @@ useEffect(() => {
       try {
         const response = await fetch(url)
         if (!response.ok) {
-          throw new Error(`Не удалось загрузить URL: ${response.status} ${response.statusText}`)
+          throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ DOCX РїРѕ URL: ${response.status} ${response.statusText}`)
         }
 
         const ab = await response.arrayBuffer()
@@ -1477,11 +1774,11 @@ useEffect(() => {
     try {
       response = await fetch(url)
     } catch (e) {
-      throw new Error(`Не удалось загрузить URL: ${e?.message || e}`)
+      throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕ URL: ${e?.message || e}`)
     }
 
     if (!response.ok) {
-      throw new Error(`Не удалось загрузить URL: ${response.status} ${response.statusText}`)
+      throw new Error(`РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РґР°РЅРЅС‹Рµ РїРѕ URL: ${response.status} ${response.statusText}`)
     }
 
     const text = await response.text()
@@ -1494,21 +1791,17 @@ useEffect(() => {
     await importFromText({ text, hintName })
   }
 
-  // Обработчик для режима карандаша фона
   useEffect(() => {
     if (!isBgPaintingMode || !editor) return
 
     const handleMouseUp = () => {
-      // При отпускании мыши применяем цвет к выделенному тексту
       setTimeout(() => {
         applyBgColorToSelection()
       }, 10)
     }
 
-    // Меняем курсор на карандаш
     document.body.style.cursor = 'crosshair'
     
-    // Добавляем обработчик отпускания мыши
     document.addEventListener('mouseup', handleMouseUp)
     
     return () => {
@@ -1517,15 +1810,14 @@ useEffect(() => {
     }
   }, [isBgPaintingMode, bgColor, editor])
 
-  // Drag & Drop для модалки
   const handleMouseDown = useCallback((e) => {
-    // Проверяем, что клик именно на заголовке модалки для перетаскивания
     const isDragHandle = e.target.classList.contains('modal-drag-handle') ||
         e.target.closest('.modal-header') ||
         e.target.closest('.link-modal-header') ||
         e.target.closest('.custom-style-modal-header');
+    const isToolbarOverflowModalSurface = e.target.closest('.toolbar-overflow-modal') &&
+        !e.target.closest('button, input, textarea, select, a, [role="button"]');
     
-    // Проверяем, что это не input, textarea или select
     const isInput = e.target.tagName === 'INPUT' || 
                     e.target.tagName === 'TEXTAREA' ||
                     e.target.tagName === 'SELECT' ||
@@ -1534,10 +1826,11 @@ useEffect(() => {
                     e.target.closest('select') ||
                     e.target.closest('button') && !isDragHandle;
     
-    if (isDragHandle && !isInput) {
+    if ((isDragHandle || isToolbarOverflowModalSurface) && !isInput) {
       const modalElement = e.target.closest('.modal, .link-modal, .custom-style-modal');
       if (modalElement) {
         const rect = modalElement.getBoundingClientRect();
+        draggedModalRef.current = modalElement
         setDragOffset({
           x: e.clientX - rect.left,
           y: e.clientY - rect.top
@@ -1553,18 +1846,27 @@ useEffect(() => {
     
     const newX = e.clientX - dragOffset.x
     const newY = e.clientY - dragOffset.y
+
+    const modalEl = draggedModalRef.current
+    const modalWidth = modalEl?.offsetWidth || 0
+    const modalHeight = modalEl?.offsetHeight || 0
+
+    const clamped = clampFixedModalPosition(
+      { x: newX, y: newY },
+      { width: modalWidth, height: modalHeight },
+      MODAL_VIEWPORT_MARGIN
+    )
     
-    const boundedX = Math.max(10, Math.min(newX, window.innerWidth - 450))
-    const boundedY = Math.max(10, Math.min(newY, window.innerHeight - 400))
-    
-    setModalPosition({
-      x: boundedX,
-      y: boundedY
-    })
+    setModalPosition(prev => ({
+      ...prev,
+      x: clamped.x,
+      y: clamped.y
+    }))
   }, [isDragging, dragOffset])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
+    draggedModalRef.current = null
   }, [])
 
   useEffect(() => {
@@ -1582,6 +1884,48 @@ useEffect(() => {
       }
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
+
+  const hasAnyToolbarModalOpen =
+    showTextColorModal ||
+    showBgColorModal ||
+    showLinkModal ||
+    showCustomStyleModal ||
+    showExportModal ||
+    showImportModal ||
+    showJsonModal ||
+    showArticleLayoutModal ||
+    showToolbarOverflowModal
+
+  useEffect(() => {
+    if (!hasAnyToolbarModalOpen) return
+
+    const clampRenderedModalToViewport = () => {
+      const modalSelector = [
+        '.modal.toolbar-overflow-modal',
+        '.modal.json-modal',
+        '.modal.article-layout-modal',
+        '.modal.doc-io-modal',
+        '.custom-style-modal',
+        '.link-modal',
+        '.modal.color-modal',
+      ].join(', ')
+      const modalEl = document.querySelector(modalSelector)
+      if (!(modalEl instanceof HTMLElement)) return
+      const rect = modalEl.getBoundingClientRect()
+      setModalPosition(prev => {
+        const next = clampFixedModalPosition(prev, rect, MODAL_VIEWPORT_MARGIN)
+        if (next.x === prev.x && next.y === prev.y) return prev
+        return { ...prev, ...next }
+      })
+    }
+
+    const rafId = window.requestAnimationFrame(clampRenderedModalToViewport)
+    window.addEventListener('resize', clampRenderedModalToViewport)
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.removeEventListener('resize', clampRenderedModalToViewport)
+    }
+  }, [hasAnyToolbarModalOpen, jsonModalWidth])
 
   const handleJsonResizeMouseDown = useCallback(
     e => {
@@ -1639,7 +1983,6 @@ useEffect(() => {
     }
   }, [isResizingJsonModal])
 
-  // Функция для получения превью ссылки (для LinkModal)
   const fetchLinkPreview = async (url) => {
     if (!url || !url.trim()) {
       return null
@@ -1651,7 +1994,7 @@ useEffect(() => {
       
       return {
         title: domain,
-        description: `Ссылка на ${domain}`,
+        description: `РЎСЃС‹Р»РєР° РЅР° ${domain}`,
         favicon: `https://www.google.com/s2/favicons?domain=${domain}&sz=64`,
         url: url
       }
@@ -1660,7 +2003,50 @@ useEffect(() => {
     }
   }
 
-  // Кнопка
+  const getToolbarButtonTitle = (value) => {
+    if (typeof value !== 'string') return ''
+    const text = value.trim()
+    if (!text || text.length > 120) return ''
+    if (/^\?+$/.test(text) || text.includes('???')) return ''
+    const fragments = ['\u0420\u00a0', '\u0420\u040e', '\u0421\u0402', '\u0432\u0402']
+    if (fragments.some(fragment => text.includes(fragment))) return ''
+    const oddCyrillicCount = (text.match(/[\u0400-\u040f\u0450-\u045f]/g) || []).length
+    if (oddCyrillicCount >= 3) return ''
+    const weirdMojibakeMarkers = (text.match(/(?:РІР‚|Р Р‹|Р РЋ|РЎвЂє|РЎС›)/g) || []).length
+    const rCount = (text.match(/\u0420/g) || []).length
+    const vCount = (text.match(/\u0412/g) || []).length
+    if (weirdMojibakeMarkers >= 2 || (rCount >= 4 && vCount >= 4 && text.length > 20)) return ''
+    return text
+  }
+
+  useEffect(() => {
+    const sanitizeDomTitle = event => {
+      const target = event.target
+      if (!(target instanceof Element)) return
+
+      const titledNode = target.closest('[title]')
+      if (!titledNode) return
+
+      const rawTitle = titledNode.getAttribute('title')
+      if (rawTitle == null) return
+
+      if (!getToolbarButtonTitle(rawTitle)) {
+        titledNode.removeAttribute('title')
+      }
+    }
+
+    document.addEventListener('mouseover', sanitizeDomTitle, true)
+    document.addEventListener('focusin', sanitizeDomTitle, true)
+
+    return () => {
+      document.removeEventListener('mouseover', sanitizeDomTitle, true)
+      document.removeEventListener('focusin', sanitizeDomTitle, true)
+    }
+  }, [])
+
+
+
+
   const btn = (active, onClick, label, title = '') => (
     <button
       className={`toolbar-btn ${active ? 'active' : ''}`}
@@ -1669,7 +2055,7 @@ useEffect(() => {
         e.stopPropagation()
         onClick()
       }}
-      title={title}
+      title={getToolbarButtonTitle(title)}
     >
       {label}
     </button>
@@ -1683,217 +2069,515 @@ useEffect(() => {
       ? `${Math.round(Number(articleManualWidth) || 1080)}px`
       : getArticleWidthPresetText(selectedWidthPreset)
 
-  return (
-    <>
-      <div className="toolbar">
-        {/* Группа: Жирность/Курсив/Подчеркивание */}
-        <div className="toolbar-group">
+  const detectToolbarOverflow = useCallback(() => {
+    const toolbarMainElement = toolbarMainRef.current
+    if (!(toolbarMainElement instanceof HTMLElement)) return
+
+    const mainRect = toolbarMainElement.getBoundingClientRect()
+    if (!mainRect?.width) {
+      setOverflowGroupIds(prev => (prev.length ? [] : prev))
+      return
+    }
+
+    const nextOverflowGroupIds = TOOLBAR_GROUP_ORDER.filter(groupId => {
+      const groupElement = toolbarGroupRefs.current[groupId]
+      if (!(groupElement instanceof HTMLElement)) return false
+      const groupRect = groupElement.getBoundingClientRect()
+      return groupRect.right > mainRect.right - 1
+    })
+
+    setOverflowGroupIds(prev =>
+      areStringArraysEqual(prev, nextOverflowGroupIds) ? prev : nextOverflowGroupIds
+    )
+  }, [])
+
+  useEffect(() => {
+    let raf = 0
+    const schedule = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(detectToolbarOverflow)
+    }
+
+    schedule()
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null
+    if (resizeObserver) {
+      if (toolbarRootRef.current instanceof HTMLElement) {
+        resizeObserver.observe(toolbarRootRef.current)
+      }
+      if (toolbarMainRef.current instanceof HTMLElement) {
+        resizeObserver.observe(toolbarMainRef.current)
+      }
+      TOOLBAR_GROUP_ORDER.forEach(groupId => {
+        const groupElement = toolbarGroupRefs.current[groupId]
+        if (groupElement instanceof HTMLElement) {
+          resizeObserver.observe(groupElement)
+        }
+      })
+    }
+
+    window.addEventListener('resize', schedule)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', schedule)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [
+    articleManualWidth,
+    articlePaddingFrameVisible,
+    articleWidthFrameVisible,
+    articleWidthMode,
+    articleWidthPreset,
+    detectToolbarOverflow,
+    selectedFontSize,
+    showToolbarOverflowModal,
+    textColor,
+    bgColor,
+    toolbarRefreshTick,
+  ])
+
+  const openToolbarOverflowModal = () => {
+    closeAllModals()
+    announceModalOpen()
+    setShowToolbarOverflowModal(true)
+
+    if (toolbarOverflowTriggerRef.current) {
+      const rect = toolbarOverflowTriggerRef.current.getBoundingClientRect()
+      const toolbarRect =
+        toolbarRootRef.current instanceof HTMLElement
+          ? toolbarRootRef.current.getBoundingClientRect()
+          : null
+
+      if (toolbarRect) {
+        const width = Math.max(1, Math.round(toolbarRect.width))
+        const anchored = clampToolbarModalPosition(
+          { x: Math.round(toolbarRect.left), y: Math.round(toolbarRect.bottom) + 4 },
+          { width, height: 220 }
+        )
+
+        setModalPosition({
+          ...anchored,
+          width,
+        })
+        return
+      }
+
+      const topAnchor = rect.bottom + 8
+      setModalPosition({
+        x: Math.min(Math.max(20, rect.left), Math.max(20, window.innerWidth - 380)),
+        y: Math.min(Math.max(20, topAnchor), Math.max(20, window.innerHeight - 220)),
+      })
+      return
+    }
+
+    setModalPosition({
+      x: Math.max(20, window.innerWidth / 2 - 180),
+      y: Math.max(20, window.innerHeight / 2 - 180),
+    })
+  }
+
+  const syncToolbarOverflowModalWidth = useCallback(() => {
+    const toolbarRect =
+      toolbarRootRef.current instanceof HTMLElement
+        ? toolbarRootRef.current.getBoundingClientRect()
+        : null
+    if (!toolbarRect) return
+
+    const width = Math.max(1, Math.round(toolbarRect.width))
+    setModalPosition(prev => {
+      const clamped = clampToolbarModalPosition(
+        { x: Math.round(toolbarRect.left), y: prev.y },
+        { width, height: 220 }
+      )
+      const next = { ...prev, ...clamped, width }
+      if (
+        prev.x === next.x &&
+        prev.y === next.y &&
+        Number(prev.width) === Number(next.width)
+      ) {
+        return prev
+      }
+      return next
+    })
+  }, [clampToolbarModalPosition])
+
+  useEffect(() => {
+    if (!showToolbarOverflowModal) return
+
+    let raf = 0
+    const schedule = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(syncToolbarOverflowModalWidth)
+    }
+
+    schedule()
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined' ? new ResizeObserver(schedule) : null
+
+    if (resizeObserver && toolbarRootRef.current instanceof HTMLElement) {
+      resizeObserver.observe(toolbarRootRef.current)
+    }
+
+    window.addEventListener('resize', schedule)
+
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', schedule)
+      if (resizeObserver) {
+        resizeObserver.disconnect()
+      }
+    }
+  }, [showToolbarOverflowModal, syncToolbarOverflowModalWidth])
+
+  const renderToolbarGroup = (groupId, { inOverflow = false } = {}) => {
+    const isHiddenInMain = !inOverflow && overflowGroupIds.includes(groupId)
+    const groupClassName = [
+      'toolbar-group',
+      `toolbar-group-${groupId}`,
+      inOverflow ? 'toolbar-group-in-overflow' : '',
+      isHiddenInMain ? 'toolbar-group-overflow-hidden' : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+
+    const groupRef =
+      inOverflow
+        ? undefined
+        : node => {
+            if (node) {
+              toolbarGroupRefs.current[groupId] = node
+            } else {
+              delete toolbarGroupRefs.current[groupId]
+            }
+          }
+
+    if (groupId === 'text-style') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
           {btn(
             editor.isActive('bold'),
             toggleBoldAction,
             <span className="bold-icon">B</span>,
-            'Жирный'
+            'Р–РёСЂРЅС‹Р№',
           )}
           {btn(
             editor.isActive('italic'),
             toggleItalicAction,
             <span className="italic-icon">I</span>,
-            'Курсив'
+            'РљСѓСЂСЃРёРІ',
           )}
           {btn(
             editor.isActive('underline'),
             toggleUnderlineAction,
             <span className="underline-icon">U</span>,
-            'Подчеркнутый'
+            'РџРѕРґС‡РµСЂРєРЅСѓС‚С‹Р№',
           )}
           {btn(
             editor.isActive('strike'),
             toggleStrikeAction,
-            <span style={{ textDecoration: 'line-through'}}>S</span>,
-            'Зачеркнутый'
+            <span style={{ textDecoration: 'line-through' }}>S</span>,
+            'Р—Р°С‡РµСЂРєРЅСѓС‚С‹Р№',
           )}
         </div>
+      )
+    }
 
-        {/* Группа: Размер шрифта */}
-        <div className="toolbar-group">
-          <FontSizeSelect 
+    if (groupId === 'font-size') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
+          <FontSizeSelect
             editor={editor}
             selectedFontSize={selectedFontSize}
             setSelectedFontSize={setSelectedFontSize}
           />
         </div>
+      )
+    }
 
-        {/* Группа: Выравнивание */}
-        <div className="toolbar-group">
+    if (groupId === 'alignment') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
           {btn(
             currentAlignmentValue === 'left',
             () => setAlignment('left'),
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 5h16v2H4zm0 4h10v2H4zm0 4h16v2H4zm0 4h10v2H4z"/>
-            </svg>,
-            'Выровнять по левому краю'
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 5h16v2H4zm0 4h10v2H4zm0 4h16v2H4zm0 4h10v2H4z" />
+              </svg>
+              */}
+              <FormatAlignLeftRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>,
+            'Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РїРѕ Р»РµРІРѕРјСѓ РєСЂР°СЋ',
           )}
           {btn(
             currentAlignmentValue === 'center',
             () => setAlignment('center'),
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 5h16v2H4zm2 4h12v2H6zm-2 4h16v2H4zm2 4h12v2H6z"/>
-            </svg>,
-            'Выровнять по центру'
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 5h16v2H4zm2 4h12v2H6zm-2 4h16v2H4zm2 4h12v2H6z" />
+              </svg>
+              */}
+              <FormatAlignCenterRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>,
+            'Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РїРѕ С†РµРЅС‚СЂСѓ',
           )}
           {btn(
             currentAlignmentValue === 'right',
             () => setAlignment('right'),
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 5h16v2H4zm6 4h10v2H10zm-6 4h16v2H4zm6 4h10v2H10z"/>
-            </svg>,
-            'Выровнять по правому краю'
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 5h16v2H4zm6 4h10v2H10zm-6 4h16v2H4zm6 4h10v2H10z" />
+              </svg>
+              */}
+              <FormatAlignRightRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>,
+            'Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РїРѕ РїСЂР°РІРѕРјСѓ РєСЂР°СЋ',
           )}
           {btn(
             currentAlignmentValue === 'justify',
             () => setAlignment('justify'),
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h16v2H4z" />
-            </svg>,
-            'Выровнять по ширине'
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h16v2H4z" />
+              </svg>
+              */}
+              <FormatAlignJustifyRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>,
+            'Р’С‹СЂР°РІРЅРёРІР°РЅРёРµ РїРѕ С€РёСЂРёРЅРµ',
           )}
         </div>
+      )
+    }
 
-        {/* Группа: Цвет текста */}
-        <div className="toolbar-group">
+    if (groupId === 'text-color') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
           <div className="color-tool-container">
             <button
               ref={textColorButtonRef}
               className="color-main-btn text-color-btn"
-              style={{ 
+              style={{
                 color: textColor,
               }}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation()
                 applyTextColor(textColor)
               }}
-              title="Применить цвет текста"
+              title="РџСЂРёРјРµРЅРёС‚СЊ С†РІРµС‚ С‚РµРєСЃС‚Р°"
             >
               A
             </button>
             <button
               ref={textSelectButtonRef}
               className="color-select-btn"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation()
                 openTextColorModal()
               }}
-              title="Выбрать цвет текста"
+              title="Р’С‹Р±СЂР°С‚СЊ С†РІРµС‚ С‚РµРєСЃС‚Р°"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-              </svg>
+              <>
+                {/* Legacy SVG icon:
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                </svg>
+                */}
+                <ChevronRightRoundedIcon
+                  aria-hidden="true"
+                  fontSize="inherit"
+                  style={{ width: 12, height: 12, fontSize: 12 }}
+                />
+              </>
             </button>
           </div>
         </div>
+      )
+    }
 
-        {/* Группа: Цвет фона */}
-        <div className="toolbar-group">
+    if (groupId === 'bg-color') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
           <div className="color-tool-container">
             <button
               ref={bgColorButtonRef}
               className={`color-main-btn bg-color-btn ${isBgPaintingMode ? 'painting-mode' : ''}`}
               style={{
                 backgroundColor: bgColor,
-                color: textColor
+                color: bgButtonTextColor,
               }}
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation()
                 setIsBgPaintingMode(!isBgPaintingMode)
               }}
-              title={isBgPaintingMode ? 
-                "Режим карандаша активен - выделяйте текст для заливки" : 
-                "Режим карандаша - нажмите и выделяйте текст"}
+              title={
+                isBgPaintingMode
+                  ? 'Р’С‹РєР»СЋС‡РёС‚СЊ СЂРµР¶РёРј Р·Р°Р»РёРІРєРё С„РѕРЅР°'
+                  : 'Р’РєР»СЋС‡РёС‚СЊ СЂРµР¶РёРј Р·Р°Р»РёРІРєРё С„РѕРЅР°'
+              }
             >
               A
             </button>
             <button
               ref={bgSelectButtonRef}
               className="color-select-btn"
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation()
                 openBgColorModal()
               }}
-              title="Выбрать цвет фона"
+              title="Р’С‹Р±СЂР°С‚СЊ С†РІРµС‚ С„РѕРЅР°"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-              </svg>
+              <>
+                {/* Legacy SVG icon:
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
+                </svg>
+                */}
+                <ChevronRightRoundedIcon
+                  aria-hidden="true"
+                  fontSize="inherit"
+                  style={{ width: 12, height: 12, fontSize: 12 }}
+                />
+              </>
             </button>
           </div>
         </div>
+      )
+    }
 
-        {/* Группа: Ссылка */}
-        <div className="toolbar-group">
+    if (groupId === 'link') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
           <button
             ref={linkButtonRef}
             className={`toolbar-btn ${editor.isActive('link') ? 'active' : ''}`}
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault()
               e.stopPropagation()
               openLinkModal()
             }}
-            title="Ссылка"
+            title="Р’СЃС‚Р°РІРёС‚СЊ РёР»Рё СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ СЃСЃС‹Р»РєСѓ"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
-            </svg>
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z" />
+              </svg>
+              */}
+              <LinkRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>
           </button>
         </div>
+      )
+    }
 
-        {/* Кнопка сброса стилей */}
-        {/* Import / Export */}
-        <div className="toolbar-group">
+    if (groupId === 'import-export') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
           <button
             ref={importButtonRef}
             className={`toolbar-btn ${showImportModal ? 'active' : ''}`}
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault()
               e.stopPropagation()
               openImportModal()
             }}
-            title="Импорт"
+            title="РРјРїРѕСЂС‚"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M5 20h14v-2H5v2zM12 2l-5 5h3v6h4V7h3l-5-5z"/>
-            </svg>
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 20h14v-2H5v2zM12 2l-5 5h3v6h4V7h3l-5-5z" />
+              </svg>
+              */}
+              <UploadRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>
           </button>
           <button
             ref={exportButtonRef}
             className={`toolbar-btn ${showExportModal ? 'active' : ''}`}
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault()
               e.stopPropagation()
               openExportModal()
             }}
-            title="Экспорт"
+            title="Р­РєСЃРїРѕСЂС‚"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M5 20h14v-2H5v2zM12 2v10h4l-5 5-5-5h4V2h2z"/>
-            </svg>
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5 20h14v-2H5v2zM12 2v10h4l-5 5-5-5h4V2h2z" />
+              </svg>
+              */}
+              <DownloadRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>
           </button>
           <button
             ref={jsonButtonRef}
             className={`toolbar-btn ${showJsonModal ? 'active' : ''}`}
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault()
               e.stopPropagation()
               openJsonModal()
             }}
             title="JSON"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M8 5c-1.1 0-2 .9-2 2v3c0 .6-.4 1-1 1 .6 0 1 .4 1 1v3c0 1.1.9 2 2 2h1v-2H8v-3c0-.6-.4-1-1-1 .6 0 1-.4 1-1V7h1V5H8zm8 0h-1v2h1v3c0 .6.4 1 1 1-.6 0-1 .4-1 1v3h-1v2h1c1.1 0 2-.9 2-2v-3c0-.6.4-1 1-1-.6 0-1-.4-1-1V7c0-1.1-.9-2-2-2z" />
-            </svg>
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5c-1.1 0-2 .9-2 2v3c0 .6-.4 1-1 1 .6 0 1 .4 1 1v3c0 1.1.9 2 2 2h1v-2H8v-3c0-.6-.4-1-1-1 .6 0 1-.4 1-1V7h1V5H8zm8 0h-1v2h1v3c0 .6.4 1 1 1-.6 0-1 .4-1 1v3h-1v2h1c1.1 0 2-.9 2-2v-3c0-.6.4-1 1-1-.6 0-1-.4-1-1V7c0-1.1-.9-2-2-2z" />
+              </svg>
+              */}
+              <DataObjectRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>
           </button>
         </div>
+      )
+    }
 
-        <div className="toolbar-group">
+    if (groupId === 'article-layout') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
           <button
             ref={articleLayoutButtonRef}
             className={`toolbar-btn ${showArticleLayoutModal || articleWidthFrameVisible || articlePaddingFrameVisible ? 'active' : ''}`}
@@ -1902,39 +2586,109 @@ useEffect(() => {
               e.stopPropagation()
               openArticleLayoutModal(articleLayoutTab)
             }}
-            title={`Параметры статьи: ${currentWidthLabel}`}
+            title={`\u041f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b \u0441\u0442\u0430\u0442\u044c\u0438: ${currentWidthLabel}`}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 0v11h14V5H5zm4 15h6v2H9v-2z" />
-            </svg>
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 0v11h14V5H5zm4 15h6v2H9v-2z" />
+              </svg>
+              */}
+              <DesktopWindowsRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>
           </button>
         </div>
+      )
+    }
 
-        {/* Reset styles */}
-        <div className="toolbar-group">
+    if (groupId === 'reset') {
+      return (
+        <div key={groupId} className={groupClassName} ref={groupRef}>
           {btn(
             hasAnyStyle(),
             resetAllStyles,
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-            </svg>,
-            'Сбросить все стили'
+            <>
+              {/* Legacy SVG icon:
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+              </svg>
+              */}
+              <RestartAltRoundedIcon
+                aria-hidden="true"
+                fontSize="inherit"
+                style={{ width: 16, height: 16, fontSize: 16 }}
+              />
+            </>,
+            'РЎР±СЂРѕСЃРёС‚СЊ С„РѕСЂРјР°С‚РёСЂРѕРІР°РЅРёРµ',
           )}
         </div>
+      )
+    }
 
-        <div className="toolbar-spacer" />
+    return null
+  }
 
-        <div className="toolbar-group">
-          {btn(
-            anchorModeEnabled,
-            () => onToggleAnchorMode?.(),
-            '#',
-            'Режим навигационных меток'
+  return (
+    <>
+      <div
+        className={`toolbar${altSelectionModeActive ? ' toolbar-alt-locked' : ''}`}
+        ref={toolbarRootRef}
+      >
+        <div className="toolbar-main" ref={toolbarMainRef}>
+          {TOOLBAR_GROUP_ORDER.map(groupId => renderToolbarGroup(groupId))}
+        </div>
+
+        <div className="toolbar-right">
+          {overflowGroupIds.length > 0 && (
+            <button
+              ref={toolbarOverflowTriggerRef}
+              type="button"
+              className={`toolbar-overflow-trigger ${showToolbarOverflowModal ? 'active' : ''}`}
+              onClick={e => {
+                e.preventDefault()
+                e.stopPropagation()
+                openToolbarOverflowModal()
+              }}
+              title="More tools"
+            >
+              ...
+            </button>
           )}
+
+          <div className="toolbar-group toolbar-anchor-group">
+            {btn(
+              anchorModeEnabled,
+              () => onToggleAnchorMode?.(),
+              '#',
+              'Р РµР¶РёРј СЏРєРѕСЂРµР№',
+            )}
+            {altSelectionModeActive ? (
+              <button
+                type="button"
+                className="toolbar-lasso-indicator"
+                title={'\u0412\u044b\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0440\u0435\u0436\u0438\u043c \u0432\u044b\u0434\u0435\u043b\u0435\u043d\u0438\u044f \u0431\u043b\u043e\u043a\u043e\u0432 (Alt)'}
+                aria-label={'\u0412\u044b\u043a\u043b\u044e\u0447\u0438\u0442\u044c \u0440\u0435\u0436\u0438\u043c \u0432\u044b\u0434\u0435\u043b\u0435\u043d\u0438\u044f \u0431\u043b\u043e\u043a\u043e\u0432 (Alt)'}
+                onClick={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onDisableAltSelectionMode?.()
+                }}
+              >
+                <GestureRoundedIcon
+                  aria-hidden="true"
+                  fontSize="inherit"
+                  style={{ width: 15, height: 15, fontSize: 15 }}
+                />
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      {/* Бэкдроп для всех модалок */}
       {(
         showTextColorModal ||
         showBgColorModal ||
@@ -1943,106 +2697,158 @@ useEffect(() => {
         showExportModal ||
         showImportModal ||
         showJsonModal ||
-        showArticleLayoutModal
-      ) && (
-        <div 
-          ref={backdropRef}
-          className="modal-backdrop"
-          style={{ zIndex: 9 }}
-        />
-      )}
+        showArticleLayoutModal ||
+        showToolbarOverflowModal
+      ) &&
+        renderModalPortal(
+          <div 
+            ref={backdropRef}
+            className="modal-backdrop"
+            style={{ zIndex: 2147482900 }}
+          />
+        )}
 
-      {/* Модалки выбора цвета */}
-      {showTextColorModal && (
-        <ColorModal 
-          type="text"
-          currentColor={textColor}
-          customColors={customTextColors}
-          onApplyColor={applyTextColor}
-          onSaveCustomColor={saveCustomColor}
-          onRemoveCustomColor={removeCustomColor}
-          onClose={closeAllModals}
-          position={modalPosition}
-          isDragging={isDragging}
-          onMouseDown={handleMouseDown}
-          blockClose={blockClose}
-          setBlockClose={setBlockClose}
-        />
-      )}
+      {showTextColorModal &&
+        renderModalPortal(
+          <ColorModal 
+            type="text"
+            currentColor={textColor}
+            customColors={customTextColors}
+            onApplyColor={applyTextColor}
+            onSaveCustomColor={saveCustomColor}
+            onRemoveCustomColor={removeCustomColor}
+            onClose={closeAllModals}
+            position={modalPosition}
+            isDragging={isDragging}
+            onMouseDown={handleMouseDown}
+            blockClose={blockClose}
+            setBlockClose={setBlockClose}
+          />
+        )}
       
-      {showBgColorModal && (
-        <ColorModal 
-          type="bg"
-          currentColor={bgColor}
-          customColors={customBgColors}
-          onApplyColor={applyBgColor}
-          onSaveCustomColor={saveCustomColor}
-          onRemoveCustomColor={removeCustomColor}
-          onClose={closeAllModals}
-          position={modalPosition}
-          isDragging={isDragging}
-          onMouseDown={handleMouseDown}
-          blockClose={blockClose}
-          setBlockClose={setBlockClose}
-        />
-      )}
+      {showBgColorModal &&
+        renderModalPortal(
+          <ColorModal 
+            type="bg"
+            currentColor={bgColor}
+            customColors={customBgColors}
+            onApplyColor={applyBgColor}
+            onSaveCustomColor={saveCustomColor}
+            onRemoveCustomColor={removeCustomColor}
+            onClose={closeAllModals}
+            position={modalPosition}
+            isDragging={isDragging}
+            onMouseDown={handleMouseDown}
+            blockClose={blockClose}
+            setBlockClose={setBlockClose}
+          />
+        )}
       
-      {showLinkModal && (
-        <LinkModal
-          editor={editor}
-          onClose={closeAllModals}
-          position={modalPosition}
-          isDragging={isDragging}
-          onMouseDown={handleMouseDown}
-          blockClose={blockClose}
-          setBlockClose={setBlockClose}
-          customLinkStyles={customLinkStyles}
-          removeCustomStyle={removeCustomStyle}
-          onOpenCustomStyleModal={() => openCustomStyleModal()}
-          onEditStyle={handleEditStyle}
-          applyLinkStyle={applyLinkStyle}
-          fetchLinkPreview={fetchLinkPreview}
-        />
-      )}
+      {showLinkModal &&
+        renderModalPortal(
+          <LinkModal
+            editor={editor}
+            onClose={closeAllModals}
+            position={modalPosition}
+            isDragging={isDragging}
+            onMouseDown={handleMouseDown}
+            blockClose={blockClose}
+            setBlockClose={setBlockClose}
+            customLinkStyles={customLinkStyles}
+            removeCustomStyle={removeCustomStyle}
+            onOpenCustomStyleModal={() => openCustomStyleModal()}
+            onEditStyle={handleEditStyle}
+            applyLinkStyle={applyLinkStyle}
+            fetchLinkPreview={fetchLinkPreview}
+            initialStyleId={linkModalInitialStyleId}
+            focusUrlInput={focusLinkModalUrlInput}
+          />
+        )}
       
-      {showCustomStyleModal && (
-        <CustomStyleModal
-          onClose={closeAllModals}
-          position={modalPosition}
-          onMouseDown={handleMouseDown}
-          blockClose={blockClose}
-          setBlockClose={setBlockClose}
-          onCreateCustomStyle={createCustomStyle}
-          onUpdateCustomStyle={updateCustomStyle}
-          editingStyle={editingStyle}
-          standardStyles={linkStyles}
-        />
-      )}
+      {showCustomStyleModal &&
+        renderModalPortal(
+          <CustomStyleModal
+            onClose={handleCustomStyleModalClose}
+            position={modalPosition}
+            onMouseDown={handleMouseDown}
+            blockClose={blockClose}
+            setBlockClose={setBlockClose}
+            onCreateCustomStyle={createCustomStyle}
+            onUpdateCustomStyle={updateCustomStyle}
+            editingStyle={editingStyle}
+            standardStyles={linkStyles}
+          />
+        )}
 
-      {showExportModal && (
-        <ExportModal
-          onClose={closeAllModals}
-          position={modalPosition}
-          isDragging={isDragging}
-          onMouseDown={handleMouseDown}
-          setBlockClose={setBlockClose}
-          onExport={handleExport}
-        />
-      )}
+      {showExportModal &&
+        renderModalPortal(
+          <ExportModal
+            onClose={closeAllModals}
+            position={modalPosition}
+            isDragging={isDragging}
+            onMouseDown={handleMouseDown}
+            setBlockClose={setBlockClose}
+            onExport={handleExport}
+          />
+        )}
 
-      {showImportModal && (
-        <ImportModal
-          onClose={closeAllModals}
-          position={modalPosition}
-          isDragging={isDragging}
-          onMouseDown={handleMouseDown}
-          setBlockClose={setBlockClose}
-          onImportFile={handleImportFile}
-          onImportUrl={handleImportUrl}
-        />
-      )}
+      {showImportModal &&
+        renderModalPortal(
+          <ImportModal
+            onClose={closeAllModals}
+            position={modalPosition}
+            isDragging={isDragging}
+            onMouseDown={handleMouseDown}
+            setBlockClose={setBlockClose}
+            onImportFile={handleImportFile}
+            onImportUrl={handleImportUrl}
+          />
+        )}
 
-      {showArticleLayoutModal && (
+      {showToolbarOverflowModal &&
+        renderModalPortal(
+          <div
+            className={`modal toolbar-overflow-modal ${isDragging ? 'dragging' : ''}`}
+            style={{
+              left: `${modalPosition.x}px`,
+              top: `${modalPosition.y}px`,
+              width: typeof modalPosition.width === 'number' ? `${modalPosition.width}px` : undefined,
+              maxWidth: typeof modalPosition.width === 'number' ? `${modalPosition.width}px` : undefined,
+            }}
+            onMouseDown={handleMouseDown}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="doc-io-modal-content">
+              <div className="toolbar-overflow-modal-close-row">
+                <button
+                  className="close-modal-btn"
+                  onMouseDown={e => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
+                  onClick={e => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    closeAllModals()
+                  }}
+                  title={'\u0417\u0430\u043a\u0440\u044b\u0442\u044c'}
+                >
+                  x
+                </button>
+              </div>
+
+              <div className="toolbar-overflow-groups">
+                {overflowGroupIds.length ? (
+                  overflowGroupIds.map(groupId => renderToolbarGroup(groupId, { inOverflow: true }))
+                ) : (
+                  <div className="toolbar-overflow-empty">{'\u0412\u0441\u0435 \u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u044b \u043f\u043e\u043c\u0435\u0449\u0430\u044e\u0442\u0441\u044f \u0432 \u043f\u0430\u043d\u0435\u043b\u0438.'}</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+      {showArticleLayoutModal && renderModalPortal(
         <div
           className={`modal article-layout-modal ${isDragging ? 'dragging' : ''}`}
           style={{
@@ -2053,7 +2859,7 @@ useEffect(() => {
         >
           <div className="doc-io-modal-content">
             <div className="modal-header" onMouseDown={handleMouseDown}>
-              <div className="modal-drag-handle">Параметры статьи</div>
+              <div className="modal-drag-handle">{'\u041f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b \u0441\u0442\u0430\u0442\u044c\u0438'}</div>
               <button
                 className="close-modal-btn"
                 onMouseDown={e => {
@@ -2065,7 +2871,7 @@ useEffect(() => {
                   e.stopPropagation()
                   closeAllModals()
                 }}
-                title="Закрыть"
+                title={'\u0417\u0430\u043a\u0440\u044b\u0442\u044c'}
               >
                 x
               </button>
@@ -2080,7 +2886,7 @@ useEffect(() => {
                   switchArticleLayoutTab('width')
                 }}
               >
-                Ширина
+                {'\u0428\u0438\u0440\u0438\u043d\u0430'}
               </button>
               <button
                 className={`article-layout-tab ${articleLayoutTab === 'padding' ? 'active' : ''}`}
@@ -2090,13 +2896,13 @@ useEffect(() => {
                   switchArticleLayoutTab('padding')
                 }}
               >
-                Отступы
+                {'\u041e\u0442\u0441\u0442\u0443\u043f\u044b'}
               </button>
             </div>
 
             {articleLayoutTab === 'width' ? (
               <>
-                <div className="article-layout-section-title">Режим ширины</div>
+                <div className="article-layout-section-title">{'\u0420\u0435\u0436\u0438\u043c \u0448\u0438\u0440\u0438\u043d\u044b'}</div>
                 <div className="article-width-mode-switch">
                   <button
                     className={`article-width-mode-btn ${articleWidthMode === 'preset' ? 'active' : ''}`}
@@ -2106,7 +2912,7 @@ useEffect(() => {
                       onArticleWidthModeChange?.('preset')
                     }}
                   >
-                    Заготовки
+                    {'\u0417\u0430\u0433\u043e\u0442\u043e\u0432\u043a\u0438'}
                   </button>
                   <button
                     className={`article-width-mode-btn ${articleWidthMode === 'manual' ? 'active' : ''}`}
@@ -2117,7 +2923,7 @@ useEffect(() => {
                       onArticleWidthFrameVisibleChange?.(true)
                     }}
                   >
-                    Вручную
+                    {'\u0412\u0440\u0443\u0447\u043d\u0443\u044e'}
                   </button>
                 </div>
 
@@ -2132,7 +2938,7 @@ useEffect(() => {
                           resetArticleWidth()
                         }}
                       >
-                        Сбросить
+                        {'\u0421\u0431\u0440\u043e\u0441\u0438\u0442\u044c'}
                       </button>
                       <button
                         className={`modal-btn article-width-frame-toggle ${articleWidthFrameVisible ? 'hide' : 'show'}`}
@@ -2142,7 +2948,9 @@ useEffect(() => {
                           onArticleWidthFrameVisibleChange?.(!articleWidthFrameVisible)
                         }}
                       >
-                        {articleWidthFrameVisible ? 'Скрыть боковые линии' : 'Показать боковые линии'}
+                        {articleWidthFrameVisible
+                          ? '\u0421\u043a\u0440\u044b\u0442\u044c \u0431\u043e\u043a\u043e\u0432\u044b\u0435 \u043b\u0438\u043d\u0438\u0438'
+                          : '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u0431\u043e\u043a\u043e\u0432\u044b\u0435 \u043b\u0438\u043d\u0438\u0438'}
                       </button>
                     </div>
                   </div>
@@ -2172,7 +2980,7 @@ useEffect(() => {
                           resetArticleWidth()
                         }}
                       >
-                        Сбросить
+                        {'\u0421\u0431\u0440\u043e\u0441\u0438\u0442\u044c'}
                       </button>
                     </div>
                   </>
@@ -2180,7 +2988,7 @@ useEffect(() => {
               </>
             ) : (
               <>
-                <div className="article-layout-section-title">Режим отступов</div>
+                <div className="article-layout-section-title">{'\u0420\u0435\u0436\u0438\u043c \u043e\u0442\u0441\u0442\u0443\u043f\u043e\u0432'}</div>
                 <div className="article-padding-mode-switch">
                   <button
                     className={`article-padding-mode-btn ${articlePaddingMode === 'shared' ? 'active' : ''}`}
@@ -2190,7 +2998,7 @@ useEffect(() => {
                       onArticlePaddingModeChange?.('shared')
                     }}
                   >
-                    Общая рамка
+                    {'\u041e\u0431\u0449\u0430\u044f \u0440\u0430\u043c\u043a\u0430'}
                   </button>
                   <button
                     className={`article-padding-mode-btn ${articlePaddingMode === 'manual' ? 'active' : ''}`}
@@ -2200,7 +3008,7 @@ useEffect(() => {
                       onArticlePaddingModeChange?.('manual')
                     }}
                   >
-                    Вручную
+                    {'\u0412\u0440\u0443\u0447\u043d\u0443\u044e'}
                   </button>
                 </div>
 
@@ -2213,7 +3021,7 @@ useEffect(() => {
                       onArticlePaddingReset?.()
                     }}
                   >
-                    Сбросить
+                    {'\u0421\u0431\u0440\u043e\u0441\u0438\u0442\u044c'}
                   </button>
                   <button
                     className={`modal-btn ${articlePaddingFrameVisible ? 'primary' : 'secondary'}`}
@@ -2223,7 +3031,9 @@ useEffect(() => {
                       onArticlePaddingFrameVisibleChange?.(!articlePaddingFrameVisible)
                     }}
                   >
-                    {articlePaddingFrameVisible ? 'Скрыть рамку' : 'Показать рамку'}
+                    {articlePaddingFrameVisible
+                      ? '\u0421\u043a\u0440\u044b\u0442\u044c \u0440\u0430\u043c\u043a\u0443'
+                      : '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u0440\u0430\u043c\u043a\u0443'}
                   </button>
                 </div>
               </>
@@ -2232,7 +3042,7 @@ useEffect(() => {
         </div>
       )}
 
-      {showJsonModal && (
+      {showJsonModal && renderModalPortal(
         <div
           className={`modal json-modal ${isDragging ? 'dragging' : ''} ${isResizingJsonModal ? 'resizing' : ''}`}
           style={{
@@ -2258,9 +3068,9 @@ useEffect(() => {
                   jsonResizeStateRef.current = null
                   closeAllModals()
                 }}
-                title="Закрыть"
+                title={'\u0417\u0430\u043a\u0440\u044b\u0442\u044c'}
               >
-                ?
+                x
               </button>
             </div>
 
@@ -2283,7 +3093,7 @@ useEffect(() => {
                     refreshJsonFromEditor()
                   }}
                 >
-                  Обновить
+                  {'\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c'}
                 </button>
                 <button
                   className="modal-btn secondary"
@@ -2293,7 +3103,7 @@ useEffect(() => {
                     copyJsonToClipboard()
                   }}
                 >
-                  Копировать
+                  {'\u041a\u043e\u043f\u0438\u0440\u043e\u0432\u0430\u0442\u044c'}
                 </button>
                 <button
                   className="modal-btn primary"
@@ -2303,7 +3113,7 @@ useEffect(() => {
                     applyJsonToEditor()
                   }}
                 >
-                  Применить
+                  {'\u041f\u0440\u0438\u043c\u0435\u043d\u0438\u0442\u044c'}
                 </button>
               </div>
             </div>
@@ -2312,13 +3122,11 @@ useEffect(() => {
           <div
             className="json-modal-resize-handle"
             onMouseDown={handleJsonResizeMouseDown}
-            title="Изменить ширину"
+            title={'\u0418\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u0448\u0438\u0440\u0438\u043d\u0443'}
           />
         </div>
       )}
     </>
   )
 }
-
-
 

@@ -292,6 +292,9 @@ function CreateRequestReport({
         "success"
       );
     } catch (error) {
+      if (error.message.startsWith("Airline has no prices")) {
+        alert("У авиакомпании нет цен.");
+      }
       console.error("Catch: ", error);
       // console.log(input);
     } finally {

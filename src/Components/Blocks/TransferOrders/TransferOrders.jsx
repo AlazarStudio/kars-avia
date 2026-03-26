@@ -8,8 +8,8 @@ import {
   GET_AIRLINE,
   GET_REQUESTS_ARCHIVED,
   getCookie,
-  CANCEL_REQUEST,
   GET_TRANSFER_REQUESTS,
+  UPDATE_TRANSFER_REQUEST_MUTATION,
   TRANSFER_CREATED_SUBSCRIPTION,
   TRANSFER_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests.js";
@@ -30,6 +30,7 @@ import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import InfoTableDataTransferOrders from "../InfoTableDataTransferOrders/InfoTableDataTransferOrders.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import CreateTransferRequest from "../CreateTransferRequest/CreateTransferRequest.jsx";
+import ExistRequestTransfer from "../ExistRequestTransfer/ExistRequestTransfer.jsx";
 import { hasAccessMenu } from "../../../utils/access";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
@@ -217,8 +218,15 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   // ]);
 
   const handleOpenExistRequest = (matchData) => {
-    setExistRequestData(matchData); // Сохраняем данные match
-    setShowRequestSidebar(true); // Открываем ExistRequest
+    const transferId = typeof matchData === "object" && matchData?.id ? matchData.id : matchData;
+    setExistRequestData(matchData);
+    setChooseRequestID(transferId);
+    setShowRequestSidebar(true);
+  };
+
+  const handleSelectTransfer = (transferId) => {
+    setChooseRequestID(transferId);
+    setShowRequestSidebar(true);
   };
 
   const [showDelete, setShowDelete] = useState(false);
@@ -229,8 +237,8 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     setRequestId(id);
   };
 
-  // Запрос на отмену созданной, но не размещенной заявки
-  const [cancelRequestMutation] = useMutation(CANCEL_REQUEST, {
+  // Отмена трансфера через updateTransfer (смена статуса)
+  const [updateTransferMutation] = useMutation(UPDATE_TRANSFER_REQUEST_MUTATION, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -240,13 +248,15 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
 
   const handleCancelRequest = async (id) => {
     try {
-      // Отправка запроса с правильным ID заявки
-      const response = await cancelRequestMutation({
+      await updateTransferMutation({
         variables: {
-          cancelRequestId: id,
+          updateTransferId: id,
+          input: {
+            status: "CANCELLED",
+          },
         },
       });
-      // console.log("Заявка успешно отменена", response);
+      await refetch();
     } catch (error) {
       console.error("Ошибка при отмене заявки:", JSON.stringify(error));
     }
@@ -403,8 +413,8 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   const validCurrentPage = urlPage < totalPages ? urlPage : 0;
 
   return (
-    <div className={classes.section} style={disAdmin ? { padding: "0px" } : {}}>
-      {!disAdmin && <Header>Заказы</Header>}
+    <div className={classes.section} style={disAdmin ? { padding: "0px", overflow: "visible" } : {}}>
+      {!disAdmin && <Header>Трансфер</Header>}
       <div className={classes.section_searchAndFilter}>
         <Filter
           user={user}
@@ -443,6 +453,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
             token={token}
             canChat={canChatTransfer}
             toggleRequestSidebar={toggleRequestSidebar}
+            onSelectTransfer={handleSelectTransfer}
             requests={filteredRequests || []}
             chooseRequestID={chooseRequestID}
             setChooseObject={setChooseObject}
@@ -477,18 +488,17 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
         user={user}
         addNotification={addNotification}
       />
-      {/* <ExistRequest
-        setChooseCityRequest={setChooseCityRequest}
+      <ExistRequestTransfer
         show={showRequestSidebar}
         onClose={toggleRequestSidebar}
-        setChooseRequestID={setChooseRequestID}
-        setShowChooseHotel={setShowChooseHotel}
-        chooseRequestID={chooseRequestID ? chooseRequestID : existRequestData}
+        chooseRequestID={chooseRequestID}
         user={user}
         accessMenu={accessMenu}
+        setChooseRequestID={setChooseRequestID}
+        canChat={canChatTransfer}
         openDeleteComponent={openDeleteComponent}
         setRequestId={setChooseRequestId}
-      /> */}
+      />
       {/* <ChooseHotel
         chooseCityRequest={chooseCityRequest}
         show={showChooseHotel}

@@ -38,8 +38,9 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import { isSuperAdmin, hasAccessMenu } from "../../../utils/access";
 
-function RegisterOfContracts({ children, id, user, ...props }) {
+function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) {
   const token = getCookie("token");
   const location = useLocation();
   const navigate = useNavigate();
@@ -71,6 +72,9 @@ function RegisterOfContracts({ children, id, user, ...props }) {
   const [selectedOrganization, setSelectedOrganization] = useState(null);
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
+
+  const canCreate = isSuperAdmin(user) || hasAccessMenu(accessMenu, "contractCreate");
+  const canEdit = isSuperAdmin(user) || hasAccessMenu(accessMenu, "contractUpdate");
 
   const query =
     activeTab === "airlines"
@@ -352,7 +356,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
     setEditShowAddTarif(false);
   };
 
-  // NEW: открыть модал удаления договора
+  // NEW: открыть модал удаления договора (из таблицы — закрывает сайдбар)
   const openDeleteContract = (contract) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -360,6 +364,15 @@ function RegisterOfContracts({ children, id, user, ...props }) {
       data: { contract },
     });
     setEditShowAddTarif(false);
+  };
+
+  // Открыть модал удаления без закрытия сайдбара (из меню договора)
+  const openDeleteContractFromMenu = (contract) => {
+    setShowDelete(true);
+    setDeleteIndex({
+      type: "deleteContract",
+      data: { contract },
+    });
   };
 
   // NEW: удалить договор (авиа/гостиница)
@@ -382,6 +395,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
       setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
       await refetch();
       setShowDelete(false);
+      setEditShowAddTarif(false);
       addNotification?.("Договор удалён.", "success");
     } catch (e) {
       console.error(e);
@@ -742,11 +756,13 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           onChange={handleSearchTarif}
         />
 
-        <Filter
-          toggleSidebar={toggleTarifsCategory}
-          handleChange={""}
-          buttonTitle={"Создать договор"}
-        />
+        {canCreate && (
+          <Filter
+            toggleSidebar={toggleTarifsCategory}
+            handleChange={""}
+            buttonTitle={"Создать договор"}
+          />
+        )}
       </div>
 
       {loading && <MUILoader fullHeight={"70vh"} />}
@@ -757,7 +773,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           <InfoTableAllDataTarifs
             pageInfo={pageInfo}
             activeTab={activeTab}
-            canEdit={true}
+            canEdit={canEdit}
             toggleRequestSidebar={toggleEditTarifs}
             toggleEditTarifsCategory={toggleEditTarifsCategory}
             requests={addTarif}
@@ -803,7 +819,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           <EditRequestAirlineContract
             user={user}
             id={id}
-            canEdit={true}
+            canEdit={canEdit}
             activeFilterTab={activeTab}
             setAddTarif={setAddTarif}
             show={showEditAddTarif}
@@ -811,6 +827,14 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             addTarif={addTarif}
             tarif={selectedTarif}
             addNotification={addNotification}
+            onRequestDelete={
+              canEdit
+                ? () => {
+                    const contract = addTarif.find((x) => x.id === selectedTarif);
+                    if (contract) openDeleteContractFromMenu(contract);
+                  }
+                : undefined
+            }
           />
         </>
       ) : null}
@@ -835,7 +859,7 @@ function RegisterOfContracts({ children, id, user, ...props }) {
           <EditRequestHotelContract
             user={user}
             id={id}
-            canEdit={true}
+            canEdit={canEdit}
             activeFilterTab={activeTab}
             companiesData={companiesData}
             hotelsData={hotelsData}
@@ -847,6 +871,14 @@ function RegisterOfContracts({ children, id, user, ...props }) {
             addTarif={addTarif}
             tarif={selectedTarif}
             addNotification={addNotification}
+            onRequestDelete={
+              canEdit
+                ? () => {
+                    const contract = addTarif.find((x) => x.id === selectedTarif);
+                    if (contract) openDeleteContractFromMenu(contract);
+                  }
+                : undefined
+            }
           />
         </>
       ) : null}

@@ -24,6 +24,23 @@
   background: #8C9AAA;
 }
 
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.earlyCompleteBtn {
+  background: transparent;
+  color: #5C6470;
+  border: 1px solid #E8EDF4;
+}
+
+.earlyCompleteBtn:hover:not(:disabled) {
+  background: #F6F8FC;
+  color: #005EFF;
+}
+
 .historyBtn {
   display: flex;
   align-items: center;

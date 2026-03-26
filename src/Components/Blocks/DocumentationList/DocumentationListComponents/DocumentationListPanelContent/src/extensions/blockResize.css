@@ -48,6 +48,37 @@
   bottom: -4px;
 }
 
+/* corners */
+.block-resize.corner {
+  width: 12px;
+  height: 12px;
+  z-index: 7;
+}
+
+.block-resize.top-left {
+  top: -6px;
+  left: -6px;
+  cursor: nwse-resize;
+}
+
+.block-resize.top-right {
+  top: -6px;
+  right: -6px;
+  cursor: nesw-resize;
+}
+
+.block-resize.bottom-left {
+  bottom: -6px;
+  left: -6px;
+  cursor: nesw-resize;
+}
+
+.block-resize.bottom-right {
+  bottom: -6px;
+  right: -6px;
+  cursor: nwse-resize;
+}
+
 /* hover feedback */
 .block-resizable:hover .block-resize {
   background: rgba(99, 102, 241, 0.12);

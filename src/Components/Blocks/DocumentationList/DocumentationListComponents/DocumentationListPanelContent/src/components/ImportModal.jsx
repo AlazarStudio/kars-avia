@@ -13,6 +13,7 @@ export default function ImportModal({
   const [url, setUrl] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
+  const [showHelp, setShowHelp] = useState(false)
 
   const fileInputRef = useRef(null)
   const urlInputRef = useRef(null)
@@ -78,6 +79,29 @@ export default function ImportModal({
       <div className="doc-io-modal-content">
         <div className="modal-header" onMouseDown={onMouseDown}>
           <div className="modal-drag-handle">Импорт</div>
+          <div className="doc-io-header-actions">
+            <button
+              type="button"
+              className={`close-modal-btn doc-io-help-btn ${showHelp ? 'active' : ''}`}
+              onMouseDown={e => {
+                e.preventDefault()
+                e.stopPropagation()
+              }}
+              onClick={e => {
+                e.preventDefault()
+                e.stopPropagation()
+                setShowHelp(prev => !prev)
+              }}
+              title={showHelp
+                ? '\u0421\u043a\u0440\u044b\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443'
+                : '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443'}
+              aria-label={showHelp
+                ? '\u0421\u043a\u0440\u044b\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443'
+                : '\u041f\u043e\u043a\u0430\u0437\u0430\u0442\u044c \u043f\u043e\u0434\u0441\u043a\u0430\u0437\u043a\u0443'}
+              aria-pressed={showHelp}
+            >
+              ?
+            </button>
           <button
             className="close-modal-btn"
             onMouseDown={e => {
@@ -93,6 +117,7 @@ export default function ImportModal({
           >
             ×
           </button>
+          </div>
         </div>
 
         <div className="doc-io-tabs" role="tablist" aria-label="Импорт">
@@ -145,6 +170,7 @@ export default function ImportModal({
               hidden
               onChange={handleFileChange}
             />
+            {showHelp && (
             <div className="doc-io-hint">
               Поддерживаются: <b>.json</b> (рекомендуется), <b>.txt</b>/<b>.html</b>, <b>.doc</b>/<b>.docx</b>, <b>.pdf</b>, <b>.xls</b>/<b>.xlsx</b>.
               <br />
@@ -152,6 +178,7 @@ export default function ImportModal({
               <br />
               Импорт заменяет текущий документ.
             </div>
+            )}
           </div>
         )}
 
@@ -175,9 +202,11 @@ export default function ImportModal({
               }}
               disabled={busy}
             />
+            {showHelp && (
             <div className="doc-io-hint">
               URL должен отдавать содержимое файла (CORS может помешать). Импорт заменяет текущий документ.
             </div>
+            )}
           </div>
         )}
 

@@ -10,7 +10,6 @@ import {
   EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
   GET_AIRLINE,
   GET_AIRLINE_POSITIONS,
-  GET_AIRLINES_RELAY,
   GET_AIRPORTS_RELAY,
   GET_REQUEST,
   GET_HOTELS_RELAY,
@@ -20,6 +19,7 @@ import {
   SAVE_HANDLE_EXTEND_MUTATION,
   SAVE_MEALS_MUTATION,
   UPDATE_REQUEST_RELAY,
+  getMediaUrl,
 } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 import {
@@ -38,6 +38,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import ExistRequestAdditionalMenu from "./ExistRequestAdditionalMenu";
 import ExistRequestEditForm from "./ExistRequestEditForm";
+import { roles, roleLabels } from "../../../roles";
 
 function ExistRequest({
   show,
@@ -178,6 +179,32 @@ function ExistRequest({
       skip: newPageIndex * prev.take,
     }));
   };
+
+  // Группировка истории по датам (как в уведомлениях)
+  const dayKey = (s) => {
+    const d = new Date(s);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  };
+  const fmtDay = (ts) =>
+    new Date(ts).toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  const groupedHistory = useMemo(() => {
+    const list = logsData?.logs?.logs ?? [];
+    const sorted = [...list].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    const m = new Map();
+    for (const log of sorted) {
+      const k = dayKey(log.createdAt);
+      if (!m.has(k)) m.set(k, []);
+      m.get(k).push(log);
+    }
+    return Array.from(m.entries()).sort((a, b) => b[0] - a[0]);
+  }, [logsData?.logs?.logs]);
 
   useEffect(() => {
     if (formData) {
@@ -353,11 +380,6 @@ function ExistRequest({
             selectedPlace !== formData.hotelChess?.place);
         const hotelRoomChangeAllowed = canChangeHotel && selectedHotelId && selectedRoomId && !user?.airlineId;
         const reserveChanged = selectedReserve !== undefined && selectedReserve !== null && selectedReserve !== formData.reserve;
-        const airlineIdChanged =
-          canChangeHotel &&
-          !user?.airlineId &&
-          selectedAirlineId &&
-          selectedAirlineId !== formData?.airline?.id;
         const mealPlanChanged =
           mealPlanIncluded !== formData?.mealPlan?.included ||
           mealPlanBreakfastEnabled !== (formData?.mealPlan?.breakfastEnabled ?? true) ||
@@ -381,9 +403,6 @@ function ExistRequest({
 
         if (reserveChanged) {
           requestInput.reserve = selectedReserve;
-        }
-        if (airlineIdChanged) {
-          requestInput.airlineId = selectedAirlineId;
         }
         if (personIdChanged) {
           requestInput.personId = effectivePersonId;
@@ -419,6 +438,8 @@ function ExistRequest({
             requestInput.personId = formData.person.id;
           }
         }
+
+        // console.log(requestInput)
 
         // Сохранение изменений дат и hotelId (если изменился)
         await updateRequestRelay({
@@ -510,15 +531,6 @@ function ExistRequest({
       setSelectedPlace(null);
     } else {
       setSelectedAirportId(null);
-    }
-  }, []);
-
-  const handleAirlineChange = useCallback((event, newValue) => {
-    if (newValue) {
-      setSelectedAirlineId(newValue.id);
-      setSelectedEmployee(null);
-    } else {
-      setSelectedAirlineId(null);
     }
   }, []);
 
@@ -698,7 +710,6 @@ function ExistRequest({
   const [airports, setAirports] = useState([]);
   const [selectedAirportId, setSelectedAirportId] = useState(null);
   const [selectedReserve, setSelectedReserve] = useState(null);
-  const [selectedAirlineId, setSelectedAirlineId] = useState(null);
   const [mealPlanIncluded, setMealPlanIncluded] = useState(true);
   const [mealPlanBreakfastEnabled, setMealPlanBreakfastEnabled] = useState(true);
   const [mealPlanLunchEnabled, setMealPlanLunchEnabled] = useState(true);
@@ -709,7 +720,7 @@ function ExistRequest({
     { title: "Не включено", value: false },
   ];
 
-  const effectiveAirlineId = selectedAirlineId ?? formData?.airline?.id;
+  const effectiveAirlineId = formData?.airline?.id;
   const { data: airlineData, refetch: airlineRefetch } = useQuery(GET_AIRLINE, {
     context: {
       headers: {
@@ -734,22 +745,6 @@ function ExistRequest({
       setAirports(airportsData.airports);
     }
   }, [airportsData]);
-
-  const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    skip: !chooseRequestID,
-  });
-
-  const [airlines, setAirlines] = useState([]);
-  useEffect(() => {
-    if (airlinesData?.airlines?.airlines) {
-      setAirlines(airlinesData.airlines.airlines);
-    }
-  }, [airlinesData]);
 
   // Запрос для получения списка гостиниц
   const { data: hotelsData, loading: hotelsLoading } = useQuery(
@@ -849,9 +844,6 @@ function ExistRequest({
       if (formData.reserve !== undefined && formData.reserve !== null) {
         setSelectedReserve(formData.reserve);
       }
-      if (formData.airline?.id) {
-        setSelectedAirlineId(formData.airline.id);
-      }
       if (formData?.mealPlan?.included !== undefined) {
         setMealPlanIncluded(formData.mealPlan.included);
       }
@@ -893,6 +885,7 @@ function ExistRequest({
       setIsLoading(false);
       return;
     }
+    console.log(personToSave);
 
     updateRequestRelay({
       variables: {
@@ -925,8 +918,26 @@ function ExistRequest({
   const handleUpdateRequest = async () => {
     if (isEditing) {
       await handleExtendChangeRequest();
+    } else {
+      setActiveTab("Общая");
     }
     setIsEditing(!isEditing);
+  };
+
+  const handlePlaceClick = () => {
+    const hasPendingEmployeeSelection =
+      Boolean(selectedEmployee?.id) &&
+      selectedEmployee.id !== formData?.person?.id;
+
+    if (hasPendingEmployeeSelection) {
+      alert("Подтвердите выбор сотрудника.");
+      return;
+    }
+
+    onClose();
+    setShowChooseHotel(true);
+    setChooseCityRequest(formData?.airport?.city);
+    localStorage.setItem("selectedTab", 0);
   };
 
   const [newStaffId, setNewStaffId] = useState(null);
@@ -935,7 +946,15 @@ function ExistRequest({
 
   useEffect(() => {
     if (newStaffId) {
-      setSelectedEmployee(newStaffId);
+      const staffObj = typeof newStaffId === "object" ? newStaffId : { id: newStaffId };
+      setSelectedEmployee(staffObj);
+      setAirlineStaff((prev) => {
+        const list = prev || [];
+        if (!list.some((p) => p.id === staffObj.id)) {
+          return [...list, staffObj];
+        }
+        return list;
+      });
     }
   }, [newStaffId]);
 
@@ -982,7 +1001,7 @@ function ExistRequest({
                 )} */}
             </div>
             <div className={classes.requestTitle_close}>
-              {formData.status !== 'canceled' && formData.status !== "archived" && (
+              {formData.status !== 'canceled' && formData.status !== "archived" && formData.status !== "created" && formData.status !== "opened" && (
                 <ExistRequestAdditionalMenu
                   anchorEl={anchorEl}
                   onOpen={handleMenuOpen}
@@ -1016,7 +1035,8 @@ function ExistRequest({
                   Общая
                 </div>
                 {formData.status !== "created" &&
-                  formData.status !== "opened" && (
+                  formData.status !== "opened" &&
+                  (user?.airlineId ? !isEditing : true) && (
                     <div
                       className={`${classes.tab} ${activeTab === "Питание" ? classes.activeTab : ""
                         }`}
@@ -1025,7 +1045,7 @@ function ExistRequest({
                       Питание
                     </div>
                   )}
-                {canChatTab && (
+                {!isEditing && canChatTab && (
                   <div
                     className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
                       }`}
@@ -1044,42 +1064,44 @@ function ExistRequest({
                     {/* {console.log(formData?.chat)} */}
                   </div>
                 )}
-                <div
-                  className={`${classes.tab} ${activeTab === "История" ? classes.activeTab : ""
-                    }`}
-                  onClick={() => handleTabChange("История")}
-                >
-                  История
-                </div>
+                {!isEditing && (
+                  <div
+                    className={`${classes.tab} ${activeTab === "История" ? classes.activeTab : ""
+                      }`}
+                    onClick={() => handleTabChange("История")}
+                  >
+                    История
+                  </div>
+                )}
               </div>
 
               <div
                 className={classes.requestMiddle}
                 style={{
                   height: (isEditing) ? "calc(100vh - 198px)" : "calc(100vh - 120px)"
-                    // (activeTab !== "Комментарии" &&
-                    //   activeTab !== "История" &&
-                    //   formData.status !== "created" &&
-                    //   formData.status !== "canceled" &&
-                    //   formData.status !== "archived" &&
-                    //   (accessMenu
-                    //     ? user?.airlineId &&
-                    //     hasAccessMenu(accessMenu, "requestUpdate")
-                    //     : true))
-                    //   ? "calc(100vh - 120px)"
-                    //   :
-                    //   (activeTab !== "Комментарии" &&
-                    //     activeTab !== "История" &&
-                    //     formData.status !== "created" &&
-                    //     formData.status !== "canceled" &&
-                    //     formData.status !== "archived" &&
-                    //     (accessMenu
-                    //       ? !user?.airlineId &&
-                    //       (dispatcherCanUpdate ??
-                    //         hasAccessMenu(accessMenu, "requestUpdate"))
-                    //       : true))
-                    //     ? "calc(100vh - 120px)"
-                    //     : null,
+                  // (activeTab !== "Комментарии" &&
+                  //   activeTab !== "История" &&
+                  //   formData.status !== "created" &&
+                  //   formData.status !== "canceled" &&
+                  //   formData.status !== "archived" &&
+                  //   (accessMenu
+                  //     ? user?.airlineId &&
+                  //     hasAccessMenu(accessMenu, "requestUpdate")
+                  //     : true))
+                  //   ? "calc(100vh - 120px)"
+                  //   :
+                  //   (activeTab !== "Комментарии" &&
+                  //     activeTab !== "История" &&
+                  //     formData.status !== "created" &&
+                  //     formData.status !== "canceled" &&
+                  //     formData.status !== "archived" &&
+                  //     (accessMenu
+                  //       ? !user?.airlineId &&
+                  //       (dispatcherCanUpdate ??
+                  //         hasAccessMenu(accessMenu, "requestUpdate"))
+                  //       : true))
+                  //     ? "calc(100vh - 120px)"
+                  //     : null,
                 }}
               >
                 {/* Вкладка "Общая" */}
@@ -1089,11 +1111,22 @@ function ExistRequest({
                     <div className={classes.requestDataTitle}>
                       Информация о сотруднике
                     </div>
-                    {isEditing && !user?.hotelId ? (
+                    {(isEditing || ((formData.status === "created" || formData.status === "opened") && !formData.person)) && !(formData.person && (formData.status === "created" || formData.status === "opened")) && (!user?.hotelId && !user?.airlineId) ? (
                       <>
-                        {!formData.person && (
-                          <div className={classes.staffWrapper}>
-                            <label>Добавьте сотрудника авиакомпании</label>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>
+                            Авиакомпания
+                          </div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {formData.airline?.name || "—"}
+                          </div>
+                        </div>
+                        <div className={classes.requestDataInfo}>
+                          <div
+                            className={classes.requestDataInfo_title}
+                            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+                          >
+                            Сотрудник
                             <div
                               className={classes.addStaff}
                               onClick={toggleAddStaff}
@@ -1101,55 +1134,9 @@ function ExistRequest({
                               <img src="/plus.png" alt="" />
                             </div>
                           </div>
-                        )}
-                        {!user?.airlineId && canChangeHotel && (
-                          <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>
-                              Авиакомпания
-                            </div>
-                            <MUIAutocompleteColor
-                              dropdownWidth="60%"
-                              label="Введите авиакомпанию"
-                              options={airlines}
-                              getOptionLabel={(option) =>
-                                option ? option.name || "" : ""
-                              }
-                              value={
-                                airlines.find(
-                                  (a) => a.id === selectedAirlineId
-                                ) || null
-                              }
-                              onChange={handleAirlineChange}
-                            />
-                          </div>
-                        )}
-                        {!user?.airlineId && !canChangeHotel && (
-                          <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>
-                              Авиакомпания
-                            </div>
-                            <div className={classes.requestDataInfo_desc}>
-                              {formData.airline?.name || "—"}
-                            </div>
-                          </div>
-                        )}
-                        {user?.airlineId && (
-                          <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>
-                              Авиакомпания
-                            </div>
-                            <div className={classes.requestDataInfo_desc}>
-                              {formData.airline.name}
-                            </div>
-                          </div>
-                        )}
-                        <div className={classes.requestDataInfo}>
-                          <div className={classes.requestDataInfo_title}>
-                            Сотрудник
-                          </div>
                           <MUIAutocompleteColor
                             dropdownWidth="60%"
-                            label="Введите сотрудника"
+                            label="Выберите сотрудника"
                             options={airlineStaff || []}
                             getOptionLabel={(option) =>
                               option
@@ -1188,6 +1175,11 @@ function ExistRequest({
                             }}
                           />
                         </div>
+                        {(formData.status === "created" || formData.status === "opened") && (
+                          <Button onClick={handleSaveChanges}>
+                            Подтвердите выбор сотрудника
+                          </Button>
+                        )}
                       </>
                     ) : formData.person ? (
                       <>
@@ -1249,7 +1241,7 @@ function ExistRequest({
                       <div className={classes.requestDataInfo_title}>
                         Питание
                       </div>
-                      {isEditing &&
+                      {isEditing && !user?.airlineId &&
                         formData.status !== "created" &&
                         formData.status !== "opened" ? (
                         <>
@@ -1384,14 +1376,14 @@ function ExistRequest({
                           onHotelChange={handleHotelChange}
                           onRoomChange={handleRoomChange}
                           onReserveChange={setSelectedReserve}
+                          formDataExtend={formDataExtend}
+                          onExtendChange={handleExtendChange}
                         />
                       )}
 
-                    {/* Продление */}
-                    {formData.status !== "archived" &&
-                      // formData.status !== "created" &&
-                      // formData.status !== "opened" &&
-                      formData.status !== "canceled" && (
+                    {/* Продление / Изменение даты — только для created и opened */}
+                    {(formData.status === "created" ||
+                      formData.status === "opened") && (
                         // !user?.hotelId &&
                         // formData.status !== "archiving" &&
                         <>
@@ -1508,9 +1500,9 @@ function ExistRequest({
                             }
                           >
                             <div /> {/* под дату */}
-                            <div>З</div>
-                            <div>О</div>
-                            <div>У</div>
+                            <div style={{ color: "var(--text)" }}>З</div>
+                            <div style={{ color: "var(--text)" }}>О</div>
+                            <div style={{ color: "var(--text)" }}>У</div>
                           </div>
 
                           {/* Строки с данными */}
@@ -1722,7 +1714,7 @@ function ExistRequest({
                       separator={separator}
                       chatHeight={
                         user?.airlineId || user?.hotelId
-                          ? "calc(100vh - 201px)"
+                          ? "calc(100vh - 202px)"
                           : "calc(100vh - 260px)"
                       }
                     />
@@ -1735,32 +1727,45 @@ function ExistRequest({
                     style={{ paddingBottom: totalPages > 1 ? "60px" : "20px" }}
                   >
                     <div className={classes.logs}>
-                      {[...logsData.logs.logs].map((log, index) => (
-                        <>
-                          <div className={classes.historyDate} key={index}>
-                            {new Date(log.createdAt).toLocaleDateString(
-                              "ru-RU",
-                              {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                              }
-                            )}
-                            {/* {convertToDate(log.createdAt)}{" "}
-                        {convertToDate(log.createdAt, true)} */}
+                      {groupedHistory.map(([dayTs, dayLogs]) => (
+                        <div
+                          className={classes.historySection}
+                          key={dayTs}
+                        >
+                          <div className={classes.historyDate}>
+                            {fmtDay(dayTs)}
                           </div>
-                          <div
-                            className={classes.historyLog}
-                            dangerouslySetInnerHTML={{
-                              __html: `<span class='historyLogTime'>${convertToDate(
-                                log.createdAt,
-                                true
-                              )}</span> ${log.description}`,
-                            }}
-                          >
-                            {/* {log.description} */}
-                          </div>
-                        </>
+                          {/* {console.log(dayLogs)} */}
+                          {dayLogs.map((log, idx) => (
+                            <div className={classes.logText}>
+                              <div className={classes.logInfo}>
+                                <span className='historyLogTime'>{convertToDate(
+                                  log.createdAt,
+                                  true
+                                )}</span>
+                                <div
+                                  key={log.id ?? `${dayTs}-${idx}`}
+                                  className={classes.historyLog}
+                                  dangerouslySetInnerHTML={{
+                                    __html: `${log.description}`,
+                                  }}
+                                />
+                              </div>
+                              <div
+                                className={classes.logImg}
+                                title={
+                                  log.user
+                                    ? [log.user.name, roleLabels[log.user.role] ?? roleLabels[log.user.role?.toUpperCase()] ?? log.user.role]
+                                        .filter(Boolean)
+                                        .join(", ") || undefined
+                                    : undefined
+                                }
+                              >
+                                <img src={log.user?.images[0] ? getMediaUrl(log.user?.images[0]) : "/no-avatar.png"} alt="" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       ))}
                     </div>
                     {totalPages > 1 && (
@@ -1805,12 +1810,7 @@ function ExistRequest({
                     {((isSuperAdmin(user) || isDispatcherAdmin(user)) &&
                       !formData.hotelId) && (
                         <Button
-                          onClick={() => {
-                            onClose();
-                            setShowChooseHotel(true);
-                            setChooseCityRequest(formData?.airport?.city);
-                            localStorage.setItem("selectedTab", 0);
-                          }}
+                          onClick={handlePlaceClick}
                         >
                           {/* {console.log(formData)} */}
                           Разместить
@@ -1854,13 +1854,13 @@ function ExistRequest({
             </>
           )}
           <CreateRequestAirlineStaff
-            id={formData?.airline?.id} // Или любое другое значение, нужное для вашего компонента
+            id={formData?.airline?.id}
             show={showAddStaff}
             onClose={toggleAddStaff}
             isExist={true}
             positions={positions}
             setNewStaffId={setNewStaffId}
-          // setSelectedAirline={setSelectedAirline}
+            airlineRefetch={airlineRefetch}
           />
         </Sidebar>
       )}

@@ -25,6 +25,7 @@ import { TableSelectionLockPlugin } from './extensions/tableSelectionLock'
 import { FrameBlock } from './extensions/frameBlock'
 import { ColumnsLayout } from './extensions/columnsLayout'
 import { BlockLassoSelectionPlugin } from './extensions/blockLassoSelection'
+import { QuoteBlock } from './extensions/quoteBlock'
 
 // Новые расширения для панели инструментов
 import { Color } from '@tiptap/extension-color'
@@ -154,6 +155,7 @@ export const editorExtensions = [
   // Базовые расширения
   StarterKit.configure({
     heading: { levels: [1, 2, 3, 4, 5, 6] },
+    blockquote: false,
     // Отключаем подчеркивание из StarterKit, будем использовать отдельное
     underline: false,
     // Отключаем цвет текста из StarterKit, будем использовать отдельное
@@ -197,6 +199,7 @@ export const editorExtensions = [
   TableCellCursorPad,
   TableCellSelectionOnContent,
 
+  QuoteBlock,
   Toggle,
   FrameBlock,
   ColumnsLayout,
