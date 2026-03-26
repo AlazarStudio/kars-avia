@@ -27,10 +27,14 @@ import { Box, CircularProgress } from "@mui/material";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
 
 // Компонент для создания новой заявки
-function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
+function CreateRequest({ show, onClose, onMatchFound, user }) {
   const token = getCookie("token");
+  const { success } = useToast();
+  const { showAlert, confirm, isDialogOpen } = useDialog();
   const [userID, setUserID] = useState();
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
@@ -38,6 +42,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   const [newStaffId, setNewStaffId] = useState(null);
   const sidebarRef = useRef();
   const [disableAutocomplete, setDisableAutocomplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Запрос данных авиакомпаний и аэропортов
   const { data, refetch } = useQuery(GET_AIRLINES_RELAY, {
@@ -266,7 +271,11 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   }, [userID]);
 
   // Закрытие формы с проверкой на несохраненные изменения
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) {
+      return;
+    }
+
     if (!isEdited) {
       resetForm();
       setMatchingRequest(null);
@@ -275,13 +284,16 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       setMatchingRequest(null);
       onClose();
       setNewStaffId(null);
     }
-  }, [isEdited, resetForm, setMatchingRequest, onClose]);
+  }, [isEdited, resetForm, setMatchingRequest, onClose, isDialogOpen, confirm]);
   const today = new Date().toISOString().split("T")[0];
 
   // Рассчитываем минимальную дату прибытия как дату, начиная с месяца назад
@@ -447,8 +459,6 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     );
   };
 
-  const [isLoading, setIsLoading] = useState(false);
-
   // console.log(formData);
 
   // Отправка формы на сервер
@@ -456,7 +466,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     setIsLoading(true);
 
     if (!isFormValid()) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
@@ -472,7 +482,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     // }
 
     if (formData.arrivalDate < minArrivalDate) {
-      alert("Дата прибытия не может быть больше месяца назад.");
+      showAlert("Дата прибытия не может быть больше месяца назад.");
       setFormData((prevFormData) => ({
         ...prevFormData,
         arrivalDate: "", // Очищаем дату прибытия
@@ -483,7 +493,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
     // Проверка на дату отъезда: она не может быть раньше даты прибытия
     if (formData.departureDate < formData.arrivalDate) {
-      alert("Дата отъезда не может быть раньше даты прибытия.");
+      showAlert("Дата отъезда не может быть раньше даты прибытия.");
       setFormData((prevFormData) => ({
         ...prevFormData,
         departureDate: "", // Очищаем дату отъезда
@@ -496,7 +506,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       formData.departureDate === formData.arrivalDate &&
       formData.departureTime <= formData.arrivalTime
     ) {
-      alert("Время отъезда должно быть позже времени прибытия.");
+      showAlert("Время отъезда должно быть позже времени прибытия.");
       // Очищаем значения для времени прибытия и отъезда
       setFormData((prevFormData) => ({
         ...prevFormData,
@@ -526,12 +536,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       const response = await createRequest({ variables: { input } });
       resetForm();
       onClose();
-      addNotification
-        ? addNotification(
-          "Создание заявки для экипажа прошло успешно.",
-          "success"
-        )
-        : null;
+      success("Создание заявки для экипажа прошло успешно.");
       // console.log(response);
     } catch (error) {
       console.error(error);
@@ -544,7 +549,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
           setMatchingRequest(requestId);
         }
       } else {
-        alert("Ошибка при создании заявки");
+        showAlert("Ошибка при создании заявки");
         setIsLoading(false);
       }
     } finally {
@@ -614,6 +619,14 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   // Клик вне боковой панели закрывает её
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) {
+        return;
+      }
+
+      if (event.target.closest(".MuiSnackbar-root")) {
+        return;
+      }
+
       if (
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
@@ -632,7 +645,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
     // Очистка эффекта при демонтировании компонента
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   const meal = [
     {

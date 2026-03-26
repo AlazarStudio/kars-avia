@@ -22,9 +22,7 @@ import { Box, CircularProgress, TextField } from "@mui/material";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import {
-  fullNotifyTime,
   menuAccess,
-  notifyTime,
   statusMapping,
 } from "../../../roles.js";
 import {
@@ -32,7 +30,6 @@ import {
   getDispatcherAccess,
 } from "../../../utils/access";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
-import Notification from "../../Notification/Notification.jsx";
 import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 
@@ -229,17 +226,6 @@ function Estafeta({ user, accessMenu }) {
 
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const handleChange = (e) =>
     setFilterData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -594,7 +580,6 @@ function Estafeta({ user, accessMenu }) {
         onClose={toggleCreateSidebar}
         onMatchFound={handleOpenExistRequest}
         user={user}
-        addNotification={addNotification}
       />
       <ExistRequest
         setChooseCityRequest={setChooseCityRequest}
@@ -633,21 +618,6 @@ function Estafeta({ user, accessMenu }) {
           isCancel={true}
         />
       )}
-
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </div>
   );
 }
