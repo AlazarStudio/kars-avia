@@ -12,17 +12,20 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { rolesObject } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function CreateRequestDispatcherCompany({
   show,
   onClose,
   onCreated,
   onPositionCreated,
-  addNotification,
   positions,
   departments,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [isEdited, setIsEdited] = useState(false);
   const [isCreatingPosition, setIsCreatingPosition] = useState(false);
@@ -57,18 +60,23 @@ function CreateRequestDispatcherCompany({
     setNewPositionName("");
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, confirm, isDialogOpen]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -84,8 +92,8 @@ function CreateRequestDispatcherCompany({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+    if (file && file.size > maxSizeInBytes) {
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: "",
@@ -130,7 +138,7 @@ function CreateRequestDispatcherCompany({
   const handleCreatePosition = useCallback(async () => {
     const trimmedName = newPositionName.trim();
     if (!trimmedName) {
-      alert("Введите название должности.");
+      showAlert("Введите название должности.");
       return;
     }
 
@@ -140,7 +148,7 @@ function CreateRequestDispatcherCompany({
         trimmedName.toLowerCase()
     );
     if (isDuplicate) {
-      alert("Такая должность уже существует.");
+      showAlert("Такая должность уже существует.");
       return;
     }
 
@@ -172,17 +180,19 @@ function CreateRequestDispatcherCompany({
       setNewPositionName("");
       setIsCreatingPosition(false);
       onPositionCreated?.(createdPosition);
-      addNotification?.("Должность добавлена успешно.", "success");
+      success("Должность добавлена успешно.");
     } catch (error) {
       console.error("Ошибка при создании должности:", error);
-      addNotification?.("Не удалось создать должность.", "error");
+      notifyError("Не удалось создать должность.");
     }
   }, [
     newPositionName,
     localPositions,
     createPosition,
     onPositionCreated,
-    addNotification,
+    showAlert,
+    success,
+    notifyError,
   ]);
 
   const departmentOptions = useMemo(
@@ -212,20 +222,20 @@ function CreateRequestDispatcherCompany({
     );
 
     if (emptyFields.length > 0) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      alert("Введите корректный email.");
+      showAlert("Введите корректный email.");
       setIsLoading(false);
       return;
     }
 
     if (formData.password.length < 8) {
-      alert("Пароль должен содержать минимум 8 символов.");
+      showAlert("Пароль должен содержать минимум 8 символов.");
       setIsLoading(false);
       return;
     }
@@ -254,7 +264,7 @@ function CreateRequestDispatcherCompany({
         onCreated?.(response.data.registerUser);
         resetForm();
         onClose();
-        addNotification?.("Аккаунт диспетчера создан успешно.", "success");
+        success("Аккаунт диспетчера создан успешно.");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
@@ -263,19 +273,19 @@ function CreateRequestDispatcherCompany({
           "ApolloError: Пользователь с таким логином уже существует"
         )
       ) {
-        alert("Пользователь с таким логином уже существует");
+        showAlert("Пользователь с таким логином уже существует");
       } else if (
         String(e).startsWith(
           "ApolloError: Пользователь с такой почтой уже существует"
         )
       ) {
-        alert("Пользователь с такой почтой уже существует");
+        showAlert("Пользователь с такой почтой уже существует");
       } else if (
         String(e).startsWith(
           "ApolloError: Пользователь с такой почтой и логином уже существует"
         )
       ) {
-        alert("Пользователь с такой почтой и логином уже существует");
+        showAlert("Пользователь с такой почтой и логином уже существует");
       }
     } finally {
       setIsLoading(false);
@@ -284,6 +294,9 @@ function CreateRequestDispatcherCompany({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (sidebarRef.current?.contains(event.target)) {
         return;
       }
@@ -300,7 +313,7 @@ function CreateRequestDispatcherCompany({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

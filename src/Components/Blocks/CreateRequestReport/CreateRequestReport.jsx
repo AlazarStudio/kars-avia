@@ -15,16 +15,19 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function CreateRequestReport({
   show,
   onClose,
-  addNotification,
   positions,
   airports,
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success } = useToast();
 
   const [isEdited, setIsEdited] = useState(false);
   const [formData, setFormData] = useState({
@@ -179,21 +182,29 @@ function CreateRequestReport({
   }, [user.airlineId, user.hotelId]);
 
   // Закрытие формы с проверкой изменений
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, isDialogOpen, confirm]);
 
   // Следим за кликом вне сайдбара
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
@@ -204,7 +215,7 @@ function CreateRequestReport({
       document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   // Поля формы меняются
   const handleChange = useCallback((e) => {
@@ -235,12 +246,12 @@ function CreateRequestReport({
     setIsLoading(true);
 
     if (!isFormValid()) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
     if (formData.endDate < formData.startDate) {
-      alert("Конечная дата не может быть раньше начальной.");
+      showAlert("Конечная дата не может быть раньше начальной.");
       setFormData((prev) => ({ ...prev, endDate: "" }));
       setIsLoading(false);
       return;
@@ -285,15 +296,14 @@ function CreateRequestReport({
       });
       resetForm();
       onClose();
-      addNotification(
+      success(
         `Отчет ${
           formData.personId !== "" ? "по сотруднику" : ""
         } создан успешно.`,
-        "success"
       );
     } catch (error) {
       if (error.message.startsWith("Airline has no prices")) {
-        alert("У авиакомпании нет цен.");
+        showAlert("У авиакомпании нет цен.");
       }
       console.error("Catch: ", error);
       // console.log(input);

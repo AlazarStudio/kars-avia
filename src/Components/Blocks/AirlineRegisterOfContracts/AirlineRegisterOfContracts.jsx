@@ -396,7 +396,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
             id={id}
             user={user}
             pageInfo={pageInfo}
-            activeTab={activeTab}
+            activeTab={"airlines"}
             toggleRequestSidebar={toggleEditTarifs}
             toggleEditTarifsCategory={toggleEditTarifsCategory}
             requests={addTarif}
@@ -426,43 +426,41 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         </>
       )}
 
-      {activeTab === "airlines" ? (
-        <>
-          {canCreate && (
-            <CreateRequestContract
-              user={user}
-              id={id}
-              airlinesData={airlinesData}
-              companiesData={companiesData}
-              show={showAddTarifCategory}
-              onClose={toggleTarifsCategory}
-              addTarif={addTarif}
-              setAddTarif={setAddTarif}
-              addNotification={addNotification}
-            />
-          )}
-          <EditRequestAirlineContract
-            user={user}
-            id={id}
-            canEdit={canEdit}
-            activeFilterTab={"airlines"}
-            setAddTarif={setAddTarif}
-            show={showEditAddTarif}
-            onClose={() => setEditShowAddTarif(false)}
-            addTarif={addTarif}
-            tarif={selectedTarif}
-            addNotification={addNotification}
-            onRequestDelete={
-              canEdit
-                ? () => {
-                    const contract = addTarif.find((x) => x.id === selectedTarif);
-                    if (contract) openDeleteContractFromMenu(contract);
-                  }
-                : undefined
+
+      {canCreate && (
+        <CreateRequestContract
+          user={user}
+          id={id}
+          airlinesData={airlinesData}
+          companiesData={companiesData}
+          show={showAddTarifCategory}
+          onClose={toggleTarifsCategory}
+          addTarif={addTarif}
+          setAddTarif={setAddTarif}
+          addNotification={addNotification}
+        />
+      )}
+      <EditRequestAirlineContract
+        user={user}
+        id={id}
+        canEdit={canEdit}
+        activeFilterTab={"airlines"}
+        setAddTarif={setAddTarif}
+        show={showEditAddTarif}
+        onClose={() => setEditShowAddTarif(false)}
+        addTarif={addTarif}
+        tarif={selectedTarif}
+        addNotification={addNotification}
+        onRequestDelete={
+          canEdit
+            ? () => {
+              const contract = addTarif.find((x) => x.id === selectedTarif);
+              if (contract) openDeleteContractFromMenu(contract);
             }
-          />
-        </>
-      ) : null}
+            : undefined
+        }
+      />
+
 
       {showDelete && (
         <DeleteComponent
@@ -471,10 +469,10 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
           }}
           close={closeDeleteComponent}
           title={`Вы действительно хотите удалить ${deleteIndex.type === "deleteTarif"
-              ? "тариф"
-              : deleteIndex.type === "deleteCategory"
-                ? "категорию"
-                : "договор"
+            ? "тариф"
+            : deleteIndex.type === "deleteCategory"
+              ? "категорию"
+              : "договор"
             }?`}
         />
       )}

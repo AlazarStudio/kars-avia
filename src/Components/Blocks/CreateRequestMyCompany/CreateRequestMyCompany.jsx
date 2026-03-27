@@ -15,15 +15,18 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { rolesObject } from "../../../roles";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function CreateRequestMyCompany({
   show,
   onClose,
   addDispatcher,
-  addNotification,
   positions,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success } = useToast();
 
   let infoCities = useQuery(GET_CITIES, {
     context: {
@@ -81,18 +84,23 @@ function CreateRequestMyCompany({
     setIsEdited(false); // Сброс флага изменений
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, confirm, isDialogOpen]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -149,7 +157,7 @@ function CreateRequestMyCompany({
     );
 
     if (emptyFields.length > 0) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
@@ -188,7 +196,7 @@ function CreateRequestMyCompany({
         addDispatcher(response_create_user.data.createCompany);
         resetForm();
         onClose();
-        addNotification("Компания создана успешно.", "success");
+        success("Компания создана успешно.");
       }
     } catch (e) {
       console.error("Ошибка при создании компании:", e);
@@ -208,6 +216,9 @@ function CreateRequestMyCompany({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
@@ -226,7 +237,7 @@ function CreateRequestMyCompany({
 
     // Очистка эффекта при демонтировании компонента
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

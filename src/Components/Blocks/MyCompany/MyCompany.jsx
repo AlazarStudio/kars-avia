@@ -12,14 +12,14 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
+import { useToast } from "../../../contexts/ToastContext";
 import InfoTableDataMyCompany from "../InfoTableDataMyCompany/InfoTableDataMyCompany";
 import CreateRequestMyCompany from "../CreateRequestMyCompany/CreateRequestMyCompany";
 import ExistRequestMyCompany from "../ExistRequestMyCompany/ExistRequestMyCompany";
 
 function MyCompany({ children, user, ...props }) {
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
 
   const { loading, error, data, refetch } = useQuery(GET_ALL_COMPANIES, {
     context: {
@@ -84,7 +84,7 @@ function MyCompany({ children, user, ...props }) {
         setCompanyData(companyData.filter((_, i) => i !== index));
         setShowDelete(false);
         setShowRequestSidebar(false);
-        addNotification("Удаление диспетчера прошло успешно.", "success");
+        success("Удаление диспетчера прошло успешно.");
       }
     } catch (error) {
       console.error("Ошибка при удалении пользователя", error);
@@ -92,7 +92,7 @@ function MyCompany({ children, user, ...props }) {
       //   "Ошибка, у вас недостаточно прав для удаления диспетчера.",
       //   "error"
       // );
-      alert("Ошибка при удалении пользователя");
+      notifyError("Ошибка при удалении пользователя");
     }
   };
 
@@ -129,17 +129,6 @@ function MyCompany({ children, user, ...props }) {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilterData((prevState) => ({
@@ -200,7 +189,6 @@ function MyCompany({ children, user, ...props }) {
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
           addDispatcher={addDispatcher}
-          addNotification={addNotification}
         />
 
         <ExistRequestMyCompany
@@ -210,7 +198,6 @@ function MyCompany({ children, user, ...props }) {
           updateDispatcher={updateDispatcher}
           openDeleteComponent={openDeleteComponent}
           deleteComponentRef={deleteComponentRef}
-          addNotification={addNotification}
         />
 
         {showDelete && (
@@ -223,20 +210,6 @@ function MyCompany({ children, user, ...props }) {
             title={`Вы действительно хотите удалить компанию?`}
           />
         )}
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

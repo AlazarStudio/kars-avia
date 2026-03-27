@@ -20,6 +20,8 @@ import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutoc
 import { action } from "../../../roles.js";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 function CreateRequestContract({
   show,
   id,
@@ -28,9 +30,10 @@ function CreateRequestContract({
   companiesData,
   selectedContract,
   user,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success } = useToast();
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
     context: {
       headers: {
@@ -141,15 +144,17 @@ function CreateRequestContract({
     setSelectedCompany(null);
   };
 
-  const closeButton = () => {
-    let success = confirm(
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
+    const isConfirmed = await confirm(
       "Вы уверены, все несохраненные данные будут удалены?"
     );
-    if (success) {
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  };
+  }, [confirm, isDialogOpen, onClose]);
   const addNewAgreement = () => {
     setFormData((prevData) => ({
       ...prevData,
@@ -274,6 +279,38 @@ function CreateRequestContract({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const isFormValid = () => {
+    return (
+      formData.contractNumber?.trim() &&
+      formData.date &&
+      formData.companyId &&
+      formData.airlineId &&
+      formData.applicationType?.trim()
+    );
+  };
+
+  const hasValidContractDate = () => {
+    const contractDate = new Date(formData.date);
+    return !Number.isNaN(contractDate.getTime());
+  };
+
+  const getFilledAgreements = () => {
+    return formData.aaContracts.filter(
+      (agreement) =>
+        agreement.contractNumberAA?.trim() ||
+        agreement.dateAA ||
+        agreement.itemAgreement?.trim() ||
+        agreement.notesAA?.trim() ||
+        agreement.filesAA?.length
+    );
+  };
+
+  const hasValidAgreements = (agreements) => {
+    return agreements.every(
+      (agreement) => agreement.contractNumberAA?.trim() && agreement.dateAA
+    );
+  };
+
   // console.log(selectedContract?.id);
   // console.log(formData);
 
@@ -282,8 +319,27 @@ function CreateRequestContract({
     setIsLoading(true);
 
     try {
+      if (!isFormValid()) {
+        showAlert("Пожалуйста, заполните все обязательные поля договора.");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!hasValidContractDate()) {
+        showAlert("Укажите корректную дату договора.");
+        setIsLoading(false);
+        return;
+      }
+
+      const filledAgreements = getFilledAgreements();
+      if (!hasValidAgreements(filledAgreements)) {
+        showAlert("Для ДС заполните как минимум номер и дату.");
+        setIsLoading(false);
+        return;
+      }
+
       const isoDate = new Date(formData.date).toISOString();
-      const aaContracts = formData.aaContracts.map((agreement) => ({
+      const aaContracts = filledAgreements.map((agreement) => ({
         contractNumber: agreement.contractNumberAA,
         date: new Date(agreement.dateAA).toISOString(),
         itemAgreement: agreement.itemAgreement,
@@ -326,11 +382,11 @@ function CreateRequestContract({
       resetForm();
       onClose();
       setIsLoading(false);
-      addNotification("Добавление договора прошло успешно.", "success");
+      success("Добавление договора прошло успешно.");
       setFileName([]);
     } catch (error) {
       setIsLoading(false);
-      alert("Произошла ошибка при добавлении договора.");
+      showAlert("Произошла ошибка при добавлении договора.");
       console.error("Произошла ошибка при выполнении запроса:", error);
     }
   };
@@ -338,18 +394,26 @@ function CreateRequestContract({
   useEffect(() => {
     if (show) {
       resetForm();
-      const handleClickOutside = (event) => {
-        if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-          closeButton();
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
     }
   }, [show]);
+
+  useEffect(() => {
+    if (!show) return;
+
+    const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        closeButton();
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, closeButton, isDialogOpen]);
 
   // useEffect(() => {
   //   const names = addTarif.map((tarif) => ({

@@ -13,6 +13,8 @@ import { rolesObject } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function ExistRequestDispatcherCompany({
   show,
@@ -21,12 +23,13 @@ function ExistRequestDispatcherCompany({
   updateDispatcher,
   openDeleteComponent,
   positions,
-  addNotification,
   onUpdated,
   departments,
 }) {
   const token = getCookie("token");
   decodeJWT(token);
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success } = useToast();
 
   const [uploadFile] = useMutation(UPDATE_DISPATCHER_USER, {
     context: {
@@ -98,7 +101,9 @@ function ExistRequestDispatcherCompany({
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
@@ -106,12 +111,15 @@ function ExistRequestDispatcherCompany({
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, isEditing, onClose, resetForm]);
+  }, [isEdited, onClose, resetForm, isDialogOpen, confirm]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -127,8 +135,8 @@ function ExistRequestDispatcherCompany({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+    if (file && file.size > maxSizeInBytes) {
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: null,
@@ -170,18 +178,18 @@ function ExistRequestDispatcherCompany({
     );
 
     if (emptyFields.length > 0) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      alert("Введите корректный email.");
+      showAlert("Введите корректный email.");
       setIsLoading(false);
       return;
     }
     if (formData.password !== "" && formData.password.length < 8) {
-      alert("Новый пароль должен содержать минимум 8 символов.");
+      showAlert("Новый пароль должен содержать минимум 8 символов.");
       setIsLoading(false);
       return;
     }
@@ -211,24 +219,21 @@ function ExistRequestDispatcherCompany({
         resetForm();
         onClose();
         setIsLoading(false);
-        addNotification?.(
-          "Редактирование диспетчера прошло успешно.",
-          "success"
-        );
+        success("Редактирование диспетчера прошло успешно.");
         onUpdated?.(response.data.updateUser);
       }
     } catch (error) {
       console.error("Ошибка обновления пользователя:", error);
       if (String(error).startsWith("ApolloError: Указан неверный пароль.")) {
-        alert("Указан неверный старый пароль.");
+        showAlert("Указан неверный старый пароль.");
       } else if (
         String(error).startsWith(
           "ApolloError: Для обновления пароля необходимо указать предыдущий пароль."
         )
       ) {
-        alert("Для обновления пароля необходимо указать предыдущий пароль.");
+        showAlert("Для обновления пароля необходимо указать предыдущий пароль.");
       } else {
-        alert("Ошибка обновления пользователя.");
+        showAlert("Ошибка обновления пользователя.");
       }
     } finally {
       setIsLoading(false);
@@ -238,6 +243,9 @@ function ExistRequestDispatcherCompany({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (sidebarRef.current?.contains(event.target)) {
         return;
       }
@@ -254,7 +262,7 @@ function ExistRequestDispatcherCompany({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

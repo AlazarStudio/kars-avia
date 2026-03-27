@@ -16,6 +16,8 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function ExistRequestCompany({
   show,
@@ -26,10 +28,11 @@ function ExistRequestCompany({
   openDeleteComponent,
   filterList,
   positions,
-  addNotification,
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success } = useToast();
 
   const [uploadFile] = useMutation(
     UPDATE_DISPATCHER_USER,
@@ -107,7 +110,9 @@ function ExistRequestCompany({
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       resetForm();
@@ -116,12 +121,15 @@ function ExistRequestCompany({
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, isEditing, onClose, resetForm]);
+  }, [isEdited, onClose, resetForm, isDialogOpen, confirm]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -152,8 +160,8 @@ function ExistRequestCompany({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+    if (file && file.size > maxSizeInBytes) {
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: null,
@@ -193,18 +201,18 @@ function ExistRequestCompany({
       );
 
       if (emptyFields.length > 0) {
-        alert("Пожалуйста, заполните все обязательные поля.");
+        showAlert("Пожалуйста, заполните все обязательные поля.");
         setIsLoading(false);
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        alert("Введите корректный email.");
+        showAlert("Введите корректный email.");
         setIsLoading(false);
         return;
       }
       if (formData.password !== "" && formData.password.length < 8) {
-        alert("Новый пароль должен содержать минимум 8 символов.");
+        showAlert("Новый пароль должен содержать минимум 8 символов.");
         setIsLoading(false);
         return;
       }
@@ -234,29 +242,25 @@ function ExistRequestCompany({
           resetForm();
           onClose();
           setIsLoading(false);
-          addNotification(
-            "Редактирование диспетчера прошло успешно.",
-            "success"
-          );
+          success("Редактирование диспетчера прошло успешно.");
         }
       } catch (error) {
         console.error("Ошибка обновления пользователя:", error);
         if (String(error).startsWith("ApolloError: Указан неверный пароль.")) {
-          alert("Указан неверный старый пароль.");
+          showAlert("Указан неверный старый пароль.");
         } else if (
           String(error).startsWith(
             "ApolloError: Для обновления пароля необходимо указать предыдущий пароль."
           )
         ) {
-          alert("Для обновления пароля необходимо указать предыдущий пароль.");
+          showAlert("Для обновления пароля необходимо указать предыдущий пароль.");
         } else {
-          alert("Ошибка обновления пользователя.");
+          showAlert("Ошибка обновления пользователя.");
         }
       } finally {
         // resetForm();
         // onClose();
         setIsLoading(false); // Сбрасываем isLoading после завершения запроса
-        // addNotification("Редактирование диспетчера прошло успешно.", "success");
         setShowOldPassword(false);
         setShowNewPassword(false);
         setFormData((prevData) => ({
@@ -271,6 +275,9 @@ function ExistRequestCompany({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (anchorEl && menuRef.current?.contains(event.target)) {
         setAnchorEl(null);
         return;
@@ -290,7 +297,7 @@ function ExistRequestCompany({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   // console.log(user);
 

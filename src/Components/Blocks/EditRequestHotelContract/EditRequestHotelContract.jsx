@@ -29,6 +29,8 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
 import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
 function EditRequestHotelContract({
   show,
@@ -40,11 +42,12 @@ function EditRequestHotelContract({
   citiesData,
   onClose,
   tarif, // тут приходит airlineContractId
-  addNotification,
   canEdit = false, // Флаг для разрешения редактирования
   onRequestDelete, // колбэк: закрыть сайдбар и открыть модал удаления договора
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const query =
     activeFilterTab === "hotels"
@@ -220,15 +223,17 @@ function EditRequestHotelContract({
   const sidebarRef = useRef();
   const agreementSidebarRef = useRef(); // New ref for the EditAdditionalAgreement sidebar
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (isEditing) {
-      const ok = confirm("Вы уверены, все несохраненные данные будут удалены?");
+      const ok = await confirm("Вы уверены, все несохраненные данные будут удалены?");
       if (!ok) return;
     }
     onClose?.();
     setIsEditing(false);
     setActiveTab("Общая");
-  }, [isEditing, onClose]);
+  }, [isEditing, onClose, isDialogOpen, confirm]);
 
   useEffect(() => {
     if (citiesData) {
@@ -369,7 +374,8 @@ function EditRequestHotelContract({
     // console.log(ag);
 
     // Предупреждение перед удалением
-    if (!confirm("Удалить дополнительное соглашение?")) return;
+    const isConfirmed = await confirm("Удалить дополнительное соглашение?");
+    if (!isConfirmed) return;
 
     try {
       setIsLoading(true);
@@ -389,13 +395,12 @@ function EditRequestHotelContract({
       setIsLoading(false);
 
       // Уведомление об успешном удалении
-      // addNotification("Дополнительное соглашение успешно удалено", "success");
+      success("Дополнительное соглашение успешно удалено.");
     } catch (err) {
-      // console.error("Ошибка при удалении:", err);
-      // alert("Произошла ошибка при удалении соглашения.");
+      notifyError("Произошла ошибка при удалении соглашения.");
     }
     refetch();
-  }, []);
+  }, [confirm, refetch, success, notifyError]);
 
   // Сабмит (оставляю локально; сюда можно подставить твои UPDATE_* мутации)
   const handleSubmit = async (e) => {
@@ -456,12 +461,12 @@ function EditRequestHotelContract({
         });
       }
 
-      addNotification?.("Изменения сохранены.", "success");
+      success("Изменения сохранены.");
       onClose();
       setIsEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Произошла ошибка при сохранении договора.");
+      showAlert("Произошла ошибка при сохранении договора.");
     } finally {
       setIsLoading(false);
       setFileName([]);
@@ -477,6 +482,9 @@ function EditRequestHotelContract({
     if (!show) return;
 
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       const clickedOutsideMain =
         sidebarRef.current && !sidebarRef.current.contains(event.target);
       const clickedOutsideAgreement = !agreementSidebarRef.current?.contains(
@@ -491,7 +499,7 @@ function EditRequestHotelContract({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]); // ← важно
+  }, [show, closeButton, isDialogOpen]); // ← важно
 
   return (
     <>

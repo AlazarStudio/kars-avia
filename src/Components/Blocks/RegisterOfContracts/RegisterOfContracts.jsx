@@ -22,8 +22,7 @@ import {
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import Notification from "../../Notification/Notification.jsx";
-import { action, fullNotifyTime, notifyTime } from "../../../roles.js";
+import { action } from "../../../roles.js";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Header from "../Header/Header.jsx";
 import InfoTableAllDataTarifs from "../InfoTableAllDataTarifs/InfoTableAllDataTarifs.jsx";
@@ -39,9 +38,11 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { isSuperAdmin, hasAccessMenu } from "../../../utils/access";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
 function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) {
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -176,17 +177,6 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
   const [typeFilter, setTypeFilter] = useState("ГК Карс");
 
   const [selectedContract, setSelectedContract] = useState(null);
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const [deleteAirlineContract] = useMutation(DELETE_AIRLINE_CONTRACT, {
     context: {
@@ -396,10 +386,10 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
       await refetch();
       setShowDelete(false);
       setEditShowAddTarif(false);
-      addNotification?.("Договор удалён.", "success");
+      success("Договор удалён.");
     } catch (e) {
       console.error(e);
-      addNotification?.("Не удалось удалить договор.", "error");
+      notifyError("Не удалось удалить договор.");
     }
   };
 
@@ -814,7 +804,6 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             onClose={toggleTarifsCategory}
             addTarif={addTarif}
             setAddTarif={setAddTarif}
-            addNotification={addNotification}
           />
           <EditRequestAirlineContract
             user={user}
@@ -826,7 +815,6 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             onClose={() => setEditShowAddTarif(false)}
             addTarif={addTarif}
             tarif={selectedTarif}
-            addNotification={addNotification}
             onRequestDelete={
               canEdit
                 ? () => {
@@ -853,7 +841,6 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             onClose={toggleTarifsCategory}
             addTarif={addTarif}
             setAddTarif={setAddTarif}
-            addNotification={addNotification}
           />
 
           <EditRequestHotelContract
@@ -870,7 +857,6 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             onClose={() => setEditShowAddTarif(false)}
             addTarif={addTarif}
             tarif={selectedTarif}
-            addNotification={addNotification}
             onRequestDelete={
               canEdit
                 ? () => {
@@ -898,20 +884,6 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             }?`}
         />
       )}
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </div>
   );
 }

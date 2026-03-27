@@ -22,14 +22,15 @@ import {
   GET_REPORTS_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
-import { fullNotifyTime, menuAccess, notifyTime, roles } from "../../../roles";
+import { menuAccess, roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
-import Notification from "../../Notification/Notification";
 import MUITextField from "../MUITextField/MUITextField";
+import { useToast } from "../../../contexts/ToastContext";
 
 function Reports({ children, accessMenu, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { success, error: notifyError } = useToast();
 
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -153,8 +154,10 @@ function Reports({ children, accessMenu, ...props }) {
       });
       setShowDelete(false);
       setShowRequestSidebar(false);
+      success("Отчет удален успешно.");
     } catch (error) {
       console.error("Delete Report error: ", error);
+      notifyError("Ошибка при удалении отчета.");
     }
   };
 
@@ -194,17 +197,6 @@ function Reports({ children, accessMenu, ...props }) {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilterData((prevState) => ({
@@ -313,7 +305,6 @@ function Reports({ children, accessMenu, ...props }) {
             //   addDispatcher={addDispatcher}
             positions={positions}
             airports={airports}
-            addNotification={addNotification}
           />
         )}
         {/* 
@@ -335,21 +326,6 @@ function Reports({ children, accessMenu, ...props }) {
             title={`Вы действительно хотите удалить отчет?`}
           />
         )}
-
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

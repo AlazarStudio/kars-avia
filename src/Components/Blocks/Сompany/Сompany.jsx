@@ -15,8 +15,7 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
+import { useToast } from "../../../contexts/ToastContext";
 import { canAccessMenu } from "../../../utils/access";
 import { useNavigate } from "react-router-dom";
 import InfoTableDataDispatcherCompany from "../InfoTableDataDispatcherCompany/InfoTableDataDispatcherCompany";
@@ -30,6 +29,7 @@ import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
 function Company({ user, accessMenu }) {
   const token = getCookie("token");
   const navigate = useNavigate();
+  const { success, error: notifyError } = useToast();
   const canCreate = canAccessMenu(accessMenu, "userCreate", user);
   const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
 
@@ -88,17 +88,6 @@ function Company({ user, accessMenu }) {
       },
     },
   });
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now();
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const [departments, setDepartments] = useState([]);
   const [dispatchers, setDispatchers] = useState([]);
@@ -231,7 +220,7 @@ function Company({ user, accessMenu }) {
             deleteDispatcherDepartmentId: deleteTarget.department.id,
           },
         });
-        addNotification("Удаление отдела прошло успешно.", "success");
+        success("Удаление отдела прошло успешно.");
         refetchDepartments();
       }
 
@@ -241,13 +230,13 @@ function Company({ user, accessMenu }) {
             deleteUserId: deleteTarget.dispatcher.id,
           },
         });
-        addNotification("Удаление диспетчера прошло успешно.", "success");
+        success("Удаление диспетчера прошло успешно.");
         refetchDispatchers();
         refetchDepartments();
       }
     } catch (error) {
       console.error("Ошибка при удалении", error);
-      addNotification("Ошибка при удалении.", "error");
+      notifyError("Ошибка при удалении.");
     } finally {
       setShowDelete(false);
     }
@@ -383,7 +372,6 @@ function Company({ user, accessMenu }) {
             }}
             positions={positions}
             departments={departments}
-            addNotification={addNotification}
           />
         )}
 
@@ -396,7 +384,6 @@ function Company({ user, accessMenu }) {
             openDeleteComponent={openDeleteDispatcherFromSidebar}
             positions={positions}
             departments={departments}
-            addNotification={addNotification}
             onUpdated={() => {
               refetchDispatchers();
               refetchDepartments();
@@ -409,7 +396,6 @@ function Company({ user, accessMenu }) {
             show={showCreateDepartment}
             onClose={() => setShowCreateDepartment(false)}
             onCreated={() => refetchDepartments()}
-            addNotification={addNotification}
           />
         )}
 
@@ -420,7 +406,6 @@ function Company({ user, accessMenu }) {
             department={selectedDepartment}
             refetchDepartments={refetchDepartments}
             onUpdated={() => refetchDepartments()}
-            addNotification={addNotification}
           />
         )}
 
@@ -447,21 +432,6 @@ function Company({ user, accessMenu }) {
           departmentItem={selectedDepartmentForSettings}
           type="dispatcher"
         />
-
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

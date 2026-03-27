@@ -2,26 +2,16 @@ import React, { useState, useEffect, useMemo } from "react";
 import classes from "./DriversCompanyList.module.css";
 import Filter from "../Filter/Filter";
 import {
-  GET_AIRLINES,
-  GET_AIRLINES_SUBSCRIPTION,
-  GET_AIRLINES_UPDATE_SUBSCRIPTION,
-  GET_AIRPORTS_RELAY,
-  GET_CITIES,
   GET_ORGANIZATIONS,
   getCookie,
   ORGANIZATION_CREATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import Header from "../Header/Header";
-import InfoTableDataAirlines from "../InfoTableDataAirlines/InfoTableDataAirlines";
-import CreateRequestAirline from "../CreateRequestAirline/CreateRequestAirline";
 import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
-import InfoTableDataRepresentativeAirlines from "../InfoTableDataRepresentativeAirlines/InfoTableDataRepresentativeAirlines";
 import CreateRequestDriversCompany from "../CreateRequestDriversCompany/CreateRequestDriversCompany";
 import InfoTableDataDriversCompanies from "../InfoTableDataDriversCompanies/InfoTableDataDriversCompanies";
 import { hasAccessMenu } from "../../../utils/access";
@@ -107,17 +97,6 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
-  };
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -248,23 +227,7 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
           cities={cities}
           onClose={toggleCreateSidebar}
           addHotel={addAirline}
-          addNotification={addNotification}
         />
-
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

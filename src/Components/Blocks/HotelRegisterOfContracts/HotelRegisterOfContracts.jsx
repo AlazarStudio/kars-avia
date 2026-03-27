@@ -46,7 +46,6 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
 
   const [searchTarif, setSearchTarif] = useState("");
   const debouncedSearch = useDebounce(searchTarif, 500);
-  const [activeTab, setActiveTab] = useState("airlines"); // "contracts" | "registers"
 
   const [pageInfo, setPageInfo] = useState({
     skip: currentPageRelay,
@@ -273,15 +272,9 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
   // NEW: удалить договор (авиа/гостиница)
   const deleteContract = async (contract) => {
     try {
-      if (activeTab === "airlines") {
-        await deleteAirlineContract({
-          variables: { deleteAirlineContractId: contract.id },
-        });
-      } else {
-        await deleteHotelContract({
-          variables: { deleteHotelContractId: contract.id },
-        });
-      }
+      await deleteHotelContract({
+        variables: { deleteHotelContractId: contract.id },
+      });
       // оптимистично выкидываем из списка + подстраховочно refetch
       setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
       await refetch();
@@ -513,9 +506,9 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
         onRequestDelete={
           canEdit
             ? () => {
-                const contract = addTarif.find((x) => x.id === selectedTarif);
-                if (contract) openDeleteContractFromMenu(contract);
-              }
+              const contract = addTarif.find((x) => x.id === selectedTarif);
+              if (contract) openDeleteContractFromMenu(contract);
+            }
             : undefined
         }
       />
