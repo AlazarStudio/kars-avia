@@ -10,9 +10,8 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import Notification from "../../Notification/Notification.jsx";
-import { fullNotifyTime, notifyTime } from "../../../roles.js";
 import MUITextField from "../MUITextField/MUITextField.jsx";
+import { useToast } from "../../../contexts/ToastContext";
 import Filter from "../Filter/Filter.jsx";
 import InfoTableOrganizationTransferPrices from "../InfoTableOrganizationTransferPrices/InfoTableOrganizationTransferPrices.jsx";
 import TransferPriceSidebarForm from "../TransferPriceSidebarForm/TransferPriceSidebarForm.jsx";
@@ -24,6 +23,7 @@ import {
 
 function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_TRANSFER_PRICES, {
     context: {
@@ -74,16 +74,7 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
   const [showEditSidebar, setShowEditSidebar] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [notifications, setNotifications] = useState([]);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState(null);
-
-  const addNotification = (text, status) => {
-    const nid = Date.now();
-    setNotifications((prev) => [...prev, { id: nid, text, status }]);
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== nid));
-    }, fullNotifyTime);
-  };
 
   useEffect(() => {
     if (!data?.airline) return;
@@ -106,14 +97,11 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
           images: null,
         },
       });
-      addNotification("Цены на трансфер сохранены.", "success");
+      success("Цены на трансфер сохранены.");
       refetch();
     } catch (err) {
       console.error("Ошибка сохранения цен на трансфер:", err);
-      addNotification(
-        err?.message || "Не удалось сохранить цены на трансфер.",
-        "error"
-      );
+      notifyError(err?.message || "Не удалось сохранить цены на трансфер.");
     } finally {
       setIsSaving(false);
     }
@@ -152,14 +140,14 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
         variables: { id: deleteConfirmItem.id },
       });
       if (res?.data?.deleteAirlineTransferPrice) {
-        addNotification("Цена на трансфер удалена.", "success");
+        success("Цена на трансфер удалена.");
         refetch();
       } else {
-        addNotification("Не удалось удалить цену на трансфер.", "error");
+        notifyError("Не удалось удалить цену на трансфер.");
       }
     } catch (err) {
       console.error(err);
-      addNotification(err?.message || "Не удалось удалить цену на трансфер.", "error");
+      notifyError(err?.message || "Не удалось удалить цену на трансфер.");
     } finally {
       setDeleteConfirmItem(null);
     }
@@ -264,19 +252,6 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
           close={() => setDeleteConfirmItem(null)}
         />
       )}
-
-      {notifications.map((n, idx) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={idx}
-          time={notifyTime}
-          onClose={() =>
-            setNotifications((prev) => prev.filter((notif) => notif.id !== n.id))
-          }
-        />
-      ))}
     </div>
   );
 }

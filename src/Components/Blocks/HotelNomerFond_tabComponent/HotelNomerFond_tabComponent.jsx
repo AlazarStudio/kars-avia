@@ -22,8 +22,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
-import Notification from "../../Notification/Notification.jsx";
-import { fullNotifyTime, notifyTime } from "../../../roles.js";
+import { useToast } from "../../../contexts/ToastContext";
 
 const CATEGORY_LABELS = {
   onePlace: "Одноместный",
@@ -47,6 +46,7 @@ const getCategoryLabel = (category) =>
 function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { success, error: notifyError } = useToast();
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_ROOMS, {
     context: {
@@ -90,17 +90,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
   const [showEditNomer, setShowEditNomer] = useState(false);
   const [selectedNomer, setSelectedNomer] = useState({});
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const [deleteHotelRoom] = useMutation(DELETE_HOTEL_ROOM, {
     context: {
@@ -202,15 +191,22 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
   };
 
   const deleteTarif = async (item) => {
-    let response_update_category = await deleteHotelCategory({
-      variables: {
-        deleteCategoryId: item.item.id,
-      },
-    });
-    if (response_update_category) {
-      setAddTarif(addTarif.filter((_, i) => i !== item.index));
-      setShowDelete(false);
-      setShowEditCategory(false);
+    try {
+      const response = await deleteHotelCategory({
+        variables: {
+          deleteCategoryId: item.item.id,
+        },
+      });
+      if (response?.data) {
+        setAddTarif((prev) => prev.filter((_, i) => i !== item.index));
+        setShowDelete(false);
+        setShowEditCategory(false);
+        refetch();
+        success("Категория удалена.");
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить категорию.");
     }
   };
 
@@ -220,26 +216,33 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
   };
 
   const deleteNomerFromCategory = async (roomInfo) => {
-    let response_update_room = await deleteHotelRoom({
-      variables: {
-        deleteRoomId: roomInfo.nomer.id,
-      },
-    });
+    try {
+      const response = await deleteHotelRoom({
+        variables: {
+          deleteRoomId: roomInfo.nomer.id,
+        },
+      });
 
-    if (response_update_room) {
-      setAddTarif((prevTarifs) =>
-        prevTarifs.map((tarif) => {
-          if (tarif.name === deleteNomer.category) {
-            const updatedNumbers = tarif.rooms.filter(
-              (num) => num.name !== deleteNomer.nomer.name
-            );
-            return { ...tarif, rooms: updatedNumbers };
-          }
-          return tarif;
-        })
-      );
-      setShowDelete(false);
-      setDeleteNomer(null);
+      if (response?.data) {
+        setAddTarif((prevTarifs) =>
+          prevTarifs.map((tarif) => {
+            if (tarif.name === deleteNomer.category) {
+              const updatedNumbers = tarif.rooms.filter(
+                (num) => num.name !== deleteNomer.nomer.name
+              );
+              return { ...tarif, rooms: updatedNumbers };
+            }
+            return tarif;
+          })
+        );
+        setShowDelete(false);
+        setDeleteNomer(null);
+        refetch();
+        success("Номер удалён.");
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить номер.");
     }
   };
 
@@ -383,7 +386,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
             addTarif={addTarif}
             setAddTarif={setAddTarif}
             uniqueCategories={uniqueCategories}
-            addNotification={addNotification}
           />
 
           <EditRequestNomerFond
@@ -402,7 +404,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
             uniqueCategories={uniqueCategories}
             addTarif={addTarif}
             setAddTarif={setAddTarif}
-            addNotification={addNotification}
             openDeleteNomerComponent={openDeleteNomerComponent}
           />
           <EditRequestCategory
@@ -426,20 +427,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                 }?`}
             />
           )}
-          {notifications.map((n, index) => (
-            <Notification
-              key={n.id}
-              text={n.text}
-              status={n.status}
-              index={index}
-              time={notifyTime}
-              onClose={() => {
-                setNotifications((prev) =>
-                  prev.filter((notif) => notif.id !== n.id)
-                );
-              }}
-            />
-          ))}
         </>
       )}
     </>

@@ -75,7 +75,7 @@ function HotelPage({ children, id, user, accessMenu = {}, ...props }) {
 
   const backProps = params.requestId
     ? { to: "/relay", state: { requestId: params.requestId } } // передаём state
-    : { to: -1 };
+    : { to: "/hotels" };
 
   return (
     <>

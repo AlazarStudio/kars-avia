@@ -15,9 +15,8 @@ import {
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import Notification from "../../Notification/Notification.jsx";
-import { fullNotifyTime, notifyTime } from "../../../roles.js";
 import InfoTableAirlineDataTarifs from "../InfoTableAirlineDataTarifs/InfoTableAirlineDataTarifs.jsx";
+import { useToast } from "../../../contexts/ToastContext";
 import CreateRequestAirlineTarifCategory from "../CreateRequestAirlineTarifCategory/CreateRequestAirlineTarifCategory.jsx";
 import EditRequestAirlineTarifCategory from "../EditRequestAirlineTarifCategory/EditRequestAirlineTarifCategory.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
@@ -27,6 +26,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 
 function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_TARIFS, {
     context: {
@@ -103,17 +103,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   const [deleteConfirmContract, setDeleteConfirmContract] = useState(null);
 
   const [selectedContract, setSelectedContract] = useState(null);
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const [deleteHotelCategory] = useMutation(DELETE_AIRLINE_CATEGORY, {
     context: {
@@ -270,16 +259,22 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   // };
 
   const deleteTarif = async (index, tarifID) => {
-    let response_update_tarif = await deleteHotelTarif({
-      variables: {
-        deleteTariffId: tarifID,
-      },
-    });
+    try {
+      let response_update_tarif = await deleteHotelTarif({
+        variables: {
+          deleteTariffId: tarifID,
+        },
+      });
 
-    if (response_update_tarif) {
-      setAddTarif(addTarif.filter((_, i) => i !== index));
-      setShowDelete(false);
-      setEditShowAddTarif(false);
+      if (response_update_tarif) {
+        setAddTarif(addTarif.filter((_, i) => i !== index));
+        setShowDelete(false);
+        setEditShowAddTarif(false);
+        success("Договор удалён.");
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить договор.");
     }
   };
 
@@ -311,14 +306,14 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         variables: { id: deleteConfirmContract.id },
       });
       if (res?.data?.deleteAirlinePrice) {
-        addNotification("Договор удалён.", "success");
+        success("Договор удалён.");
         refetch();
       } else {
-        addNotification("Не удалось удалить договор.", "error");
+        notifyError("Не удалось удалить договор.");
       }
     } catch (err) {
       console.error(err);
-      addNotification(err?.message || "Не удалось удалить договор.", "error");
+      notifyError(err?.message || "Не удалось удалить договор.");
     } finally {
       setDeleteConfirmContract(null);
     }
@@ -336,29 +331,35 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
   };
 
   const deleteTarifCategory = async (category, tarif) => {
-    let response_update_category = await deleteHotelCategory({
-      variables: {
-        deleteCategoryId: category.id,
-      },
-    });
-
-    if (response_update_category) {
-      const updatedTarifs = addTarif.map((t) => {
-        if (t.id == tarif.id) {
-          const updatedCategories = t.category.filter(
-            (cat) => cat.id !== category.id
-          );
-          return {
-            name: tarif.name,
-            category: updatedCategories,
-          };
-        }
-        return t;
+    try {
+      let response_update_category = await deleteHotelCategory({
+        variables: {
+          deleteCategoryId: category.id,
+        },
       });
 
-      setAddTarif(updatedTarifs);
-      setShowDelete(false);
-      setEditShowAddTarif(false);
+      if (response_update_category) {
+        const updatedTarifs = addTarif.map((t) => {
+          if (t.id == tarif.id) {
+            const updatedCategories = t.category.filter(
+              (cat) => cat.id !== category.id
+            );
+            return {
+              name: tarif.name,
+              category: updatedCategories,
+            };
+          }
+          return t;
+        });
+
+        setAddTarif(updatedTarifs);
+        setShowDelete(false);
+        setEditShowAddTarif(false);
+        success("Категория удалена.");
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить категорию.");
     }
   };
 
@@ -495,7 +496,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         onClose={toggleTarifsCategory}
         addTarif={addTarif}
         setAddTarif={setAddTarif}
-        addNotification={addNotification}
         // refetchAllCategories={refetch}
       /> */}
 
@@ -507,7 +507,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         addTarif={addTarif}
         selectedContract={selectedContract}
         setAddTarif={setAddTarif}
-        addNotification={addNotification}
         // refetchAllCategories={refetch}
       />
 
@@ -540,7 +539,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         addTarif={addTarif}
         selectedContract={selectedContract}
         tarif={selectedTarif}
-        addNotification={addNotification}
         onDelete={() => {
           setEditShowAddTarif(false);
           openDeleteContractConfirm(selectedTarif);
@@ -567,20 +565,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
           close={() => setDeleteConfirmContract(null)}
         />
       )}
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </div>
   );
 }

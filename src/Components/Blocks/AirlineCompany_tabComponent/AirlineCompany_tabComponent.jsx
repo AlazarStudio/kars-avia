@@ -24,12 +24,12 @@ import {
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, menuAccess, notifyTime } from "../../../roles";
 import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
+import { useToast } from "../../../contexts/ToastContext";
 
 function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props }) {
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
     context: {
@@ -96,17 +96,6 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
   );
 
   // console.log(dataSubscriptionUpd);
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime); // 5 секунд уведомление + 300 мс для анимации
-  };
 
   const [addTarif, setAddTarif] = useState([]);
   const [showAddTarif, setShowAddTarif] = useState(false);
@@ -209,9 +198,11 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         setAddTarif(addTarif.filter((_, i) => i !== index));
         setShowDelete(false);
         setShowEditCategory(false);
+        success("Отдел удалён.");
       }
     } catch (err) {
       console.error(err);
+      notifyError("Не удалось удалить отдел.");
     }
   };
 
@@ -230,28 +221,34 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
   });
 
   const deleteNomerFromCategory = async () => {
-    let request = await deleteAirlineManager({
-      variables: {
-        deleteUserId: deleteNomer.user.id,
-      },
-    });
-
-    if (request) {
-      setAddTarif((prevTarifs) => {
-        return prevTarifs.map((tarif) => {
-          if (tarif.name === deleteNomer.category) {
-            const updatedNumbers = tarif.users.filter(
-              (user) => user.id !== deleteNomer.user.id
-            );
-            return { ...tarif, users: updatedNumbers };
-          }
-          return tarif;
-        });
+    try {
+      let request = await deleteAirlineManager({
+        variables: {
+          deleteUserId: deleteNomer.user.id,
+        },
       });
 
-      setShowDelete(false);
-      setDeleteNomer(null);
-      refetch();
+      if (request) {
+        setAddTarif((prevTarifs) => {
+          return prevTarifs.map((tarif) => {
+            if (tarif.name === deleteNomer.category) {
+              const updatedNumbers = tarif.users.filter(
+                (user) => user.id !== deleteNomer.user.id
+              );
+              return { ...tarif, users: updatedNumbers };
+            }
+            return tarif;
+          });
+        });
+
+        setShowDelete(false);
+        setDeleteNomer(null);
+        refetch();
+        success("Пользователь удалён.");
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить пользователя.");
     }
   };
 
@@ -399,7 +396,6 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
             addTarif={addTarif}
             setAddTarif={setAddTarif}
             positions={positions}
-            addNotification={addNotification}
           />
           <CreateRequestAirlineOtdel
             id={id}
@@ -408,7 +404,6 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
             addTarif={addTarif}
             setAddTarif={setAddTarif}
             positions={airlinePositions}
-            addNotification={addNotification}
           />
         </>
       )}
@@ -423,7 +418,6 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         onSubmit={handleEditNomer}
         addTarif={addTarif}
         positions={positions}
-        addNotification={addNotification}
         openDeleteComponent={openDeleteNomerComponent}
       />
       {(!user?.airlineId || accessMenu.userUpdate) && (
@@ -435,7 +429,6 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
             onClose={() => setShowEditCategory(false)}
             category={selectedCategory}
             onSubmit={handleEditCategory}
-            addNotification={addNotification}
           />
         </>
       )}
@@ -467,21 +460,6 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         departmentItem={selectedDepartmentForSettings}
         type="airline"
       />
-
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </>
   );
 }

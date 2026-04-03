@@ -16,6 +16,8 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestAirlineTarifCategory({
   show,
@@ -29,10 +31,11 @@ function EditRequestAirlineTarifCategory({
   setAddTarif,
   user,
   type,
-  addNotification,
   onDelete,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
     context: {
       headers: {
@@ -136,19 +139,24 @@ function EditRequestAirlineTarifCategory({
     setIsEdited(false);
   }, [getInitialFormData]);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       onClose();
       setIsEditing(false);
       return;
     }
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, onClose, resetForm]);
+  }, [isEdited, onClose, resetForm, confirm, isDialogOpen]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -179,8 +187,8 @@ function EditRequestAirlineTarifCategory({
 
   const handleFileChange = (e) => {
     const files = e.target.files;
-    if (files.length > 8) {
-      alert("Вы можете загрузить не более 8 изображений.");
+    if (files && files.length > 8) {
+      showAlert("Вы можете загрузить не более 8 изображений.");
       e.target.value = null;
       return;
     }
@@ -248,10 +256,10 @@ function EditRequestAirlineTarifCategory({
         onClose();
         setIsLoading(false);
         setIsEditing(false);
-        addNotification("Изменение соглашения прошло успешно.", "success");
+        success("Изменение соглашения прошло успешно.");
       } catch (error) {
         setIsLoading(false);
-        alert("Произошло ошибка при изменении соглашения.");
+        notifyError("Произошла ошибка при изменении соглашения.");
         console.error("Произошла ошибка при выполнении запроса:", error);
       }
     }
@@ -259,15 +267,20 @@ function EditRequestAirlineTarifCategory({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (anchorEl && menuRef.current?.contains(event.target)) return;
       if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
     if (show) {
       document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   // useEffect(() => {
   //   const names = addTarif.map((tarif) => ({

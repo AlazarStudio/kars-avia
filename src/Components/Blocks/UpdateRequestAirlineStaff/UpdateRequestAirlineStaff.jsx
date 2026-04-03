@@ -14,6 +14,8 @@ import { InputMask } from "@react-input/mask";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { menuAccess, positions } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function UpdateRequestAirlineStaff({
   show,
@@ -25,9 +27,11 @@ function UpdateRequestAirlineStaff({
   setAddTarif,
   setShowDelete,
   setDeleteIndex,
-  addNotification,
   positions,
 }) {
+  const { confirm, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
+
   // const [userRole, setUserRole] = useState();
   const token = getCookie("token");
   const [isEditing, setIsEditing] = useState(false);
@@ -71,18 +75,23 @@ function UpdateRequestAirlineStaff({
     setIsEditing(false);
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -139,11 +148,11 @@ function UpdateRequestAirlineStaff({
           resetForm();
           onClose();
           setIsLoading(false);
-          addNotification("Редактирование прошло успешно.", "success");
+          success("Редактирование прошло успешно.");
         }
       } catch (err) {
         setIsLoading(false);
-        alert("Произошла ошибка при сохранении данных");
+        notifyError("Произошла ошибка при сохранении данных");
       }
     }
     setIsEditing(!isEditing);
@@ -151,10 +160,10 @@ function UpdateRequestAirlineStaff({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
 
       closeButton();
@@ -169,7 +178,7 @@ function UpdateRequestAirlineStaff({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   // let positions = [
   //   "КАЭ (Капитан Эскадрильи)",

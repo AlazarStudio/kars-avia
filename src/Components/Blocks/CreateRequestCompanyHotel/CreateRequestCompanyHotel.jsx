@@ -14,16 +14,19 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import { rolesObject } from "../../../roles.js";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function CreateRequestCompanyHotel({
   show,
   onClose,
   addDispatcher,
-  addNotification,
   positions,
   id,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
@@ -51,18 +54,23 @@ function CreateRequestCompanyHotel({
     setIsEdited(false); // Сброс флага изменений
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [confirm, isDialogOpen, isEdited, resetForm, onClose]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -76,26 +84,27 @@ function CreateRequestCompanyHotel({
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSizeInBytes = 8 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: "",
       }));
       if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
+        fileInputRef.current.value = "";
       }
       return;
     }
 
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        images: file, // Сохраняем файл напрямую
-      }));
-    }
+    setIsEdited(true);
+    setFormData((prevState) => ({
+      ...prevState,
+      images: file,
+    }));
   };
 
   const [uploadFile, { data, loading, error }] = useMutation(
@@ -130,20 +139,20 @@ function CreateRequestCompanyHotel({
     );
 
     if (emptyFields.length > 0) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      alert("Введите корректный email.");
+      showAlert("Введите корректный email.");
       setIsLoading(false);
       return;
     }
 
     if (formData.password.length < 8) {
-      alert("Пароль должен содержать минимум 8 символов.");
+      showAlert("Пароль должен содержать минимум 8 символов.");
       setIsLoading(false);
       return;
     }
@@ -177,28 +186,21 @@ function CreateRequestCompanyHotel({
         addDispatcher(response_create_user.data.registerUser);
         resetForm();
         onClose();
-        addNotification("Создание аккаунта прошло успешно.", "success");
+        success("Создание аккаунта прошло успешно.");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
-      if (
-        String(e).startsWith(
-          "ApolloError: Пользователь с таким логином уже существует"
-        )
-      ) {
-        alert("Пользователь с таким логином уже существует");
+      const msg = String(e?.message || e);
+      if (msg.includes("Пользователь с таким логином уже существует")) {
+        showAlert("Пользователь с таким логином уже существует");
+      } else if (msg.includes("Пользователь с таким email уже существует")) {
+        showAlert("Пользователь с такой почтой уже существует");
       } else if (
-        String(e).startsWith(
-          "ApolloError: Пользователь с таким email уже существует"
-        )
+        msg.includes("Пользователь с таким email и логином уже существует")
       ) {
-        alert("Пользователь с такой почтой уже существует");
-      } else if (
-        String(e).startsWith(
-          "ApolloError: Пользователь с таким email и логином уже существует"
-        )
-      ) {
-        alert("Пользователь с такой почтой и логином уже существует");
+        showAlert("Пользователь с такой почтой и логином уже существует");
+      } else {
+        notifyError("Не удалось создать пользователя.");
       }
     } finally {
       // onClose();
@@ -209,11 +211,17 @@ function CreateRequestCompanyHotel({
   };
 
   useEffect(() => {
+    if (show) {
+      resetForm();
+    }
+  }, [show, resetForm]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
 
       closeButton();
@@ -228,7 +236,7 @@ function CreateRequestCompanyHotel({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

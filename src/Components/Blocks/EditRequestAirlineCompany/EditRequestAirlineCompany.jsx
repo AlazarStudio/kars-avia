@@ -14,6 +14,8 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { roles, rolesObject } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestAirlineCompany({
   show,
@@ -26,11 +28,12 @@ function EditRequestAirlineCompany({
   onSubmit,
   addTarif,
   id,
-  addNotification,
   positions,
   openDeleteComponent,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success } = useToast();
 
   const [uploadFile, { data, loading, error }] = useMutation(
     UPDATE_AIRLINE_USER,
@@ -103,7 +106,9 @@ function EditRequestAirlineCompany({
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       resetForm();
@@ -112,12 +117,15 @@ function EditRequestAirlineCompany({
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, isEditing, onClose, resetForm]);
+  }, [isEdited, onClose, resetForm, confirm, isDialogOpen]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -151,8 +159,8 @@ function EditRequestAirlineCompany({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+    if (file && file.size > maxSizeInBytes) {
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: null,
@@ -186,20 +194,20 @@ function EditRequestAirlineCompany({
     e.preventDefault();
     if (isEditing) {
       if (!isFormValid()) {
-        alert("Пожалуйста, заполните все обязательные поля.");
+        showAlert("Пожалуйста, заполните все обязательные поля.");
         setIsLoading(false);
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        alert("Введите корректный email.");
+        showAlert("Введите корректный email.");
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
       if (formData.password !== "" && formData.password.length < 8) {
-        alert("Новый пароль должен содержать минимум 8 символов.");
+        showAlert("Новый пароль должен содержать минимум 8 символов.");
         setIsLoading(false);
         return;
       }
@@ -274,21 +282,21 @@ function EditRequestAirlineCompany({
           resetForm();
           onClose();
           setIsLoading(false);
-          addNotification("Редактирование аккаунта прошло успешно.", "success");
+          success("Редактирование аккаунта прошло успешно.");
         }
       } catch (err) {
         setIsLoading(false);
         console.error("Ошибка обновления пользователя:", err);
         if (String(err).startsWith("ApolloError: Указан неверный пароль.")) {
-          alert("Указан неверный старый пароль.");
+          showAlert("Указан неверный старый пароль.");
         } else if (
           String(err).startsWith(
             "ApolloError: Для обновления пароля необходимо указать предыдущий пароль."
           )
         ) {
-          alert("Для обновления пароля необходимо указать предыдущий пароль.");
+          showAlert("Для обновления пароля необходимо указать предыдущий пароль.");
         } else {
-          alert("Ошибка обновления пользователя.");
+          showAlert("Ошибка обновления пользователя.");
         }
       }
     }
@@ -297,6 +305,9 @@ function EditRequestAirlineCompany({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (anchorEl && menuRef.current?.contains(event.target)) {
         setAnchorEl(null);
         return;
@@ -316,7 +327,7 @@ function EditRequestAirlineCompany({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   // const positions = ["Директор", "Заместитель директора", "Сотрудник"];
 

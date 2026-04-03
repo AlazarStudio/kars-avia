@@ -15,6 +15,8 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { InputMask } from "@react-input/mask";
 import { positions } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function CreateRequestAirlineStaff({
   show,
@@ -24,11 +26,13 @@ function CreateRequestAirlineStaff({
   setAddTarif,
   airlineRefetch,
   setSelectedAirline,
-  addNotification,
   positions,
   setNewStaffId,
   isExist,
 }) {
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
+
   const [userRole, setUserRole] = useState();
   const [isEdited, setIsEdited] = useState(false);
   const token = getCookie("token");
@@ -56,18 +60,23 @@ function CreateRequestAirlineStaff({
     setIsEdited(false); // Сбрасываем флаг изменений
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -101,7 +110,7 @@ function CreateRequestAirlineStaff({
     setIsLoading(true);
 
     if (!isFormValid()) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
@@ -159,15 +168,12 @@ function CreateRequestAirlineStaff({
 
         resetForm();
         onClose();
-        // setSelectedAirline ? setSelectedAirline(null) : null;
-        addNotification
-          ? addNotification("Сотрудник добавлен успешно.", "success")
-          : null;
+        success("Сотрудник добавлен успешно.");
         setIsLoading(false);
         // airlineRefetch ? airlineRefetch() : null;
       }
     } catch (err) {
-      alert("Произошла ошибка при сохранении данных");
+      notifyError("Произошла ошибка при сохранении данных");
       console.error(err);
       setIsLoading(false);
     }
@@ -175,10 +181,10 @@ function CreateRequestAirlineStaff({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
 
       closeButton();
@@ -193,7 +199,7 @@ function CreateRequestAirlineStaff({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   const genders = ["Мужской", "Женский"];
 

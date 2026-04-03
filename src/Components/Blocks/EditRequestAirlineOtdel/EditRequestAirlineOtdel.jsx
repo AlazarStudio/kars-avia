@@ -11,6 +11,8 @@ import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestAirlineOtdel({
   show,
@@ -19,8 +21,10 @@ function EditRequestAirlineOtdel({
   category,
   positions, // Все доступные должности
   onSubmit,
-  addNotification,
 }) {
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
+
   // const [userRole, setUserRole] = useState();
   const token = getCookie("token");
 
@@ -73,7 +77,9 @@ function EditRequestAirlineOtdel({
     setIsEditing(false);
   };
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       resetForm();
@@ -81,12 +87,15 @@ function EditRequestAirlineOtdel({
       setIsEditing(false);
       return;
     }
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, confirm, isDialogOpen]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -130,7 +139,7 @@ function EditRequestAirlineOtdel({
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        alert("Введите корректный email.");
+        showAlert("Введите корректный email.");
         setIsLoading(false);
         return;
       }
@@ -168,10 +177,10 @@ function EditRequestAirlineOtdel({
         onSubmit(sortedDepartments);
         resetForm();
         setIsEditing(false);
-        addNotification("Редактирование отдела прошло успешно.", "success");
+        success("Редактирование отдела прошло успешно.");
       }
     } catch (err) {
-      alert("Произошла ошибка при сохранении данных");
+      notifyError("Произошла ошибка при сохранении данных");
       console.error(err);
     } finally {
       setIsEditing(false);
@@ -181,6 +190,9 @@ function EditRequestAirlineOtdel({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (anchorEl && menuRef.current?.contains(event.target)) {
         setAnchorEl(null);
         return;
@@ -200,7 +212,7 @@ function EditRequestAirlineOtdel({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

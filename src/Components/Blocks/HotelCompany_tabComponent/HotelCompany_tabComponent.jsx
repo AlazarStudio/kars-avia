@@ -19,12 +19,12 @@ import {
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
-import Notification from "../../Notification/Notification.jsx";
-import { fullNotifyTime, notifyTime } from "../../../roles.js";
+import { useToast } from "../../../contexts/ToastContext";
 
 function HotelCompany_tabComponent({ children, id, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { success, error: notifyError } = useToast();
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_USERS, {
     context: {
@@ -126,15 +126,22 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
   });
 
   const deleteDispatcher = async (index, userID) => {
-    let response_delete_user = await deleteHotelUser({
-      variables: {
-        deleteUserId: userID,
-      },
-    });
-    if (response_delete_user) {
-      setCompanyData(companyData.filter((_, i) => i !== index));
-      setShowDelete(false);
-      setShowRequestSidebar(false);
+    try {
+      const response = await deleteHotelUser({
+        variables: {
+          deleteUserId: userID,
+        },
+      });
+      if (response?.data) {
+        setCompanyData((prev) => prev.filter((_, i) => i !== index));
+        setShowDelete(false);
+        setShowRequestSidebar(false);
+        refetch();
+        success("Пользователь удалён.");
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить пользователя.");
     }
   };
 
@@ -162,16 +169,6 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -241,7 +238,6 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
         onClose={toggleCreateSidebar}
         addDispatcher={addDispatcher}
         positions={positions}
-        addNotification={addNotification}
       />
 
       <ExistRequestCompanyHotel
@@ -254,7 +250,6 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
         deleteComponentRef={deleteComponentRef}
         isLoading={isLoading}
         positions={positions}
-        addNotification={addNotification}
         // filterList={filterList}
       />
 
@@ -266,20 +261,6 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
           title={`Вы действительно хотите удалить пользователя?`}
         />
       )}
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </>
   );
 }

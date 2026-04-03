@@ -16,6 +16,8 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import { roles, rolesObject } from "../../../roles.js";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function ExistRequestCompanyHotel({
   show,
@@ -24,12 +26,13 @@ function ExistRequestCompanyHotel({
   updateDispatcher,
   openDeleteComponent,
   filterList,
-  addNotification,
   positions,
   id,
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [uploadFile, { data, loading, error }] = useMutation(
     UPDATE_HOTEL_USER,
@@ -78,6 +81,7 @@ function ExistRequestCompanyHotel({
       });
       setShowIMG(chooseObject.images);
       setIndex(chooseObject.index);
+      setIsEdited(false);
     }
   }, [chooseObject]);
 
@@ -104,7 +108,9 @@ function ExistRequestCompanyHotel({
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       resetForm();
@@ -113,12 +119,15 @@ function ExistRequestCompanyHotel({
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, isEditing, onClose, resetForm]);
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -147,26 +156,27 @@ function ExistRequestCompanyHotel({
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const maxSizeInBytes = 8 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: null,
       }));
       if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
+        fileInputRef.current.value = "";
       }
       return;
     }
 
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        images: file,
-      }));
-    }
+    setIsEdited(true);
+    setFormData((prevState) => ({
+      ...prevState,
+      images: file,
+    }));
   };
 
   const handleUpdate = async () => {
@@ -179,18 +189,18 @@ function ExistRequestCompanyHotel({
       );
 
       if (emptyFields.length > 0) {
-        alert("Пожалуйста, заполните все обязательные поля.");
+        showAlert("Пожалуйста, заполните все обязательные поля.");
         setIsLoading(false);
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        alert("Введите корректный email.");
+        showAlert("Введите корректный email.");
         setIsLoading(false);
         return;
       }
       if (formData.password !== "" && formData.password.length < 8) {
-        alert("Новый пароль должен содержать минимум 8 символов.");
+        showAlert("Новый пароль должен содержать минимум 8 символов.");
         setIsLoading(false);
         return;
       }
@@ -220,20 +230,23 @@ function ExistRequestCompanyHotel({
           updateDispatcher(response_update_user.data.updateUser, index);
           resetForm();
           onClose();
-          addNotification("Редактирование аккаунта прошло успешно.", "success");
+          success("Редактирование аккаунта прошло успешно.");
         }
       } catch (error) {
         console.error("Ошибка обновления пользователя:", error);
-        if (String(error).startsWith("ApolloError: Указан неверный пароль.")) {
-          alert("Указан неверный старый пароль.");
+        const msg = String(error?.message || error);
+        if (msg.includes("Указан неверный старый пароль")) {
+          showAlert("Указан неверный старый пароль.");
         } else if (
-          String(error).startsWith(
-            "ApolloError: Для обновления пароля необходимо указать предыдущий пароль."
+          msg.includes(
+            "Для обновления пароля необходимо указать предыдущий пароль"
           )
         ) {
-          alert("Для обновления пароля необходимо указать предыдущий пароль.");
+          showAlert(
+            "Для обновления пароля необходимо указать предыдущий пароль."
+          );
         } else {
-          alert("Ошибка обновления пользователя.");
+          notifyError("Ошибка обновления пользователя.");
         }
       } finally {
         // resetForm();
@@ -254,6 +267,8 @@ function ExistRequestCompanyHotel({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
       if (anchorEl && menuRef.current?.contains(event.target)) {
         setAnchorEl(null);
         return;
@@ -273,7 +288,7 @@ function ExistRequestCompanyHotel({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   // console.log(isLoading);
 

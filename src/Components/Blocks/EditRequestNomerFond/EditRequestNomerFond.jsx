@@ -16,6 +16,8 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestNomerFond({
   type,
@@ -36,10 +38,11 @@ function EditRequestNomerFond({
   setAddTarif,
   selectedNomer,
   filter,
-  addNotification,
   openDeleteNomerComponent,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
   // console.log(nomer);
   const [selectedRoomKind, setSelectedRoomKind] = useState(null);
   const [hotelTariff, setHotelTariff] = useState([]);
@@ -155,7 +158,9 @@ function EditRequestNomerFond({
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       resetForm();
@@ -163,12 +168,15 @@ function EditRequestNomerFond({
       onClose();
       return;
     }
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       setIsEditing(false);
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [confirm, isDialogOpen, isEdited, resetForm, onClose]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -200,6 +208,7 @@ function EditRequestNomerFond({
 
   // переключает пометку удаления для серверного изображения (по его пути)
   const toggleDeleteServerImage = (imagePath) => {
+    setIsEdited(true);
     setDeletedImages((prev) => {
       if (prev.includes(imagePath)) {
         return prev.filter((p) => p !== imagePath);
@@ -228,26 +237,28 @@ function EditRequestNomerFond({
 
   const handleFileChange = (e) => {
     const files = e.target.files;
+    if (!files?.length) return;
+
     if (files.length > 8) {
-      alert("Вы можете загрузить не более 8 изображений.");
+      showAlert("Вы можете загрузить не более 8 изображений.");
       e.target.value = null;
       return;
     }
 
-    // Преобразуем файлы в массив
+    setIsEdited(true);
     const fileArray = Array.from(files);
 
     setFormData((prevState) => ({
       ...prevState,
-      roomImages: fileArray, // Сохраняем массив файлов
+      roomImages: fileArray,
     }));
   };
 
   const handleCoverImageChange = (image) => {
     if (isEditing) {
+      setIsEdited(true);
       setCoverImage(image);
     }
-    // setIsEditing(!isEditing);
   };
 
   const [updateHotel] = useMutation(UPDATE_HOTEL, {
@@ -493,12 +504,11 @@ function EditRequestNomerFond({
         resetForm();
         onClose();
         setIsLoading(false);
-        if (addNotification) {
-          addNotification("Редактирование номера прошло успешно.", "success");
-        }
+        success("Редактирование номера прошло успешно.");
         setIsEditing(false);
       } catch (error) {
         console.error("Ошибка при обновлении номера", error);
+        notifyError("Не удалось сохранить изменения номера.");
       } finally {
         setIsLoading(false);
       }
@@ -507,6 +517,8 @@ function EditRequestNomerFond({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
       if (anchorEl && menuRef.current?.contains(event.target)) return;
       if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
@@ -515,7 +527,7 @@ function EditRequestNomerFond({
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   const categories = [
     {
