@@ -32,7 +32,6 @@ function Analytics({user}) {
         return null;
     }
   };
-  ``;
   return (
     <div className={classes.analyticsContainer}>
       <Header>Аналитика</Header>
