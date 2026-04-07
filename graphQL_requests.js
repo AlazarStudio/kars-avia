@@ -5871,6 +5871,60 @@ export const GET_CITY_REGIONS = gql`
   }
 `;
 
+export const GET_AIRLINE_ANALYTICS = gql`
+  query AirlineAnalytics($input: AirlineAnalyticsInput!) {
+    airlineAnalytics(input: $input) {
+      airportsBreakdown {
+        airportId
+        airportName
+        airportCode
+        totalRequests
+        uniquePeopleCount
+        usedRoomsCount
+        totalSpend
+        livingSpend
+        mealSpend
+        transferSpend
+      }
+      positionsBreakdown {
+        positionId
+        positionName
+        count
+        percent
+      }
+      segments {
+        label
+        segmentKey
+        segmentType
+        metrics {
+          totalRequests
+          uniquePeopleCount
+          usedRoomsCount
+          totalSpend
+          livingSpend
+          mealSpend
+          transferSpend
+        }
+        positionsBreakdown {
+          positionId
+          positionName
+          count
+          percent
+        }
+      }
+      summary {
+        totalRequests
+        uniquePeopleCount
+        usedRoomsCount
+        totalSpend
+        livingSpend
+        mealSpend
+        transferSpend
+      }
+    }
+  }
+`;
+
 export const GET_ANALYTICS_AIRLINE_SERVICE_COMPARISON = gql`
   query AirlineComparison($input: AnalyticsAirlineServiceComparisonInput!) {
     analyticsAirlineServiceComparison(input: $input) {

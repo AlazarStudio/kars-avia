@@ -1,7 +1,135 @@
+.pageWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  flex: 1;
+}
+
+.filtersStrip {
+  width: 100%;
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comparePeriodsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.compareLabel {
+  font-size: 13px;
+  color: #545873;
+  margin-right: 4px;
+}
+
+.compareChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.removeCompareBtn {
+  border: none;
+  background: #f1f4fb;
+  color: #545873;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.removeCompareBtn:hover {
+  background: #e4e8f5;
+  color: #c00;
+}
+
+.groupByWrap {
+  min-width: 200px;
+}
+
+.periodHint {
+  margin: 0;
+  font-size: 13px;
+  color: #b45309;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.kpiCard {
+  background: #f8f9fd;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  color: #545873;
+}
+
+.kpiValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2e355d;
+}
+
+.barBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.barHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.barTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2e355d;
+}
+
+.segmentsSection {
+  margin-top: 8px;
+}
+
+.segmentsTitle {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2e355d;
+}
+
+.tableScroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
 .container {
   display: flex;
   gap: 24px;
-  height: calc(100vh - 200px);
+  min-height: 0;
+  flex: 1;
   overflow: hidden;
 }
 
@@ -123,7 +251,9 @@
 .contentWrapper {
   overflow: hidden;
   overflow-y: auto;
-  height: 600px;
+  flex: 1;
+  min-height: 280px;
+  max-height: min(620px, calc(100vh - 380px));
   display: flex;
   flex-direction: column;
   gap: 20px;

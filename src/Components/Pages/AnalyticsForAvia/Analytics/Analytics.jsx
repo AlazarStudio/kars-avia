@@ -51,7 +51,7 @@ function Analytics({user}) {
         </div>
       )}
 
-      <div className={user?.airlineId ? classes.tabContent : null}>{renderTabContent()}</div>
+      <div className={classes.tabContent}>{renderTabContent()}</div>
     </div>
   );
 }

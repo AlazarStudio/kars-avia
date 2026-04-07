@@ -6,7 +6,8 @@ import {
   LineChart, Line,
   PieChart, Pie, Cell,
   XAxis, YAxis, Tooltip,
-  Legend
+  Legend,
+  CartesianGrid,
 } from "recharts";
 
 function AnalyticsChart({
@@ -16,6 +17,7 @@ function AnalyticsChart({
   yKey = "y",
   dataKey = "value",
   title,
+  barValueLabel,
   // colors = ["#0057C3", "#F44336", "#4CAF50", "#9575CD", "#9E9E9E", "#FF9800", "#638EA4", "#3B653D"],
   colors = ["#0057C3", "#2196f3", "#4CAF50", "#9575CD", "#ff9800", "#f44336", "#638EA4", "#3B653D"],
   height = 265
@@ -75,6 +77,28 @@ function AnalyticsChart({
               />
               <Bar dataKey={yKey} fill={colors[0]} />
 
+            </BarChart>
+          </ResponsiveContainer>
+        );
+
+      case "simpleBar":
+        return (
+          <ResponsiveContainer width="100%" height={height} outline={false}>
+            <BarChart
+              data={data}
+              margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e8eaf5" />
+              <XAxis dataKey={xKey} tick={{ fontSize: 11 }} interval={0} angle={-28} textAnchor="end" height={70} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip
+                contentStyle={{ background: "#fff", border: "1px solid #aab0dd5c", borderRadius: "8px" }}
+                itemStyle={{ color: "#000" }}
+                cursor={{ fill: "#9CA4D91A" }}
+                formatter={(value, name) => [value, name === yKey ? (barValueLabel || name) : name]}
+                labelFormatter={(label) => String(label ?? "")}
+              />
+              <Bar dataKey={yKey} fill={colors[0]} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         );

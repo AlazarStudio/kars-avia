@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import classes from "./AirlineAnalytics.module.css";
 import AnalyticsChart from "../../AnalyticsChart/AnalyticsChart";
 import DateRangePickerCustom from "../../DateRangePickerCustom";
 import {
   addDays,
+  differenceInCalendarDays,
   formatISO,
   startOfToday,
   subDays,
-  differenceInCalendarDays,
 } from "date-fns";
 import {
   GET_AIRLINES,
-  GET_ANALYTICS_AIRLINE_SERVICE_COMPARISON,
-  GET_CITY_REGIONS,
+  GET_AIRLINE_ANALYTICS,
+  GET_AIRPORTS_RELAY,
+  GET_AIRLINE_POSITIONS,
   getCookie,
   getMediaUrl,
 } from "../../../../../../graphQL_requests";
@@ -28,53 +29,57 @@ const SERVICE_OPTIONS = [
   { id: "MEAL", label: "Питание" },
   { id: "TRANSFER", label: "Трансфер" },
 ];
-const CREW_OPTIONS = [
-  { id: "ALL", label: "Все" },
-  { id: "SQUADRON", label: "Эскадрилья" },
-  { id: "TECHNICIAN", label: "Инженеры" },
-  // { id: "POSITIONS", label: "Должности" },
-];
-const SERVICE_LABEL_MAP = {
-  LIVING: "Проживание",
-  MEAL: "Питание",
-  TRANSFER: "Трансфер",
-};
 
-const formatInt = (value) => new Intl.NumberFormat("ru-RU").format(Number(value) || 0);
+const GROUP_BY_OPTIONS = [
+  { id: "NONE", label: "Без сравнения" },
+  { id: "AIRPORT", label: "По аэропортам" },
+  { id: "POSITION", label: "По должностям" },
+  { id: "PERIOD", label: "По периодам" },
+];
+
+const BAR_METRIC_OPTIONS = [
+  { id: "totalSpend", label: "Траты, ₽" },
+  { id: "totalRequests", label: "Заявки" },
+  { id: "uniquePeopleCount", label: "Уникальные люди" },
+  { id: "usedRoomsCount", label: "Комнаты" },
+];
+
+const formatInt = (value) =>
+  new Intl.NumberFormat("ru-RU").format(Number(value) || 0);
 const formatRub = (value) =>
   `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 }).format(
     Number(value) || 0
   )} ₽`;
-const formatPct = (value) =>
-  value === null || value === undefined
-    ? "—"
-    : `${value > 0 ? "+" : ""}${Number(value).toFixed(1)}%`;
+
+function defaultCompareRange(mainRange) {
+  const p2Start = mainRange.startDate;
+  const p1End = subDays(p2Start, 1);
+  const p1Start = subDays(p1End, 6);
+  return { startDate: p1Start, endDate: p1End, key: "selection" };
+}
 
 function AirlineAnalytics({ user, height }) {
   const token = getCookie("token");
 
-  const [period2, setPeriod2] = useState({
+  const [mainRange, setMainRange] = useState({
     startDate: addDays(startOfToday(), -6),
     endDate: startOfToday(),
     key: "selection",
   });
-  const [period1, setPeriod1] = useState(() => {
-    const p2End = startOfToday();
-    const p2Start = addDays(p2End, -6);
-    const p1End = subDays(p2Start, 1);
-    const p1Start = subDays(p1End, 6);
-    return { startDate: p1Start, endDate: p1End, key: "selection" };
-  });
+  const [comparePeriodRanges, setComparePeriodRanges] = useState([]);
 
   const [showPicker, setShowPicker] = useState(false);
-  const [pickerTarget, setPickerTarget] = useState("period2");
+  const [pickerMode, setPickerMode] = useState("main");
+
   const [airlines, setAirlines] = useState([]);
   const [selectedAirline, setSelectedAirline] = useState();
   const [searchQuery, setSearchQuery] = useState();
-  const [selectedServices, setSelectedServices] = useState(["LIVING"]);
-  const [crewMode, setCrewMode] = useState("SQUADRON");
-  const [positionsText, setPositionsText] = useState("");
-  const [selectedRegions, setSelectedRegions] = useState([]);
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [selectedAirportIds, setSelectedAirportIds] = useState([]);
+  const [selectedPositionIds, setSelectedPositionIds] = useState([]);
+  const [groupBy, setGroupBy] = useState("NONE");
+  const [barMetric, setBarMetric] = useState("totalSpend");
+
   const debouncedSearch = useDebounce(searchQuery, 500);
 
   const PAGE_SIZE = 15;
@@ -97,11 +102,6 @@ function AirlineAnalytics({ user, height }) {
     },
   });
 
-  // useEffect(() => {
-  //   if (airlinesData?.airlines?.airlines) {
-  //     setAirlines(airlinesData.airlines.airlines || []);
-  //   }
-  // }, [airlinesData]);
   useEffect(() => {
     const conn = airlinesData?.airlines;
     const page = conn?.airlines ?? [];
@@ -110,14 +110,13 @@ function AirlineAnalytics({ user, height }) {
     if (page.length) {
       setAirlines(page);
       setTotal(count);
-      setHasMore(page.length < count); // если пришло меньше total — показываем кнопку
+      setHasMore(page.length < count);
     }
     if (user?.airlineId) {
       setSelectedAirline(page.find((i) => i.id === user?.airlineId));
     }
   }, [airlinesData, user]);
 
-  // 4) догрузка следующих 15
   const handleLoadMore = async () => {
     const nextTake = Math.min(
       airlines.length + PAGE_SIZE,
@@ -132,14 +131,14 @@ function AirlineAnalytics({ user, height }) {
     const newList = conn?.airlines ?? [];
     const newTotal = conn?.totalCount ?? total;
 
-    setAirlines(newList); // просто заменяем массив на «первые nextTake»
+    setAirlines(newList);
     setTotal(newTotal);
-    setHasMore(newList.length < newTotal); // если всё забрали — кнопка исчезает
+    setHasMore(newList.length < newTotal);
   };
 
   const airlineId = user?.airlineId || selectedAirline?.id || airlines[0]?.id;
 
-  const { data: regionsData } = useQuery(GET_CITY_REGIONS, {
+  const { data: airportsData } = useQuery(GET_AIRPORTS_RELAY, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -147,202 +146,397 @@ function AirlineAnalytics({ user, height }) {
     },
   });
 
-  const comparisonInput = useMemo(() => {
-    if (!airlineId) return null;
+  const { data: positionsData } = useQuery(GET_AIRLINE_POSITIONS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
-    const parsedPositions = positionsText
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
+  const airportOptions = useMemo(
+    () =>
+      (airportsData?.airports ?? []).map((a) => ({
+        id: a.id,
+        label: [a.code, a.name, a.city].filter(Boolean).join(" · "),
+      })),
+    [airportsData?.airports]
+  );
+
+  const positionOptions = useMemo(
+    () =>
+      (positionsData?.getAirlinePositions ?? []).map((p) => ({
+        id: p.id,
+        label: p.name,
+      })),
+    [positionsData?.getAirlinePositions]
+  );
+
+  const selectedAirportOpts = useMemo(
+    () => airportOptions.filter((o) => selectedAirportIds.includes(o.id)),
+    [airportOptions, selectedAirportIds]
+  );
+
+  const selectedPositionOpts = useMemo(
+    () => positionOptions.filter((o) => selectedPositionIds.includes(o.id)),
+    [positionOptions, selectedPositionIds]
+  );
+
+  const serviceOptions = useMemo(() => SERVICE_OPTIONS, []);
+  const selectedServiceOptions = useMemo(
+    () => serviceOptions.filter((item) => selectedServices.includes(item.id)),
+    [selectedServices, serviceOptions]
+  );
+
+  const analyticsInput = useMemo(() => {
+    if (!airlineId) return null;
+    if (groupBy === "PERIOD" && comparePeriodRanges.length === 0) return null;
 
     const input = {
       airlineId,
-      period1: {
-        startDate: formatISO(period1.startDate, { representation: "date" }),
-        endDate: formatISO(period1.endDate, { representation: "date" }),
-      },
-      period2: {
-        startDate: formatISO(period2.startDate, { representation: "date" }),
-        endDate: formatISO(period2.endDate, { representation: "date" }),
-      },
-      services: selectedServices,
-      crew: {
-        mode: crewMode,
-      },
+      dateFrom: formatISO(mainRange.startDate, { representation: "date" }),
+      dateTo: formatISO(mainRange.endDate, { representation: "date" }),
     };
 
-    if (crewMode === "POSITIONS" && parsedPositions.length) {
-      input.crew.positionNames = parsedPositions;
-    }
-
-    if (selectedRegions.length) {
-      input.regions = selectedRegions;
+    if (selectedServices.length) input.services = selectedServices;
+    if (selectedAirportIds.length) input.airportIds = selectedAirportIds;
+    if (selectedPositionIds.length) input.positionIds = selectedPositionIds;
+    if (groupBy && groupBy !== "NONE") input.groupBy = groupBy;
+    if (groupBy === "PERIOD" && comparePeriodRanges.length) {
+      input.comparePeriods = comparePeriodRanges.map((r) => ({
+        startDate: formatISO(r.startDate, { representation: "date" }),
+        endDate: formatISO(r.endDate, { representation: "date" }),
+      }));
     }
 
     return input;
   }, [
     airlineId,
-    crewMode,
-    period1.endDate,
-    period1.startDate,
-    period2.endDate,
-    period2.startDate,
-    positionsText,
-    selectedRegions,
+    mainRange.endDate,
+    mainRange.startDate,
+    groupBy,
+    comparePeriodRanges,
     selectedServices,
+    selectedAirportIds,
+    selectedPositionIds,
   ]);
 
-  const { data: comparisonData, loading: comparisonLoading } = useQuery(
-    GET_ANALYTICS_AIRLINE_SERVICE_COMPARISON,
+  const { data: analyticsData, loading: analyticsLoading } = useQuery(
+    GET_AIRLINE_ANALYTICS,
     {
       context: {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
-      variables: {
-        input: comparisonInput,
-      },
-      skip: !comparisonInput,
+      variables: { input: analyticsInput },
+      skip: !analyticsInput,
     }
   );
 
-  const handleSearch = (e) => {
-    setSearchQuery(e.target.value);
-  };
+  const result = analyticsData?.airlineAnalytics;
+  const summary = result?.summary;
+  const positionsBreakdown = result?.positionsBreakdown;
+  const airportsBreakdown = result?.airportsBreakdown;
+  const segments = result?.segments ?? [];
+
+  const pieData = useMemo(
+    () =>
+      (positionsBreakdown ?? []).map((item) => ({
+        x: item.positionName,
+        value: item.count,
+      })),
+    [positionsBreakdown]
+  );
+
+  const barChartData = useMemo(() => {
+    return (airportsBreakdown ?? []).map((row) => ({
+      name:
+        row.airportName ||
+        row.airportCode ||
+        row.airportId ||
+        "—",
+      value: Number(row[barMetric]) || 0,
+    }));
+  }, [airportsBreakdown, barMetric]);
+
+  const barMetricLabel = useMemo(
+    () => BAR_METRIC_OPTIONS.find((o) => o.id === barMetric)?.label || barMetric,
+    [barMetric]
+  );
+
+  const comparisonRows = useMemo(
+    () => [
+      { metric: "Заявки", key: "totalRequests", format: formatInt },
+      { metric: "Уникальные люди", key: "uniquePeopleCount", format: formatInt },
+      { metric: "Комнаты", key: "usedRoomsCount", format: formatInt },
+      { metric: "Общие траты", key: "totalSpend", format: formatRub },
+      { metric: "Проживание", key: "livingSpend", format: formatRub },
+      { metric: "Питание", key: "mealSpend", format: formatRub },
+      { metric: "Трансфер", key: "transferSpend", format: formatRub },
+    ],
+    []
+  );
 
   const filteredAirlines = useMemo(() => {
     if (!searchQuery) return airlines;
-
     return airlines.filter((request) =>
       request?.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [airlines, searchQuery]);
 
-  const rows = comparisonData?.analyticsAirlineServiceComparison || [];
-  const allRegions = regionsData?.cityRegions || [];
-  const period2Days = differenceInCalendarDays(period2.endDate, period2.startDate) + 1;
-  const serviceOptions = useMemo(() => SERVICE_OPTIONS, []);
-  const selectedServiceOptions = useMemo(
-    () => serviceOptions.filter((item) => selectedServices.includes(item.id)),
-    [selectedServices, serviceOptions]
-  );
-  const regionOptions = useMemo(
-    () => allRegions.map((region) => ({ id: region, label: region })),
-    [allRegions]
-  );
-  const selectedRegionOptions = useMemo(
-    () => regionOptions.filter((item) => selectedRegions.includes(item.id)),
-    [regionOptions, selectedRegions]
-  );
+  const openMainPicker = useCallback(() => {
+    setPickerMode("main");
+    setShowPicker(true);
+  }, []);
 
-  const budgetByServiceData = useMemo(() => {
-    const map = new Map();
-    rows.forEach((row) => {
-      const current = map.get(row.service) || 0;
-      map.set(row.service, current + (Number(row.period2?.budgetRub) || 0));
-    });
+  const openComparePicker = useCallback((index) => {
+    setPickerMode(index);
+    setShowPicker(true);
+  }, []);
 
-    return Array.from(map.entries()).map(([service, value]) => ({
-      x: SERVICE_LABEL_MAP[service] || service,
-      value,
-    }));
-  }, [rows]);
+  const openAddComparePicker = useCallback(() => {
+    setPickerMode("add");
+    setShowPicker(true);
+  }, []);
 
-  const peopleByRegionData = useMemo(() => {
-    const map = new Map();
-    rows.forEach((row) => {
-      const current = map.get(row.region) || 0;
-      map.set(row.region, current + (Number(row.period2?.peopleCount) || 0));
-    });
-
-    return Array.from(map.entries())
-      .map(([x, count]) => ({ x, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 8);
-  }, [rows]);
-
-  const periodCompareData = useMemo(() => {
-    let peopleP1 = 0;
-    let peopleP2 = 0;
-    let budgetP1 = 0;
-    let budgetP2 = 0;
-
-    rows.forEach((row) => {
-      peopleP1 += Number(row.period1?.peopleCount) || 0;
-      peopleP2 += Number(row.period2?.peopleCount) || 0;
-      budgetP1 += Number(row.period1?.budgetRub) || 0;
-      budgetP2 += Number(row.period2?.budgetRub) || 0;
-    });
-
-    return [
-      { x: "P1 люди", value: peopleP1 },
-      { x: "P2 люди", value: peopleP2 },
-      { x: "P1 бюджет", value: budgetP1 },
-      { x: "P2 бюджет", value: budgetP2 },
-    ];
-  }, [rows]);
-
-  useEffect(() => {
-    if (!selectedRegions.length && allRegions.length >= 2) {
-      setSelectedRegions(allRegions.slice(0, 2));
-    } else if (!selectedRegions.length && allRegions.length === 1) {
-      setSelectedRegions([allRegions[0]]);
+  const pickerValue = useMemo(() => {
+    if (pickerMode === "main") return mainRange;
+    if (pickerMode === "add") {
+      return (
+        comparePeriodRanges[comparePeriodRanges.length - 1] ||
+        defaultCompareRange(mainRange)
+      );
     }
-  }, [allRegions, selectedRegions.length]);
+    if (typeof pickerMode === "number" && comparePeriodRanges[pickerMode]) {
+      return comparePeriodRanges[pickerMode];
+    }
+    return mainRange;
+  }, [pickerMode, mainRange, comparePeriodRanges]);
+
+  const applyPickerRange = useCallback(
+    (range) => {
+      if (pickerMode === "main") {
+        setMainRange(range);
+      } else if (pickerMode === "add") {
+        setComparePeriodRanges((prev) => [...prev, { ...range, key: "selection" }]);
+      } else if (typeof pickerMode === "number") {
+        setComparePeriodRanges((prev) => {
+          const next = [...prev];
+          next[pickerMode] = { ...range, key: "selection" };
+          return next;
+        });
+      }
+      setShowPicker(false);
+    },
+    [pickerMode]
+  );
+
+  const handleGroupByChange = useCallback((_, label) => {
+    const nextId =
+      GROUP_BY_OPTIONS.find((item) => item.label === label)?.id ?? "NONE";
+    setGroupBy(nextId);
+    if (nextId === "PERIOD") {
+      setComparePeriodRanges((prev) =>
+        prev.length ? prev : [defaultCompareRange(mainRange)]
+      );
+    }
+  }, [mainRange]);
+
+  const removeComparePeriod = useCallback((index) => {
+    setComparePeriodRanges((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const periodHint =
+    groupBy === "PERIOD" && comparePeriodRanges.length === 0
+      ? "Добавьте хотя бы один период для сравнения с основным."
+      : null;
+
+  const mainDays =
+    differenceInCalendarDays(mainRange.endDate, mainRange.startDate) + 1;
 
   return (
-    <div className={classes.container} style={height && { height }}>
-      {user?.airlineId ? null : (
-        <div className={classes.sidebarContainer}>
-          <div className={classes.searchContainer}>
-            {/* <input type="text" placeholder="Поиск" name="search" id="search" value={searchQuery} onChange={handleSearch}/> */}
-            <MUITextField
-              label={"Поиск"}
-              value={searchQuery}
-              onChange={handleSearch}
-              className={classes.mainSearch}
+    <div className={classes.pageWrap} style={height ? { height } : undefined}>
+      <div className={classes.filtersStrip}>
+        <div className={classes.filtersRow}>
+          <button
+            type="button"
+            className={classes.periodButton}
+            onClick={openMainPicker}
+          >
+            Основной период
+          </button>
+
+          <MultiSelectAutocomplete
+            dropdownWidth="220px"
+            label="Услуги"
+            flexWrap
+            options={serviceOptions}
+            value={selectedServiceOptions}
+            isMultiple
+            limitTags={1}
+            onChange={(_, newValue) => {
+              setSelectedServices((newValue || []).map((item) => item.id));
+            }}
+          />
+
+          <MultiSelectAutocomplete
+            dropdownWidth="260px"
+            label="Аэропорты"
+            flexWrap
+            options={airportOptions}
+            value={selectedAirportOpts}
+            isMultiple
+            limitTags={1}
+            listboxHeight={280}
+            onChange={(_, newValue) => {
+              setSelectedAirportIds((newValue || []).map((item) => item.id));
+            }}
+          />
+
+          <MultiSelectAutocomplete
+            dropdownWidth="220px"
+            label="Должности"
+            flexWrap
+            options={positionOptions}
+            value={selectedPositionOpts}
+            isMultiple
+            limitTags={1}
+            listboxHeight={240}
+            onChange={(_, newValue) => {
+              setSelectedPositionIds((newValue || []).map((item) => item.id));
+            }}
+          />
+
+          <div className={classes.groupByWrap}>
+            <MUIAutocomplete
+              dropdownWidth="200px"
+              label="Группировка"
+              flexWrap
+              options={GROUP_BY_OPTIONS.map((item) => item.label)}
+              value={
+                GROUP_BY_OPTIONS.find((item) => item.id === groupBy)?.label ||
+                "Без сравнения"
+              }
+              onChange={handleGroupByChange}
+              hideLabelOnFocus={false}
             />
           </div>
-          <div className={classes.sidebar}>
-            <ul className={classes.list}>
-              {filteredAirlines.map((airline) => (
-                <li
-                  key={airline.id}
-                  className={`${classes.listItem} ${selectedAirline && selectedAirline.id === airline.id
-                      ? classes.active
-                      : !selectedAirline && airline.id === airlines[0]?.id
-                        ? classes.active
-                        : ""
-                    }`}
-                  onClick={() =>
-                    setSelectedAirline({
-                      id: airline.id,
-                      name: airline.name,
-                      images: airline.images,
-                    })
-                  }
-                >
-                  <div className={classes.circle}>
-                    <img src={getMediaUrl(airline.images[0])} alt="" />
-                  </div>
-                  <p>{airline.name}</p>
-                </li>
-              ))}
-            </ul>
-            {hasMore && (
-              <button className={classes.periodButton} onClick={handleLoadMore}>
-                {loadingMore ? <MUILoader loadSize={"16px"} /> : "Показать ещё"}
-              </button>
-            )}
-          </div>
         </div>
-      )}
 
-      <div className={classes.content}>
-        <div className={classes.graphs}>
-          <div className={classes.header}>
-            <div className={classes.headerTop}>
+        {groupBy === "PERIOD" ? (
+          <div className={classes.comparePeriodsRow}>
+            <span className={classes.compareLabel}>
+              Сравниваемые периоды (основной — в датах выше):
+            </span>
+            {comparePeriodRanges.map((r, idx) => (
+              <div key={idx} className={classes.compareChip}>
+                <button
+                  type="button"
+                  className={classes.periodButton}
+                  onClick={() => openComparePicker(idx)}
+                >
+                  {formatISO(r.startDate, { representation: "date" })} —{" "}
+                  {formatISO(r.endDate, { representation: "date" })}
+                </button>
+                <button
+                  type="button"
+                  className={classes.removeCompareBtn}
+                  onClick={() => removeComparePeriod(idx)}
+                  aria-label="Удалить период"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              className={classes.periodButton}
+              onClick={openAddComparePicker}
+            >
+              + Период
+            </button>
+          </div>
+        ) : null}
+
+        {periodHint ? (
+          <p className={classes.periodHint}>{periodHint}</p>
+        ) : (
+          <p className={classes.periodInfo}>
+            Период:{" "}
+            {formatISO(mainRange.startDate, { representation: "date" })} —{" "}
+            {formatISO(mainRange.endDate, { representation: "date" })} (
+            {mainDays} дн.)
+          </p>
+        )}
+      </div>
+
+      {showPicker ? (
+        <DateRangePickerCustom
+          value={pickerValue}
+          onChange={applyPickerRange}
+          onClose={() => setShowPicker(false)}
+        />
+      ) : null}
+
+      <div className={classes.container}>
+        {user?.airlineId ? null : (
+          <div className={classes.sidebarContainer}>
+            <div className={classes.searchContainer}>
+              <MUITextField
+                label="Поиск"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={classes.mainSearch}
+              />
+            </div>
+            <div className={classes.sidebar}>
+              <ul className={classes.list}>
+                {filteredAirlines.map((airline) => (
+                  <li
+                    key={airline.id}
+                    className={`${classes.listItem} ${
+                      selectedAirline && selectedAirline.id === airline.id
+                        ? classes.active
+                        : !selectedAirline && airline.id === airlines[0]?.id
+                          ? classes.active
+                          : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedAirline({
+                        id: airline.id,
+                        name: airline.name,
+                        images: airline.images,
+                      })
+                    }
+                  >
+                    <div className={classes.circle}>
+                      <img src={getMediaUrl(airline.images[0])} alt="" />
+                    </div>
+                    <p>{airline.name}</p>
+                  </li>
+                ))}
+              </ul>
+              {hasMore ? (
+                <button
+                  type="button"
+                  className={classes.periodButton}
+                  onClick={handleLoadMore}
+                >
+                  {loadingMore ? (
+                    <MUILoader loadSize="16px" />
+                  ) : (
+                    "Показать ещё"
+                  )}
+                </button>
+              ) : null}
+            </div>
+          </div>
+        )}
+
+        <div className={classes.content}>
+          <div className={classes.graphs}>
+            <div className={classes.header}>
               <h2 className={classes.title}>
                 <div className={classes.circle}>
                   <img
@@ -358,187 +552,138 @@ function AirlineAnalytics({ user, height }) {
                   {selectedAirline ? selectedAirline?.name : airlines[0]?.name}
                 </p>
               </h2>
+            </div>
 
-              <div className={classes.headerControls}>
-                <div className={classes.filtersRow}>
-                  <MultiSelectAutocomplete
-                    dropdownWidth={"200px"}
-                    label="Услуги"
-                    flexWrap={true}
-                    options={serviceOptions}
-                    value={selectedServiceOptions}
-                    isMultiple
-                    limitTags={1}
-                    onChange={(_, newValue) => {
-                      const next = (newValue || []).map((item) => item.id);
-                      if (!next.length) return;
-                      setSelectedServices(next);
-                    }}
-                  />
-
-                  <div className={classes.positionsWrap}>
-                    <MUIAutocomplete
-                      dropdownWidth={"200px"}
-                      label="Состав"
-                      flexWrap={true}
-                      options={CREW_OPTIONS.map((item) => item.label)}
-                      value={
-                        CREW_OPTIONS.find((item) => item.id === crewMode)?.label || "Эскадрилья"
-                      }
-                      onChange={(_, newValue) => {
-                        const nextId =
-                          CREW_OPTIONS.find((item) => item.label === newValue)?.id ||
-                          "SQUADRON";
-                        setCrewMode(nextId);
-                      }}
-                      hideLabelOnFocus={false}
-                    />
-                    {crewMode === "POSITIONS" ? (
-                      <MUITextField
-                        label={"Должности (через запятую)"}
-                        value={positionsText}
-                        onChange={(e) => setPositionsText(e.target.value)}
-                        className={classes.mainSearch}
-                      />
-                    ) : null}
+            <div className={classes.contentWrapper}>
+              {!analyticsInput ? (
+                periodHint ? (
+                  <p className={classes.periodHint}>{periodHint}</p>
+                ) : !airlineId ? (
+                  <p className={classes.periodHint}>Загрузка списка авиакомпаний…</p>
+                ) : null
+              ) : analyticsLoading ? (
+                <div className={classes.loaderWrap}>
+                  <MUILoader fullHeight="55vh" />
+                </div>
+              ) : (
+                <>
+                  <div className={classes.kpiGrid}>
+                    <div className={classes.kpiCard}>
+                      <span className={classes.kpiLabel}>Заявки</span>
+                      <span className={classes.kpiValue}>
+                        {formatInt(summary?.totalRequests)}
+                      </span>
+                    </div>
+                    <div className={classes.kpiCard}>
+                      <span className={classes.kpiLabel}>Уникальные люди</span>
+                      <span className={classes.kpiValue}>
+                        {formatInt(summary?.uniquePeopleCount)}
+                      </span>
+                    </div>
+                    <div className={classes.kpiCard}>
+                      <span className={classes.kpiLabel}>Номерной фонд</span>
+                      <span className={classes.kpiValue}>
+                        {formatInt(summary?.usedRoomsCount)}
+                      </span>
+                    </div>
+                    <div className={classes.kpiCard}>
+                      <span className={classes.kpiLabel}>Общие траты</span>
+                      <span className={classes.kpiValue}>
+                        {formatRub(summary?.totalSpend)}
+                      </span>
+                    </div>
+                    <div className={classes.kpiCard}>
+                      <span className={classes.kpiLabel}>Проживание</span>
+                      <span className={classes.kpiValue}>
+                        {formatRub(summary?.livingSpend)}
+                      </span>
+                    </div>
+                    <div className={classes.kpiCard}>
+                      <span className={classes.kpiLabel}>Питание</span>
+                      <span className={classes.kpiValue}>
+                        {formatRub(summary?.mealSpend)}
+                      </span>
+                    </div>
+                    <div className={classes.kpiCard}>
+                      <span className={classes.kpiLabel}>Трансфер</span>
+                      <span className={classes.kpiValue}>
+                        {formatRub(summary?.transferSpend)}
+                      </span>
+                    </div>
                   </div>
 
-                  <MultiSelectAutocomplete
-                    dropdownWidth={"200px"}
-                    label="Регионы"
-                    flexWrap={true}
-                    options={regionOptions}
-                    value={selectedRegionOptions}
-                    isMultiple
-                    limitTags={1}
-                    showSelectAll
-                    listboxHeight={240}
-                    onChange={(_, newValue) => {
-                      const next = (newValue || []).map((item) => item.id);
-                      setSelectedRegions(next);
-                    }}
-                  />
-                </div>
-
-                <div className={classes.periodButtons}>
-                  <button
-                    className={classes.periodButton}
-                    onClick={() => {
-                      setPickerTarget("period1");
-                      setShowPicker(true);
-                    }}
+                  <div
+                    className={
+                      user?.airlineId ? classes.rowNoAdaptive : classes.row
+                    }
                   >
-                    Период 1
-                  </button>
-                  <button
-                    className={classes.periodButton}
-                    onClick={() => {
-                      setPickerTarget("period2");
-                      setShowPicker(true);
-                    }}
-                  >
-                    Период 2
-                  </button>
-                </div>
-              </div>
+                    <AnalyticsChart
+                      type="pie"
+                      title="Заявки по должностям"
+                      data={pieData}
+                      xKey="x"
+                      dataKey="value"
+                    />
+                    <div className={classes.barBlock}>
+                      <div className={classes.barHeader}>
+                        <h4 className={classes.barTitle}>Аэропорты</h4>
+                        <div className={classes.wrapper}>
+                          <select
+                            className={classes.select}
+                            value={barMetric}
+                            onChange={(e) => setBarMetric(e.target.value)}
+                          >
+                            {BAR_METRIC_OPTIONS.map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <AnalyticsChart
+                        type="simpleBar"
+                        data={barChartData}
+                        xKey="name"
+                        yKey="value"
+                        barValueLabel={barMetricLabel}
+                        height={320}
+                      />
+                    </div>
+                  </div>
+
+                  {segments.length > 0 ? (
+                    <div className={classes.segmentsSection}>
+                      <h4 className={classes.segmentsTitle}>Сравнение сегментов</h4>
+                      <div className={classes.tableScroll}>
+                        <table className={classes.analyticsTable}>
+                          <thead>
+                            <tr>
+                              <th>Метрика</th>
+                              {segments.map((s) => (
+                                <th key={s.segmentKey}>{s.label}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {comparisonRows.map((row) => (
+                              <tr key={row.key}>
+                                <td>{row.metric}</td>
+                                {segments.map((s) => (
+                                  <td key={`${s.segmentKey}-${row.key}`}>
+                                    {row.format(s.metrics?.[row.key])}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              )}
             </div>
-            {showPicker && (
-              <DateRangePickerCustom
-                value={pickerTarget === "period1" ? period1 : period2}
-                onChange={(range) => {
-                  if (pickerTarget === "period1") {
-                    setPeriod1(range);
-                  } else {
-                    setPeriod2(range);
-                  }
-                  setShowPicker(false);
-                }}
-                onClose={() => setShowPicker(false)}
-              />
-            )}
-          </div>
-
-          <div className={classes.contentWrapper}>
-            <div className={classes.periodInfo}>
-              <p>
-                P1 (Период 1): {formatISO(period1.startDate, { representation: "date" })} -{" "}
-                {formatISO(period1.endDate, { representation: "date" })}
-              </p>
-              <p>
-                P2 (Период 2): {formatISO(period2.startDate, { representation: "date" })} -{" "}
-                {formatISO(period2.endDate, { representation: "date" })} ({period2Days} дн.)
-              </p>
-            </div>
-
-            {comparisonLoading ? (
-              <div className={classes.loaderWrap}>
-                <MUILoader fullHeight={"55vh"} />
-              </div>
-            ) : (
-              <>
-                <div className={user?.airlineId ? classes.rowNoAdaptive : classes.row}>
-                  <AnalyticsChart
-                    type="pie"
-                    title="Бюджет P2 по услугам"
-                    data={budgetByServiceData}
-                    xKey="x"
-                    dataKey="value"
-                  />
-                  <AnalyticsChart
-                    type="bar"
-                    title="Топ регионов по людям (P2)"
-                    data={peopleByRegionData}
-                    xKey="x"
-                    yKey="count"
-                  />
-                </div>
-
-                <div className={classes.row}>
-                  <AnalyticsChart
-                    type="pie"
-                    title="Сравнение периодов (люди и бюджет)"
-                    data={periodCompareData}
-                    xKey="x"
-                    dataKey="value"
-                  />
-                </div>
-
-                <table className={classes.analyticsTable}>
-                  <thead>
-                    <tr>
-                      <th>Регион</th>
-                      <th>Услуга</th>
-                      <th>Люди (P1 / P2 / %)</th>
-                      <th>Бюджет (P1 / P2 / %)</th>
-                      <th>Номерной фонд (P1 / P2 / %)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row, idx) => (
-                      <tr key={`${row.region}-${row.service}-${idx}`}>
-                        <td>{row.region}</td>
-                        <td>{SERVICE_LABEL_MAP[row.service] || row.service}</td>
-                        <td>
-                          {formatInt(row.period1.peopleCount)} / {formatInt(row.period2.peopleCount)} /{" "}
-                          {formatPct(row.diff.peopleDeltaPct)}
-                        </td>
-                        <td>
-                          {formatRub(row.period1.budgetRub)} / {formatRub(row.period2.budgetRub)} /{" "}
-                          {formatPct(row.diff.budgetDeltaPct)}
-                        </td>
-                        <td>
-                          {row.service === "LIVING"
-                            ? `${formatInt(row.period1.roomsUsed)} / ${formatInt(
-                              row.period2.roomsUsed
-                            )} / ${formatPct(row.diff.roomsDeltaPct)}`
-                            : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </>
-            )}
           </div>
         </div>
       </div>
@@ -547,373 +692,3 @@ function AirlineAnalytics({ user, height }) {
 }
 
 export default AirlineAnalytics;
-
-
-
-// import React, { useState, useEffect, useMemo } from "react";
-// import classes from "./AirlineAnalytics.module.css";
-// import AnalyticsChart from "../../AnalyticsChart/AnalyticsChart";
-// import DateRangePickerCustom from "../../DateRangePickerCustom";
-// import {
-//   addDays,
-//   formatISO,
-//   startOfToday,
-//   format,
-//   eachDayOfInterval,
-// } from "date-fns";
-// import {
-//   GET_AIRLINES,
-//   GET_AIRLINES_RELAY,
-//   GET_ANALYTICS_AIRLINE_REQUESTS,
-//   getCookie,
-//   getMediaUrl,
-// } from "../../../../../../graphQL_requests";
-// import { useQuery } from "@apollo/client";
-// import MUITextField from "../../../../Blocks/MUITextField/MUITextField";
-// import { useDebounce } from "../../../../../hooks/useDebounce";
-// import MUILoader from "../../../../Blocks/MUILoader/MUILoader";
-
-// function fillMissingDates(data, startDate, endDate) {
-//   const allDates = eachDayOfInterval({ start: startDate, end: endDate });
-
-//   const map = new Map(data.map((item) => [item.date.slice(0, 10), item.count]));
-
-//   return allDates.map((date) => {
-//     const formatted = format(date, "yyyy-MM-dd");
-//     return {
-//       date: formatted,
-//       count: map.get(formatted) ?? 0,
-//     };
-//   });
-// }
-
-// function AirlineAnalytics({ user, height }) {
-//   const token = getCookie("token");
-
-//   const [dateRange, setDateRange] = useState({
-//     startDate: addDays(startOfToday(), -6),
-//     endDate: startOfToday(),
-//     key: "selection",
-//   });
-
-//   const [showPicker, setShowPicker] = useState(false);
-//   const [airlines, setAirlines] = useState([]);
-//   const [selectedAirline, setSelectedAirline] = useState();
-//   const [searchQuery, setSearchQuery] = useState();
-//   const debouncedSearch = useDebounce(searchQuery, 500);
-
-//   const PAGE_SIZE = 15;
-//   const [total, setTotal] = useState(0);
-//   const [hasMore, setHasMore] = useState(false);
-//   const [loadingMore, setLoadingMore] = useState(false);
-
-//   const { data: airlinesData, refetch: itemsRefetch } = useQuery(GET_AIRLINES, {
-//     context: {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     },
-//     variables: {
-//       pagination: {
-//         skip: 0,
-//         take: PAGE_SIZE,
-//         search: debouncedSearch,
-//       },
-//     },
-//   });
-
-//   // useEffect(() => {
-//   //   if (airlinesData?.airlines?.airlines) {
-//   //     setAirlines(airlinesData.airlines.airlines || []);
-//   //   }
-//   // }, [airlinesData]);
-//   useEffect(() => {
-//     const conn = airlinesData?.airlines;
-//     const page = conn?.airlines ?? [];
-//     const count = conn?.totalCount ?? 0;
-
-//     if (page.length) {
-//       setAirlines(page);
-//       setTotal(count);
-//       setHasMore(page.length < count); // если пришло меньше total — показываем кнопку
-//     }
-//     if (user?.airlineId) {
-//       setSelectedAirline(page.find((i) => i.id === user?.airlineId));
-//     }
-//   }, [airlinesData, user]);
-
-//   // 4) догрузка следующих 15
-//   const handleLoadMore = async () => {
-//     const nextTake = Math.min(
-//       airlines.length + PAGE_SIZE,
-//       total || Number.MAX_SAFE_INTEGER
-//     );
-
-//     setLoadingMore(true);
-//     const res = await itemsRefetch({ pagination: { skip: 0, take: nextTake } });
-//     setLoadingMore(false);
-
-//     const conn = res?.data?.airlines;
-//     const newList = conn?.airlines ?? [];
-//     const newTotal = conn?.totalCount ?? total;
-
-//     setAirlines(newList); // просто заменяем массив на «первые nextTake»
-//     setTotal(newTotal);
-//     setHasMore(newList.length < newTotal); // если всё забрали — кнопка исчезает
-//   };
-
-//   const airlineId = selectedAirline ? selectedAirline.id : airlines[0]?.id;
-
-//   const { data, refetch } = useQuery(GET_ANALYTICS_AIRLINE_REQUESTS, {
-//     context: {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     },
-//     variables: {
-//       input: {
-//         filters: {
-//           airlineId: user?.airlineId ? user?.airlineId : airlineId,
-//         },
-//         startDate:
-//           formatISO(dateRange.startDate, { representation: "date" }) +
-//           "T00:00:00",
-//         endDate:
-//           formatISO(dateRange.endDate, { representation: "date" }) +
-//           "T23:59:59",
-//       },
-//     },
-//   });
-
-//   useEffect(() => {
-//     refetch({
-//       input: {
-//         filters: {
-//           airlineId: user?.airlineId ? user?.airlineId : airlineId,
-//         },
-//         startDate: formatISO(dateRange.startDate, { representation: "date" }),
-//         endDate: formatISO(dateRange.endDate, { representation: "date" }),
-//       },
-//     });
-//   }, [dateRange, user]);
-
-//   const rawCreatedRequests =
-//     data?.analyticsEntityRequests?.createdByPeriod?.map((item) => ({
-//       date: item.date,
-//       count: item.count_created,
-//     })) || [];
-
-//   const handleSearch = (e) => {
-//     setSearchQuery(e.target.value);
-//   };
-//   const createdRequests = fillMissingDates(
-//     rawCreatedRequests,
-//     dateRange.startDate,
-//     dateRange.endDate
-//   );
-
-//   const filteredAirlines = useMemo(() => {
-//     if (!searchQuery) return airlines;
-
-//     return airlines.filter((request) =>
-//       request?.name.toLowerCase().includes(searchQuery.toLowerCase())
-//     );
-//   }, [airlines, searchQuery]);
-
-//   return (
-//     <div className={classes.container} style={height && { height }}>
-//       {user?.airlineId ? null : (
-//         <div className={classes.sidebarContainer}>
-//           <div className={classes.searchContainer}>
-//             {/* <input type="text" placeholder="Поиск" name="search" id="search" value={searchQuery} onChange={handleSearch}/> */}
-//             <MUITextField
-//               label={"Поиск"}
-//               value={searchQuery}
-//               onChange={handleSearch}
-//               className={classes.mainSearch}
-//             />
-//           </div>
-//           <div className={classes.sidebar}>
-//             <ul className={classes.list}>
-//               {filteredAirlines.map((airline) => (
-//                 <li
-//                   key={airline.id}
-//                   className={`${classes.listItem} ${
-//                     selectedAirline && selectedAirline.id === airline.id
-//                       ? classes.active
-//                       : !selectedAirline && airline.id === airlines[0]?.id
-//                       ? classes.active
-//                       : ""
-//                   }`}
-//                   onClick={() =>
-//                     setSelectedAirline({
-//                       id: airline.id,
-//                       name: airline.name,
-//                       images: airline.images,
-//                     })
-//                   }
-//                 >
-//                   <div className={classes.circle}>
-//                     <img src={getMediaUrl(airline.images[0])} alt="" />
-//                   </div>
-//                   <p>{airline.name}</p>
-//                 </li>
-//               ))}
-//             </ul>
-//             {hasMore && (
-//               <button className={classes.periodButton} onClick={handleLoadMore}>
-//                 {loadingMore ? <MUILoader loadSize={"16px"} /> : "Показать ещё"}
-//               </button>
-//             )}
-//           </div>
-//         </div>
-//       )}
-
-//       <div className={classes.content}>
-//         <div className={classes.graphs}>
-//           <div className={classes.header}>
-//             <h2 className={classes.title}>
-//               <div className={classes.circle}>
-//                 <img
-//                   src={getMediaUrl(
-//                     selectedAirline
-//                       ? selectedAirline?.images?.[0]
-//                       : airlines[0]?.images?.[0]
-//                   )}
-//                   alt=""
-//                 />
-//               </div>
-//               <p>
-//                 {selectedAirline ? selectedAirline?.name : airlines[0]?.name}
-//               </p>
-//             </h2>
-
-//             <button
-//               className={classes.periodButton}
-//               onClick={() => setShowPicker(true)}
-//             >
-//               Выбрать период
-//             </button>
-//             {showPicker && (
-//               <DateRangePickerCustom
-//                 value={dateRange}
-//                 onChange={(range) => {
-//                   setDateRange(range);
-//                   setShowPicker(false);
-//                 }}
-//                 onClose={() => setShowPicker(false)}
-//               />
-//             )}
-//           </div>
-
-//           <div className={classes.contentWrapper}>
-//             <div className={user?.airlineId ? classes.rowNoAdaptive : classes.row}>
-//               <AnalyticsChart
-//                 type="bar"
-//                 title="Количество созданных заявок"
-//                 data={createdRequests}
-//                 xKey="date"
-//                 yKey="count"
-//               />
-
-//               <AnalyticsChart
-//                 type="pie"
-//                 title="Отмененные заявки"
-//                 data={[
-//                   {
-//                     x: "Отработанные",
-//                     value:
-//                       data?.analyticsEntityRequests?.totalCreatedRequests || 0,
-//                   },
-//                   {
-//                     x: "Отмененые",
-//                     value:
-//                       data?.analyticsEntityRequests?.totalCancelledRequests ||
-//                       0,
-//                   },
-//                 ]}
-//                 xKey="x"
-//                 dataKey="value"
-//               />
-
-//               {/* <AnalyticsChart
-//                   type="line"
-//                   title="Среднее время ожидания обработки заявки"
-//                   data={filteredAverageTime}
-//                   xKey="date"
-//                   yKey="hours"
-//                 /> */}
-//             </div>
-
-//             <div className={classes.row}>
-//               <AnalyticsChart
-//                 type="pie"
-//                 title="Заявки по статусам"
-//                 data={[
-//                   {
-//                     x: "Создано",
-//                     value:
-//                       data?.analyticsEntityRequests?.statusCounts?.created || 0,
-//                   },
-//                   {
-//                     x: "Продлено",
-//                     value:
-//                       data?.analyticsEntityRequests?.statusCounts?.extended ||
-//                       0,
-//                   },
-//                   {
-//                     x: "Забронировано",
-//                     value:
-//                       data?.analyticsEntityRequests?.statusCounts?.done || 0,
-//                   },
-//                   {
-//                     x: "Ранний заезд",
-//                     value:
-//                       data?.analyticsEntityRequests?.statusCounts?.earlyStart ||
-//                       0,
-//                   },
-//                   {
-//                     x: "Перенесено ",
-//                     value:
-//                       data?.analyticsEntityRequests?.statusCounts
-//                         ?.transferred || 0,
-//                   },
-//                   {
-//                     x: "Сокращено ",
-//                     value:
-//                       data?.analyticsEntityRequests?.statusCounts?.reduced || 0,
-//                   },
-//                   {
-//                     x: "Готово к архиву ",
-//                     value:
-//                       data?.analyticsEntityRequests?.statusCounts?.archiving ||
-//                       0,
-//                   },
-//                   {
-//                     x: "Архив",
-//                     value:
-//                       data?.analyticsEntityRequests?.statusCounts?.archived ||
-//                       0,
-//                   },
-//                 ]}
-//                 xKey="x"
-//                 dataKey="value"
-//               />
-
-//               {/* <AnalyticsChart
-//                   type="bar"
-//                   title="Количество дублированных заявок"
-//                   data={[]}
-//                   xKey="date"
-//                   yKey="count"
-//                 /> */}
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default AirlineAnalytics;
-
