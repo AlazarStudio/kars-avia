@@ -303,7 +303,7 @@ function CreateRequestReport({
       );
     } catch (error) {
       if (error.message.startsWith("Airline has no prices")) {
-        showAlert("У авиакомпании нет цен.");
+        showAlert("У авиакомпании нет цен по выбранному аэропорту.");
       }
       console.error("Catch: ", error);
       // console.log(input);
