@@ -5874,29 +5874,8 @@ export const GET_CITY_REGIONS = gql`
 export const GET_AIRLINE_ANALYTICS = gql`
   query AirlineAnalytics($input: AirlineAnalyticsInput!) {
     airlineAnalytics(input: $input) {
-      airportsBreakdown {
-        airportId
-        airportName
-        airportCode
-        totalRequests
-        uniquePeopleCount
-        usedRoomsCount
-        totalSpend
-        livingSpend
-        mealSpend
-        transferSpend
-      }
-      positionsBreakdown {
-        positionId
-        positionName
-        count
-        percent
-      }
-      segments {
-        label
-        segmentKey
-        segmentType
-        metrics {
+      period1 {
+        summary {
           totalRequests
           uniquePeopleCount
           usedRoomsCount
@@ -5911,15 +5890,61 @@ export const GET_AIRLINE_ANALYTICS = gql`
           count
           percent
         }
+        airportsBreakdown {
+          airportId
+          airportName
+          airportCode
+          totalRequests
+          uniquePeopleCount
+          usedRoomsCount
+          totalSpend
+          livingSpend
+          mealSpend
+          transferSpend
+        }
+        servicesBreakdown {
+          service
+          totalRequests
+          uniquePeopleCount
+          usedRoomsCount
+          totalSpend
+        }
       }
-      summary {
-        totalRequests
-        uniquePeopleCount
-        usedRoomsCount
-        totalSpend
-        livingSpend
-        mealSpend
-        transferSpend
+      period2 {
+        summary {
+          totalRequests
+          uniquePeopleCount
+          usedRoomsCount
+          totalSpend
+          livingSpend
+          mealSpend
+          transferSpend
+        }
+        positionsBreakdown {
+          positionId
+          positionName
+          count
+          percent
+        }
+        airportsBreakdown {
+          airportId
+          airportName
+          airportCode
+          totalRequests
+          uniquePeopleCount
+          usedRoomsCount
+          totalSpend
+          livingSpend
+          mealSpend
+          transferSpend
+        }
+        servicesBreakdown {
+          service
+          totalRequests
+          uniquePeopleCount
+          usedRoomsCount
+          totalSpend
+        }
       }
     }
   }

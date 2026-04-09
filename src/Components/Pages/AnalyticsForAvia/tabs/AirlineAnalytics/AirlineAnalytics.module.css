@@ -17,6 +17,46 @@
   gap: 12px;
 }
 
+.filtersRowCompare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.compareApplyGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.compareCheckbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  color: #2e355d;
+  cursor: pointer;
+  user-select: none;
+}
+
+.compareCheckbox input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--dark-blue, #0057c3);
+}
+
+.periodSummaryInline {
+  font-size: 13px;
+  color: #545873;
+  line-height: 1.35;
+  max-width: min(100%, 420px);
+}
+
 .comparePeriodsRow {
   display: flex;
   flex-wrap: wrap;
@@ -89,9 +129,40 @@
   color: #2e355d;
 }
 
+.chartsStackPeriod {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 100%;
+}
+
+.pieChartsRow {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+  overflow-x: auto;
+}
+
+.pieChartsRow > div {
+  flex: 1 1 0;
+  min-width: 220px;
+  min-height: 0;
+  max-width: 100%;
+}
+
 .barBlock {
   flex: 1;
   min-width: 0;
+}
+
+.barBlockBelowPies {
+  flex: none;
+  width: 100%;
 }
 
 .barHeader {
@@ -105,6 +176,49 @@
 .barTitle {
   margin: 0;
   font-size: 16px;
+  font-weight: 600;
+  color: #2e355d;
+}
+
+.airportBarsStack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.airportBarChartItem {
+  min-width: 0;
+}
+
+.airportBarChartSubtitle {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #545873;
+}
+
+.chartsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+
+.pieChartSection {
+  width: 100%;
+  min-width: 0;
+}
+
+.breakdownTableSection {
+  margin-top: 14px;
+  width: 100%;
+}
+
+.breakdownTableTitle {
+  margin: 0 0 10px;
+  font-size: 15px;
   font-weight: 600;
   color: #2e355d;
 }
@@ -339,7 +453,10 @@
 
 .filtersRow {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
+  width: 100%;
 }
 
 .positionsWrap {
@@ -418,4 +535,10 @@
   /* .contentWrapper {
     height: 500px;
   } */
+}
+
+@media (max-width: 1100px) {
+  .airportBarsStack {
+    grid-template-columns: 1fr;
+  }
 }

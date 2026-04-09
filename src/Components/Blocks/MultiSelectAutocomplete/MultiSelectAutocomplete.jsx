@@ -110,9 +110,13 @@ function MultiSelectAutocomplete({
         },
         listbox: {
           sx: {
-            fontSize: "14px", // Уменьшаем размер шрифта списка
+            fontSize: "14px",
             padding: "0",
             borderRadius: "10px !important",
+            "& .MuiAutocomplete-option": {
+              padding: "4px 8px",
+              minHeight: "unset",
+            },
             ...(listboxHeight && { maxHeight: listboxHeight }),
           },
         },
@@ -153,7 +157,7 @@ function MultiSelectAutocomplete({
               borderRadius: "10px !important",
             },
             "& .MuiOutlinedInput-root": {
-              padding: "0 px",
+              padding: "0 8px",
               borderRadius: "10px !important",
             },
             "& .MuiInputLabel-shrink": {
@@ -191,9 +195,6 @@ function MultiSelectAutocomplete({
         "& .MuiSvgIcon-root": {
           fontSize: "18px",
         },
-        "& .MuiAutocomplete-listbox": {
-          fontSize: "10px",
-        },
       }}
       {...props}
       renderOption={
@@ -211,7 +212,8 @@ function MultiSelectAutocomplete({
                   <Checkbox
                     icon={icon}
                     checkedIcon={checkedIcon}
-                    style={{ marginRight: 8 }}
+                    size="small"
+                    sx={{ p: 0.25, mr: 0.5 }}
                     checked={checked}
                   />
                   {label}
