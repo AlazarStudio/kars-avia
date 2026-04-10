@@ -6,7 +6,7 @@
 }
 
 .sidebarContainer {
-  width: 300px;
+  width: 250px;
   padding: 6px 16px 16px 16px;
   display: flex;
   flex-direction: column;
@@ -67,8 +67,10 @@
 }
 
 .circle {
-  width: 40px;
-  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   border-radius: 50%;
   overflow: hidden;
   background-color: #ececec;

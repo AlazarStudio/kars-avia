@@ -103,6 +103,23 @@
   color: #b45309;
 }
 
+.analyticsEmptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: min(50vh, 400px);
+  padding: 48px 24px;
+  box-sizing: border-box;
+}
+
+.analyticsEmptyMessage {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+  text-align: center;
+}
+
 .kpiGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -140,24 +157,139 @@
 
 .pieChartsRow {
   display: flex;
-  flex-wrap: nowrap;
-  gap: 16px;
   width: 100%;
   min-width: 0;
   align-items: stretch;
-  overflow-x: auto;
 }
 
-.pieChartsRow > div {
-  flex: 1 1 0;
-  min-width: 220px;
-  min-height: 0;
+/* Круг + столбцы: периоды друг под другом, строка периода на всю ширину */
+.pieChartsRowStacked {
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pieChartsRowStacked > .pieBarPair,
+.pieChartsRowStacked > .pieBarPair1 {
+  width: 100%;
+  flex: 0 0 auto;
+  min-width: 0;
   max-width: 100%;
+}
+
+/* Только круговая диаграмма: на широком экране 1–2 карточки по ~50% в ряд */
+.pieChartsRowInline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pieChartsRowInline > .pieBarPair,
+.pieChartsRowInline > .pieBarPair1 {
+  flex: 1 1 calc(50% - 8px);
+  max-width: calc(50% - 8px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .pieChartsRowInline {
+    flex-direction: column;
+  }
+
+  .pieChartsRowInline > .pieBarPair,
+  .pieChartsRowInline > .pieBarPair1 {
+    max-width: 100%;
+    width: 100%;
+    flex: 0 0 auto;
+  }
+}
+
+.pieBarPair {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 16px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* Перебиваем width: 49% / 70% у AnalyticsChart — два графика делят строку поровну */
+.pieBarPair > div {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.pieBarPair1 {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 16px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.pieBarPair1 > div {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Один groupedBar «Бюджет по должностям» под двумя pie при сравнении периодов */
+.pieChartsGroupedBudgetWrap {
+  width: 100%;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* Два круговых в один ряд, под ними общий столбчатый график */
+.pieChartsComparePiesRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pieChartsComparePiesRow > .pieBarPair1 {
+  flex: 1 1 calc(50% - 8px);
+  max-width: calc(50% - 8px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  .pieChartsComparePiesRow {
+    flex-direction: column;
+  }
+
+  .pieChartsComparePiesRow > .pieBarPair1 {
+    max-width: 100%;
+    width: 100%;
+    flex: 0 0 auto;
+  }
 }
 
 .barBlock {
   flex: 1;
   min-width: 0;
+}
+
+.serviceSection > .breakdownTableSection + .barBlock {
+  margin-top: 36px;
+}
+
+.serviceSection > .pieChartsRow + .barBlock {
+  margin-top: 28px;
 }
 
 .barBlockBelowPies {
@@ -170,7 +302,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 22px;
 }
 
 .barTitle {
@@ -188,19 +320,28 @@
 
 .airportBarChartItem {
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .airportBarChartSubtitle {
-  margin: 0 0 8px 0;
+  margin: 0 0 16px 0;
   font-size: 14px;
   font-weight: 600;
   color: #545873;
+  line-height: 1.35;
+}
+
+/* Подзаголовок второго периода — отступ от предыдущей таблицы */
+.breakdownTableSection .tableScroll + .airportBarChartSubtitle {
+  margin-top: 28px;
 }
 
 .chartsColumn {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 26px;
   width: 100%;
   min-width: 0;
   flex: 1;
@@ -212,26 +353,52 @@
 }
 
 .breakdownTableSection {
-  margin-top: 14px;
+  margin-top: 22px;
   width: 100%;
 }
 
 .breakdownTableTitle {
-  margin: 0 0 10px;
+  margin: 0 0 24px;
   font-size: 15px;
   font-weight: 600;
   color: #2e355d;
+  line-height: 1.35;
+}
+
+.serviceSection > .pieChartsRow + .breakdownTableSection {
+  margin-top: 28px;
+}
+
+.serviceSection {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #edf0ff;
+}
+
+.serviceSection:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.serviceSectionTitle {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2e355d;
+  line-height: 1.35;
 }
 
 .segmentsSection {
-  margin-top: 8px;
+  margin-top: 16px;
 }
 
 .segmentsTitle {
-  margin: 0 0 12px;
+  margin: 0 0 22px;
   font-size: 16px;
   font-weight: 600;
   color: #2e355d;
+  line-height: 1.35;
 }
 
 .tableScroll {
@@ -248,7 +415,7 @@
 }
 
 .sidebarContainer {
-  width: 300px;
+  width: 250px;
   padding: 6px 16px 16px 16px;
   display: flex;
   flex-direction: column;
@@ -310,8 +477,10 @@
 }
 
 .circle {
-  width: 40px;
-  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   border-radius: 50%;
   overflow: hidden;
   background-color: #ececec;
@@ -378,6 +547,52 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.graphsPdfRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+.headerRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.exportPdfButton {
+  flex-shrink: 0;
+  background: #0057c3;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.exportPdfButton:hover:not(:disabled) {
+  background: #0047a3;
+}
+
+.exportPdfButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Разрыв страницы PDF не должен резать блок посередине (html2pdf + CSS) */
+.pdfAvoidSplit {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
 }
 
 .row {
@@ -488,7 +703,7 @@
 .analyticsTable th,
 .analyticsTable td {
   border: 1px solid #edf0ff;
-  padding: 10px;
+  padding: 10px 12px;
   text-align: left;
   vertical-align: top;
 }
@@ -496,6 +711,39 @@
 .analyticsTable th {
   background: #f8f9fd;
   color: #2e355d;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.sortableTh {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortableTh:hover {
+  background: #eef1fb;
+}
+
+.sortableThActive {
+  background: #e8ecfb;
+}
+
+.sortableThInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sortIndicator {
+  font-size: 11px;
+  color: #c62828;
+  opacity: 0.4;
+  min-width: 1em;
+  font-weight: 600;
+}
+
+.sortableThActive .sortIndicator {
+  opacity: 1;
 }
 
 
@@ -532,13 +780,17 @@
     flex-direction: column;
     gap: 4px;
   }
+
   /* .contentWrapper {
     height: 500px;
   } */
 }
 
-@media (max-width: 1100px) {
-  .airportBarsStack {
-    grid-template-columns: 1fr;
+/* Узкий экран: по одному графику в ряд внутри периода */
+@media (max-width: 720px) {
+  .pieBarPair1,
+  .pieBarPair {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

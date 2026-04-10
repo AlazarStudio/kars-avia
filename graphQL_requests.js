@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 
 
-// export const path = import.meta.env.VITE_PRODUCTION_PATH;
-// export const server = import.meta.env.VITE_PRODUCTION_SERVER;
+export const path = import.meta.env.VITE_PRODUCTION_PATH;
+export const server = import.meta.env.VITE_PRODUCTION_SERVER;
 
 // export const path = import.meta.env.VITE_DEMO_PATH;
 // export const server = import.meta.env.VITE_DEMO_SERVER;
 
-export const path = import.meta.env.VITE_DEV_PATH;
-export const server = import.meta.env.VITE_DEV_SERVER;
+// export const path = import.meta.env.VITE_DEV_PATH;
+// export const server = import.meta.env.VITE_DEV_SERVER;
 
 
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
@@ -5875,75 +5875,105 @@ export const GET_AIRLINE_ANALYTICS = gql`
   query AirlineAnalytics($input: AirlineAnalyticsInput!) {
     airlineAnalytics(input: $input) {
       period1 {
-        summary {
-          totalRequests
-          uniquePeopleCount
-          usedRoomsCount
-          totalSpend
-          livingSpend
-          mealSpend
-          transferSpend
-        }
-        positionsBreakdown {
-          positionId
-          positionName
-          count
-          percent
-        }
-        airportsBreakdown {
-          airportId
-          airportName
-          airportCode
-          totalRequests
-          uniquePeopleCount
-          usedRoomsCount
-          totalSpend
-          livingSpend
-          mealSpend
-          transferSpend
-        }
-        servicesBreakdown {
+        dateFrom
+        dateTo
+        services {
           service
           totalRequests
           uniquePeopleCount
+          totalBudget
           usedRoomsCount
-          totalSpend
+          airports {
+            airportId
+            airportName
+            airportCode
+            requestsCount
+            uniquePeopleCount
+            budget
+            usedRoomsCount
+          }
+          positions {
+            positionId
+            positionName
+            count
+            percent
+            budget
+          }
+          requests {
+            requestId
+            requestNumber
+            personId
+            personName
+            positionId
+            positionName
+            airportId
+            airportName
+            airportCode
+            budget
+            livingBudget
+            mealBudget
+            transferBudget
+          }
+          transfers {
+            transferId
+            requestNumber
+            fromAddress
+            toAddress
+            passengersCount
+            uniquePeopleCount
+            budget
+          }
         }
       }
       period2 {
-        summary {
-          totalRequests
-          uniquePeopleCount
-          usedRoomsCount
-          totalSpend
-          livingSpend
-          mealSpend
-          transferSpend
-        }
-        positionsBreakdown {
-          positionId
-          positionName
-          count
-          percent
-        }
-        airportsBreakdown {
-          airportId
-          airportName
-          airportCode
-          totalRequests
-          uniquePeopleCount
-          usedRoomsCount
-          totalSpend
-          livingSpend
-          mealSpend
-          transferSpend
-        }
-        servicesBreakdown {
+        dateFrom
+        dateTo
+        services {
           service
           totalRequests
           uniquePeopleCount
+          totalBudget
           usedRoomsCount
-          totalSpend
+          airports {
+            airportId
+            airportName
+            airportCode
+            requestsCount
+            uniquePeopleCount
+            budget
+            usedRoomsCount
+          }
+          positions {
+            positionId
+            positionName
+            count
+            percent
+            budget
+          }
+          requests {
+            requestId
+            requestNumber
+            personId
+            personName
+            positionId
+            positionName
+            airportId
+            airportName
+            airportCode
+            budget
+            livingBudget
+            mealBudget
+            transferBudget
+          }
+          transfers {
+            transferId
+            requestNumber
+            fromAddress
+            toAddress
+            passengersCount
+            uniquePeopleCount
+            budget
+          }
         }
       }
     }

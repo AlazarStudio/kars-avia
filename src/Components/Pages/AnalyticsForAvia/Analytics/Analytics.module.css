@@ -96,7 +96,7 @@
 } */
 
 .tabContent {
-  margin-top: 12px;
+  /* margin-top: 12px; */
   display: flex;
   flex-direction: column;
   min-height: 0;

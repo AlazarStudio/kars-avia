@@ -10,6 +10,41 @@ import {
   CartesianGrid,
 } from "recharts";
 
+/** При 1–2 категориях на оси X — уже столбцы и больше зазор между группами */
+function barDensityProps(categoryCount) {
+  const few = categoryCount > 0 && categoryCount <= 2;
+  return {
+    categoryGap: few ? "42%" : "24%",
+    barGap: few ? 4 : 6,
+    simpleMaxBarSize: few ? 48 : undefined,
+    groupedMaxBarSize: few ? 22 : 40,
+    groupedCollapsedMaxBarSize: few ? 38 : 48,
+    plainMaxBarSize: few ? 56 : undefined,
+  };
+}
+
+/** groupedBar: строки есть, но все значения по сериям null/undefined или 0 — график визуально пустой */
+function groupedSeriesDataIsEffectivelyEmpty(data, seriesKeys) {
+  if (!data?.length || !seriesKeys?.length) return true;
+  for (const row of data) {
+    for (const k of seriesKeys) {
+      const v = row[k];
+      if (v === null || v === undefined) continue;
+      const n = Number(v);
+      if (!Number.isNaN(n) && n !== 0) return false;
+    }
+  }
+  return true;
+}
+
+function simpleBarDataIsEffectivelyEmpty(data, yKey) {
+  if (!data?.length) return true;
+  return !data.some((row) => {
+    const n = Number(row[yKey]);
+    return !Number.isNaN(n) && n !== 0;
+  });
+}
+
 function AnalyticsChart({
   type,
   data,
@@ -58,7 +93,9 @@ function AnalyticsChart({
   };
 
   const renderChart = () => {
-    if (!data || data.length === 0) return <p>Нет данных</p>;
+    if (!data || data.length === 0) {
+      return <p className={classes.chartEmpty}>Нет данных</p>;
+    }
 
     const chartHeight =
       type === "pie"
@@ -66,11 +103,17 @@ function AnalyticsChart({
         : height;
 
     switch (type) {
-      case "bar":
+      case "bar": {
+        if (simpleBarDataIsEffectivelyEmpty(data, yKey)) {
+          return <p className={classes.chartEmpty}>Нет данных</p>;
+        }
+        const bd = barDensityProps(data.length);
         return (
           <ResponsiveContainer width="100%" height={chartHeight} outline={false}>
-            <BarChart data={data}
+            <BarChart
+              data={data}
               margin={{ top: 0, right: 0, left: -19, bottom: 0 }}
+              barCategoryGap={bd.categoryGap}
             >
               <XAxis dataKey={xKey} tickFormatter={formatAxisLabel} />
               <YAxis />
@@ -85,18 +128,28 @@ function AnalyticsChart({
                 }}
                 labelFormatter={formatTooltipLabel}
               />
-              <Bar dataKey={yKey} fill={colors[0]} />
+              <Bar
+                dataKey={yKey}
+                fill={colors[0]}
+                maxBarSize={bd.plainMaxBarSize}
+              />
 
             </BarChart>
           </ResponsiveContainer>
         );
+      }
 
-      case "simpleBar":
+      case "simpleBar": {
+        if (simpleBarDataIsEffectivelyEmpty(data, yKey)) {
+          return <p className={classes.chartEmpty}>Нет данных</p>;
+        }
+        const bd = barDensityProps(data.length);
         return (
           <ResponsiveContainer width="100%" height={chartHeight} outline={false}>
             <BarChart
               data={data}
               margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
+              barCategoryGap={bd.categoryGap}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e8eaf5" />
               <XAxis dataKey={xKey} tick={{ fontSize: 11 }} interval={0} angle={-28} textAnchor="end" height={70} />
@@ -108,20 +161,31 @@ function AnalyticsChart({
                 formatter={(value, name) => [value, name === yKey ? (barValueLabel || name) : name]}
                 labelFormatter={(label) => String(label ?? "")}
               />
-              <Bar dataKey={yKey} fill={colors[0]} radius={[4, 4, 0, 0]} />
+              <Bar
+                dataKey={yKey}
+                fill={colors[0]}
+                radius={[4, 4, 0, 0]}
+                maxBarSize={bd.simpleMaxBarSize}
+              />
             </BarChart>
           </ResponsiveContainer>
         );
+      }
 
       case "groupedBar": {
         if (!series?.length) {
-          return <p>Нет серий для группировки</p>;
+          return <p className={classes.chartEmpty}>Нет данных</p>;
+        }
+        const seriesKeysForEmpty = series.map((s) => s.key);
+        if (groupedSeriesDataIsEffectivelyEmpty(data, seriesKeysForEmpty)) {
+          return <p className={classes.chartEmpty}>Нет данных</p>;
         }
         const formatGrouped = (v) =>
           typeof groupedValueFormat === "function"
             ? groupedValueFormat(v)
             : v;
 
+        const bdGrouped = barDensityProps(data.length);
         const seriesKeys = series.map((s) => s.key);
         /** Если ни в одной категории нет двух периодов сразу — один столбец на категорию (без «дыр» от null) */
         const anyCategoryHasBothPeriods = data.some((row) => {
@@ -191,12 +255,14 @@ function AnalyticsChart({
             return { ...row, value, periodIndex };
           });
 
+          const bdCollapsed = barDensityProps(singleData.length);
+
           return (
             <ResponsiveContainer width="100%" height={chartHeight} outline={false}>
               <BarChart
                 data={singleData}
                 margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
-                barCategoryGap="24%"
+                barCategoryGap={bdCollapsed.categoryGap}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e8eaf5" />
                 <XAxis
@@ -263,7 +329,7 @@ function AnalyticsChart({
                 {periodLegend}
                 <Bar
                   dataKey="value"
-                  maxBarSize={48}
+                  maxBarSize={bdCollapsed.groupedCollapsedMaxBarSize}
                   radius={[4, 4, 0, 0]}
                   isAnimationActive={false}
                 >
@@ -284,8 +350,8 @@ function AnalyticsChart({
             <BarChart
               data={data}
               margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
-              barCategoryGap="24%"
-              barGap={6}
+              barCategoryGap={bdGrouped.categoryGap}
+              barGap={bdGrouped.barGap}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e8eaf5" />
               <XAxis
@@ -357,7 +423,7 @@ function AnalyticsChart({
                   dataKey={s.key}
                   name={s.label}
                   fill={colors[i % colors.length]}
-                  maxBarSize={40}
+                  maxBarSize={bdGrouped.groupedMaxBarSize}
                   radius={[4, 4, 0, 0]}
                 />
               ))}
@@ -401,22 +467,41 @@ function AnalyticsChart({
           </ResponsiveContainer>
         );
 
-      case "pie":
-        const total = data.reduce((acc, item) => acc + item[dataKey], 0);
+      case "pie": {
+        const total = data.reduce(
+          (acc, item) => acc + (Number(item[dataKey]) || 0),
+          0
+        );
+        if (total === 0) {
+          return <p className={classes.chartEmpty}>Нет данных</p>;
+        }
 
         return (
-          <ResponsiveContainer width="100%" height={chartHeight}>
-            <PieChart>
+          <ResponsiveContainer
+            width="100%"
+            height={chartHeight}
+            minWidth={280}
+            minHeight={chartHeight}
+            debounce={50}
+            outline={false}
+          >
+            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
               <Pie
                 data={data}
                 dataKey={dataKey}
                 nameKey={xKey}
-                outerRadius={90}
-                innerRadius={70}
+                cx="42%"
+                cy="50%"
+                outerRadius="72%"
+                innerRadius="52%"
                 paddingAngle={0}
+                isAnimationActive={false}
               >
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                  <Cell
+                    key={`cell-${String(entry?.[xKey] ?? index)}`}
+                    fill={colors[index % colors.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip
@@ -429,7 +514,13 @@ function AnalyticsChart({
                 layout="vertical"
                 align="right"
                 verticalAlign="middle"
-                content={({ payload }) => (
+                content={({ payload }) => {
+                  const sortedPayload = [...(payload ?? [])].sort(
+                    (a, b) =>
+                      (Number(b.payload?.[dataKey]) || 0) -
+                      (Number(a.payload?.[dataKey]) || 0)
+                  );
+                  return (
                   <ul style={{
                     listStyle: "none",
                     margin: 0,
@@ -439,10 +530,13 @@ function AnalyticsChart({
                     gap: 10,
                     width: 210
                   }}>
-                    {payload.map((entry, index) => {
+                    {sortedPayload.map((entry, index) => {
                       const percent = Math.round((entry.payload[dataKey] / total) * 100);
+                      const rowKey = String(
+                        entry.payload?.[xKey] ?? entry.value ?? index
+                      );
                       return (
-                        <li key={`item-${index}`} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <li key={`item-${rowKey}`} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                           <div style={{
                             width: 12,
                             height: 12,
@@ -456,20 +550,24 @@ function AnalyticsChart({
                       );
                     })}
                   </ul>
-                )}
+                  );
+                }}
               />
             </PieChart>
           </ResponsiveContainer>
         );
+      }
 
       default:
-        return <p>Тип графика не поддерживается</p>;
+        return (
+          <p className={classes.chartEmpty}>Тип графика не поддерживается</p>
+        );
     }
   };
 
   return (
     <div className={classes.container} style={fullWidth ? { width: "100%" } : undefined}>
-      {title && <h4>{title}</h4>}
+      {title && <h4 className={classes.title}>{title}</h4>}
       {renderChart()}
     </div>
   );

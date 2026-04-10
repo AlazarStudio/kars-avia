@@ -1,4 +1,11 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  Fragment,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+  useRef,
+} from "react";
 import classes from "./AirlineAnalytics.module.css";
 import AnalyticsChart from "../../AnalyticsChart/AnalyticsChart";
 import DateRangePickerCustom from "../../DateRangePickerCustom";
@@ -24,6 +31,28 @@ import MUIAutocompleteColor from "../../../../Blocks/MUIAutocompleteColor/MUIAut
 import { useDebounce } from "../../../../../hooks/useDebounce";
 import MUILoader from "../../../../Blocks/MUILoader/MUILoader";
 import Button from "../../../../Standart/Button/Button";
+import {
+  AIRPORT_BAR_METRICS,
+  SERVICE_LABELS,
+  buildGroupedBarDataForMetric,
+  buildGroupedBarDataForPositionBudget,
+  formatRoomsForService,
+  getPeriodServices,
+  getServiceBlock,
+  hasMeaningfulServiceBlock,
+  mergeAirportRows,
+  mergeEntityRequestRowsFromServices,
+  mergePositionRows,
+  orderedServiceKeys,
+  sumRequestServiceBudgets,
+} from "./airlineAnalyticsMappers";
+import {
+  nextSortDir,
+  sortAirportRows,
+  sortMergedRequestRows,
+  sortPositionRows,
+  sortSegmentBlocks,
+} from "./analyticsTableSortUtils";
 
 const SERVICE_OPTIONS = [
   { id: "LIVING", label: "Проживание" },
@@ -38,35 +67,10 @@ function formatPeriodHuman(range) {
   )}`;
 }
 
-/** Единый формат ID аэропорта из GraphQL (строка/число) — для сопоставления периодов */
-function normAirportId(id) {
-  if (id == null || id === "") return "";
-  return String(id);
-}
-
-function findAirportRow(rows, airportId) {
-  const want = normAirportId(airportId);
-  if (!want) return undefined;
-  return rows.find((r) => normAirportId(r.airportId) === want);
-}
-
-/** Один выбранный аэропорт или null = все аэропорты */
-function airportMatchesPeriodFilter(airportId, selectedAirportEntry) {
-  if (!selectedAirportEntry?.id) return true;
-  return normAirportId(airportId) === normAirportId(selectedAirportEntry.id);
-}
-
 const ALL_AIRPORTS_OPTION = { id: null, name: "Все аэропорты", code: "" };
 
 const ALL_SERVICES_OPTION = { id: null, label: "Все услуги", isAll: true };
 const ALL_POSITIONS_OPTION = { id: null, label: "Все должности", isAll: true };
-
-const BAR_METRIC_OPTIONS = [
-  { id: "totalSpend", label: "Траты, ₽" },
-  { id: "totalRequests", label: "Заявки" },
-  { id: "uniquePeopleCount", label: "Уникальные люди" },
-  { id: "usedRoomsCount", label: "Комнаты" },
-];
 
 const formatInt = (value) =>
   new Intl.NumberFormat("ru-RU").format(Number(value) || 0);
@@ -80,12 +84,6 @@ function formatPct(value) {
   return `${Number(value).toFixed(1)}%`;
 }
 
-function normPositionKey(row) {
-  if (!row) return "";
-  return String(row.positionId ?? row.positionName ?? "");
-}
-
-/** Круговая диаграмма по должностям: скрыть при выборе ровно одной должности (тривиальное 100%); 0 = все должности — показывать */
 function shouldShowPositionsPie(selectedPositionIds) {
   return (
     selectedPositionIds.length === 0 || selectedPositionIds.length >= 2
@@ -99,7 +97,33 @@ function defaultCompareRange(mainRange) {
   return { startDate: p1Start, endDate: p1End, key: "selection" };
 }
 
-/** Снимок фильтров для запроса аналитики (после «Применить») */
+function SortableTh({
+  children,
+  sortKey,
+  active,
+  dir,
+  onSort,
+  rowSpan,
+  colSpan,
+}) {
+  return (
+    <th
+      rowSpan={rowSpan}
+      colSpan={colSpan}
+      scope="col"
+      className={`${classes.sortableTh}${active ? ` ${classes.sortableThActive}` : ""}`}
+      onClick={() => onSort(sortKey)}
+    >
+      <span className={classes.sortableThInner}>
+        {children}
+        <span className={classes.sortIndicator} aria-hidden>
+          {active ? (dir === "asc" ? "↑" : "↓") : "↕"}
+        </span>
+      </span>
+    </th>
+  );
+}
+
 function buildAirlineAnalyticsQueryInput(airlineId, snapshot) {
   if (!airlineId || !snapshot) return null;
   const period1 = {
@@ -159,7 +183,6 @@ function AirlineAnalytics({ user, height }) {
   const [selectedAirportB, setSelectedAirportB] = useState(null);
   const [selectedPositionIdsB, setSelectedPositionIdsB] = useState([]);
 
-  /** Запрос аналитики только после нажатия «Применить» */
   const [appliedAnalytics, setAppliedAnalytics] = useState(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
@@ -240,14 +263,9 @@ function AirlineAnalytics({ user, height }) {
     },
   });
 
-  const airportsList = useMemo(
-    () => airportsData?.airports ?? [],
-    [airportsData?.airports]
-  );
-
   const airportAutocompleteOptions = useMemo(
-    () => [ALL_AIRPORTS_OPTION, ...airportsList],
-    [airportsList]
+    () => [ALL_AIRPORTS_OPTION, ...(airportsData?.airports ?? [])],
+    [airportsData?.airports]
   );
 
   const positionOptions = useMemo(
@@ -313,242 +331,221 @@ function AirlineAnalytics({ user, height }) {
   const period1Result = appliedAnalytics
     ? analyticsData?.airlineAnalytics?.period1
     : undefined;
-  const period2Result = appliedAnalytics
+  const period2Result = appliedAnalytics?.compareEnabled
     ? analyticsData?.airlineAnalytics?.period2 ?? null
     : null;
-
-  const summary = period1Result?.summary;
-  const positionsBreakdown = period1Result?.positionsBreakdown;
-  const airportsBreakdown = period1Result?.airportsBreakdown;
-
-  const segments = useMemo(() => {
-    if (!period1Result || !appliedAnalytics) return [];
-    const f = appliedAnalytics;
-    const rows = [
-      {
-        segmentKey: "period1",
-        label: formatPeriodHuman(f.mainRange),
-        metrics: period1Result.summary,
-        positionsBreakdown: period1Result.positionsBreakdown ?? [],
-        airportsBreakdown: period1Result.airportsBreakdown ?? [],
-      },
-    ];
-    if (f.compareEnabled && period2Result) {
-      rows.push({
-        segmentKey: "period2",
-        label: formatPeriodHuman(f.compareRange),
-        metrics: period2Result.summary,
-        positionsBreakdown: period2Result.positionsBreakdown ?? [],
-        airportsBreakdown: period2Result.airportsBreakdown ?? [],
-      });
-    }
-    return rows;
-  }, [period1Result, period2Result, appliedAnalytics]);
 
   const isPeriodMultiChart =
     appliedAnalytics?.compareEnabled && period2Result != null;
 
-  const pieData = useMemo(
-    () =>
-      (positionsBreakdown ?? []).map((item) => ({
-        x: item.positionName,
-        value: item.count,
-      })),
-    [positionsBreakdown]
+  const serviceKeys = useMemo(
+    () => orderedServiceKeys(period1Result, period2Result),
+    [period1Result, period2Result]
   );
 
-  /** Один период: по одному simpleBar на каждую метрику аэропортов */
-  const singlePeriodAirportBarCharts = useMemo(
-    () =>
-      BAR_METRIC_OPTIONS.map((opt) => ({
-        id: opt.id,
-        label: opt.label,
-        data: (airportsBreakdown ?? []).map((row) => ({
-          name:
-            row.airportName ||
-            row.airportCode ||
-            row.airportId ||
-            "—",
-          value: Number(row[opt.id]) || 0,
-        })),
-      })),
-    [airportsBreakdown]
+  const mergedRequestsPeriod1 = useMemo(
+    () => mergeEntityRequestRowsFromServices(period1Result),
+    [period1Result]
   );
-
-  const groupedBarSeries = useMemo(
-    () =>
-      segments.map((s, i) => ({
-        key: `p${i}`,
-        label: s.label,
-      })),
-    [segments]
+  const mergedRequestsPeriod2 = useMemo(
+    () => mergeEntityRequestRowsFromServices(period2Result),
+    [period2Result]
   );
+  const unifiedShowGroupedBars =
+    isPeriodMultiChart && period1Result && period2Result;
+  const showUnifiedRequestsTable =
+    serviceKeys.includes("LIVING") || serviceKeys.includes("MEAL");
 
-  const groupedBarChartsByMetric = useMemo(() => {
-    if (!isPeriodMultiChart || !segments.length) {
-      return BAR_METRIC_OPTIONS.map((o) => ({ id: o.id, label: o.label, data: [] }));
-    }
-    const rowsList = segments.map((s) => s.airportsBreakdown ?? []);
-    if (rowsList.length < 2) {
-      return BAR_METRIC_OPTIONS.map((o) => ({ id: o.id, label: o.label, data: [] }));
-    }
-
-    const periodCount = rowsList.length;
-    const metaById = new Map();
-
-    for (const rows of rowsList) {
-      for (const r of rows) {
-        const id = normAirportId(r.airportId);
-        if (!id) continue;
-        if (!metaById.has(id)) {
-          metaById.set(id, {
-            airportName: r.airportName,
-            airportCode: r.airportCode,
-          });
-        } else {
-          const m = metaById.get(id);
-          if (!m.airportName && r.airportName) m.airportName = r.airportName;
-          if (!m.airportCode && r.airportCode) m.airportCode = r.airportCode;
-        }
-      }
-    }
-
-    const primaryIds = rowsList[0]
-      .map((r) => normAirportId(r.airportId))
-      .filter(Boolean);
-    const seen = new Set(primaryIds);
-    const idOrdered = [...primaryIds];
-    for (const id of metaById.keys()) {
-      if (!seen.has(id)) {
-        seen.add(id);
-        idOrdered.push(id);
-      }
-    }
-
-    const periodFilters = [
-      appliedAnalytics?.selectedAirport ?? null,
-      appliedAnalytics?.selectedAirportB ?? null,
-    ];
-
-    const idOrderedFiltered = idOrdered.filter((airportId) =>
-      periodFilters.some((ids) => airportMatchesPeriodFilter(airportId, ids))
-    );
-
-    return BAR_METRIC_OPTIONS.map((opt) => ({
-      id: opt.id,
-      label: opt.label,
-      data: idOrderedFiltered.map((airportId) => {
-        const meta = metaById.get(airportId);
-        const name =
-          meta?.airportName ||
-          meta?.airportCode ||
-          airportId;
-
-        const point = { name };
-        for (let idx = 0; idx < periodCount; idx++) {
-          if (!airportMatchesPeriodFilter(airportId, periodFilters[idx])) {
-            point[`p${idx}`] = null;
-            continue;
-          }
-          const row = findAirportRow(rowsList[idx], airportId);
-          point[`p${idx}`] = Number(row?.[opt.id]) || 0;
-        }
-        return point;
-      }),
-    }));
-  }, [isPeriodMultiChart, segments, appliedAnalytics]);
-
-  const comparisonRows = useMemo(
-    () => [
-      { metric: "Заявки", key: "totalRequests", format: formatInt },
-      { metric: "Уникальные люди", key: "uniquePeopleCount", format: formatInt },
-      { metric: "Комнаты", key: "usedRoomsCount", format: formatInt },
-      { metric: "Общие траты", key: "totalSpend", format: formatRub },
-      { metric: "Проживание", key: "livingSpend", format: formatRub },
-      { metric: "Питание", key: "mealSpend", format: formatRub },
-      { metric: "Трансфер", key: "transferSpend", format: formatRub },
-    ],
-    []
-  );
-
-  const mergedPositionTableRows = useMemo(() => {
-    const p1 = period1Result?.positionsBreakdown ?? [];
-    const p2 = period2Result?.positionsBreakdown ?? [];
-    if (!isPeriodMultiChart || !period2Result) {
-      return p1.map((r) => ({
-        key: normPositionKey(r),
-        name: r.positionName,
-        p1: r,
-        p2: null,
-      }));
-    }
-    const map = new Map();
-    for (const r of p1) {
-      const k = normPositionKey(r);
-      if (!k) continue;
-      map.set(k, { key: k, name: r.positionName, p1: r, p2: null });
-    }
-    for (const r of p2) {
-      const k = normPositionKey(r);
-      if (!k) continue;
-      if (!map.has(k)) {
-        map.set(k, { key: k, name: r.positionName, p1: null, p2: null });
-      }
-      const row = map.get(k);
-      row.p2 = r;
-      if (!row.name) row.name = r.positionName;
-    }
-    return Array.from(map.values()).sort(
-      (a, b) =>
-        (b.p1?.count ?? b.p2?.count ?? 0) - (a.p1?.count ?? a.p2?.count ?? 0)
+  const chartAreaHasAnyData = useMemo(() => {
+    const check = (period) =>
+      getPeriodServices(period).some((b) => hasMeaningfulServiceBlock(b));
+    return (
+      check(period1Result) ||
+      (isPeriodMultiChart && check(period2Result))
     );
   }, [period1Result, period2Result, isPeriodMultiChart]);
 
-  const mergedAirportTableRows = useMemo(() => {
-    const p1 = period1Result?.airportsBreakdown ?? [];
-    const p2 = period2Result?.airportsBreakdown ?? [];
-    if (!isPeriodMultiChart || !period2Result) {
-      return p1.map((r) => ({
-        key: normAirportId(r.airportId),
-        name: r.airportName || r.airportCode || r.airportId,
-        p1: r,
-        p2: null,
-      }));
-    }
-    const map = new Map();
-    for (const r of p1) {
-      const k = normAirportId(r.airportId);
-      if (!k) continue;
-      map.set(k, {
-        key: k,
-        name: r.airportName || r.airportCode || k,
-        p1: r,
-        p2: null,
-      });
-    }
-    for (const r of p2) {
-      const k = normAirportId(r.airportId);
-      if (!k) continue;
-      if (!map.has(k)) {
-        map.set(k, {
-          key: k,
-          name: r.airportName || r.airportCode || k,
-          p1: null,
-          p2: null,
-        });
+  const hasRequestRows =
+    mergedRequestsPeriod1.length > 0 ||
+    (isPeriodMultiChart && mergedRequestsPeriod2.length > 0);
+
+  const analyticsIsEmpty = !chartAreaHasAnyData && !hasRequestRows;
+
+  const [tableSortById, setTableSortById] = useState({});
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const analyticsPdfRef = useRef(null);
+
+  const handleExportAnalyticsPdf = useCallback(async () => {
+    const root = analyticsPdfRef.current;
+    if (!root || pdfExporting) return;
+
+    const scrollEl = root.querySelector("[data-analytics-pdf-scroll]");
+    const prevStyle = scrollEl
+      ? {
+          maxHeight: scrollEl.style.maxHeight,
+          overflow: scrollEl.style.overflow,
+          overflowY: scrollEl.style.overflowY,
+        }
+      : null;
+
+    try {
+      setPdfExporting(true);
+      if (scrollEl) {
+        scrollEl.style.maxHeight = "none";
+        scrollEl.style.overflow = "visible";
+        scrollEl.style.overflowY = "visible";
       }
-      const row = map.get(k);
-      row.p2 = r;
-      if (!row.name || row.name === row.key) {
-        row.name = r.airportName || r.airportCode || k;
+
+      const { default: html2pdf } = await import("html2pdf.js");
+
+      const airlineTitle =
+        selectedAirline?.name ?? airlines[0]?.name ?? "Аналитика";
+      const safeSlug = airlineTitle.replace(/[\\/:*?"<>|]+/g, " ").trim();
+      const fileName = `Аналитика_${safeSlug}_${format(new Date(), "dd-MM-yyyy_HH-mm")}.pdf`;
+
+      await html2pdf()
+        .set({
+          margin: [10, 8, 10, 8],
+          filename: fileName,
+          image: { type: "jpeg", quality: 0.95 },
+          html2canvas: {
+            scale: 1.75,
+            useCORS: true,
+            logging: false,
+            letterRendering: true,
+            ignoreElements: (el) =>
+              Boolean(el?.classList?.contains("pdfNoCapture")),
+          },
+          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
+          pagebreak: {
+            mode: ["css", "legacy"],
+            avoid: [`.${classes.pdfAvoidSplit}`],
+          },
+        })
+        .from(root)
+        .save();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      if (scrollEl && prevStyle) {
+        scrollEl.style.maxHeight = prevStyle.maxHeight;
+        scrollEl.style.overflow = prevStyle.overflow;
+        scrollEl.style.overflowY = prevStyle.overflowY;
       }
+      setPdfExporting(false);
     }
-    return Array.from(map.values()).sort(
-      (a, b) =>
-        (Number(b.p1?.totalSpend) || Number(b.p2?.totalSpend) || 0) -
-        (Number(a.p1?.totalSpend) || Number(a.p2?.totalSpend) || 0)
+  }, [pdfExporting, selectedAirline?.name, airlines[0]?.name]);
+
+  const handleTableSort = useCallback((tableId, columnKey) => {
+    setTableSortById((prev) => {
+      const cur = prev[tableId];
+      const dir = nextSortDir(
+        cur?.key === columnKey ? cur : null,
+        columnKey
+      );
+      return { ...prev, [tableId]: { key: columnKey, dir } };
+    });
+  }, []);
+
+  const segmentTableBlocks = useMemo(() => {
+    const blocks = [];
+    const isMulti = isPeriodMultiChart;
+    for (const sk of serviceKeys) {
+      const sb1 = getServiceBlock(period1Result, sk);
+      const sb2 = isMulti ? getServiceBlock(period2Result, sk) : null;
+      if (
+        !hasMeaningfulServiceBlock(sb1) &&
+        !hasMeaningfulServiceBlock(sb2)
+      ) {
+        continue;
+      }
+      const sl = SERVICE_LABELS[sk] || sk;
+      const rows = [
+        {
+          label: "Заявки",
+          v1: sb1 ? formatInt(sb1.totalRequests) : "—",
+          v2: sb2 ? formatInt(sb2.totalRequests) : "—",
+        },
+        {
+          label: "Уник. люди",
+          v1: sb1 ? formatInt(sb1.uniquePeopleCount) : "—",
+          v2: sb2 ? formatInt(sb2.uniquePeopleCount) : "—",
+        },
+        {
+          label: "Бюджет",
+          v1: sb1 ? formatRub(sb1.totalBudget) : "—",
+          v2: sb2 ? formatRub(sb2.totalBudget) : "—",
+        },
+        ...(sk === "LIVING"
+          ? [
+              {
+                label: "Комнаты",
+                v1: sb1
+                  ? formatRoomsForService(
+                      sk,
+                      sb1.usedRoomsCount,
+                      formatInt
+                    )
+                  : "—",
+                v2: sb2
+                  ? formatRoomsForService(
+                      sk,
+                      sb2.usedRoomsCount,
+                      formatInt
+                    )
+                  : "—",
+              },
+            ]
+          : []),
+      ];
+      blocks.push({ sk, sb1, sb2, sl, rows });
+    }
+    return sortSegmentBlocks(
+      blocks,
+      tableSortById.segments ?? null,
+      isMulti
     );
-  }, [period1Result, period2Result, isPeriodMultiChart]);
+  }, [
+    serviceKeys,
+    period1Result,
+    period2Result,
+    isPeriodMultiChart,
+    tableSortById.segments,
+  ]);
+
+  const sortReqP1 = tableSortById["req-p1"];
+  const sortReqP2 = tableSortById["req-p2"];
+  const sortReqSingle = tableSortById["req-single"];
+
+  const mergedRequestsP1Sorted = useMemo(
+    () =>
+      sortMergedRequestRows(
+        mergedRequestsPeriod1,
+        sortReqP1 ?? null,
+        sumRequestServiceBudgets
+      ),
+    [mergedRequestsPeriod1, sortReqP1?.key, sortReqP1?.dir]
+  );
+
+  const mergedRequestsP2Sorted = useMemo(
+    () =>
+      sortMergedRequestRows(
+        mergedRequestsPeriod2,
+        sortReqP2 ?? null,
+        sumRequestServiceBudgets
+      ),
+    [mergedRequestsPeriod2, sortReqP2?.key, sortReqP2?.dir]
+  );
+
+  const mergedRequestsSingleSorted = useMemo(
+    () =>
+      sortMergedRequestRows(
+        mergedRequestsPeriod1,
+        sortReqSingle ?? null,
+        sumRequestServiceBudgets
+      ),
+    [mergedRequestsPeriod1, sortReqSingle?.key, sortReqSingle?.dir]
+  );
 
   const filteredAirlines = useMemo(() => {
     if (!searchQuery) return airlines;
@@ -627,6 +624,21 @@ function AirlineAnalytics({ user, height }) {
     differenceInCalendarDays(compareRange.endDate, compareRange.startDate) +
     1;
 
+  const period1Label = appliedAnalytics
+    ? formatPeriodHuman(appliedAnalytics.mainRange)
+    : "";
+  const period2Label = appliedAnalytics
+    ? formatPeriodHuman(appliedAnalytics.compareRange)
+    : "";
+
+  const groupedBarSeries = useMemo(
+    () => [
+      { key: "p0", label: period1Label },
+      { key: "p1", label: period2Label },
+    ],
+    [period1Label, period2Label]
+  );
+
   return (
     <div className={classes.pageWrap} style={height ? { height } : undefined}>
       <div className={classes.filtersStrip}>
@@ -636,14 +648,11 @@ function AirlineAnalytics({ user, height }) {
             className={classes.periodButton}
             onClick={openMainPicker}
           >
-            Период 1
+            {compareEnabled ? "Период 1" : "Период"}
           </button>
 
           <span className={classes.periodSummaryInline}>
-            Период 1:{" "}
-            {formatISO(mainRange.startDate, { representation: "date" })} —{" "}
-            {formatISO(mainRange.endDate, { representation: "date" })} (
-            {mainDays} дн.)
+            {formatPeriodHuman(mainRange)} ({mainDays} дн.)
           </span>
 
           <MUIAutocompleteColor
@@ -806,10 +815,7 @@ function AirlineAnalytics({ user, height }) {
             </button>
 
             <span className={classes.periodSummaryInline}>
-              Период 2:{" "}
-              {formatISO(compareRange.startDate, { representation: "date" })} —{" "}
-              {formatISO(compareRange.endDate, { representation: "date" })} (
-              {compareDays} дн.)
+              {formatPeriodHuman(compareRange)} ({compareDays} дн.)
             </span>
 
             <MUIAutocompleteColor
@@ -931,12 +937,13 @@ function AirlineAnalytics({ user, height }) {
                 {filteredAirlines.map((airline) => (
                   <li
                     key={airline.id}
-                    className={`${classes.listItem} ${selectedAirline && selectedAirline.id === airline.id
+                    className={`${classes.listItem} ${
+                      selectedAirline && selectedAirline.id === airline.id
                         ? classes.active
                         : !selectedAirline && airline.id === airlines[0]?.id
                           ? classes.active
                           : ""
-                      }`}
+                    }`}
                     onClick={() =>
                       setSelectedAirline({
                         id: airline.id,
@@ -971,25 +978,43 @@ function AirlineAnalytics({ user, height }) {
 
         <div className={classes.content}>
           <div className={classes.graphs}>
-            <div className={classes.header}>
-              <h2 className={classes.title}>
-                <div className={classes.circle}>
-                  <img
-                    src={getMediaUrl(
-                      selectedAirline
-                        ? selectedAirline?.images?.[0]
-                        : airlines[0]?.images?.[0]
-                    )}
-                    alt=""
-                  />
-                </div>
-                <p>
-                  {selectedAirline ? selectedAirline?.name : airlines[0]?.name}
-                </p>
-              </h2>
-            </div>
+            <div ref={analyticsPdfRef} className={classes.graphsPdfRoot}>
+              <div className={classes.headerRow}>
+                <h2 className={classes.title}>
+                  <div className={classes.circle}>
+                    <img
+                      src={getMediaUrl(
+                        selectedAirline
+                          ? selectedAirline?.images?.[0]
+                          : airlines[0]?.images?.[0]
+                      )}
+                      alt=""
+                    />
+                  </div>
+                  <p>
+                    {selectedAirline
+                      ? selectedAirline?.name
+                      : airlines[0]?.name}
+                  </p>
+                </h2>
+                {appliedAnalytics && !analyticsLoading && airlineId ? (
+                  <button
+                    type="button"
+                    className={`${classes.exportPdfButton} pdfNoCapture`}
+                    disabled={pdfExporting}
+                    onClick={handleExportAnalyticsPdf}
+                  >
+                    {pdfExporting
+                      ? "Формирование…"
+                      : "Выгрузить аналитику"}
+                  </button>
+                ) : null}
+              </div>
 
-            <div className={classes.contentWrapper}>
+            <div
+              className={classes.contentWrapper}
+              data-analytics-pdf-scroll
+            >
               {!airlineId ? (
                 <p className={classes.periodHint}>Загрузка списка авиакомпаний…</p>
               ) : !appliedAnalytics ? (
@@ -1003,415 +1028,1423 @@ function AirlineAnalytics({ user, height }) {
                 </div>
               ) : (
                 <>
-                  {/* <div className={classes.kpiGrid}>
-                    <div className={classes.kpiCard}>
-                      <span className={classes.kpiLabel}>Заявки</span>
-                      <span className={classes.kpiValue}>
-                        {formatInt(summary?.totalRequests)}
-                      </span>
+                  {analyticsIsEmpty ? (
+                    <div className={classes.analyticsEmptyState}>
+                      <p className={classes.analyticsEmptyMessage}>
+                        Нет данных
+                      </p>
                     </div>
-                    <div className={classes.kpiCard}>
-                      <span className={classes.kpiLabel}>Уникальные люди</span>
-                      <span className={classes.kpiValue}>
-                        {formatInt(summary?.uniquePeopleCount)}
-                      </span>
-                    </div>
-                    <div className={classes.kpiCard}>
-                      <span className={classes.kpiLabel}>Номерной фонд</span>
-                      <span className={classes.kpiValue}>
-                        {formatInt(summary?.usedRoomsCount)}
-                      </span>
-                    </div>
-                    <div className={classes.kpiCard}>
-                      <span className={classes.kpiLabel}>Общие траты</span>
-                      <span className={classes.kpiValue}>
-                        {formatRub(summary?.totalSpend)}
-                      </span>
-                    </div>
-                    <div className={classes.kpiCard}>
-                      <span className={classes.kpiLabel}>Проживание</span>
-                      <span className={classes.kpiValue}>
-                        {formatRub(summary?.livingSpend)}
-                      </span>
-                    </div>
-                    <div className={classes.kpiCard}>
-                      <span className={classes.kpiLabel}>Питание</span>
-                      <span className={classes.kpiValue}>
-                        {formatRub(summary?.mealSpend)}
-                      </span>
-                    </div>
-                    <div className={classes.kpiCard}>
-                      <span className={classes.kpiLabel}>Трансфер</span>
-                      <span className={classes.kpiValue}>
-                        {formatRub(summary?.transferSpend)}
-                      </span>
-                    </div>
-                  </div> */}
-
+                  ) : (
+                    <>
                   <div
                     className={
                       user?.airlineId ? classes.rowNoAdaptive : classes.row
                     }
                   >
-                    {isPeriodMultiChart ? (
-                      <div className={classes.chartsStackPeriod}>
-                        {segments.some((_, idx) =>
+                    <div className={classes.chartsColumn}>
+                      {chartAreaHasAnyData
+                        ? serviceKeys.map((serviceKey) => {
+                        const b1 = getServiceBlock(period1Result, serviceKey);
+                        const b2 = isPeriodMultiChart
+                          ? getServiceBlock(period2Result, serviceKey)
+                          : null;
+                        if (
+                          !hasMeaningfulServiceBlock(b1) &&
+                          !hasMeaningfulServiceBlock(b2)
+                        ) {
+                          return null;
+                        }
+
+                        const label =
+                          SERVICE_LABELS[serviceKey] || serviceKey;
+                        const showAirportRoomsCol = serviceKey === "LIVING";
+                        const airportMetrics = AIRPORT_BAR_METRICS.filter(
+                          (m) =>
+                            m.id !== "usedRoomsCount" ||
+                            serviceKey === "LIVING"
+                        );
+
+                        const showGroupedBars =
+                          isPeriodMultiChart && b1 && b2;
+                        const periodFilters = appliedAnalytics
+                          ? [
+                              appliedAnalytics.selectedAirport,
+                              appliedAnalytics.selectedAirportB,
+                            ]
+                          : [null, null];
+
+                        const posRows = mergePositionRows(
+                          b1?.positions,
+                          b2?.positions,
+                          showGroupedBars
+                        );
+                        const apRows = mergeAirportRows(
+                          b1?.airports,
+                          b2?.airports,
+                          showGroupedBars
+                        );
+
+                        const posTableId = `pos-${serviceKey}`;
+                        const apTableId = `ap-${serviceKey}`;
+                        const posSort = tableSortById[posTableId] ?? null;
+                        const apSort = tableSortById[apTableId] ?? null;
+                        const posSorted = sortPositionRows(
+                          posRows,
+                          showGroupedBars,
+                          posSort
+                        );
+                        const apSorted = sortAirportRows(
+                          apRows,
+                          showGroupedBars,
+                          apSort
+                        );
+
+                        const budgetBarFromPositions = (positions) => {
+                          if (serviceKey !== "LIVING" && serviceKey !== "MEAL") {
+                            return null;
+                          }
+                          const rows = (positions ?? [])
+                            .map((p) => ({
+                              name: p.positionName,
+                              value: Number(p.budget) || 0,
+                            }))
+                            .filter((r) => r.value > 0);
+                          return rows.length > 0 ? rows : null;
+                        };
+
+                        const positionsToPieData = (positions) =>
+                          (positions ?? [])
+                            .map((item) => ({
+                              x: item.positionName,
+                              value: Number(item.count) || 0,
+                            }))
+                            .filter((d) => d.value > 0);
+
+                        const pieBlocks = [];
+                        if (
+                          b1 &&
                           shouldShowPositionsPie(
-                            idx === 0
-                              ? appliedAnalytics.selectedPositionIds
-                              : appliedAnalytics.selectedPositionIdsB
-                          )
-                        ) ? (
-                          <div className={classes.pieChartsRow}>
-                            {segments.map((seg, idx) => {
-                              const posIds =
-                                idx === 0
-                                  ? appliedAnalytics.selectedPositionIds
-                                  : appliedAnalytics.selectedPositionIdsB;
-                              if (!shouldShowPositionsPie(posIds)) return null;
-                              return (
-                                <AnalyticsChart
-                                  key={seg.segmentKey}
-                                  type="pie"
-                                  title={seg.label}
-                                  data={(
-                                    seg.positionsBreakdown ?? []
-                                  ).map((item) => ({
-                                    x: item.positionName,
-                                    value: item.count,
-                                  }))}
-                                  xKey="x"
-                                  dataKey="value"
-                                />
-                              );
-                            })}
-                          </div>
-                        ) : null}
-
-                        <div className={classes.breakdownTableSection}>
-                          <h4 className={classes.breakdownTableTitle}>
-                            Детализация по должностям
-                          </h4>
-                          <div className={classes.tableScroll}>
-                            <table className={classes.analyticsTable}>
-                              <thead>
-                                {segments.length >= 2 ? (
-                                  <>
-                                    <tr>
-                                      <th rowSpan={2}>Должность</th>
-                                      <th colSpan={2}>{segments[0].label}</th>
-                                      <th colSpan={2}>{segments[1].label}</th>
-                                    </tr>
-                                    <tr>
-                                      <th>Заявки</th>
-                                      <th>%</th>
-                                      <th>Заявки</th>
-                                      <th>%</th>
-                                    </tr>
-                                  </>
-                                ) : null}
-                              </thead>
-                              <tbody>
-                                {mergedPositionTableRows.map((row) => (
-                                  <tr key={row.key}>
-                                    <td>{row.name}</td>
-                                    {segments.length >= 2 ? (
-                                      <>
-                                        <td>
-                                          {row.p1 != null
-                                            ? formatInt(row.p1.count)
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p1 != null
-                                            ? formatPct(row.p1.percent)
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p2 != null
-                                            ? formatInt(row.p2.count)
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p2 != null
-                                            ? formatPct(row.p2.percent)
-                                            : "—"}
-                                        </td>
-                                      </>
-                                    ) : null}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        <div
-                          className={`${classes.barBlock} ${classes.barBlockBelowPies}`}
-                        >
-                          <div className={classes.barHeader}>
-                            <h4 className={classes.barTitle}>Аэропорты</h4>
-                          </div>
-                          <div className={classes.airportBarsStack}>
-                            {groupedBarChartsByMetric.map((cfg) => (
-                              <div
-                                key={cfg.id}
-                                className={classes.airportBarChartItem}
-                              >
-                                <h5
-                                  className={classes.airportBarChartSubtitle}
-                                >
-                                  {cfg.label}
-                                </h5>
-                                <AnalyticsChart
-                                  type="groupedBar"
-                                  data={cfg.data}
-                                  series={groupedBarSeries}
-                                  xKey="name"
-                                  height={260}
-                                  fullWidth
-                                  groupedValueFormat={(v) =>
-                                    cfg.id === "totalSpend"
-                                      ? formatRub(v)
-                                      : formatInt(v)
-                                  }
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div className={classes.breakdownTableSection}>
-                          <h4 className={classes.breakdownTableTitle}>
-                            Детализация по аэропортам
-                          </h4>
-                          <div className={classes.tableScroll}>
-                            <table className={classes.analyticsTable}>
-                              <thead>
-                                {segments.length >= 2 ? (
-                                  <>
-                                    <tr>
-                                      <th rowSpan={2}>Аэропорт</th>
-                                      <th colSpan={4}>{segments[0].label}</th>
-                                      <th colSpan={4}>{segments[1].label}</th>
-                                    </tr>
-                                    <tr>
-                                      <th>Заявки</th>
-                                      <th>Люди</th>
-                                      <th>Комнаты</th>
-                                      <th>Траты, ₽</th>
-                                      <th>Заявки</th>
-                                      <th>Люди</th>
-                                      <th>Комнаты</th>
-                                      <th>Траты, ₽</th>
-                                    </tr>
-                                  </>
-                                ) : null}
-                              </thead>
-                              <tbody>
-                                {mergedAirportTableRows.map((row) => (
-                                  <tr key={row.key}>
-                                    <td>{row.name}</td>
-                                    {segments.length >= 2 ? (
-                                      <>
-                                        <td>
-                                          {row.p1
-                                            ? formatInt(row.p1.totalRequests)
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p1
-                                            ? formatInt(
-                                                row.p1.uniquePeopleCount
-                                              )
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p1
-                                            ? formatInt(row.p1.usedRoomsCount)
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p1
-                                            ? formatRub(row.p1.totalSpend)
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p2
-                                            ? formatInt(row.p2.totalRequests)
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p2
-                                            ? formatInt(
-                                                row.p2.uniquePeopleCount
-                                              )
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p2
-                                            ? formatInt(row.p2.usedRoomsCount)
-                                            : "—"}
-                                        </td>
-                                        <td>
-                                          {row.p2
-                                            ? formatRub(row.p2.totalSpend)
-                                            : "—"}
-                                        </td>
-                                      </>
-                                    ) : null}
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={classes.chartsColumn}>
-                        <div className={classes.pieChartSection}>
-                          {shouldShowPositionsPie(
                             appliedAnalytics.selectedPositionIds
-                          ) ? (
-                            <AnalyticsChart
-                              type="pie"
-                              title="Заявки по должностям"
-                              data={pieData}
-                              xKey="x"
-                              dataKey="value"
-                            />
-                          ) : null}
-                          <div className={classes.breakdownTableSection}>
-                            <h4 className={classes.breakdownTableTitle}>
-                              Детализация по должностям
-                            </h4>
-                            <div className={classes.tableScroll}>
-                              <table className={classes.analyticsTable}>
-                                <thead>
-                                  <tr>
-                                    <th>Должность</th>
-                                    <th>Заявки</th>
-                                    <th>%</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {mergedPositionTableRows.map((row) => (
-                                    <tr key={row.key}>
-                                      <td>{row.name}</td>
-                                      <td>{formatInt(row.p1?.count)}</td>
-                                      <td>{formatPct(row.p1?.percent)}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        </div>
+                          )
+                        ) {
+                          const p1Pie = positionsToPieData(b1.positions);
+                          if (p1Pie.length > 0) {
+                            pieBlocks.push({
+                              key: "p1",
+                              title: showGroupedBars ? period1Label : label,
+                              data: p1Pie,
+                              barData: budgetBarFromPositions(b1.positions),
+                            });
+                          }
+                        }
+                        if (
+                          showGroupedBars &&
+                          b2 &&
+                          shouldShowPositionsPie(
+                            appliedAnalytics.selectedPositionIdsB
+                          )
+                        ) {
+                          const p2Pie = positionsToPieData(b2.positions);
+                          if (p2Pie.length > 0) {
+                            pieBlocks.push({
+                              key: "p2",
+                              title: period2Label,
+                              data: p2Pie,
+                              barData: budgetBarFromPositions(b2.positions),
+                            });
+                          }
+                        }
 
-                        <div className={classes.barBlock}>
-                          <div className={classes.barHeader}>
-                            <h4 className={classes.barTitle}>Аэропорты</h4>
-                          </div>
-                          <div className={classes.airportBarsStack}>
-                            {singlePeriodAirportBarCharts.map((cfg) => (
+                        const hasSideBySideBarInPeriod =
+                          (serviceKey === "LIVING" ||
+                            serviceKey === "MEAL") &&
+                          pieBlocks.some(
+                            (pb) =>
+                              pb.barData && pb.barData.length > 0
+                          );
+
+                        const positionBudgetGroupedData =
+                          showGroupedBars &&
+                          (serviceKey === "LIVING" ||
+                            serviceKey === "MEAL") &&
+                          b1 &&
+                          b2
+                            ? buildGroupedBarDataForPositionBudget([
+                                b1,
+                                b2,
+                              ])
+                            : null;
+                        const showPositionBudgetGroupedChart =
+                          positionBudgetGroupedData &&
+                          positionBudgetGroupedData.length > 0;
+
+                        const airportChartConfigs = airportMetrics.filter(
+                          (cfg) => {
+                            if (showGroupedBars) {
+                              const gData = buildGroupedBarDataForMetric(
+                                cfg.id,
+                                [b1, b2].filter(Boolean),
+                                periodFilters
+                              );
+                              return gData.length > 0;
+                            }
+                            return (b1?.airports?.length ?? 0) > 0;
+                          }
+                        );
+
+                        const showPieRow =
+                          pieBlocks.length > 0 ||
+                          showPositionBudgetGroupedChart;
+                        const showAirportBarBlock =
+                          serviceKey !== "TRANSFER" &&
+                          airportChartConfigs.length > 0;
+                        const showPosTable = posSorted.length > 0;
+                        const showApTable = apSorted.length > 0;
+
+                        if (
+                          !showPieRow &&
+                          !showAirportBarBlock &&
+                          !showPosTable &&
+                          !showApTable
+                        ) {
+                          return null;
+                        }
+
+                        return (
+                          <div
+                            key={serviceKey}
+                            className={classes.serviceSection}
+                          >
+                            <h3 className={classes.serviceSectionTitle}>
+                              {label}
+                            </h3>
+
+                            {showPieRow ? (
                               <div
-                                key={cfg.id}
-                                className={classes.airportBarChartItem}
+                                className={`${classes.pieChartsRow} ${
+                                  hasSideBySideBarInPeriod
+                                    ? classes.pieChartsRowStacked
+                                    : classes.pieChartsRowInline
+                                }`}
                               >
-                                <h5
-                                  className={classes.airportBarChartSubtitle}
-                                >
-                                  {cfg.label}
-                                </h5>
-                                <AnalyticsChart
-                                  type="simpleBar"
-                                  data={cfg.data}
-                                  xKey="name"
-                                  yKey="value"
-                                  barValueLabel={cfg.label}
-                                  height={260}
-                                  fullWidth
-                                />
+                                {showPositionBudgetGroupedChart ? (
+                                  <div
+                                    className={classes.pieChartsComparePiesRow}
+                                  >
+                                    {pieBlocks.map((pb) => (
+                                      <div
+                                        key={`${serviceKey}-${pb.key}`}
+                                        className={`${classes.pieBarPair1} ${classes.pdfAvoidSplit}`}
+                                      >
+                                        <AnalyticsChart
+                                          type="pie"
+                                          title={pb.title}
+                                          data={pb.data}
+                                          xKey="x"
+                                          dataKey="value"
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  pieBlocks.map((pb) => (
+                                    <div
+                                      key={`${serviceKey}-${pb.key}`}
+                                      className={`${
+                                        serviceKey === "LIVING" ||
+                                        serviceKey === "MEAL"
+                                          ? classes.pieBarPair1
+                                          : classes.pieBarPair
+                                      } ${classes.pdfAvoidSplit}`}
+                                    >
+                                      <AnalyticsChart
+                                        type="pie"
+                                        title={pb.title}
+                                        data={pb.data}
+                                        xKey="x"
+                                        dataKey="value"
+                                      />
+                                      {(serviceKey === "LIVING" ||
+                                        serviceKey === "MEAL") &&
+                                      pb.barData &&
+                                      pb.barData.length > 0 ? (
+                                        <AnalyticsChart
+                                          type="simpleBar"
+                                          title="Бюджет по должностям"
+                                          data={pb.barData}
+                                          xKey="name"
+                                          yKey="value"
+                                          barValueLabel="Бюджет, ₽"
+                                          height={280}
+                                          // fullWidth
+                                        />
+                                      ) : null}
+                                    </div>
+                                  ))
+                                )}
+                                {showPositionBudgetGroupedChart ? (
+                                  <div
+                                    className={`${classes.pieChartsGroupedBudgetWrap} ${classes.pdfAvoidSplit}`}
+                                  >
+                                    <AnalyticsChart
+                                      type="groupedBar"
+                                      title="Бюджет по должностям"
+                                      data={positionBudgetGroupedData}
+                                      series={groupedBarSeries}
+                                      xKey="name"
+                                      height={280}
+                                      fullWidth
+                                      groupedValueFormat={(v) =>
+                                        formatRub(v)
+                                      }
+                                    />
+                                  </div>
+                                ) : null}
                               </div>
-                            ))}
-                          </div>
-                          <div className={classes.breakdownTableSection}>
-                            <h4 className={classes.breakdownTableTitle}>
-                              Детализация по аэропортам
-                            </h4>
-                            <div className={classes.tableScroll}>
-                              <table className={classes.analyticsTable}>
-                                <thead>
-                                  <tr>
-                                    <th>Аэропорт</th>
-                                    <th>Заявки</th>
-                                    <th>Уник. люди</th>
-                                    <th>Комнаты</th>
-                                    <th>Траты, ₽</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {mergedAirportTableRows.map((row) => (
-                                    <tr key={row.key}>
-                                      <td>{row.name}</td>
-                                      <td>
-                                        {formatInt(row.p1?.totalRequests)}
-                                      </td>
-                                      <td>
-                                        {formatInt(row.p1?.uniquePeopleCount)}
-                                      </td>
-                                      <td>
-                                        {formatInt(row.p1?.usedRoomsCount)}
-                                      </td>
-                                      <td>
-                                        {formatRub(row.p1?.totalSpend)}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                            ) : null}
+
+                            {showPosTable ? (
+                            <div className={classes.breakdownTableSection}>
+                              <h4 className={classes.breakdownTableTitle}>
+                                Должности
+                              </h4>
+                              <div className={classes.tableScroll}>
+                                <table className={classes.analyticsTable}>
+                                  <thead>
+                                    {showGroupedBars ? (
+                                      <>
+                                        <tr>
+                                          <SortableTh
+                                            rowSpan={2}
+                                            sortKey="name"
+                                            active={posSort?.key === "name"}
+                                            dir={posSort?.dir}
+                                            onSort={(k) =>
+                                              handleTableSort(posTableId, k)
+                                            }
+                                          >
+                                            Должность
+                                          </SortableTh>
+                                          <th colSpan={3}>{period1Label}</th>
+                                          <th colSpan={3}>{period2Label}</th>
+                                        </tr>
+                                        <tr>
+                                          <SortableTh
+                                            sortKey="p1count"
+                                            active={posSort?.key === "p1count"}
+                                            dir={posSort?.dir}
+                                            onSort={(k) =>
+                                              handleTableSort(posTableId, k)
+                                            }
+                                          >
+                                            Заявки
+                                          </SortableTh>
+                                          <SortableTh
+                                            sortKey="p1pct"
+                                            active={posSort?.key === "p1pct"}
+                                            dir={posSort?.dir}
+                                            onSort={(k) =>
+                                              handleTableSort(posTableId, k)
+                                            }
+                                          >
+                                            %
+                                          </SortableTh>
+                                          <SortableTh
+                                            sortKey="p1budget"
+                                            active={
+                                              posSort?.key === "p1budget"
+                                            }
+                                            dir={posSort?.dir}
+                                            onSort={(k) =>
+                                              handleTableSort(posTableId, k)
+                                            }
+                                          >
+                                            Бюджет, ₽
+                                          </SortableTh>
+                                          <SortableTh
+                                            sortKey="p2count"
+                                            active={posSort?.key === "p2count"}
+                                            dir={posSort?.dir}
+                                            onSort={(k) =>
+                                              handleTableSort(posTableId, k)
+                                            }
+                                          >
+                                            Заявки
+                                          </SortableTh>
+                                          <SortableTh
+                                            sortKey="p2pct"
+                                            active={posSort?.key === "p2pct"}
+                                            dir={posSort?.dir}
+                                            onSort={(k) =>
+                                              handleTableSort(posTableId, k)
+                                            }
+                                          >
+                                            %
+                                          </SortableTh>
+                                          <SortableTh
+                                            sortKey="p2budget"
+                                            active={
+                                              posSort?.key === "p2budget"
+                                            }
+                                            dir={posSort?.dir}
+                                            onSort={(k) =>
+                                              handleTableSort(posTableId, k)
+                                            }
+                                          >
+                                            Бюджет, ₽
+                                          </SortableTh>
+                                        </tr>
+                                      </>
+                                    ) : (
+                                      <tr>
+                                        <SortableTh
+                                          sortKey="name"
+                                          active={posSort?.key === "name"}
+                                          dir={posSort?.dir}
+                                          onSort={(k) =>
+                                            handleTableSort(posTableId, k)
+                                          }
+                                        >
+                                          Должность
+                                        </SortableTh>
+                                        <SortableTh
+                                          sortKey="p1count"
+                                          active={posSort?.key === "p1count"}
+                                          dir={posSort?.dir}
+                                          onSort={(k) =>
+                                            handleTableSort(posTableId, k)
+                                          }
+                                        >
+                                          Заявки
+                                        </SortableTh>
+                                        <SortableTh
+                                          sortKey="p1pct"
+                                          active={posSort?.key === "p1pct"}
+                                          dir={posSort?.dir}
+                                          onSort={(k) =>
+                                            handleTableSort(posTableId, k)
+                                          }
+                                        >
+                                          %
+                                        </SortableTh>
+                                        <SortableTh
+                                          sortKey="p1budget"
+                                          active={
+                                            posSort?.key === "p1budget"
+                                          }
+                                          dir={posSort?.dir}
+                                          onSort={(k) =>
+                                            handleTableSort(posTableId, k)
+                                          }
+                                        >
+                                          Бюджет, ₽
+                                        </SortableTh>
+                                      </tr>
+                                    )}
+                                  </thead>
+                                  <tbody>
+                                    {posSorted.map((row) => (
+                                      <tr key={row.key}>
+                                        <td>{row.name}</td>
+                                        {showGroupedBars ? (
+                                          <>
+                                            <td>
+                                              {row.p1 != null
+                                                ? formatInt(row.p1.count)
+                                                : "—"}
+                                            </td>
+                                            <td>
+                                              {row.p1 != null
+                                                ? formatPct(row.p1.percent)
+                                                : "—"}
+                                            </td>
+                                            <td>
+                                              {row.p1 != null
+                                                ? formatRub(row.p1.budget)
+                                                : "—"}
+                                            </td>
+                                            <td>
+                                              {row.p2 != null
+                                                ? formatInt(row.p2.count)
+                                                : "—"}
+                                            </td>
+                                            <td>
+                                              {row.p2 != null
+                                                ? formatPct(row.p2.percent)
+                                                : "—"}
+                                            </td>
+                                            <td>
+                                              {row.p2 != null
+                                                ? formatRub(row.p2.budget)
+                                                : "—"}
+                                            </td>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <td>
+                                              {formatInt(row.p1?.count)}
+                                            </td>
+                                            <td>
+                                              {formatPct(row.p1?.percent)}
+                                            </td>
+                                            <td>
+                                              {formatRub(row.p1?.budget)}
+                                            </td>
+                                          </>
+                                        )}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
+                            ) : null}
+
+                            {showAirportBarBlock ? (
+                                <div className={classes.barBlock}>
+                                  <div className={classes.barHeader}>
+                                    <h4 className={classes.barTitle}>
+                                      Аэропорты
+                                    </h4>
+                                  </div>
+                                  <div className={classes.airportBarsStack}>
+                                    {airportChartConfigs.map((cfg) => {
+                                      let chartEl;
+                                      if (showGroupedBars) {
+                                        const data =
+                                          buildGroupedBarDataForMetric(
+                                            cfg.id,
+                                            [b1, b2].filter(Boolean),
+                                            periodFilters
+                                          );
+                                        chartEl = (
+                                          <AnalyticsChart
+                                            type="groupedBar"
+                                            data={data}
+                                            series={groupedBarSeries}
+                                            xKey="name"
+                                            height={260}
+                                            fullWidth
+                                            groupedValueFormat={(v) =>
+                                              cfg.id === "budget"
+                                                ? formatRub(v)
+                                                : formatInt(v)
+                                            }
+                                          />
+                                        );
+                                      } else {
+                                        const data = (b1.airports ?? []).map(
+                                          (row) => ({
+                                            name:
+                                              row.airportCode ||
+                                              row.airportName ||
+                                              row.airportId ||
+                                              "—",
+                                            value:
+                                              cfg.id === "requestsCount"
+                                                ? Number(row.requestsCount) ||
+                                                  0
+                                                : cfg.id === "budget"
+                                                  ? Number(row.budget) || 0
+                                                  : cfg.id ===
+                                                      "uniquePeopleCount"
+                                                    ? Number(
+                                                        row.uniquePeopleCount
+                                                      ) || 0
+                                                    : Number(
+                                                        row.usedRoomsCount
+                                                      ) || 0,
+                                          })
+                                        );
+                                        chartEl = (
+                                          <AnalyticsChart
+                                            type="simpleBar"
+                                            data={data}
+                                            xKey="name"
+                                            yKey="value"
+                                            barValueLabel={cfg.label}
+                                            height={260}
+                                            fullWidth
+                                          />
+                                        );
+                                      }
+                                      return (
+                                        <div
+                                          key={`${serviceKey}-${cfg.id}`}
+                                          className={`${classes.airportBarChartItem} ${classes.pdfAvoidSplit}`}
+                                        >
+                                          <h5
+                                            className={
+                                              classes.airportBarChartSubtitle
+                                            }
+                                          >
+                                            {cfg.label}
+                                          </h5>
+                                          {chartEl}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                            ) : null}
+
+                            {showApTable ? (
+                                <div
+                                  className={classes.breakdownTableSection}
+                                >
+                                  <h4 className={classes.breakdownTableTitle}>
+                                    Аэропорты
+                                  </h4>
+                                  <div className={classes.tableScroll}>
+                                    <table className={classes.analyticsTable}>
+                                      <thead>
+                                        {showGroupedBars ? (
+                                          <>
+                                            <tr>
+                                              <SortableTh
+                                                rowSpan={2}
+                                                sortKey="name"
+                                                active={apSort?.key === "name"}
+                                                dir={apSort?.dir}
+                                                onSort={(k) =>
+                                                  handleTableSort(
+                                                    apTableId,
+                                                    k
+                                                  )
+                                                }
+                                              >
+                                                Аэропорт
+                                              </SortableTh>
+                                              <th
+                                                colSpan={
+                                                  showAirportRoomsCol ? 4 : 3
+                                                }
+                                              >
+                                                {period1Label}
+                                              </th>
+                                              <th
+                                                colSpan={
+                                                  showAirportRoomsCol ? 4 : 3
+                                                }
+                                              >
+                                                {period2Label}
+                                              </th>
+                                            </tr>
+                                            <tr>
+                                              <SortableTh
+                                                sortKey="p1req"
+                                                active={
+                                                  apSort?.key === "p1req"
+                                                }
+                                                dir={apSort?.dir}
+                                                onSort={(k) =>
+                                                  handleTableSort(
+                                                    apTableId,
+                                                    k
+                                                  )
+                                                }
+                                              >
+                                                Заявки
+                                              </SortableTh>
+                                              <SortableTh
+                                                sortKey="p1people"
+                                                active={
+                                                  apSort?.key === "p1people"
+                                                }
+                                                dir={apSort?.dir}
+                                                onSort={(k) =>
+                                                  handleTableSort(
+                                                    apTableId,
+                                                    k
+                                                  )
+                                                }
+                                              >
+                                                Люди
+                                              </SortableTh>
+                                              {showAirportRoomsCol ? (
+                                                <SortableTh
+                                                  sortKey="p1rooms"
+                                                  active={
+                                                    apSort?.key === "p1rooms"
+                                                  }
+                                                  dir={apSort?.dir}
+                                                  onSort={(k) =>
+                                                    handleTableSort(
+                                                      apTableId,
+                                                      k
+                                                    )
+                                                  }
+                                                >
+                                                  Комнаты
+                                                </SortableTh>
+                                              ) : null}
+                                              <SortableTh
+                                                sortKey="p1budget"
+                                                active={
+                                                  apSort?.key === "p1budget"
+                                                }
+                                                dir={apSort?.dir}
+                                                onSort={(k) =>
+                                                  handleTableSort(
+                                                    apTableId,
+                                                    k
+                                                  )
+                                                }
+                                              >
+                                                Бюджет, ₽
+                                              </SortableTh>
+                                              <SortableTh
+                                                sortKey="p2req"
+                                                active={
+                                                  apSort?.key === "p2req"
+                                                }
+                                                dir={apSort?.dir}
+                                                onSort={(k) =>
+                                                  handleTableSort(
+                                                    apTableId,
+                                                    k
+                                                  )
+                                                }
+                                              >
+                                                Заявки
+                                              </SortableTh>
+                                              <SortableTh
+                                                sortKey="p2people"
+                                                active={
+                                                  apSort?.key === "p2people"
+                                                }
+                                                dir={apSort?.dir}
+                                                onSort={(k) =>
+                                                  handleTableSort(
+                                                    apTableId,
+                                                    k
+                                                  )
+                                                }
+                                              >
+                                                Люди
+                                              </SortableTh>
+                                              {showAirportRoomsCol ? (
+                                                <SortableTh
+                                                  sortKey="p2rooms"
+                                                  active={
+                                                    apSort?.key === "p2rooms"
+                                                  }
+                                                  dir={apSort?.dir}
+                                                  onSort={(k) =>
+                                                    handleTableSort(
+                                                      apTableId,
+                                                      k
+                                                    )
+                                                  }
+                                                >
+                                                  Комнаты
+                                                </SortableTh>
+                                              ) : null}
+                                              <SortableTh
+                                                sortKey="p2budget"
+                                                active={
+                                                  apSort?.key === "p2budget"
+                                                }
+                                                dir={apSort?.dir}
+                                                onSort={(k) =>
+                                                  handleTableSort(
+                                                    apTableId,
+                                                    k
+                                                  )
+                                                }
+                                              >
+                                                Бюджет, ₽
+                                              </SortableTh>
+                                            </tr>
+                                          </>
+                                        ) : (
+                                          <tr>
+                                            <SortableTh
+                                              sortKey="name"
+                                              active={apSort?.key === "name"}
+                                              dir={apSort?.dir}
+                                              onSort={(k) =>
+                                                handleTableSort(apTableId, k)
+                                              }
+                                            >
+                                              Аэропорт
+                                            </SortableTh>
+                                            <SortableTh
+                                              sortKey="p1req"
+                                              active={apSort?.key === "p1req"}
+                                              dir={apSort?.dir}
+                                              onSort={(k) =>
+                                                handleTableSort(apTableId, k)
+                                              }
+                                            >
+                                              Заявки
+                                            </SortableTh>
+                                            <SortableTh
+                                              sortKey="p1people"
+                                              active={
+                                                apSort?.key === "p1people"
+                                              }
+                                              dir={apSort?.dir}
+                                              onSort={(k) =>
+                                                handleTableSort(apTableId, k)
+                                              }
+                                            >
+                                              Люди
+                                            </SortableTh>
+                                            {showAirportRoomsCol ? (
+                                              <SortableTh
+                                                sortKey="p1rooms"
+                                                active={
+                                                  apSort?.key === "p1rooms"
+                                                }
+                                                dir={apSort?.dir}
+                                                onSort={(k) =>
+                                                  handleTableSort(
+                                                    apTableId,
+                                                    k
+                                                  )
+                                                }
+                                              >
+                                                Комнаты
+                                              </SortableTh>
+                                            ) : null}
+                                            <SortableTh
+                                              sortKey="p1budget"
+                                              active={
+                                                apSort?.key === "p1budget"
+                                              }
+                                              dir={apSort?.dir}
+                                              onSort={(k) =>
+                                                handleTableSort(apTableId, k)
+                                              }
+                                            >
+                                              Бюджет, ₽
+                                            </SortableTh>
+                                          </tr>
+                                        )}
+                                      </thead>
+                                      <tbody>
+                                        {apSorted.map((row) => (
+                                          <tr key={row.key}>
+                                            <td>{row.name}</td>
+                                            {showGroupedBars ? (
+                                              <>
+                                                <td>
+                                                  {row.p1
+                                                    ? formatInt(
+                                                        row.p1.requestsCount
+                                                      )
+                                                    : "—"}
+                                                </td>
+                                                <td>
+                                                  {row.p1
+                                                    ? formatInt(
+                                                        row.p1.uniquePeopleCount
+                                                      )
+                                                    : "—"}
+                                                </td>
+                                                {showAirportRoomsCol ? (
+                                                  <td>
+                                                    {row.p1
+                                                      ? formatRoomsForService(
+                                                          serviceKey,
+                                                          row.p1
+                                                            .usedRoomsCount,
+                                                          formatInt
+                                                        )
+                                                      : "—"}
+                                                  </td>
+                                                ) : null}
+                                                <td>
+                                                  {row.p1
+                                                    ? formatRub(row.p1.budget)
+                                                    : "—"}
+                                                </td>
+                                                <td>
+                                                  {row.p2
+                                                    ? formatInt(
+                                                        row.p2.requestsCount
+                                                      )
+                                                    : "—"}
+                                                </td>
+                                                <td>
+                                                  {row.p2
+                                                    ? formatInt(
+                                                        row.p2.uniquePeopleCount
+                                                      )
+                                                    : "—"}
+                                                </td>
+                                                {showAirportRoomsCol ? (
+                                                  <td>
+                                                    {row.p2
+                                                      ? formatRoomsForService(
+                                                          serviceKey,
+                                                          row.p2
+                                                            .usedRoomsCount,
+                                                          formatInt
+                                                        )
+                                                      : "—"}
+                                                  </td>
+                                                ) : null}
+                                                <td>
+                                                  {row.p2
+                                                    ? formatRub(row.p2.budget)
+                                                    : "—"}
+                                                </td>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <td>
+                                                  {formatInt(
+                                                    row.p1?.requestsCount
+                                                  )}
+                                                </td>
+                                                <td>
+                                                  {formatInt(
+                                                    row.p1?.uniquePeopleCount
+                                                  )}
+                                                </td>
+                                                {showAirportRoomsCol ? (
+                                                  <td>
+                                                    {formatRoomsForService(
+                                                      serviceKey,
+                                                      row.p1?.usedRoomsCount,
+                                                      formatInt
+                                                    )}
+                                                  </td>
+                                                ) : null}
+                                                <td>
+                                                  {formatRub(row.p1?.budget)}
+                                                </td>
+                                              </>
+                                            )}
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                            ) : null}
                           </div>
-                        </div>
-                      </div>
-                    )}
+                        );
+                      })
+                        : null}
+                    </div>
                   </div>
 
-                  {segments.length > 0 ? (
+                  {segmentTableBlocks.length > 0 ? (
                     <div className={classes.segmentsSection}>
                       <h4 className={classes.segmentsTitle}>
-                        {segments.length > 1
-                          ? "Сравнение периодов"
-                          : "Показатели периода"}
+                        Сводка по услугам
                       </h4>
                       <div className={classes.tableScroll}>
                         <table className={classes.analyticsTable}>
                           <thead>
                             <tr>
-                              <th>Метрика</th>
-                              {segments.map((s) => (
-                                <th key={s.segmentKey}>{s.label}</th>
-                              ))}
+                              <SortableTh
+                                sortKey="service"
+                                active={
+                                  tableSortById.segments?.key === "service"
+                                }
+                                dir={tableSortById.segments?.dir}
+                                onSort={(k) => handleTableSort("segments", k)}
+                              >
+                                Услуга / метрика
+                              </SortableTh>
+                              {isPeriodMultiChart ? (
+                                <>
+                                  <SortableTh
+                                    sortKey="p1"
+                                    active={
+                                      tableSortById.segments?.key === "p1"
+                                    }
+                                    dir={tableSortById.segments?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("segments", k)
+                                    }
+                                  >
+                                    {period1Label}
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="p2"
+                                    active={
+                                      tableSortById.segments?.key === "p2"
+                                    }
+                                    dir={tableSortById.segments?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("segments", k)
+                                    }
+                                  >
+                                    {period2Label}
+                                  </SortableTh>
+                                </>
+                              ) : (
+                                <SortableTh
+                                  sortKey="value"
+                                  active={
+                                    tableSortById.segments?.key === "value"
+                                  }
+                                  dir={tableSortById.segments?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("segments", k)
+                                  }
+                                >
+                                  Значение
+                                </SortableTh>
+                              )}
                             </tr>
                           </thead>
                           <tbody>
-                            {comparisonRows.map((row) => (
-                              <tr key={row.key}>
-                                <td>{row.metric}</td>
-                                {segments.map((s) => (
-                                  <td key={`${s.segmentKey}-${row.key}`}>
-                                    {row.format(s.metrics?.[row.key])}
-                                  </td>
-                                ))}
-                              </tr>
-                            ))}
+                            {segmentTableBlocks.map(
+                              ({ sk, sl, rows: segRows }) => (
+                                <Fragment key={sk}>
+                                  <tr>
+                                    <td
+                                      colSpan={
+                                        isPeriodMultiChart ? 3 : 2
+                                      }
+                                    >
+                                      <strong>{sl}</strong>
+                                    </td>
+                                  </tr>
+                                  {segRows.map((r) => (
+                                    <tr key={`${sk}-${r.label}`}>
+                                      <td>{r.label}</td>
+                                      {isPeriodMultiChart ? (
+                                        <>
+                                          <td>{r.v1}</td>
+                                          <td>{r.v2}</td>
+                                        </>
+                                      ) : (
+                                        <td>{r.v1}</td>
+                                      )}
+                                    </tr>
+                                  ))}
+                                </Fragment>
+                              )
+                            )}
                           </tbody>
                         </table>
                       </div>
                     </div>
                   ) : null}
+                  {showUnifiedRequestsTable && hasRequestRows ? (
+                    <div className={classes.breakdownTableSection}>
+                      <h4 className={classes.breakdownTableTitle}>Заявки</h4>
+                      {unifiedShowGroupedBars ? (
+                        <>
+                          <h5
+                            className={classes.airportBarChartSubtitle}
+                          >
+                            {period1Label}
+                          </h5>
+                          <div className={classes.tableScroll}>
+                            <table className={classes.analyticsTable}>
+                              <thead>
+                                <tr>
+                                  <SortableTh
+                                    sortKey="number"
+                                    active={sortReqP1?.key === "number"}
+                                    dir={sortReqP1?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p1", k)
+                                    }
+                                  >
+                                    Номер
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="person"
+                                    active={sortReqP1?.key === "person"}
+                                    dir={sortReqP1?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p1", k)
+                                    }
+                                  >
+                                    Человек
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="position"
+                                    active={sortReqP1?.key === "position"}
+                                    dir={sortReqP1?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p1", k)
+                                    }
+                                  >
+                                    Должность
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="airport"
+                                    active={sortReqP1?.key === "airport"}
+                                    dir={sortReqP1?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p1", k)
+                                    }
+                                  >
+                                    Аэропорт
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="total"
+                                    active={sortReqP1?.key === "total"}
+                                    dir={sortReqP1?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p1", k)
+                                    }
+                                  >
+                                    Бюджет
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="living"
+                                    active={sortReqP1?.key === "living"}
+                                    dir={sortReqP1?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p1", k)
+                                    }
+                                  >
+                                    Проживание
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="meal"
+                                    active={sortReqP1?.key === "meal"}
+                                    dir={sortReqP1?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p1", k)
+                                    }
+                                  >
+                                    Питание
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="transfer"
+                                    active={sortReqP1?.key === "transfer"}
+                                    dir={sortReqP1?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p1", k)
+                                    }
+                                  >
+                                    Трансфер
+                                  </SortableTh>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {mergedRequestsP1Sorted.length ? (
+                                  mergedRequestsP1Sorted.map((r, idx) => (
+                                    <tr
+                                      key={
+                                        r.requestId ??
+                                        r.requestNumber ??
+                                        `p1-${idx}`
+                                      }
+                                    >
+                                      <td>
+                                        {r.requestNumber ??
+                                          r.requestId ??
+                                          "—"}
+                                      </td>
+                                      <td>{r.personName ?? "—"}</td>
+                                      <td>{r.positionName ?? "—"}</td>
+                                      <td>
+                                        {r.airportCode ??
+                                          r.airportName ??
+                                          "—"}
+                                      </td>
+                                      <td>
+                                        {formatRub(
+                                          sumRequestServiceBudgets(r)
+                                        )}
+                                      </td>
+                                      <td>
+                                        {formatRub(r.livingBudget)}
+                                      </td>
+                                      <td>{formatRub(r.mealBudget)}</td>
+                                      <td>
+                                        {formatRub(r.transferBudget)}
+                                      </td>
+                                    </tr>
+                                  ))
+                                ) : (
+                                  <tr>
+                                    <td colSpan={8}>Нет строк</td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                          <h5
+                            className={classes.airportBarChartSubtitle}
+                          >
+                            {period2Label}
+                          </h5>
+                          <div className={classes.tableScroll}>
+                            <table className={classes.analyticsTable}>
+                              <thead>
+                                <tr>
+                                  <SortableTh
+                                    sortKey="number"
+                                    active={sortReqP2?.key === "number"}
+                                    dir={sortReqP2?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p2", k)
+                                    }
+                                  >
+                                    Номер
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="person"
+                                    active={sortReqP2?.key === "person"}
+                                    dir={sortReqP2?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p2", k)
+                                    }
+                                  >
+                                    Человек
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="position"
+                                    active={sortReqP2?.key === "position"}
+                                    dir={sortReqP2?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p2", k)
+                                    }
+                                  >
+                                    Должность
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="airport"
+                                    active={sortReqP2?.key === "airport"}
+                                    dir={sortReqP2?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p2", k)
+                                    }
+                                  >
+                                    Аэропорт
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="total"
+                                    active={sortReqP2?.key === "total"}
+                                    dir={sortReqP2?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p2", k)
+                                    }
+                                  >
+                                    Бюджет
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="living"
+                                    active={sortReqP2?.key === "living"}
+                                    dir={sortReqP2?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p2", k)
+                                    }
+                                  >
+                                    Проживание
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="meal"
+                                    active={sortReqP2?.key === "meal"}
+                                    dir={sortReqP2?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p2", k)
+                                    }
+                                  >
+                                    Питание
+                                  </SortableTh>
+                                  <SortableTh
+                                    sortKey="transfer"
+                                    active={sortReqP2?.key === "transfer"}
+                                    dir={sortReqP2?.dir}
+                                    onSort={(k) =>
+                                      handleTableSort("req-p2", k)
+                                    }
+                                  >
+                                    Трансфер
+                                  </SortableTh>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {mergedRequestsP2Sorted.length ? (
+                                  mergedRequestsP2Sorted.map((r, idx) => (
+                                    <tr
+                                      key={
+                                        r.requestId ??
+                                        r.requestNumber ??
+                                        `p2-${idx}`
+                                      }
+                                    >
+                                      <td>
+                                        {r.requestNumber ??
+                                          r.requestId ??
+                                          "—"}
+                                      </td>
+                                      <td>{r.personName ?? "—"}</td>
+                                      <td>{r.positionName ?? "—"}</td>
+                                      <td>
+                                        {r.airportCode ??
+                                          r.airportName ??
+                                          "—"}
+                                      </td>
+                                      <td>
+                                        {formatRub(
+                                          sumRequestServiceBudgets(r)
+                                        )}
+                                      </td>
+                                      <td>
+                                        {formatRub(r.livingBudget)}
+                                      </td>
+                                      <td>{formatRub(r.mealBudget)}</td>
+                                      <td>
+                                        {formatRub(r.transferBudget)}
+                                      </td>
+                                    </tr>
+                                  ))
+                                ) : (
+                                  <tr>
+                                    <td colSpan={8}>Нет строк</td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        </>
+                      ) : (
+                        <div className={classes.tableScroll}>
+                          <table className={classes.analyticsTable}>
+                            <thead>
+                              <tr>
+                                <SortableTh
+                                  sortKey="number"
+                                  active={sortReqSingle?.key === "number"}
+                                  dir={sortReqSingle?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("req-single", k)
+                                  }
+                                >
+                                  Номер
+                                </SortableTh>
+                                <SortableTh
+                                  sortKey="person"
+                                  active={sortReqSingle?.key === "person"}
+                                  dir={sortReqSingle?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("req-single", k)
+                                  }
+                                >
+                                  Человек
+                                </SortableTh>
+                                <SortableTh
+                                  sortKey="position"
+                                  active={
+                                    sortReqSingle?.key === "position"
+                                  }
+                                  dir={sortReqSingle?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("req-single", k)
+                                  }
+                                >
+                                  Должность
+                                </SortableTh>
+                                <SortableTh
+                                  sortKey="airport"
+                                  active={sortReqSingle?.key === "airport"}
+                                  dir={sortReqSingle?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("req-single", k)
+                                  }
+                                >
+                                  Аэропорт
+                                </SortableTh>
+                                <SortableTh
+                                  sortKey="total"
+                                  active={sortReqSingle?.key === "total"}
+                                  dir={sortReqSingle?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("req-single", k)
+                                  }
+                                >
+                                  Бюджет
+                                </SortableTh>
+                                <SortableTh
+                                  sortKey="living"
+                                  active={sortReqSingle?.key === "living"}
+                                  dir={sortReqSingle?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("req-single", k)
+                                  }
+                                >
+                                  Проживание
+                                </SortableTh>
+                                <SortableTh
+                                  sortKey="meal"
+                                  active={sortReqSingle?.key === "meal"}
+                                  dir={sortReqSingle?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("req-single", k)
+                                  }
+                                >
+                                  Питание
+                                </SortableTh>
+                                <SortableTh
+                                  sortKey="transfer"
+                                  active={
+                                    sortReqSingle?.key === "transfer"
+                                  }
+                                  dir={sortReqSingle?.dir}
+                                  onSort={(k) =>
+                                    handleTableSort("req-single", k)
+                                  }
+                                >
+                                  Трансфер
+                                </SortableTh>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {mergedRequestsSingleSorted.length ? (
+                                mergedRequestsSingleSorted.map((r, idx) => (
+                                  <tr
+                                    key={
+                                      r.requestId ??
+                                      r.requestNumber ??
+                                      `p1-${idx}`
+                                    }
+                                  >
+                                    <td>
+                                      {r.requestNumber ??
+                                        r.requestId ??
+                                        "—"}
+                                    </td>
+                                    <td>{r.personName ?? "—"}</td>
+                                    <td>{r.positionName ?? "—"}</td>
+                                    <td>
+                                      {r.airportCode ??
+                                        r.airportName ??
+                                        "—"}
+                                    </td>
+                                    <td>
+                                      {formatRub(sumRequestServiceBudgets(r))}
+                                    </td>
+                                    <td>
+                                      {formatRub(r.livingBudget)}
+                                    </td>
+                                    <td>{formatRub(r.mealBudget)}</td>
+                                    <td>
+                                      {formatRub(r.transferBudget)}
+                                    </td>
+                                  </tr>
+                                ))
+                              ) : (
+                                <tr>
+                                  <td colSpan={8}>Нет строк</td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                    </>
+                  )}
                 </>
               )}
+            </div>
             </div>
           </div>
         </div>
