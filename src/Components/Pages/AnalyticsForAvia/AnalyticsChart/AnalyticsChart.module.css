@@ -7,6 +7,8 @@
   flex-direction: column;
   width: 49%;
   gap: 10px;
+  flex: 1;
+  min-height: 0;
 }
 
 /* Единое отображение отсутствия данных (центр, крупный тёмный текст) */
@@ -33,13 +35,82 @@
   color: #2E355D;
 }
 
+/* Pie / donut: блок по центру карточки, одинаковый размер кольца (px, не vw) */
+.pieWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 0;
+  padding: 8px 12px 16px 12px;
+  box-sizing: border-box;
+}
 
-@media (min-width: 0px) and (max-width: 1699px) {
+.pieRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
+
+.pieChartSquare {
+  flex: 0 0 auto;
+  width: 210px;
+  height: 210px;
+  flex-shrink: 0;
+}
+
+.pieLegendList {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px 0 0;
+  flex: 0 1 auto;
+  /* min-width: 0; */
+  /* max-width: min(280px, calc(100% - 204px - 16px)); */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  /* max-height: 280px; */
+  overflow-y: auto;
+  align-self: center;
+}
+
+.pieLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pieLegendSwatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pieLegendText {
+  font-size: 16px;
+  color: #333;
+  line-height: 1.35;
+}
+
+
+@media (min-width: 0px) and (max-width: 1599px) {
   .container {
     border-radius: 10px;
     display: flex;
     flex-direction: column;
     width: 70%;
+  }
+
+  .pieLegendText {
+    font-size: 14px;
   }
 }
 

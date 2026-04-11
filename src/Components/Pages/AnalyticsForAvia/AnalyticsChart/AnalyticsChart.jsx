@@ -97,10 +97,7 @@ function AnalyticsChart({
       return <p className={classes.chartEmpty}>Нет данных</p>;
     }
 
-    const chartHeight =
-      type === "pie"
-        ? Math.min(305, Math.max(height, 260 + Math.max(0, data.length - 5) * 22))
-        : height;
+    const chartHeight = height;
 
     switch (type) {
       case "bar": {
@@ -476,86 +473,68 @@ function AnalyticsChart({
           return <p className={classes.chartEmpty}>Нет данных</p>;
         }
 
+        const sortedRows = [...data].sort(
+          (a, b) =>
+            (Number(b[dataKey]) || 0) - (Number(a[dataKey]) || 0)
+        );
+
         return (
-          <ResponsiveContainer
-            width="100%"
-            height={chartHeight}
-            minWidth={280}
-            minHeight={chartHeight}
-            debounce={50}
-            outline={false}
-          >
-            <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-              <Pie
-                data={data}
-                dataKey={dataKey}
-                nameKey={xKey}
-                cx="42%"
-                cy="50%"
-                outerRadius="72%"
-                innerRadius="52%"
-                paddingAngle={0}
-                isAnimationActive={false}
-              >
-                {data.map((entry, index) => (
-                  <Cell
-                    key={`cell-${String(entry?.[xKey] ?? index)}`}
-                    fill={colors[index % colors.length]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{ background: "#fff", border: "1px solid #aab0dd5c", borderRadius: "8px" }}
-                itemStyle={{ color: "#000" }}
-                cursor={{ fill: "#9CA4D91A" }}
-                formatter={(value, name) => [`${value}`, name]}
-              />
-              <Legend
-                layout="vertical"
-                align="right"
-                verticalAlign="middle"
-                content={({ payload }) => {
-                  const sortedPayload = [...(payload ?? [])].sort(
-                    (a, b) =>
-                      (Number(b.payload?.[dataKey]) || 0) -
-                      (Number(a.payload?.[dataKey]) || 0)
+          <div className={classes.pieWrap}>
+            <div className={classes.pieRow}>
+              <div className={classes.pieChartSquare}>
+                <ResponsiveContainer width="100%" height="100%" debounce={50} outline={false}>
+                  <PieChart margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+                    <Pie
+                      data={data}
+                      dataKey={dataKey}
+                      nameKey={xKey}
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="78%"
+                      innerRadius="56%"
+                      paddingAngle={0}
+                      isAnimationActive={false}
+                    >
+                      {data.map((entry, index) => (
+                        <Cell
+                          key={`cell-${String(entry?.[xKey] ?? index)}`}
+                          fill={colors[index % colors.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ background: "#fff", border: "1px solid #aab0dd5c", borderRadius: "8px" }}
+                      itemStyle={{ color: "#000" }}
+                      cursor={{ fill: "#9CA4D91A" }}
+                      formatter={(value, name) => [`${value}`, name]}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <ul className={classes.pieLegendList}>
+                {sortedRows.map((row, index) => {
+                  const pct = Math.round(((Number(row[dataKey]) || 0) / total) * 100);
+                  const rowKey = String(row?.[xKey] ?? index);
+                  const origIdx = data.findIndex(
+                    (d) => String(d?.[xKey] ?? "") === String(row?.[xKey] ?? "")
                   );
+                  const fill =
+                    colors[(origIdx >= 0 ? origIdx : index) % colors.length];
                   return (
-                  <ul style={{
-                    listStyle: "none",
-                    margin: 0,
-                    padding: 0,
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 10,
-                    width: 'fit-content',
-                    paddingRight: 20
-                  }}>
-                    {sortedPayload.map((entry, index) => {
-                      const percent = Math.round((entry.payload[dataKey] / total) * 100);
-                      const rowKey = String(
-                        entry.payload?.[xKey] ?? entry.value ?? index
-                      );
-                      return (
-                        <li key={`item-${rowKey}`} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <div style={{
-                            width: 12,
-                            height: 12,
-                            borderRadius: "50%",
-                            backgroundColor: entry.color
-                          }} />
-                          <span style={{ fontSize: 16, color: "#333" }}>
-                            {entry.value} — {percent || 0}%
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                    <li key={`pie-legend-${rowKey}`} className={classes.pieLegendItem}>
+                      <span
+                        className={classes.pieLegendSwatch}
+                        style={{ backgroundColor: fill }}
+                      />
+                      <span className={classes.pieLegendText}>
+                        {row[xKey]} — {pct || 0}%
+                      </span>
+                    </li>
                   );
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+                })}
+              </ul>
+            </div>
+          </div>
         );
       }
 

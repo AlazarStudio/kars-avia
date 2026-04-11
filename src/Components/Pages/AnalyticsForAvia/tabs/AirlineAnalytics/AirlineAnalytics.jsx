@@ -1297,11 +1297,47 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
               {!airlineId ? (
                 <div className={classes.emptyState}>
                   <div className={classes.emptyStateIcon}>
-                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-                      <rect width="56" height="56" rx="16" fill="#eef2fd"/>
-                      <rect x="12" y="34" width="8" height="10" rx="2" fill="#9ca4d9"/>
-                      <rect x="24" y="26" width="8" height="18" rx="2" fill="#6b78c8"/>
-                      <rect x="36" y="18" width="8" height="26" rx="2" fill="#0057c3"/>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden>
+                      <rect width="56" height="56" rx="16" fill="#eef2fd" />
+                      <svg
+                        x="16"
+                        y="16"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <line
+                          x1="4"
+                          y1="6"
+                          x2="20"
+                          y2="6"
+                          stroke="#0057c3"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <line
+                          x1="8"
+                          y1="12"
+                          x2="16"
+                          y2="12"
+                          stroke="#6b78c8"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <line
+                          x1="11"
+                          y1="18"
+                          x2="13"
+                          y2="18"
+                          stroke="#9ca4d9"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
                     </svg>
                   </div>
                   <p className={classes.emptyStateTitle}>Выберите авиакомпанию</p>
@@ -1327,11 +1363,47 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
               ) : !appliedAnalytics ? (
                 <div className={classes.emptyState}>
                   <div className={classes.emptyStateIcon}>
-                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-                      <rect width="56" height="56" rx="16" fill="#eef2fd"/>
-                      <rect x="12" y="34" width="8" height="10" rx="2" fill="#9ca4d9"/>
-                      <rect x="24" y="26" width="8" height="18" rx="2" fill="#6b78c8"/>
-                      <rect x="36" y="18" width="8" height="26" rx="2" fill="#0057c3"/>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden>
+                      <rect width="56" height="56" rx="16" fill="#eef2fd" />
+                      <svg
+                        x="16"
+                        y="16"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <line
+                          x1="4"
+                          y1="6"
+                          x2="20"
+                          y2="6"
+                          stroke="#0057c3"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <line
+                          x1="8"
+                          y1="12"
+                          x2="16"
+                          y2="12"
+                          stroke="#6b78c8"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <line
+                          x1="11"
+                          y1="18"
+                          x2="13"
+                          y2="18"
+                          stroke="#9ca4d9"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
                     </svg>
                   </div>
                   <p className={classes.emptyStateTitle}>Настройте фильтры</p>
@@ -1449,7 +1521,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                           if (p1Pie.length > 0) {
                             pieBlocks.push({
                               key: "p1",
-                              title: showGroupedBars ? period1Label : label,
+                              title: showGroupedBars ? `Процент заявок по должностям за ${period1Label}` : "Процент заявок по должностям",
                               data: p1Pie,
                               barData: budgetBarFromPositions(b1.positions),
                             });
@@ -1466,7 +1538,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                           if (p2Pie.length > 0) {
                             pieBlocks.push({
                               key: "p2",
-                              title: period2Label,
+                              title: `Процент заявок по должностям за ${period2Label}`,
                               data: p2Pie,
                               barData: budgetBarFromPositions(b2.positions),
                             });
