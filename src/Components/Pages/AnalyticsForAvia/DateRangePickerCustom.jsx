@@ -163,11 +163,19 @@ import {
   startOfQuarter, endOfQuarter, subQuarters,
   startOfYear, endOfYear, subYears,
   isSameDay,
+  startOfToday,
 } from "date-fns";
 import ru from "date-fns/locale/ru";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import Button from "../../Standart/Button/Button";
+
+function isRangeValueComplete(v) {
+  if (!v?.startDate || !v?.endDate) return false;
+  const a = new Date(v.startDate);
+  const b = new Date(v.endDate);
+  return !Number.isNaN(a.getTime()) && !Number.isNaN(b.getTime());
+}
 
 function DateRangePickerCustom({ onChange, onClose, value }) {
     // меняй 7 на 6, если нужно
@@ -180,11 +188,30 @@ function DateRangePickerCustom({ onChange, onClose, value }) {
     return { startDate: start, endDate: end };
   };
   
-  // дефолт = последние 7 дней (или внешнее value)
-  const defaultSelection =
-    value || { startDate: addDays(new Date(), -7), endDate: new Date(), key: "selection" };
+  const defaultSelection = isRangeValueComplete(value)
+    ? { ...value, key: value.key || "selection" }
+    : (() => {
+        const d = startOfToday();
+        return { startDate: d, endDate: d, key: "selection" };
+      })();
 
   const [range, setRange] = React.useState([defaultSelection]);
+
+  const valueKey = isRangeValueComplete(value)
+    ? `${new Date(value.startDate).getTime()}-${new Date(value.endDate).getTime()}`
+    : "empty";
+
+  // valueKey отражает выбранные даты; ссылка на value может меняться без смены дат
+  React.useEffect(() => {
+    setRange([
+      isRangeValueComplete(value)
+        ? { ...value, key: value.key || "selection" }
+        : (() => {
+            const d = startOfToday();
+            return { startDate: d, endDate: d, key: "selection" };
+          })(),
+    ]);
+  }, [valueKey]);
 
   // хелпер для своих статик-пресетов (подсветка активного варианта)
   const makeStatic = (label, getter) => ({

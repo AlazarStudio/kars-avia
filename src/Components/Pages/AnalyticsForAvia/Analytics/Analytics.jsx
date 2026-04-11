@@ -9,8 +9,8 @@ import Header from "../../../Blocks/Header/Header";
 
 const tabs = [
   { key: "airlines", label: "Авиакомпании" },
-  { key: "hotels", label: "Гостиницы" },
-  { key: "dispatchers", label: "Диспетчеры" },
+  // { key: "hotels", label: "Гостиницы" },
+  // { key: "dispatchers", label: "Диспетчеры" },
   // { key: "support", label: "Техподдержка" }
 ];
 
@@ -22,10 +22,10 @@ function Analytics({user}) {
     switch (activeTab) {
       case "airlines":
         return <AirlineAnalytics user={user} height={user.airlineId ? "calc(100vh - 125px)" : null}/>;
-      case "dispatchers":
-        return <DispatcherAnalytics />;
-      case "hotels":
-        return <HotelAnalytics />;
+      // case "dispatchers":
+      //   return <DispatcherAnalytics />;
+      // case "hotels":
+      //   return <HotelAnalytics />;
       // case "support":
       //   return <SupportAnalytics />;
       default:

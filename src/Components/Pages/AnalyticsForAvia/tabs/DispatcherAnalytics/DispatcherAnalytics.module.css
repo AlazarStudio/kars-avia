@@ -68,10 +68,8 @@
 }
 
 .circle {
-  min-width: 40px;
-  min-height: 40px;
-  max-width: 40px;
-  max-height: 40px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   overflow: hidden;
   background-color: #ececec;
@@ -99,11 +97,11 @@
   color: #545873;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .listItem p {
-  width: calc(100% - 35px);
+  width: calc(100% - 45px);
 }
 
 .listItem:hover {

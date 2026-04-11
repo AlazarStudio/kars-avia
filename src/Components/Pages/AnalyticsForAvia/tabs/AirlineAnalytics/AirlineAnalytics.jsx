@@ -60,7 +60,17 @@ const SERVICE_OPTIONS = [
   { id: "TRANSFER", label: "Трансфер" },
 ];
 
+function isPeriodRangeComplete(range) {
+  return Boolean(
+    range?.startDate &&
+      range?.endDate &&
+      !Number.isNaN(new Date(range.startDate).getTime()) &&
+      !Number.isNaN(new Date(range.endDate).getTime())
+  );
+}
+
 function formatPeriodHuman(range) {
+  if (!isPeriodRangeComplete(range)) return "";
   return `${format(range.startDate, "dd.MM.yyyy")} — ${format(
     range.endDate,
     "dd.MM.yyyy"
@@ -158,16 +168,8 @@ function buildAirlineAnalyticsQueryInput(airlineId, snapshot) {
 function AirlineAnalytics({ user, height }) {
   const token = getCookie("token");
 
-  const [mainRange, setMainRange] = useState({
-    startDate: addDays(startOfToday(), -6),
-    endDate: startOfToday(),
-    key: "selection",
-  });
-  const [compareRange, setCompareRange] = useState(() => ({
-    startDate: subDays(addDays(startOfToday(), -6), 7),
-    endDate: subDays(addDays(startOfToday(), -6), 1),
-    key: "selection",
-  }));
+  const [mainRange, setMainRange] = useState(null);
+  const [compareRange, setCompareRange] = useState(null);
 
   const [compareEnabled, setCompareEnabled] = useState(false);
 
@@ -573,12 +575,17 @@ function AirlineAnalytics({ user, height }) {
     (range) => {
       if (pickerTarget === "main") {
         setMainRange(range);
+        if (compareEnabled) {
+          setCompareRange((cr) =>
+            isPeriodRangeComplete(cr) ? cr : defaultCompareRange(range)
+          );
+        }
       } else {
         setCompareRange(range);
       }
       setShowPicker(false);
     },
-    [pickerTarget]
+    [pickerTarget, compareEnabled]
   );
 
   const handleCompareToggle = useCallback(
@@ -586,9 +593,15 @@ function AirlineAnalytics({ user, height }) {
       const next = event.target.checked;
       setCompareEnabled(next);
       if (next) {
-        setCompareRange(defaultCompareRange(mainRange));
+        setCompareRange(
+          isPeriodRangeComplete(mainRange)
+            ? defaultCompareRange(mainRange)
+            : null
+        );
         setSelectedAirportB(selectedAirport);
         setSelectedPositionIdsB([...selectedPositionIds]);
+      } else {
+        setCompareRange(null);
       }
     },
     [mainRange, selectedAirport, selectedPositionIds]
@@ -596,9 +609,12 @@ function AirlineAnalytics({ user, height }) {
 
   const handleApplyAnalytics = useCallback(() => {
     if (!airlineId) return;
+    if (!isPeriodRangeComplete(mainRange)) return;
+    if (compareEnabled && !isPeriodRangeComplete(compareRange)) return;
     setAppliedAnalytics({
       mainRange: { ...mainRange },
-      compareRange: { ...compareRange },
+      compareRange:
+        compareEnabled && compareRange ? { ...compareRange } : null,
       compareEnabled,
       selectedServices: [...selectedServices],
       selectedAirport,
@@ -618,11 +634,13 @@ function AirlineAnalytics({ user, height }) {
     selectedPositionIdsB,
   ]);
 
-  const mainDays =
-    differenceInCalendarDays(mainRange.endDate, mainRange.startDate) + 1;
-  const compareDays =
-    differenceInCalendarDays(compareRange.endDate, compareRange.startDate) +
-    1;
+  const mainDays = isPeriodRangeComplete(mainRange)
+    ? differenceInCalendarDays(mainRange.endDate, mainRange.startDate) + 1
+    : null;
+  const compareDays = isPeriodRangeComplete(compareRange)
+    ? differenceInCalendarDays(compareRange.endDate, compareRange.startDate) +
+      1
+    : null;
 
   const period1Label = appliedAnalytics
     ? formatPeriodHuman(appliedAnalytics.mainRange)
@@ -652,7 +670,9 @@ function AirlineAnalytics({ user, height }) {
           </button>
 
           <span className={classes.periodSummaryInline}>
-            {formatPeriodHuman(mainRange)} ({mainDays} дн.)
+            {isPeriodRangeComplete(mainRange)
+              ? `${formatPeriodHuman(mainRange)} (${mainDays} дн.)`
+              : ""}
           </span>
 
           <MUIAutocompleteColor
@@ -793,7 +813,11 @@ function AirlineAnalytics({ user, height }) {
             <Button
               type="button"
               onClick={handleApplyAnalytics}
-              disabled={!airlineId}
+              disabled={
+                !airlineId ||
+                !isPeriodRangeComplete(mainRange) ||
+                (compareEnabled && !isPeriodRangeComplete(compareRange))
+              }
               padding="0 18px"
               height="36px"
               fontSize="13px"
@@ -815,7 +839,9 @@ function AirlineAnalytics({ user, height }) {
             </button>
 
             <span className={classes.periodSummaryInline}>
-              {formatPeriodHuman(compareRange)} ({compareDays} дн.)
+              {isPeriodRangeComplete(compareRange)
+                ? `${formatPeriodHuman(compareRange)} (${compareDays} дн.)`
+                : ""}
             </span>
 
             <MUIAutocompleteColor
