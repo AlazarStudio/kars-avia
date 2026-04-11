@@ -9,14 +9,79 @@
   min-height: 0;
 }
 
+.tabsBar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.filterBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  background: #0057c3;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0 18px;
+  height: 36px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.filterBtn:hover {
+  background: #0047a3;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.appliedPeriodBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  text-align: right;
+}
+
+.appliedPeriodRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #545873;
+  white-space: nowrap;
+  justify-content: flex-end;
+}
+
+.appliedPeriodBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0057c3;
+  background: #e8f0fe;
+  border-radius: 4px;
+  padding: 1px 5px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+
 .tabs {
   position: relative;
   display: flex;
-  margin: 30px 0;
   padding: 0;
   list-style-type: none;
   gap: 10px;
   align-items: center;
+  flex: 1;
 }
 
 .tabs::after {

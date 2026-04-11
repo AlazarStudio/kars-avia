@@ -77,6 +77,12 @@ function formatPeriodHuman(range) {
   )}`;
 }
 
+function formatPeriodWithDays(range) {
+  if (!isPeriodRangeComplete(range)) return "";
+  const days = differenceInCalendarDays(range.endDate, range.startDate) + 1;
+  return `${format(range.startDate, "dd.MM.yyyy")} — ${format(range.endDate, "dd.MM.yyyy")} · ${days} дн.`;
+}
+
 const ALL_AIRPORTS_OPTION = { id: null, name: "Все аэропорты", code: "" };
 
 const ALL_SERVICES_OPTION = { id: null, label: "Все услуги", isAll: true };
@@ -165,7 +171,7 @@ function buildAirlineAnalyticsQueryInput(airlineId, snapshot) {
   return input;
 }
 
-function AirlineAnalytics({ user, height }) {
+function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodChange }) {
   const token = getCookie("token");
 
   const [mainRange, setMainRange] = useState(null);
@@ -186,6 +192,13 @@ function AirlineAnalytics({ user, height }) {
   const [selectedPositionIdsB, setSelectedPositionIdsB] = useState([]);
 
   const [appliedAnalytics, setAppliedAnalytics] = useState(null);
+
+  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+  const openSnapshotRef = useRef(null);
+  // Всегда актуальные значения — читаем из рефов в stable-callback'ах
+  const filterStateRef = useRef({});
+  const airlineIdRef = useRef(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -245,9 +258,67 @@ function AirlineAnalytics({ user, height }) {
 
   const airlineId = user?.airlineId || selectedAirline?.id || airlines[0]?.id;
 
+  // Синхронно обновляем рефы на каждом рендере — так stable-callback'ы всегда видят актуальные значения
+  filterStateRef.current = {
+    mainRange, compareRange, compareEnabled, selectedServices,
+    selectedAirport, selectedPositionIds, selectedAirportB, selectedPositionIdsB,
+  };
+  airlineIdRef.current = airlineId;
+
+  // Оповещаем родителя о выбранном периоде (для отображения в шапке над табами)
   useEffect(() => {
-    setAppliedAnalytics(null);
-  }, [airlineId]);
+    if (!appliedAnalytics) { onPeriodChange?.(null); return; }
+    const p1 = formatPeriodWithDays(appliedAnalytics.mainRange);
+    const p2 =
+      appliedAnalytics.compareEnabled && appliedAnalytics.compareRange
+        ? formatPeriodWithDays(appliedAnalytics.compareRange)
+        : null;
+    onPeriodChange?.({ p1, p2 });
+  }, [appliedAnalytics]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Услуга — живой фильтр: применяется сразу без нажатия «Применить»
+  useEffect(() => {
+    setAppliedAnalytics((prev) => {
+      if (!prev) return prev;
+      return { ...prev, selectedServices: [...selectedServices] };
+    });
+  }, [selectedServices]);
+
+  // При смене авиакомпании: если фильтр уже заполнен — применяем сразу, иначе сбрасываем
+  useEffect(() => {
+    const f = filterStateRef.current;
+    if (isPeriodRangeComplete(f?.mainRange)) {
+      setAppliedAnalytics({
+        mainRange: { ...f.mainRange },
+        compareRange: f.compareEnabled && f.compareRange ? { ...f.compareRange } : null,
+        compareEnabled: f.compareEnabled,
+        selectedServices: [...f.selectedServices],
+        selectedAirport: f.selectedAirport,
+        selectedPositionIds: [...f.selectedPositionIds],
+        selectedAirportB: f.selectedAirportB,
+        selectedPositionIdsB: [...f.selectedPositionIdsB],
+      });
+    } else {
+      setAppliedAnalytics(null);
+    }
+  }, [airlineId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Когда модалка открывается — фиксируем snapshot текущих значений
+  useEffect(() => {
+    if (filterOpen) {
+      const f = filterStateRef.current;
+      openSnapshotRef.current = {
+        mainRange: f.mainRange ? { ...f.mainRange } : null,
+        compareRange: f.compareRange ? { ...f.compareRange } : null,
+        compareEnabled: f.compareEnabled,
+        selectedAirport: f.selectedAirport,
+        selectedPositionIds: [...f.selectedPositionIds],
+        selectedAirportB: f.selectedAirportB,
+        selectedPositionIdsB: [...f.selectedPositionIdsB],
+      };
+      setDiscardConfirmOpen(false);
+    }
+  }, [filterOpen]);
 
   const { data: airportsData } = useQuery(GET_AIRPORTS_RELAY, {
     context: {
@@ -589,22 +660,23 @@ function AirlineAnalytics({ user, height }) {
   );
 
   const handleCompareToggle = useCallback(
-    (event) => {
-      const next = event.target.checked;
+    () => {
+      const f = filterStateRef.current;
+      const next = !f.compareEnabled;
       setCompareEnabled(next);
       if (next) {
         setCompareRange(
-          isPeriodRangeComplete(mainRange)
-            ? defaultCompareRange(mainRange)
+          isPeriodRangeComplete(f.mainRange)
+            ? { ...f.mainRange, key: "selection" }
             : null
         );
-        setSelectedAirportB(selectedAirport);
-        setSelectedPositionIdsB([...selectedPositionIds]);
+        setSelectedAirportB(f.selectedAirport);
+        setSelectedPositionIdsB([...(f.selectedPositionIds || [])]);
       } else {
         setCompareRange(null);
       }
     },
-    [mainRange, selectedAirport, selectedPositionIds]
+    [] // stable — читает из filterStateRef
   );
 
   const handleApplyAnalytics = useCallback(() => {
@@ -634,6 +706,58 @@ function AirlineAnalytics({ user, height }) {
     selectedPositionIdsB,
   ]);
 
+  // Stable — читает из refs, не зависит от state в closure
+  const hasDraftChanges = useCallback(() => {
+    const s = openSnapshotRef.current;
+    if (!s) return false;
+    const f = filterStateRef.current;
+    const rangesEqual = (a, b) => {
+      if (!a && !b) return true;
+      if (!a || !b) return false;
+      return (
+        new Date(a.startDate).getTime() === new Date(b.startDate).getTime() &&
+        new Date(a.endDate).getTime() === new Date(b.endDate).getTime()
+      );
+    };
+    return (
+      !rangesEqual(f.mainRange, s.mainRange) ||
+      !rangesEqual(f.compareRange, s.compareRange) ||
+      f.compareEnabled !== s.compareEnabled ||
+      (f.selectedAirport?.id ?? null) !== (s.selectedAirport?.id ?? null) ||
+      JSON.stringify(f.selectedPositionIds) !== JSON.stringify(s.selectedPositionIds) ||
+      (f.selectedAirportB?.id ?? null) !== (s.selectedAirportB?.id ?? null) ||
+      JSON.stringify(f.selectedPositionIdsB) !== JSON.stringify(s.selectedPositionIdsB)
+    );
+  }, []); // stable
+
+  const handleModalCloseAttempt = useCallback(() => {
+    if (hasDraftChanges()) {
+      setDiscardConfirmOpen(true);
+    } else {
+      onFilterClose?.();
+    }
+  }, [hasDraftChanges, onFilterClose]);
+
+  const handleDiscardAndClose = useCallback(() => {
+    const s = openSnapshotRef.current;
+    if (s) {
+      setMainRange(s.mainRange);
+      setCompareRange(s.compareRange);
+      setCompareEnabled(s.compareEnabled);
+      setSelectedAirport(s.selectedAirport);
+      setSelectedPositionIds(s.selectedPositionIds);
+      setSelectedAirportB(s.selectedAirportB);
+      setSelectedPositionIdsB(s.selectedPositionIdsB);
+    }
+    setDiscardConfirmOpen(false);
+    onFilterClose?.();
+  }, [onFilterClose]);
+
+  const handleApplyAndClose = useCallback(() => {
+    handleApplyAnalytics();
+    onFilterClose?.();
+  }, [handleApplyAnalytics, onFilterClose]);
+
   const mainDays = isPeriodRangeComplete(mainRange)
     ? differenceInCalendarDays(mainRange.endDate, mainRange.startDate) + 1
     : null;
@@ -659,286 +783,222 @@ function AirlineAnalytics({ user, height }) {
 
   return (
     <div className={classes.pageWrap} style={height ? { height } : undefined}>
-      <div className={classes.filtersStrip}>
-        <div className={classes.filtersRow}>
-          <button
-            type="button"
-            className={classes.periodButton}
-            onClick={openMainPicker}
-          >
-            {compareEnabled ? "Период 1" : "Период"}
-          </button>
+      {/* Модалка фильтров (управляется из Analytics.jsx через filterOpen / onFilterClose) */}
+      {filterOpen && (
+        <div className={classes.filterModalOverlay} onClick={handleModalCloseAttempt}>
+          <div className={classes.filterModalCard} onClick={(e) => e.stopPropagation()}>
 
-          <span className={classes.periodSummaryInline}>
-            {isPeriodRangeComplete(mainRange)
-              ? `${formatPeriodHuman(mainRange)} (${mainDays} дн.)`
-              : ""}
-          </span>
+            {/* Заголовок */}
+            <div className={classes.filterModalHeader}>
+              <span className={classes.filterModalTitle}>Фильтры</span>
+              <button type="button" className={classes.filterModalCloseBtn} onClick={handleModalCloseAttempt}>✕</button>
+            </div>
 
-          <MUIAutocompleteColor
-            dropdownWidth="180px"
-            label="Аэропорт"
-            hideLabelOnFocus={false}
-            listboxHeight={280}
-            options={airportAutocompleteOptions}
-            getOptionLabel={(option) =>
-              option ? `${option.code || ""} ${option.name || ""}`.trim() : ""
-            }
-            isOptionEqualToValue={(option, value) =>
-              (option?.id ?? null) === (value?.id ?? null) &&
-              (option?.name ?? "") === (value?.name ?? "")
-            }
-            renderOption={(optionProps, option) => {
-              const isAll =
-                option.name === "Все аэропорты" || option.code === "";
+            {/* Тело с overflow-y:auto чтобы скролилось при нужде */}
+            <div className={classes.filterModalBody}>
 
-              if (isAll) {
-                return (
-                  <li {...optionProps} key={option.id ?? "all-airports"}>
-                    <span style={{ color: "black" }}>{option.name}</span>
-                  </li>
-                );
-              }
+              {/* ─── Период 1 ─── */}
+              <div className={classes.filterModalPeriodCard}>
+                <span className={classes.filterModalPeriodLabel}>
+                  {compareEnabled ? "Период 1" : "Период"}
+                </span>
+                <button type="button" className={classes.periodButtonModal} onClick={openMainPicker}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  {isPeriodRangeComplete(mainRange)
+                    ? `${formatPeriodHuman(mainRange)}  ·  ${mainDays} дн.`
+                    : "Выбрать период"}
+                </button>
 
-              const labelText = `${option.code || ""} ${option.name || ""}`.trim();
-              const words = labelText.split(" ");
+                <div className={classes.filterModalRow2col}>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label="Аэропорт"
+                    hideLabelOnFocus={false}
+                    listboxHeight={220}
+                    disablePortal={false}
+                    options={airportAutocompleteOptions}
+                    getOptionLabel={(option) =>
+                      option ? `${option.code || ""} ${option.name || ""}`.trim() : ""
+                    }
+                    isOptionEqualToValue={(option, value) =>
+                      (option?.id ?? null) === (value?.id ?? null) &&
+                      (option?.name ?? "") === (value?.name ?? "")
+                    }
+                    renderOption={(optionProps, option) => {
+                      const isAll = option.name === "Все аэропорты" || option.code === "";
+                      if (isAll) return <li {...optionProps} key={option.id ?? "all-airports"}><span style={{ color: "black" }}>{option.name}</span></li>;
+                      const words = `${option.code || ""} ${option.name || ""}`.trim().split(" ");
+                      return (
+                        <li {...optionProps} key={option.id}>
+                          {words.map((w, i) => <span key={i} style={{ color: i === 0 ? "black" : "gray", marginRight: "4px" }}>{w}</span>)}
+                        </li>
+                      );
+                    }}
+                    value={selectedAirport ?? ALL_AIRPORTS_OPTION}
+                    onChange={(_, newValue) => {
+                      setSelectedAirport(!newValue || newValue.id == null || newValue.name === "Все аэропорты" ? null : newValue);
+                    }}
+                  />
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label="Должности"
+                    hideLabelOnFocus={false}
+                    listboxHeight={220}
+                    disablePortal={false}
+                    options={positionOptionsWithAll}
+                    getOptionLabel={(option) => option?.label ?? ""}
+                    isOptionEqualToValue={(option, value) => (option?.id ?? null) === (value?.id ?? null)}
+                    renderOption={(optionProps, option) => {
+                      if (option?.isAll) return <li {...optionProps} key="all-positions"><span style={{ color: "black" }}>{option.label}</span></li>;
+                      return <li {...optionProps} key={option.id}><span style={{ color: "black" }}>{option.label}</span></li>;
+                    }}
+                    value={selectedPositionAutocompleteValue}
+                    onChange={(_, newValue) => {
+                      setSelectedPositionIds(!newValue || newValue.isAll || newValue.id == null ? [] : [newValue.id]);
+                    }}
+                  />
+                </div>
 
-              return (
-                <li {...optionProps} key={option.id}>
-                  {words.map((word, index) => (
-                    <span
-                      key={index}
-                      style={{
-                        color: index === 0 ? "black" : "gray",
-                        marginRight: "4px",
+                {/* ─── Кнопка добавления сравнения — внизу карточки (только когда не активно) ─── */}
+                {!compareEnabled && (
+                  <button
+                    type="button"
+                    className={classes.addCompareBtn}
+                    onClick={handleCompareToggle}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Сравнить с другим периодом
+                  </button>
+                )}
+              </div>
+
+              {/* ─── Период 2 ─── */}
+              {compareEnabled && (
+                <div className={classes.filterModalPeriodCard} data-period="2">
+                  <span className={classes.filterModalPeriodLabel}>Период 2</span>
+                  <button type="button" className={classes.periodButtonModal} onClick={openCompareRangePicker}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    {isPeriodRangeComplete(compareRange)
+                      ? `${formatPeriodHuman(compareRange)}  ·  ${compareDays} дн.`
+                      : "Выбрать период"}
+                  </button>
+
+                  <div className={classes.filterModalRow2col}>
+                    <MUIAutocompleteColor
+                      dropdownWidth="100%"
+                      label="Аэропорт"
+                      hideLabelOnFocus={false}
+                      listboxHeight={220}
+                      disablePortal={false}
+                      options={airportAutocompleteOptions}
+                      getOptionLabel={(option) =>
+                        option ? `${option.code || ""} ${option.name || ""}`.trim() : ""
+                      }
+                      isOptionEqualToValue={(option, value) =>
+                        (option?.id ?? null) === (value?.id ?? null) &&
+                        (option?.name ?? "") === (value?.name ?? "")
+                      }
+                      renderOption={(optionProps, option) => {
+                        const isAll = option.name === "Все аэропорты" || option.code === "";
+                        if (isAll) return <li {...optionProps} key={option.id ?? "all-airports-b"}><span style={{ color: "black" }}>{option.name}</span></li>;
+                        const words = `${option.code || ""} ${option.name || ""}`.trim().split(" ");
+                        return (
+                          <li {...optionProps} key={option.id}>
+                            {words.map((w, i) => <span key={i} style={{ color: i === 0 ? "black" : "gray", marginRight: "4px" }}>{w}</span>)}
+                          </li>
+                        );
                       }}
-                    >
-                      {word}
-                    </span>
-                  ))}
-                </li>
-              );
-            }}
-            value={selectedAirport ?? ALL_AIRPORTS_OPTION}
-            onChange={(event, newValue) => {
-              if (
-                !newValue ||
-                newValue.id == null ||
-                newValue.name === "Все аэропорты"
-              ) {
-                setSelectedAirport(null);
-              } else {
-                setSelectedAirport(newValue);
-              }
-            }}
-          />
+                      value={selectedAirportB ?? ALL_AIRPORTS_OPTION}
+                      onChange={(_, newValue) => {
+                        setSelectedAirportB(!newValue || newValue.id == null || newValue.name === "Все аэропорты" ? null : newValue);
+                      }}
+                    />
+                    <MUIAutocompleteColor
+                      dropdownWidth="100%"
+                      label="Должности"
+                      hideLabelOnFocus={false}
+                      listboxHeight={220}
+                      disablePortal={false}
+                      options={positionOptionsWithAll}
+                      getOptionLabel={(option) => option?.label ?? ""}
+                      isOptionEqualToValue={(option, value) => (option?.id ?? null) === (value?.id ?? null)}
+                      renderOption={(optionProps, option) => {
+                        if (option?.isAll) return <li {...optionProps} key="all-positions-b"><span style={{ color: "black" }}>{option.label}</span></li>;
+                        return <li {...optionProps} key={option.id}><span style={{ color: "black" }}>{option.label}</span></li>;
+                      }}
+                      value={selectedPositionAutocompleteValueB}
+                      onChange={(_, newValue) => {
+                        setSelectedPositionIdsB(!newValue || newValue.isAll || newValue.id == null ? [] : [newValue.id]);
+                      }}
+                    />
+                  </div>
 
-          <MUIAutocompleteColor
-            dropdownWidth="180px"
-            label="Услуги"
-            hideLabelOnFocus={false}
-            listboxHeight={240}
-            options={serviceOptionsWithAll}
-            getOptionLabel={(option) => option?.label ?? ""}
-            isOptionEqualToValue={(option, value) =>
-              (option?.id ?? null) === (value?.id ?? null)
-            }
-            renderOption={(optionProps, option) => {
-              if (option?.isAll) {
-                return (
-                  <li {...optionProps} key="all-services">
-                    <span style={{ color: "black" }}>{option.label}</span>
-                  </li>
-                );
-              }
-              return (
-                <li {...optionProps} key={option.id}>
-                  <span style={{ color: "black" }}>{option.label}</span>
-                </li>
-              );
-            }}
-            value={selectedServiceAutocompleteValue}
-            onChange={(event, newValue) => {
-              if (!newValue || newValue.isAll || newValue.id == null) {
-                setSelectedServices([]);
-              } else {
-                setSelectedServices([newValue.id]);
-              }
-            }}
-          />
+                  {/* ─── Убрать сравнение — внизу карточки Период 2 ─── */}
+                  <button
+                    type="button"
+                    className={`${classes.addCompareBtn} ${classes.addCompareBtnActive}`}
+                    onClick={handleCompareToggle}
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Убрать сравнение
+                  </button>
+                </div>
+              )}
+            </div>
 
-          <MUIAutocompleteColor
-            dropdownWidth="180px"
-            label="Должности"
-            hideLabelOnFocus={false}
-            listboxHeight={240}
-            options={positionOptionsWithAll}
-            getOptionLabel={(option) => option?.label ?? ""}
-            isOptionEqualToValue={(option, value) =>
-              (option?.id ?? null) === (value?.id ?? null)
-            }
-            renderOption={(optionProps, option) => {
-              if (option?.isAll) {
-                return (
-                  <li {...optionProps} key="all-positions">
-                    <span style={{ color: "black" }}>{option.label}</span>
-                  </li>
-                );
-              }
-              return (
-                <li {...optionProps} key={option.id}>
-                  <span style={{ color: "black" }}>{option.label}</span>
-                </li>
-              );
-            }}
-            value={selectedPositionAutocompleteValue}
-            onChange={(event, newValue) => {
-              if (!newValue || newValue.isAll || newValue.id == null) {
-                setSelectedPositionIds([]);
-              } else {
-                setSelectedPositionIds([newValue.id]);
-              }
-            }}
-          />
+            {/* Футер */}
+            <div className={classes.filterModalFooter}>
+              <button type="button" className={classes.filterModalCancelBtn} onClick={handleModalCloseAttempt}>
+                Отмена
+              </button>
+              <Button
+                type="button"
+                onClick={handleApplyAndClose}
+                disabled={
+                  !airlineId ||
+                  !isPeriodRangeComplete(mainRange) ||
+                  (compareEnabled && !isPeriodRangeComplete(compareRange))
+                }
+                padding="0 28px"
+                height="40px"
+                fontSize="14px"
+                fontWeight="600"
+              >
+                Применить
+              </Button>
+            </div>
 
-          <div className={classes.compareApplyGroup}>
-            <label className={classes.compareCheckbox}>
-              <input
-                type="checkbox"
-                checked={compareEnabled}
-                onChange={handleCompareToggle}
-              />
-              <span>Сравнить</span>
-            </label>
-            <Button
-              type="button"
-              onClick={handleApplyAnalytics}
-              disabled={
-                !airlineId ||
-                !isPeriodRangeComplete(mainRange) ||
-                (compareEnabled && !isPeriodRangeComplete(compareRange))
-              }
-              padding="0 18px"
-              height="36px"
-              fontSize="13px"
-              fontWeight="600"
-            >
-              Применить
-            </Button>
+            {/* Подтверждение сброса */}
+            {discardConfirmOpen && (
+              <div className={classes.discardOverlay}>
+                <div className={classes.discardCard}>
+                  <p className={classes.discardText}>
+                    Вы изменили параметры фильтра, но не применили их. Закрыть без сохранения?
+                  </p>
+                  <div className={classes.discardActions}>
+                    <button type="button" className={classes.discardContinueBtn} onClick={() => setDiscardConfirmOpen(false)}>
+                      Продолжить редактирование
+                    </button>
+                    <button type="button" className={classes.discardCloseBtn} onClick={handleDiscardAndClose}>
+                      Закрыть без сохранения
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+      )}
 
-        {compareEnabled ? (
-          <div className={classes.filtersRowCompare}>
-            <button
-              type="button"
-              className={classes.periodButton}
-              onClick={openCompareRangePicker}
-            >
-              Период 2
-            </button>
-
-            <span className={classes.periodSummaryInline}>
-              {isPeriodRangeComplete(compareRange)
-                ? `${formatPeriodHuman(compareRange)} (${compareDays} дн.)`
-                : ""}
-            </span>
-
-            <MUIAutocompleteColor
-              dropdownWidth="180px"
-              label="Аэропорт"
-              hideLabelOnFocus={false}
-              listboxHeight={280}
-              options={airportAutocompleteOptions}
-              getOptionLabel={(option) =>
-                option ? `${option.code || ""} ${option.name || ""}`.trim() : ""
-              }
-              isOptionEqualToValue={(option, value) =>
-                (option?.id ?? null) === (value?.id ?? null) &&
-                (option?.name ?? "") === (value?.name ?? "")
-              }
-              renderOption={(optionProps, option) => {
-                const isAll =
-                  option.name === "Все аэропорты" || option.code === "";
-
-                if (isAll) {
-                  return (
-                    <li {...optionProps} key={option.id ?? "all-airports-b"}>
-                      <span style={{ color: "black" }}>{option.name}</span>
-                    </li>
-                  );
-                }
-
-                const labelText = `${option.code || ""} ${option.name || ""}`.trim();
-                const words = labelText.split(" ");
-
-                return (
-                  <li {...optionProps} key={option.id}>
-                    {words.map((word, index) => (
-                      <span
-                        key={index}
-                        style={{
-                          color: index === 0 ? "black" : "gray",
-                          marginRight: "4px",
-                        }}
-                      >
-                        {word}
-                      </span>
-                    ))}
-                  </li>
-                );
-              }}
-              value={selectedAirportB ?? ALL_AIRPORTS_OPTION}
-              onChange={(event, newValue) => {
-                if (
-                  !newValue ||
-                  newValue.id == null ||
-                  newValue.name === "Все аэропорты"
-                ) {
-                  setSelectedAirportB(null);
-                } else {
-                  setSelectedAirportB(newValue);
-                }
-              }}
-            />
-
-            <MUIAutocompleteColor
-              dropdownWidth="180px"
-              label="Должности"
-              hideLabelOnFocus={false}
-              listboxHeight={240}
-              options={positionOptionsWithAll}
-              getOptionLabel={(option) => option?.label ?? ""}
-              isOptionEqualToValue={(option, value) =>
-                (option?.id ?? null) === (value?.id ?? null)
-              }
-              renderOption={(optionProps, option) => {
-                if (option?.isAll) {
-                  return (
-                    <li {...optionProps} key="all-positions-b">
-                      <span style={{ color: "black" }}>{option.label}</span>
-                    </li>
-                  );
-                }
-                return (
-                  <li {...optionProps} key={option.id}>
-                    <span style={{ color: "black" }}>{option.label}</span>
-                  </li>
-                );
-              }}
-              value={selectedPositionAutocompleteValueB}
-              onChange={(event, newValue) => {
-                if (!newValue || newValue.isAll || newValue.id == null) {
-                  setSelectedPositionIdsB([]);
-                } else {
-                  setSelectedPositionIdsB([newValue.id]);
-                }
-              }}
-            />
-          </div>
-        ) : null}
-      </div>
-
+      {/* DateRangePicker — z-index 1000, поверх модалки */}
       {showPicker ? (
         <DateRangePickerCustom
           value={pickerValue}
@@ -1023,6 +1083,37 @@ function AirlineAnalytics({ user, height }) {
                       : airlines[0]?.name}
                   </p>
                 </h2>
+                {appliedAnalytics && <div className={classes.serviceFilterWrap}>
+                  {serviceDropdownOpen && (
+                    <div className={classes.serviceSelectBackdrop} onClick={() => setServiceDropdownOpen(false)} />
+                  )}
+                  <button
+                    type="button"
+                    className={classes.serviceSelectBtn}
+                    onClick={() => setServiceDropdownOpen((o) => !o)}
+                  >
+                    <span>{selectedServiceAutocompleteValue.label}</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, transition: "transform 0.15s", transform: serviceDropdownOpen ? "rotate(180deg)" : "none" }}>
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {serviceDropdownOpen && (
+                    <ul className={classes.serviceSelectList}>
+                      {serviceOptionsWithAll.map((option) => (
+                        <li
+                          key={option.id ?? "all"}
+                          className={`${classes.serviceSelectOption} ${(selectedServiceAutocompleteValue.id ?? null) === (option.id ?? null) ? classes.serviceSelectOptionActive : ""}`}
+                          onClick={() => {
+                            setSelectedServices(!option || option.isAll || option.id == null ? [] : [option.id]);
+                            setServiceDropdownOpen(false);
+                          }}
+                        >
+                          {option.label}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>}
                 {appliedAnalytics && !analyticsLoading && airlineId ? (
                   <button
                     type="button"

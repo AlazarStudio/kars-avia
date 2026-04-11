@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import classes from "./Analytics.module.css";
 
 import AirlineAnalytics from "../tabs/AirlineAnalytics/AirlineAnalytics";
@@ -16,12 +16,30 @@ const tabs = [
 
 function Analytics({user}) {
   const [activeTab, setActiveTab] = useState("airlines");
-  // console.log(user);
-  
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [appliedPeriod, setAppliedPeriod] = useState(null);
+
+  const openFilter = useCallback(() => setFilterOpen(true), []);
+  const closeFilter = useCallback(() => setFilterOpen(false), []);
+
+  const handleTabChange = (key) => {
+    setActiveTab(key);
+    setFilterOpen(false);
+    setAppliedPeriod(null);
+  };
+
   const renderTabContent = () => {
     switch (activeTab) {
       case "airlines":
-        return <AirlineAnalytics user={user} height={user.airlineId ? "calc(100vh - 125px)" : null}/>;
+        return (
+          <AirlineAnalytics
+            user={user}
+            height={user.airlineId ? "calc(100vh - 125px)" : null}
+            filterOpen={filterOpen}
+            onFilterClose={closeFilter}
+            onPeriodChange={setAppliedPeriod}
+          />
+        );
       // case "dispatchers":
       //   return <DispatcherAnalytics />;
       // case "hotels":
@@ -32,24 +50,56 @@ function Analytics({user}) {
         return null;
     }
   };
+
   return (
     <div className={classes.analyticsContainer}>
       <Header>Аналитика</Header>
-      {user?.airlineId ? null : (
-        <div className={classes.tabs}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`${classes.tabButton} ${
-                activeTab === tab.key ? classes.active : ""
-              }`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
+
+      {/* Строка с табами и кнопкой Фильтры */}
+      <div className={classes.tabsBar}>
+        {user?.airlineId ? (
+          <div />
+        ) : (
+          <div className={classes.tabs}>
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                className={`${classes.tabButton} ${activeTab === tab.key ? classes.active : ""}`}
+                onClick={() => handleTabChange(tab.key)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className={classes.filterGroup}>
+          {appliedPeriod && (
+            <div className={classes.appliedPeriodBlock}>
+              {appliedPeriod.p2 ? (
+                <>
+                  <span className={classes.appliedPeriodRow}>
+                    <span className={classes.appliedPeriodBadge}>Период 1</span>
+                    {appliedPeriod.p1}
+                  </span>
+                  <span className={classes.appliedPeriodRow}>
+                    <span className={classes.appliedPeriodBadge}>Период 2</span>
+                    {appliedPeriod.p2}
+                  </span>
+                </>
+              ) : (
+                <span className={classes.appliedPeriodRow}>{appliedPeriod.p1}</span>
+              )}
+            </div>
+          )}
+          <button type="button" className={classes.filterBtn} onClick={openFilter}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+            </svg>
+            Фильтры
+          </button>
         </div>
-      )}
+      </div>
 
       <div className={classes.tabContent}>{renderTabContent()}</div>
     </div>
