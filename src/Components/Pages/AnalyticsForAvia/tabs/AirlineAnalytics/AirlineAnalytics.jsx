@@ -445,7 +445,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
   const analyticsIsEmpty = !chartAreaHasAnyData && !hasRequestRows;
 
   const [tableSortById, setTableSortById] = useState({});
-  const [pdfExporting, setPdfExporting] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(null);
   const analyticsPdfRef = useRef(null);
 
   const handleExportAnalyticsPdf = useCallback(async () => {
@@ -462,50 +462,195 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
       : null;
 
     try {
-      setPdfExporting(true);
+      setPdfExporting({ current: 0, total: 0 });
       if (scrollEl) {
         scrollEl.style.maxHeight = "none";
         scrollEl.style.overflow = "visible";
         scrollEl.style.overflowY = "visible";
       }
 
-      const { default: html2pdf } = await import("html2pdf.js");
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import("html2canvas"),
+        import("jspdf"),
+      ]);
+
+      const sections = root.querySelectorAll("[data-pdf-section]");
+      if (!sections.length) {
+        setPdfExporting(null);
+        return;
+      }
+
+      const totalSections = sections.length;
+      setPdfExporting({ current: 0, total: totalSections });
+
+      const MARGIN_X = 8;
+      const MARGIN_Y = 10;
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth() - MARGIN_X * 2;
+      const pageH = pdf.internal.pageSize.getHeight() - MARGIN_Y * 2;
+
+      const MAX_CANVAS_HEIGHT = 16000;
+      const SCALE = 1.75;
+      const SECTION_GAP_MM = 4;
+      let isFirstPage = true;
+      let cursorY = 0;
+
+      const ensurePage = () => {
+        if (isFirstPage) {
+          isFirstPage = false;
+          cursorY = 0;
+        } else {
+          pdf.addPage();
+          cursorY = 0;
+        }
+      };
+
+      const addCanvasToPdf = (canvas) => {
+        const imgW = pageW;
+        const imgH = (canvas.height / canvas.width) * imgW;
+
+        if (imgH <= pageH) {
+          const remaining = pageH - cursorY;
+          if (cursorY > 0 && imgH > remaining) {
+            ensurePage();
+          } else if (isFirstPage) {
+            isFirstPage = false;
+            cursorY = 0;
+          }
+
+          const data = canvas.toDataURL("image/jpeg", 0.92);
+          pdf.addImage(data, "JPEG", MARGIN_X, MARGIN_Y + cursorY, imgW, imgH);
+          cursorY += imgH + SECTION_GAP_MM;
+          return;
+        }
+
+        if (cursorY > 0) ensurePage();
+        else if (isFirstPage) { isFirstPage = false; cursorY = 0; }
+
+        let yOffset = 0;
+        while (yOffset < imgH) {
+          if (yOffset > 0) { pdf.addPage(); cursorY = 0; }
+
+          const sourceY = (yOffset / imgH) * canvas.height;
+          const sliceH = Math.min(pageH, imgH - yOffset);
+          const sourceSliceH = (sliceH / imgH) * canvas.height;
+
+          const sliceCanvas = document.createElement("canvas");
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = Math.round(sourceSliceH);
+          const ctx = sliceCanvas.getContext("2d");
+          ctx.drawImage(
+            canvas,
+            0, Math.round(sourceY),
+            canvas.width, Math.round(sourceSliceH),
+            0, 0,
+            sliceCanvas.width, sliceCanvas.height
+          );
+
+          const sliceData = sliceCanvas.toDataURL("image/jpeg", 0.92);
+          pdf.addImage(sliceData, "JPEG", MARGIN_X, MARGIN_Y, imgW, sliceH);
+          yOffset += pageH;
+          cursorY = sliceH + SECTION_GAP_MM;
+        }
+      };
+
+      const h2cOptions = (s) => ({
+        scale: s,
+        useCORS: false,
+        allowTaint: false,
+        imageTimeout: 0,
+        logging: false,
+        letterRendering: true,
+        backgroundColor: "#ffffff",
+        ignoreElements: (el) =>
+          Boolean(el?.classList?.contains("pdfNoCapture")),
+        onclone: (_doc, cloned) => {
+          for (const img of cloned.querySelectorAll("img")) {
+            img.remove();
+          }
+        },
+      });
+
+      for (let i = 0; i < totalSections; i++) {
+        setPdfExporting({ current: i + 1, total: totalSections });
+        await new Promise((r) => setTimeout(r, 0));
+        const section = sections[i];
+        const sectionHeight = section.scrollHeight;
+        const scaledHeight = sectionHeight * SCALE;
+
+        if (scaledHeight <= MAX_CANVAS_HEIGHT) {
+          const canvas = await html2canvas(section, h2cOptions(SCALE));
+          addCanvasToPdf(canvas);
+        } else {
+          const tbodyRows = section.querySelectorAll("tbody tr");
+
+          if (tbodyRows.length > 10) {
+            const ROWS_PER_CHUNK = 40;
+            const rowChunks = [];
+            for (let r = 0; r < tbodyRows.length; r += ROWS_PER_CHUNK) {
+              rowChunks.push(
+                Array.from(tbodyRows).slice(r, r + ROWS_PER_CHUNK)
+              );
+            }
+
+            for (let ci = 0; ci < rowChunks.length; ci++) {
+              const visibleSet = new Set(rowChunks[ci]);
+              const hidden = [];
+              for (const row of tbodyRows) {
+                if (!visibleSet.has(row)) {
+                  row.style.display = "none";
+                  hidden.push(row);
+                }
+              }
+
+              try {
+                const visibleH = section.scrollHeight;
+                const chunkScale =
+                  visibleH * SCALE > MAX_CANVAS_HEIGHT
+                    ? Math.max(1, MAX_CANVAS_HEIGHT / visibleH)
+                    : SCALE;
+                const canvas = await html2canvas(
+                  section,
+                  h2cOptions(chunkScale)
+                );
+                addCanvasToPdf(canvas);
+              } finally {
+                for (const row of hidden) {
+                  row.style.display = "";
+                }
+              }
+            }
+          } else {
+            const reducedScale = Math.min(
+              SCALE,
+              MAX_CANVAS_HEIGHT / sectionHeight
+            );
+            const canvas = await html2canvas(
+              section,
+              h2cOptions(Math.max(1, reducedScale))
+            );
+            addCanvasToPdf(canvas);
+          }
+        }
+      }
+
+      setPdfExporting({ current: totalSections, total: totalSections, saving: true });
+      await new Promise((r) => setTimeout(r, 50));
 
       const airlineTitle =
         selectedAirline?.name ?? airlines[0]?.name ?? "Аналитика";
       const safeSlug = airlineTitle.replace(/[\\/:*?"<>|]+/g, " ").trim();
       const fileName = `Аналитика_${safeSlug}_${format(new Date(), "dd-MM-yyyy_HH-mm")}.pdf`;
-
-      await html2pdf()
-        .set({
-          margin: [10, 8, 10, 8],
-          filename: fileName,
-          image: { type: "jpeg", quality: 0.95 },
-          html2canvas: {
-            scale: 1.75,
-            useCORS: true,
-            logging: false,
-            letterRendering: true,
-            ignoreElements: (el) =>
-              Boolean(el?.classList?.contains("pdfNoCapture")),
-          },
-          jsPDF: { unit: "mm", format: "a4", orientation: "landscape" },
-          pagebreak: {
-            mode: ["css", "legacy"],
-            avoid: [`.${classes.pdfAvoidSplit}`],
-          },
-        })
-        .from(root)
-        .save();
+      pdf.save(fileName);
     } catch (err) {
-      console.error(err);
+      console.error("PDF export error:", err);
     } finally {
       if (scrollEl && prevStyle) {
         scrollEl.style.maxHeight = prevStyle.maxHeight;
         scrollEl.style.overflow = prevStyle.overflow;
         scrollEl.style.overflowY = prevStyle.overflowY;
       }
-      setPdfExporting(false);
+      setPdfExporting(null);
     }
   }, [pdfExporting, selectedAirline?.name, airlines[0]?.name]);
 
@@ -781,8 +926,37 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
     [period1Label, period2Label]
   );
 
+  const pdfPct = pdfExporting
+    ? pdfExporting.total > 0
+      ? Math.round((pdfExporting.current / pdfExporting.total) * 100)
+      : 0
+    : 0;
+
+  const pdfHint = pdfExporting
+    ? pdfExporting.saving
+      ? "Сохранение файла…"
+      : pdfExporting.total > 0
+        ? `Секция ${pdfExporting.current} из ${pdfExporting.total}`
+        : "Подготовка данных…"
+    : "";
+
   return (
     <div className={classes.pageWrap} style={height ? { height } : undefined}>
+      {pdfExporting && (
+        <div className={classes.pdfOverlay}>
+          <div className={classes.pdfOverlayCard}>
+            <p className={classes.pdfOverlayTitle}>Формирование PDF</p>
+            <p className={classes.pdfOverlayPercent}>{pdfPct}%</p>
+            <div className={classes.pdfOverlayBarTrack}>
+              <div
+                className={classes.pdfOverlayBarFill}
+                style={{ width: `${pdfPct}%` }}
+              />
+            </div>
+            <p className={classes.pdfOverlayHint}>{pdfHint}</p>
+          </div>
+        </div>
+      )}
       {/* Модалка фильтров (управляется из Analytics.jsx через filterOpen / onFilterClose) */}
       {filterOpen && (
         <div className={classes.filterModalOverlay} onClick={handleModalCloseAttempt}>
@@ -1062,7 +1236,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
           <div className={classes.graphs}>
             <div ref={analyticsPdfRef} className={classes.graphsPdfRoot}>
               {airlineId && (
-              <div className={classes.headerRow}>
+              <div className={classes.headerRow} data-pdf-section>
                 <h2 className={classes.title}>
                   <div className={classes.circle}>
                     <img
@@ -1107,12 +1281,10 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                   <button
                     type="button"
                     className={`${classes.exportPdfButton} pdfNoCapture`}
-                    disabled={pdfExporting}
+                    disabled={!!pdfExporting}
                     onClick={handleExportAnalyticsPdf}
                   >
-                    {pdfExporting
-                      ? "Формирование…"
-                      : "Выгрузить аналитику"}
+                    Выгрузить аналитику
                   </button>
                 ) : null}
               </div>
@@ -1361,11 +1533,11 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                             key={serviceKey}
                             className={classes.serviceSection}
                           >
-                            <h3 className={classes.serviceSectionTitle}>
-                              {label}
-                            </h3>
-
                             {showPieRow ? (
+                              <div data-pdf-section>
+                              <h3 className={classes.serviceSectionTitle}>
+                                {label}
+                              </h3>
                               <div
                                 className={`${classes.pieChartsRow} ${
                                   hasSideBySideBarInPeriod
@@ -1447,10 +1619,15 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                                   </div>
                                 ) : null}
                               </div>
-                            ) : null}
+                              </div>
+                            ) : (
+                              <h3 className={classes.serviceSectionTitle} data-pdf-section>
+                                {label}
+                              </h3>
+                            )}
 
                             {showPosTable ? (
-                            <div className={classes.breakdownTableSection}>
+                            <div className={classes.breakdownTableSection} data-pdf-section>
                               <h4 className={classes.breakdownTableTitle}>
                                 Должности
                               </h4>
@@ -1648,13 +1825,8 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
 
                             {showAirportBarBlock ? (
                                 <div className={classes.barBlock}>
-                                  <div className={classes.barHeader}>
-                                    <h4 className={classes.barTitle}>
-                                      Аэропорты
-                                    </h4>
-                                  </div>
-                                  <div className={classes.airportBarsStack}>
-                                    {airportChartConfigs.map((cfg) => {
+                                  {(() => {
+                                    const items = airportChartConfigs.map((cfg) => {
                                       let chartEl;
                                       if (showGroupedBars) {
                                         const data =
@@ -1714,29 +1886,52 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                                           />
                                         );
                                       }
-                                      return (
-                                        <div
-                                          key={`${serviceKey}-${cfg.id}`}
-                                          className={`${classes.airportBarChartItem} ${classes.pdfAvoidSplit}`}
-                                        >
-                                          <h5
-                                            className={
-                                              classes.airportBarChartSubtitle
-                                            }
-                                          >
-                                            {cfg.label}
-                                          </h5>
-                                          {chartEl}
+                                      return { cfg, chartEl };
+                                    });
+                                    const rows = [];
+                                    for (let ri = 0; ri < items.length; ri += 2) {
+                                      rows.push(items.slice(ri, ri + 2));
+                                    }
+                                    return rows.map((row, ri) => (
+                                      <div
+                                        key={`${serviceKey}-barrow-${ri}`}
+                                        className={classes.airportBarsRow}
+                                        data-pdf-section
+                                      >
+                                        {ri === 0 && (
+                                          <div className={classes.barHeaderFull}>
+                                            <h4 className={classes.barTitle}>
+                                              Аэропорты
+                                            </h4>
+                                          </div>
+                                        )}
+                                        <div className={classes.airportBarsGrid}>
+                                          {row.map(({ cfg, chartEl }) => (
+                                            <div
+                                              key={`${serviceKey}-${cfg.id}`}
+                                              className={classes.airportBarChartItem}
+                                            >
+                                              <h5
+                                                className={
+                                                  classes.airportBarChartSubtitle
+                                                }
+                                              >
+                                                {cfg.label}
+                                              </h5>
+                                              {chartEl}
+                                            </div>
+                                          ))}
                                         </div>
-                                      );
-                                    })}
-                                  </div>
+                                      </div>
+                                    ));
+                                  })()}
                                 </div>
                             ) : null}
 
                             {showApTable ? (
                                 <div
                                   className={classes.breakdownTableSection}
+                                  data-pdf-section
                                 >
                                   <h4 className={classes.breakdownTableTitle}>
                                     Аэропорты
@@ -2079,7 +2274,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                   </div>
 
                   {segmentTableBlocks.length > 0 ? (
-                    <div className={classes.segmentsSection}>
+                    <div className={classes.segmentsSection} data-pdf-section>
                       <h4 className={classes.segmentsTitle}>
                         Сводка по услугам
                       </h4>
@@ -2175,7 +2370,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                     </div>
                   ) : null}
                   {showUnifiedRequestsTable && hasRequestRows ? (
-                    <div className={classes.breakdownTableSection}>
+                    <div className={classes.breakdownTableSection} data-pdf-section>
                       <h4 className={classes.breakdownTableTitle}>Заявки</h4>
                       {unifiedShowGroupedBars ? (
                         <>
