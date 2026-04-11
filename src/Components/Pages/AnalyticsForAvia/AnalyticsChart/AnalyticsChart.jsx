@@ -528,7 +528,8 @@ function AnalyticsChart({
                     display: "flex",
                     flexDirection: "column",
                     gap: 10,
-                    width: 210
+                    width: 'fit-content',
+                    paddingRight: 20
                   }}>
                     {sortedPayload.map((entry, index) => {
                       const percent = Math.round((entry.payload[dataKey] / total) * 100);

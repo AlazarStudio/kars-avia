@@ -414,6 +414,65 @@
   color: #b45309;
 }
 
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.emptyStateIcon {
+  margin-bottom: 8px;
+}
+
+.emptyStateTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #2e355d;
+}
+
+.emptyStateSubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #9ca4d9;
+  line-height: 1.6;
+}
+
+.emptyStateSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.emptyStateStep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #545873;
+}
+
+.emptyStateStepNum {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #eef2fd;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0057c3;
+  flex-shrink: 0;
+}
+
 .analyticsEmptyState {
   display: flex;
   align-items: center;
@@ -851,6 +910,8 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  /* для центрирования emptyState по высоте */
+  min-height: 0;
 }
 
 .graphs {

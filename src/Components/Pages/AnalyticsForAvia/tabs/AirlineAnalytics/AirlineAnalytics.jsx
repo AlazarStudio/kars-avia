@@ -256,7 +256,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
     setHasMore(newList.length < newTotal);
   };
 
-  const airlineId = user?.airlineId || selectedAirline?.id || airlines[0]?.id;
+  const airlineId = user?.airlineId || selectedAirline?.id || null;
 
   // Синхронно обновляем рефы на каждом рендере — так stable-callback'ы всегда видят актуальные значения
   filterStateRef.current = {
@@ -1024,11 +1024,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                   <li
                     key={airline.id}
                     className={`${classes.listItem} ${
-                      selectedAirline && selectedAirline.id === airline.id
-                        ? classes.active
-                        : !selectedAirline && airline.id === airlines[0]?.id
-                          ? classes.active
-                          : ""
+                      selectedAirline?.id === airline.id ? classes.active : ""
                     }`}
                     onClick={() =>
                       setSelectedAirline({
@@ -1065,23 +1061,16 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
         <div className={classes.content}>
           <div className={classes.graphs}>
             <div ref={analyticsPdfRef} className={classes.graphsPdfRoot}>
+              {airlineId && (
               <div className={classes.headerRow}>
                 <h2 className={classes.title}>
                   <div className={classes.circle}>
                     <img
-                      src={getMediaUrl(
-                        selectedAirline
-                          ? selectedAirline?.images?.[0]
-                          : airlines[0]?.images?.[0]
-                      )}
+                      src={getMediaUrl(selectedAirline?.images?.[0])}
                       alt=""
                     />
                   </div>
-                  <p>
-                    {selectedAirline
-                      ? selectedAirline?.name
-                      : airlines[0]?.name}
-                  </p>
+                  <p>{selectedAirline?.name}</p>
                 </h2>
                 {appliedAnalytics && <div className={classes.serviceFilterWrap}>
                   {serviceDropdownOpen && (
@@ -1127,18 +1116,58 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                   </button>
                 ) : null}
               </div>
+              )}
 
             <div
               className={classes.contentWrapper}
               data-analytics-pdf-scroll
             >
               {!airlineId ? (
-                <p className={classes.periodHint}>Загрузка списка авиакомпаний…</p>
+                <div className={classes.emptyState}>
+                  <div className={classes.emptyStateIcon}>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                      <rect width="56" height="56" rx="16" fill="#eef2fd"/>
+                      <rect x="12" y="34" width="8" height="10" rx="2" fill="#9ca4d9"/>
+                      <rect x="24" y="26" width="8" height="18" rx="2" fill="#6b78c8"/>
+                      <rect x="36" y="18" width="8" height="26" rx="2" fill="#0057c3"/>
+                    </svg>
+                  </div>
+                  <p className={classes.emptyStateTitle}>Выберите авиакомпанию</p>
+                  <p className={classes.emptyStateSubtitle}>
+                    Выберите авиакомпанию из списка слева,<br/>
+                    затем настройте период в фильтрах
+                  </p>
+                  <div className={classes.emptyStateSteps}>
+                    <div className={classes.emptyStateStep}>
+                      <span className={classes.emptyStateStepNum}>1</span>
+                      <span>Выберите авиакомпанию в списке</span>
+                    </div>
+                    <div className={classes.emptyStateStep}>
+                      <span className={classes.emptyStateStepNum}>2</span>
+                      <span>Нажмите «Фильтры» и выберите период</span>
+                    </div>
+                    <div className={classes.emptyStateStep}>
+                      <span className={classes.emptyStateStepNum}>3</span>
+                      <span>Нажмите «Применить» — данные загрузятся</span>
+                    </div>
+                  </div>
+                </div>
               ) : !appliedAnalytics ? (
-                <p className={classes.periodHint}>
-                  Настройте период и фильтры, затем нажмите «Применить» — данные
-                  загрузятся после этого.
-                </p>
+                <div className={classes.emptyState}>
+                  <div className={classes.emptyStateIcon}>
+                    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+                      <rect width="56" height="56" rx="16" fill="#eef2fd"/>
+                      <rect x="12" y="34" width="8" height="10" rx="2" fill="#9ca4d9"/>
+                      <rect x="24" y="26" width="8" height="18" rx="2" fill="#6b78c8"/>
+                      <rect x="36" y="18" width="8" height="26" rx="2" fill="#0057c3"/>
+                    </svg>
+                  </div>
+                  <p className={classes.emptyStateTitle}>Настройте фильтры</p>
+                  <p className={classes.emptyStateSubtitle}>
+                    Нажмите «Фильтры», укажите период<br/>
+                    и нажмите «Применить»
+                  </p>
+                </div>
               ) : analyticsLoading ? (
                 <div className={classes.loaderWrap}>
                   <MUILoader fullHeight="55vh" />
