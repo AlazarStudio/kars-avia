@@ -1,6 +1,10 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import classes from "./MUIAutocomplete.module.css";
 import { Autocomplete, TextField } from "@mui/material";
+import {
+  buildAutocompleteRunnerIds,
+  SCRIPT_RUNNER_ID_ATTR,
+} from "../../../utils/scriptRunnerSelectors";
 
 function MUIAutocomplete({
   label,
@@ -13,13 +17,40 @@ function MUIAutocomplete({
   isDisabled,
   isMultiple,
   listboxHeight,
+  scriptRunnerId,
   children,
   ...props
 }) {
   const [focused, setFocused] = useState(false);
+  const fieldName = props.name || props.id;
+  const placeholder = props.placeholder;
+  const runnerIds = useMemo(
+    () =>
+      buildAutocompleteRunnerIds({
+        explicitId: scriptRunnerId,
+        label,
+        fieldName,
+        placeholder,
+        autocompleteType: "single",
+      }),
+    [scriptRunnerId, label, fieldName, placeholder]
+  );
+  const optionPropsFactory = (option) => ({
+    [SCRIPT_RUNNER_ID_ATTR]: buildAutocompleteRunnerIds({
+      explicitId: scriptRunnerId,
+      label,
+      fieldName,
+      placeholder,
+      autocompleteType: "single",
+      option,
+    }).optionId,
+  });
+
   return (
     <>
       <Autocomplete
+        {...props}
+        {...{ [SCRIPT_RUNNER_ID_ATTR]: runnerIds.rootId }}
         // multiple={isMultiple ? isMultiple : false}
         options={options ? options : []}
         disablePortal
@@ -30,7 +61,9 @@ function MUIAutocomplete({
         // autoComplete={false}
         // aria-autocomplete="none"
         slotProps={{
+          ...(props.slotProps || {}),
           popper: {
+            ...(props.slotProps?.popper || {}),
             modifiers: [
               {
                 name: "preventOverflow",
@@ -38,10 +71,14 @@ function MUIAutocomplete({
                   boundary: "window",
                 },
               },
+              ...((props.slotProps?.popper?.modifiers) || []),
             ],
           },
           listbox: {
+            ...(props.slotProps?.listbox || {}),
+            [SCRIPT_RUNNER_ID_ATTR]: runnerIds.listboxId,
             sx: {
+              ...(props.slotProps?.listbox?.sx || {}),
               fontSize: "14px", // Уменьшаем размер шрифта списка
               padding: "0",
               borderRadius: "10px !important",
@@ -49,7 +86,10 @@ function MUIAutocomplete({
             },
           },
           paper: {
+            ...(props.slotProps?.paper || {}),
+            [SCRIPT_RUNNER_ID_ATTR]: runnerIds.paperId,
             sx: {
+              ...(props.slotProps?.paper?.sx || {}),
               borderRadius: "10px !important",
               "& .MuiAutocomplete-noOptions": {
                 fontSize: "14px", // Уменьшаем шрифт текста "Нет вариантов"
@@ -63,9 +103,37 @@ function MUIAutocomplete({
         value={value}
         onChange={onChange}
         noOptionsText="Ничего не найдено."
+        renderOption={(optionProps, option, state, ownerState) => {
+          const mergedOptionProps = {
+            ...optionProps,
+            ...optionPropsFactory(option),
+          };
+
+          if (props.renderOption) {
+            return props.renderOption(mergedOptionProps, option, state, ownerState);
+          }
+
+          const optionLabel =
+            typeof option === "string"
+              ? option
+              : option?.label ?? option?.name ?? "";
+
+          return (
+            <li
+              {...mergedOptionProps}
+              key={option?.id ?? option?.value ?? option?.label ?? optionLabel}
+            >
+              {optionLabel}
+            </li>
+          );
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
+            inputProps={{
+              ...params.inputProps,
+              [SCRIPT_RUNNER_ID_ATTR]: runnerIds.inputId,
+            }}
             label={
               hideLabelOnFocus && (focused || value)
                 ? ""

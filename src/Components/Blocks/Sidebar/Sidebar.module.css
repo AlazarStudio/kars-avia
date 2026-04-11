@@ -6,7 +6,7 @@
     height: 100vh;
     background-color: #fff;
     box-shadow: 0px 4px 4px 0px #00000040;
-    z-index: 999;
+    z-index: 10000;
     transition: transform 0.3s ease-in-out, transform 0.3s ease-in-out;
     transform: translateX(100%); /* Начальное положение за экраном */
 }

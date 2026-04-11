@@ -471,6 +471,12 @@ function CreateRepresentativeRequest({
   // Клик вне боковой панели закрывает её
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (event.target.closest?.("[data-script-runner-control]")) {
+        return;
+      }
+      if (document.body.dataset.scriptRunnerPickMode === "true") {
+        return;
+      }
       if (isDialogOpen) return;
 
       if (event.target.closest(".MuiSnackbar-root")) {

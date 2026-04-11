@@ -29,6 +29,7 @@ import NotificationsSidebar from "../NotificationsSidebar/NotificationsSidebar";
 import ProfileSidebar from "../ProfileSidebar/ProfileSidebar";
 import NotifyIcon from "../../../shared/icons/NotifyIcon";
 import { authService } from "../../../services/authService";
+import { useScriptRunner } from "../../../contexts/ScriptRunnerContext";
 
 function Header({ children, isExternalUser = false }) {
   const token = authService.getAccessToken();
@@ -49,6 +50,8 @@ function Header({ children, isExternalUser = false }) {
   const [showChooseHotel, setShowChooseHotel] = useState(false);
   const [showProfileSidebar, setShowProfileSidebar] = useState(false);
   const [profileEditMode, setProfileEditMode] = useState(null);
+  const { isAvailable: isScriptRunnerAvailable, openScriptRunner } =
+    useScriptRunner();
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
@@ -360,6 +363,19 @@ function Header({ children, isExternalUser = false }) {
                 </svg>
               </div>
             ) : null}
+            {isScriptRunnerAvailable && (
+              <div
+                className={classes.section_top_elems_notify}
+                onClick={openScriptRunner}
+                title="Script Runner"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#545873" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+              </div>
+            )}
+
             <div
               className={classes.section_top_elems_notify}
               onClick={toggleNotifications}
