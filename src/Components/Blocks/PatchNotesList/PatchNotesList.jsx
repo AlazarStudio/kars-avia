@@ -1,24 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
 import classes from "./PatchNotesList.module.css";
 import Filter from "../Filter/Filter";
-import CreateRequestHotel from "../CreateRequestHotel/CreateRequestHotel";
 import Header from "../Header/Header";
-import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
-import { useQuery, useSubscription } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 import {
   convertToDate,
   GET_ALL_PATCH_NOTES,
-  GET_HOTELS,
-  GET_HOTELS_SUBSCRIPTION,
-  GET_HOTELS_UPDATE_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles";
-import ReactPaginate from "react-paginate";
-import { useLocation, useNavigate } from "react-router-dom";
+import { roles } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
 import InfoTableDataPatchNotes from "../InfoTableDataPatchNotes/InfoTableDataPatchNotes";
 import CreateRequestPatchNote from "../CreateRequestPatchNote/CreateRequestPatchNote";
 import EditRequestPatchNote from "../EditRequestPatchNote/EditRequestPatchNote";
@@ -75,17 +67,6 @@ function PatchNotesList({ children, user, ...props }) {
     setShowRequestSidebar(!showRequestSidebar);
   };
 
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilterData((prevState) => ({
@@ -132,18 +113,18 @@ function PatchNotesList({ children, user, ...props }) {
         <Header>Patch Notes</Header>
 
         <div className={classes.section_searchAndFilter}>
-          <MUITextField
-            label={"Поиск"}
-            className={classes.mainSearch}
-            value={searchQuery}
-            onChange={handleSearch}
-          />
           <DateRangeModalSelector
             width={"150px"}
             initialRange={dateRange}
             onChange={(start, end) =>
               setDateRange({ startDate: start, endDate: end })
             }
+          />
+          <MUITextField
+            label={"Поиск"}
+            className={classes.mainSearch}
+            value={searchQuery}
+            onChange={handleSearch}
           />
           {(user.role === roles.superAdmin 
           ) && (
@@ -170,7 +151,6 @@ function PatchNotesList({ children, user, ...props }) {
         <CreateRequestPatchNote
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
-          addNotification={addNotification}
           refetchPatchNotes={refetch}
         />
 
@@ -179,23 +159,8 @@ function PatchNotesList({ children, user, ...props }) {
           show={showEditPatchNote}
           onClose={() => setShowEditPatchNote(false)}
           patchNoteId={patchNoteId}
-          addNotification={addNotification}
           refetchPatchNotes={refetch}
         />
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

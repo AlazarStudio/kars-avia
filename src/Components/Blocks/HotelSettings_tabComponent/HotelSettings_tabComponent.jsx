@@ -16,13 +16,14 @@ import {
   GET_AIRPORTS_RELAY,
   REORDER_GALLERY,
 } from "../../../../graphQL_requests.js";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
+import { roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { useNavigate } from "react-router-dom";
 import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
-import Notification from "../../Notification/Notification.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 import TextEditor from "../TextEditor/TextEditor.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
@@ -38,6 +39,8 @@ function HotelSettings_tabComponent({ id }) {
   // const [userRole, setUserRole] = useState();
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { showAlert } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const navigate = useNavigate();
 
@@ -171,22 +174,12 @@ function HotelSettings_tabComponent({ id }) {
   // console.log(dataSubscriptionUpd)
 
   const [isLoading, setIsLoading] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const handleEditClick = async () => {
     if (isEditing) {
       setIsLoading(true);
       try {
-        const response = await updateHotel({
+        await updateHotel({
           variables: {
             updateHotelId: hotel.id,
             input: {
@@ -234,16 +227,13 @@ function HotelSettings_tabComponent({ id }) {
           },
         });
 
-        addNotification("Редактирование гостиницы прошло успешно.", "success");
-        refetch()
-        // console.log(response);
-
-        // alert('Данные успешно сохранены');
+        success("Редактирование гостиницы прошло успешно.");
+        refetch();
       } catch (err) {
         console.error("Произошла ошибка при сохранении данных", err);
+        notifyError("Произошла ошибка при сохранении данных");
       } finally {
         setIsLoading(false);
-        // addNotification("Редактирование гостиницы прошло успешно.", "success");
       }
     }
     setIsEditing(!isEditing);
@@ -252,10 +242,11 @@ function HotelSettings_tabComponent({ id }) {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (!file) return;
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
     if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setHotel((prevState) => ({
         ...prevState,
         images: [`${data.hotel.images[0]}`],
@@ -266,14 +257,12 @@ function HotelSettings_tabComponent({ id }) {
       return;
     }
 
-    if (file) {
-      setNewImage(file); // Сохраняем объект файла
-      const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
-      setHotel((prevState) => ({
-        ...prevState,
-        images: [imageUrl], // Обновляем URL изображения для отображения
-      }));
-    }
+    setNewImage(file); // Сохраняем объект файла
+    const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
+    setHotel((prevState) => ({
+      ...prevState,
+      images: [imageUrl], // Обновляем URL изображения для отображения
+    }));
   };
 
   const fileInputRefGallery = useRef(null);
@@ -309,10 +298,10 @@ function HotelSettings_tabComponent({ id }) {
       setHotel((prev) => ({ ...prev, gallery: keepArray }));
       setImagesToDelete([]);
       setShowDeleteGallery(false);
-      addNotification("Изображения удалены.", "success");
+      success("Изображения удалены.");
     } catch (err) {
       console.error("Ошибка при удалении изображений галереи", err);
-      addNotification("Не удалось удалить изображения.", "error");
+      notifyError("Не удалось удалить изображения.");
     }
   };
 
@@ -1257,20 +1246,6 @@ function HotelSettings_tabComponent({ id }) {
             onClose={toggleLogsSidebar}
             name={hotel?.name}
           />
-          {notifications.map((n, index) => (
-            <Notification
-              key={n.id}
-              text={n.text}
-              status={n.status}
-              index={index}
-              time={notifyTime}
-              onClose={() => {
-                setNotifications((prev) =>
-                  prev.filter((notif) => notif.id !== n.id)
-                );
-              }}
-            />
-          ))}
           {showDelete && (
             <DeleteComponent
               remove={handleDeleteHotel}

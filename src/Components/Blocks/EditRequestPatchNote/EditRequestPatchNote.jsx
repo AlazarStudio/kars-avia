@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestPatchNote.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
@@ -12,6 +12,8 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
 import { roles } from "../../../roles.js";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestPatchNote({
   show,
@@ -19,9 +21,10 @@ function EditRequestPatchNote({
   user,
   patchNoteId,
   refetchPatchNotes,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm: confirmDialog } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [formData, setFormData] = useState();
 
@@ -45,24 +48,37 @@ function EditRequestPatchNote({
     },
   });
 
+  const [isEdited, setIsEdited] = useState(false);
+
   useEffect(() => {
     if (show && data) {
       setFormData(data?.getPatchNote);
+      setIsEdited(false);
     }
   }, [show, data]);
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const closeButton = () => {
-    let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-    if (success) {
+  const closeButton = useCallback(async () => {
+    if (!isEdited) {
       onClose();
       setIsEditing(false);
+      return;
     }
-  };
+
+    const ok = await confirmDialog(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (ok) {
+      onClose();
+      setIsEditing(false);
+      setIsEdited(false);
+    }
+  }, [isEdited, confirmDialog, onClose]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (isEditing) setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -78,7 +94,7 @@ function EditRequestPatchNote({
 
       try {
         const isoDate = new Date(formData.date).toISOString();
-        let response_update_tarif = await updatePatchNote({
+        await updatePatchNote({
           variables: {
             updatePatchNoteId: patchNoteId,
             data: {
@@ -89,13 +105,14 @@ function EditRequestPatchNote({
           },
         });
         refetchPatchNotes();
+        setIsEdited(false);
         onClose();
         setIsLoading(false);
-        addNotification("Редактирование патча прошло успешно.", "success");
+        success("Редактирование патча прошло успешно.");
       } catch (error) {
         setIsLoading(false);
         console.error("Произошла ошибка при выполнении запроса:", error);
-        alert("Произошло ошибка при редактировании патча.");
+        notifyError("Произошла ошибка при редактировании патча.");
       }
     }
     setIsEditing(!isEditing);
@@ -114,7 +131,7 @@ function EditRequestPatchNote({
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }
-  }, [show]);
+  }, [show, closeButton]);
 
   const patchDate = formData?.date?.split("T")[0];
 
@@ -165,6 +182,7 @@ function EditRequestPatchNote({
                 anotherDescription={formData?.description || ""}
                 isEditing={isEditing}
                 onChange={(newDescription) => {
+                  if (isEditing) setIsEdited(true);
                   setFormData((prev) => ({
                     ...prev,
                     description: newDescription,

@@ -1,6 +1,9 @@
 import React from "react";
 import { Alert, Backdrop, Button, Snackbar, Stack } from "@mui/material";
 
+/** Выше `Sidebar` (z-index 10000 в Sidebar.module.css), иначе confirm оказывается под панелями */
+const CONFIRM_Z = 11_000;
+
 function MUIConfirm({
   open,
   message,
@@ -23,11 +26,16 @@ function MUIConfirm({
       <Backdrop
         open={open}
         sx={{
-          zIndex: (theme) => theme.zIndex.snackbar - 1,
+          zIndex: CONFIRM_Z - 1,
           backgroundColor: "rgba(0, 0, 0, 0.2)",
         }}
       />
-      <Snackbar open={open} onClose={handleClose} anchorOrigin={anchorOrigin}>
+      <Snackbar
+        open={open}
+        onClose={handleClose}
+        anchorOrigin={anchorOrigin}
+        sx={{ zIndex: CONFIRM_Z }}
+      >
         <Alert
           severity={severity}
           variant={variant}

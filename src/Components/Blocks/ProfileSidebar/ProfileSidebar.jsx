@@ -4,6 +4,7 @@ import classes from "./ProfileSidebar.module.css";
 import Sidebar from "../Sidebar/Sidebar";
 import { getMediaUrl } from "../../../../graphQL_requests";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
 import HomeIcon from "../../../shared/icons/HomeIcon";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import ExitIcon from "../../../shared/icons/ExitIcon";
@@ -107,6 +108,7 @@ function ProfileSidebar({
   onLogout,
 }) {
   const navigate = useNavigate();
+  const { isDialogOpen } = useDialog();
   const sidebarRef = useRef(null);
   const [theme, setTheme] = useState(() => {
     try {
@@ -116,17 +118,6 @@ function ProfileSidebar({
     }
   });
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-        onClose();
-      }
-    };
-    if (show) document.addEventListener("mousedown", handleClickOutside);
-    else document.removeEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, onClose]);
-
   const handleThemeChange = (value) => {
     setTheme(value);
     try {
@@ -134,6 +125,22 @@ function ProfileSidebar({
       document.documentElement.setAttribute("data-theme", value);
     } catch (_) { }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [show, onClose, isDialogOpen]);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);

@@ -1,6 +1,9 @@
 import React from "react";
 import { Alert, Backdrop, Snackbar } from "@mui/material";
 
+/** Выше `Sidebar` (z-index 10000), иначе алерт оказывается под боковыми панелями */
+const ALERT_Z = 11_000;
+
 function MUIAlert({
   open,
   message,
@@ -16,7 +19,7 @@ function MUIAlert({
       <Backdrop
         open={open}
         sx={{
-          zIndex: (theme) => theme.zIndex.snackbar - 1,
+          zIndex: ALERT_Z - 1,
           backgroundColor: "rgba(0, 0, 0, 0.2)",
         }}
       />
@@ -25,6 +28,7 @@ function MUIAlert({
         autoHideDuration={autoHideDuration}
         onClose={onClose}
         anchorOrigin={anchorOrigin}
+        sx={{ zIndex: ALERT_Z }}
       >
         <Alert
           onClose={onClose}

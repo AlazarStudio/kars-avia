@@ -113,6 +113,10 @@ select {
     justify-content: flex-end;
 }
 
+.requestButton button {
+    flex-basis: 50%;
+}
+
 @media (min-width: 0px) and (max-width: 1399px) {
     .requestTitle_name {
         font-size: 20px;
