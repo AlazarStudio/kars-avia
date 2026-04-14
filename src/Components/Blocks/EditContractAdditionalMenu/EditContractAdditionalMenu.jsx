@@ -27,6 +27,7 @@ function EditContractAdditionalMenu({
         disableAutoFocusItem
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
+        sx={{ zIndex: 10050 }}
         PaperProps={{
           className: classes.paper,
         }}
