@@ -31,6 +31,113 @@ function generateSelector(el) {
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const MARKER_HOLD_TO_DRAG_MS = 2000;
+const SCRIPT_RUNNER_EXPORT_VERSION = 1;
+const SCRIPT_RUNNER_LIBRARY_TYPE = "script-runner-library";
+const SCRIPT_RUNNER_SINGLE_TYPE = "script-runner-script";
+
+function isPlainObject(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function isValidActionItem(action) {
+  return isPlainObject(action) && typeof action.type === "string";
+}
+
+function isValidActionsArray(actions) {
+  return Array.isArray(actions) && actions.every(isValidActionItem);
+}
+
+function makeSafeFileName(name, fallback = "script-runner") {
+  const safe = String(name ?? "")
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
+    .replace(/\s+/g, " ")
+    .slice(0, 120);
+  return safe || fallback;
+}
+
+function getUniqueScriptName(existingNames, preferredName) {
+  const taken = new Set(existingNames);
+  const baseName = String(preferredName ?? "").trim() || "Новый скрипт";
+  if (!taken.has(baseName)) return baseName;
+  let nextName = `${baseName} (copy)`;
+  if (!taken.has(nextName)) return nextName;
+  let i = 2;
+  while (taken.has(`${baseName} (copy ${i})`)) i += 1;
+  return `${baseName} (copy ${i})`;
+}
+
+function buildLibraryExportPayload(scripts) {
+  return {
+    type: SCRIPT_RUNNER_LIBRARY_TYPE,
+    version: SCRIPT_RUNNER_EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    scripts,
+  };
+}
+
+function buildSingleScriptExportPayload(name, actions) {
+  return {
+    type: SCRIPT_RUNNER_SINGLE_TYPE,
+    version: SCRIPT_RUNNER_EXPORT_VERSION,
+    exportedAt: new Date().toISOString(),
+    name,
+    actions,
+  };
+}
+
+function triggerJsonDownload(fileName, payload) {
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function parseLibraryPayload(payload) {
+  if (!isPlainObject(payload)) {
+    throw new Error("Некорректный формат файла библиотеки");
+  }
+  if (payload.type !== SCRIPT_RUNNER_LIBRARY_TYPE) {
+    throw new Error("Файл не является экспортом библиотеки Script Runner");
+  }
+  if (payload.version !== SCRIPT_RUNNER_EXPORT_VERSION) {
+    throw new Error("Неподдерживаемая версия файла библиотеки");
+  }
+  if (!isPlainObject(payload.scripts)) {
+    throw new Error("В файле библиотеки отсутствует объект scripts");
+  }
+  const normalized = {};
+  Object.entries(payload.scripts).forEach(([name, actions]) => {
+    if (!isValidActionsArray(actions)) {
+      throw new Error(`Скрипт "${name}" содержит некорректные действия`);
+    }
+    normalized[String(name)] = actions;
+  });
+  return normalized;
+}
+
+function parseSingleScriptPayload(payload) {
+  if (!isPlainObject(payload)) {
+    throw new Error("Некорректный формат файла скрипта");
+  }
+  if (payload.type !== SCRIPT_RUNNER_SINGLE_TYPE) {
+    throw new Error("Файл не является экспортом отдельного скрипта");
+  }
+  if (payload.version !== SCRIPT_RUNNER_EXPORT_VERSION) {
+    throw new Error("Неподдерживаемая версия файла скрипта");
+  }
+  if (!isValidActionsArray(payload.actions)) {
+    throw new Error("В файле скрипта отсутствует корректный массив actions");
+  }
+  const scriptName = String(payload.name ?? "").trim() || "Импортированный скрипт";
+  return { name: scriptName, actions: payload.actions };
+}
 
 function getElementCenter(el) {
   const rect = el.getBoundingClientRect();
@@ -719,6 +826,20 @@ const IconEyeOff = () => (
     <path d="m1 1 22 22" />
   </svg>
 );
+const IconDownload = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v12" />
+    <polyline points="7 11 12 16 17 11" />
+    <path d="M4 21h16" />
+  </svg>
+);
+const IconUpload = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 21V9" />
+    <polyline points="7 13 12 8 17 13" />
+    <path d="M4 3h16" />
+  </svg>
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  ScriptRunner
@@ -726,6 +847,7 @@ const IconEyeOff = () => (
 function ScriptRunner({ show, onClose }) {
   const barRef = useRef(null);
   const pickOverlayRef = useRef(null);
+  const importInputRef = useRef(null);
 
   // ── Body style injection ─────────────────────────────────────────────────────
   useLayoutEffect(() => {
@@ -955,6 +1077,8 @@ function ScriptRunner({ show, onClose }) {
   const [saveName, setSaveName] = useState("");
   const [editingScriptName, setEditingScriptName] = useState(null);
   const [visibleScriptName, setVisibleScriptName] = useState(null);
+  const [importMode, setImportMode] = useState("library");
+  const [scriptsNotice, setScriptsNotice] = useState(null);
 
   const reloadSaved = () => {
     const saved = {};
@@ -996,6 +1120,104 @@ function ScriptRunner({ show, onClose }) {
     const scriptActions = savedScripts[name] ?? [];
     runScript(scriptActions);
   };
+
+  const mergeScriptsWithRename = useCallback((baseScripts, incomingScripts) => {
+    const merged = { ...baseScripts };
+    const existingNames = new Set(Object.keys(merged));
+    let importedCount = 0;
+    let renamedCount = 0;
+
+    Object.entries(incomingScripts).forEach(([name, scriptActions]) => {
+      const uniqueName = getUniqueScriptName(existingNames, name);
+      if (uniqueName !== name) renamedCount += 1;
+      merged[uniqueName] = scriptActions;
+      existingNames.add(uniqueName);
+      importedCount += 1;
+    });
+
+    return { merged, importedCount, renamedCount };
+  }, []);
+
+  const exportLibrary = useCallback(() => {
+    const payload = buildLibraryExportPayload(savedScripts);
+    triggerJsonDownload(
+      `${makeSafeFileName("script-runner-library")}.json`,
+      payload
+    );
+    setScriptsNotice({
+      type: "success",
+      text: `Экспортировано скриптов: ${Object.keys(savedScripts).length}`,
+    });
+  }, [savedScripts]);
+
+  const exportSingleScript = useCallback((name) => {
+    const actionsForScript = savedScripts[name];
+    if (!isValidActionsArray(actionsForScript)) return;
+    const payload = buildSingleScriptExportPayload(name, actionsForScript);
+    triggerJsonDownload(
+      `${makeSafeFileName(name, "script-runner-script")}.json`,
+      payload
+    );
+    setScriptsNotice({
+      type: "success",
+      text: `Скрипт "${name}" экспортирован`,
+    });
+  }, [savedScripts]);
+
+  const triggerImport = useCallback((mode) => {
+    setImportMode(mode);
+    setScriptsNotice(null);
+    if (!importInputRef.current) return;
+    importInputRef.current.value = "";
+    importInputRef.current.click();
+  }, []);
+
+  const importLibraryPayload = useCallback((payloadObject) => {
+    const scriptsFromFile = parseLibraryPayload(payloadObject);
+    const { merged, importedCount, renamedCount } = mergeScriptsWithRename(
+      savedScripts,
+      scriptsFromFile
+    );
+    persistSavedScripts(merged);
+    setScriptsNotice({
+      type: "success",
+      text: `Импортировано ${importedCount} скриптов${renamedCount ? `, переименовано: ${renamedCount}` : ""}`,
+    });
+  }, [mergeScriptsWithRename, persistSavedScripts, savedScripts]);
+
+  const importSingleScriptPayload = useCallback((payloadObject) => {
+    const parsed = parseSingleScriptPayload(payloadObject);
+    const { merged } = mergeScriptsWithRename(savedScripts, {
+      [parsed.name]: parsed.actions,
+    });
+    const addedName = Object.keys(merged).find((key) => !savedScripts[key] || merged[key] !== savedScripts[key]);
+    persistSavedScripts(merged);
+    setScriptsNotice({
+      type: "success",
+      text: `Скрипт "${addedName ?? parsed.name}" импортирован`,
+    });
+  }, [mergeScriptsWithRename, persistSavedScripts, savedScripts]);
+
+  const handleImportFileChange = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const payload = JSON.parse(text);
+      if (importMode === "single") {
+        importSingleScriptPayload(payload);
+      } else {
+        importLibraryPayload(payload);
+      }
+    } catch (error) {
+      setScriptsNotice({
+        type: "error",
+        text: error?.message || "Не удалось импортировать файл",
+      });
+    } finally {
+      e.target.value = "";
+    }
+  }, [importLibraryPayload, importMode, importSingleScriptPayload]);
 
   const deleteScript = (name) => {
     const nextScripts = { ...savedScripts };
@@ -1725,6 +1947,14 @@ function ScriptRunner({ show, onClose }) {
         defaultX={20} defaultY={80}
         defaultW={700} defaultH={440} minW={280} minH={200}
       >
+        <input
+          ref={importInputRef}
+          data-script-runner-control
+          type="file"
+          accept="application/json,.json"
+          style={{ display: "none" }}
+          onChange={handleImportFileChange}
+        />
         <div data-script-runner-control className={classes.saveSection}>
           <div data-script-runner-control className={classes.saveLabel}>
             Новый скрипт
@@ -1740,6 +1970,38 @@ function ScriptRunner({ show, onClose }) {
               <IconSave /> Создать
             </button>
           </div>
+          <div data-script-runner-control className={classes.saveRow}>
+            <button
+              data-script-runner-control
+              className={classes.secondaryBtn}
+              onClick={exportLibrary}
+            >
+              <IconDownload /> Экспорт библиотеки
+            </button>
+            <button
+              data-script-runner-control
+              className={classes.secondaryBtn}
+              onClick={() => triggerImport("library")}
+            >
+              <IconUpload /> Импорт библиотеки
+            </button>
+            <button
+              data-script-runner-control
+              className={classes.secondaryBtn}
+              onClick={() => triggerImport("single")}
+            >
+              <IconUpload /> Импорт скрипта
+            </button>
+          </div>
+          {scriptsNotice?.text && (
+            <div
+              data-script-runner-control
+              className={classes.scriptMeta}
+              style={{ marginTop: 8, color: scriptsNotice.type === "error" ? "#d9534f" : undefined }}
+            >
+              {scriptsNotice.text}
+            </div>
+          )}
         </div>
 
         <div data-script-runner-control className={classes.scriptsDivider} />
@@ -1789,6 +2051,14 @@ function ScriptRunner({ show, onClose }) {
                     onClick={() => toggleScriptPreview(name)}
                   >
                     {visibleScriptName === name ? <IconEyeOff /> : <IconEye />}
+                  </button>
+                  <button
+                    data-script-runner-control
+                    className={classes.iconBtn}
+                    title="Экспортировать скрипт"
+                    onClick={() => exportSingleScript(name)}
+                  >
+                    <IconDownload />
                   </button>
                   <button data-script-runner-control className={`${classes.iconBtn} ${classes.iconBtnDel}`}
                     onClick={() => deleteScript(name)}>✕</button>
