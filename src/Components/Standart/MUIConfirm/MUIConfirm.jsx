@@ -1,8 +1,33 @@
 import React from "react";
-import { Alert, Backdrop, Button, Snackbar, Stack } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+} from "@mui/material";
+import HelpOutlineRoundedIcon from "@mui/icons-material/HelpOutlineRounded";
+import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 
-/** Выше `Sidebar` (z-index 10000 в Sidebar.module.css), иначе confirm оказывается под панелями */
-const CONFIRM_Z = 11_000;
+const SEVERITY_CONFIG = {
+  warning: {
+    icon: <HelpOutlineRoundedIcon sx={{ color: "text.secondary", fontSize: 28 }} />,
+    confirmColor: "primary",
+  },
+  error: {
+    icon: <ErrorOutlineRoundedIcon sx={{ color: "error.main", fontSize: 28 }} />,
+    confirmColor: "error",
+  },
+  info: {
+    icon: <HelpOutlineRoundedIcon sx={{ color: "text.secondary", fontSize: 28 }} />,
+    confirmColor: "primary",
+  },
+  success: {
+    icon: <HelpOutlineRoundedIcon sx={{ color: "text.secondary", fontSize: 28 }} />,
+    confirmColor: "primary",
+  },
+};
 
 function MUIConfirm({
   open,
@@ -12,49 +37,33 @@ function MUIConfirm({
   confirmText = "Да",
   cancelText = "Нет",
   severity = "warning",
-  anchorOrigin = { vertical: "top", horizontal: "center" },
-  variant = "filled",
-  minWidth = 320,
 }) {
-  const handleClose = (event, reason) => {
-    if (reason === "clickaway") return;
-    onClose();
-  };
+  const { icon, confirmColor } = SEVERITY_CONFIG[severity] ?? SEVERITY_CONFIG.warning;
 
   return (
-    <>
-      <Backdrop
-        open={open}
-        sx={{
-          zIndex: CONFIRM_Z - 1,
-          backgroundColor: "rgba(0, 0, 0, 0.2)",
-        }}
-      />
-      <Snackbar
-        open={open}
-        onClose={handleClose}
-        anchorOrigin={anchorOrigin}
-        sx={{ zIndex: CONFIRM_Z }}
-      >
-        <Alert
-          severity={severity}
-          variant={variant}
-          sx={{ width: "100%", minWidth, alignItems: "center" }}
-          action={
-            <Stack direction="row" spacing={1}>
-              <Button color="inherit" size="small" onClick={onClose}>
-                {cancelText}
-              </Button>
-              <Button color="inherit" size="small" onClick={onConfirm} autoFocus>
-                {confirmText}
-              </Button>
-            </Stack>
-          }
-        >
-          {message}
-        </Alert>
-      </Snackbar>
-    </>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{ sx: { borderRadius: 2 } }}
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, pb: 1 }}>
+        {icon}
+        Подтверждение
+      </DialogTitle>
+      <DialogContent sx={{ pt: 0 }}>
+        <DialogContentText>{message}</DialogContentText>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button variant="outlined" color="inherit" onClick={onClose}>
+          {cancelText}
+        </Button>
+        <Button variant="contained" color={confirmColor} onClick={onConfirm} autoFocus>
+          {confirmText}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }
 
