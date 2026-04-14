@@ -74,6 +74,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
   const [showAddSidebar, setShowAddSidebar] = useState(false);
   const [showEditSidebar, setShowEditSidebar] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
+  const [editInitialMode, setEditInitialMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState(null);
@@ -139,6 +140,13 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
 
   const handleEdit = (item, index) => {
     setEditIndex(index);
+    setEditInitialMode(true);
+    setShowEditSidebar(true);
+  };
+
+  const handleView = (item, index) => {
+    setEditIndex(index);
+    setEditInitialMode(false);
     setShowEditSidebar(true);
   };
 
@@ -229,6 +237,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
         cities={cities}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
+        onRowClick={handleView}
       />
 
       <TransferPriceSidebarForm
@@ -251,6 +260,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
         airports={airports}
         cities={cities}
         onSubmit={handleSidebarSubmit}
+        initialEditMode={editInitialMode}
         onDelete={(item) => {
           setShowEditSidebar(false);
           setEditIndex(null);

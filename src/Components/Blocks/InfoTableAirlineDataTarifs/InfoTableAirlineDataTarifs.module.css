@@ -278,6 +278,15 @@
     gap: 10px;
 }
 
+.contractRowName {
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.contractRowName:hover {
+    color: #0057C3;
+}
+
 .expandButton {
     display: flex;
     align-items: center;
@@ -310,57 +319,127 @@
 /* Ряд с категориями тарифов */
 .pricesRow {
     display: flex;
-    /* Перенос при нехватке места */
     flex-wrap: wrap;
-    /* justify-content: space-between; */
-    gap: 20px;
+    gap: 8px;
 }
 
-/* Каждый блок категории цены */
-.priceItem {
-    flex-basis: 18%;
+/* Карточка цены */
+.priceChip {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    /* border: 1px solid var(--hover-gray); */
-    background-color: var(--hover-gray);
-    padding: 8px 12px;
+    align-items: flex-start;
+    gap: 2px;
+    border: 1px solid #e4e4ef;
     border-radius: 10px;
-    /* min-width: 100px; */
-    transition: all ease-in-out 0.3s;
+    padding: 10px 16px;
+    background: #fff;
+    min-width: 110px;
+    transition: box-shadow 0.2s ease;
 }
 
-/* .priceItem:hover {
-    background-color: var(--hover-gray);
-} */
-
-.priceItemLabel {
-    /* font-weight: 500; */
-    font-size: 14px;
+.priceChip:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
 }
 
-.priceItemValue {
-    font-size: 14px;
-    color: #666666;
-    margin-top: 4px;
+.priceChipLabel {
+    font-size: 11px;
+    color: #999;
+    white-space: nowrap;
+    line-height: 1.3;
+}
+
+.priceChipValue {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e;
+    white-space: nowrap;
+    line-height: 1.3;
+    font-family: 'Inter', sans-serif;
+}
+
+.priceChipEmpty {
+    opacity: 0.35;
 }
 
 /* Стили для списка аэропортов */
 .airportList {
-    margin-top: 8px;
-    font-size: 14px;
-    color: #444;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .airportListTitle {
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
     font-size: 14px;
     color: #444;
 }
 
-.airportItem {
-    margin-left: 16px;
+.airportChip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #e4e4ef;
+    border-radius: 10px;
+    padding: 6px 12px 6px 6px;
+    background: #fff;
+    transition: box-shadow 0.2s ease;
+}
+
+.airportChip:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.airportCode {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0057C3;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border-radius: 6px;
+    padding: 4px 8px;
+    min-width: 44px;
+    text-align: center;
+    font-family: 'Inter', monospace;
+}
+
+.airportInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.airportCity {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.3;
+}
+
+.airportName {
+    font-size: 11px;
+    color: #999;
+    line-height: 1.3;
+}
+
+.showMoreBtn {
+    align-self: center;
+    border: 1px solid #e4e4ef;
+    border-radius: 10px;
+    padding: 6px 14px;
+    background: #fff;
+    font-size: 12px;
+    color: #0057C3;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+    white-space: nowrap;
+}
+
+.showMoreBtn:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 

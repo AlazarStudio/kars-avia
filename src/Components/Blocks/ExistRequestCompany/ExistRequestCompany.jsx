@@ -28,6 +28,7 @@ function ExistRequestCompany({
   openDeleteComponent,
   filterList,
   positions,
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
@@ -106,6 +107,10 @@ function ExistRequestCompany({
   }, [chooseObject]);
 
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (show) setIsEditing(initialEditMode);
+  }, [show]);
   const [isLoading, setIsLoading] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);

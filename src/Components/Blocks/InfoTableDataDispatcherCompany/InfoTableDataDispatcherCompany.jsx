@@ -15,6 +15,8 @@ function InfoTableDataDispatcherCompany({
   onOpenAccess,
   onEditDispatcher,
   onDeleteDispatcher,
+  onViewDepartment,
+  onViewDispatcher,
   accessMenu,
 }) {
   const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
@@ -26,7 +28,11 @@ function InfoTableDataDispatcherCompany({
           <div key={group.id || `no-department-${index}`}>
             <div className={classes.InfoTable_data}>
               <div className={`${classes.InfoTable_data_elem}`}>
-                <div className={classes.InfoTable_data_elem_title}>
+                <div
+                  className={classes.InfoTable_data_elem_title}
+                  style={onViewDepartment && !group.isNoDepartment ? { cursor: "pointer" } : undefined}
+                  onClick={onViewDepartment && !group.isNoDepartment ? () => onViewDepartment(group) : undefined}
+                >
                   {group.name}
                 </div>
               </div>
@@ -72,7 +78,11 @@ function InfoTableDataDispatcherCompany({
                         className={classes.employeeAvatar}
                       />
                     </div>
-                    <div className={classes.employeeInfo}>
+                    <div
+                      className={classes.employeeInfo}
+                      style={onViewDispatcher ? { cursor: "pointer" } : undefined}
+                      onClick={onViewDispatcher ? () => onViewDispatcher(dispatcher) : undefined}
+                    >
                       <div className={classes.employeeName}>
                         {dispatcher.name}
                       </div>

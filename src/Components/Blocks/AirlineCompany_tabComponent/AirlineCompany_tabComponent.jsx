@@ -166,8 +166,17 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
     setshowAddCategory(!showAddCategory);
   };
 
+  const [otdelEditMode, setOtdelEditMode] = useState(false);
+
+  const toggleViewCategory = (category) => {
+    setSelectedCategory(category);
+    setOtdelEditMode(false);
+    setShowEditCategory(true);
+  };
+
   const toggleEditCategory = (category) => {
     setSelectedCategory(category);
+    setOtdelEditMode(true);
     setShowEditCategory(true);
   };
 
@@ -263,8 +272,17 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
     setShowEditCategory(false);
   };
 
+  const [employeeEditMode, setEmployeeEditMode] = useState(false);
+
+  const toggleViewNomer = (user, department) => {
+    setSelectedNomer({ user, department });
+    setEmployeeEditMode(false);
+    setShowEditNomer(true);
+  };
+
   const toggleEditNomer = (user, department) => {
     setSelectedNomer({ user, department });
+    setEmployeeEditMode(true);
     setShowEditNomer(true);
   };
 
@@ -378,7 +396,9 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
           accessMenu={accessMenu}
           airlineId={id}
           toggleRequestSidebar={toggleEditCategory}
+          onViewOtdel={toggleViewCategory}
           toggleRequestEditNumber={toggleEditNomer}
+          onViewEmployee={toggleViewNomer}
           requests={filteredRequestsEmployees}
           openDeleteComponent={openDeleteComponent}
           openDeleteNomerComponent={openDeleteNomerComponent}
@@ -418,6 +438,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         onSubmit={handleEditNomer}
         addTarif={addTarif}
         positions={positions}
+        initialEditMode={employeeEditMode}
         openDeleteComponent={openDeleteNomerComponent}
       />
       {(!user?.airlineId || accessMenu.userUpdate) && (
@@ -429,6 +450,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
             onClose={() => setShowEditCategory(false)}
             category={selectedCategory}
             onSubmit={handleEditCategory}
+            initialEditMode={otdelEditMode}
           />
         </>
       )}

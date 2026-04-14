@@ -90,6 +90,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
   const [showEditNomer, setShowEditNomer] = useState(false);
   const [selectedNomer, setSelectedNomer] = useState({});
+  const [nomerEditMode, setNomerEditMode] = useState(false);
 
   const [deleteHotelRoom] = useMutation(DELETE_HOTEL_ROOM, {
     context: {
@@ -257,8 +258,15 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     setShowEditCategory(false);
   };
 
+  const toggleViewNomer = (nomer, category) => {
+    setSelectedNomer({ nomer, category });
+    setNomerEditMode(false);
+    setShowEditNomer(true);
+  };
+
   const toggleEditNomer = (nomer, category, reserve, active) => {
     setSelectedNomer({ nomer, category, reserve, active });
+    setNomerEditMode(true);
     setShowEditNomer(true);
   };
 
@@ -371,6 +379,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
             user={user}
             toggleRequestSidebar={toggleEditCategory}
             toggleRequestEditNumber={toggleEditNomer}
+            onViewNomer={toggleViewNomer}
             requests={categoryFilteredRequests}
             openDeleteComponent={openDeleteComponent}
             openDeleteNomerComponent={openDeleteNomerComponent}
@@ -405,6 +414,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
             addTarif={addTarif}
             setAddTarif={setAddTarif}
             openDeleteNomerComponent={openDeleteNomerComponent}
+            initialEditMode={nomerEditMode}
           />
           <EditRequestCategory
             id={id}

@@ -17,6 +17,7 @@ function TransferPriceSidebarForm({
   cities = [],
   onSubmit,
   onDelete,
+  initialEditMode = false,
 }) {
   const { confirm, showAlert, isDialogOpen } = useDialog();
   const sidebarRef = useRef(null);
@@ -48,7 +49,7 @@ function TransferPriceSidebarForm({
       setFormData(getInitialFormData());
       setIsEdited(false);
       if (isEditMode) {
-        setIsEditing(false);
+        setIsEditing(initialEditMode);
       }
     }
   }, [show, isEditMode, getInitialFormData]);

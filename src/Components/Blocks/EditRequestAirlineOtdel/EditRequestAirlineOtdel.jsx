@@ -21,6 +21,7 @@ function EditRequestAirlineOtdel({
   category,
   positions, // Все доступные должности
   onSubmit,
+  initialEditMode = false,
 }) {
   const { confirm, showAlert, isDialogOpen } = useDialog();
   const { success, error: notifyError } = useToast();
@@ -34,6 +35,10 @@ function EditRequestAirlineOtdel({
 
   const [isEdited, setIsEdited] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (show) setIsEditing(initialEditMode);
+  }, [show]);
 
   const [formData, setFormData] = useState({
     type: category?.name || "",

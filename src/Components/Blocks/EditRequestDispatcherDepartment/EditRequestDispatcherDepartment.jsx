@@ -19,12 +19,17 @@ function EditRequestDispatcherDepartment({
   refetchDepartments,
   department,
   onUpdated,
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
   const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (show) setIsEditing(initialEditMode);
+  }, [show]);
 
   const [formData, setFormData] = useState({
     name: department?.name || "",

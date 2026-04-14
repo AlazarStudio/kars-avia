@@ -14,6 +14,7 @@ function InfoTableAllDataTarifs({
   activeTab,
   pageInfo,
   toggleRequestSidebar,
+  onEditRow,
   toggleEditTarifsCategory,
   requests,
   openDeleteContract,
@@ -123,7 +124,7 @@ function InfoTableAllDataTarifs({
                             <EditPencilIcon
                                 cursor="pointer"
                                 style={{width:"fit-content", height:"fit-content"}}
-                                onClick={() => handleObject(item.id)}
+                                onClick={() => onEditRow ? onEditRow(item.id) : handleObject(item.id)}
                             />
                             <DeleteIcon
                                 cursor="pointer"

@@ -47,6 +47,7 @@ function EditRequestAirlineContract({
   tarif, // тут приходит airlineContractId
   canEdit = false, // Флаг для разрешения редактирования
   onRequestDelete, // колбэк: закрыть сайдбар и открыть модал удаления договора
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
@@ -105,6 +106,10 @@ function EditRequestAirlineContract({
 
   // Управление режимом редактирования (как в исходнике)
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (show) setIsEditing(initialEditMode);
+  }, [show]);
   const [activeTab, setActiveTab] = useState("Общая");
   const [anchorEl, setAnchorEl] = useState(null);
   const menuRef = useRef(null);

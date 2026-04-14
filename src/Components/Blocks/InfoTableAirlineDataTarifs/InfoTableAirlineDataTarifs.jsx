@@ -5,11 +5,36 @@ import { roles } from "../../../roles";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 
+const SHOW_LIMIT = 20;
+
+function ChipsList({ items, renderChip }) {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? items : items.slice(0, SHOW_LIMIT);
+  const hidden = items.length - SHOW_LIMIT;
+
+  return (
+    <div className={classes.airportList}>
+      {visible.map((item, i) => renderChip(item, i))}
+      {!showAll && hidden > 0 && (
+        <button className={classes.showMoreBtn} onClick={() => setShowAll(true)}>
+          + ещё {hidden}
+        </button>
+      )}
+      {showAll && items.length > SHOW_LIMIT && (
+        <button className={classes.showMoreBtn} onClick={() => setShowAll(false)}>
+          Скрыть
+        </button>
+      )}
+    </div>
+  );
+}
+
 function InfoTableAirlineDataTarifs({
   toggleRequestSidebar,
   toggleEditTarifsCategory,
   onDeleteTarifsCategory,
   toggleEditMealPrices,
+  onRowClick,
   requests,
   mealPrices,
   user,
@@ -57,7 +82,12 @@ function InfoTableAirlineDataTarifs({
                     />
                   </svg>
                 </div>
-                <span>{item.name}</span>
+                <span
+                  className={onRowClick ? classes.contractRowName : undefined}
+                  onClick={onRowClick ? () => onRowClick(item) : undefined}
+                >
+                  {item.name}
+                </span>
               </div>
               <div className={classes.contractRowActions}>
                 <EditPencilIcon
@@ -78,160 +108,79 @@ function InfoTableAirlineDataTarifs({
             {expandedRows.has(index) && (
               <>
                 {/* <p style={{ marginTop: "10px" }}>Категории - цены</p> */}
-                <div className={classes.airportListTitle}>Категории - цены</div>
-                {/* Ряд с категориями цен */}
+                <div className={classes.airportListTitle}>Категории — цены</div>
                 {user?.role !== roles.hotelAdmin && (
                   <div className={classes.pricesRow}>
-                    {item.prices?.priceApartment !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Апартаменты
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceApartment?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceStudio !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>Студия</span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceStudio?.toLocaleString() ?? 0} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceLuxe !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>Люкс</span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceLuxe?.toLocaleString() ?? 0} ₽
+                    {[
+                      { label: "Апартаменты",    value: item.prices?.priceApartment },
+                      { label: "Студия",          value: item.prices?.priceStudio },
+                      { label: "Люкс",            value: item.prices?.priceLuxe },
+                      { label: "Одноместный",     value: item.prices?.priceOneCategory },
+                      { label: "Двухместный",     value: item.prices?.priceTwoCategory },
+                      { label: "Трёхместный",     value: item.prices?.priceThreeCategory },
+                      { label: "Четырёхместный",  value: item.prices?.priceFourCategory },
+                      { label: "Пятиместный",     value: item.prices?.priceFiveCategory },
+                      { label: "Шестиместный",    value: item.prices?.priceSixCategory },
+                      { label: "Семиместный",     value: item.prices?.priceSevenCategory },
+                      { label: "Восьмиместный",   value: item.prices?.priceEightCategory },
+                    ]
+                      .filter(({ value }) => value !== undefined)
+                      .sort((a, b) => (b.value > 0 ? 1 : 0) - (a.value > 0 ? 1 : 0))
+                      .map(({ label, value }) => (
+                      <div key={label} className={`${classes.priceChip} ${!value ? classes.priceChipEmpty : ""}`}>
+                        <span className={classes.priceChipLabel}>{label}</span>
+                        <span className={classes.priceChipValue}>
+                          {value?.toLocaleString()} ₽
                         </span>
                       </div>
-                    )}
-                    {item.prices?.priceOneCategory !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Одноместный
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceOneCategory?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceTwoCategory !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Двухместный
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceTwoCategory?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceThreeCategory !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Трехместный
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceThreeCategory?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceFourCategory !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Четырехместный
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceFourCategory?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceFiveCategory !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Пятиместный
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceFiveCategory?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceSixCategory !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Шестиместный
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceSixCategory?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceSevenCategory !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Семиместный
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceSevenCategory?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
-                    {item.prices?.priceEightCategory !== undefined && (
-                      <div className={classes.priceItem}>
-                        <span className={classes.priceItemLabel}>
-                          Восьмиместный
-                        </span>
-                        <span className={classes.priceItemValue}>
-                          {item.prices.priceEightCategory?.toLocaleString()} ₽
-                        </span>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 )}
 
-                {/* <p style={{ marginTop: "10px" }}>Питание - цены</p> */}
-                <div className={classes.airportListTitle}>Питание - цены</div>
+                <div className={classes.airportListTitle}>Питание — цены</div>
                 <div className={classes.pricesRow}>
-                  {item.mealPrice?.breakfast !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>Завтрак</span>
-                      <span className={classes.priceItemValue}>
-                        {item.mealPrice?.breakfast?.toLocaleString()} ₽
+                  {[
+                    { label: "Завтрак", value: item.mealPrice?.breakfast },
+                    { label: "Обед",    value: item.mealPrice?.lunch },
+                    { label: "Ужин",    value: item.mealPrice?.dinner },
+                  ]
+                    .filter(({ value }) => value !== undefined)
+                    .sort((a, b) => (b.value > 0 ? 1 : 0) - (a.value > 0 ? 1 : 0))
+                    .map(({ label, value }) => (
+                    <div key={label} className={`${classes.priceChip} ${!value ? classes.priceChipEmpty : ""}`}>
+                      <span className={classes.priceChipLabel}>{label}</span>
+                      <span className={classes.priceChipValue}>
+                        {value?.toLocaleString()} ₽
                       </span>
                     </div>
-                  )}
-                  {item.mealPrice?.lunch !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>Обед</span>
-                      <span className={classes.priceItemValue}>
-                        {item.mealPrice?.lunch?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
-                  {item.mealPrice?.dinner !== undefined && (
-                    <div className={classes.priceItem}>
-                      <span className={classes.priceItemLabel}>Ужин</span>
-                      <span className={classes.priceItemValue}>
-                        {item.mealPrice?.dinner?.toLocaleString()} ₽
-                      </span>
-                    </div>
-                  )}
+                  ))}
                 </div>
 
                 {/* Блок аэропортов (если есть) */}
                 {item.airports && item.airports.length > 0 && (
-                  <div className={classes.airportList}>
-                    <div className={classes.airportListTitle}>Аэропорты:</div>
-                    {item.airports.map((airportItem) => (
-                      <div key={airportItem.id} className={classes.airportItem}>
-                        {airportItem.airport.city} — {airportItem.airport.name}{" "}
-                        {airportItem.airport.code &&
-                          `(${airportItem.airport.code})`}
-                      </div>
-                    ))}
-                  </div>
+                  <>
+                    <div className={classes.airportListTitle}>Аэропорты</div>
+                    <ChipsList
+                      items={item.airports}
+                      renderChip={(airportItem) => (
+                        <div key={airportItem.id} className={classes.airportChip}>
+                          {airportItem.airport.code && (
+                            <span className={classes.airportCode}>
+                              {airportItem.airport.code}
+                            </span>
+                          )}
+                          <div className={classes.airportInfo}>
+                            <span className={classes.airportCity}>
+                              {airportItem.airport.city}
+                            </span>
+                            <span className={classes.airportName}>
+                              {airportItem.airport.name}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    />
+                  </>
                 )}
               </>
             )}

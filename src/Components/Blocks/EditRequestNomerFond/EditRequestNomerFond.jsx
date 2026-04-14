@@ -39,6 +39,7 @@ function EditRequestNomerFond({
   selectedNomer,
   filter,
   openDeleteNomerComponent,
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
@@ -157,6 +158,10 @@ function EditRequestNomerFond({
   }, [show, nomer, hotelTariff]);
 
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (show) setIsEditing(initialEditMode);
+  }, [show]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;

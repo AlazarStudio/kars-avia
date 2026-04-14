@@ -173,16 +173,34 @@ function Company({ user, accessMenu }) {
     },
   });
 
+  const [dispatcherEditMode, setDispatcherEditMode] = useState(false);
+  const [departmentEditMode, setDepartmentEditMode] = useState(false);
+
+  const openViewDepartment = (department) => {
+    setSelectedDepartment(department);
+    setDepartmentEditMode(false);
+    setShowEditDepartment(true);
+  };
+
   const openEditDepartment = (department) => {
     if (!canEdit) return;
     setSelectedDepartment(department);
+    setDepartmentEditMode(true);
     setShowEditDepartment(true);
+  };
+
+  const openViewDispatcher = (dispatcher) => {
+    const index = dispatchers.findIndex((item) => item.id === dispatcher.id);
+    setSelectedDispatcher({ ...dispatcher, index });
+    setDispatcherEditMode(false);
+    setShowEditDispatcher(true);
   };
 
   const openEditDispatcher = (dispatcher) => {
     if (!canEdit) return;
     const index = dispatchers.findIndex((item) => item.id === dispatcher.id);
     setSelectedDispatcher({ ...dispatcher, index });
+    setDispatcherEditMode(true);
     setShowEditDispatcher(true);
   };
 
@@ -346,9 +364,11 @@ function Company({ user, accessMenu }) {
             user={user}
             groups={groups}
             onEditDepartment={openEditDepartment}
+            onViewDepartment={openViewDepartment}
             onDeleteDepartment={openDeleteDepartment}
             onOpenAccess={openAccessDepartment}
             onEditDispatcher={openEditDispatcher}
+            onViewDispatcher={openViewDispatcher}
             onDeleteDispatcher={openDeleteDispatcher}
             accessMenu={accessMenu}
           />
@@ -384,6 +404,7 @@ function Company({ user, accessMenu }) {
             openDeleteComponent={openDeleteDispatcherFromSidebar}
             positions={positions}
             departments={departments}
+            initialEditMode={dispatcherEditMode}
             onUpdated={() => {
               refetchDispatchers();
               refetchDepartments();
@@ -405,6 +426,7 @@ function Company({ user, accessMenu }) {
             onClose={() => setShowEditDepartment(false)}
             department={selectedDepartment}
             refetchDepartments={refetchDepartments}
+            initialEditMode={departmentEditMode}
             onUpdated={() => refetchDepartments()}
           />
         )}

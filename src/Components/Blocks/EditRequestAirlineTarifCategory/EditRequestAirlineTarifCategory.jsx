@@ -32,6 +32,7 @@ function EditRequestAirlineTarifCategory({
   user,
   type,
   onDelete,
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
@@ -131,6 +132,7 @@ function EditRequestAirlineTarifCategory({
     if (show && tarif) {
       setFormData(getInitialFormData());
       setIsEdited(false);
+      setIsEditing(initialEditMode);
     }
   }, [show, tarif?.id, getInitialFormData]);
 

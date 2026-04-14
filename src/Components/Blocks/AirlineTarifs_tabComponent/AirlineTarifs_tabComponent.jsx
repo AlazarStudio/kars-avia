@@ -166,8 +166,17 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     setShowAddTarifCategory(!showAddTarifCategory);
   };
 
+  const [openInEditMode, setOpenInEditMode] = useState(false);
+
   const toggleEditTarifs = (tarif) => {
     setSelectedTarif(tarif);
+    setOpenInEditMode(true);
+    setEditShowAddTarif(true);
+  };
+
+  const toggleViewTarifs = (tarif) => {
+    setSelectedTarif(tarif);
+    setOpenInEditMode(false);
     setEditShowAddTarif(true);
   };
 
@@ -471,20 +480,12 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         <InfoTableAirlineDataTarifs
           user={user}
           toggleEditTarifsCategory={toggleEditTarifs}
+          onRowClick={toggleViewTarifs}
           onDeleteTarifsCategory={openDeleteContractConfirm}
           requests={filteredRequestsTarif}
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
           toggleTarifs={toggleTarifs}
-          // toggleRequestSidebar={toggleEditTarifs}
-          // toggleEditMealPrices={toggleEditMealPrices}
-          // mealPrices={filteredRequestsMealTarif}
-          // dataSubscriptionUpd={dataSubscriptionUpd}
-          // dataSubscriptionAirUpd={dataSubscriptionAirUpd}
-          // refetch={refetch}
-          // selectedContract={selectedContract}
-          // onOpenContract={onOpenContract}
-          // onBack={onBackFromDetails}
         />
       )}
 
@@ -539,6 +540,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         addTarif={addTarif}
         selectedContract={selectedContract}
         tarif={selectedTarif}
+        initialEditMode={openInEditMode}
         onDelete={() => {
           setEditShowAddTarif(false);
           openDeleteContractConfirm(selectedTarif);

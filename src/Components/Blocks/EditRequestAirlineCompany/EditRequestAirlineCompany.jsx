@@ -30,6 +30,7 @@ function EditRequestAirlineCompany({
   id,
   positions,
   openDeleteComponent,
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
@@ -80,6 +81,7 @@ function EditRequestAirlineCompany({
         department: department || "",
       });
       setShowIMG(selectedUser.images);
+      setIsEditing(initialEditMode);
     }
   }, [show, department, selectedUser]);
 

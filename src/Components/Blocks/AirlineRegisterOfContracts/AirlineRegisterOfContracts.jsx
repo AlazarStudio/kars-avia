@@ -205,8 +205,17 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
     setShowAddTarifCategory(!showAddTarifCategory);
   };
 
+  const [contractEditMode, setContractEditMode] = useState(false);
+
+  const toggleViewTarifs = (tarif) => {
+    setSelectedTarif(tarif);
+    setContractEditMode(false);
+    setEditShowAddTarif(true);
+  };
+
   const toggleEditTarifs = (tarif) => {
     setSelectedTarif(tarif);
+    setContractEditMode(true);
     setEditShowAddTarif(true);
   };
 
@@ -397,7 +406,8 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
             user={user}
             pageInfo={pageInfo}
             activeTab={"airlines"}
-            toggleRequestSidebar={toggleEditTarifs}
+            toggleRequestSidebar={toggleViewTarifs}
+            onEditRow={toggleEditTarifs}
             toggleEditTarifsCategory={toggleEditTarifsCategory}
             requests={addTarif}
             openDeleteComponent={openDeleteComponent}
@@ -451,6 +461,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         addTarif={addTarif}
         tarif={selectedTarif}
         addNotification={addNotification}
+        initialEditMode={contractEditMode}
         onRequestDelete={
           canEdit
             ? () => {

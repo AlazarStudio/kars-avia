@@ -8,7 +8,7 @@ import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { useNavigate } from "react-router-dom";
 import { menuAccess } from "../../../roles";
 
-function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, onOpenSettings, ...props }) {
+function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, onViewOtdel, requests, openDeleteComponent, toggleRequestEditNumber, onViewEmployee, openDeleteNomerComponent, onOpenSettings, ...props }) {
     const navigate = useNavigate();
 
     return (
@@ -20,7 +20,11 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                             className={classes.InfoTable_data}
                         >
                             <div className={`${classes.InfoTable_data_elem}`}>
-                                <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
+                                <div
+                                    className={classes.InfoTable_data_elem_title}
+                                    style={onViewOtdel && !item.isNoDepartment ? { cursor: "pointer" } : undefined}
+                                    onClick={onViewOtdel && !item.isNoDepartment ? () => onViewOtdel(item) : undefined}
+                                >{item.name}</div>
                             </div>
 
                             <div className={classes.infoTable_buttons}>
@@ -39,7 +43,11 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                         <div className={classes.employeeImg}>
                                             <img src={employee.images?.[0] ? getMediaUrl(employee.images[0]) : '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
                                         </div>
-                                        <div className={classes.employeeInfo}>
+                                        <div
+                                            className={classes.employeeInfo}
+                                            style={onViewEmployee ? { cursor: "pointer" } : undefined}
+                                            onClick={onViewEmployee ? () => onViewEmployee(employee, item.name) : undefined}
+                                        >
                                             <div className={classes.employeeName}>{employee.name}</div>
                                             <div className={classes.employeePost}>{employee.role === "AIRLINEADMIN" ? "Администратор" : "Модератор"}</div>
                                             <div className={classes.employeePost}>{employee.position?.name}</div>
