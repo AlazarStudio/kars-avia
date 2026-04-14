@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestPatchNote.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 
 import {
   GET_PATCH_NOTE,
+  convertToDate,
   getCookie,
   UPDATE_PATCH_NOTE,
 } from "../../../../graphQL_requests.js";
@@ -14,6 +15,7 @@ import TextEditor from "../TextEditor/TextEditor.jsx";
 import { roles } from "../../../roles.js";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function EditRequestPatchNote({
   show,
@@ -25,6 +27,7 @@ function EditRequestPatchNote({
   const token = getCookie("token");
   const { confirm: confirmDialog } = useDialog();
   const { success, error: notifyError } = useToast();
+  const canEdit = user.role === roles.superAdmin;
 
   const [formData, setFormData] = useState();
 
@@ -37,6 +40,7 @@ function EditRequestPatchNote({
       },
     },
     variables: { getPatchNoteId: patchNoteId },
+    skip: !patchNoteId,
   });
 
   const [updatePatchNote] = useMutation(UPDATE_PATCH_NOTE, {
@@ -140,64 +144,110 @@ function EditRequestPatchNote({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать патч</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="close" />
+          <CloseIcon />
         </div>
       </div>
 
       {isLoading || loading ? (
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
+      ) : error ? (
+        <div className={classes.requestMiddle}>
+          <div className={classes.requestData}>
+            <div className={classes.formHint}>
+              Не удалось загрузить патч. Попробуйте открыть запись ещё раз.
+            </div>
+          </div>
+        </div>
       ) : (
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название</label>
-              <input
-                type="text"
-                name="name"
-                value={formData?.name || ""}
-                onChange={handleChange}
-                placeholder=""
-                disabled={!isEditing}
-              />
+              {canEdit && isEditing && (
+                <div className={classes.formHint}>
+                  После сохранения изменения сразу появятся в ленте Patch Notes.
+                </div>
+              )}
 
-              <label>Дата</label>
-              <input
-                type="date"
-                name="date"
-                value={patchDate || ""}
-                onChange={handleChange}
-                disabled={!isEditing}
-                placeholder="Дата"
-              />
+              {isEditing ? (
+                <>
+                  <div className={classes.fieldGroup}>
+                    <label>Название</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData?.name || ""}
+                      onChange={handleChange}
+                      placeholder=""
+                      disabled={!isEditing}
+                    />
+                  </div>
 
-              <label>Описание</label>
-              {/* <textarea
-                id="description"
-                name="description"
-                value={formData?.description || ""}
-                onChange={handleChange}
-                disabled={!isEditing}
-              ></textarea> */}
-              <TextEditor
-                anotherDescription={formData?.description || ""}
-                isEditing={isEditing}
-                onChange={(newDescription) => {
-                  if (isEditing) setIsEdited(true);
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: newDescription,
-                  }));
-                }}
-              />
+                  <div className={classes.fieldGroup}>
+                    <label>Дата</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={patchDate || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      placeholder="Дата"
+                    />
+                  </div>
+
+                  <div className={classes.fieldGroup}>
+                    <label>Описание</label>
+                    <TextEditor
+                      anotherDescription={formData?.description || ""}
+                      isEditing={isEditing}
+                      onChange={(newDescription) => {
+                        if (isEditing) setIsEdited(true);
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: newDescription,
+                        }));
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={classes.previewMetaGrid}>
+                    <div className={classes.previewMetaCard}>
+                      <div className={classes.previewMetaLabel}>Версия</div>
+                      <div className={classes.previewMetaValue}>
+                        {formData?.name || "Без названия"}
+                      </div>
+                    </div>
+                    <div className={classes.previewMetaCard}>
+                      <div className={classes.previewMetaLabel}>Дата</div>
+                      <div className={classes.previewMetaValue}>
+                        {formData?.date
+                          ? convertToDate(formData.date, false)
+                          : "Дата не указана"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={classes.previewArticle}>
+                    <div className={classes.previewArticleLabel}>Описание</div>
+                    <div
+                      className={classes.previewArticleContent}
+                      dangerouslySetInnerHTML={{
+                        __html: formData?.description || "<p>Описание отсутствует.</p>",
+                      }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
-          {user.role !== roles.superAdmin ? null : (
+          {canEdit ? (
             <div className={classes.requestButton}>
               <Button
                 type="submit"
                 onClick={handleSubmit}
-                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-                color={!isEditing ? "#3B6C54" : "#fff"}
+                backgroundcolor="#0057C3"
+                color="#fff"
               >
                 {isEditing ? (
                   <>
@@ -210,7 +260,7 @@ function EditRequestPatchNote({
                 )}
               </Button>
             </div>
-          )}
+          ) : null}
         </>
       )}
     </Sidebar>

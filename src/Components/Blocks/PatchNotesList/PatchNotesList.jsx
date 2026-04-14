@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import classes from "./PatchNotesList.module.css";
-import Filter from "../Filter/Filter";
 import Header from "../Header/Header";
 import { useQuery } from "@apollo/client";
 import {
@@ -15,15 +14,13 @@ import InfoTableDataPatchNotes from "../InfoTableDataPatchNotes/InfoTableDataPat
 import CreateRequestPatchNote from "../CreateRequestPatchNote/CreateRequestPatchNote";
 import EditRequestPatchNote from "../EditRequestPatchNote/EditRequestPatchNote";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector";
+import Button from "../../Standart/Button/Button";
 
-function PatchNotesList({ children, user, ...props }) {
+function PatchNotesList({ user }) {
   const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
-  const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
-  const [filterData, setFilterData] = useState({ filterSelect: "" });
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
 
   const [dateRange, setDateRange] = useState({
     startDate: null,
@@ -63,32 +60,28 @@ function PatchNotesList({ children, user, ...props }) {
     setShowCreateSidebar(!showCreateSidebar);
   };
 
-  const toggleRequestSidebar = () => {
-    setShowRequestSidebar(!showRequestSidebar);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFilterData((prevState) => ({
-      ...prevState,
-      [name]: value,
-    }));
-  };
-
-  const handleSearch = async (e) => {
+  const handleSearch = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
   };
 
   const filteredRequests = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
     return companyData.filter((request) => {
       const { startDate, endDate } = dateRange;
       const reqDate = new Date(request.date);
+      const plainDescription = request.description
+        ?.replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
 
       const matchesSearch =
-        request.description.includes(searchQuery.toLowerCase()) ||
-        request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        convertToDate(request.date, false).includes(searchQuery.toLowerCase());
+        !normalizedQuery ||
+        plainDescription?.includes(normalizedQuery) ||
+        request.name?.toLowerCase().includes(normalizedQuery) ||
+        convertToDate(request.date, false).toLowerCase().includes(normalizedQuery);
 
       const matchesDate =
         startDate && endDate
@@ -97,9 +90,14 @@ function PatchNotesList({ children, user, ...props }) {
 
       return matchesSearch && matchesDate;
     });
-  }, [isSearching, companyData, filterData, searchQuery, dateRange]);
+  }, [companyData, dateRange, searchQuery]);
 
-  // console.log(dateRange);
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (searchQuery.trim()) count += 1;
+    if (dateRange.startDate && dateRange.endDate) count += 1;
+    return count;
+  }, [dateRange.endDate, dateRange.startDate, searchQuery]);
 
   const [patchNoteId, setPatchNoteId] = useState();
   const [showEditPatchNote, setShowEditPatchNote] = useState(false);
@@ -114,7 +112,7 @@ function PatchNotesList({ children, user, ...props }) {
 
         <div className={classes.section_searchAndFilter}>
           <DateRangeModalSelector
-            width={"150px"}
+            width={"190px"}
             initialRange={dateRange}
             onChange={(start, end) =>
               setDateRange({ startDate: start, endDate: end })
@@ -126,19 +124,15 @@ function PatchNotesList({ children, user, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          {(user.role === roles.superAdmin 
-          ) && (
-            <div className={classes.filter}>
-              <Filter
-                toggleSidebar={toggleCreateSidebar}
-                handleChange={handleChange}
-                filterData={filterData}
-                buttonTitle={"Добавить патч"}
-                needDate={false}
-              />
+          {user.role === roles.superAdmin && (
+            <div className={classes.searchActions}>
+              <Button onClick={toggleCreateSidebar} padding="0 18px">
+                Добавить патч
+              </Button>
             </div>
           )}
         </div>
+
         {loading && <MUILoader />}
         {error && <p>Error: {error.message}</p>}
 

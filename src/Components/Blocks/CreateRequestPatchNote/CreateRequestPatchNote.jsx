@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestPatchNote.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
-  CREATE_HOTEL,
   CREATE_PATCH_NOTE,
   getCookie,
 } from "../../../../graphQL_requests";
@@ -192,34 +191,46 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                placeholder=""
-                onChange={handleChange}
-              />
-              <label>Дата</label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                placeholder="Дата"
-              />
-              <label>Описание</label>
-              <TextEditor
-                anotherDescription={formData.description}
-                isEditing={true}
-                onChange={(newDescription) => {
-                  setIsEdited(true);
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: newDescription,
-                  }));
-                }}
-              />
+              <div className={classes.formHint}>
+                Запись появится в общем списке патчей сразу после сохранения.
+              </div>
+
+              <div className={classes.fieldGroup}>
+                <label>Название</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  placeholder="Например: Улучшили поиск по заявкам"
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className={classes.fieldGroup}>
+                <label>Дата</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  placeholder="Дата"
+                />
+              </div>
+
+              <div className={classes.fieldGroup}>
+                <label>Описание</label>
+                <TextEditor
+                  anotherDescription={formData.description}
+                  isEditing={true}
+                  onChange={(newDescription) => {
+                    setIsEdited(true);
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: newDescription,
+                    }));
+                  }}
+                />
+              </div>
             </div>
           </div>
 

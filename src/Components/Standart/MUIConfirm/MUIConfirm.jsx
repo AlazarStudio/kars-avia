@@ -46,7 +46,9 @@ function MUIConfirm({
       onClose={onClose}
       maxWidth="xs"
       fullWidth
-      PaperProps={{ sx: { borderRadius: 2 } }}
+      sx={{ zIndex: 14000 }}
+      PaperProps={{ sx: { borderRadius: 2, zIndex: 14001 } }}
+      BackdropProps={{ sx: { zIndex: 14000 } }}
     >
       <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1, pb: 1 }}>
         {icon}
