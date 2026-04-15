@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import classes from "./RepresentativeAdminMenu.module.css";
 import { useState } from "react";
 import DelayedText from "../../../Blocks/DelayedText/DelayedText";
+import FAPIcon from "../../../../shared/icons/FAPIcon";
 
 const RepresentativeAdminMenu = ({
   id,
@@ -80,6 +81,16 @@ const RepresentativeAdminMenu = ({
             </div>
           )}
           {!menuOpen && <span className={classes.tooltip}>Заявки</span>}
+        </Link>
+        <Link
+          to={"/fapv2"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""} ${id == "fapv2" && classes.menu_items__activeElem}`}
+        >
+          <div className={classes.svgWrapper}>
+            <FAPIcon />
+          </div>
+          <DelayedText show={menuOpen} delay={200}>ФАП v2</DelayedText>
+          {!menuOpen && <span className={classes.tooltip}>ФАП v2</span>}
         </Link>
         <Link
           to={"/representativeCompany"}

@@ -1,4 +1,6 @@
-# CLAUDE.md — Kars Avia
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Работа с кодом
 
@@ -16,18 +18,9 @@
 
 ## Визуальный стиль
 
-**Если проект уже существует:**
-- Проанализируй существующие компоненты, цвета, шрифты, отступы и паттерны
+- Анализируй существующие компоненты, цвета, шрифты, отступы и паттерны
 - Строго следуй этой стилистике во всех новых элементах
 - Не вноси визуальные изменения если не просят
-
-**Если проект новый:**
-- Найди в интернете как выглядят современные сайты или приложения в этой тематике
-- Изучи какие цвета, типографику и UI-паттерны используют лидеры в этой нише
-- Подбери уникальную палитру под тематику — не шаблонные синий/серый
-- Один цвет доминирует (60-70%), один поддерживающий, один акцентный
-- Современный дизайн: чистые линии, достаточно воздуха, чёткая иерархия
-- Не делай скучно — каждый экран должен выглядеть продуманно и красиво
 
 ## Экономия токенов
 
@@ -35,6 +28,8 @@
 - Без лишних комментариев и резюме после выполнения
 - Если задача понятна — не переспрашивай
 - Думай на английском, отвечай на русском
+
+---
 
 ## О проекте
 
@@ -149,11 +144,48 @@ src/
 
 ## GraphQL
 
-- Все запросы/мутации/подписки — в `graphQL_requests.js`
+- **Все** запросы/мутации/подписки — в одном файле `graphQL_requests.js` (5000+ строк). Перед добавлением нового запроса убедись, что аналогичного нет.
 - HTTP endpoint: `${server}/graphql`
 - WS endpoint: `ws://${path}/graphql`
 - Загрузка файлов: `apollo-upload-client` (createUploadLink)
 - Подписки: `graphql-ws` + `GraphQLWsLink`
+
+## Система прав доступа (двухуровневая)
+
+Права работают на двух уровнях одновременно:
+
+**1. Роль** — грубая фильтрация: что вообще видит пользователь. Определяется через `user.role` (из JWT). `src/constants/access.js` содержит матрицу: какие страницы/действия доступны каждой роли.
+
+**2. `accessMenu`** — точечные feature-флаги внутри роли. Для авиакомпаний берётся из `authUser.effectiveAccessMenu` (GraphQL), для диспетчеров — из `dispatcherDepartment.accessMenu`.
+
+**Поток `accessMenu` по компонентам:**
+```
+Main_Page (запрашивает GET_AUTH_USER_ACCESS / GET_DISPATCHER_DEPARTMENTS)
+  → устанавливает state accessMenu
+  → передаёт в MenuDispetcher (видимость пунктов меню)
+  → передаёт в AllRoles → RoleContent → дочерние страницы/блоки
+```
+
+Для авиакомпаний `effectiveAccessMenu` уже учитывает переопределения по должности (позиции), рассчитывается на бэке.
+
+## Настройки доступа отдела (SettingsSidebar)
+
+`src/Components/Blocks/SettingsSidebar/` — боковая панель для редактирования прав доступа отдела. Работает для обоих типов: `type="airline"` и `type="dispatcher"`.
+
+**Архитектура стейта:**
+
+- `accessMenu` — raw API-формат `{ requestMenu: bool, ... }`, загружается из `currentDepartment.accessMenu`
+- `accessStateRef` — ref, в который `AccessPermissionsPanel` непрерывно пишет своё внутреннее состояние (формат секций: `{ squadron: { access, create, ... }, transfer: {...}, ... }`)
+- `buildAccessPayload(internalState)` — конвертер internal → raw API, вызывается при сохранении
+
+**Должности с доступом по разделам (`type="airline"`):**
+
+- `positionAccessMenusByPosId: { [positionId]: { requestMenu, transferMenu, personalMenu } }` — какие из трёх разделов (Эскадрилья, Трансфер, Сотрудники) доступны каждой должности
+- Загружается из `currentDepartment.positionAccessMenus`
+- При сохранении: `positionIds` = `Object.keys(positionAccessMenusByPosId)`, `positionAccessMenus` = массив `{ positionId, accessMenu }`
+- На бэке хранится в модели `PositionOnDepartment` (junction: отдел ↔ должность + встроенный `accessMenu`)
+
+**`AccessPermissionsPanel`** — чисто UI, получает всё через пропсы. Управляет только своим внутренним `state` (секции переключателей) и пишет его в `stateRef`. Для должностей — получает `positionAccessMenusByPosId` + `setPositionAccessMenusByPosId` и управляет ими напрямую через колбэки.
 
 ## Шахматка (Placement)
 
@@ -185,3 +217,5 @@ src/
 - **Стандартные примитивы**: используй компоненты из `src/Components/Standart/` (Button, H1, H2, Layout, RowBlock, ColumnBlock, WidthBlock, CenterBlock, Text)
 - **MUI-обёртки**: `MUIAutocomplete`, `MUILoader`, `MUIAlert`, `MUIConfirm`, `MUISwitch`, `MUITextField` — внутренние обёртки над MUI
 - **Lazy loading**: тяжёлые страницы подключаются через `React.lazy` + `Suspense`
+- **Визуальный disabled**: затемнение элементов при `disabled` делается через `opacity: 0.55` на контейнере (класс `rowDisabled`), а не через MUI-проп `disabled` — это обеспечивает одинаковый вид для включённых и выключённых переключателей
+- **CSS-модули**: каждый компонент имеет свой `.module.css`. Стили соседних компонентов из той же папки могут шариться (напр. `AccessPermissionsPanel` использует `SettingsSidebar.module.css`)

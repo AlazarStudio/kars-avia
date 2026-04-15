@@ -9,8 +9,8 @@ export default function AccessPermissionsPanel({
   isEditing,
   type = "dispatcher",
   positionOptions = [],
-  positionIds = [],
-  setPositionIds,
+  positionAccessMenusByPosId = {},
+  setPositionAccessMenusByPosId,
 }) {
   const b = (v) => !!v;
 
@@ -82,9 +82,31 @@ export default function AccessPermissionsPanel({
   const set = (section, key, value) =>
     setState((s) => ({ ...s, [section]: { ...s[section], [key]: value } }));
 
+  const handlePositionToggle = (posId, field, value) => {
+    setPositionAccessMenusByPosId((prev) => ({
+      ...prev,
+      [posId]: { ...prev[posId], [field]: value },
+    }));
+  };
+
+  const handlePositionSelectionChange = (event, newValue) => {
+    const newIds = newValue.map((o) => o.value);
+    setPositionAccessMenusByPosId((prev) => {
+      const next = {};
+      newIds.forEach((id) => {
+        next[id] = prev[id] || { requestMenu: true, transferMenu: true, personalMenu: true };
+      });
+      return next;
+    });
+  };
+
+  const selectedPositions = positionOptions.filter((opt) =>
+    Object.keys(positionAccessMenusByPosId).includes(opt.value)
+  );
+
   return (
     <div className={classes.accessPanel}>
-      {/* Должности - только для авиакомпаний */}
+      {/* Должности — только для авиакомпаний */}
       {type === "airline" && (
         <SectionCard title="Должности">
           <MultiSelectAutocomplete
@@ -93,13 +115,53 @@ export default function AccessPermissionsPanel({
             dropdownWidth={"100%"}
             label={"Выберите должности"}
             options={positionOptions}
-            value={positionOptions.filter((option) =>
-              positionIds?.includes(option.value)
-            )}
-            onChange={(event, newValue) => {
-              setPositionIds(newValue.map((option) => option.value));
-            }}
+            value={selectedPositions}
+            onChange={handlePositionSelectionChange}
           />
+
+          {/* Таблица доступа к разделам по должностям */}
+          {selectedPositions.length > 0 && (
+            <div className={classes.positionsTable}>
+              <div className={classes.positionsTableHeader}>
+                <div className={classes.positionCellName} />
+                <div className={classes.positionCellSection}>Эскадрилья</div>
+                <div className={classes.positionCellSection}>Трансфер</div>
+                <div className={classes.positionCellSection}>Сотрудники</div>
+              </div>
+              {selectedPositions.map((opt) => {
+                const access = positionAccessMenusByPosId[opt.value] || {};
+                return (
+                  <div key={opt.value} className={`${classes.positionRow} ${!isEditing ? classes.rowDisabled : ""}`}>
+                    <div className={classes.positionCellName}>{opt.label}</div>
+                    <div className={classes.positionCellSection}>
+                      <MUISwitch
+                        label=""
+                        checked={!!access.requestMenu}
+                        onChange={(e) => handlePositionToggle(opt.value, "requestMenu", e.target.checked)}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className={classes.positionCellSection}>
+                      <MUISwitch
+                        label=""
+                        checked={!!access.transferMenu}
+                        onChange={(e) => handlePositionToggle(opt.value, "transferMenu", e.target.checked)}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                    <div className={classes.positionCellSection}>
+                      <MUISwitch
+                        label=""
+                        checked={!!access.personalMenu}
+                        onChange={(e) => handlePositionToggle(opt.value, "personalMenu", e.target.checked)}
+                        disabled={!isEditing}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </SectionCard>
       )}
 
@@ -295,14 +357,6 @@ export default function AccessPermissionsPanel({
             onChange={(v) => set("analytics", "access", v)}
             disabled={!isEditing}
           />
-          {/* {type === "airline" && (
-            <RowSwitch
-              label="Выгрузка аналитики"
-              checked={state.analytics.export}
-              onChange={(v) => set("analytics", "export", v)}
-              disabled={!isEditing || !state.analytics.access}
-            />
-          )} */}
         </SectionCard>
 
         {/* Об авиакомпании */}

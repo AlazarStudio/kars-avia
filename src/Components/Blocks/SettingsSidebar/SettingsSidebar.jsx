@@ -38,7 +38,8 @@ export default function SettingsSidebar({
   const [accessMenu, setAccessMenu] = useState({});
   const [notificationMenu, setNotificationMenu] = useState({});
   const [airlinePositions, setAirlinePositions] = useState([]);
-  const [positionIds, setPositionIds] = useState([]);
+  // { [positionId]: { requestMenu, transferMenu, personalMenu } }
+  const [positionAccessMenusByPosId, setPositionAccessMenusByPosId] = useState({});
 
   const accessStateRef = useRef(null);
   const notificationsStateRef = useRef(null);
@@ -121,8 +122,16 @@ export default function SettingsSidebar({
       setAccessMenu(currentDepartment.accessMenu || {});
       setNotificationMenu(currentDepartment.notificationMenu || {});
 
-      if (type === "airline" && currentDepartment.position) {
-        setPositionIds(currentDepartment.position.map((p) => String(p.id)));
+      if (type === "airline") {
+        const byPosId = {};
+        currentDepartment.positionAccessMenus?.forEach((pam) => {
+          byPosId[pam.positionId] = {
+            requestMenu: !!pam.accessMenu?.requestMenu,
+            transferMenu: !!pam.accessMenu?.transferMenu,
+            personalMenu: !!pam.accessMenu?.personalMenu,
+          };
+        });
+        setPositionAccessMenusByPosId(byPosId);
       }
     }
   }, [show, currentDepartment, type]);
@@ -237,6 +246,10 @@ export default function SettingsSidebar({
       const notificationPayload = buildNotificationPayload(notificationsStateRef.current);
 
       if (type === "airline" && airlineId && currentDepartment) {
+        const positionIds = Object.keys(positionAccessMenusByPosId);
+        const positionPayloads = Object.entries(positionAccessMenusByPosId).map(
+          ([posId, access]) => ({ positionId: posId, accessMenu: access })
+        );
         await updateAirline({
           variables: {
             updateAirlineId: airlineId,
@@ -246,7 +259,8 @@ export default function SettingsSidebar({
                   id: currentDepartment.id,
                   accessMenu: accessPayload,
                   notificationMenu: notificationPayload,
-                  positionIds: positionIds,
+                  positionIds,
+                  positionAccessMenus: positionPayloads,
                 },
               ],
             },
@@ -287,8 +301,16 @@ export default function SettingsSidebar({
     if (currentDepartment) {
       setAccessMenu(currentDepartment.accessMenu || {});
       setNotificationMenu(currentDepartment.notificationMenu || {});
-      if (type === "airline" && currentDepartment.position) {
-        setPositionIds(currentDepartment.position.map((p) => String(p.id)));
+      if (type === "airline") {
+        const byPosId = {};
+        currentDepartment.positionAccessMenus?.forEach((pam) => {
+          byPosId[pam.positionId] = {
+            requestMenu: !!pam.accessMenu?.requestMenu,
+            transferMenu: !!pam.accessMenu?.transferMenu,
+            personalMenu: !!pam.accessMenu?.personalMenu,
+          };
+        });
+        setPositionAccessMenusByPosId(byPosId);
       }
     }
     setIsEditing(false);
@@ -378,8 +400,8 @@ export default function SettingsSidebar({
                   isEditing={isEditing}
                   type={type}
                   positionOptions={positionOptions}
-                  positionIds={positionIds}
-                  setPositionIds={setPositionIds}
+                  positionAccessMenusByPosId={positionAccessMenusByPosId}
+                  setPositionAccessMenusByPosId={setPositionAccessMenusByPosId}
                 />
               )}
               {activeTab === "notifications" && (
