@@ -38,6 +38,8 @@ import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHote
 import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
 import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDriverDetailPage/RepresentativeDriverDetailPage";
 import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
+import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
+import FapReportPage from "./Components/Pages/FapV2/FapReportPage";
 
 const TransferOrder = lazy(() =>
   import("./Components/Blocks/TransferOrder/TransferOrder")
@@ -151,6 +153,14 @@ function App() {
             <Route
               path="/:id/representativeRequestsPlacement/:idRequest/driver/:driverIndex"
               element={<RepresentativeDriverDetailPage user={user} />}
+            />
+            <Route
+              path="/fapv2/:requestId"
+              element={<FapDetailPage user={user} />}
+            />
+            <Route
+              path="/fapv2/:requestId/report/:hotelIndex"
+              element={<FapReportPage user={user} />}
             />
 
             {/* Шахматка */}

@@ -31,9 +31,11 @@ function generateSelector(el) {
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const MARKER_HOLD_TO_DRAG_MS = 2000;
-const SCRIPT_RUNNER_EXPORT_VERSION = 1;
+
 const SCRIPT_RUNNER_LIBRARY_TYPE = "script-runner-library";
 const SCRIPT_RUNNER_SINGLE_TYPE = "script-runner-script";
+const SCRIPT_RUNNER_FOLDER_TYPE = "script-runner-folder";
+const SCRIPTS_TREE_STORAGE_KEY = "karsavia_scripts_tree";
 
 function isPlainObject(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
@@ -56,33 +58,191 @@ function makeSafeFileName(name, fallback = "script-runner") {
   return safe || fallback;
 }
 
-function getUniqueScriptName(existingNames, preferredName) {
-  const taken = new Set(existingNames);
-  const baseName = String(preferredName ?? "").trim() || "Новый скрипт";
-  if (!taken.has(baseName)) return baseName;
-  let nextName = `${baseName} (copy)`;
-  if (!taken.has(nextName)) return nextName;
-  let i = 2;
-  while (taken.has(`${baseName} (copy ${i})`)) i += 1;
-  return `${baseName} (copy ${i})`;
+// ─── Tree utilities ──────────────────────────────────────────────────────────
+
+let _idCounter = 0;
+function generateId() {
+  _idCounter += 1;
+  return `${Date.now().toString(36)}-${(Math.random() * 0xffffff | 0).toString(36)}-${_idCounter}`;
 }
 
-function buildLibraryExportPayload(scripts) {
+function findNodeById(tree, id) {
+  for (const node of tree) {
+    if (node.id === id) return node;
+    if (node.type === "folder" && node.children) {
+      const found = findNodeById(node.children, id);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function updateNodeById(tree, id, updater) {
+  return tree.map((node) => {
+    if (node.id === id) return updater(node);
+    if (node.type === "folder" && node.children) {
+      return { ...node, children: updateNodeById(node.children, id, updater) };
+    }
+    return node;
+  });
+}
+
+function removeNodeById(tree, id) {
+  return tree
+    .filter((node) => node.id !== id)
+    .map((node) => {
+      if (node.type === "folder" && node.children) {
+        return { ...node, children: removeNodeById(node.children, id) };
+      }
+      return node;
+    });
+}
+
+function insertNode(tree, parentId, node) {
+  if (parentId == null) return [...tree, node];
+  return tree.map((n) => {
+    if (n.id === parentId && n.type === "folder") {
+      return { ...n, children: [...(n.children || []), node] };
+    }
+    if (n.type === "folder" && n.children) {
+      return { ...n, children: insertNode(n.children, parentId, node) };
+    }
+    return n;
+  });
+}
+
+function collectScripts(node) {
+  if (node.type === "script") return [node];
+  if (node.type === "folder" && node.children) {
+    return node.children.flatMap(collectScripts);
+  }
+  return [];
+}
+
+function collectAllScripts(tree) {
+  return tree.flatMap(collectScripts);
+}
+
+function countScripts(tree) {
+  return collectAllScripts(tree).length;
+}
+
+function assignIdsToTree(tree) {
+  return tree.map((node) => {
+    const withId = { ...node, id: node.id || generateId() };
+    if (withId.type === "folder" && withId.children) {
+      withId.children = assignIdsToTree(withId.children);
+    }
+    return withId;
+  });
+}
+
+function isDescendantOf(tree, ancestorId, nodeId) {
+  const ancestor = findNodeById(tree, ancestorId);
+  if (!ancestor || ancestor.type !== "folder") return false;
+  return !!findNodeById(ancestor.children || [], nodeId);
+}
+
+function moveNode(tree, nodeId, targetParentId) {
+  const node = findNodeById(tree, nodeId);
+  if (!node) return tree;
+  const without = removeNodeById(tree, nodeId);
+  return insertNode(without, targetParentId, node);
+}
+
+function insertRelativeToNode(tree, targetId, node, position) {
+  const result = [];
+  for (const n of tree) {
+    if (position === "before" && n.id === targetId) result.push(node);
+    if (n.type === "folder" && n.children) {
+      result.push({ ...n, children: insertRelativeToNode(n.children, targetId, node, position) });
+    } else {
+      result.push(n);
+    }
+    if (position === "after" && n.id === targetId) result.push(node);
+  }
+  return result;
+}
+
+function reorderNode(tree, nodeId, targetId, position) {
+  if (nodeId === targetId) return tree;
+  const node = findNodeById(tree, nodeId);
+  if (!node) return tree;
+  const without = removeNodeById(tree, nodeId);
+  if (position === "inside") {
+    return insertNode(without, targetId, node);
+  }
+  return insertRelativeToNode(without, targetId, node, position);
+}
+
+function migrateFromFlatFormat() {
+  const nodes = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key?.startsWith("karsavia_script_")) {
+      try {
+        const actions = JSON.parse(localStorage.getItem(key));
+        if (isValidActionsArray(actions)) {
+          nodes.push({
+            id: generateId(),
+            type: "script",
+            name: key.replace("karsavia_script_", ""),
+            actions,
+          });
+        }
+      } catch { /* skip corrupted */ }
+    }
+  }
+  return nodes;
+}
+
+function flatObjectToTree(scripts) {
+  return Object.entries(scripts).map(([name, actions]) => ({
+    id: generateId(),
+    type: "script",
+    name,
+    actions: isValidActionsArray(actions) ? actions : [],
+  }));
+}
+
+function isValidTreeNode(node) {
+  if (!isPlainObject(node)) return false;
+  if (node.type === "script") return typeof node.name === "string";
+  if (node.type === "folder") return typeof node.name === "string" && Array.isArray(node.children);
+  return false;
+}
+
+function isValidTree(tree) {
+  return Array.isArray(tree) && tree.every(isValidTreeNode);
+}
+
+// ─── Export/import ───────────────────────────────────────────────────────────
+
+function buildLibraryExportPayload(tree) {
   return {
     type: SCRIPT_RUNNER_LIBRARY_TYPE,
-    version: SCRIPT_RUNNER_EXPORT_VERSION,
+    version: 2,
     exportedAt: new Date().toISOString(),
-    scripts,
+    tree,
   };
 }
 
 function buildSingleScriptExportPayload(name, actions) {
   return {
     type: SCRIPT_RUNNER_SINGLE_TYPE,
-    version: SCRIPT_RUNNER_EXPORT_VERSION,
+    version: 1,
     exportedAt: new Date().toISOString(),
     name,
     actions,
+  };
+}
+
+function buildFolderExportPayload(folder) {
+  return {
+    type: SCRIPT_RUNNER_FOLDER_TYPE,
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    folder,
   };
 }
 
@@ -99,44 +259,38 @@ function triggerJsonDownload(fileName, payload) {
   URL.revokeObjectURL(url);
 }
 
-function parseLibraryPayload(payload) {
+function parseImportPayload(payload) {
   if (!isPlainObject(payload)) {
-    throw new Error("Некорректный формат файла библиотеки");
+    throw new Error("Некорректный формат файла");
   }
-  if (payload.type !== SCRIPT_RUNNER_LIBRARY_TYPE) {
-    throw new Error("Файл не является экспортом библиотеки Script Runner");
-  }
-  if (payload.version !== SCRIPT_RUNNER_EXPORT_VERSION) {
-    throw new Error("Неподдерживаемая версия файла библиотеки");
-  }
-  if (!isPlainObject(payload.scripts)) {
-    throw new Error("В файле библиотеки отсутствует объект scripts");
-  }
-  const normalized = {};
-  Object.entries(payload.scripts).forEach(([name, actions]) => {
-    if (!isValidActionsArray(actions)) {
-      throw new Error(`Скрипт "${name}" содержит некорректные действия`);
-    }
-    normalized[String(name)] = actions;
-  });
-  return normalized;
-}
 
-function parseSingleScriptPayload(payload) {
-  if (!isPlainObject(payload)) {
-    throw new Error("Некорректный формат файла скрипта");
+  if (payload.type === SCRIPT_RUNNER_LIBRARY_TYPE) {
+    if (payload.version === 2 && isValidTree(payload.tree)) {
+      return { kind: "tree", nodes: assignIdsToTree(payload.tree) };
+    }
+    if (payload.version === 1 && isPlainObject(payload.scripts)) {
+      return { kind: "tree", nodes: flatObjectToTree(payload.scripts) };
+    }
+    throw new Error("Некорректный файл библиотеки");
   }
-  if (payload.type !== SCRIPT_RUNNER_SINGLE_TYPE) {
-    throw new Error("Файл не является экспортом отдельного скрипта");
+
+  if (payload.type === SCRIPT_RUNNER_FOLDER_TYPE) {
+    if (payload.version === 2 && isPlainObject(payload.folder) && payload.folder.type === "folder") {
+      const folder = { ...payload.folder, id: generateId(), children: assignIdsToTree(payload.folder.children || []) };
+      return { kind: "tree", nodes: [folder] };
+    }
+    throw new Error("Некорректный файл группы");
   }
-  if (payload.version !== SCRIPT_RUNNER_EXPORT_VERSION) {
-    throw new Error("Неподдерживаемая версия файла скрипта");
+
+  if (payload.type === SCRIPT_RUNNER_SINGLE_TYPE) {
+    if (!isValidActionsArray(payload.actions)) {
+      throw new Error("В файле скрипта некорректные действия");
+    }
+    const name = String(payload.name ?? "").trim() || "Импортированный скрипт";
+    return { kind: "tree", nodes: [{ id: generateId(), type: "script", name, actions: payload.actions }] };
   }
-  if (!isValidActionsArray(payload.actions)) {
-    throw new Error("В файле скрипта отсутствует корректный массив actions");
-  }
-  const scriptName = String(payload.name ?? "").trim() || "Импортированный скрипт";
-  return { name: scriptName, actions: payload.actions };
+
+  throw new Error("Неизвестный формат файла");
 }
 
 function getElementCenter(el) {
@@ -840,6 +994,30 @@ const IconUpload = () => (
     <path d="M4 3h16" />
   </svg>
 );
+const IconFolder = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+  </svg>
+);
+const IconChevron = ({ open }) => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+    style={{ transition: "transform 0.15s", transform: open ? "rotate(90deg)" : "rotate(0deg)" }}>
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+);
+const IconFolderPlus = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+    <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
+  </svg>
+);
+const IconGrip = () => (
+  <svg width="8" height="14" viewBox="0 0 8 14" fill="currentColor">
+    <circle cx="2" cy="2" r="1.2"/><circle cx="6" cy="2" r="1.2"/>
+    <circle cx="2" cy="7" r="1.2"/><circle cx="6" cy="7" r="1.2"/>
+    <circle cx="2" cy="12" r="1.2"/><circle cx="6" cy="12" r="1.2"/>
+  </svg>
+);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 //  ScriptRunner
@@ -1072,131 +1250,227 @@ function ScriptRunner({ show, onClose }) {
     };
   }, [markerHoldState?.markerId, markerHoldState?.startedAt, draggingMarker]);
 
-  // ── Saved scripts ──────────────────────────────────────────────────────────────
-  const [savedScripts, setSavedScripts] = useState({});
+  // ── Script tree ─────────────────────────────────────────────────────────────
+  const [scriptTree, setScriptTree] = useState([]);
   const [saveName, setSaveName] = useState("");
-  const [editingScriptName, setEditingScriptName] = useState(null);
-  const [visibleScriptName, setVisibleScriptName] = useState(null);
-  const [importMode, setImportMode] = useState("library");
+  const [editingScriptId, setEditingScriptId] = useState(null);
+  const [visibleNodeId, setVisibleNodeId] = useState(null);
+  const [renamingNodeId, setRenamingNodeId] = useState(null);
+  const [renamingValue, setRenamingValue] = useState("");
+  const [createTargetParentId, setCreateTargetParentId] = useState(null);
   const [scriptsNotice, setScriptsNotice] = useState(null);
 
-  const reloadSaved = () => {
-    const saved = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key?.startsWith("karsavia_script_")) {
-        try { saved[key.replace("karsavia_script_", "")] = JSON.parse(localStorage.getItem(key)); } catch {}
+  const editingNode = editingScriptId ? findNodeById(scriptTree, editingScriptId) : null;
+  const editingScriptName = editingNode?.type === "script" ? editingNode.name : null;
+
+  const loadTree = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(SCRIPTS_TREE_STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (isValidTree(parsed)) {
+          setScriptTree(assignIdsToTree(parsed));
+          return;
+        }
       }
+    } catch { /* fall through */ }
+    const migrated = migrateFromFlatFormat();
+    if (migrated.length) {
+      localStorage.setItem(SCRIPTS_TREE_STORAGE_KEY, JSON.stringify(migrated));
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith("karsavia_script_"))
+        .forEach((key) => localStorage.removeItem(key));
     }
-    setSavedScripts(saved);
-  };
-  useEffect(reloadSaved, []);
+    setScriptTree(migrated);
+  }, []);
+  useEffect(loadTree, [loadTree]);
 
-  const persistSavedScripts = useCallback((nextScripts) => {
-    Object.keys(localStorage)
-      .filter((key) => key.startsWith("karsavia_script_"))
-      .forEach((key) => localStorage.removeItem(key));
+  const persistTree = useCallback((nextTree) => {
+    try { localStorage.setItem(SCRIPTS_TREE_STORAGE_KEY, JSON.stringify(nextTree)); } catch { /* ignore */ }
+    setScriptTree(nextTree);
+  }, []);
 
-    Object.entries(nextScripts).forEach(([name, scriptActions]) => {
-      localStorage.setItem(
-        `karsavia_script_${name}`,
-        JSON.stringify(scriptActions)
-      );
-    });
-    setSavedScripts(nextScripts);
+  const createScript = useCallback((parentId, name) => {
+    const node = { id: generateId(), type: "script", name, actions: [] };
+    setScriptTree((prev) => insertNode(prev, parentId, node));
+  }, []);
+
+  const createFolder = useCallback((parentId, name) => {
+    const node = { id: generateId(), type: "folder", name, collapsed: false, children: [] };
+    setScriptTree((prev) => insertNode(prev, parentId, node));
   }, []);
 
   const saveScript = () => {
     if (!saveName.trim()) return;
-    const name = saveName.trim();
-    persistSavedScripts({
-      ...savedScripts,
-      [name]: [],
-    });
+    createScript(createTargetParentId, saveName.trim());
     setSaveName("");
   };
 
-  const runScriptByName = (name) => {
-    const scriptActions = savedScripts[name] ?? [];
-    runScript(scriptActions);
+  const saveFolder = () => {
+    if (!saveName.trim()) return;
+    createFolder(createTargetParentId, saveName.trim());
+    setSaveName("");
   };
 
-  const mergeScriptsWithRename = useCallback((baseScripts, incomingScripts) => {
-    const merged = { ...baseScripts };
-    const existingNames = new Set(Object.keys(merged));
-    let importedCount = 0;
-    let renamedCount = 0;
+  const deleteNode = useCallback((id) => {
+    setScriptTree((prev) => removeNodeById(prev, id));
+    if (editingScriptId === id) { setEditingScriptId(null); setActions([]); setShowAdd(false); }
+    if (visibleNodeId === id) { setVisibleNodeId(null); }
+  }, [editingScriptId, visibleNodeId]);
 
-    Object.entries(incomingScripts).forEach(([name, scriptActions]) => {
-      const uniqueName = getUniqueScriptName(existingNames, name);
-      if (uniqueName !== name) renamedCount += 1;
-      merged[uniqueName] = scriptActions;
-      existingNames.add(uniqueName);
-      importedCount += 1;
-    });
-
-    return { merged, importedCount, renamedCount };
+  const renameNode = useCallback((id, newName) => {
+    setScriptTree((prev) => updateNodeById(prev, id, (n) => ({ ...n, name: newName })));
   }, []);
 
+  const startRename = useCallback((id, currentName) => {
+    setRenamingNodeId(id);
+    setRenamingValue(currentName);
+  }, []);
+
+  const commitRename = useCallback(() => {
+    if (renamingNodeId && renamingValue.trim()) {
+      renameNode(renamingNodeId, renamingValue.trim());
+    }
+    setRenamingNodeId(null);
+    setRenamingValue("");
+  }, [renamingNodeId, renamingValue, renameNode]);
+
+  const toggleCollapse = useCallback((id) => {
+    setScriptTree((prev) => updateNodeById(prev, id, (n) => ({ ...n, collapsed: !n.collapsed })));
+  }, []);
+
+  // ── Drag & drop ────────────────────────────────────────────────────────────
+  const [dragId, setDragId] = useState(null);
+  const [dropInfo, setDropInfo] = useState(null);
+
+  const handleDragStart = useCallback((e, nodeId) => {
+    setDragId(nodeId);
+    e.dataTransfer.effectAllowed = "move";
+    try { e.dataTransfer.setData("text/plain", nodeId); } catch { /* IE */ }
+  }, []);
+
+  const handleDragEnd = useCallback(() => {
+    setDragId(null);
+    setDropInfo(null);
+  }, []);
+
+  const computeDropPosition = useCallback((e, nodeId, nodeType) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const h = rect.height;
+    const ratio = y / h;
+
+    if (nodeType === "folder") {
+      if (ratio < 0.25) return { targetId: nodeId, position: "before" };
+      if (ratio > 0.75) return { targetId: nodeId, position: "after" };
+      return { targetId: nodeId, position: "inside" };
+    }
+    return { targetId: nodeId, position: ratio < 0.5 ? "before" : "after" };
+  }, []);
+
+  const handleDragOver = useCallback((e, nodeId, nodeType) => {
+    if (!dragId || dragId === nodeId) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    const info = computeDropPosition(e, nodeId, nodeType);
+    setDropInfo((prev) => {
+      if (prev?.targetId === info.targetId && prev?.position === info.position) return prev;
+      return info;
+    });
+  }, [dragId, computeDropPosition]);
+
+  const handleDragLeaveList = useCallback((e) => {
+    if (!e.currentTarget.contains(e.relatedTarget)) setDropInfo(null);
+  }, []);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!dragId || !dropInfo) { setDragId(null); setDropInfo(null); return; }
+    if (dropInfo.position === "inside" && isDescendantOf(scriptTree, dragId, dropInfo.targetId)) {
+      setDragId(null); setDropInfo(null); return;
+    }
+    setScriptTree((prev) => reorderNode(prev, dragId, dropInfo.targetId, dropInfo.position));
+    setDragId(null);
+    setDropInfo(null);
+  }, [dragId, dropInfo, scriptTree]);
+
+  const runScriptById = useCallback((id) => {
+    const node = findNodeById(scriptTree, id);
+    if (node?.type === "script") runScript(node.actions);
+  }, [scriptTree]);
+
+  const runFolderById = useCallback((id) => {
+    const node = findNodeById(scriptTree, id);
+    if (node?.type === "folder") {
+      const scripts = collectScripts(node);
+      const allActions = [];
+      scripts.forEach((s, i) => {
+        allActions.push(...s.actions);
+        if (i < scripts.length - 1) {
+          allActions.push({ type: "wait", ms: "4000" });
+        }
+      });
+      if (allActions.length) runScript(allActions);
+    }
+  }, [scriptTree]);
+
+  const editScript = useCallback((id) => {
+    if (editingScriptId === id) {
+      setEditingScriptId(null); setActions([]); setShowAdd(false); setShowScenario(false);
+      return;
+    }
+    const node = findNodeById(scriptTree, id);
+    if (node?.type !== "script") return;
+    setEditingScriptId(id);
+    setActions([...node.actions]);
+    setShowAdd(false); setShowScenario(false);
+  }, [editingScriptId, scriptTree]);
+
+  const toggleNodePreview = useCallback((id) => {
+    setVisibleNodeId((prev) => (prev === id ? null : id));
+  }, []);
+
+  useEffect(() => {
+    if (!editingScriptId) return;
+    persistTree(updateNodeById(scriptTree, editingScriptId, (n) => ({ ...n, actions: [...actions] })));
+  }, [editingScriptId, actions]);
+
+  useEffect(() => {
+    if (editingScriptId || scriptTree.length === 0) return;
+    persistTree(scriptTree);
+  }, [scriptTree, editingScriptId]);
+
+  // ── Export/import ─────────────────────────────────────────────────────────────
   const exportLibrary = useCallback(() => {
-    const payload = buildLibraryExportPayload(savedScripts);
-    triggerJsonDownload(
-      `${makeSafeFileName("script-runner-library")}.json`,
-      payload
-    );
-    setScriptsNotice({
-      type: "success",
-      text: `Экспортировано скриптов: ${Object.keys(savedScripts).length}`,
-    });
-  }, [savedScripts]);
+    const payload = buildLibraryExportPayload(scriptTree);
+    triggerJsonDownload(`${makeSafeFileName("script-runner-library")}.json`, payload);
+    setScriptsNotice({ type: "success", text: `Экспортировано скриптов: ${countScripts(scriptTree)}` });
+  }, [scriptTree]);
 
-  const exportSingleScript = useCallback((name) => {
-    const actionsForScript = savedScripts[name];
-    if (!isValidActionsArray(actionsForScript)) return;
-    const payload = buildSingleScriptExportPayload(name, actionsForScript);
-    triggerJsonDownload(
-      `${makeSafeFileName(name, "script-runner-script")}.json`,
-      payload
-    );
-    setScriptsNotice({
-      type: "success",
-      text: `Скрипт "${name}" экспортирован`,
-    });
-  }, [savedScripts]);
+  const exportSingleScript = useCallback((id) => {
+    const node = findNodeById(scriptTree, id);
+    if (node?.type !== "script") return;
+    const payload = buildSingleScriptExportPayload(node.name, node.actions);
+    triggerJsonDownload(`${makeSafeFileName(node.name, "script")}.json`, payload);
+    setScriptsNotice({ type: "success", text: `Скрипт "${node.name}" экспортирован` });
+  }, [scriptTree]);
 
-  const triggerImport = useCallback((mode) => {
-    setImportMode(mode);
+  const exportFolder = useCallback((id) => {
+    const node = findNodeById(scriptTree, id);
+    if (node?.type !== "folder") return;
+    const payload = buildFolderExportPayload(node);
+    triggerJsonDownload(`${makeSafeFileName(node.name, "folder")}.json`, payload);
+    setScriptsNotice({ type: "success", text: `Группа "${node.name}" экспортирована` });
+  }, [scriptTree]);
+
+  const triggerImport = useCallback(() => {
     setScriptsNotice(null);
     if (!importInputRef.current) return;
     importInputRef.current.value = "";
     importInputRef.current.click();
   }, []);
-
-  const importLibraryPayload = useCallback((payloadObject) => {
-    const scriptsFromFile = parseLibraryPayload(payloadObject);
-    const { merged, importedCount, renamedCount } = mergeScriptsWithRename(
-      savedScripts,
-      scriptsFromFile
-    );
-    persistSavedScripts(merged);
-    setScriptsNotice({
-      type: "success",
-      text: `Импортировано ${importedCount} скриптов${renamedCount ? `, переименовано: ${renamedCount}` : ""}`,
-    });
-  }, [mergeScriptsWithRename, persistSavedScripts, savedScripts]);
-
-  const importSingleScriptPayload = useCallback((payloadObject) => {
-    const parsed = parseSingleScriptPayload(payloadObject);
-    const { merged } = mergeScriptsWithRename(savedScripts, {
-      [parsed.name]: parsed.actions,
-    });
-    const addedName = Object.keys(merged).find((key) => !savedScripts[key] || merged[key] !== savedScripts[key]);
-    persistSavedScripts(merged);
-    setScriptsNotice({
-      type: "success",
-      text: `Скрипт "${addedName ?? parsed.name}" импортирован`,
-    });
-  }, [mergeScriptsWithRename, persistSavedScripts, savedScripts]);
 
   const handleImportFileChange = useCallback(async (e) => {
     const file = e.target.files?.[0];
@@ -1204,60 +1478,17 @@ function ScriptRunner({ show, onClose }) {
     try {
       const text = await file.text();
       const payload = JSON.parse(text);
-      if (importMode === "single") {
-        importSingleScriptPayload(payload);
-      } else {
-        importLibraryPayload(payload);
-      }
+      const result = parseImportPayload(payload);
+      const importedNodes = assignIdsToTree(result.nodes);
+      setScriptTree((prev) => [...prev, ...importedNodes]);
+      const sc = importedNodes.flatMap((n) => n.type === "script" ? [n] : collectScripts(n));
+      setScriptsNotice({ type: "success", text: `Импортировано: ${sc.length} скриптов` });
     } catch (error) {
-      setScriptsNotice({
-        type: "error",
-        text: error?.message || "Не удалось импортировать файл",
-      });
+      setScriptsNotice({ type: "error", text: error?.message || "Не удалось импортировать файл" });
     } finally {
       e.target.value = "";
     }
-  }, [importLibraryPayload, importMode, importSingleScriptPayload]);
-
-  const deleteScript = (name) => {
-    const nextScripts = { ...savedScripts };
-    delete nextScripts[name];
-    persistSavedScripts(nextScripts);
-    if (editingScriptName === name) {
-      setEditingScriptName(null);
-      setActions([]);
-      setShowAdd(false);
-    }
-    if (visibleScriptName === name) {
-      setVisibleScriptName(null);
-    }
-  };
-
-  const editScript = (name) => {
-    if (editingScriptName === name) {
-      setEditingScriptName(null);
-      setActions([]);
-      setShowAdd(false);
-      setShowScenario(false);
-      return;
-    }
-    setEditingScriptName(name);
-    setActions([...(savedScripts[name] ?? [])]);
-    setShowAdd(false);
-    setShowScenario(false);
-  };
-
-  const toggleScriptPreview = (name) => {
-    setVisibleScriptName((prev) => (prev === name ? null : name));
-  };
-
-  useEffect(() => {
-    if (!editingScriptName) return;
-    persistSavedScripts({
-      ...savedScripts,
-      [editingScriptName]: [...actions],
-    });
-  }, [editingScriptName, actions]);
+  }, []);
 
   // ── Form helpers ───────────────────────────────────────────────────────────────
   const setField = (name, val) => setNewFields((p) => ({
@@ -1338,12 +1569,15 @@ function ScriptRunner({ show, onClose }) {
   const totalMs    = report?.reduce((s, r) => s + (r.duration ?? 0), 0) ?? 0;
   const allOk      = okCount === totalCount && totalCount > 0;
   const draftAction = { type: newType, ...newFields };
-  const previewActions =
-    visibleScriptName != null
-      ? visibleScriptName === editingScriptName
-        ? actions
-        : (savedScripts[visibleScriptName] ?? [])
-      : [];
+  const previewActions = React.useMemo(() => {
+    if (visibleNodeId == null) return [];
+    if (visibleNodeId === editingScriptId) return actions;
+    const node = findNodeById(scriptTree, visibleNodeId);
+    if (!node) return [];
+    if (node.type === "script") return node.actions ?? [];
+    return collectScripts(node).flatMap((s) => s.actions);
+  }, [visibleNodeId, editingScriptId, actions, scriptTree]);
+
   const markers = React.useMemo(() => {
     const actionMarkers = previewActions
       .map((action, index) => {
@@ -1354,8 +1588,8 @@ function ScriptRunner({ show, onClose }) {
 
     const draftMarker =
       showAdd &&
-      editingScriptName &&
-      visibleScriptName === editingScriptName &&
+      editingScriptId &&
+      visibleNodeId === editingScriptId &&
       (newFields.selector || newFields.point)
         ? buildMarkerFromAction(
             pickMode === "point" && pickPreviewPoint
@@ -1379,8 +1613,8 @@ function ScriptRunner({ show, onClose }) {
   }, [
     previewActions,
     showAdd,
-    editingScriptName,
-    visibleScriptName,
+    editingScriptId,
+    visibleNodeId,
     newFields,
     draftAction,
     pickMode,
@@ -1526,7 +1760,7 @@ function ScriptRunner({ show, onClose }) {
 
         {/* Window toggles */}
         <div data-script-runner-control className={classes.barGroup}>
-          {editingScriptName && (
+          {editingScriptId && editingScriptName && (
             <>
               <div data-script-runner-control className={classes.barScriptStatus}>
                 Выбран скрипт для редактирования:
@@ -1552,8 +1786,8 @@ function ScriptRunner({ show, onClose }) {
             className={`${classes.barBtn} ${showScripts ? classes.barBtnActive : ""}`}
             onClick={() => { setShowScripts(v => !v); if (!showScripts) bringToFront("scripts"); }}>
             <IconBook /> Скрипты
-            {Object.keys(savedScripts).length > 0 && (
-              <span data-script-runner-control className={classes.barBadge}>{Object.keys(savedScripts).length}</span>
+            {countScripts(scriptTree) > 0 && (
+              <span data-script-runner-control className={classes.barBadge}>{countScripts(scriptTree)}</span>
             )}
           </button>
           {report && (
@@ -1574,7 +1808,7 @@ function ScriptRunner({ show, onClose }) {
 
       {/* ─── ADD ACTION WINDOW ─── */}
       <DraggableWindow
-        show={showAdd} title={editingScriptName ? `Добавить действие: ${editingScriptName}` : "Добавить действие"} zIndex={zMap.add}
+        show={showAdd} title={editingScriptId && editingScriptName ? `Добавить действие: ${editingScriptName}` : "Добавить действие"} zIndex={zMap.add}
         onClose={() => setShowAdd(false)} onFocus={() => bringToFront("add")}
         defaultX={20} defaultY={80}
         defaultW={380} defaultH={340} minW={320} minH={240}
@@ -1885,7 +2119,7 @@ function ScriptRunner({ show, onClose }) {
 
       {/* ─── SCENARIO WINDOW ─── */}
       <DraggableWindow
-        show={!!editingScriptName && showScenario} title={editingScriptName ? `Сценарий: ${editingScriptName}` : "Сценарий"} zIndex={zMap.scenario}
+        show={!!editingScriptId && showScenario} title={editingScriptName ? `Сценарий: ${editingScriptName}` : "Сценарий"} zIndex={zMap.scenario}
         onClose={() => setShowScenario(false)} onFocus={() => bringToFront("scenario")}
         defaultX={20} defaultY={80}
         defaultW={360} defaultH={420} minW={280} minH={200}
@@ -1957,48 +2191,40 @@ function ScriptRunner({ show, onClose }) {
         />
         <div data-script-runner-control className={classes.saveSection}>
           <div data-script-runner-control className={classes.saveLabel}>
-            Новый скрипт
+            {createTargetParentId
+              ? <>В группу: <span style={{ color: "#0057c3" }}>{findNodeById(scriptTree, createTargetParentId)?.name ?? ""}</span>
+                <button data-script-runner-control className={classes.pickBannerBtn} style={{ marginLeft: 4, background: "#eef2fd", color: "#0057c3", fontSize: 10, padding: "1px 8px" }}
+                  onClick={() => setCreateTargetParentId(null)}>✕ В корень</button>
+              </>
+              : "Новый элемент"
+            }
           </div>
           <div data-script-runner-control className={classes.saveRow}>
             <input data-script-runner-control className={classes.formInput}
-              placeholder="Название скрипта..."
+              placeholder="Название..."
               value={saveName}
               onChange={e => setSaveName(e.target.value)}
               onKeyDown={e => e.key === "Enter" && saveScript()} />
             <button data-script-runner-control className={classes.primaryBtn}
               onClick={saveScript} disabled={!saveName.trim()}>
-              <IconSave /> Создать
+              <IconSave /> Скрипт
+            </button>
+            <button data-script-runner-control className={classes.secondaryBtn}
+              onClick={saveFolder} disabled={!saveName.trim()}>
+              <IconFolderPlus /> Группа
             </button>
           </div>
           <div data-script-runner-control className={classes.saveRow}>
-            <button
-              data-script-runner-control
-              className={classes.secondaryBtn}
-              onClick={exportLibrary}
-            >
+            <button data-script-runner-control className={classes.secondaryBtn} onClick={exportLibrary}>
               <IconDownload /> Экспорт библиотеки
             </button>
-            <button
-              data-script-runner-control
-              className={classes.secondaryBtn}
-              onClick={() => triggerImport("library")}
-            >
-              <IconUpload /> Импорт библиотеки
-            </button>
-            <button
-              data-script-runner-control
-              className={classes.secondaryBtn}
-              onClick={() => triggerImport("single")}
-            >
-              <IconUpload /> Импорт скрипта
+            <button data-script-runner-control className={classes.secondaryBtn} onClick={triggerImport}>
+              <IconUpload /> Импорт
             </button>
           </div>
           {scriptsNotice?.text && (
-            <div
-              data-script-runner-control
-              className={classes.scriptMeta}
-              style={{ marginTop: 8, color: scriptsNotice.type === "error" ? "#d9534f" : undefined }}
-            >
+            <div data-script-runner-control className={classes.scriptMeta}
+              style={{ marginTop: 8, color: scriptsNotice.type === "error" ? "#d9534f" : undefined }}>
               {scriptsNotice.text}
             </div>
           )}
@@ -2006,65 +2232,159 @@ function ScriptRunner({ show, onClose }) {
 
         <div data-script-runner-control className={classes.scriptsDivider} />
 
-        {Object.keys(savedScripts).length === 0 ? (
+        {scriptTree.length === 0 ? (
           <div data-script-runner-control className={classes.emptyState}>
             <div data-script-runner-control className={classes.emptyIcon}><IconBook /></div>
             <p data-script-runner-control className={classes.emptyText}>Нет сохранённых скриптов</p>
           </div>
         ) : (
-          <div data-script-runner-control className={classes.scriptsList}>
-            {Object.entries(savedScripts).map(([name, sc]) => (
-              <div key={name} data-script-runner-control className={classes.scriptCard}>
-                <div data-script-runner-control className={classes.scriptCardInfo}>
-                  <div data-script-runner-control className={classes.scriptName}>
-                    {name}
-                    {editingScriptName === name && (
-                      <span data-script-runner-control className={classes.scriptEditingBadge}>
-                        редактируется
+          <div data-script-runner-control className={classes.scriptsList}
+            onDragLeave={handleDragLeaveList}
+            onDrop={handleDrop}>
+            {(function renderTree(nodes, depth) {
+              return nodes.map((node) => {
+                const isDragged = dragId === node.id;
+                const dropBefore = dropInfo?.targetId === node.id && dropInfo?.position === "before";
+                const dropAfter = dropInfo?.targetId === node.id && dropInfo?.position === "after";
+                const dropInside = dropInfo?.targetId === node.id && dropInfo?.position === "inside";
+
+                if (node.type === "folder") {
+                  const scriptCount = collectScripts(node).length;
+                  return (
+                    <React.Fragment key={node.id}>
+                      {dropBefore && <div data-script-runner-control className={classes.dropLine} style={{ marginLeft: depth * 20 }} />}
+                      <div data-script-runner-control
+                        className={`${classes.folderRow} ${isDragged ? classes.dragging : ""} ${dropInside ? classes.folderDropTarget : ""}`}
+                        style={{ paddingLeft: depth * 20 }}
+                        onDragOver={(e) => handleDragOver(e, node.id, "folder")}>
+                        <span data-script-runner-control className={classes.gripHandle} draggable
+                          onDragStart={(e) => handleDragStart(e, node.id)}
+                          onDragEnd={handleDragEnd}>
+                          <IconGrip />
+                        </span>
+                        <button data-script-runner-control className={classes.folderChevronBtn}
+                          onClick={() => toggleCollapse(node.id)}>
+                          <IconChevron open={!node.collapsed} />
+                        </button>
+                        <span data-script-runner-control className={classes.folderIcon}><IconFolder /></span>
+                        {renamingNodeId === node.id ? (
+                          <input data-script-runner-control className={classes.inlineRenameInput}
+                            autoFocus
+                            value={renamingValue}
+                            onChange={(e) => setRenamingValue(e.target.value)}
+                            onBlur={commitRename}
+                            onKeyDown={(e) => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") { setRenamingNodeId(null); setRenamingValue(""); } }}
+                          />
+                        ) : (
+                          <span data-script-runner-control className={classes.folderName}
+                            onDoubleClick={() => startRename(node.id, node.name)}>
+                            {node.name}
+                          </span>
+                        )}
+                        <span data-script-runner-control className={classes.scriptMeta} style={{ marginTop: 0, marginLeft: 6 }}>
+                          {scriptCount}
+                        </span>
+                        <div data-script-runner-control className={classes.folderActions}>
+                          <button data-script-runner-control className={classes.iconBtn} title="Запустить все"
+                            onClick={() => runFolderById(node.id)} disabled={!scriptCount || isRunning}>
+                            <IconPlay />
+                          </button>
+                          <button data-script-runner-control className={`${classes.iconBtn} ${
+                            visibleNodeId === node.id ? classes.iconBtnActive : ""
+                          }`}
+                            title={visibleNodeId === node.id ? "Скрыть точки" : "Показать точки"}
+                            onClick={() => toggleNodePreview(node.id)}>
+                            {visibleNodeId === node.id ? <IconEyeOff /> : <IconEye />}
+                          </button>
+                          <button data-script-runner-control className={classes.iconBtn} title="Создавать внутри"
+                            onClick={() => setCreateTargetParentId((prev) => prev === node.id ? null : node.id)}
+                            style={createTargetParentId === node.id ? { background: "#e8f0ff", borderColor: "#9db6f2", color: "#0057c3" } : undefined}>
+                            <IconPlus />
+                          </button>
+                          <button data-script-runner-control className={classes.iconBtn} title="Экспортировать группу"
+                            onClick={() => exportFolder(node.id)}>
+                            <IconDownload />
+                          </button>
+                          <button data-script-runner-control className={`${classes.iconBtn} ${classes.iconBtnDel}`}
+                            onClick={() => deleteNode(node.id)}>✕</button>
+                        </div>
+                      </div>
+                      {dropAfter && !(!node.collapsed && node.children?.length) && <div data-script-runner-control className={classes.dropLine} style={{ marginLeft: depth * 20 }} />}
+                      {!node.collapsed && node.children && node.children.length > 0 && renderTree(node.children, depth + 1)}
+                    </React.Fragment>
+                  );
+                }
+                const sc = node.actions ?? [];
+                return (
+                  <React.Fragment key={node.id}>
+                    {dropBefore && <div data-script-runner-control className={classes.dropLine} style={{ marginLeft: depth * 20 }} />}
+                    <div data-script-runner-control
+                      className={`${classes.scriptCard} ${isDragged ? classes.dragging : ""}`}
+                      style={{ marginLeft: depth * 20 }}
+                      onDragOver={(e) => handleDragOver(e, node.id, "script")}>
+                      <span data-script-runner-control className={classes.gripHandle} draggable
+                        onDragStart={(e) => handleDragStart(e, node.id)}
+                        onDragEnd={handleDragEnd}>
+                        <IconGrip />
                       </span>
-                    )}
-                  </div>
-                  <div data-script-runner-control className={classes.scriptMeta}>
-                    {sc.length} {sc.length === 1 ? "действие" : sc.length < 5 ? "действия" : "действий"}
-                  </div>
-                </div>
-                <div data-script-runner-control className={classes.scriptCardActions}>
-                  <button data-script-runner-control className={classes.iconBtn}
-                    onClick={() => runScriptByName(name)}
-                    title="Запустить"
-                    disabled={!sc.length || isRunning}>
-                    <IconPlay />
-                  </button>
-                  <button data-script-runner-control className={`${classes.iconBtn} ${
-                    editingScriptName === name ? classes.iconBtnActive : ""
-                  }`}
-                    title="Редактировать"
-                    onClick={() => editScript(name)}>
-                    <IconEdit />
-                  </button>
-                  <button
-                    data-script-runner-control
-                    className={`${classes.iconBtn} ${
-                      visibleScriptName === name ? classes.iconBtnActive : ""
-                    }`}
-                    title={visibleScriptName === name ? "Скрыть точки" : "Показать точки"}
-                    onClick={() => toggleScriptPreview(name)}
-                  >
-                    {visibleScriptName === name ? <IconEyeOff /> : <IconEye />}
-                  </button>
-                  <button
-                    data-script-runner-control
-                    className={classes.iconBtn}
-                    title="Экспортировать скрипт"
-                    onClick={() => exportSingleScript(name)}
-                  >
-                    <IconDownload />
-                  </button>
-                  <button data-script-runner-control className={`${classes.iconBtn} ${classes.iconBtnDel}`}
-                    onClick={() => deleteScript(name)}>✕</button>
-                </div>
-              </div>
-            ))}
+                      <div data-script-runner-control className={classes.scriptCardInfo}>
+                        <div data-script-runner-control className={classes.scriptName}>
+                          {renamingNodeId === node.id ? (
+                            <input data-script-runner-control className={classes.inlineRenameInput}
+                              autoFocus
+                              value={renamingValue}
+                              onChange={(e) => setRenamingValue(e.target.value)}
+                              onBlur={commitRename}
+                              onKeyDown={(e) => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") { setRenamingNodeId(null); setRenamingValue(""); } }}
+                            />
+                          ) : (
+                            <span onDoubleClick={() => startRename(node.id, node.name)}>{node.name}</span>
+                          )}
+                          {editingScriptId === node.id && (
+                            <span data-script-runner-control className={classes.scriptEditingBadge}>
+                              редактируется
+                            </span>
+                          )}
+                        </div>
+                        <div data-script-runner-control className={classes.scriptMeta}>
+                          {sc.length} {sc.length === 1 ? "действие" : sc.length < 5 ? "действия" : "действий"}
+                        </div>
+                      </div>
+                      <div data-script-runner-control className={classes.scriptCardActions}>
+                        <button data-script-runner-control className={classes.iconBtn}
+                          onClick={() => runScriptById(node.id)}
+                          title="Запустить"
+                          disabled={!sc.length || isRunning}>
+                          <IconPlay />
+                        </button>
+                        <button data-script-runner-control className={`${classes.iconBtn} ${
+                          editingScriptId === node.id ? classes.iconBtnActive : ""
+                        }`}
+                          title="Редактировать"
+                          onClick={() => editScript(node.id)}>
+                          <IconEdit />
+                        </button>
+                        <button data-script-runner-control className={`${classes.iconBtn} ${
+                          visibleNodeId === node.id ? classes.iconBtnActive : ""
+                        }`}
+                          title={visibleNodeId === node.id ? "Скрыть точки" : "Показать точки"}
+                          onClick={() => toggleNodePreview(node.id)}>
+                          {visibleNodeId === node.id ? <IconEyeOff /> : <IconEye />}
+                        </button>
+                      <button data-script-runner-control className={classes.iconBtn}
+                        title="Экспортировать скрипт"
+                          onClick={() => exportSingleScript(node.id)}>
+                          <IconDownload />
+                        </button>
+                        <button data-script-runner-control className={`${classes.iconBtn} ${classes.iconBtnDel}`}
+                          onClick={() => deleteNode(node.id)}>✕</button>
+                      </div>
+                    </div>
+                    {dropAfter && <div data-script-runner-control className={classes.dropLine} style={{ marginLeft: depth * 20 }} />}
+                  </React.Fragment>
+                );
+              });
+            })(scriptTree, 0)}
           </div>
         )}
 

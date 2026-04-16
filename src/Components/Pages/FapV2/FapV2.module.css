@@ -1,0 +1,158 @@
+.section {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 30px;
+  overflow: hidden;
+  background: #F1F4FB;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.title {
+  font-family: Inter, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #2B2B34;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.searchWrap {
+  width: 300px;
+}
+
+.statusWrap {
+  width: 200px;
+}
+
+.grid {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  cursor: pointer;
+  border: 1px solid #E4E4EF;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  border-color: var(--dark-blue);
+}
+
+.cardTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardFlight {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.flightNumber {
+  font-family: Inter, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2B2B34;
+}
+
+.flightMeta {
+  font-family: Nunito Sans, sans-serif;
+  font-size: 13px;
+  color: #545873;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #C0C3D6;
+  flex-shrink: 0;
+}
+
+.statusBadge {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: Inter, sans-serif;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cardServices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.serviceChip {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+}
+
+.cardBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+  border-top: 1px solid #F1F5F9;
+}
+
+.cardDate {
+  font-family: Nunito Sans, sans-serif;
+  font-size: 12px;
+  color: #94A3B8;
+}
+
+.loader {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+}
+
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px;
+  color: #94A3B8;
+  font-family: Inter, sans-serif;
+  font-size: 15px;
+}

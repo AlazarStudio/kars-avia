@@ -321,6 +321,53 @@
     justify-content: center;
 }
 
+/* Таблица должностей с доступом по разделам */
+.positionsTable {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.positionsTableHeader {
+    display: flex;
+    align-items: center;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--no-active);
+}
+
+.positionRow {
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    border-bottom: 1px dashed var(--no-active);
+}
+
+.positionCellName {
+    flex: 1;
+    font-size: 13px;
+    font-family: Nunito Sans, sans-serif;
+    color: #2B2B34;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 8px;
+}
+
+.positionCellSection {
+    width: 68px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-family: Inter, sans-serif;
+    color: #545873;
+    text-align: center;
+    line-height: 1.2;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
 .loaderContainer {
     display: flex;
     justify-content: center;

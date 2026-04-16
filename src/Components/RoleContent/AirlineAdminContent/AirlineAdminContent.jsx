@@ -32,6 +32,7 @@ import {
 } from "../../../../graphQL_requests";
 import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
+import FapV2 from "../../Pages/FapV2/FapV2";
 
 // Универсальная заглушка «нет доступа» (по желанию — замени на свой экран)
 const NoAccess = () => (
@@ -69,6 +70,12 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
         guardKey: "reserveMenu",
         Comp: RepresentativeRequests,
         props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["fapv2"],
+        guardKey: "reserveMenu",
+        Comp: FapV2,
+        props: () => ({ user }),
       },
       {
         ids: ["orders"],

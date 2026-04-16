@@ -23,6 +23,7 @@ import DispatcherAccessSettings from "../../Blocks/DispatcherAccessSettings/Disp
 import DispatcherNotificationsSettings from "../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings";
 import { canAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
+import FapV2 from "../../Pages/FapV2/FapV2";
 
 const NoAccess = () => (
   <div
@@ -65,6 +66,12 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         Comp: RepresentativeRequests,
         // Comp: Reserve,
         props: () => ({ user, accessMenu: safeAccessMenu }),
+      },
+      {
+        ids: ["fapv2"],
+        guardKey: "reserveMenu",
+        Comp: FapV2,
+        props: () => ({ user }),
       },
       {
         ids: ["company"],

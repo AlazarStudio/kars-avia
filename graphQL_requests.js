@@ -1787,6 +1787,14 @@ export const CANCEL_PASSENGER_REQUEST = gql`
   }
 `;
 
+export const ADD_PASSENGER_REQUEST_PERSON = gql`
+  mutation AddPassengerRequestPerson($requestId: ID!, $service: PassengerServiceKind!, $person: PassengerServicePersonInput!) {
+    addPassengerRequestPerson(requestId: $requestId, service: $service, person: $person) {
+      id
+    }
+  }
+`;
+
 export const SET_PASSENGER_SERVICE_STATUS = gql`
   mutation SetPassengerServiceStatus($id: ID!, $service: PassengerServiceKind!, $status: PassengerServiceStatus!) {
     setPassengerRequestServiceStatus(id: $id, service: $service, status: $status) {
@@ -4351,6 +4359,18 @@ export const GET_AIRLINE_COMPANY = gql`
         position {
           id
           name
+        }
+        positionAccessMenus {
+          positionId
+          position {
+            id
+            name
+          }
+          accessMenu {
+            requestMenu
+            transferMenu
+            personalMenu
+          }
         }
         accessMenu {
           requestMenu
