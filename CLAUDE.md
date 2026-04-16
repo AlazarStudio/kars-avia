@@ -210,6 +210,15 @@ Main_Page (запрашивает GET_AUTH_USER_ACCESS / GET_DISPATCHER_DEPARTME
 | `archived` | Архив |
 | `canceled` | Отменён |
 
+## Модуль FAP (Passenger Requests)
+
+`src/Components/Blocks/FapV2/` — управление заявками на пассажирские услуги (вода, питание, проживание, трансфер, багаж).
+
+- `fapConstants.js` — конфиги статусов (`REQUEST_STATUS_CONFIG`, `SERVICE_STATUS_CONFIG`), типов услуг (`SERVICE_CONFIG`), утилиты форматирования дат
+- `FapDetail` — детальная страница заявки, управляет переходами статусов (`CREATED → ACCEPTED → IN_PROGRESS → COMPLETED`)
+- Каждая секция (`FapLivingSection`, `FapTransferSection`, и т.д.) — отдельный компонент своего типа услуги
+- `FapReport` — отчёт по размещению с группировкой по `roomCategory + roomKind`, редактируемыми ценами и экспортом в XLSX
+
 ## Ключевые паттерны
 
 - **Контексты**: Toast (`useToast`) и Dialog (`useDialog`) доступны глобально
@@ -219,3 +228,5 @@ Main_Page (запрашивает GET_AUTH_USER_ACCESS / GET_DISPATCHER_DEPARTME
 - **Lazy loading**: тяжёлые страницы подключаются через `React.lazy` + `Suspense`
 - **Визуальный disabled**: затемнение элементов при `disabled` делается через `opacity: 0.55` на контейнере (класс `rowDisabled`), а не через MUI-проп `disabled` — это обеспечивает одинаковый вид для включённых и выключённых переключателей
 - **CSS-модули**: каждый компонент имеет свой `.module.css`. Стили соседних компонентов из той же папки могут шариться (напр. `AccessPermissionsPanel` использует `SettingsSidebar.module.css`)
+- **SVG-иконки**: хранятся как React-компоненты в `src/shared/icons/`. Использовать их вместо MUI-иконок где возможно
+- **`calculateEffectiveCostDays(arrival, departure)`** из `src/utils/effectiveCostDays.js` — считает эффективные сутки с учётом частичных суток (заезд до 06:00 → +1, до 14:00 → +0.5; выезд после 18:00 → +1, после 12:00 → +0.5). Используется в расчётах стоимости размещения
