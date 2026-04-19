@@ -106,11 +106,12 @@ src/
 │   ├── useLocalStorage.jsx
 │   └── useWindowSize.jsx
 ├── constants/
+│   └── externalAuthErrors.js
+├── utils/
 │   ├── access.js            # Матрица доступа по ролям
-│   ├── externalAuthErrors.js
-│   ├── effectiveCostDays.js
-│   └── transferPrices.js
-├── utils/                   # Утилитарные функции
+│   ├── effectiveCostDays.js # Расчёт эффективных суток
+│   ├── transferPrices.js    # Цены трансфера
+│   └── scriptRunnerSelectors.js
 ├── shared/                  # Общие компоненты
 └── Components/
     ├── Pages/               # Страницы (маршруты)
@@ -132,7 +133,7 @@ src/
 | `airlineAdmin` | `AIRLINEADMIN` | Администратор авиакомпании |
 | `airlineModerator` | `AIRLINEMODERATOR` | Модератор авиакомпании |
 
-Матрица доступа по ролям — `src/constants/access.js`.
+Матрица доступа по ролям — `src/utils/access.js`.
 
 ## Аутентификация
 
@@ -224,7 +225,7 @@ Main_Page (запрашивает GET_AUTH_USER_ACCESS / GET_DISPATCHER_DEPARTME
 - **Контексты**: Toast (`useToast`) и Dialog (`useDialog`) доступны глобально
 - **Медиафайлы**: `getMediaUrl(path)` из `graphQL_requests.js` добавляет token в URL
 - **Стандартные примитивы**: используй компоненты из `src/Components/Standart/` (Button, H1, H2, Layout, RowBlock, ColumnBlock, WidthBlock, CenterBlock, Text)
-- **MUI-обёртки**: `MUIAutocomplete`, `MUILoader`, `MUIAlert`, `MUIConfirm`, `MUISwitch`, `MUITextField` — внутренние обёртки над MUI
+- **MUI-обёртки**: `MUIAutocomplete`, `MUIAutocompleteColor`, `MUILoader`, `MUIAlert`, `MUIConfirm`, `MUISwitch`, `MUITextField` — в `src/Components/Blocks/MUI*/`
 - **Lazy loading**: тяжёлые страницы подключаются через `React.lazy` + `Suspense`
 - **Визуальный disabled**: затемнение элементов при `disabled` делается через `opacity: 0.55` на контейнере (класс `rowDisabled`), а не через MUI-проп `disabled` — это обеспечивает одинаковый вид для включённых и выключённых переключателей
 - **CSS-модули**: каждый компонент имеет свой `.module.css`. Стили соседних компонентов из той же папки могут шариться (напр. `AccessPermissionsPanel` использует `SettingsSidebar.module.css`)

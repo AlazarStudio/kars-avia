@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(git checkout:*)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(npm run *)",
+      "Bash(git -C /c/github/kars-avia log --all --oneline --grep=\"FAP\\\\|fap\")",
+      "Bash(git -C /c/github/kars-avia log --all --oneline -- \"*Fap*\")",
+      "Bash(git -C /c/github/kars-avia show f146345:src/Components)",
+      "Bash(git -C /c/github/kars-avia diff f146345 HEAD -- src/Components/Blocks/)",
+      "Bash(git -C /c/github/kars-avia show f146345:src/Components/Pages)"
     ]
   }
 }

@@ -20,6 +20,7 @@ import MUIAutocomplete from "../../Blocks/MUIAutocomplete/MUIAutocomplete";
 import Button from "../../Standart/Button/Button";
 import CreateRepresentativeRequest from "../../Blocks/CreateRepresentativeRequest/CreateRepresentativeRequest";
 import { useDebounce } from "../../../hooks/useDebounce";
+import Header from "../../Blocks/Header/Header";
 
 const STATUS_OPTIONS = [
   { value: null, label: "Все статусы" },
@@ -68,17 +69,7 @@ export default function FapV2({ user }) {
 
   return (
     <div className={classes.section}>
-      <div className={classes.topRow}>
-        <div className={classes.title}>ФАП — заявки</div>
-        <Button
-          backgroundcolor="var(--dark-blue)"
-          color="#fff"
-          onClick={() => setShowCreate(true)}
-        >
-          + Создать заявку
-        </Button>
-      </div>
-
+      <Header>ФАП — заявки</Header>
       <div className={classes.toolbar}>
         <MUITextField
           className={classes.searchWrap}
@@ -96,6 +87,13 @@ export default function FapV2({ user }) {
           isOptionEqualToValue={(o, v) => o?.value === v?.value}
           dropdownWidth="200px"
         />
+        <Button
+          backgroundcolor="var(--dark-blue)"
+          color="#fff"
+          onClick={() => setShowCreate(true)}
+        >
+          + Создать заявку
+        </Button>
       </div>
 
       <div className={classes.grid}>

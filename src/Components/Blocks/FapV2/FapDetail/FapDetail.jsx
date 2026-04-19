@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import classes from "./FapDetail.module.css";
 import {
   GET_PASSENGER_REQUEST,
@@ -17,6 +21,7 @@ import {
 } from "../fapConstants";
 import MUILoader from "../../MUILoader/MUILoader";
 import Button from "../../../Standart/Button/Button";
+import Header from "../../Header/Header";
 import FapWaterMealSection from "../FapWaterMealSection/FapWaterMealSection";
 import FapLivingSection from "../FapLivingSection/FapLivingSection";
 import FapTransferSection from "../FapTransferSection/FapTransferSection";
@@ -24,6 +29,8 @@ import FapBaggageSection from "../FapBaggageSection/FapBaggageSection";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
+import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
+import Message from "../../Message/Message";
 
 const STATUS_TRANSITIONS = {
   CREATED: ["ACCEPTED"],
@@ -40,8 +47,10 @@ export default function FapDetail({ user }) {
 
   const [showAddService, setShowAddService] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
-  const [showCancelForm, setShowCancelForm] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   const { loading, data, refetch } = useQuery(GET_PASSENGER_REQUEST, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -85,6 +94,13 @@ export default function FapDetail({ user }) {
   const isFinal =
     request.status === "COMPLETED" || request.status === "CANCELLED";
 
+  const allServicesAdded =
+    !!request.waterService?.plan?.enabled &&
+    !!request.mealService?.plan?.enabled &&
+    !!request.livingService?.plan?.enabled &&
+    !!request.transferService?.plan?.enabled &&
+    !!request.baggageDeliveryService?.plan?.enabled;
+
   const handleStatusChange = async (newStatus) => {
     const ok = await confirm(
       `Перевести заявку в статус «${REQUEST_STATUS_CONFIG[newStatus]?.label}»?`
@@ -103,18 +119,16 @@ export default function FapDetail({ user }) {
   };
 
   const handleCancel = async () => {
-    const ok = await confirm("Отменить заявку?");
-    if (!ok) return;
     try {
       setSaving(true);
       await cancelRequest({
         variables: {
           id: request.id,
-          cancelReason: cancelReason || undefined,
+          cancelReason: cancelReason.trim() || undefined,
         },
       });
       setCancelReason("");
-      setShowCancelForm(false);
+      setShowCancelDialog(false);
       refetch();
       success("Заявка отменена");
     } catch {
@@ -126,19 +140,24 @@ export default function FapDetail({ user }) {
 
   return (
     <div className={classes.page}>
-      {/* Sticky header */}
+      <Header>
+        <div className={classes.headerNav}>
+          <button
+            className={classes.backBtn}
+            onClick={() => navigate("/fapv2")}
+          >
+            <img src="/arrow.png" alt="" />
+          </button>
+          <span className={classes.headerNavTitle}>
+            Заявка {request.flightNumber}
+          </span>
+        </div>
+      </Header>
+
+      {/* Sticky action bar */}
       <div className={classes.stickyHeader}>
         <div className={classes.headerRow}>
           <div className={classes.headerLeft}>
-            <button
-              className={classes.backBtn}
-              onClick={() => navigate("/fapv2")}
-            >
-              ←
-            </button>
-            <div className={classes.headerTitle}>
-              {request.flightNumber}
-            </div>
             <span
               className={classes.statusBadge}
               style={{ color: statusCfg.color, background: statusCfg.bg }}
@@ -161,49 +180,42 @@ export default function FapDetail({ user }) {
                     {REQUEST_STATUS_CONFIG[s]?.label}
                   </Button>
                 ))}
-                <Button
-                  backgroundcolor="#F6F7FB"
-                  color="#545873"
-                  onClick={() => setShowAddService(true)}
-                >
-                  + Услуга
-                </Button>
-                <Button
-                  backgroundcolor="#FEF2F2"
-                  color="#EF4444"
-                  onClick={() => setShowCancelForm((v) => !v)}
-                >
-                  Отменить
-                </Button>
+                {!allServicesAdded && (
+                  <Button
+                    backgroundcolor="#F6F7FB"
+                    color="#545873"
+                    onClick={() => setShowAddService(true)}
+                  >
+                    + Услуга
+                  </Button>
+                )}
               </>
+            )}
+            <Button
+              backgroundcolor={showLogs ? "var(--dark-blue)" : "#F6F7FB"}
+              color={showLogs ? "#fff" : "#545873"}
+              onClick={() => setShowLogs((v) => !v)}
+            >
+              История
+            </Button>
+            <Button
+              backgroundcolor={showChat ? "var(--dark-blue)" : "#F6F7FB"}
+              color={showChat ? "#fff" : "#545873"}
+              onClick={() => setShowChat((v) => !v)}
+            >
+              Чат
+            </Button>
+            {!isFinal && (
+              <Button
+                backgroundcolor="#FEF2F2"
+                color="#EF4444"
+                onClick={() => setShowCancelDialog(true)}
+              >
+                Отменить
+              </Button>
             )}
           </div>
         </div>
-
-        {showCancelForm && (
-          <div style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center" }}>
-            <input
-              className={classes.addFormInput}
-              style={{
-                flex: 1,
-                padding: "8px 12px",
-                border: "1px solid #E4E4EF",
-                borderRadius: "8px",
-                fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
-              }}
-              placeholder="Причина отмены (необязательно)"
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-            />
-            <Button backgroundcolor="var(--hover-gray)" color="#000" onClick={() => setShowCancelForm(false)}>
-              Отмена
-            </Button>
-            <Button backgroundcolor="#EF4444" color="#fff" onClick={handleCancel} disabled={saving}>
-              Подтвердить
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Info bar */}
@@ -271,42 +283,68 @@ export default function FapDetail({ user }) {
         )}
       </div>
 
-      {/* Service sections */}
-      <div className={classes.content}>
-        <FapWaterMealSection
-          service={request.waterService}
-          serviceKind="WATER"
-          label={SERVICE_CONFIG.water.label}
-          color={SERVICE_CONFIG.water.color}
-          requestId={request.id}
-          onRefetch={refetch}
-        />
-        <FapWaterMealSection
-          service={request.mealService}
-          serviceKind="MEAL"
-          label={SERVICE_CONFIG.meal.label}
-          color={SERVICE_CONFIG.meal.color}
-          requestId={request.id}
-          onRefetch={refetch}
-        />
-        <FapLivingSection
-          service={request.livingService}
-          color={SERVICE_CONFIG.living.color}
-          request={request}
-          onRefetch={refetch}
-        />
-        <FapTransferSection
-          service={request.transferService}
-          color={SERVICE_CONFIG.transfer.color}
-          request={request}
-          onRefetch={refetch}
-        />
-        <FapBaggageSection
-          service={request.baggageDeliveryService}
-          color={SERVICE_CONFIG.baggage.color}
-          request={request}
-          onRefetch={refetch}
-        />
+      {/* Content row: sections + optional chat panel */}
+      <div className={classes.contentRow}>
+        <div className={classes.sectionsPane}>
+          <FapWaterMealSection
+            service={request.waterService}
+            serviceKind="WATER"
+            label={SERVICE_CONFIG.water.label}
+            color={SERVICE_CONFIG.water.color}
+            requestId={request.id}
+            onRefetch={refetch}
+          />
+          <FapWaterMealSection
+            service={request.mealService}
+            serviceKind="MEAL"
+            label={SERVICE_CONFIG.meal.label}
+            color={SERVICE_CONFIG.meal.color}
+            requestId={request.id}
+            onRefetch={refetch}
+          />
+          <FapLivingSection
+            service={request.livingService}
+            color={SERVICE_CONFIG.living.color}
+            request={request}
+            onRefetch={refetch}
+          />
+          <FapTransferSection
+            service={request.transferService}
+            color={SERVICE_CONFIG.transfer.color}
+            request={request}
+            onRefetch={refetch}
+          />
+          <FapBaggageSection
+            service={request.baggageDeliveryService}
+            color={SERVICE_CONFIG.baggage.color}
+            request={request}
+            onRefetch={refetch}
+          />
+        </div>
+
+        {showChat && (
+          <div className={classes.chatPane}>
+            <div className={classes.chatPaneHeader}>
+              <span className={classes.chatPaneTitle}>Чат</span>
+              <button
+                className={classes.chatPaneClose}
+                onClick={() => setShowChat(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className={classes.chatPaneBody}>
+              <Message
+                activeTab="Комментарий"
+                passengerRequestId={request.id}
+                token={token}
+                user={user}
+                chatPadding="0"
+                chatHeight="calc(100vh - 386px)"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {showAddService && (
@@ -319,6 +357,74 @@ export default function FapDetail({ user }) {
           request={request}
         />
       )}
+
+      <PassengerRequestLogs
+        show={showLogs}
+        onClose={() => setShowLogs(false)}
+        passengerRequestId={request.id}
+      />
+
+      {/* Cancel confirmation dialog */}
+      <Dialog
+        open={showCancelDialog}
+        onClose={() => {
+          setShowCancelDialog(false);
+          setCancelReason("");
+        }}
+        PaperProps={{ sx: { borderRadius: "16px", minWidth: 440, maxWidth: 500 } }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 700,
+            fontSize: 18,
+            color: "#EF4444",
+            borderBottom: "1px solid #F1F5F9",
+            pb: 2,
+          }}
+        >
+          Отмена заявки
+        </DialogTitle>
+        <DialogContent sx={{ pt: "16px !important", pb: 1 }}>
+          <p
+            style={{
+              fontFamily: "Inter, sans-serif",
+              fontSize: 14,
+              color: "#545873",
+              margin: "0 0 16px",
+            }}
+          >
+            После отмены заявка перейдёт в статус «Отменена». Это действие необратимо.
+          </p>
+          <textarea
+            className={classes.cancelTextarea}
+            rows={4}
+            placeholder="Причина отмены (необязательно)"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions sx={{ padding: "12px 20px 20px", gap: 1 }}>
+          <Button
+            backgroundcolor="#F6F7FB"
+            color="#545873"
+            onClick={() => {
+              setShowCancelDialog(false);
+              setCancelReason("");
+            }}
+          >
+            Назад
+          </Button>
+          <Button
+            backgroundcolor="#EF4444"
+            color="#fff"
+            onClick={handleCancel}
+            disabled={saving}
+          >
+            {saving ? "Отмена..." : "Отменить заявку"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

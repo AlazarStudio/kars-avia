@@ -156,7 +156,7 @@ function Message({
                 setMessages(fapChat);
                 setNewMessagesCount(fapChat.unreadMessagesCount || 0);
             }
-            setIsHaveTwoChats(false);
+            setIsHaveTwoChats?.(false);
             return;
         }
 

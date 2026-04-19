@@ -5,6 +5,7 @@ import {
   ADD_PASSENGER_REQUEST_PERSON,
   COMPLETE_PASSENGER_REQUEST_WATER_EARLY,
   COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
+  SET_PASSENGER_SERVICE_STATUS,
   getCookie,
 } from "../../../../../graphQL_requests";
 import {
@@ -52,6 +53,27 @@ export default function FapWaterMealSection({
     COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
     { context: { headers: { Authorization: `Bearer ${token}` } } }
   );
+
+  const [setServiceStatus] = useMutation(SET_PASSENGER_SERVICE_STATUS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const handleDelivered = async () => {
+    const ok = await confirm(
+      serviceKind === "WATER" ? "Отметить воду как доставленную?" : "Отметить питание как доставленное?"
+    );
+    if (!ok) return;
+    try {
+      setSaving(true);
+      await setServiceStatus({ variables: { id: requestId, service: serviceKind, status: "ACCEPTED" } });
+      onRefetch();
+      success("Статус обновлён");
+    } catch {
+      notifyError("Ошибка при смене статуса");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (!service?.plan?.enabled) return null;
 
@@ -198,6 +220,16 @@ export default function FapWaterMealSection({
 
           {!isCompleted && (
             <div className={classes.sectionActions}>
+              {service.status === "NEW" && (
+                <Button
+                  backgroundcolor="#ECFDF5"
+                  color="#10B981"
+                  onClick={handleDelivered}
+                  disabled={saving}
+                >
+                  {serviceKind === "WATER" ? "Вода доставлена" : "Питание доставлено"}
+                </Button>
+              )}
               <Button
                 backgroundcolor="var(--dark-blue)"
                 color="#fff"

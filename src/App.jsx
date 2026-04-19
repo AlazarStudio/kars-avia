@@ -162,7 +162,6 @@ function App() {
               path="/fapv2/:requestId/report/:hotelIndex"
               element={<FapReportPage user={user} />}
             />
-
             {/* Шахматка */}
             {/* <Route
               path="/:id/placement/:idHotel"
