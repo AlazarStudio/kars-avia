@@ -1,11 +1,10 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@apollo/client";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
-import Drawer from "@mui/material/Drawer";
 import classes from "../FapDetail/FapDetail.module.css";
 import lClasses from "./FapLivingSection.module.css";
 import {
@@ -16,31 +15,27 @@ import {
 import { SERVICE_STATUS_CONFIG, formatDate } from "../fapConstants";
 import Button from "../../../Standart/Button/Button";
 import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentativeHotel";
-import RepresentativeHotelDetail from "../../RepresentativeHotelDetail/RepresentativeHotelDetail";
+import HotelGuestsModal from "./HotelGuestsModal";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 
-export default function FapLivingSection({ service, color, request, onRefetch }) {
+export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle }) {
   const navigate = useNavigate();
   const { requestId } = useParams();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const { confirm } = useDialog();
 
-  const [open, setOpen] = useState(false);
   const [showAddHotel, setShowAddHotel] = useState(false);
   const [expandedHotels, setExpandedHotels] = useState({});
 
-  // Early complete
   const [showEarlyForm, setShowEarlyForm] = useState(false);
   const [earlyReason, setEarlyReason] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Hotel management dialog (guests: add/edit/delete/relocate/evict)
   const [hotelMgmtIndex, setHotelMgmtIndex] = useState(null);
 
-  // External auth link dialog
-  const [issueLinkState, setIssueLinkState] = useState(null); // { hotelIndex, hotelId }
+  const [issueLinkState, setIssueLinkState] = useState(null);
   const [issueLinkForm, setIssueLinkForm] = useState({ email: "", name: "", accessType: "CRM" });
   const [issueLinkResult, setIssueLinkResult] = useState(null);
   const [issueLinkCooldown, setIssueLinkCooldown] = useState(0);
@@ -54,11 +49,6 @@ export default function FapLivingSection({ service, color, request, onRefetch })
   const [createExternalLink, { loading: issuingLink }] = useMutation(CREATE_EXTERNAL_AUTH_LINK, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
-
-  const addNotification = useCallback((msg, type) => {
-    if (type === "error") notifyError(msg);
-    else success(msg);
-  }, [success, notifyError]);
 
   if (!service?.plan?.enabled) return null;
 
@@ -127,11 +117,9 @@ export default function FapLivingSection({ service, color, request, onRefetch })
     }
   };
 
-  const mgmtHotel = hotelMgmtIndex != null ? hotels[hotelMgmtIndex] : null;
-
   return (
     <div className={classes.section}>
-      <div className={classes.sectionHeader} onClick={() => setOpen((v) => !v)}>
+      <div className={classes.sectionHeader} onClick={onToggle}>
         <div className={classes.sectionHeaderLeft}>
           <div className={classes.sectionDot} style={{ background: color }} />
           <span className={classes.sectionName}>Проживание</span>
@@ -147,13 +135,12 @@ export default function FapLivingSection({ service, color, request, onRefetch })
             {hotels.length}{" "}
             {hotels.length === 1 ? "отель" : hotels.length < 5 ? "отеля" : "отелей"}
           </span>
-          <span className={`${classes.chevron} ${open ? classes.chevronOpen : ""}`}>▾</span>
+          <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>
         </div>
       </div>
 
-      {open && (
+      {isOpen && (
         <div className={classes.sectionBody}>
-          {/* Plan row */}
           <div className={classes.planRow}>
             {service.plan?.peopleCount && (
               <div className={classes.planItem}>
@@ -184,7 +171,6 @@ export default function FapLivingSection({ service, color, request, onRefetch })
 
             return (
               <div key={hotel.itemId || idx} className={lClasses.hotelCard}>
-                {/* Hotel header */}
                 <div className={lClasses.hotelHeader} onClick={() => toggleHotel(idx)}>
                   <div className={lClasses.hotelHeaderLeft}>
                     <div
@@ -247,7 +233,6 @@ export default function FapLivingSection({ service, color, request, onRefetch })
                   </div>
                 </div>
 
-                {/* Progress bar */}
                 {capacity > 0 && (
                   <div className={lClasses.progressBar}>
                     <div
@@ -257,7 +242,6 @@ export default function FapLivingSection({ service, color, request, onRefetch })
                   </div>
                 )}
 
-                {/* Compact guest list */}
                 {isExpanded && (
                   <div className={lClasses.hotelBody}>
                     {people.length === 0 ? (
@@ -372,89 +356,24 @@ export default function FapLivingSection({ service, color, request, onRefetch })
         />
       )}
 
-      {/* Hotel guests management drawer */}
-      <Drawer
-        anchor="right"
+      <HotelGuestsModal
         open={hotelMgmtIndex != null}
         onClose={() => setHotelMgmtIndex(null)}
-        PaperProps={{
-          sx: {
-            width: { xs: "100%", sm: 700 },
-            display: "flex",
-            flexDirection: "column",
-          },
-        }}
-      >
-        <div
-          style={{
-            padding: "16px 20px",
-            borderBottom: "1px solid #E4E4EF",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontWeight: 700,
-              fontSize: 18,
-              color: "#2B2B34",
-            }}
-          >
-            {mgmtHotel?.name || "Отель"} — гости
-          </span>
-          <button
-            onClick={() => setHotelMgmtIndex(null)}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#94A3B8",
-              fontSize: 18,
-              padding: "4px 8px",
-              borderRadius: 8,
-              lineHeight: 1,
-            }}
-          >
-            ✕
-          </button>
-        </div>
-        <div style={{ flex: 1, overflow: "auto" }}>
-          {mgmtHotel && (
-            <RepresentativeHotelDetail
-              request={request}
-              hotel={mgmtHotel}
-              hotelIndex={hotelMgmtIndex}
-              onRefetch={onRefetch}
-              addNotification={addNotification}
-              hidePageTitle
-              onGenerateReport={() => {
+        request={request}
+        hotel={hotelMgmtIndex != null ? hotels[hotelMgmtIndex] : null}
+        hotelIndex={hotelMgmtIndex ?? 0}
+        onRefetch={onRefetch}
+        onGenerateReport={
+          hotelMgmtIndex != null
+            ? () => {
+                const idx = hotelMgmtIndex;
                 setHotelMgmtIndex(null);
-                navigate(`/fapv2/${requestId}/report/${hotelMgmtIndex}`);
-              }}
-            />
-          )}
-        </div>
-        <div
-          style={{
-            padding: "12px 20px",
-            borderTop: "1px solid #E4E4EF",
-            flexShrink: 0,
-          }}
-        >
-          <Button
-            backgroundcolor="#F6F7FB"
-            color="#545873"
-            onClick={() => setHotelMgmtIndex(null)}
-          >
-            Закрыть
-          </Button>
-        </div>
-      </Drawer>
+                navigate(`/fapv2/${requestId}/report/${idx}`);
+              }
+            : undefined
+        }
+      />
 
-      {/* External auth link dialog */}
       {issueLinkState && (
         <Dialog
           open

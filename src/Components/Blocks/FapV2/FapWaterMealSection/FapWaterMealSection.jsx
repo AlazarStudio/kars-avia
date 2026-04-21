@@ -26,12 +26,12 @@ export default function FapWaterMealSection({
   color,
   requestId,
   onRefetch,
+  isOpen,
+  onToggle,
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const { confirm } = useDialog();
-
-  const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(emptyPerson);
   const [earlyReason, setEarlyReason] = useState("");
@@ -131,7 +131,7 @@ export default function FapWaterMealSection({
     <div className={classes.section}>
       <div
         className={classes.sectionHeader}
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
       >
         <div className={classes.sectionHeaderLeft}>
           <div
@@ -153,14 +153,14 @@ export default function FapWaterMealSection({
               : `${people.length} чел.`}
           </span>
           <span
-            className={`${classes.chevron} ${open ? classes.chevronOpen : ""}`}
+            className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}
           >
             ▾
           </span>
         </div>
       </div>
 
-      {open && (
+      {isOpen && (
         <div className={classes.sectionBody}>
           <div className={classes.planRow}>
             {service.plan?.peopleCount && (

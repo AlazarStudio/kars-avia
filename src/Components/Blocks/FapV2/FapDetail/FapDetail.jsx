@@ -51,6 +51,10 @@ export default function FapDetail({ user }) {
   const [saving, setSaving] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [showChat, setShowChat] = useState(false);
+  const [openSection, setOpenSection] = useState(null);
+
+  const toggleSection = (key) =>
+    setOpenSection((prev) => (prev === key ? null : key));
 
   const { loading, data, refetch } = useQuery(GET_PASSENGER_REQUEST, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -293,6 +297,8 @@ export default function FapDetail({ user }) {
             color={SERVICE_CONFIG.water.color}
             requestId={request.id}
             onRefetch={refetch}
+            isOpen={openSection === "water"}
+            onToggle={() => toggleSection("water")}
           />
           <FapWaterMealSection
             service={request.mealService}
@@ -301,24 +307,32 @@ export default function FapDetail({ user }) {
             color={SERVICE_CONFIG.meal.color}
             requestId={request.id}
             onRefetch={refetch}
+            isOpen={openSection === "meal"}
+            onToggle={() => toggleSection("meal")}
           />
           <FapLivingSection
             service={request.livingService}
             color={SERVICE_CONFIG.living.color}
             request={request}
             onRefetch={refetch}
+            isOpen={openSection === "living"}
+            onToggle={() => toggleSection("living")}
           />
           <FapTransferSection
             service={request.transferService}
             color={SERVICE_CONFIG.transfer.color}
             request={request}
             onRefetch={refetch}
+            isOpen={openSection === "transfer"}
+            onToggle={() => toggleSection("transfer")}
           />
           <FapBaggageSection
             service={request.baggageDeliveryService}
             color={SERVICE_CONFIG.baggage.color}
             request={request}
             onRefetch={refetch}
+            isOpen={openSection === "baggage"}
+            onToggle={() => toggleSection("baggage")}
           />
         </div>
 

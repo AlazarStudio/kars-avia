@@ -22,12 +22,10 @@ import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 
 const emptyPerson = { fullName: "", phone: "" };
 
-export default function FapTransferSection({ service, color, request, onRefetch }) {
+export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const { confirm } = useDialog();
-
-  const [open, setOpen] = useState(false);
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [expandedDrivers, setExpandedDrivers] = useState({});
 
@@ -127,7 +125,7 @@ export default function FapTransferSection({ service, color, request, onRefetch 
 
   return (
     <div className={classes.section}>
-      <div className={classes.sectionHeader} onClick={() => setOpen((v) => !v)}>
+      <div className={classes.sectionHeader} onClick={onToggle}>
         <div className={classes.sectionHeaderLeft}>
           <div className={classes.sectionDot} style={{ background: color }} />
           <span className={classes.sectionName}>Трансфер</span>
@@ -140,11 +138,11 @@ export default function FapTransferSection({ service, color, request, onRefetch 
             {drivers.length} водит. · {totalPassengers}
             {service.plan?.peopleCount ? `/${service.plan.peopleCount}` : ""} пасс.
           </span>
-          <span className={`${classes.chevron} ${open ? classes.chevronOpen : ""}`}>▾</span>
+          <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>
         </div>
       </div>
 
-      {open && (
+      {isOpen && (
         <div className={classes.sectionBody}>
           <div className={classes.planRow}>
             {service.plan?.peopleCount && (

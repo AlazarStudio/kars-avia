@@ -12,12 +12,10 @@ import AddRepresentativeBaggageDriver from "../../AddRepresentativeBaggageDriver
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 
-export default function FapBaggageSection({ service, color, request, onRefetch }) {
+export default function FapBaggageSection({ service, color, request, onRefetch, isOpen, onToggle }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const { confirm } = useDialog();
-
-  const [open, setOpen] = useState(false);
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [earlyReason, setEarlyReason] = useState("");
   const [showEarlyForm, setShowEarlyForm] = useState(false);
@@ -82,7 +80,7 @@ export default function FapBaggageSection({ service, color, request, onRefetch }
     <div className={classes.section}>
       <div
         className={classes.sectionHeader}
-        onClick={() => setOpen((v) => !v)}
+        onClick={onToggle}
       >
         <div className={classes.sectionHeaderLeft}>
           <div className={classes.sectionDot} style={{ background: color }} />
@@ -98,13 +96,13 @@ export default function FapBaggageSection({ service, color, request, onRefetch }
           <span style={{ fontSize: 13, color: "#545873" }}>
             {drivers.length} водит.
           </span>
-          <span className={`${classes.chevron} ${open ? classes.chevronOpen : ""}`}>
+          <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>
             ▾
           </span>
         </div>
       </div>
 
-      {open && (
+      {isOpen && (
         <div className={classes.sectionBody}>
           <div className={classes.planRow}>
             {service.plan?.plannedAt && (
