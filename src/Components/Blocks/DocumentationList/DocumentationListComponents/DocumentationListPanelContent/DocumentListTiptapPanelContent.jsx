@@ -1390,11 +1390,11 @@ export default function DocumentListTiptapPanelContent({
             {emptyStateTopLeftControls}
           </div>
         ) : null}
-        {emptyStateTopRightControls ? (
+        {/* {emptyStateTopRightControls ? (
           <div className="tiptap-panel-empty-top-right">
             {emptyStateTopRightControls}
           </div>
-        ) : null}
+        ) : null} */}
         <div className="tiptap-panel-empty-message">Выберите статью</div>
       </div>
     )
@@ -1410,14 +1410,13 @@ export default function DocumentListTiptapPanelContent({
       <div className="tiptap-panel-top-sticky">
         <div className="tiptap-panel-header" ref={headerRef}>
         {headerLeadingControls}
-        <button className="tiptap-panel-back-btn" onClick={handleBack}>
+        {/* <button className="tiptap-panel-back-btn" onClick={handleBack}>
           <ArrowBackRoundedIcon
             aria-hidden="true"
             fontSize="inherit"
             style={{ width: 16, height: 16, fontSize: 16 }}
           />
-          {/* <span>Назад</span> */}
-        </button>
+        </button> */}
         <div className="tiptap-panel-title">{docTitle || 'Без названия'}</div>
         {(canEdit || headerTrailingControls) && (
           <div
