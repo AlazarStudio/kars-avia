@@ -71,7 +71,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         ids: ["fapv2"],
         guardKey: "reserveMenu",
         Comp: FapV2,
-        props: () => ({ user }),
+        props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
         ids: ["company"],

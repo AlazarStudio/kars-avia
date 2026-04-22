@@ -1,0 +1,78 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  background: #F1F4FB;
+  padding: 30px;
+  gap: 15px;
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.headerNav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backBtn {
+  width: 35px;
+  height: 35px;
+  border: 1px dotted #545873;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px;
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+
+.backBtn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.headerNavTitle {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Контентная область — flex-колонка чтобы дочерняя секция могла растягиваться */
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Белый блок услуги (div.section из FapDetail.module.css) растягивается на всю высоту */
+.content > div {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Тело секции: убираем max-height аккордеона, даём flex:1 и скролл */
+.content > div > div:last-child {
+  max-height: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}

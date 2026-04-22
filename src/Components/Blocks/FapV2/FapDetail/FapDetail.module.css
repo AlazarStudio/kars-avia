@@ -319,10 +319,17 @@
   border-top: 1px solid #E4E4EF;
 }
 
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+}
+
 .planRow {
   display: flex;
   gap: 20px;
-  padding: 12px 0;
   flex-wrap: wrap;
 }
 
@@ -348,6 +355,19 @@
   gap: 10px;
   padding: 10px 0 4px;
   flex-wrap: wrap;
+}
+
+.actionsRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.actionsLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Table */
@@ -517,6 +537,26 @@
   font-weight: 500;
 }
 
+/* Copy link button (drivers / hotels) */
+.linkBtn {
+  font-size: 13px;
+  font-weight: 500;
+  color: #8B5CF6;
+  background: #F5F3FF;
+  border: none;
+  border-radius: 10px;
+  padding: 5px 12px;
+  min-height: 30px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.linkBtn:hover {
+  background: #EDE9FE;
+}
+
 /* Cancel textarea */
 .cancelTextarea {
   width: 100%;
@@ -534,4 +574,15 @@
 
 .cancelTextarea:focus {
   border-color: var(--red);
+}
+
+.progressBar {
+  height: 3px;
+  background: #E4E4EF;
+}
+
+.progressFill {
+  height: 3px;
+  border-radius: 0 2px 2px 0;
+  transition: width 0.3s ease;
 }

@@ -2,7 +2,7 @@
 
 ## Концепция
 
-FapV2 — основной интерфейс для работы с `PassengerRequest`. Ключевое отличие от старого FAP (`ReservePlacementRepresentative`): вместо отдельных страниц на каждую сущность — всё на одном экране через аккордеоны. Меньше навигации, быстрее доступ к действиям.
+FapV2 — основной интерфейс для работы с `PassengerRequest`. Ключевое отличие от старого FAP (`ReservePlacementRepresentative`): список заявок → карточка заявки (навигационные карточки услуг) → отдельная страница конкретной услуги. Меньше навигации, чёткое разделение уровней детализации.
 
 ---
 
@@ -11,7 +11,8 @@ FapV2 — основной интерфейс для работы с `PassengerR
 | Путь | Компонент | Описание |
 |------|-----------|----------|
 | `/fapv2` | `FapV2` | Список заявок (карточный грид) |
-| `/fapv2/:requestId` | `FapDetailPage` → `FapDetail` | Детальная страница заявки |
+| `/fapv2/:requestId` | `FapDetailPage` → `FapDetail` | Детальная страница заявки (навигация по услугам) |
+| `/fapv2/:requestId/service/:serviceKey` | `FapServicePage` | Детальная страница конкретной услуги |
 | `/fapv2/:requestId/report/:hotelIndex` | `FapReportPage` → `FapReport` | Отчёт по отелю |
 
 ---
@@ -24,17 +25,20 @@ src/Components/
 │   ├── FapV2.jsx              # Список заявок
 │   ├── FapV2.module.css
 │   ├── FapDetailPage.jsx      # Обёртка детали (MenuDispetcher + accessMenu)
+│   ├── FapServicePage.jsx     # Страница конкретной услуги (MenuDispetcher + accessMenu)
+│   ├── FapServicePage.module.css
 │   └── FapReportPage.jsx      # Обёртка отчёта (MenuDispetcher + accessMenu)
 └── Blocks/FapV2/
     ├── fapConstants.js                     # Конфиги статусов, услуг, утилиты дат
     ├── FapDetail/
-    │   ├── FapDetail.jsx                   # Детальная страница заявки
-    │   └── FapDetail.module.css
+    │   ├── FapDetail.jsx                   # Навигационная страница заявки
+    │   └── FapDetail.module.css            # Общие стили всех секций (topRow, planRow, actionsRow, progressBar, linkBtn и др.)
     ├── FapWaterMealSection/
     │   └── FapWaterMealSection.jsx         # Секция «Вода» / «Питание»
     ├── FapLivingSection/
     │   ├── FapLivingSection.jsx            # Секция «Проживание»
-    │   └── FapLivingSection.module.css
+    │   ├── FapLivingSection.module.css
+    │   └── HotelGuestsModal.jsx            # Модалка управления гостями отеля
     ├── FapTransferSection/
     │   └── FapTransferSection.jsx          # Секция «Трансфер»
     ├── FapBaggageSection/
@@ -51,21 +55,23 @@ src/Components/
 Карточный грид. Каждая карточка: номер рейса, авиакомпания, аэропорт, статус (бейдж), активные услуги (чипы), дата создания.
 
 - Поиск по рейсу (`useDebounce`, 400 мс)
-- Фильтр по статусу (`MUIAutocomplete`)
+- Фильтр по статусу (`MUIAutocomplete`), сохраняется в `localStorage` (`statusFilterFapV2`)
+- Фильтр по авиакомпании (`MUIAutocompleteColor`), скрыт для роли `airlineAdmin`
+- Фильтр по аэропорту (`MUIAutocomplete`)
 - Реалтайм: `PASSENGER_REQUEST_CREATED_SUBSCRIPTION` + `PASSENGER_REQUEST_UPDATED_SUBSCRIPTION` → `refetch()`
-- Кнопка «+ Создать заявку» → `CreateRepresentativeRequest`
+- Кнопка «+ Создать заявку» → `CreateRepresentativeRequest` (скрыта если `user.airlineId` и `!accessMenu.requestCreate`)
 
 ---
 
-## FapDetail — детальная страница
+## FapDetail — навигационная страница заявки
 
 ### Sticky header
-- Номер рейса + статус-бейдж
-- Кнопки перехода к следующему статусу (по `STATUS_TRANSITIONS`)
+- Статус-бейдж
+- Кнопки перехода к следующему статусу с подтверждением через MUI Dialog (по `STATUS_TRANSITIONS`)
 - «+ Услуга» → `AddRepresentativeService`
 - **«История»** → `PassengerRequestLogs` (sidebar с пагинацией)
 - **«Чат»** → toggleable чат-панель справа (`Message`)
-- «Отменить» → inline-форма с причиной → `CANCEL_PASSENGER_REQUEST`
+- «Отменить заявку» → MUI Dialog с опциональной причиной → `CANCEL_PASSENGER_REQUEST`
 
 ```js
 const STATUS_TRANSITIONS = {
@@ -73,26 +79,64 @@ const STATUS_TRANSITIONS = {
   ACCEPTED: ["IN_PROGRESS"],
   IN_PROGRESS: ["COMPLETED"],
 };
+
+const STATUS_ACTION_LABELS = {
+  ACCEPTED: "Принять заявку",
+  IN_PROGRESS: "Начать выполнение",
+  COMPLETED: "Завершить заявку",
+};
 ```
 
 ### Layout с чатом
 
-Когда чат открыт (кнопка «Чат»):
+Когда чат открыт:
 ```
-[sectionsPane: flex: 1, overflow-y auto]  |  [chatPane: 360px, border-left]
-         аккордеоны услуг                 |       Message component
+[sectionsPane: flex: 1, overflow-y auto]  |  [chatPane: 380px, border-left]
+         навигационные карточки           |       Message component
 ```
 
-### Info bar
-Горизонтальная полоса: авиакомпания, маршрут, дата рейса, пассажиров, время принятия, причина завершения.
+### Навигационные карточки услуг
 
-### Секции услуг (аккордеоны)
-Рендерятся последовательно в `.sectionsPane`. Каждая возвращает `null` если `service.plan.enabled === false`:
-1. `FapWaterMealSection` (serviceKind="WATER")
-2. `FapWaterMealSection` (serviceKind="MEAL")
-3. `FapLivingSection`
-4. `FapTransferSection`
-5. `FapBaggageSection`
+Каждая карточка — кликабельный div, переход на `/fapv2/:requestId/service/:serviceKey`. Отображает: цветную точку, название, статус-бейдж, краткую сводку (кол-во человек, отелей, водителей), стрелку «›».
+
+Рендерятся только если `service.plan.enabled === true`. Ключи: `water`, `meal`, `living`, `transfer`, `baggage`.
+
+---
+
+## FapServicePage — страница конкретной услуги
+
+Отдельная полноэкранная страница с `MenuDispetcher`. Отображает одну секцию услуги без аккордеона (`isOpen={true}`). Загружает `GET_PASSENGER_REQUEST` + подписку `PASSENGER_REQUEST_UPDATED_SUBSCRIPTION`.
+
+Маршрут: `/fapv2/:requestId/service/:serviceKey`
+
+Карта `serviceKey → компонент`:
+- `water` → `FapWaterMealSection` (serviceKind="WATER")
+- `meal` → `FapWaterMealSection` (serviceKind="MEAL")
+- `living` → `FapLivingSection`
+- `transfer` → `FapTransferSection`
+- `baggage` → `FapBaggageSection`
+
+**CSS-переопределение** (`FapServicePage.module.css`): дочерний `.section` растягивается на всю высоту контентной зоны; `.sectionBody` теряет `max-height` аккордеона и становится `flex: 1, overflow-y: auto`.
+
+---
+
+## Общий layout секций (FapDetail.module.css)
+
+Все секции используют единую структуру внутри `.sectionBody`:
+
+```
+.topRow                   ← flex row, space-between, padding: 12px 0
+  .planRow                ← метаданные услуги (кол-во, время, даты) — слева
+  .actionsRow             ← кнопки действий (добавить, завершить досрочно) — справа
+.progressBar              ← 3px полоска заполнения (если есть peopleCount)
+  .progressFill
+[карточки / таблица]
+[showEarlyForm]           ← inline-форма с причиной досрочного завершения
+```
+
+**Прогресс-бар** показывается между заголовком секции и аккордеонным телом — виден всегда. Зеленеет когда `completed >= total`.
+
+**Кнопки ссылок** (`.linkBtn` — фиолетовые): копируют ссылку в буфер через `navigator.clipboard.writeText`. Показываются только если поле не пустое.
 
 ---
 
@@ -100,70 +144,74 @@ const STATUS_TRANSITIONS = {
 
 ### FapWaterMealSection
 
-Пропсы: `service`, `serviceKind` ("WATER" | "MEAL"), `label`, `color`, `requestId`, `onRefetch`.
+Пропсы: `service`, `serviceKind` ("WATER" | "MEAL"), `label`, `color`, `requestId`, `onRefetch`, `isOpen`, `onToggle`.
 
 **Заголовок:** `N / plan.peopleCount чел.` + статус-бейдж.
 
-**Тело:**
-- Плановые данные: кол-во человек, планируемое время
-- Таблица людей: ФИО, телефон, место, время выдачи
-- Кнопки (если не завершено):
-  - **«Вода/Питание доставлена»** (зелёная) — `SET_PASSENGER_SERVICE_STATUS(status: "ACCEPTED")`, показывается только если `service.status === "NEW"`
-  - «+ Добавить человека» → inline-форма
-  - «Завершить досрочно» → inline-форма с причиной
+**Прогресс-бар:** `people.length / plan.peopleCount` (если `peopleCount > 0`).
 
-**Мутации:** `ADD_PASSENGER_REQUEST_PERSON`, `COMPLETE_PASSENGER_REQUEST_WATER_EARLY` / `COMPLETE_PASSENGER_REQUEST_MEAL_EARLY`, `SET_PASSENGER_SERVICE_STATUS`
+**Тело (topRow + таблица):**
+- Плановые данные: кол-во человек, планируемое время (HH:mm)
+- Кнопки (actionsRow, если не завершено):
+  - **«Вода/Питание доставлена»** (зелёная) — `SET_PASSENGER_SERVICE_STATUS(status: "ACCEPTED")`, только если `service.status === "NEW"`
+  - **«Завершить досрочно»** → inline-форма с причиной
+- Таблица людей: ФИО, телефон, место, **время выдачи (только HH:mm)**
+- Inline-форма досрочного завершения
+
+**Важно:** ручного добавления людей в вода/питание нет (соответствие старому FAP). Список только для просмотра.
+
+**Мутации:** `COMPLETE_PASSENGER_REQUEST_WATER_EARLY`, `COMPLETE_PASSENGER_REQUEST_MEAL_EARLY`, `SET_PASSENGER_SERVICE_STATUS`
 
 ---
 
 ### FapLivingSection
 
-Пропсы: `service`, `color`, `request`, `onRefetch`.
+Пропсы: `service`, `color`, `request`, `onRefetch`, `isOpen`, `onToggle`.
 
 **Заголовок:** `totalGuests/totalCapacity гостей · N отелей`
 
 **Тело:**
-- Плановые даты: заселение / выселение / мест по плану
+- topRow: плановые даты (заселение / выселение / мест по плану) + кнопки (+ Добавить отель, Завершить досрочно)
 - Карточки отелей — каждая раскрывается отдельно (`expandedHotels`)
-  - Прогресс-бар заполняемости
+  - **Прогресс-бар заполнения:** `hotel.people.length / hotel.peopleCount`
   - Чип `N/capacity` (зелёный если полный)
   - Кнопки в заголовке карточки:
     - **«Отчёт»** → `navigate(/fapv2/:requestId/report/:idx)`
-    - **«Гости»** → MUI Dialog с `RepresentativeHotelDetail` (полное управление: добавить/редактировать/удалить/переселить/выселить)
-    - **«Ссылка»** — выдача external auth link для гостиницы (если `hotel.hotelId` есть), открывает диалог с выбором CRM/PWA, email, именем
-  - В раскрытом состоянии: компактная таблица гостей (ФИО, телефон, номер, категория)
-  - Если гостей нет — empty state с кнопкой «Добавить гостя»
-  - Кнопка «Управление гостями →» при наличии гостей
-- Кнопки секции: «+ Добавить отель» → `AddRepresentativeHotel`, **«Завершить досрочно»** → `COMPLETE_PASSENGER_REQUEST_LIVING_EARLY`
+    - **«Гости»** → `HotelGuestsModal` (полное управление)
+    - **Ссылки (CRM / PWA / Ссылка)** — копируют `hotel.linkCRM` / `hotel.linkPWA` / `hotel.link` в буфер; показываются только если соответствующее поле заполнено
+  - В раскрытом состоянии: таблица гостей (ФИО, телефон, номер, категория)
 
-**Управление гостями** (MUI Dialog `fullWidth maxWidth="md"`):
-- Переиспользует `RepresentativeHotelDetail` с пропсами:
-  - `hidePageTitle={true}`, `onGenerateReport`, `addNotification` (wrapper для useToast)
-- Даёт всё: добавить/редактировать/удалить/переселить/выселить через `AddRepresentativeBooking` и мутации
+**Мутации:** `COMPLETE_PASSENGER_REQUEST_LIVING_EARLY`
 
-**External auth link dialog:**
-- Выбор типа: CRM / PWA (кнопки-переключатели)
-- Поле email (обязательно), поле имени (опционально)
-- После успеха: показывает ссылку с кнопкой «Копировать»
-- Cooldown: 60 сек между выдачами (проверка по `Date.now()`)
-- Мутация: `CREATE_EXTERNAL_AUTH_LINK` с `scope: "HOTEL"`
+#### HotelGuestsModal
+
+MUI Dialog с `maxWidth` динамическим: `view === "list" ? "md" : "sm"`.
+
+Четыре состояния (`view`):
+- `"list"` — список броней с поиском, кнопки «Отчёт», «+ Добавить бронь»
+- `"form"` — форма добавления/редактирования брони (ФИО, телефон, дата заезда, дата выезда, номер комнаты)
+- `"relocate"` — переселение: выбор отеля + причина
+- `"evict"` — выселение: причина
+
+Мутации: `ADD_PASSENGER_REQUEST_HOTEL_PERSON`, `UPDATE_PASSENGER_REQUEST_HOTEL_PERSON`, `REMOVE_PASSENGER_REQUEST_HOTEL_PERSON`, `RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON`, `EVICT_PASSENGER_REQUEST_HOTEL_PERSON`
 
 ---
 
 ### FapTransferSection
 
-Пропсы: `service`, `color`, `request`, `onRefetch`.
+Пропсы: `service`, `color`, `request`, `onRefetch`, `isOpen`, `onToggle`.
 
 **Заголовок:** `N водит. · totalPassengers/plan.peopleCount пасс.`
 
+**Прогресс-бар:** `totalPassengers / plan.peopleCount`.
+
 **Тело:**
-- Плановые данные: кол-во человек, время
+- topRow: кол-во человек, время + кнопки (+ Добавить водителя, Завершить досрочно)
 - Карточки водителей, раскрываются (`expandedDrivers`):
+  - Заголовок карточки: ФИО, метаданные + **кнопка «PWA»** или «Ссылка» — копирует `driver.linkPWA` / `driver.link`
   - Таблица пассажиров: `#`, ФИО, телефон + кнопки редактировать/удалить (если не завершено)
-  - Кнопка «+ Добавить пассажира» (если не достигнут лимит мест водителя)
-  - Диалог добавления/редактирования пассажира: ФИО, телефон
-  - Диалог подтверждения удаления
-- Кнопки секции: «+ Добавить водителя» → `AddRepresentativeDriver`, **«Завершить досрочно»** → `COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY`
+  - Кнопка «+ Добавить пассажира» (если не достигнут лимит)
+  - MUI Dialogs: добавление/редактирование пассажира, подтверждение удаления
 
 **Мутации:** `ADD_PASSENGER_REQUEST_DRIVER_PERSON`, `UPDATE_PASSENGER_REQUEST_DRIVER_PERSON`, `REMOVE_PASSENGER_REQUEST_DRIVER_PERSON`, `COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY`
 
@@ -171,16 +219,19 @@ const STATUS_TRANSITIONS = {
 
 ### FapBaggageSection
 
-Пропсы: `service`, `color`, `request`, `onRefetch`.
+Пропсы: `service`, `color`, `request`, `onRefetch`, `isOpen`, `onToggle`.
 
 **Заголовок:** `N водит.`
 
 **Тело:**
-- Планируемое время
+- topRow: планируемое время + кнопки (+ Добавить водителя, Завершить досрочно)
 - Карточки водителей (не раскрываются): ФИО, телефон, адреса, описание
+  - **Кнопка «PWA»** или «Ссылка» — копирует `driver.linkPWA` / `driver.link`
   - Статус: «В пути» / «✓ Доставлено» + время
   - Кнопка «Доставлено» → `COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY`
-- Кнопки: «+ Добавить водителя» → `AddRepresentativeBaggageDriver`, «Завершить досрочно» (форма с причиной) → `COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY`
+- Inline-форма досрочного завершения
+
+**Мутации:** `COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY`, `COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY`
 
 ---
 
@@ -231,9 +282,9 @@ formatDateTime(dateStr)  // → "дд.мм.гггг чч:мм"
 
 ---
 
-## Обёртки-страницы (FapDetailPage / FapReportPage)
+## Обёртки-страницы (FapDetailPage / FapServicePage / FapReportPage)
 
-Оба компонента:
+Все компоненты:
 1. Загружают `accessMenu` (авиакомпания → `GET_AIRLINE_DEPARTMENT`, диспетчер → `GET_DISPATCHER_DEPARTMENTS`)
 2. Рендерят `<MenuDispetcher id="fapv2" .../>` + основной компонент
 
@@ -245,23 +296,26 @@ formatDateTime(dateStr)  // → "дд.мм.гггг чч:мм"
 
 | Функционал | Старый FAP | FapV2 |
 |---|---|---|
-| Список: поиск, фильтр, карточки, create | ✅ | ✅ |
+| Список: поиск, фильтры (статус, авиакомпания, аэропорт), карточки, create | ✅ | ✅ |
 | Список: realtime | ✅ | ✅ |
 | Детальная: статусы, отмена, добавить услугу | ✅ | ✅ |
-| Вода/питание: просмотр, добавление людей | ✅ | ✅ |
+| Вода/питание: просмотр списка людей | ✅ | ✅ |
 | Вода/питание: «Доставлено» кнопка | ✅ | ✅ |
 | Вода/питание: досрочное завершение | ✅ | ✅ |
-| Проживание: отели, прогресс, добавить отель | ✅ | ✅ |
-| Проживание: добавить/редактировать/удалить гостей | ✅ | ✅ (через диалог) |
-| Проживание: переселить/выселить гостей | ✅ | ✅ (через диалог) |
+| Вода/питание: время выдачи только HH:mm | ✅ | ✅ |
+| Вода/питание: прогресс-бар | — | ✅ |
+| Проживание: отели, прогресс-бар, добавить отель | ✅ | ✅ |
+| Проживание: добавить/редактировать/удалить/переселить/выселить гостей | ✅ | ✅ (через HotelGuestsModal) |
 | Проживание: досрочное завершение | ✅ | ✅ |
-| Проживание: external auth link | ✅ | ✅ |
-| Трансфер: водители, добавить водителя | ✅ | ✅ |
-| Трансфер: добавить/редактировать/удалить пассажиров | ✅ | ✅ (inline) |
+| Проживание: копирование ссылок CRM/PWA | ✅ | ✅ |
+| Трансфер: водители, добавить водителя, прогресс-бар | ✅ | ✅ |
+| Трансфер: добавить/редактировать/удалить пассажиров | ✅ | ✅ (inline диалог) |
 | Трансфер: досрочное завершение | ✅ | ✅ |
+| Трансфер: копирование PWA-ссылки | ✅ | ✅ |
 | Багаж: водители, отметить доставлено | ✅ | ✅ |
 | Багаж: досрочное завершение | ✅ | ✅ |
+| Багаж: копирование PWA-ссылки | ✅ | ✅ |
 | Отчёт: сохранение, Excel | ✅ | ✅ (улучшен) |
 | Чат по заявке | ✅ | ✅ (панель справа) |
 | История действий (логи) | ✅ | ✅ (боковая панель) |
-| Навигация на отдельную страницу гостиницы/водителя | ✅ | — (заменено inline/диалог) |
+| Навигация на отдельную страницу услуги | — | ✅ (FapServicePage) |

@@ -33,6 +33,13 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
     { context: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
+  const copyLink = (url) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url)
+      .then(() => success("Ссылка скопирована"))
+      .catch(() => notifyError("Не удалось скопировать ссылку"));
+  };
+
   if (!service?.plan?.enabled) return null;
 
   const drivers = service.drivers || [];
@@ -104,13 +111,31 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
 
       {isOpen && (
         <div className={classes.sectionBody}>
-          <div className={classes.planRow}>
-            {service.plan?.plannedAt && (
-              <div className={classes.planItem}>
-                <span className={classes.planLabel}>Планируемое время</span>
-                <span className={classes.planValue}>
-                  {formatTime(service.plan.plannedAt)}
-                </span>
+          <div className={classes.topRow}>
+            <div className={classes.planRow}>
+              {service.plan?.plannedAt && (
+                <div className={classes.planItem}>
+                  <span className={classes.planLabel}>Планируемое время</span>
+                  <span className={classes.planValue}>{formatTime(service.plan.plannedAt)}</span>
+                </div>
+              )}
+            </div>
+            {!isCompleted && (
+              <div className={classes.actionsRow}>
+                <Button
+                  backgroundcolor="var(--dark-blue)"
+                  color="#fff"
+                  onClick={() => setShowAddDriver(true)}
+                >
+                  + Добавить водителя
+                </Button>
+                <Button
+                  backgroundcolor="#FEF2F2"
+                  color="#EF4444"
+                  onClick={() => setShowEarlyForm((v) => !v)}
+                >
+                  Завершить досрочно
+                </Button>
               </div>
             )}
           </div>
@@ -138,6 +163,25 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {driver.linkPWA ? (
+                      <button
+                        type="button"
+                        className={classes.linkBtn}
+                        onClick={(e) => { e.stopPropagation(); copyLink(driver.linkPWA); }}
+                        title="Скопировать PWA-ссылку"
+                      >
+                        PWA
+                      </button>
+                    ) : driver.link ? (
+                      <button
+                        type="button"
+                        className={classes.linkBtn}
+                        onClick={(e) => { e.stopPropagation(); copyLink(driver.link); }}
+                        title="Скопировать ссылку"
+                      >
+                        Ссылка
+                      </button>
+                    ) : null}
                     {done ? (
                       <span className={classes.deliveryDone}>
                         ✓ Доставлено
@@ -171,24 +215,6 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
             );
           })}
 
-          {!isCompleted && (
-            <div className={classes.sectionActions}>
-              <Button
-                backgroundcolor="var(--dark-blue)"
-                color="#fff"
-                onClick={() => setShowAddDriver(true)}
-              >
-                + Добавить водителя
-              </Button>
-              <Button
-                backgroundcolor="#FEF2F2"
-                color="#EF4444"
-                onClick={() => setShowEarlyForm((v) => !v)}
-              >
-                Завершить досрочно
-              </Button>
-            </div>
-          )}
 
           {showEarlyForm && (
             <div className={classes.addForm}>

@@ -15,19 +15,13 @@ import {
 } from "../../../../../graphQL_requests";
 import {
   SERVICE_CONFIG,
+  SERVICE_STATUS_CONFIG,
   REQUEST_STATUS_CONFIG,
-  formatDate,
-  formatDateTime,
 } from "../fapConstants";
 import MUILoader from "../../MUILoader/MUILoader";
 import Button from "../../../Standart/Button/Button";
 import Header from "../../Header/Header";
-import FapWaterMealSection from "../FapWaterMealSection/FapWaterMealSection";
-import FapLivingSection from "../FapLivingSection/FapLivingSection";
-import FapTransferSection from "../FapTransferSection/FapTransferSection";
-import FapBaggageSection from "../FapBaggageSection/FapBaggageSection";
 import { useToast } from "../../../../contexts/ToastContext";
-import { useDialog } from "../../../../contexts/DialogContext";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import Message from "../../Message/Message";
@@ -38,12 +32,74 @@ const STATUS_TRANSITIONS = {
   IN_PROGRESS: ["COMPLETED"],
 };
 
+const STATUS_ACTION_LABELS = {
+  ACCEPTED: "Принять заявку",
+  IN_PROGRESS: "Начать выполнение",
+  COMPLETED: "Завершить заявку",
+};
+
+const STATUS_CONFIRM_CONFIG = {
+  ACCEPTED: {
+    title: "Принятие заявки",
+    body: "Вы собираетесь принять заявку. После подтверждения она перейдёт в статус «Принята» и будет готова к дальнейшему выполнению.",
+  },
+  IN_PROGRESS: {
+    title: "Начало выполнения",
+    body: "Вы собираетесь перевести заявку в статус «В работе». Это означает, что исполнение заявки началось.",
+  },
+  COMPLETED: {
+    title: "Завершение заявки",
+    body: "Вы собираетесь завершить заявку. После подтверждения все услуги считаются выполненными. Это действие необратимо.",
+  },
+};
+
+const SERVICE_KEYS = ["water", "meal", "living", "transfer", "baggage"];
+
+function getServiceData(serviceKey, request) {
+  switch (serviceKey) {
+    case "water":    return request.waterService;
+    case "meal":     return request.mealService;
+    case "living":   return request.livingService;
+    case "transfer": return request.transferService;
+    case "baggage":  return request.baggageDeliveryService;
+    default:         return null;
+  }
+}
+
+function getServiceSummary(serviceKey, request) {
+  switch (serviceKey) {
+    case "water": {
+      const s = request.waterService;
+      return `${s?.people?.length ?? 0} / ${s?.plan?.peopleCount ?? 0} чел.`;
+    }
+    case "meal": {
+      const s = request.mealService;
+      return `${s?.people?.length ?? 0} / ${s?.plan?.peopleCount ?? 0} чел.`;
+    }
+    case "living": {
+      const hotels = request.livingService?.plan?.hotels ?? [];
+      const totalPeople = hotels.reduce((acc, h) => acc + (h.people?.length ?? 0), 0);
+      const totalCap = hotels.reduce((acc, h) => acc + (h.capacity ?? 0), 0);
+      return totalCap > 0 ? `${totalPeople} / ${totalCap} гостей` : `${hotels.length} отелей`;
+    }
+    case "transfer": {
+      const drivers = request.transferService?.plan?.drivers ?? [];
+      return `${drivers.length} водителей`;
+    }
+    case "baggage": {
+      const drivers = request.baggageDeliveryService?.plan?.drivers ?? [];
+      return `${drivers.length} водителей`;
+    }
+    default:
+      return "";
+  }
+}
+
 export default function FapDetail({ user }) {
   const { requestId } = useParams();
   const navigate = useNavigate();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
-  const { confirm } = useDialog();
 
   const [showAddService, setShowAddService] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
@@ -51,10 +107,8 @@ export default function FapDetail({ user }) {
   const [saving, setSaving] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [showChat, setShowChat] = useState(false);
-  const [openSection, setOpenSection] = useState(null);
-
-  const toggleSection = (key) =>
-    setOpenSection((prev) => (prev === key ? null : key));
+  const [pendingStatus, setPendingStatus] = useState(null);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
 
   const { loading, data, refetch } = useQuery(GET_PASSENGER_REQUEST, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -95,8 +149,7 @@ export default function FapDetail({ user }) {
 
   const statusCfg = REQUEST_STATUS_CONFIG[request.status] || {};
   const nextStatuses = STATUS_TRANSITIONS[request.status] || [];
-  const isFinal =
-    request.status === "COMPLETED" || request.status === "CANCELLED";
+  const isFinal = request.status === "COMPLETED" || request.status === "CANCELLED";
 
   const allServicesAdded =
     !!request.waterService?.plan?.enabled &&
@@ -105,14 +158,13 @@ export default function FapDetail({ user }) {
     !!request.transferService?.plan?.enabled &&
     !!request.baggageDeliveryService?.plan?.enabled;
 
-  const handleStatusChange = async (newStatus) => {
-    const ok = await confirm(
-      `Перевести заявку в статус «${REQUEST_STATUS_CONFIG[newStatus]?.label}»?`
-    );
-    if (!ok) return;
+  const handleConfirmStatus = async () => {
+    if (!pendingStatus) return;
     try {
       setSaving(true);
-      await setStatus({ variables: { id: request.id, status: newStatus } });
+      await setStatus({ variables: { id: request.id, status: pendingStatus } });
+      setShowStatusDialog(false);
+      setPendingStatus(null);
       refetch();
       success("Статус обновлён");
     } catch {
@@ -146,15 +198,10 @@ export default function FapDetail({ user }) {
     <div className={classes.page}>
       <Header>
         <div className={classes.headerNav}>
-          <button
-            className={classes.backBtn}
-            onClick={() => navigate("/fapv2")}
-          >
+          <button className={classes.backBtn} onClick={() => navigate("/fapv2")}>
             <img src="/arrow.png" alt="" />
           </button>
-          <span className={classes.headerNavTitle}>
-            Заявка {request.flightNumber}
-          </span>
+          <span className={classes.headerNavTitle}>Заявка {request.flightNumber}</span>
         </div>
       </Header>
 
@@ -178,10 +225,10 @@ export default function FapDetail({ user }) {
                     key={s}
                     backgroundcolor="var(--dark-blue)"
                     color="#fff"
-                    onClick={() => handleStatusChange(s)}
+                    onClick={() => { setPendingStatus(s); setShowStatusDialog(true); }}
                     disabled={saving}
                   >
-                    {REQUEST_STATUS_CONFIG[s]?.label}
+                    {STATUS_ACTION_LABELS[s] || REQUEST_STATUS_CONFIG[s]?.label}
                   </Button>
                 ))}
                 {!allServicesAdded && (
@@ -215,135 +262,57 @@ export default function FapDetail({ user }) {
                 color="#EF4444"
                 onClick={() => setShowCancelDialog(true)}
               >
-                Отменить
+                Отменить заявку
               </Button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Info bar */}
-      <div className={classes.infoBar}>
-        {request.airline?.name && (
-          <div className={classes.infoItem}>
-            <span className={classes.infoLabel}>Авиакомпания</span>
-            <span className={classes.infoValue}>{request.airline.name}</span>
-          </div>
-        )}
-        {request.airline?.name && <div className={classes.divider} />}
-        {(request.routeFrom || request.routeTo) && (
-          <>
-            <div className={classes.infoItem}>
-              <span className={classes.infoLabel}>Маршрут</span>
-              <span className={classes.infoValue}>
-                {[request.routeFrom, request.routeTo]
-                  .filter(Boolean)
-                  .join(" → ")}
-              </span>
-            </div>
-            <div className={classes.divider} />
-          </>
-        )}
-        {request.flightDate && (
-          <>
-            <div className={classes.infoItem}>
-              <span className={classes.infoLabel}>Дата рейса</span>
-              <span className={classes.infoValue}>
-                {formatDate(request.flightDate)}
-              </span>
-            </div>
-            <div className={classes.divider} />
-          </>
-        )}
-        {request.plannedPassengersCount && (
-          <div className={classes.infoItem}>
-            <span className={classes.infoLabel}>Пассажиров</span>
-            <span className={classes.infoValue}>
-              {request.plannedPassengersCount}
-            </span>
-          </div>
-        )}
-        {request.statusTimes?.acceptedAt && (
-          <>
-            <div className={classes.divider} />
-            <div className={classes.infoItem}>
-              <span className={classes.infoLabel}>Принято</span>
-              <span className={classes.infoValue}>
-                {formatDateTime(request.statusTimes.acceptedAt)}
-              </span>
-            </div>
-          </>
-        )}
-        {request.earlyCompletionReason && (
-          <>
-            <div className={classes.divider} />
-            <div className={classes.infoItem}>
-              <span className={classes.infoLabel}>Причина завершения</span>
-              <span className={classes.infoValue}>
-                {request.earlyCompletionReason}
-              </span>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Content row: sections + optional chat panel */}
+      {/* Content row: service nav cards + optional chat panel */}
       <div className={classes.contentRow}>
         <div className={classes.sectionsPane}>
-          <FapWaterMealSection
-            service={request.waterService}
-            serviceKind="WATER"
-            label={SERVICE_CONFIG.water.label}
-            color={SERVICE_CONFIG.water.color}
-            requestId={request.id}
-            onRefetch={refetch}
-            isOpen={openSection === "water"}
-            onToggle={() => toggleSection("water")}
-          />
-          <FapWaterMealSection
-            service={request.mealService}
-            serviceKind="MEAL"
-            label={SERVICE_CONFIG.meal.label}
-            color={SERVICE_CONFIG.meal.color}
-            requestId={request.id}
-            onRefetch={refetch}
-            isOpen={openSection === "meal"}
-            onToggle={() => toggleSection("meal")}
-          />
-          <FapLivingSection
-            service={request.livingService}
-            color={SERVICE_CONFIG.living.color}
-            request={request}
-            onRefetch={refetch}
-            isOpen={openSection === "living"}
-            onToggle={() => toggleSection("living")}
-          />
-          <FapTransferSection
-            service={request.transferService}
-            color={SERVICE_CONFIG.transfer.color}
-            request={request}
-            onRefetch={refetch}
-            isOpen={openSection === "transfer"}
-            onToggle={() => toggleSection("transfer")}
-          />
-          <FapBaggageSection
-            service={request.baggageDeliveryService}
-            color={SERVICE_CONFIG.baggage.color}
-            request={request}
-            onRefetch={refetch}
-            isOpen={openSection === "baggage"}
-            onToggle={() => toggleSection("baggage")}
-          />
+          {SERVICE_KEYS.map((key) => {
+            const cfg = SERVICE_CONFIG[key];
+            const service = getServiceData(key, request);
+            if (!service?.plan?.enabled) return null;
+            const svcStatus = SERVICE_STATUS_CONFIG[service.status] || {};
+            const summary = getServiceSummary(key, request);
+            return (
+              <div
+                key={key}
+                className={classes.section}
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate(`/fapv2/${request.id}/service/${key}`)}
+              >
+                <div className={classes.sectionHeader}>
+                  <div className={classes.sectionHeaderLeft}>
+                    <div className={classes.sectionDot} style={{ background: cfg.color }} />
+                    <span className={classes.sectionName}>{cfg.label}</span>
+                    <span
+                      className={classes.svcStatusBadge}
+                      style={{ color: svcStatus.color, background: svcStatus.bg }}
+                    >
+                      {svcStatus.label || service.status}
+                    </span>
+                  </div>
+                  <div className={classes.sectionHeaderRight}>
+                    {summary && (
+                      <span style={{ fontSize: 14, color: "var(--main-gray)" }}>{summary}</span>
+                    )}
+                    <span style={{ fontSize: 18, color: "var(--main-gray)", lineHeight: 1 }}>›</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {showChat && (
           <div className={classes.chatPane}>
             <div className={classes.chatPaneHeader}>
               <span className={classes.chatPaneTitle}>Чат</span>
-              <button
-                className={classes.chatPaneClose}
-                onClick={() => setShowChat(false)}
-              >
+              <button className={classes.chatPaneClose} onClick={() => setShowChat(false)}>
                 ✕
               </button>
             </div>
@@ -378,13 +347,52 @@ export default function FapDetail({ user }) {
         passengerRequestId={request.id}
       />
 
+      {/* Status change confirmation dialog */}
+      <Dialog
+        open={showStatusDialog}
+        onClose={() => { setShowStatusDialog(false); setPendingStatus(null); }}
+        PaperProps={{ sx: { borderRadius: "16px", minWidth: 440, maxWidth: 520 } }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 700,
+            fontSize: 18,
+            color: "var(--text)",
+            borderBottom: "1px solid #F1F5F9",
+            pb: 2,
+          }}
+        >
+          {pendingStatus && STATUS_CONFIRM_CONFIG[pendingStatus]?.title}
+        </DialogTitle>
+        <DialogContent sx={{ pt: "16px !important", pb: 1 }}>
+          <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "#545873", margin: 0 }}>
+            {pendingStatus && STATUS_CONFIRM_CONFIG[pendingStatus]?.body}
+          </p>
+        </DialogContent>
+        <DialogActions sx={{ padding: "12px 20px 20px", gap: 1 }}>
+          <Button
+            backgroundcolor="#F6F7FB"
+            color="#545873"
+            onClick={() => { setShowStatusDialog(false); setPendingStatus(null); }}
+          >
+            Назад
+          </Button>
+          <Button
+            backgroundcolor="var(--dark-blue)"
+            color="#fff"
+            onClick={handleConfirmStatus}
+            disabled={saving}
+          >
+            {saving ? "Сохранение..." : "Подтвердить"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Cancel confirmation dialog */}
       <Dialog
         open={showCancelDialog}
-        onClose={() => {
-          setShowCancelDialog(false);
-          setCancelReason("");
-        }}
+        onClose={() => { setShowCancelDialog(false); setCancelReason(""); }}
         PaperProps={{ sx: { borderRadius: "16px", minWidth: 440, maxWidth: 500 } }}
       >
         <DialogTitle
@@ -422,10 +430,7 @@ export default function FapDetail({ user }) {
           <Button
             backgroundcolor="#F6F7FB"
             color="#545873"
-            onClick={() => {
-              setShowCancelDialog(false);
-              setCancelReason("");
-            }}
+            onClick={() => { setShowCancelDialog(false); setCancelReason(""); }}
           >
             Назад
           </Button>

@@ -40,6 +40,7 @@ import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDri
 import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
 import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
 import FapReportPage from "./Components/Pages/FapV2/FapReportPage";
+import FapServicePage from "./Components/Pages/FapV2/FapServicePage";
 
 const TransferOrder = lazy(() =>
   import("./Components/Blocks/TransferOrder/TransferOrder")
@@ -161,6 +162,10 @@ function App() {
             <Route
               path="/fapv2/:requestId/report/:hotelIndex"
               element={<FapReportPage user={user} />}
+            />
+            <Route
+              path="/fapv2/:requestId/service/:serviceKey"
+              element={<FapServicePage user={user} />}
             />
             {/* Шахматка */}
             {/* <Route

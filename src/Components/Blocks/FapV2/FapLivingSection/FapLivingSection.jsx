@@ -1,15 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@apollo/client";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
 import classes from "../FapDetail/FapDetail.module.css";
 import lClasses from "./FapLivingSection.module.css";
 import {
   COMPLETE_PASSENGER_REQUEST_LIVING_EARLY,
-  CREATE_EXTERNAL_AUTH_LINK,
   getCookie,
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatDate } from "../fapConstants";
@@ -35,20 +30,18 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
 
   const [hotelMgmtIndex, setHotelMgmtIndex] = useState(null);
 
-  const [issueLinkState, setIssueLinkState] = useState(null);
-  const [issueLinkForm, setIssueLinkForm] = useState({ email: "", name: "", accessType: "CRM" });
-  const [issueLinkResult, setIssueLinkResult] = useState(null);
-  const [issueLinkCooldown, setIssueLinkCooldown] = useState(0);
-
   const statusCfg = SERVICE_STATUS_CONFIG[service?.status] || {};
 
   const [completeLivingEarly] = useMutation(COMPLETE_PASSENGER_REQUEST_LIVING_EARLY, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
-  const [createExternalLink, { loading: issuingLink }] = useMutation(CREATE_EXTERNAL_AUTH_LINK, {
-    context: { headers: { Authorization: `Bearer ${token}` } },
-  });
+  const copyLink = (url) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url)
+      .then(() => success("Ссылка скопирована"))
+      .catch(() => notifyError("Не удалось скопировать ссылку"));
+  };
 
   if (!service?.plan?.enabled) return null;
 
@@ -79,44 +72,6 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
     }
   };
 
-  const openIssueLinkDialog = (hotelIndex, hotelId) => {
-    setIssueLinkState({ hotelIndex, hotelId });
-    setIssueLinkForm({ email: "", name: "", accessType: "CRM" });
-    setIssueLinkResult(null);
-  };
-
-  const handleIssueLink = async () => {
-    if (!issueLinkState || issueLinkCooldown > Date.now()) {
-      notifyError("Подождите перед повторной выдачей ссылки");
-      return;
-    }
-    if (!issueLinkForm.email.trim()) {
-      notifyError("Укажите email");
-      return;
-    }
-    try {
-      setSaving(true);
-      const { data } = await createExternalLink({
-        variables: {
-          input: {
-            email: issueLinkForm.email.trim(),
-            name: issueLinkForm.name.trim() || undefined,
-            scope: "HOTEL",
-            accessType: issueLinkForm.accessType,
-            hotelId: issueLinkState.hotelId,
-            passengerRequestId: request.id,
-          },
-        },
-      });
-      setIssueLinkResult(data?.createExternalAuthLink);
-      setIssueLinkCooldown(Date.now() + 60000);
-    } catch (e) {
-      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при выдаче ссылки");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   return (
     <div className={classes.section}>
       <div className={classes.sectionHeader} onClick={onToggle}>
@@ -141,23 +96,43 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
 
       {isOpen && (
         <div className={classes.sectionBody}>
-          <div className={classes.planRow}>
-            {service.plan?.peopleCount && (
-              <div className={classes.planItem}>
-                <span className={classes.planLabel}>Мест по плану</span>
-                <span className={classes.planValue}>{service.plan.peopleCount}</span>
-              </div>
-            )}
-            {service.plan?.plannedFromAt && (
-              <div className={classes.planItem}>
-                <span className={classes.planLabel}>Заселение</span>
-                <span className={classes.planValue}>{formatDate(service.plan.plannedFromAt)}</span>
-              </div>
-            )}
-            {service.plan?.plannedToAt && (
-              <div className={classes.planItem}>
-                <span className={classes.planLabel}>Выселение</span>
-                <span className={classes.planValue}>{formatDate(service.plan.plannedToAt)}</span>
+          <div className={classes.topRow}>
+            <div className={classes.planRow}>
+              {service.plan?.peopleCount && (
+                <div className={classes.planItem}>
+                  <span className={classes.planLabel}>Мест по плану</span>
+                  <span className={classes.planValue}>{service.plan.peopleCount}</span>
+                </div>
+              )}
+              {service.plan?.plannedFromAt && (
+                <div className={classes.planItem}>
+                  <span className={classes.planLabel}>Заселение</span>
+                  <span className={classes.planValue}>{formatDate(service.plan.plannedFromAt)}</span>
+                </div>
+              )}
+              {service.plan?.plannedToAt && (
+                <div className={classes.planItem}>
+                  <span className={classes.planLabel}>Выселение</span>
+                  <span className={classes.planValue}>{formatDate(service.plan.plannedToAt)}</span>
+                </div>
+              )}
+            </div>
+            {!isCompleted && (
+              <div className={classes.actionsRow}>
+                <Button
+                  backgroundcolor="var(--dark-blue)"
+                  color="#fff"
+                  onClick={() => setShowAddHotel(true)}
+                >
+                  + Добавить отель
+                </Button>
+                <Button
+                  backgroundcolor="#FEF2F2"
+                  color="#EF4444"
+                  onClick={() => setShowEarlyForm((v) => !v)}
+                >
+                  Завершить досрочно
+                </Button>
               </div>
             )}
           </div>
@@ -220,15 +195,36 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                     >
                       Гости
                     </button>
-                    {hotel.hotelId && (
+                    {(hotel.linkCRM || hotel.linkPWA) ? (
+                      <>
+                        {hotel.linkCRM && (
+                          <button
+                            className={lClasses.linkBtn}
+                            onClick={(e) => { e.stopPropagation(); copyLink(hotel.linkCRM); }}
+                            title="Скопировать CRM-ссылку"
+                          >
+                            CRM
+                          </button>
+                        )}
+                        {hotel.linkPWA && (
+                          <button
+                            className={lClasses.linkBtn}
+                            onClick={(e) => { e.stopPropagation(); copyLink(hotel.linkPWA); }}
+                            title="Скопировать PWA-ссылку"
+                          >
+                            PWA
+                          </button>
+                        )}
+                      </>
+                    ) : hotel.link ? (
                       <button
                         className={lClasses.linkBtn}
-                        onClick={(e) => { e.stopPropagation(); openIssueLinkDialog(idx, hotel.hotelId); }}
-                        title="Выдать ссылку доступа для гостиницы"
+                        onClick={(e) => { e.stopPropagation(); copyLink(hotel.link); }}
+                        title="Скопировать ссылку"
                       >
                         Ссылка
                       </button>
-                    )}
+                    ) : null}
                     <span className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`}>▾</span>
                   </div>
                 </div>
@@ -305,24 +301,6 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
             );
           })}
 
-          {!isCompleted && (
-            <div className={classes.sectionActions}>
-              <Button
-                backgroundcolor="var(--dark-blue)"
-                color="#fff"
-                onClick={() => setShowAddHotel(true)}
-              >
-                + Добавить отель
-              </Button>
-              <Button
-                backgroundcolor="#FEF2F2"
-                color="#EF4444"
-                onClick={() => setShowEarlyForm((v) => !v)}
-              >
-                Завершить досрочно
-              </Button>
-            </div>
-          )}
 
           {showEarlyForm && (
             <div className={classes.addForm}>
@@ -374,116 +352,6 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
         }
       />
 
-      {issueLinkState && (
-        <Dialog
-          open
-          onClose={() => { setIssueLinkState(null); setIssueLinkResult(null); }}
-          PaperProps={{ sx: { borderRadius: "15px", minWidth: 400 } }}
-        >
-          <DialogTitle sx={{ fontFamily: "Inter, sans-serif", fontWeight: 700 }}>
-            Ссылка для гостиницы
-          </DialogTitle>
-          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "8px !important" }}>
-            {issueLinkResult ? (
-              <div>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "#10B981", marginBottom: 8 }}>
-                  {issueLinkResult.emailed ? "Ссылка отправлена на email." : "Ссылка создана."}
-                </p>
-                {issueLinkResult.link && (
-                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input
-                      readOnly
-                      value={issueLinkResult.link}
-                      className={classes.addFormInput}
-                      style={{ flex: 1, fontSize: 12 }}
-                      onClick={(e) => e.target.select()}
-                    />
-                    <Button
-                      backgroundcolor="var(--dark-blue)"
-                      color="#fff"
-                      onClick={() => { navigator.clipboard.writeText(issueLinkResult.link); success("Скопировано"); }}
-                    >
-                      Копировать
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
-                    type="button"
-                    onClick={() => setIssueLinkForm((f) => ({ ...f, accessType: "CRM" }))}
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      border: `2px solid ${issueLinkForm.accessType === "CRM" ? "var(--dark-blue)" : "#E4E4EF"}`,
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      background: issueLinkForm.accessType === "CRM" ? "#EFF6FF" : "#fff",
-                      fontFamily: "Inter, sans-serif",
-                      fontWeight: 600,
-                      fontSize: 13,
-                      color: issueLinkForm.accessType === "CRM" ? "var(--dark-blue)" : "#545873",
-                    }}
-                  >
-                    CRM
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIssueLinkForm((f) => ({ ...f, accessType: "PWA" }))}
-                    style={{
-                      flex: 1,
-                      padding: "8px 12px",
-                      border: `2px solid ${issueLinkForm.accessType === "PWA" ? "var(--dark-blue)" : "#E4E4EF"}`,
-                      borderRadius: 8,
-                      cursor: "pointer",
-                      background: issueLinkForm.accessType === "PWA" ? "#EFF6FF" : "#fff",
-                      fontFamily: "Inter, sans-serif",
-                      fontWeight: 600,
-                      fontSize: 13,
-                      color: issueLinkForm.accessType === "PWA" ? "var(--dark-blue)" : "#545873",
-                    }}
-                  >
-                    PWA
-                  </button>
-                </div>
-                <div>
-                  <label className={classes.addFormLabel}>Email *</label>
-                  <input
-                    className={classes.addFormInput}
-                    style={{ width: "100%", marginTop: 4 }}
-                    value={issueLinkForm.email}
-                    onChange={(e) => setIssueLinkForm((f) => ({ ...f, email: e.target.value }))}
-                    placeholder="hotel@example.com"
-                    type="email"
-                  />
-                </div>
-                <div>
-                  <label className={classes.addFormLabel}>Имя (необязательно)</label>
-                  <input
-                    className={classes.addFormInput}
-                    style={{ width: "100%", marginTop: 4 }}
-                    value={issueLinkForm.name}
-                    onChange={(e) => setIssueLinkForm((f) => ({ ...f, name: e.target.value }))}
-                    placeholder="Имя представителя"
-                  />
-                </div>
-              </>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ padding: "8px 16px 16px" }}>
-            <Button backgroundcolor="#F6F7FB" color="#545873" onClick={() => { setIssueLinkState(null); setIssueLinkResult(null); }}>
-              Закрыть
-            </Button>
-            {!issueLinkResult && (
-              <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={handleIssueLink} disabled={issuingLink || saving || !issueLinkForm.email.trim()}>
-                Выдать ссылку
-              </Button>
-            )}
-          </DialogActions>
-        </Dialog>
-      )}
     </div>
   );
 }

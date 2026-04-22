@@ -267,7 +267,7 @@ export default function HotelGuestsModal({
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth={view === "list" ? "md" : "sm"}
       fullWidth
       PaperProps={{
         sx: {

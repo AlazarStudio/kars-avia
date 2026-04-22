@@ -8,7 +8,8 @@
       "Bash(git -C /c/github/kars-avia log --all --oneline -- \"*Fap*\")",
       "Bash(git -C /c/github/kars-avia show f146345:src/Components)",
       "Bash(git -C /c/github/kars-avia diff f146345 HEAD -- src/Components/Blocks/)",
-      "Bash(git -C /c/github/kars-avia show f146345:src/Components/Pages)"
+      "Bash(git -C /c/github/kars-avia show f146345:src/Components/Pages)",
+      "Bash(git ls-tree *)"
     ]
   }
 }

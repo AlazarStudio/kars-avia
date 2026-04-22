@@ -53,6 +53,13 @@ export default function FapTransferSection({ service, color, request, onRefetch,
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
+  const copyLink = (url) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url)
+      .then(() => success("Ссылка скопирована"))
+      .catch(() => notifyError("Не удалось скопировать ссылку"));
+  };
+
   if (!service?.plan?.enabled) return null;
 
   const drivers = service.drivers || [];
@@ -142,19 +149,47 @@ export default function FapTransferSection({ service, color, request, onRefetch,
         </div>
       </div>
 
+      {service.plan?.peopleCount > 0 && (
+        <div className={classes.progressBar}>
+          <div
+            className={classes.progressFill}
+            style={{
+              width: `${Math.min(100, Math.round((totalPassengers / service.plan.peopleCount) * 100))}%`,
+              background: totalPassengers >= service.plan.peopleCount ? "#10B981" : color,
+            }}
+          />
+        </div>
+      )}
+
       {isOpen && (
         <div className={classes.sectionBody}>
-          <div className={classes.planRow}>
-            {service.plan?.peopleCount && (
-              <div className={classes.planItem}>
-                <span className={classes.planLabel}>Кол-во человек</span>
-                <span className={classes.planValue}>{service.plan.peopleCount}</span>
-              </div>
-            )}
-            {service.plan?.plannedAt && (
-              <div className={classes.planItem}>
-                <span className={classes.planLabel}>Время</span>
-                <span className={classes.planValue}>{formatTime(service.plan.plannedAt)}</span>
+          <div className={classes.topRow}>
+            <div className={classes.planRow}>
+              {service.plan?.peopleCount && (
+                <div className={classes.planItem}>
+                  <span className={classes.planLabel}>Кол-во человек</span>
+                  <span className={classes.planValue}>{service.plan.peopleCount}</span>
+                </div>
+              )}
+              {service.plan?.plannedAt && (
+                <div className={classes.planItem}>
+                  <span className={classes.planLabel}>Время</span>
+                  <span className={classes.planValue}>{formatTime(service.plan.plannedAt)}</span>
+                </div>
+              )}
+            </div>
+            {!isCompleted && (
+              <div className={classes.actionsRow}>
+                <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={() => setShowAddDriver(true)}>
+                  + Добавить водителя
+                </Button>
+                <Button
+                  backgroundcolor="#FEF2F2"
+                  color="#EF4444"
+                  onClick={() => setShowEarlyForm((v) => !v)}
+                >
+                  Завершить досрочно
+                </Button>
               </div>
             )}
           </div>
@@ -175,7 +210,28 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                       <span> · {people.length}{driver.peopleCount ? `/${driver.peopleCount}` : ""} пасс.</span>
                     </div>
                   </div>
-                  <span className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`}>▾</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {driver.linkPWA ? (
+                      <button
+                        type="button"
+                        className={classes.linkBtn}
+                        onClick={(e) => { e.stopPropagation(); copyLink(driver.linkPWA); }}
+                        title="Скопировать PWA-ссылку"
+                      >
+                        PWA
+                      </button>
+                    ) : driver.link ? (
+                      <button
+                        type="button"
+                        className={classes.linkBtn}
+                        onClick={(e) => { e.stopPropagation(); copyLink(driver.link); }}
+                        title="Скопировать ссылку"
+                      >
+                        Ссылка
+                      </button>
+                    ) : null}
+                    <span className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`}>▾</span>
+                  </div>
                 </div>
 
                 {isExpanded && (
@@ -241,20 +297,6 @@ export default function FapTransferSection({ service, color, request, onRefetch,
             );
           })}
 
-          {!isCompleted && (
-            <div className={classes.sectionActions}>
-              <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={() => setShowAddDriver(true)}>
-                + Добавить водителя
-              </Button>
-              <Button
-                backgroundcolor="#FEF2F2"
-                color="#EF4444"
-                onClick={() => setShowEarlyForm((v) => !v)}
-              >
-                Завершить досрочно
-              </Button>
-            </div>
-          )}
 
           {showEarlyForm && (
             <div className={classes.addForm}>
