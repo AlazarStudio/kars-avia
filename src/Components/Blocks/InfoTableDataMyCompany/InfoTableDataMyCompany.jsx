@@ -26,7 +26,7 @@ function InfoTableDataMyCompany({ children, user, toggleRequestSidebar, openDele
                     <div
                         className={classes.InfoTable_data}
                         onClick={() => handleObject(item, index)}
-                        key={index}
+                        key={item.id}
                     >
                         {/* <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{index + 1}</div> */}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>

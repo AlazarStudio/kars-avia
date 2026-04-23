@@ -82,7 +82,7 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
                         className={`${classes.InfoTable_data} ${chooseRequestID === item.id && classes.InfoTable_data_active}`}
                         style={{ opacity: (item.status !== 'archiving' && item.status !== 'canceled' ) ? 1 : 0.5 }}
                         onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
-                        key={index}
+                        key={item.id}
                         // data-id={item.id}
                     >
                         {/* {item.status === 'created' && <div className={classes.newRequest}></div>} */}

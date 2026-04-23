@@ -12,20 +12,18 @@ import Button from "../../../Standart/Button/Button";
 import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentativeHotel";
 import HotelGuestsModal from "./HotelGuestsModal";
 import { useToast } from "../../../../contexts/ToastContext";
-import { useDialog } from "../../../../contexts/DialogContext";
+import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
-export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle }) {
+export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage }) {
   const navigate = useNavigate();
   const { requestId } = useParams();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
-  const { confirm } = useDialog();
 
   const [showAddHotel, setShowAddHotel] = useState(false);
   const [expandedHotels, setExpandedHotels] = useState({});
 
-  const [showEarlyForm, setShowEarlyForm] = useState(false);
-  const [earlyReason, setEarlyReason] = useState("");
+  const [showEarlyModal, setShowEarlyModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const [hotelMgmtIndex, setHotelMgmtIndex] = useState(null);
@@ -54,15 +52,11 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
   const totalCapacity = hotels.reduce((s, h) => s + (h.peopleCount || 0), 0);
   const totalGuests = hotels.reduce((s, h) => s + (h.people?.length || 0), 0);
 
-  const handleCompleteEarly = async () => {
-    if (!earlyReason.trim()) return;
-    const ok = await confirm("Завершить услугу досрочно?");
-    if (!ok) return;
+  const handleCompleteEarly = async (reason) => {
     try {
       setSaving(true);
-      await completeLivingEarly({ variables: { requestId: request.id, reason: earlyReason } });
-      setEarlyReason("");
-      setShowEarlyForm(false);
+      await completeLivingEarly({ variables: { requestId: request.id, reason } });
+      setShowEarlyModal(false);
       onRefetch();
       success("Услуга завершена досрочно");
     } catch {
@@ -90,7 +84,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
             {hotels.length}{" "}
             {hotels.length === 1 ? "отель" : hotels.length < 5 ? "отеля" : "отелей"}
           </span>
-          <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>
+          {!isPage && <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>}
         </div>
       </div>
 
@@ -129,7 +123,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                 <Button
                   backgroundcolor="#FEF2F2"
                   color="#EF4444"
-                  onClick={() => setShowEarlyForm((v) => !v)}
+                  onClick={() => setShowEarlyModal(true)}
                 >
                   Завершить досрочно
                 </Button>
@@ -284,17 +278,6 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                         </tbody>
                       </table>
                     )}
-                    {people.length > 0 && !isCompleted && (
-                      <div style={{ paddingTop: 10 }}>
-                        <Button
-                          backgroundcolor="#F6F7FB"
-                          color="#545873"
-                          onClick={(e) => { e.stopPropagation(); setHotelMgmtIndex(idx); }}
-                        >
-                          Управление гостями →
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -302,27 +285,6 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
           })}
 
 
-          {showEarlyForm && (
-            <div className={classes.addForm}>
-              <div className={classes.addFormField}>
-                <label className={classes.addFormLabel}>Причина *</label>
-                <input
-                  className={classes.addFormInput}
-                  value={earlyReason}
-                  onChange={(e) => setEarlyReason(e.target.value)}
-                  placeholder="Укажите причину..."
-                />
-              </div>
-              <div className={classes.addFormActions}>
-                <Button backgroundcolor="var(--hover-gray)" color="#000" onClick={() => { setShowEarlyForm(false); setEarlyReason(""); }}>
-                  Отмена
-                </Button>
-                <Button backgroundcolor="#EF4444" color="#fff" onClick={handleCompleteEarly} disabled={saving || !earlyReason.trim()}>
-                  Завершить
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -352,6 +314,18 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
         }
       />
 
+      <FapDestructiveModal
+        open={showEarlyModal}
+        onClose={() => setShowEarlyModal(false)}
+        onConfirm={handleCompleteEarly}
+        title="Досрочное завершение"
+        description="Услуга будет завершена досрочно. Это действие необратимо."
+        reasonLabel="Причина *"
+        placeholder="Укажите причину..."
+        confirmText="Завершить"
+        cancelText="Отмена"
+        saving={saving}
+      />
     </div>
   );
 }

@@ -20,7 +20,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1300; /* выше обычных попапов */
+  z-index: 10000; /* выше обычных попапов */
+  /* z-index: 1300;  */
 }
 
 /* белый контейнер модалки */

@@ -60,6 +60,19 @@
   color: var(--text);
 }
 
+.representativeLinkBtn {
+  border: none;
+  background: transparent;
+  color: var(--dark-blue);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+}
+
 /* Sticky action bar */
 .stickyHeader {
   background: #fff;
@@ -277,7 +290,7 @@
 
 .sectionName {
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text);
 }
 
@@ -523,6 +536,8 @@
   color: #10B981;
   font-size: 13px;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .deliveryPending {
@@ -535,6 +550,8 @@
   color: #F59E0B;
   font-size: 13px;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Copy link button (drivers / hotels) */

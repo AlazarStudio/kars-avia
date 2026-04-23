@@ -180,7 +180,7 @@ export default function FapV2({ user, accessMenu }) {
             color="#fff"
             onClick={() => setShowCreate(true)}
           >
-            + Создать заявку
+            Создать заявку
           </Button>
         )}
       </div>

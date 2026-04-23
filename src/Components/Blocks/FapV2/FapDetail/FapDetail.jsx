@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Dialog from "@mui/material/Dialog";
@@ -25,6 +25,9 @@ import { useToast } from "../../../../contexts/ToastContext";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import Message from "../../Message/Message";
+import CopyIcon from "../../../../shared/icons/CopyIcon";
+import { isExternalUser } from "../../../../utils/access";
+import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
 const STATUS_TRANSITIONS = {
   CREATED: ["ACCEPTED"],
@@ -102,8 +105,7 @@ export default function FapDetail({ user }) {
   const { success, error: notifyError } = useToast();
 
   const [showAddService, setShowAddService] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -128,6 +130,32 @@ export default function FapDetail({ user }) {
   });
 
   const request = data?.passengerRequest;
+
+  const representativePwaLink = useMemo(() => {
+    const links = request?.representativeLinks || [];
+    if (!Array.isArray(links) || links.length === 0) return "";
+    const byDepartment = user?.representativeDepartmentId
+      ? links.find(
+          (item) =>
+            String(item?.representativeDepartmentId) ===
+              String(user.representativeDepartmentId) && item?.linkPWA
+        )
+      : null;
+    if (byDepartment?.linkPWA) return byDepartment.linkPWA;
+    const firstWithPwa = links.find((item) => item?.linkPWA);
+    return firstWithPwa?.linkPWA || "";
+  }, [request?.representativeLinks, user?.representativeDepartmentId]);
+
+  const canCopyRepresentativeLink = !isExternalUser(user) && Boolean(representativePwaLink);
+
+  const handleCopyRepresentativeLink = async () => {
+    try {
+      await navigator.clipboard.writeText(representativePwaLink);
+      success("Ссылка представительства скопирована");
+    } catch {
+      notifyError("Не удалось скопировать ссылку");
+    }
+  };
 
   if (loading) {
     return (
@@ -174,17 +202,16 @@ export default function FapDetail({ user }) {
     }
   };
 
-  const handleCancel = async () => {
+  const handleCancel = async (reason) => {
     try {
       setSaving(true);
       await cancelRequest({
         variables: {
           id: request.id,
-          cancelReason: cancelReason.trim() || undefined,
+          cancelReason: reason,
         },
       });
-      setCancelReason("");
-      setShowCancelDialog(false);
+      setShowCancelModal(false);
       refetch();
       success("Заявка отменена");
     } catch {
@@ -202,6 +229,16 @@ export default function FapDetail({ user }) {
             <img src="/arrow.png" alt="" />
           </button>
           <span className={classes.headerNavTitle}>Заявка {request.flightNumber}</span>
+          {canCopyRepresentativeLink && (
+            <button
+              type="button"
+              className={classes.representativeLinkBtn}
+              onClick={handleCopyRepresentativeLink}
+              title="Скопировать ссылку для представительства"
+            >
+              Ссылка <CopyIcon />
+            </button>
+          )}
         </div>
       </Header>
 
@@ -260,7 +297,7 @@ export default function FapDetail({ user }) {
               <Button
                 backgroundcolor="#FEF2F2"
                 color="#EF4444"
-                onClick={() => setShowCancelDialog(true)}
+                onClick={() => setShowCancelModal(true)}
               >
                 Отменить заявку
               </Button>
@@ -323,7 +360,7 @@ export default function FapDetail({ user }) {
                 token={token}
                 user={user}
                 chatPadding="0"
-                chatHeight="calc(100vh - 386px)"
+                chatHeight="calc(100vh - 313px)"
               />
             </div>
           </div>
@@ -389,61 +426,19 @@ export default function FapDetail({ user }) {
         </DialogActions>
       </Dialog>
 
-      {/* Cancel confirmation dialog */}
-      <Dialog
-        open={showCancelDialog}
-        onClose={() => { setShowCancelDialog(false); setCancelReason(""); }}
-        PaperProps={{ sx: { borderRadius: "16px", minWidth: 440, maxWidth: 500 } }}
-      >
-        <DialogTitle
-          sx={{
-            fontFamily: "Inter, sans-serif",
-            fontWeight: 700,
-            fontSize: 18,
-            color: "#EF4444",
-            borderBottom: "1px solid #F1F5F9",
-            pb: 2,
-          }}
-        >
-          Отмена заявки
-        </DialogTitle>
-        <DialogContent sx={{ pt: "16px !important", pb: 1 }}>
-          <p
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: 14,
-              color: "#545873",
-              margin: "0 0 16px",
-            }}
-          >
-            После отмены заявка перейдёт в статус «Отменена». Это действие необратимо.
-          </p>
-          <textarea
-            className={classes.cancelTextarea}
-            rows={4}
-            placeholder="Причина отмены (необязательно)"
-            value={cancelReason}
-            onChange={(e) => setCancelReason(e.target.value)}
-          />
-        </DialogContent>
-        <DialogActions sx={{ padding: "12px 20px 20px", gap: 1 }}>
-          <Button
-            backgroundcolor="#F6F7FB"
-            color="#545873"
-            onClick={() => { setShowCancelDialog(false); setCancelReason(""); }}
-          >
-            Назад
-          </Button>
-          <Button
-            backgroundcolor="#EF4444"
-            color="#fff"
-            onClick={handleCancel}
-            disabled={saving}
-          >
-            {saving ? "Отмена..." : "Отменить заявку"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <FapDestructiveModal
+        open={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        onConfirm={handleCancel}
+        title="Отмена заявки"
+        description="После отмены заявка перейдёт в статус «Отменена». Это действие необратимо."
+        showReason
+        reasonRequired={false}
+        placeholder="Причина отмены (необязательно)"
+        confirmText="Отменить заявку"
+        cancelText="Назад"
+        saving={saving}
+      />
     </div>
   );
 }

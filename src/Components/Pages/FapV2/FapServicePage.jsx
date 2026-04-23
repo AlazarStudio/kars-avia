@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
@@ -19,7 +19,10 @@ import FapBaggageSection from "../../Blocks/FapV2/FapBaggageSection/FapBaggageSe
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
+  isExternalUser,
 } from "../../../utils/access";
+import CopyIcon from "../../../shared/icons/CopyIcon";
+import { useToast } from "../../../contexts/ToastContext";
 import mainClasses from "../../Pages/Main_page/Main_Page.module.css";
 import classes from "./FapServicePage.module.css";
 
@@ -27,6 +30,7 @@ export default function FapServicePage({ user }) {
   const { requestId, serviceKey } = useParams();
   const navigate = useNavigate();
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
 
   const [accessMenu, setAccessMenu] = useState({});
   const isDispatcherRole = isDispatcherRoleCheck(user);
@@ -73,6 +77,32 @@ export default function FapServicePage({ user }) {
   const cfg = SERVICE_CONFIG[serviceKey];
   const noop = () => {};
 
+  const representativePwaLink = useMemo(() => {
+    const links = request?.representativeLinks || [];
+    if (!Array.isArray(links) || links.length === 0) return "";
+    const byDepartment = user?.representativeDepartmentId
+      ? links.find(
+          (item) =>
+            String(item?.representativeDepartmentId) ===
+              String(user.representativeDepartmentId) && item?.linkPWA
+        )
+      : null;
+    if (byDepartment?.linkPWA) return byDepartment.linkPWA;
+    const firstWithPwa = links.find((item) => item?.linkPWA);
+    return firstWithPwa?.linkPWA || "";
+  }, [request?.representativeLinks, user?.representativeDepartmentId]);
+
+  const canCopyRepresentativeLink = !isExternalUser(user) && Boolean(representativePwaLink);
+
+  const handleCopyRepresentativeLink = async () => {
+    try {
+      await navigator.clipboard.writeText(representativePwaLink);
+      success("Ссылка представительства скопирована");
+    } catch {
+      notifyError("Не удалось скопировать ссылку");
+    }
+  };
+
   const renderSection = () => {
     if (!request || !cfg) return null;
 
@@ -88,6 +118,7 @@ export default function FapServicePage({ user }) {
             onRefetch={refetch}
             isOpen={true}
             onToggle={noop}
+            isPage
           />
         );
       case "meal":
@@ -101,6 +132,7 @@ export default function FapServicePage({ user }) {
             onRefetch={refetch}
             isOpen={true}
             onToggle={noop}
+            isPage
           />
         );
       case "living":
@@ -112,6 +144,7 @@ export default function FapServicePage({ user }) {
             onRefetch={refetch}
             isOpen={true}
             onToggle={noop}
+            isPage
           />
         );
       case "transfer":
@@ -123,6 +156,7 @@ export default function FapServicePage({ user }) {
             onRefetch={refetch}
             isOpen={true}
             onToggle={noop}
+            isPage
           />
         );
       case "baggage":
@@ -134,6 +168,7 @@ export default function FapServicePage({ user }) {
             onRefetch={refetch}
             isOpen={true}
             onToggle={noop}
+            isPage
           />
         );
       default:
@@ -159,6 +194,16 @@ export default function FapServicePage({ user }) {
                 ? `${request.flightNumber} — ${cfg?.label ?? serviceKey}`
                 : cfg?.label ?? serviceKey}
             </span>
+            {canCopyRepresentativeLink && (
+              <button
+                type="button"
+                className={classes.representativeLinkBtn}
+                onClick={handleCopyRepresentativeLink}
+                title="Скопировать ссылку для представительства"
+              >
+                Ссылка <CopyIcon />
+              </button>
+            )}
           </div>
         </Header>
 

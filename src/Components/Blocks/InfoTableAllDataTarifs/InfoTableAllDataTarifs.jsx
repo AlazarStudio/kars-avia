@@ -69,7 +69,7 @@ function InfoTableAllDataTarifs({
                     <div
                         className={`${classes.InfoTable_data}`}
                         onClick={() => handleObject(item.id)}
-                        key={index}
+                        key={item.id}
                         // data-id={item.id}
                     >
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{item.contractNumber}</div>

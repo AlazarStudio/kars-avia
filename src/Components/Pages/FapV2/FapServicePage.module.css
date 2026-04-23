@@ -45,6 +45,19 @@
   color: var(--text);
 }
 
+.representativeLinkBtn {
+  border: none;
+  background: transparent;
+  color: var(--dark-blue);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+}
+
 /* Контентная область — flex-колонка чтобы дочерняя секция могла растягиваться */
 .content {
   flex: 1;

@@ -16,22 +16,20 @@ import { SERVICE_STATUS_CONFIG, formatTime, formatDateTime } from "../fapConstan
 import Button from "../../../Standart/Button/Button";
 import AddRepresentativeDriver from "../../AddRepresentativeDriver/AddRepresentativeDriver";
 import { useToast } from "../../../../contexts/ToastContext";
-import { useDialog } from "../../../../contexts/DialogContext";
+import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 
 const emptyPerson = { fullName: "", phone: "" };
 
-export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle }) {
+export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle, isPage }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
-  const { confirm } = useDialog();
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [expandedDrivers, setExpandedDrivers] = useState({});
 
   // Early complete
-  const [earlyReason, setEarlyReason] = useState("");
-  const [showEarlyForm, setShowEarlyForm] = useState(false);
+  const [showEarlyModal, setShowEarlyModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Passenger CRUD
@@ -70,15 +68,11 @@ export default function FapTransferSection({ service, color, request, onRefetch,
 
   const totalPassengers = drivers.reduce((sum, d) => sum + (d.people?.length || 0), 0);
 
-  const handleCompleteEarly = async () => {
-    if (!earlyReason.trim()) return;
-    const ok = await confirm("Завершить услугу досрочно?");
-    if (!ok) return;
+  const handleCompleteEarly = async (reason) => {
     try {
       setSaving(true);
-      await completeTransferEarly({ variables: { requestId: request.id, reason: earlyReason } });
-      setEarlyReason("");
-      setShowEarlyForm(false);
+      await completeTransferEarly({ variables: { requestId: request.id, reason } });
+      setShowEarlyModal(false);
       onRefetch();
       success("Услуга завершена досрочно");
     } catch {
@@ -145,7 +139,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
             {drivers.length} водит. · {totalPassengers}
             {service.plan?.peopleCount ? `/${service.plan.peopleCount}` : ""} пасс.
           </span>
-          <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>
+          {!isPage && <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>}
         </div>
       </div>
 
@@ -186,7 +180,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                 <Button
                   backgroundcolor="#FEF2F2"
                   color="#EF4444"
-                  onClick={() => setShowEarlyForm((v) => !v)}
+                  onClick={() => setShowEarlyModal(true)}
                 >
                   Завершить досрочно
                 </Button>
@@ -298,27 +292,6 @@ export default function FapTransferSection({ service, color, request, onRefetch,
           })}
 
 
-          {showEarlyForm && (
-            <div className={classes.addForm}>
-              <div className={classes.addFormField}>
-                <label className={classes.addFormLabel}>Причина *</label>
-                <input
-                  className={classes.addFormInput}
-                  value={earlyReason}
-                  onChange={(e) => setEarlyReason(e.target.value)}
-                  placeholder="Укажите причину..."
-                />
-              </div>
-              <div className={classes.addFormActions}>
-                <Button backgroundcolor="var(--hover-gray)" color="#000" onClick={() => { setShowEarlyForm(false); setEarlyReason(""); }}>
-                  Отмена
-                </Button>
-                <Button backgroundcolor="#EF4444" color="#fff" onClick={handleCompleteEarly} disabled={saving || !earlyReason.trim()}>
-                  Завершить
-                </Button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
@@ -388,6 +361,18 @@ export default function FapTransferSection({ service, color, request, onRefetch,
           </DialogActions>
         </Dialog>
       )}
+      <FapDestructiveModal
+        open={showEarlyModal}
+        onClose={() => setShowEarlyModal(false)}
+        onConfirm={handleCompleteEarly}
+        title="Досрочное завершение"
+        description="Услуга будет завершена досрочно. Это действие необратимо."
+        reasonLabel="Причина *"
+        placeholder="Укажите причину..."
+        confirmText="Завершить"
+        cancelText="Отмена"
+        saving={saving}
+      />
     </div>
   );
 }

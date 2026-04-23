@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import classes from "./InfoTableAirlineDataTarifs.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { roles } from "../../../roles";
@@ -41,6 +41,14 @@ function InfoTableAirlineDataTarifs({
   ...props
 }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const hasAutoExpandedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasAutoExpandedRef.current && requests?.length > 0) {
+      hasAutoExpandedRef.current = true;
+      setExpandedRows(new Set([0]));
+    }
+  }, [requests]);
 
   const toggleRow = (index) => {
     setExpandedRows((prev) => {
@@ -83,8 +91,8 @@ function InfoTableAirlineDataTarifs({
                   </svg>
                 </div>
                 <span
-                  className={onRowClick ? classes.contractRowName : undefined}
-                  onClick={onRowClick ? () => onRowClick(item) : undefined}
+                  className={classes.contractRowName}
+                  onClick={() => toggleRow(index)}
                 >
                   {item.name}
                 </span>

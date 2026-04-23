@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import classes from "./InfoTableOrganizationTransferPrices.module.css";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
@@ -36,6 +36,14 @@ function InfoTableOrganizationTransferPrices({
   onRowClick,
 }) {
   const [expandedRows, setExpandedRows] = useState(new Set());
+  const hasAutoExpandedRef = useRef(false);
+
+  useEffect(() => {
+    if (!hasAutoExpandedRef.current && requests?.length > 0) {
+      hasAutoExpandedRef.current = true;
+      setExpandedRows(new Set([0]));
+    }
+  }, [requests]);
 
   const toggleRow = (index) => {
     setExpandedRows((prev) => {
@@ -71,8 +79,8 @@ function InfoTableOrganizationTransferPrices({
                     </svg>
                   </div>
                   <span
-                  className={onRowClick ? classes.contractRowName : undefined}
-                  onClick={onRowClick ? () => onRowClick(item, index) : undefined}
+                  className={classes.contractRowName}
+                  onClick={() => toggleRow(index)}
                 >
                   {item.name?.trim() ? item.name : `Ценник ${index + 1}`}
                 </span>
