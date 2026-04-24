@@ -39,13 +39,90 @@
 }
 .navBtn:hover { background: #F0F4F9; border-color: #C8D4E8; }
 
+.monthLabelWrap {
+  position: relative;
+}
+
 .monthLabel {
   font-size: 15px;
   font-weight: 700;
   color: #1B2A47;
   min-width: 160px;
   text-align: center;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  transition: background 0.15s, border-color 0.15s;
 }
+.monthLabel:hover { background: #F0F4F9; border-color: #E0E7F0; }
+
+.monthPicker {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  border: 1px solid #E0E7F0;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 200;
+  padding: 12px;
+  width: 220px;
+}
+
+.monthPickerYear {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.monthPickerYearLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1B2A47;
+}
+
+.monthPickerYearBtn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #E0E7F0;
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4A5568;
+  transition: background 0.15s;
+}
+.monthPickerYearBtn:hover { background: #F0F4F9; }
+
+.monthPickerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.monthPickerCell {
+  padding: 7px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4A5568;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.monthPickerCell:hover { background: #EBF5FF; color: #1E88E5; border-color: #90CAF9; }
 
 .todayBtn {
   padding: 5px 14px;

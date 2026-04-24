@@ -115,19 +115,6 @@ const AirlineAdminMenu = ({
             {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
           </Link>
         )}
-        {hasAccessMenu(accessMenu, "reserveMenu") && (
-          <Link
-            to={"/fapv2"}
-            className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-              } ${id == "fapv2" && classes.menu_items__activeElem}`}
-          >
-            <div className={classes.svgWrapper}>
-              <FAPIcon />
-            </div>
-            <DelayedText show={menuOpen} delay={200}>ФАП v2</DelayedText>
-            {!menuOpen && <span className={classes.tooltip}>ФАП v2</span>}
-          </Link>
-        )}
         {hasAccessMenu(accessMenu, "transferMenu") && (
           <Link
             to={"/orders"}

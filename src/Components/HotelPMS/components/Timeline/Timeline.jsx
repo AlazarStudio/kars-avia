@@ -1,11 +1,11 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
-  addDays, subDays, startOfMonth, endOfMonth, addMonths, subMonths,
+  addDays, subDays, startOfMonth, getDate, getMonth, getYear, setMonth, setYear,
   differenceInDays, parseISO, format, isSameDay, getDay,
 } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import classes from './Timeline.module.css';
-import { DAY_WIDTH, ROW_HEIGHT, LEFT_PANEL_WIDTH, BOOKING_STATUS, HK_STATUS } from '../../constants';
+import { DAY_WIDTH, LEFT_PANEL_WIDTH, BOOKING_STATUS, HK_STATUS } from '../../constants';
 import BookingForm from './BookingForm';
 
 const TODAY_STR = '2026-04-23';
@@ -16,29 +16,56 @@ const uid = () => `b${_nextId++}`;
 
 function Timeline({ bookings: initBookings, rooms, categories }) {
   const [bookings, setBookings] = useState(initBookings);
-  const [viewStart, setViewStart] = useState(startOfMonth(TODAY));
+  // Default: 7 days back from today so today is always visible in the first week
+  const [viewStart, setViewStart] = useState(subDays(TODAY, 7));
   const [daysCount, setDaysCount] = useState(30);
   const [search, setSearch] = useState('');
-  const [tooltip, setTooltip] = useState(null); // { booking, x, y }
+  const [tooltip, setTooltip] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(null);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [pickerYear, setPickerYear] = useState(getYear(TODAY));
 
-  // Drag state (ref to avoid re-renders during drag)
+  // Dynamic day width — fills container, capped at 30-day density
+  const [dayWidth, setDayWidth] = useState(DAY_WIDTH);
+  const dayWidthRef = useRef(DAY_WIDTH);
+
   const dragRef = useRef(null);
-  const [dragBookingId, setDragBookingId] = useState(null); // id of booking being dragged (for opacity)
-  const [ghostBooking, setGhostBooking] = useState(null);   // preview block
-  const [selection, setSelection] = useState(null);         // create-by-drag: {roomId, left, width}
+  const [dragBookingId, setDragBookingId] = useState(null);
+  const [ghostBooking, setGhostBooking] = useState(null);
+  const [selection, setSelection] = useState(null);
 
   const containerRef = useRef(null);
   const hoveredRoomRef = useRef(null);
 
-  const days = useMemo(() => (
+  // Measure container and compute dayWidth whenever container or daysCount changes
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.clientWidth;
+      if (w > 0) {
+        // Fill full width for up to 30 visible days; 60-day view scrolls at 30-day density
+        const effectiveDays = Math.min(daysCount, 30);
+        const computed = Math.max(DAY_WIDTH, (w - LEFT_PANEL_WIDTH) / effectiveDays);
+        dayWidthRef.current = computed;
+        setDayWidth(computed);
+      }
+    };
+
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [daysCount]);
+
+const days = useMemo(() => (
     Array.from({ length: daysCount }, (_, i) => addDays(viewStart, i))
   ), [viewStart, daysCount]);
 
-  const gridWidth = LEFT_PANEL_WIDTH + daysCount * DAY_WIDTH;
+  const gridWidth = LEFT_PANEL_WIDTH + daysCount * dayWidth;
 
-  // Compute available rooms count per day (ignoring cancelled)
   const availByDay = useMemo(() => {
     return days.map(day => {
       const occ = new Set(
@@ -53,7 +80,6 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
     });
   }, [days, bookings, rooms]);
 
-  // Filter bookings to visible range
   const visibleBookings = useMemo(() => {
     const end = addDays(viewStart, daysCount);
     return bookings.filter(b => {
@@ -69,12 +95,13 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
 
   // ── Geometry helpers ──────────────────────────────────────────
   const getBookingLeft = useCallback((checkIn) => {
-    const days = differenceInDays(parseISO(checkIn), viewStart);
-    return LEFT_PANEL_WIDTH + days * DAY_WIDTH;
+    const d = differenceInDays(parseISO(checkIn), viewStart);
+    return d * dayWidthRef.current;
   }, [viewStart]);
 
   const getBookingWidth = useCallback((checkIn, checkOut) => {
-    return Math.max(DAY_WIDTH, differenceInDays(parseISO(checkOut), parseISO(checkIn)) * DAY_WIDTH) - 2;
+    const dw = dayWidthRef.current;
+    return Math.max(dw, differenceInDays(parseISO(checkOut), parseISO(checkIn)) * dw) - 2;
   }, []);
 
   const getDayFromClientX = useCallback((clientX) => {
@@ -82,7 +109,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
     if (!rect) return 0;
     const scrollLeft = containerRef.current.scrollLeft;
     const x = clientX - rect.left + scrollLeft - LEFT_PANEL_WIDTH;
-    return Math.floor(x / DAY_WIDTH);
+    return Math.floor(x / dayWidthRef.current);
   }, []);
 
   const dayToDate = useCallback((dayIndex) => (
@@ -110,14 +137,9 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
 
   const handleGridMouseDown = useCallback((e, roomId, dayIndex) => {
     e.preventDefault();
-    dragRef.current = {
-      type: 'create',
-      roomId,
-      startDayIndex: dayIndex,
-      endDayIndex: dayIndex,
-    };
-    const left = LEFT_PANEL_WIDTH + dayIndex * DAY_WIDTH;
-    setSelection({ roomId, left, width: DAY_WIDTH });
+    const dw = dayWidthRef.current;
+    dragRef.current = { type: 'create', roomId, startDayIndex: dayIndex, endDayIndex: dayIndex };
+    setSelection({ roomId, left: dayIndex * dw, width: dw });
   }, []);
 
   const handleMouseMove = useCallback((e) => {
@@ -128,13 +150,14 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
     const targetRoomId = hoveredRoomRef.current;
 
     if (drag.type === 'create') {
+      const dw = dayWidthRef.current;
       drag.endDayIndex = curDayIndex;
       const startD = Math.min(drag.startDayIndex, drag.endDayIndex);
       const endD   = Math.max(drag.startDayIndex, drag.endDayIndex) + 1;
       setSelection({
         roomId: drag.roomId,
-        left: LEFT_PANEL_WIDTH + startD * DAY_WIDTH,
-        width: (endD - startD) * DAY_WIDTH,
+        left: startD * dw,
+        width: (endD - startD) * dw,
       });
       return;
     }
@@ -154,10 +177,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
 
     if (drag.type === 'resize-right') {
       const delta = curDayIndex - drag.startDayIndex;
-      const newCO = format(
-        addDays(parseISO(drag.origCheckOut), delta),
-        'yyyy-MM-dd'
-      );
+      const newCO = format(addDays(parseISO(drag.origCheckOut), delta), 'yyyy-MM-dd');
       if (newCO > drag.origCheckIn) {
         setGhostBooking(prev => ({ ...prev, checkOut: newCO }));
       }
@@ -166,10 +186,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
 
     if (drag.type === 'resize-left') {
       const delta = curDayIndex - drag.startDayIndex;
-      const newCI = format(
-        addDays(parseISO(drag.origCheckIn), delta),
-        'yyyy-MM-dd'
-      );
+      const newCI = format(addDays(parseISO(drag.origCheckIn), delta), 'yyyy-MM-dd');
       if (newCI < drag.origCheckOut) {
         setGhostBooking(prev => ({ ...prev, checkIn: newCI }));
       }
@@ -221,7 +238,6 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
     }
   }, [ghostBooking, dayToDate]);
 
-  // Attach global mouse events during drag
   useEffect(() => {
     const onMove = (e) => handleMouseMove(e);
     const onUp   = (e) => handleMouseUp(e);
@@ -257,22 +273,36 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
   }, []);
 
   // ── Navigation ────────────────────────────────────────────────
-  const goToday = () => setViewStart(startOfMonth(TODAY));
-  const prevPeriod = () => setViewStart(v => subDays(v, daysCount));
-  const nextPeriod = () => setViewStart(v => addDays(v, daysCount));
+  const goToday = () => setViewStart(subDays(TODAY, 7));
+
+  // Step depends on current view: 14d → 1 week, 30d → 2 weeks
+  const navStep = daysCount === 14 ? 7 : 14;
+  const prevPeriod = () => setViewStart(v => subDays(v, navStep));
+  const nextPeriod = () => setViewStart(v => addDays(v, navStep));
 
   const isDragging = !!dragRef.current || dragBookingId != null;
 
   const isWeekend = (date) => { const d = getDay(date); return d === 0 || d === 6; };
   const isToday   = (date) => isSameDay(date, TODAY);
 
-  const getRoomNumber = (roomId) => rooms.find(r => r.id === roomId)?.number;
-
-  // ── Render booking block ──────────────────────────────────────
+  // ── Render booking block (with edge clipping) ─────────────────
   const renderBooking = useCallback((b, isGhost = false) => {
-    const left  = getBookingLeft(b.checkIn);
-    const width = getBookingWidth(b.checkIn, b.checkOut);
-    const cfg   = BOOKING_STATUS[b.status] || BOOKING_STATUS.new;
+    const dw = dayWidthRef.current;
+    const rawLeft  = differenceInDays(parseISO(b.checkIn),  viewStart) * dw;
+    const rawRight = differenceInDays(parseISO(b.checkOut), viewStart) * dw;
+
+    const visibleLeft  = 0;
+    const visibleRight = daysCount * dw;
+
+    const clampedLeft  = Math.max(visibleLeft,  rawLeft);
+    const clampedRight = Math.min(visibleRight, rawRight);
+
+    if (clampedRight - clampedLeft <= 0) return null;
+
+    const left  = clampedLeft;
+    const width = Math.max(6, clampedRight - clampedLeft - 2);
+
+    const cfg    = BOOKING_STATUS[b.status] || BOOKING_STATUS.new;
     const nights = differenceInDays(parseISO(b.checkOut), parseISO(b.checkIn));
     const isBeingDragged = b.id === dragBookingId && !isGhost;
 
@@ -280,11 +310,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
       <div
         key={isGhost ? `ghost-${b.id}` : b.id}
         className={`${classes.bookingBlock} ${isBeingDragged ? classes.isDragging : ''} ${isGhost ? classes.isGhost : ''}`}
-        style={{
-          left,
-          width,
-          background: cfg.color,
-        }}
+        style={{ left, width, background: cfg.color }}
         onMouseDown={!isGhost ? (e) => handleBookingMouseDown(e, b, 'move') : undefined}
         onClick={!isGhost ? (e) => { e.stopPropagation(); openEditForm(b); } : undefined}
         onMouseEnter={!isGhost ? (e) => {
@@ -313,7 +339,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
         />
       </div>
     );
-  }, [getBookingLeft, getBookingWidth, handleBookingMouseDown, openEditForm, dragBookingId, isDragging]);
+  }, [viewStart, daysCount, handleBookingMouseDown, openEditForm, dragBookingId, isDragging]);
 
   // ── Main render ───────────────────────────────────────────────
   return (
@@ -326,9 +352,34 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
-          <div className={classes.monthLabel}>
-            {format(viewStart, 'LLLL yyyy', { locale: ru }).replace(/^\w/, c => c.toUpperCase())}
-            {daysCount !== 30 && ` · ${daysCount} дн.`}
+          <div className={classes.monthLabelWrap}>
+            <button
+              className={classes.monthLabel}
+              onClick={() => { setPickerYear(getYear(viewStart)); setShowMonthPicker(v => !v); }}
+            >
+              {(() => {
+                const viewEnd = addDays(viewStart, daysCount - 1);
+                const startLabel = format(viewStart, 'LLLL', { locale: ru }).replace(/^\w/, c => c.toUpperCase());
+                if (getMonth(viewEnd) !== getMonth(viewStart)) {
+                  return `${startLabel} – ${format(viewEnd, 'LLLL', { locale: ru })} ${format(viewEnd, 'yyyy')}`;
+                }
+                return `${startLabel} ${format(viewStart, 'yyyy')}`;
+              })()}
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 4 }}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            {showMonthPicker && (
+              <MonthPicker
+                year={pickerYear}
+                onYearChange={setPickerYear}
+                onSelect={(year, month) => {
+                  setViewStart(startOfMonth(setMonth(setYear(new Date(), year), month)));
+                  setShowMonthPicker(false);
+                }}
+                onClose={() => setShowMonthPicker(false)}
+              />
+            )}
           </div>
           <button className={classes.navBtn} onClick={nextPeriod}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -338,7 +389,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
         </div>
         <button className={classes.todayBtn} onClick={goToday}>Сегодня</button>
         <div className={classes.daysToggle}>
-          {[14, 30, 60].map(n => (
+          {[14, 30].map(n => (
             <button
               key={n}
               className={`${classes.daysToggleBtn} ${daysCount === n ? classes.active : ''}`}
@@ -379,6 +430,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
                 <div
                   key={i}
                   className={`${classes.dayCell} ${isWeekend(day) ? classes.isWeekend : ''} ${isToday(day) ? classes.isToday : ''}`}
+                  style={{ width: dayWidth }}
                 >
                   <div className={classes.dayName}>{format(day, 'EE', { locale: ru })}</div>
                   <div className={classes.dayNum}>{format(day, 'd')}</div>
@@ -395,7 +447,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
                 <div
                   key={i}
                   className={classes.availCell}
-                  style={{ color: count === 0 ? '#EF5350' : count <= 2 ? '#FB8C00' : '#43A047' }}
+                  style={{ width: dayWidth, color: count === 0 ? '#EF5350' : count <= 2 ? '#FB8C00' : '#43A047' }}
                 >
                   {count}
                 </div>
@@ -417,7 +469,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
                     </span>
                   </div>
                   <div className={classes.categoryBgCells}>
-                    {days.map((_, i) => <div key={i} className={classes.categoryBgCell} />)}
+                    {days.map((_, i) => <div key={i} className={classes.categoryBgCell} style={{ width: dayWidth }} />)}
                   </div>
                 </div>
 
@@ -451,6 +503,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
                           <div
                             key={di}
                             className={`${classes.gridCell} ${isWeekend(day) ? classes.isWeekend : ''} ${isToday(day) ? classes.isToday : ''}`}
+                            style={{ width: dayWidth }}
                             onMouseDown={(e) => handleGridMouseDown(e, room.id, di)}
                           />
                         ))}
@@ -467,7 +520,7 @@ function Timeline({ bookings: initBookings, rooms, categories }) {
                         {selection && selection.roomId === room.id && (
                           <div
                             className={classes.selectionRect}
-                            style={{ left: selection.left - LEFT_PANEL_WIDTH, width: selection.width }}
+                            style={{ left: selection.left, width: selection.width }}
                           />
                         )}
                       </div>
@@ -548,6 +601,41 @@ function Tooltip({ booking, x, y, rooms }) {
           <span className={classes.tooltipValue}>{booking.notes}</span>
         </div>
       )}
+    </div>
+  );
+}
+
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+
+function MonthPicker({ year, onYearChange, onSelect, onClose }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
+
+  return (
+    <div ref={ref} className={classes.monthPicker}>
+      <div className={classes.monthPickerYear}>
+        <button className={classes.monthPickerYearBtn} onClick={() => onYearChange(y => y - 1)}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span className={classes.monthPickerYearLabel}>{year}</span>
+        <button className={classes.monthPickerYearBtn} onClick={() => onYearChange(y => y + 1)}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div className={classes.monthPickerGrid}>
+        {MONTHS_RU.map((name, i) => (
+          <button key={i} className={classes.monthPickerCell} onClick={() => onSelect(year, i)}>
+            {name}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

@@ -55,22 +55,6 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
         </Link>
         <Link
-          to={"/hotel-pms"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "hotel-pms" && classes.menu_items__activeElem}`}
-        >
-          <div className={classes.svgWrapper}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--menu-gray)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="18" rx="2" />
-              <line x1="2" y1="9" x2="22" y2="9" />
-              <line x1="2" y1="15" x2="22" y2="15" />
-              <line x1="8" y1="3" x2="8" y2="21" />
-            </svg>
-          </div>
-          <DelayedText show={menuOpen} delay={200}>Шахматка 2.0</DelayedText>
-          {!menuOpen && <span className={classes.tooltip}>Шахматка 2.0</span>}
-        </Link>
-        <Link
           to={"/hotelChess"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
             } ${(id == "hotelChess" || id == undefined || !id) &&
