@@ -41,6 +41,7 @@ import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
 import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
 import FapReportPage from "./Components/Pages/FapV2/FapReportPage";
 import FapServicePage from "./Components/Pages/FapV2/FapServicePage";
+import HotelPMS from "./Components/HotelPMS/HotelPMS";
 
 const TransferOrder = lazy(() =>
   import("./Components/Blocks/TransferOrder/TransferOrder")
@@ -184,6 +185,7 @@ function App() {
 
             <Route path="/newPlacement/:idHotel" element={<NewPlacement />} />
             <Route path="/newPlacementV2/:idHotel" element={<NewPlacementV2 />} />
+            <Route path="/hotel-pms" element={<HotelPMS />} />
 
             <Route path="*" element={<Non_Found_Page />} />
           </Route>
