@@ -14,7 +14,7 @@ import HotelGuestsModal from "./HotelGuestsModal";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
-export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage }) {
+export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true }) {
   const navigate = useNavigate();
   const { requestId } = useParams();
   const token = getCookie("token");
@@ -111,7 +111,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                 </div>
               )}
             </div>
-            {!isCompleted && (
+            {canEdit && !isCompleted && (
               <div className={classes.actionsRow}>
                 <Button
                   backgroundcolor="var(--dark-blue)"
@@ -238,7 +238,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                       <div className={lClasses.emptyGuests}>
                         <span className={lClasses.emptyGuestsIcon}>🛏</span>
                         <span>Гости ещё не добавлены</span>
-                        {!isCompleted && (
+                        {canEdit && !isCompleted && (
                           <Button
                             backgroundcolor="var(--dark-blue)"
                             color="#fff"
@@ -303,6 +303,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
         hotel={hotelMgmtIndex != null ? hotels[hotelMgmtIndex] : null}
         hotelIndex={hotelMgmtIndex ?? 0}
         onRefetch={onRefetch}
+        canEdit={canEdit}
         onGenerateReport={
           hotelMgmtIndex != null
             ? () => {

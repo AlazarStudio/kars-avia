@@ -13,7 +13,7 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
-export default function FapBaggageSection({ service, color, request, onRefetch, isOpen, onToggle, isPage }) {
+export default function FapBaggageSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const { confirm } = useDialog();
@@ -114,7 +114,7 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
                 </div>
               )}
             </div>
-            {!isCompleted && (
+            {canEdit && !isCompleted && (
               <div className={classes.actionsRow}>
                 <Button
                   backgroundcolor="var(--dark-blue)"
@@ -185,7 +185,7 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
                         В пути
                       </span>
                     )}
-                    {!done && !isCompleted && (
+                    {canEdit && !done && !isCompleted && (
                       <Button
                         backgroundcolor="#ECFDF5"
                         color="#10B981"

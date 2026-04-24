@@ -338,6 +338,7 @@ function EditRequestAirlineCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать</div>
         <div className={classes.requestTitle_close}>
+        {(!user?.airlineId || accessMenu.userUpdate) && (
           <AdditionalMenu
             anchorEl={anchorEl}
             onOpen={handleMenuOpen}
@@ -345,7 +346,7 @@ function EditRequestAirlineCompany({
             menuRef={menuRef}
             onEdit={handleEditFromMenu}
             onDelete={openDeleteComponent ? handleDeleteFromMenu : undefined}
-          />
+          />)}
           <div className={classes.closeIconWrapper} onClick={closeButton}>
             <CloseIcon />
           </div>

@@ -2794,18 +2794,6 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                                 >
                                   Питание
                                 </SortableTh>
-                                <SortableTh
-                                  sortKey="transfer"
-                                  active={
-                                    sortReqSingle?.key === "transfer"
-                                  }
-                                  dir={sortReqSingle?.dir}
-                                  onSort={(k) =>
-                                    handleTableSort("req-single", k)
-                                  }
-                                >
-                                  Трансфер
-                                </SortableTh>
                               </tr>
                             </thead>
                             <tbody>
@@ -2837,14 +2825,11 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                                       {formatRub(r.livingBudget)}
                                     </td>
                                     <td>{formatRub(r.mealBudget)}</td>
-                                    <td>
-                                      {formatRub(r.transferBudget)}
-                                    </td>
                                   </tr>
                                 ))
                               ) : (
                                 <tr>
-                                  <td colSpan={8}>Нет строк</td>
+                                  <td colSpan={7}>Нет строк</td>
                                 </tr>
                               )}
                             </tbody>

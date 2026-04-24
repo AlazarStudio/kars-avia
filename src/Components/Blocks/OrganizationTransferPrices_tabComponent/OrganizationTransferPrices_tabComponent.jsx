@@ -11,7 +11,7 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import Notification from "../../Notification/Notification.jsx";
-import { fullNotifyTime, notifyTime } from "../../../roles.js";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Filter from "../Filter/Filter.jsx";
 import InfoTableOrganizationTransferPrices from "../InfoTableOrganizationTransferPrices/InfoTableOrganizationTransferPrices.jsx";
@@ -212,6 +212,9 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
   if (error) return <p>Ошибка: {error.message}</p>;
   if (!data?.organization) return null;
 
+  console.log(accessMenu, "\n", user);
+  
+
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
@@ -221,6 +224,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {user.role !== roles.superAdmin && accessMenu?.organizationUpdate ? (
         <div className={classes.section_searchAndFilter_filter}>
           <Filter
             user={user}
@@ -229,6 +233,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
             buttonTitle="Добавить договор"
           />
         </div>
+        ) : null}
       </div>
 
       <InfoTableOrganizationTransferPrices

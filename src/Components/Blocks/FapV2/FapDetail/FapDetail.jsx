@@ -98,7 +98,7 @@ function getServiceSummary(serviceKey, request) {
   }
 }
 
-export default function FapDetail({ user }) {
+export default function FapDetail({ user, canEdit = true }) {
   const { requestId } = useParams();
   const navigate = useNavigate();
   const token = getCookie("token");
@@ -255,7 +255,7 @@ export default function FapDetail({ user }) {
           </div>
 
           <div className={classes.headerRight}>
-            {!isFinal && (
+            {canEdit && !isFinal && (
               <>
                 {nextStatuses.map((s) => (
                   <Button
@@ -293,7 +293,7 @@ export default function FapDetail({ user }) {
             >
               Чат
             </Button>
-            {!isFinal && (
+            {canEdit && !isFinal && (
               <Button
                 backgroundcolor="#FEF2F2"
                 color="#EF4444"
@@ -367,7 +367,7 @@ export default function FapDetail({ user }) {
         )}
       </div>
 
-      {showAddService && (
+      {canEdit && showAddService && (
         <AddRepresentativeService
           show={showAddService}
           onClose={() => {
@@ -426,19 +426,21 @@ export default function FapDetail({ user }) {
         </DialogActions>
       </Dialog>
 
-      <FapDestructiveModal
-        open={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        onConfirm={handleCancel}
-        title="Отмена заявки"
-        description="После отмены заявка перейдёт в статус «Отменена». Это действие необратимо."
-        showReason
-        reasonRequired={false}
-        placeholder="Причина отмены (необязательно)"
-        confirmText="Отменить заявку"
-        cancelText="Назад"
-        saving={saving}
-      />
+      {canEdit && (
+        <FapDestructiveModal
+          open={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={handleCancel}
+          title="Отмена заявки"
+          description="После отмены заявка перейдёт в статус «Отменена». Это действие необратимо."
+          showReason
+          reasonRequired={false}
+          placeholder="Причина отмены (необязательно)"
+          confirmText="Отменить заявку"
+          cancelText="Назад"
+          saving={saving}
+        />
+      )}
     </div>
   );
 }

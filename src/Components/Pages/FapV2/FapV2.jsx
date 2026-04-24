@@ -174,7 +174,7 @@ export default function FapV2({ user, accessMenu }) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        {(!user?.airlineId || accessMenu?.requestCreate) && (
+        {((user?.airlineId|| user?.dispatcherDepartmentId) && accessMenu?.reserveCreate) && (
           <Button
             backgroundcolor="var(--dark-blue)"
             color="#fff"

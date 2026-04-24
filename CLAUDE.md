@@ -93,7 +93,6 @@ src/
 ├── UserActivityTracker.jsx   # Трекер активности пользователя
 ├── roles.js                 # Роли, статусы, константы
 ├── requests.js              # Моковые данные (legacy)
-├── graphQL_requests.js      # GraphQL-запросы, server/path, утилиты
 ├── services/
 │   ├── authService.js       # Работа с cookie: token, refreshToken, fingerprint
 │   └── authErrorLink.js     # Apollo error link (401 → logout)
@@ -112,14 +111,22 @@ src/
 │   ├── effectiveCostDays.js # Расчёт эффективных суток
 │   ├── transferPrices.js    # Цены трансфера
 │   └── scriptRunnerSelectors.js
-├── shared/                  # Общие компоненты
+├── shared/
+│   └── icons/               # SVG-иконки как React-компоненты
 └── Components/
     ├── Pages/               # Страницы (маршруты)
     ├── Blocks/              # Переиспользуемые блоки (формы, таблицы, модалки)
-    ├── Standart/            # Примитивы (Button, H1, Layout, RowBlock и т.д.)
-    ├── PlacementDND/        # Шахматка v1 (dnd-kit)
+    ├── Standart/            # Примитивы (Button, H1, H2, Layout, RowBlock, ColumnBlock, WidthBlock, CenterBlock, Text, MUIAlert, MUIConfirm)
+    ├── RoleContent/         # Контент по ролям (см. ниже)
+    ├── HotelPMS/            # PMS-система для гостиниц (в разработке, mock-данные)
+    ├── PlacementDND/        # Шахматка v1 (устаревшая)
     └── PlacementDNDV2/      # Шахматка v2 (текущая)
+        ├── components/      # UI-компоненты (TimelineV2, RoomRowV2, DraggableRequestV2, модалки)
+        ├── hooks/           # usePlacementData.js
+        └── utils/           # placementFilters, placementPositions, placementOverlap, placementTransforms
 ```
+
+> **Важно**: `graphQL_requests.js` находится в **корне репозитория**, а не внутри `src/`. Импорт из `src/`: `from "../graphQL_requests"`.
 
 ## Роли пользователей
 
@@ -167,7 +174,34 @@ Main_Page (запрашивает GET_AUTH_USER_ACCESS / GET_DISPATCHER_DEPARTME
   → передаёт в AllRoles → RoleContent → дочерние страницы/блоки
 ```
 
+## RoleContent
+
+`src/Components/RoleContent/AllRoles.jsx` — точка входа: получает `user` и `accessMenu`, рендерит нужный контент-компонент:
+
+| Файл | Роль |
+|------|------|
+| `SuperAdminContent` | `SUPERADMIN` |
+| `DispatcherAdminContent` | `DISPATCHERADMIN` |
+| `AirlineAdminContent` | `AIRLINEADMIN` |
+| `HotelAdminContent` | `HOTELADMIN` |
+| `RepresentativeAdminContent` | Представительские услуги |
+| `TransferAdminContent` | Трансфер |
+
+Каждый контент-компонент сам управляет выбором вкладки/страницы на основе `id` из `useParams`.
+
 Для авиакомпаний `effectiveAccessMenu` уже учитывает переопределения по должности (позиции), рассчитывается на бэке.
+
+**Все ключи `accessMenu`** (определены в `src/roles.js` → `menuAccess`):
+
+```
+requestMenu, requestCreate, requestUpdate, requestChat
+reserveMenu, reserveCreate, reserveUpdate
+userMenu, userCreate, userUpdate
+personalMenu, personalCreate, personalUpdate
+analyticsMenu
+airlineMenu, airlineUpdate, airlineContracts
+reportMenu, reportCreate
+```
 
 ## Настройки доступа отдела (SettingsSidebar)
 
@@ -225,7 +259,7 @@ Main_Page (запрашивает GET_AUTH_USER_ACCESS / GET_DISPATCHER_DEPARTME
 - **Контексты**: Toast (`useToast`) и Dialog (`useDialog`) доступны глобально
 - **Медиафайлы**: `getMediaUrl(path)` из `graphQL_requests.js` добавляет token в URL
 - **Стандартные примитивы**: используй компоненты из `src/Components/Standart/` (Button, H1, H2, Layout, RowBlock, ColumnBlock, WidthBlock, CenterBlock, Text)
-- **MUI-обёртки**: `MUIAutocomplete`, `MUIAutocompleteColor`, `MUILoader`, `MUIAlert`, `MUIConfirm`, `MUISwitch`, `MUITextField` — в `src/Components/Blocks/MUI*/`
+- **MUI-обёртки в Blocks**: `MUIAutocomplete`, `MUIAutocompleteColor`, `MUILoader`, `MUISwitch`, `MUITextField` — в `src/Components/Blocks/MUI*/`. `MUIAlert` и `MUIConfirm` — в `src/Components/Standart/`
 - **Lazy loading**: тяжёлые страницы подключаются через `React.lazy` + `Suspense`
 - **Визуальный disabled**: затемнение элементов при `disabled` делается через `opacity: 0.55` на контейнере (класс `rowDisabled`), а не через MUI-проп `disabled` — это обеспечивает одинаковый вид для включённых и выключённых переключателей
 - **CSS-модули**: каждый компонент имеет свой `.module.css`. Стили соседних компонентов из той же папки могут шариться (напр. `AccessPermissionsPanel` использует `SettingsSidebar.module.css`)

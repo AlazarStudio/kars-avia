@@ -13,6 +13,7 @@ import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
+  canAccessMenu,
 } from "../../../utils/access";
 import classes from "../../Pages/Main_page/Main_Page.module.css";
 
@@ -90,7 +91,7 @@ export default function FapReportPage({ user }) {
   return (
     <div className={classes.main}>
       <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />
-      <FapReport request={request} hotelIndex={hotelIndex} hotelName={hotel.name || "Отель"} />
+      <FapReport request={request} hotelIndex={hotelIndex} hotelName={hotel.name || "Отель"} canEdit={canAccessMenu(accessMenu, "reserveUpdate", user)} />
     </div>
   );
 }

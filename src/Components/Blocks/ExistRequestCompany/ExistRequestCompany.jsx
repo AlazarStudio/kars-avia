@@ -10,7 +10,7 @@ import {
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
-import { rolesObject } from "../../../roles";
+import { roles, rolesObject } from "../../../roles";
 import { isDispatcherModerator } from "../../../utils/access";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
@@ -29,6 +29,7 @@ function ExistRequestCompany({
   filterList,
   positions,
   initialEditMode = false,
+  accessMenu,
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
@@ -304,21 +305,23 @@ function ExistRequestCompany({
     };
   }, [show, closeButton, anchorEl, isDialogOpen]);
 
-  // console.log(user);
+  // console.log(accessMenu, "\n", user);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Диспетчер</div>
         <div className={classes.requestTitle_close}>
-          <AdditionalMenu
-            anchorEl={anchorEl}
-            onOpen={handleMenuOpen}
-            onClose={handleMenuClose}
-            menuRef={menuRef}
-            onEdit={handleEditFromMenu}
-            onDelete={handleDeleteFromMenu}
-          />
+          {user.role !== roles.superAdmin && accessMenu?.userUpdate ? (
+            <AdditionalMenu
+              anchorEl={anchorEl}
+              onOpen={handleMenuOpen}
+              onClose={handleMenuClose}
+              menuRef={menuRef}
+              onEdit={handleEditFromMenu}
+              onDelete={handleDeleteFromMenu}
+            />
+          ) : null}
           <div className={classes.closeIconWrapper} onClick={closeButton}>
             <CloseIcon />
           </div>

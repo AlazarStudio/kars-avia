@@ -12,7 +12,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import { InputMask } from "@react-input/mask";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
-import { menuAccess, positions } from "../../../roles";
+import { menuAccess, positions, roles } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
@@ -296,7 +296,7 @@ function UpdateRequestAirlineStaff({
               />
             </div>
           </div>
-          {(!user?.airlineId || accessMenu?.personalUpdate) && (
+          {(user?.role !== roles.superAdmin && accessMenu?.personalUpdate) && (
             <div className={classes.requestButton}>
               {/* <Button
                 type="submit"

@@ -169,6 +169,9 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   const canChatTransfer = accessMenu
     ? hasAccessMenu(accessMenu, "transferChat")
     : true;
+  const canUpdateTransfer = accessMenu
+    ? hasAccessMenu(accessMenu, "transferUpdate")
+    : true;
 
 
   const handleChange = (e) =>
@@ -235,6 +238,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   });
 
   const handleCancelRequest = async (id) => {
+    if (!canUpdateTransfer) return;
     try {
       await updateTransferMutation({
         variables: {
@@ -483,6 +487,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
         accessMenu={accessMenu}
         setChooseRequestID={setChooseRequestID}
         canChat={canChatTransfer}
+        canUpdate={canUpdateTransfer}
         openDeleteComponent={openDeleteComponent}
         setRequestId={setChooseRequestId}
       />

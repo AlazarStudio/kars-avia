@@ -53,9 +53,9 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                             <div className={classes.employeePost}>{employee.position?.name}</div>
                                         </div>
                                         <div className={classes.infoTable_buttons}>
-                                            <EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestEditNumber(employee, item.name)} /> 
                                             {(!user?.airlineId || accessMenu.userUpdate) && 
                                             <>
+                                                <EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestEditNumber(employee, item.name)} /> 
                                                 <DeleteIcon cursor="pointer" strokeWidth={0.5} onClick={() => openDeleteNomerComponent(employee, item.name)} />
                                             </>}
                                         </div>

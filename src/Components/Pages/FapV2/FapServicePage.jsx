@@ -20,6 +20,7 @@ import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
   isExternalUser,
+  canAccessMenu,
 } from "../../../utils/access";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import { useToast } from "../../../contexts/ToastContext";
@@ -92,6 +93,7 @@ export default function FapServicePage({ user }) {
     return firstWithPwa?.linkPWA || "";
   }, [request?.representativeLinks, user?.representativeDepartmentId]);
 
+  const canEdit = canAccessMenu(accessMenu, "reserveUpdate", user);
   const canCopyRepresentativeLink = !isExternalUser(user) && Boolean(representativePwaLink);
 
   const handleCopyRepresentativeLink = async () => {
@@ -119,6 +121,7 @@ export default function FapServicePage({ user }) {
             isOpen={true}
             onToggle={noop}
             isPage
+            canEdit={canEdit}
           />
         );
       case "meal":
@@ -133,6 +136,7 @@ export default function FapServicePage({ user }) {
             isOpen={true}
             onToggle={noop}
             isPage
+            canEdit={canEdit}
           />
         );
       case "living":
@@ -145,6 +149,7 @@ export default function FapServicePage({ user }) {
             isOpen={true}
             onToggle={noop}
             isPage
+            canEdit={canEdit}
           />
         );
       case "transfer":
@@ -157,6 +162,7 @@ export default function FapServicePage({ user }) {
             isOpen={true}
             onToggle={noop}
             isPage
+            canEdit={canEdit}
           />
         );
       case "baggage":
@@ -169,6 +175,7 @@ export default function FapServicePage({ user }) {
             isOpen={true}
             onToggle={noop}
             isPage
+            canEdit={canEdit}
           />
         );
       default:

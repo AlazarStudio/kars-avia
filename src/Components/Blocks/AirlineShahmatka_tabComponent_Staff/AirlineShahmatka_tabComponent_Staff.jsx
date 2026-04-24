@@ -336,7 +336,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
         </div>
         <div className={classes.section_searchAndFilter_filter}>
           <StatusLegend />
-          {(!user?.airlineId || accessMenu?.personalCreate) && (
+          {(user?.role !== roles.superAdmin && accessMenu?.personalCreate) && (
             <Filter
               toggleSidebar={toggleCategory}
               handleChange={handleChange}
@@ -397,7 +397,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
       />
       {/* )} */}
 
-      {(!user?.airlineId || accessMenu?.personalCreate) && (
+      {(user?.role !== roles.superAdmin && accessMenu?.personalCreate) && (
         <CreateRequestAirlineStaff
           id={id}
           show={showAddCategory}

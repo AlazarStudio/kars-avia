@@ -25,6 +25,7 @@ import RequisitesIcon from "../../../shared/icons/RequisitesIcon.jsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
 import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
+import { is } from "date-fns/locale";
 
 function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
   const token = getCookie("token");
@@ -425,6 +426,7 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                         />
                       </div>
 
+                      {isEditing ? (
                       <div className={classes.airlineAbout_info_item}>
                         <label>Изображение</label>
                         <input
@@ -436,6 +438,7 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                           className={classes.airlineAbout_info_input}
                         />
                       </div>
+                      ) : null}
                     </>
                   )
                 }

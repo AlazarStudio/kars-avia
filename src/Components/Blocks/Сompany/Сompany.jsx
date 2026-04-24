@@ -395,9 +395,9 @@ function Company({ user, accessMenu }) {
           />
         )}
 
-        {canEdit && (
           <ExistRequestCompany
             show={showEditDispatcher}
+            accessMenu={accessMenu}
             onClose={() => setShowEditDispatcher(false)}
             chooseObject={selectedDispatcher}
             updateDispatcher={() => {}}
@@ -410,7 +410,6 @@ function Company({ user, accessMenu }) {
               refetchDepartments();
             }}
           />
-        )}
 
         {canCreate && (
           <CreateRequestDispatcherDepartment

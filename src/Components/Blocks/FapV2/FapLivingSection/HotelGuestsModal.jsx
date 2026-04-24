@@ -43,6 +43,7 @@ export default function HotelGuestsModal({
   hotelIndex,
   onRefetch,
   onGenerateReport,
+  canEdit = true,
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -319,7 +320,7 @@ export default function HotelGuestsModal({
                     Отчёт
                   </Button>
                 )}
-                {canAdd && (
+                {canEdit && canAdd && (
                   <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={openAddForm}>
                     + Добавить бронь
                   </Button>
@@ -328,7 +329,7 @@ export default function HotelGuestsModal({
             </div>
 
             {/* Selection bar */}
-            {selectedIndices.length > 0 && (
+            {canEdit && selectedIndices.length > 0 && (
               <div className={classes.selectionBar}>
                 <span className={classes.selectionCount}>
                   Выбрано: {selectedIndices.length}
@@ -368,11 +369,13 @@ export default function HotelGuestsModal({
                 filteredBookings.map((row) => (
                   <div key={row._idx} className={classes.tableRow}>
                     <div className={classes.colCheck}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIndices.includes(row._idx)}
-                        onChange={() => toggleSelect(row._idx)}
-                      />
+                      {canEdit && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIndices.includes(row._idx)}
+                          onChange={() => toggleSelect(row._idx)}
+                        />
+                      )}
                     </div>
                     <div style={{ color: "#94A3B8" }}>{row._idx + 1}</div>
                     <div>{checkInStr}</div>
@@ -380,23 +383,27 @@ export default function HotelGuestsModal({
                     <div>{row.roomNumber || "—"}</div>
                     <div>{row.fullName || "—"}</div>
                     <div className={classes.cellActions}>
-                      <button
-                        type="button"
-                        className={classes.iconBtn}
-                        onClick={() => openEditForm(row._idx)}
-                        title="Редактировать"
-                      >
-                        <EditPencilIcon cursor="pointer" />
-                      </button>
-                      <button
-                        type="button"
-                        className={classes.iconBtn}
-                        onClick={() => handleRemove(row._idx)}
-                        disabled={saving}
-                        title="Удалить"
-                      >
-                        <DeleteIcon cursor="pointer" />
-                      </button>
+                      {canEdit && (
+                        <>
+                          <button
+                            type="button"
+                            className={classes.iconBtn}
+                            onClick={() => openEditForm(row._idx)}
+                            title="Редактировать"
+                          >
+                            <EditPencilIcon cursor="pointer" />
+                          </button>
+                          <button
+                            type="button"
+                            className={classes.iconBtn}
+                            onClick={() => handleRemove(row._idx)}
+                            disabled={saving}
+                            title="Удалить"
+                          >
+                            <DeleteIcon cursor="pointer" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))

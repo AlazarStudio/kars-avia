@@ -22,7 +22,7 @@ import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 
 const emptyPerson = { fullName: "", phone: "" };
 
-export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle, isPage }) {
+export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const [showAddDriver, setShowAddDriver] = useState(false);
@@ -172,7 +172,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                 </div>
               )}
             </div>
-            {!isCompleted && (
+            {canEdit && !isCompleted && (
               <div className={classes.actionsRow}>
                 <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={() => setShowAddDriver(true)}>
                   + Добавить водителя
@@ -239,7 +239,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                             <th>#</th>
                             <th>ФИО</th>
                             <th>Телефон</th>
-                            {!isCompleted && <th />}
+                            {canEdit && !isCompleted && <th />}
                           </tr>
                         </thead>
                         <tbody>
@@ -248,7 +248,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                               <td style={{ color: "#94A3B8", width: 28 }}>{pi + 1}</td>
                               <td>{p.fullName}</td>
                               <td>{p.phone || "—"}</td>
-                              {!isCompleted && (
+                              {canEdit && !isCompleted && (
                                 <td style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
                                   <button
                                     type="button"
@@ -274,7 +274,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                       </table>
                     )}
 
-                    {!isCompleted && (remaining == null || remaining > 0) && (
+                    {canEdit && !isCompleted && (remaining == null || remaining > 0) && (
                       <div style={{ paddingTop: 10 }}>
                         <Button
                           backgroundcolor="var(--dark-blue)"

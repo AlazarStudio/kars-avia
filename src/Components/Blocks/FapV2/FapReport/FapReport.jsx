@@ -57,7 +57,7 @@ const emptyPD = (person, hotelIndex, plan) => ({
   accommodationCost: 0,
 });
 
-export default function FapReport({ request, hotelIndex, hotelName }) {
+export default function FapReport({ request, hotelIndex, hotelName, canEdit = true }) {
   const navigate = useNavigate();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -337,9 +337,11 @@ export default function FapReport({ request, hotelIndex, hotelName }) {
               <p className={classes.tariffHint}>
                 Создайте тарифы с ценами — затем назначьте их гостям во вкладке «Гости».
               </p>
-              <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={addTariff}>
-                + Добавить тариф
-              </Button>
+              {canEdit && (
+                <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={addTariff}>
+                  + Добавить тариф
+                </Button>
+              )}
             </div>
 
             {tariffs.length === 0 && (
@@ -353,49 +355,54 @@ export default function FapReport({ request, hotelIndex, hotelName }) {
                     type="text"
                     className={classes.tariffNameInput}
                     value={t.name}
-                    onChange={(e) => updateTariff(t.id, "name", e.target.value)}
+                    onChange={(e) => canEdit && updateTariff(t.id, "name", e.target.value)}
+                    readOnly={!canEdit}
                     placeholder="Название тарифа (напр. Стандарт 2-мест.)"
                   />
-                  <button
-                    className={classes.applyAllBtn}
-                    onClick={() => applyTariffToAll(t.id)}
-                    title="Применить этот тариф всем гостям"
-                  >
-                    Применить всем
-                  </button>
-                  <button
-                    className={classes.removeTariffBtn}
-                    onClick={() => removeTariff(t.id)}
-                    title="Удалить тариф"
-                  >
-                    ×
-                  </button>
+                  {canEdit && (
+                    <>
+                      <button
+                        className={classes.applyAllBtn}
+                        onClick={() => applyTariffToAll(t.id)}
+                        title="Применить этот тариф всем гостям"
+                      >
+                        Применить всем
+                      </button>
+                      <button
+                        className={classes.removeTariffBtn}
+                        onClick={() => removeTariff(t.id)}
+                        title="Удалить тариф"
+                      >
+                        ×
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className={classes.tariffFields}>
                   <label className={classes.fieldLabel}>
                     Завтрак
                     <input type="number" min={0} className={classes.fieldInput} value={t.breakfast}
-                      onChange={(e) => updateTariff(t.id, "breakfast", e.target.value)} placeholder="0" />
+                      onChange={(e) => canEdit && updateTariff(t.id, "breakfast", e.target.value)} readOnly={!canEdit} placeholder="0" />
                   </label>
                   <label className={classes.fieldLabel}>
                     Обед
                     <input type="number" min={0} className={classes.fieldInput} value={t.lunch}
-                      onChange={(e) => updateTariff(t.id, "lunch", e.target.value)} placeholder="0" />
+                      onChange={(e) => canEdit && updateTariff(t.id, "lunch", e.target.value)} readOnly={!canEdit} placeholder="0" />
                   </label>
                   <label className={classes.fieldLabel}>
                     Ужин
                     <input type="number" min={0} className={classes.fieldInput} value={t.dinner}
-                      onChange={(e) => updateTariff(t.id, "dinner", e.target.value)} placeholder="0" />
+                      onChange={(e) => canEdit && updateTariff(t.id, "dinner", e.target.value)} readOnly={!canEdit} placeholder="0" />
                   </label>
                   <label className={classes.fieldLabel}>
                     Ст-ть питания
                     <input type="number" min={0} className={classes.fieldInput} value={t.foodCost}
-                      onChange={(e) => updateTariff(t.id, "foodCost", e.target.value)} placeholder="0" />
+                      onChange={(e) => canEdit && updateTariff(t.id, "foodCost", e.target.value)} readOnly={!canEdit} placeholder="0" />
                   </label>
                   <label className={classes.fieldLabel}>
                     Ст-ть проживания
                     <input type="number" min={0} className={classes.fieldInput} value={t.accommodationCost}
-                      onChange={(e) => updateTariff(t.id, "accommodationCost", e.target.value)} placeholder="0" />
+                      onChange={(e) => canEdit && updateTariff(t.id, "accommodationCost", e.target.value)} readOnly={!canEdit} placeholder="0" />
                   </label>
                 </div>
               </div>
@@ -450,7 +457,8 @@ export default function FapReport({ request, hotelIndex, hotelName }) {
                                 type="text"
                                 className={classes.cellInput}
                                 value={pd.roomNumber}
-                                onChange={(e) => updatePerson(i, "roomNumber", e.target.value)}
+                                onChange={(e) => canEdit && updatePerson(i, "roomNumber", e.target.value)}
+                                readOnly={!canEdit}
                                 placeholder="№"
                               />
                             </td>
@@ -461,14 +469,16 @@ export default function FapReport({ request, hotelIndex, hotelName }) {
                                 step={0.5}
                                 className={classes.cellInputNum}
                                 value={pd.daysCount === 0 ? "" : pd.daysCount}
-                                onChange={(e) => updatePerson(i, "daysCount", e.target.value)}
+                                onChange={(e) => canEdit && updatePerson(i, "daysCount", e.target.value)}
+                                readOnly={!canEdit}
                               />
                             </td>
                             <td>
                               <select
                                 className={classes.tariffSelect}
                                 value={pd.tariffId || ""}
-                                onChange={(e) => applyTariffToPerson(i, e.target.value)}
+                                onChange={(e) => canEdit && applyTariffToPerson(i, e.target.value)}
+                                disabled={!canEdit}
                               >
                                 <option value="">—</option>
                                 {tariffs.map((t) => (
@@ -481,27 +491,32 @@ export default function FapReport({ request, hotelIndex, hotelName }) {
                             <td>
                               <input type="number" min={0} className={classes.cellInputNum}
                                 value={pd.breakfast === 0 ? "" : pd.breakfast}
-                                onChange={(e) => updatePerson(i, "breakfast", e.target.value)} />
+                                onChange={(e) => canEdit && updatePerson(i, "breakfast", e.target.value)}
+                                readOnly={!canEdit} />
                             </td>
                             <td>
                               <input type="number" min={0} className={classes.cellInputNum}
                                 value={pd.lunch === 0 ? "" : pd.lunch}
-                                onChange={(e) => updatePerson(i, "lunch", e.target.value)} />
+                                onChange={(e) => canEdit && updatePerson(i, "lunch", e.target.value)}
+                                readOnly={!canEdit} />
                             </td>
                             <td>
                               <input type="number" min={0} className={classes.cellInputNum}
                                 value={pd.dinner === 0 ? "" : pd.dinner}
-                                onChange={(e) => updatePerson(i, "dinner", e.target.value)} />
+                                onChange={(e) => canEdit && updatePerson(i, "dinner", e.target.value)}
+                                readOnly={!canEdit} />
                             </td>
                             <td>
                               <input type="number" min={0} className={classes.cellInputNum}
                                 value={pd.foodCost === 0 ? "" : pd.foodCost}
-                                onChange={(e) => updatePerson(i, "foodCost", e.target.value)} />
+                                onChange={(e) => canEdit && updatePerson(i, "foodCost", e.target.value)}
+                                readOnly={!canEdit} />
                             </td>
                             <td>
                               <input type="number" min={0} className={classes.cellInputNum}
                                 value={pd.accommodationCost === 0 ? "" : pd.accommodationCost}
-                                onChange={(e) => updatePerson(i, "accommodationCost", e.target.value)} />
+                                onChange={(e) => canEdit && updatePerson(i, "accommodationCost", e.target.value)}
+                                readOnly={!canEdit} />
                             </td>
                             <td className={classes.rowTotal}>{total > 0 ? total : "—"}</td>
                           </tr>
@@ -527,16 +542,18 @@ export default function FapReport({ request, hotelIndex, hotelName }) {
       </div>
 
       {/* Actions */}
-      <div className={classes.actions}>
-        <Button
-          backgroundcolor="var(--dark-blue)"
-          color="#fff"
-          onClick={handleSave}
-          disabled={saving || people.length === 0}
-        >
-          {saving ? "Сохранение..." : "Сохранить отчёт"}
-        </Button>
-      </div>
+      {canEdit && (
+        <div className={classes.actions}>
+          <Button
+            backgroundcolor="var(--dark-blue)"
+            color="#fff"
+            onClick={handleSave}
+            disabled={saving || people.length === 0}
+          >
+            {saving ? "Сохранение..." : "Сохранить отчёт"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

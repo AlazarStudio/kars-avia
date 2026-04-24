@@ -10,6 +10,7 @@ import { useQuery } from "@apollo/client";
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
+  canAccessMenu,
 } from "../../../utils/access";
 import classes from "../../Pages/Main_page/Main_Page.module.css";
 
@@ -54,7 +55,7 @@ export default function FapDetailPage({ user }) {
   return (
     <div className={classes.main}>
       <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />
-      <FapDetail user={user} />
+      <FapDetail user={user} canEdit={canAccessMenu(accessMenu, "reserveUpdate", user)} />
     </div>
   );
 }

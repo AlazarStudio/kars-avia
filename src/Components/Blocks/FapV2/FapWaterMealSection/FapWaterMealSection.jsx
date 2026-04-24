@@ -26,6 +26,7 @@ export default function FapWaterMealSection({
   isOpen,
   onToggle,
   isPage,
+  canEdit = true,
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -145,7 +146,7 @@ export default function FapWaterMealSection({
               )}
             </div>
 
-            {!isCompleted && (
+            {canEdit && !isCompleted && (
               <div className={classes.actionsRow}>
                 {service.status === "NEW" && (
                   <Button

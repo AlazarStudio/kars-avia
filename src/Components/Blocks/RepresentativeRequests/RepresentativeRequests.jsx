@@ -323,7 +323,7 @@ function RepresentativeRequests({
             value={searchQuery}
             onChange={handleSearch}
           />
-          {!user?.airlineId || accessMenu.requestCreate ? (
+          {!user?.airlineId || accessMenu?.reserveCreate ? (
             <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
           ) : null}
         </div>

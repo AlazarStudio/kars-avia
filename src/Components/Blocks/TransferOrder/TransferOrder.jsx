@@ -22,7 +22,7 @@ import OrderInfoSidebar from "../OrderInfoSidebar/OrderInfoSidebar.jsx";
 import DriverItem from "../DriverItem/DriverItem.jsx";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import { statusLabels } from "../../../roles.js";
-import { canAccessMenu } from "../../../utils/access";
+import { canAccessMenu, isAirlineRole } from "../../../utils/access";
 
 const isFinishedOrCanceled = (status) => {
   const s = String(status || "").toUpperCase();
@@ -202,6 +202,7 @@ function TransferOrder({ user, token, accessMenu }) {
     ? canAccessMenu(accessMenu, "transferUpdate", user)
     : true;
   const canEditTransfer = canEditByStatus && canUpdate;
+  const canAssignDriver = !isAirlineRole(user);
 
   // если статус стал неразрешённым — выходим из редактирования
   useEffect(() => {
@@ -440,7 +441,7 @@ function TransferOrder({ user, token, accessMenu }) {
   );
 
   const handleAssignDriver = async (driverId) => {
-    if (!canUpdate) return;
+    if (!canAssignDriver || !canUpdate) return;
     if (!orderId || !driverId || assigning) return;
 
     await updateTransfer({
@@ -524,7 +525,7 @@ function TransferOrder({ user, token, accessMenu }) {
   const [confirm, setConfirm] = useState({ open: false, driver: null });
 
   const openConfirm = (driver) => {
-    if (!canUpdate) return;
+    if (!canAssignDriver || !canUpdate) return;
     if (!driver?.id) return;
     if (driver.id === assignedDriverId) return;
     setConfirm({ open: true, driver });
@@ -634,7 +635,7 @@ function TransferOrder({ user, token, accessMenu }) {
                     properties={{
                       balloonContent: `${d.name} • активных: ${d.activeTransfersCount}`,
                     }}
-                    onClick={() => openConfirm(d)}
+                    onClick={canAssignDriver ? () => openConfirm(d) : undefined}
                   />
                 ))}
 
@@ -643,7 +644,7 @@ function TransferOrder({ user, token, accessMenu }) {
             </YMaps>
           </div>
 
-          {status === "PENDING" || status === "ASSIGNED" || status === "ACCEPTED" ? (
+          {canAssignDriver && (status === "PENDING" || status === "ASSIGNED" || status === "ACCEPTED") ? (
             <>
               <div className={classes.nearestHeader}>
                 <span>Ближайшие машины ({drivers.length})</span>

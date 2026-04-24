@@ -36,7 +36,7 @@ const ReportTimer = ({ item }) => {
 
     // Если заявка завершена - показываем "Отчет" зеленым
     if (isCompleted) {
-      setTimeRemaining("Отчет");
+      setTimeRemaining("Выполнен");
       setColor("#3B6C54");
       return;
     }
