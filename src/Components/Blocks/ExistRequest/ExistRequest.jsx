@@ -7,6 +7,7 @@ import {
   CANCEL_REQUEST,
   CHANGE_TO_ARCHIVE,
   convertToDate,
+  convertToDateNew,
   EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
   GET_AIRLINE,
   GET_AIRLINE_POSITIONS,
@@ -1011,7 +1012,7 @@ function ExistRequest({
                 )} */}
             </div>
             <div className={classes.requestTitle_close}>
-              {formData.status !== 'canceled' && formData.status !== "archived" && formData.status !== "created" && formData.status !== "opened" && (
+              {formData.status !== 'canceled' && formData.status !== "archived" && (
                 <ExistRequestAdditionalMenu
                   anchorEl={anchorEl}
                   onOpen={handleMenuOpen}
@@ -1024,6 +1025,12 @@ function ExistRequest({
                   onEdit={handleUpdateRequest}
                   onCancelRequest={openDeleteComponent}
                   onCloseSidebar={closeButton}
+                  onPlace={handlePlaceClick}
+                  showPlace={
+                    (isSuperAdmin(user) || isDispatcherAdmin(user)) &&
+                    !formData.hotelId &&
+                    (formData.status === "created" || formData.status === "opened")
+                  }
                 />
               )}
               <div onClick={closeButton} className={classes.closeIconWrapper}>
@@ -1391,90 +1398,63 @@ function ExistRequest({
                         />
                       )}
 
-                    {/* Продление / Изменение даты — только для created и opened */}
+                    {/* Даты — только для created и opened */}
                     {(formData.status === "created" ||
                       formData.status === "opened") && (
-                        // !user?.hotelId &&
-                        // formData.status !== "archiving" &&
                         <>
-                          <div className={classes.requestDataTitle}>
-                            {user?.airlineId &&
-                              (formData.status !== "created" ||
-                                formData.status === "opened")
-                              ? "Запрос на изменение даты"
-                              : "Изменение даты"}
-                          </div>
-                          <label>Заезд</label>
-                          <div className={classes.reis_info}>
-                            <input
-                              type="date"
-                              name="arrivalDate"
-                              value={formDataExtend.arrivalDate}
-                              onChange={handleExtendChange}
-                              placeholder="Дата"
-                              disabled={
-                                formData.status === "created" ||
-                                  formData.status === "opened"
-                                  ? false
-                                  : !isEditing
-                              }
-                            />
-                            <input
-                              type="time"
-                              name="arrivalTime"
-                              value={formDataExtend.arrivalTime}
-                              onChange={handleExtendChange}
-                              placeholder="Время"
-                              disabled={
-                                formData.status === "created" ||
-                                  formData.status === "opened"
-                                  ? false
-                                  : !isEditing
-                              }
-                            />
-                          </div>
-                          <label>Выезд</label>
-                          <div className={classes.reis_info}>
-                            {/* <input
-                          type="text"
-                          name="departureName"
-                          value={formDataExtend.departureName}
-                          onChange={handleExtendChange}
-                          placeholder="Номер рейса"
-                        /> */}
-                            <input
-                              type="date"
-                              name="departureDate"
-                              value={formDataExtend.departureDate}
-                              onChange={handleExtendChange}
-                              placeholder="Дата"
-                              disabled={
-                                formData.status === "created" ||
-                                  formData.status === "opened"
-                                  ? false
-                                  : !isEditing
-                              }
-                            />
-                            <input
-                              type="time"
-                              name="departureTime"
-                              value={formDataExtend.departureTime}
-                              onChange={handleExtendChange}
-                              placeholder="Время"
-                              disabled={
-                                formData.status === "created" ||
-                                  formData.status === "opened"
-                                  ? false
-                                  : !isEditing
-                              }
-                            />
-                          </div>
-                          {(formData.status === "created" ||
-                            formData.status === "opened") && (
-                              <Button onClick={handleExtendChangeRequest}>
-                                Изменить даты
-                              </Button>
+                          <div className={classes.requestDataTitle}>Информация о заявке</div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>Заезд</div>
+                            {isEditing ? (
+                              <div className={classes.reis_info} style={{ width: "60%" }}>
+                                <input
+                                  type="date"
+                                  name="arrivalDate"
+                                  value={formDataExtend.arrivalDate}
+                                  onChange={handleExtendChange}
+                                  placeholder="Дата"
+                                />
+                                <input
+                                  type="time"
+                                  name="arrivalTime"
+                                  value={formDataExtend.arrivalTime}
+                                  onChange={handleExtendChange}
+                                  placeholder="Время"
+                                />
+                              </div>
+                            ) : (
+                              <div className={classes.requestDataInfo_desc}>
+                                {convertToDateNew(formData.arrival)} –{" "}
+                                {convertToDateNew(formData.arrival, true)}
+                              </div>
                             )}
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>Выезд</div>
+                            {isEditing ? (
+                              <div className={classes.reis_info} style={{ width: "60%" }}>
+                                <input
+                                  type="date"
+                                  name="departureDate"
+                                  value={formDataExtend.departureDate}
+                                  onChange={handleExtendChange}
+                                  placeholder="Дата"
+                                />
+                                <input
+                                  type="time"
+                                  name="departureTime"
+                                  value={formDataExtend.departureTime}
+                                  onChange={handleExtendChange}
+                                  placeholder="Время"
+                                />
+                              </div>
+                            ) : (
+                              <div className={classes.requestDataInfo_desc}>
+                                {convertToDateNew(formData.departure)} –{" "}
+                                {convertToDateNew(formData.departure, true)}
+                              </div>
+                            )}
+                          </div>
                         </>
                       )}
 
@@ -1799,46 +1779,7 @@ function ExistRequest({
                 )}
               </div>
 
-              {/* Кнопки для неразмещённой заявки: отмена и размещение */}
-              {(formData.status === "created" ||
-                formData.status === "opened") &&
-                activeTab === "Общая" &&
-                canUpdateActions && (
-                  <div className={classes.requestButton}>
-                    <button
-                      onClick={() => {
-                        // onClose();
-                        // handleCancelRequest(chooseRequestID);
-                        openDeleteComponent();
-                      }}
-                    >
-                      {user?.airlineId && formData.status === "opened"
-                        ? "Запрос на отмену"
-                        : "Отменить"}
-                      {/* <img src="/user-check.png" alt="" /> */}
-                    </button>
-                    {((isSuperAdmin(user) || isDispatcherAdmin(user)) &&
-                      !formData.hotelId) && (
-                        <Button
-                          onClick={handlePlaceClick}
-                        >
-                          {/* {console.log(formData)} */}
-                          Разместить
-                          <img
-                            style={{
-                              width: "fit-content",
-                              height: "fit-content",
-                            }}
-                            src="/user-check.png"
-                            alt=""
-                          />
-                        </Button>
-                      )}
-                  </div>
-                )}
-              {formData.status !== "created" &&
-                formData.status !== "opened" &&
-                formData.status !== "canceled" &&
+              {formData.status !== "canceled" &&
                 formData.status !== "archived" &&
                 activeTab !== "Комментарии" &&
                 activeTab !== "История" &&
