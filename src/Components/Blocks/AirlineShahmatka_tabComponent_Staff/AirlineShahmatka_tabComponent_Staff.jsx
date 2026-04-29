@@ -308,6 +308,8 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
       notifyError("Не удалось удалить сотрудника.");
     }
   };
+  
+  console.log(accessMenu);
 
   // if (loading || bronLoading) return <MUILoader fullHeight={"70vh"} />;
   // if (error || bronError)
