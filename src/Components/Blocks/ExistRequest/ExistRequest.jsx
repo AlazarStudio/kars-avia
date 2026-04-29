@@ -1064,12 +1064,12 @@ function ExistRequest({
                   )}
                 {!isEditing && canChatTab && (
                   <div
-                    className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
+                    className={`${classes.tab} ${activeTab === "Чат" ? classes.activeTab : ""
                       }`}
                     style={{ position: "relative" }}
-                    onClick={() => handleTabChange("Комментарии")}
+                    onClick={() => handleTabChange("Чат")}
                   >
-                    Комментарии
+                    Чат
                     {formData?.chat?.some(
                       (chat) =>
                         chat.unreadMessagesCount > 0 &&
@@ -1096,7 +1096,7 @@ function ExistRequest({
                 className={classes.requestMiddle}
                 style={{
                   height: (isEditing) ? "calc(100vh - 198px)" : "calc(100vh - 120px)"
-                  // (activeTab !== "Комментарии" &&
+                  // (activeTab !== "Чат" &&
                   //   activeTab !== "История" &&
                   //   formData.status !== "created" &&
                   //   formData.status !== "canceled" &&
@@ -1107,7 +1107,7 @@ function ExistRequest({
                   //     : true))
                   //   ? "calc(100vh - 120px)"
                   //   :
-                  //   (activeTab !== "Комментарии" &&
+                  //   (activeTab !== "Чат" &&
                   //     activeTab !== "История" &&
                   //     formData.status !== "created" &&
                   //     formData.status !== "canceled" &&
@@ -1654,8 +1654,8 @@ function ExistRequest({
                     //     )}
                     // </div>
                   )}
-                {/* Вкладка "Комментарии" */}
-                {activeTab === "Комментарии" && (
+                {/* Вкладка "Чат" */}
+                {activeTab === "Чат" && (
                   <>
                     {!isSuperAdmin(user) && !isDispatcherAdmin(user) ? null : (
                       <div className={classes.separatorWrapper}>
@@ -1781,7 +1781,7 @@ function ExistRequest({
 
               {formData.status !== "canceled" &&
                 formData.status !== "archived" &&
-                activeTab !== "Комментарии" &&
+                activeTab !== "Чат" &&
                 activeTab !== "История" &&
                 canUpdateActions &&
                 isEditing && (
@@ -2693,12 +2693,12 @@ export default ExistRequest;
 //                   )}
 //                 {canChatTab && (
 //                   <div
-//                     className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
+//                     className={`${classes.tab} ${activeTab === "Чат" ? classes.activeTab : ""
 //                       }`}
 //                     style={{ position: "relative" }}
-//                     onClick={() => handleTabChange("Комментарии")}
+//                     onClick={() => handleTabChange("Чат")}
 //                   >
-//                     Комментарии
+//                     Чат
 //                     {formData?.chat?.some(
 //                       (chat) =>
 //                         chat.unreadMessagesCount > 0 &&
@@ -2743,7 +2743,7 @@ export default ExistRequest;
 //                 className={classes.requestMiddle}
 //                 style={{
 //                   height:
-//                     (activeTab !== "Комментарии" &&
+//                     (activeTab !== "Чат" &&
 //                       activeTab !== "История" &&
 //                       formData.status !== "created" &&
 //                       formData.status !== "canceled" &&
@@ -2755,7 +2755,7 @@ export default ExistRequest;
 //                         : true))
 //                       ? "calc(100vh - 227px)"
 //                       :
-//                       (activeTab !== "Комментарии" &&
+//                       (activeTab !== "Чат" &&
 //                         activeTab !== "История" &&
 //                         formData.status !== "created" &&
 //                         formData.status !== "canceled" &&
@@ -3396,8 +3396,8 @@ export default ExistRequest;
 //                     //     )}
 //                     // </div>
 //                   )}
-//                 {/* Вкладка "Комментарии" */}
-//                 {activeTab === "Комментарии" && (
+//                 {/* Вкладка "Чат" */}
+//                 {activeTab === "Чат" && (
 //                   <>
 //                     {!isSuperAdmin(user) && !isDispatcherAdmin(user) ? null : (
 //                       <div className={classes.separatorWrapper}>
@@ -3560,7 +3560,7 @@ export default ExistRequest;
 //                 formData.status !== "canceled" &&
 //                 // formData.status !== "archiving" &&
 //                 formData.status !== "archived" &&
-//                 activeTab !== "Комментарии" &&
+//                 activeTab !== "Чат" &&
 //                 activeTab !== "История" &&
 //                 canUpdateActions && (
 //                   <div className={classes.requestButton}>

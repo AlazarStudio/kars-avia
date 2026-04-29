@@ -128,7 +128,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   // console.log(data);
 
-
   // const {
   //   loading: loadingHotel,
   //   error: errorHotel,
@@ -194,10 +193,13 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     {
       context: { headers: { Authorization: `Bearer ${token}` } },
       refetchQueries: [
-        { query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: idRequest } },
+        {
+          query: GET_PASSENGER_REQUEST,
+          variables: { passengerRequestId: idRequest },
+        },
       ],
       awaitRefetchQueries: true,
-    }
+    },
   );
 
   // Досрочное завершение всей заявки временно скрыто; доступно досрочное завершение услуг (вода, питание) в подвале каждой вкладки
@@ -219,8 +221,10 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       refetch();
     } catch (err) {
       addNotification(
-        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при завершении.",
-        "error"
+        err?.graphQLErrors?.[0]?.message ||
+          err?.message ||
+          "Ошибка при завершении.",
+        "error",
       );
     }
   };
@@ -234,11 +238,17 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
   const dispatcherDepartmentId = user?.dispatcherDepartmentId;
 
   const habitationRequest = useMemo(() => {
-    if (!request || !isExternalUser || restrictedToHotelId == null) return request;
+    if (!request || !isExternalUser || restrictedToHotelId == null)
+      return request;
     const hotels = request.livingService?.hotels ?? [];
-    const allowed = hotels.filter((h) => String(h.hotelId) === String(restrictedToHotelId));
+    const allowed = hotels.filter(
+      (h) => String(h.hotelId) === String(restrictedToHotelId),
+    );
     if (allowed.length === 0) return request;
-    return { ...request, livingService: { ...request.livingService, hotels: allowed } };
+    return {
+      ...request,
+      livingService: { ...request.livingService, hotels: allowed },
+    };
   }, [request, isExternalUser, restrictedToHotelId]);
 
   const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
@@ -266,7 +276,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
         pagination: { all: true },
       },
       // skip: !isDispatcherRole || !dispatcherDepartmentId,
-    }
+    },
   );
 
   //   console.log(user);
@@ -298,7 +308,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     if (isDispatcherRole) {
       const department =
         dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
-          (item) => item.id === dispatcherDepartmentId
+          (item) => item.id === dispatcherDepartmentId,
         );
       setAccessMenu(department?.accessMenu || {});
       return;
@@ -320,15 +330,33 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
 
   useEffect(() => {
     if (!request || !isExternalUser) return;
-    if (user?.scope === "HOTEL" && restrictedToHotelId && !location.pathname.includes("/hotel/")) {
+    if (
+      user?.scope === "HOTEL" &&
+      restrictedToHotelId &&
+      !location.pathname.includes("/hotel/")
+    ) {
       const hotels = request.livingService?.hotels ?? [];
-      const allowed = hotels.find((h) => String(h.hotelId) === String(restrictedToHotelId));
+      const allowed = hotels.find(
+        (h) => String(h.hotelId) === String(restrictedToHotelId),
+      );
       if (allowed) {
         const hotelId = allowed.hotelId ?? allowed.name ?? "";
-        navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`, { replace: true });
+        navigate(
+          `/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`,
+          { replace: true },
+        );
       }
     }
-  }, [request, isExternalUser, restrictedToHotelId, user?.scope, location.pathname, id, idRequest, navigate]);
+  }, [
+    request,
+    isExternalUser,
+    restrictedToHotelId,
+    user?.scope,
+    location.pathname,
+    id,
+    idRequest,
+    navigate,
+  ]);
 
   // console.log(dataHotel);
 
@@ -406,27 +434,37 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     setShowAddDriverSidebar((prev) => !prev);
   };
 
-  const [showAddBaggageDriverSidebar, setShowAddBaggageDriverSidebar] = useState(false);
+  const [showAddBaggageDriverSidebar, setShowAddBaggageDriverSidebar] =
+    useState(false);
   const toggleAddBaggageDriverSidebar = () => {
     setShowAddBaggageDriverSidebar((prev) => !prev);
   };
 
-  const [showCancelRequestConfirm, setShowCancelRequestConfirm] = useState(false);
+  const [showCancelRequestConfirm, setShowCancelRequestConfirm] =
+    useState(false);
   const [cancelReason, setCancelReason] = useState("");
-  const [cancelPassengerRequest, { loading: cancellingRequest }] = useMutation(CANCEL_PASSENGER_REQUEST, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  const [cancelPassengerRequest, { loading: cancellingRequest }] = useMutation(
+    CANCEL_PASSENGER_REQUEST,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      refetchQueries: [
+        {
+          query: GET_PASSENGER_REQUEST,
+          variables: { passengerRequestId: request?.id },
+        },
+      ],
+      awaitRefetchQueries: false,
+      onCompleted: () => {
+        setShowEditRequestSidebar(false);
+        setCancelReason("");
+        addNotification?.("Заявка отменена.", "success");
       },
     },
-    refetchQueries: [{ query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: request?.id } }],
-    awaitRefetchQueries: false,
-    onCompleted: () => {
-      setShowEditRequestSidebar(false);
-      setCancelReason("");
-      addNotification?.("Заявка отменена.", "success");
-    },
-  });
+  );
   const handleConfirmCancelRequest = () => {
     if (!request?.id) return;
     const reason = (cancelReason || "").trim();
@@ -445,20 +483,26 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     if (planCount == null) return true;
     const usedPlaces = (request?.transferService?.drivers ?? []).reduce(
       (sum, d) => sum + (d.peopleCount ?? 0),
-      0
+      0,
     );
     return usedPlaces < planCount;
-  }, [request?.transferService?.plan?.peopleCount, request?.transferService?.drivers]);
+  }, [
+    request?.transferService?.plan?.peopleCount,
+    request?.transferService?.drivers,
+  ]);
 
   const canAddHabitationRequest = useMemo(() => {
     const planCount = request?.livingService?.plan?.peopleCount;
     if (planCount == null) return true;
     const usedPlaces = (request?.livingService?.hotels ?? []).reduce(
       (sum, h) => sum + (h.peopleCount ?? 0),
-      0
+      0,
     );
     return usedPlaces < planCount;
-  }, [request?.livingService?.plan?.peopleCount, request?.livingService?.hotels]);
+  }, [
+    request?.livingService?.plan?.peopleCount,
+    request?.livingService?.hotels,
+  ]);
 
   const handleRasselenieExport = () => {
     const hotels = request?.livingService?.hotels ?? [];
@@ -482,7 +526,10 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Расселение");
-    const safe = (s) => String(s).replace(/[/\\?*\[\]:]/g, "_").slice(0, 100);
+    const safe = (s) =>
+      String(s)
+        .replace(/[/\\?*\[\]:]/g, "_")
+        .slice(0, 100);
     const dateStr = new Date().toISOString().slice(0, 10);
     const fileName = `rasselenie_${safe(request?.flightNumber ?? "")}_${dateStr}.xlsx`;
     XLSX.writeFile(wb, fileName);
@@ -502,10 +549,10 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     if (!Array.isArray(links) || links.length === 0) return "";
     const byDepartment = user?.representativeDepartmentId
       ? links.find(
-        (item) =>
-          String(item?.representativeDepartmentId) ===
-          String(user.representativeDepartmentId) && item?.linkPWA
-      )
+          (item) =>
+            String(item?.representativeDepartmentId) ===
+              String(user.representativeDepartmentId) && item?.linkPWA,
+        )
       : null;
     if (byDepartment?.linkPWA) return byDepartment.linkPWA;
     const firstWithPwa = links.find((item) => item?.linkPWA);
@@ -605,7 +652,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             <Link to={`/representativeRequests`} className={classes.backButton}>
               <img src="/arrow.png" alt="" />
             </Link>
-            <span className={classes.titleText}>Заявка {request.flightNumber}</span>
+            <span className={classes.titleText}>
+              Заявка {request.flightNumber}
+            </span>
             {canCopyRepresentativeLink && (
               <div className={classes.representativeLinkActions}>
                 <button
@@ -614,8 +663,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                   onClick={handleCopyRepresentativeLink}
                   title="Скопировать ссылку для представительства"
                 >
-                  Ссылка{" "}
-                  <CopyIcon />
+                  Ссылка <CopyIcon />
                 </button>
               </div>
             )}
@@ -648,13 +696,25 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 onClick={() => setShowHistoryPanel(true)}
                 title="История изменений заявки"
               >
-                История <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7.5 15C3.35786 15 0 11.6421 0 7.5C0 3.35786 3.35786 0 7.5 0C11.6421 0 15 3.35786 15 7.5C14.9955 11.6403 11.6403 14.9955 7.5 15ZM7.5 1.5C4.18629 1.5 1.5 4.18629 1.5 7.5C1.5 10.8137 4.18629 13.5 7.5 13.5C10.8137 13.5 13.5 10.8137 13.5 7.5C13.4963 4.18783 10.8122 1.50372 7.5 1.5ZM11.25 8.25H6.75V3.75H8.25V6.75H11.25V8.25Z" fill="#545873" />
+                История{" "}
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 15 15"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M7.5 15C3.35786 15 0 11.6421 0 7.5C0 3.35786 3.35786 0 7.5 0C11.6421 0 15 3.35786 15 7.5C14.9955 11.6403 11.6403 14.9955 7.5 15ZM7.5 1.5C4.18629 1.5 1.5 4.18629 1.5 7.5C1.5 10.8137 4.18629 13.5 7.5 13.5C10.8137 13.5 13.5 10.8137 13.5 7.5C13.4963 4.18783 10.8122 1.50372 7.5 1.5ZM11.25 8.25H6.75V3.75H8.25V6.75H11.25V8.25Z"
+                    fill="#545873"
+                  />
                 </svg>
               </button>
             )}
             {!isExternalUser && request?.status !== "CANCELLED" && (
-              <Button onClick={() => setShowEditRequestSidebar(true)}>Редактировать</Button>
+              <Button onClick={() => setShowEditRequestSidebar(true)}>
+                Редактировать
+              </Button>
             )}
             {/* {!isExternalUser && filters.length < 5 && (
               <Button onClick={toggleServiceSidebar}>Добавить услугу</Button>
@@ -766,7 +826,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 {!isExternalUser &&
                   canAddHabitationRequest &&
                   request?.status !== "CANCELLED" && (
-                    <Button onClick={toggleAddHotelSidebar}>Добавить гостиницу</Button>
+                    <Button onClick={toggleAddHotelSidebar}>
+                      Добавить гостиницу
+                    </Button>
                   )}
               </>
             )}
@@ -775,13 +837,17 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               !isExternalUser &&
               canAddTransferRequest &&
               request?.status !== "CANCELLED" && (
-                <Button onClick={toggleAddDriverSidebar}>Создать заявку на трансфер</Button>
+                <Button onClick={toggleAddDriverSidebar}>
+                  Создать заявку на трансфер
+                </Button>
               )}
             {filter === "baggageDelivery" &&
               request?.baggageDeliveryService?.plan?.enabled &&
               !isExternalUser &&
               request?.status !== "CANCELLED" && (
-                <Button onClick={toggleAddBaggageDriverSidebar}>Создать заявку на трансфер багажа</Button>
+                <Button onClick={toggleAddBaggageDriverSidebar}>
+                  Создать заявку на трансфер багажа
+                </Button>
               )}
             {canCompleteEarly && (
               <Button
@@ -799,8 +865,14 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
           passengerRequestId={idRequest}
         />
         {showEarlyCompleteModal && (
-          <div className={classes.modalOverlay} onClick={() => !completingEarly && setShowEarlyCompleteModal(false)}>
-            <div className={classes.modalContent} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={classes.modalOverlay}
+            onClick={() => !completingEarly && setShowEarlyCompleteModal(false)}
+          >
+            <div
+              className={classes.modalContent}
+              onClick={(e) => e.stopPropagation()}
+            >
               <h3>Досрочно завершить заявку</h3>
               <p>Укажите причину досрочного завершения (обязательно):</p>
               <MUITextField
@@ -822,7 +894,10 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 >
                   Отмена
                 </Button>
-                <Button onClick={handleEarlyComplete} disabled={completingEarly}>
+                <Button
+                  onClick={handleEarlyComplete}
+                  disabled={completingEarly}
+                >
                   {completingEarly ? "Сохранение…" : "Завершить"}
                 </Button>
               </div>
@@ -869,7 +944,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       addNotification={addNotification}
                       onDriverSelect={(d, idx) =>
                         navigate(
-                          `/${id}/representativeRequestsPlacement/${idRequest}/driver/${idx}`
+                          `/${id}/representativeRequestsPlacement/${idRequest}/driver/${idx}`,
                         )
                       }
                     />
@@ -896,7 +971,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       onStatusChanged={() => refetch()}
                       onHotelSelect={(h, i) => {
                         const hotelId = h.hotelId ?? h.name ?? String(i);
-                        navigate(`/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`);
+                        navigate(
+                          `/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`,
+                        );
                       }}
                     />
                   )}
@@ -913,12 +990,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                   token={token}
                   user={user}
                   chatPadding={"0"}
-                  chatHeight={
-                    user.role !== roles.hotelAdmin &&
-                      user.role !== roles.airlineAdmin
-                      ? "calc(100vh - 364px)"
-                      : "calc(100vh - 280px)"
-                  }
+                  chatHeight={"calc(100vh - 364px)"}
                 />
               </div>
             </div>
@@ -948,7 +1020,9 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             {showCancelRequestConfirm && (
               <div
                 className={classes.modalOverlay}
-                onClick={() => !cancellingRequest && setShowCancelRequestConfirm(false)}
+                onClick={() =>
+                  !cancellingRequest && setShowCancelRequestConfirm(false)
+                }
               >
                 <div
                   className={classes.modalContent}
@@ -973,7 +1047,10 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                     >
                       Отмена
                     </Button>
-                    <Button onClick={handleConfirmCancelRequest} disabled={cancellingRequest}>
+                    <Button
+                      onClick={handleConfirmCancelRequest}
+                      disabled={cancellingRequest}
+                    >
                       {cancellingRequest ? "Сохранение..." : "Подтвердить"}
                     </Button>
                   </div>
@@ -1011,7 +1088,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
               request={request}
               classes={classes}
             />
-
           </>
         )}
       </div>

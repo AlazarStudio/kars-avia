@@ -216,8 +216,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   };
 
   const handleSelectTransfer = (transferId) => {
-    setChooseRequestID(transferId);
-    setShowRequestSidebar(true);
+    navigate(`/orders/${transferId}`);
   };
 
   const [showDelete, setShowDelete] = useState(false);

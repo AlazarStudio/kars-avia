@@ -135,14 +135,7 @@ function TransferMessage({
     if (chatsData?.transferChats) {
       let chats = chatsData.transferChats;
 
-      // Для диспетчера показываем только чаты с сотрудниками и водителем
-      if (user?.role === roles.dispatcerAdmin || user?.role === roles.superAdmin) {
-        chats = chats.filter(
-          (chat) =>
-            chat.type === CHAT_TYPES.DISPATCHER_DRIVER ||
-            chat.type === CHAT_TYPES.DISPATCHER_PERSONAL
-        );
-      }
+      chats = chats.filter((chat) => chat.type !== CHAT_TYPES.DRIVER_PERSONAL);
 
       setAvailableChats(chats);
 

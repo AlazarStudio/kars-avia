@@ -362,7 +362,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
         </Link>
-        <Link
+        {/* <Link
           to={"/updates"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
             } ${id == "updates" && classes.menu_items__activeElem}`}
@@ -396,7 +396,7 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           </div>
           <DelayedText show={menuOpen} delay={200} >Обновления</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
-        </Link>
+        </Link> */}
       </div>
       <div
         className={classes.bottomMenu}

@@ -21,7 +21,8 @@
   display: flex;
   justify-content: space-between;
   padding: 10px;
-  border-bottom: 1px solid #CBDEFB;
+  border-bottom: 1px solid var(--no-active);
+  /* border-bottom: 1px solid #CBDEFB; */
 }
 
 .chatTypeButton {
@@ -273,7 +274,7 @@
 }
 
 .sendBlock {
-  margin: 0 20px 20px 20px;
+  /* margin: 0 20px 20px 20px; */
   padding: 5px 10px;
   display: flex;
   align-items: center;

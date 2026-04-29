@@ -217,6 +217,10 @@
     gap: 8px;
 }
 
+.sectionPositionSelect {
+    padding-top: 4px;
+}
+
 .row {
     background: #fff;
     display: flex;

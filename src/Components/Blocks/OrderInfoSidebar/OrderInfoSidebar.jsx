@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import classes from "./OrderInfoSidebar.module.css";
 import { AddressField } from "../AddressField/AddressField";
 import Button from "../../Standart/Button/Button";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete";
+import TransferMessage from "../TransferMessage/TransferMessage";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 
 function OrderInfoSidebar({
   data,
@@ -16,11 +18,19 @@ function OrderInfoSidebar({
   onToggleEditOrSave,
   onCancelEditing,
   airlineStaffOptions = [],
+  transferId,
+  token,
+  user,
+  canChat = false,
+  openDeleteComponent,
+  setRequestId,
 }) {
+  const [activeTab, setActiveTab] = useState("Общая");
+  const [anchorEl, setAnchorEl] = useState(null);
+  const menuRef = useRef(null);
+
   const fallback = {
-    name: "",
-    rating: "",
-    avatar: "",
+    persons: [],
     fromAddress: "",
     toAddress: "",
     orderDate: "",
@@ -31,220 +41,279 @@ function OrderInfoSidebar({
 
   const info = { ...fallback, ...(data || {}) };
 
+  const handleCancelRequestFromMenu = () => {
+    setRequestId?.(data?.id);
+    openDeleteComponent?.();
+  };
+// console.log(data);
+
   const disabledInputs = !canEditByStatus || !isEditing || isSaving;
 
   return (
     <aside className={classes.sidebar}>
       <div className={classes.card}>
-        <div className={classes.cardContent}>
-          <p className={classes.title}>Информация о заявке</p>
-          <div className={classes.clientBlock}>
-            {!isEditing ? (
-              <div className={classes.clientName}>{info.name}</div>
-            ) : (
-              <div style={{ width: "100%" }}>
-                <MultiSelectAutocomplete
-                  isMultiple={true}
-                  dropdownWidth={"100%"}
-                  label={"Выберите сотрудников авиакомпании"}
-                  options={airlineStaffOptions}
-                  value={airlineStaffOptions.filter((option) =>
-                    formData?.personsId?.includes(option.id)
-                  )}
-                  onChange={(event, newValue) => {
-                    setFormData((prev) => ({
-                      ...prev,
-                      personsId: newValue.map((option) => option.id),
-                    }));
-                  }}
-                  isDisabled={!canEditByStatus || !isEditing || isSaving}
-                />
+        <div className={classes.cardHeader}>
+          {canChat && (
+            <div className={classes.tabs}>
+              <div
+                className={`${classes.tab} ${activeTab === "Общая" ? classes.activeTab : ""}`}
+                onClick={() => setActiveTab("Общая")}
+              >
+                Общая
               </div>
-            )}
-          </div>
-          {/* блок маршрута (верстка та же) */}
-<div className={classes.routeCard}>
-  {/* левая вертикальная линия + точки */}
-  <div className={classes.routeMarkers}>
-    <div className={`${classes.routeDot} ${classes.routeDotEmpty}`} />
-    <div className={classes.routeLine} />
-    <div className={`${classes.routeDot} ${classes.routeDotFilled}`} />
-  </div>
-
-  {/* правая колонка с адресами */}
-  <div className={classes.routeContent}>
-    <div className={classes.routeRow}>
-      {!isEditing ? (
-        <div className={classes.routeText}>{info.fromAddress}</div>
-      ) : (
-        <AddressField
-          placeholder="г. Черкесск, Ленина, 57Б"
-          value={formData.fromAddress}
-          onChange={(addr) =>
-            setFormData((prev) => ({ ...prev, fromAddress: addr }))
-          }
-        />
-      )}
-    </div>
-
-    <div className={classes.routeDivider} />
-
-    <div className={classes.routeRow}>
-      {!isEditing ? (
-        <div className={classes.routeText}>{info.toAddress}</div>
-      ) : (
-        <AddressField
-          placeholder="г. Минеральные Воды, Ленина, 10К1"
-          value={formData.toAddress}
-          onChange={(addr) =>
-            setFormData((prev) => ({ ...prev, toAddress: addr }))
-          }
-        />
-      )}
-    </div>
-  </div>
-</div>
-
-          {/* дата заявки */}
-          <div className={classes.metaRow}>
-            <span className={classes.metaLabel}>Дата заказа</span>
-            <span className={classes.metaValue}>
-              {!isEditing ? (
-                info.orderDate
-              ) : (
-                <input
-                  type="date"
-                  name="scheduledPickupAt"
-                  value={formData?.scheduledPickupAt || ""}
-                  onChange={onChange}
-                  disabled={disabledInputs}
-                  style={{
-                    width: "100%",
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    font: "inherit",
-                    textAlign: "right",
-                  }}
-                />
-              )}
-            </span>
-          </div>
-          {/* время заявки */}
-          <div className={classes.metaRow}>
-            <span className={classes.metaLabel}>Время заказа</span>
-            <span className={classes.metaValue}>
-              {!isEditing ? (
-                info.orderTime
-              ) : (
-                <input
-                  type="time"
-                  name="scheduledPickupAtTime"
-                  value={formData?.scheduledPickupAtTime || ""}
-                  onChange={onChange}
-                  disabled={disabledInputs}
-                  style={{
-                    width: "100%",
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    font: "inherit",
-                    textAlign: "right",
-                  }}
-                />
-              )}
-            </span>
-          </div>
-          {/* комментарий (верстка та же: fakeInput) */}
-          <div className={classes.fieldGroup}>
-            <span className={classes.metaLabel}>Комментарий</span>
-            <div
-              className={classes.fakeInput}
-              style={
-                isEditing
-                  ? { padding: 0, backgroundColor: "transparent" }
-                  : undefined
-              }
-            >
-              {!isEditing ? (
-                info.description
-              ) : (
-                <textarea
-                  name="description"
-                  value={formData?.description || ""}
-                  onChange={onChange}
-                  disabled={disabledInputs}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-              )}
+              <div
+                className={`${classes.tab} ${activeTab === "Чат" ? classes.activeTab : ""}`}
+                onClick={() => setActiveTab("Чат")}
+              >
+                Чат
+              </div>
+              <div className={classes.additionalMenu}>
+                {canEditByStatus && !isEditing && (
+                  <AdditionalMenu
+                    anchorEl={anchorEl}
+                    onOpen={(e) => setAnchorEl(e.currentTarget)}
+                    onClose={() => setAnchorEl(null)}
+                    menuRef={menuRef}
+                    onEdit={onToggleEditOrSave}
+                    editLabel="Редактировать"
+                    onDelete={
+                      canEditByStatus ? handleCancelRequestFromMenu : undefined
+                    }
+                    deleteLabel="Отменить заявку"
+                  />
+                )}
+              </div>
             </div>
-          </div>
-          {/* багаж */}
-          <div className={classes.fieldGroup}>
-            <span className={classes.metaLabel}>Информация о багаже</span>
-            <div
-              className={classes.fakeInput}
-              style={
-                isEditing
-                  ? { padding: 0, backgroundColor: "transparent" }
-                  : undefined
-              }
-            >
-              {!isEditing ? (
-                info.baggage
-              ) : (
-                <textarea
-                  name="baggage"
-                  value={formData?.baggage || ""}
-                  onChange={onChange}
-                  disabled={disabledInputs}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-              )}
-            </div>
-          </div>
+          )}
         </div>
 
-        {/* кнопки как в твоей логике */}
-        {canEditByStatus && (
-          <div className={classes.buttonsWrapper}>
-            {isEditing && (
-              <button
-                type="button"
-                onClick={onCancelEditing}
-                disabled={isSaving}
-                className={classes.cancelButton}
-              >
-                Отмена
-              </button>
-            )}
-            <Button
-              type="button"
-              onClick={onToggleEditOrSave}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
+        {activeTab === "Общая" && (
+          <>
+            <div className={classes.cardContent}>
+              <div className={classes.routeCard}>
+                <div className={classes.routeMarkers}>
+                  <div
+                    className={`${classes.routeDot} ${classes.routeDotEmpty}`}
+                  />
+                  <div className={classes.routeLine} />
+                  <div
+                    className={`${classes.routeDot} ${classes.routeDotFilled}`}
+                  />
+                </div>
+
+                <div className={classes.routeContent}>
+                  <div className={classes.routeRow}>
+                    {!isEditing ? (
+                      <div className={classes.routeText}>
+                        {info.fromAddress}
+                      </div>
+                    ) : (
+                      <AddressField
+                        placeholder="г. Черкесск, Ленина, 57Б"
+                        value={formData.fromAddress}
+                        onChange={(addr) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            fromAddress: addr,
+                          }))
+                        }
+                      />
+                    )}
+                  </div>
+
+                  <div className={classes.routeDivider} />
+
+                  <div className={classes.routeRow}>
+                    {!isEditing ? (
+                      <div className={classes.routeText}>{info.toAddress}</div>
+                    ) : (
+                      <AddressField
+                        placeholder="г. Минеральные Воды, Ленина, 10К1"
+                        value={formData.toAddress}
+                        onChange={(addr) =>
+                          setFormData((prev) => ({ ...prev, toAddress: addr }))
+                        }
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {!isEditing && (
+                <div className={classes.personsSection}>
+                  <div className={classes.requestDataInfo_title}>
+                    Сотрудники
+                  </div>
+                  <div className={classes.requestDataInfo_desc}>
+                    {info.persons.length > 0 &&
+                      info.persons.map(
+                        (person, idx) =>
+                          (person.name || "") +
+                          (idx < info.persons.length - 1 ? ", " : ""),
+                      )}
+                  </div>
+                </div>
               )}
-            </Button>
-          </div>
+
+              {isEditing && (
+                <div style={{ width: "100%" }}>
+                  <MultiSelectAutocomplete
+                    isMultiple={true}
+                    dropdownWidth={"100%"}
+                    label={"Выберите сотрудников авиакомпании"}
+                    options={airlineStaffOptions}
+                    value={airlineStaffOptions.filter((option) =>
+                      formData?.personsId?.includes(option.id),
+                    )}
+                    onChange={(event, newValue) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        personsId: newValue.map((option) => option.id),
+                      }));
+                    }}
+                    isDisabled={!canEditByStatus || !isEditing || isSaving}
+                  />
+                </div>
+              )}
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Дата заказа</div>
+                {!isEditing ? (
+                  <div className={classes.requestDataInfo_desc}>
+                    {info.orderDate || "—"}
+                  </div>
+                ) : (
+                  <input
+                    type="date"
+                    name="scheduledPickupAt"
+                    value={formData?.scheduledPickupAt || ""}
+                    onChange={onChange}
+                    disabled={disabledInputs}
+                    style={{ flex: 1 }}
+                  />
+                )}
+              </div>
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Время заказа
+                </div>
+                {!isEditing ? (
+                  <div className={classes.requestDataInfo_desc}>
+                    {info.orderTime || "—"}
+                  </div>
+                ) : (
+                  <input
+                    type="time"
+                    name="scheduledPickupAtTime"
+                    value={formData?.scheduledPickupAtTime || ""}
+                    onChange={onChange}
+                    disabled={disabledInputs}
+                    style={{ flex: 1 }}
+                  />
+                )}
+              </div>
+
+              <div className={classes.fieldGroup}>
+                {/* <span className={classes.metaLabel}>Комментарий</span> */}
+                <span
+                  className={classes.requestDataInfo_title}
+                  style={{ width: "100%" }}
+                >
+                  Комментарий
+                </span>
+                <div
+                  className={classes.fakeInput}
+                  style={
+                    isEditing
+                      ? { padding: 0, backgroundColor: "transparent" }
+                      : undefined
+                  }
+                >
+                  {!isEditing ? (
+                    info.description
+                  ) : (
+                    <textarea
+                      name="description"
+                      value={formData?.description || ""}
+                      onChange={onChange}
+                      disabled={disabledInputs}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className={classes.fieldGroup}>
+                <span
+                  className={classes.requestDataInfo_title}
+                  style={{ width: "100%" }}
+                >
+                  Информация о багаже
+                </span>
+                <div
+                  className={classes.fakeInput}
+                  style={
+                    isEditing
+                      ? { padding: 0, backgroundColor: "transparent" }
+                      : undefined
+                  }
+                >
+                  {!isEditing ? (
+                    info.baggage
+                  ) : (
+                    <textarea
+                      name="baggage"
+                      value={formData?.baggage || ""}
+                      onChange={onChange}
+                      disabled={disabledInputs}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {canEditByStatus && isEditing && (
+              <div className={classes.buttonsWrapper}>
+                <button
+                  type="button"
+                  onClick={onCancelEditing}
+                  disabled={isSaving}
+                  className={classes.cancelButton}
+                >
+                  Отмена
+                </button>
+                <Button
+                  type="button"
+                  onClick={onToggleEditOrSave}
+                  backgroundcolor="#0057C3"
+                  color="#fff"
+                >
+                  Сохранить <img src="/saveDispatcher.png" alt="" />
+                </Button>
+              </div>
+            )}
+          </>
+        )}
+
+        {activeTab === "Чат" && canChat && (
+          <TransferMessage
+            transferId={transferId}
+            token={token}
+            user={user}
+            chatHeight="calc(100vh - 234px)"
+          />
         )}
       </div>
     </aside>
@@ -252,85 +321,3 @@ function OrderInfoSidebar({
 }
 
 export default OrderInfoSidebar;
-
-// import React from "react";
-// import classes from "./OrderInfoSidebar.module.css";
-
-// function OrderInfoSidebar({ data, loading }) {
-//   const fallback = {
-//     name: "",
-//     rating: "",
-//     avatar: "",
-//     fromAddress: "",
-//     toAddress: "",
-//     orderTime: "",
-//   };
-
-//   const info = { ...fallback, ...(data || {}) };
-
-//   return (
-//     <aside className={classes.sidebar}>
-//       <div className={classes.card}>
-//         <p className={classes.title}>Информация о заявке</p>
-
-//         {/* аватар + имя + рейтинг */}
-//         <div className={classes.clientBlock}>
-//           {/* <img
-//             className={classes.clientAvatar}
-//             src={info.avatar}
-//             alt={info.name}
-//           /> */}
-//           <div className={classes.clientName}>{info.name}</div>
-//           {/* <div className={classes.clientRating}>★{mock.rating}</div> */}
-//         </div>
-
-//         {/* блок маршрута */}
-//         <div className={classes.routeCard}>
-//           <div className={classes.routeLine} />
-//           <div className={classes.routeRow}>
-//             <span className={`${classes.routeDot} ${classes.routeDotEmpty}`} />
-//             <span className={classes.routeText}>{info.fromAddress}</span>
-//           </div>
-//           <div
-//             style={{
-//               backgroundColor: "#E8EDF1",
-//               height: "1px",
-//               margin: "10px 0px",
-//             }}
-//           />
-//           <div className={classes.routeRow}>
-//             <span className={`${classes.routeDot} ${classes.routeDotFilled}`} />
-//             <span className={`${classes.routeText}`}>{info.toAddress}</span>
-//           </div>
-//         </div>
-
-//         {/* время заказа */}
-//         <div className={classes.metaRow}>
-//           <span className={classes.metaLabel}>Дата заказа</span>
-//           <span className={classes.metaValue}>{info.orderDate}</span>
-//         </div>
-
-//         <div className={classes.metaRow}>
-//           <span className={classes.metaLabel}>Время заказа</span>
-//           <span className={classes.metaValue}>{info.orderTime}</span>
-//         </div>
-
-//         {/* комментарий */}
-//         <div className={classes.fieldGroup}>
-//           <span className={classes.metaLabel}>Комментарий</span>
-//           <div className={classes.fakeInput}>{info.description}</div>
-//           {/* <div className={classes.fakeInput} /> */}
-//         </div>
-
-//         {/* багаж */}
-//         <div className={classes.fieldGroup}>
-//           <span className={classes.metaLabel}>Информация о багаже</span>
-//           {/* <div className={classes.fakeInput} /> */}
-//           <div className={classes.fakeInput}>{info.baggage}</div>
-//         </div>
-//       </div>
-//     </aside>
-//   );
-// }
-
-// export default OrderInfoSidebar;
