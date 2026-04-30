@@ -11,6 +11,7 @@ import {
   getCookie,
 } from '../../../../../../graphQL_requests'
 import { findDocById } from '../docTreeUtils'
+import { loadTreeOrder, applyTreeOrder } from '../../documentationTreeOrder'
 import DocumentationListLeftPanel from '../DocumentationListLeftPanel/DocumentationListLeftPanel'
 import DocumentListTiptapPanelContent from '../DocumentationListPanelContent/DocumentListTiptapPanelContent'
 import DocumentationListRightPanel from '../DocumentationListRightPanel/DocumentationListRightPanel'
@@ -524,11 +525,16 @@ function DocumentationList1({
 
       if (isCancelled()) return
 
+      const savedOrder = loadTreeOrder(documentationType)
+      const orderedTree = savedOrder
+        ? applyTreeOrder(nextTreeWithOpenState, savedOrder)
+        : nextTreeWithOpenState
+
       skipNextTreeSyncRef.current = true
-      setTree(nextTreeWithOpenState)
+      setTree(orderedTree)
       setDraftHydrationVersion(prev => prev + 1)
     },
-    []
+    [documentationType]
   )
 
   useEffect(() => {
@@ -779,6 +785,8 @@ function DocumentationList1({
 
     if (normalizedBlocks.length === 0) {
       setIsRightPanelOpen(false)
+    } else {
+      setIsRightPanelOpen(true)
     }
   }, [])
 
@@ -846,7 +854,7 @@ function DocumentationList1({
     if (!token) return
 
     const timerId = window.setInterval(() => {
-      if (canManageDocs && activeDocId) return
+      if (canManageDocs) return
       refreshDocumentationTree()
     }, DOC_REALTIME_REFRESH_MS)
 
@@ -1031,7 +1039,7 @@ function DocumentationList1({
           className={cn(classes['panel-content'], 'panel-content')}
           style={{
             '--panel-top-controls-left-offset':
-              isLeftPanelOpen ? '10px' : hasOpenedContent ? '10px' : '64px',
+              isLeftPanelOpen ? '25px' : hasOpenedContent ? '10px' : '64px',
             '--panel-top-controls-right-offset': '10px',
           }}
         >

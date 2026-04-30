@@ -12,6 +12,7 @@ export default function BaggageDeliveryTab({
   request,
   onStatusChanged,
   addNotification,
+  readOnly = false,
 }) {
   const token = getCookie("token");
   const drivers = useMemo(() => request?.baggageDeliveryService?.drivers ?? [], [request]);
@@ -114,7 +115,9 @@ export default function BaggageDeliveryTab({
                 {d.description ?? "—"}
               </div>
               <div className={`${classes.w10} ${classes.jcEnd}`}>
-                {d.linkPWA ? (
+                {readOnly ? (
+                  <span className={classes.link}>—</span>
+                ) : d.linkPWA ? (
                   <button
                     type="button"
                     className={classes.link}
@@ -141,8 +144,8 @@ export default function BaggageDeliveryTab({
         </div>
         <ServiceFooter
           statusText={statusDrivers}
-          earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
-          onEarlyCompleteClick={canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
+          earlyCompleteLabel={!readOnly && canEarlyComplete ? "Завершить" : undefined}
+          onEarlyCompleteClick={!readOnly && canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
           earlyCompleteDisabled={completingEarly}
           history={[
             {

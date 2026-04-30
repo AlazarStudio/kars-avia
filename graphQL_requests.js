@@ -1608,6 +1608,7 @@ export const GET_HOTELS_RELAY = gql`
         images
         information {
           city
+          address
         }
         airport {
           id

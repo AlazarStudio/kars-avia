@@ -28,7 +28,6 @@ import {
   isAirlineRole,
 } from "../../../utils/access";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
-import { id } from "date-fns/locale";
 
 const isFinishedOrCanceled = (status) => {
   const s = String(status || "").toUpperCase();

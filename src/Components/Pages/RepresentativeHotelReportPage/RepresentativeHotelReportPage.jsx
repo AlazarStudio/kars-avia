@@ -507,9 +507,11 @@ function RepresentativeHotelReportPage({ user }) {
             <div className={reportClasses.groupsSection}>
               <div className={reportClasses.groupsHeader}>
                 <h3 className={reportClasses.groupsTitle}>Группы (категория и вид номера)</h3>
-                <Button type="button" onClick={addGroup}>
-                  Добавить группу
-                </Button>
+                {!isAirlineRole && (
+                  <Button type="button" onClick={addGroup}>
+                    Добавить группу
+                  </Button>
+                )}
               </div>
               {groups.length === 0 ? (
                 <p className={reportClasses.emptyMessage}>
@@ -528,6 +530,7 @@ function RepresentativeHotelReportPage({ user }) {
                             value={g.roomCategory}
                             onChange={(e) => updateGroup(g.id, "roomCategory", e.target.value)}
                             placeholder="Напр. 2-местный"
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -538,6 +541,7 @@ function RepresentativeHotelReportPage({ user }) {
                             value={g.roomKind}
                             onChange={(e) => updateGroup(g.id, "roomKind", e.target.value)}
                             placeholder="Напр. Стандарт"
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -548,6 +552,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.breakfast === 0 ? 0 : g.breakfast}
                             onChange={(e) => updateGroup(g.id, "breakfast", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -558,6 +563,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.lunch === 0 ? 0 : g.lunch}
                             onChange={(e) => updateGroup(g.id, "lunch", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -568,6 +574,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.dinner === 0 ? 0 : g.dinner}
                             onChange={(e) => updateGroup(g.id, "dinner", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -578,6 +585,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.foodCost === 0 ? 0 : g.foodCost}
                             onChange={(e) => updateGroup(g.id, "foodCost", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -588,6 +596,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.accommodationCost === 0 ? 0 : g.accommodationCost}
                             onChange={(e) => updateGroup(g.id, "accommodationCost", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                       </div>

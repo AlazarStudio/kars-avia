@@ -13,6 +13,7 @@ export default function TransferAccommodationTab({
   onStatusChanged,
   addNotification,
   onDriverSelect,
+  readOnly = false,
 }) {
   const token = getCookie("token");
   const drivers = useMemo(() => request?.transferService?.drivers ?? [], [request]);
@@ -125,7 +126,9 @@ export default function TransferAccommodationTab({
                 {d.peopleCount ?? "—"}
               </div>
               <div className={`${classes.w10} ${classes.jcEnd}`}>
-                {d.linkPWA ? (
+                {readOnly ? (
+                  <span className={classes.link}>—</span>
+                ) : d.linkPWA ? (
                   <button
                     type="button"
                     className={classes.link}
@@ -158,8 +161,8 @@ export default function TransferAccommodationTab({
         </div>
         <ServiceFooter
           statusText={statusDrivers}
-          earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
-          onEarlyCompleteClick={canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
+          earlyCompleteLabel={!readOnly && canEarlyComplete ? "Завершить" : undefined}
+          onEarlyCompleteClick={!readOnly && canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
           earlyCompleteDisabled={completingEarly}
           history={[
             {

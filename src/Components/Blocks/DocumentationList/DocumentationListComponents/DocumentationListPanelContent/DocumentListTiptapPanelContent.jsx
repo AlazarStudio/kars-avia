@@ -26,10 +26,10 @@ const EMPTY_DOC = {
 }
 
 const DEFAULT_ARTICLE_PADDING = Object.freeze({
-  top: 14,
-  right: 16,
-  bottom: 14,
-  left: 16,
+  top: 25,
+  right: 25,
+  bottom: 25,
+  left: 25,
 })
 
 const ARTICLE_WIDTH_PRESET_MAX = Object.freeze({

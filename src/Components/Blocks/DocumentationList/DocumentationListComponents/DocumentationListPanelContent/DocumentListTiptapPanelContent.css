@@ -159,7 +159,7 @@
 .tiptap-panel-header {
   min-height: 50px;
   margin-bottom: 0;
-  padding-top: 10px;
+  padding-top: 25px;
   padding-bottom: 10px;
   padding-left: var(--panel-top-controls-left-offset, 10px);
   /* padding-right: var(--panel-top-controls-right-offset, 12px); */

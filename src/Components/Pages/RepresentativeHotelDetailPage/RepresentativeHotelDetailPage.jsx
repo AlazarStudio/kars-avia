@@ -328,6 +328,7 @@ function RepresentativeHotelDetailPage({ user }) {
           }
           onIssueLink={undefined}
           className={classes.section_searchAndFilter}
+          readOnly={isAirlineRole}
           showAddBookingButton={
             hotel == null ||
             hotel.peopleCount == null ||
@@ -349,6 +350,7 @@ function RepresentativeHotelDetailPage({ user }) {
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
               isExternalUser={isExternalUser}
+              readOnly={isAirlineRole}
             />
           </div>
           <div className={classes.chatWrapper}>

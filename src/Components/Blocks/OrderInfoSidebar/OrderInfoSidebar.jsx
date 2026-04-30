@@ -42,10 +42,9 @@ function OrderInfoSidebar({
   const info = { ...fallback, ...(data || {}) };
 
   const handleCancelRequestFromMenu = () => {
-    setRequestId?.(data?.id);
+    setRequestId?.(transferId);
     openDeleteComponent?.();
   };
-// console.log(data);
 
   const disabledInputs = !canEditByStatus || !isEditing || isSaving;
 

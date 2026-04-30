@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation } from '@apollo/client'
+import { saveTreeOrder } from '../../documentationTreeOrder'
 import { 
   CREATE_SECTION, 
   CREATE_ARTICLE, 
@@ -2056,6 +2057,7 @@ function DocumentationListLeftPanel({
 
     insertAt(nextTree, parentId, insertIndex, nextMovedItem)
     setTree(nextTree)
+    saveTreeOrder(nextTree, documentationType)
     setDragState(null)
     setDropHint(null)
 
@@ -2078,6 +2080,7 @@ function DocumentationListLeftPanel({
     } catch (error) {
       console.error('Failed to persist moved item:', error)
       setTree(prevTree)
+      saveTreeOrder(prevTree, documentationType)
     }
   }
 

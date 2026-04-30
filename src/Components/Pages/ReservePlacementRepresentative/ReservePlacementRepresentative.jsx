@@ -655,7 +655,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             <span className={classes.titleText}>
               Заявка {request.flightNumber}
             </span>
-            {canCopyRepresentativeLink && (
+            {canCopyRepresentativeLink && !isAirlineRole && (
               <div className={classes.representativeLinkActions}>
                 <button
                   type="button"
@@ -824,6 +824,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                   <DownloadIcon />
                 </button>
                 {!isExternalUser &&
+                  !isAirlineRole &&
                   canAddHabitationRequest &&
                   request?.status !== "CANCELLED" && (
                     <Button onClick={toggleAddHotelSidebar}>
@@ -835,6 +836,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             {filter === "transferAccommodation" &&
               request?.transferService?.plan?.enabled &&
               !isExternalUser &&
+              !isAirlineRole &&
               canAddTransferRequest &&
               request?.status !== "CANCELLED" && (
                 <Button onClick={toggleAddDriverSidebar}>
@@ -844,6 +846,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
             {filter === "baggageDelivery" &&
               request?.baggageDeliveryService?.plan?.enabled &&
               !isExternalUser &&
+              !isAirlineRole &&
               request?.status !== "CANCELLED" && (
                 <Button onClick={toggleAddBaggageDriverSidebar}>
                   Создать заявку на трансфер багажа
@@ -920,6 +923,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       onStatusChanged={() => refetch()}
                       addNotification={addNotification}
                       token={token}
+                      readOnly={isAirlineRole}
                     />
                   )}
                 {filter === "powerSupply" &&
@@ -930,6 +934,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       onStatusChanged={() => refetch()}
                       addNotification={addNotification}
                       token={token}
+                      readOnly={isAirlineRole}
                     />
                   )}
                 {filter === "transferAccommodation" &&
@@ -942,6 +947,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                         refetchHotel();
                       }}
                       addNotification={addNotification}
+                      readOnly={isAirlineRole}
                       onDriverSelect={(d, idx) =>
                         navigate(
                           `/${id}/representativeRequestsPlacement/${idRequest}/driver/${idx}`,
@@ -959,6 +965,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                         refetchHotel();
                       }}
                       addNotification={addNotification}
+                      readOnly={isAirlineRole}
                     />
                   )}
                 {filter === "habitation" &&
@@ -969,6 +976,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       searchQuery={habitationSearchQuery}
                       addNotification={addNotification}
                       onStatusChanged={() => refetch()}
+                      readOnly={isAirlineRole}
                       onHotelSelect={(h, i) => {
                         const hotelId = h.hotelId ?? h.name ?? String(i);
                         navigate(

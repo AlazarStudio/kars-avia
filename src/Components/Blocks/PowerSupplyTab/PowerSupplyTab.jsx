@@ -24,6 +24,7 @@ export default function PowerSupplyTab({
   onStatusChanged,
   addNotification,
   token,
+  readOnly = false,
 }) {
   const people = useMemo(() => request?.mealService?.people ?? [], [request]);
   const ms = request?.mealService;
@@ -128,12 +129,12 @@ export default function PowerSupplyTab({
       </div>
       <ServiceFooter
         statusText={statusText}
-        ctaLabel={!requestCancelled && canMarkDelivered ? "Питание доставлено" : undefined}
-        onCta={!requestCancelled && canMarkDelivered ? () => mutate() : undefined}
+        ctaLabel={!readOnly && !requestCancelled && canMarkDelivered ? "Питание доставлено" : undefined}
+        onCta={!readOnly && !requestCancelled && canMarkDelivered ? () => mutate() : undefined}
         disabled={loading || !canMarkDelivered}
-        earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
+        earlyCompleteLabel={!readOnly && canEarlyComplete ? "Завершить" : undefined}
         onEarlyCompleteClick={
-          canEarlyComplete ? () => setShowEarlyCompleteModal(true) : undefined
+          !readOnly && canEarlyComplete ? () => setShowEarlyCompleteModal(true) : undefined
         }
         earlyCompleteDisabled={completingEarly}
         history={[

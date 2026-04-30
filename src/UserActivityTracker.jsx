@@ -24,7 +24,7 @@ import { authService } from "./services/authService";
 import { useDialog } from "./contexts/DialogContext";
 import { useToast } from "./contexts/ToastContext";
 
-const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 
 function lastMinutesPhrase(minutes) {
   const n = Math.max(1, Math.round(minutes));

@@ -327,6 +327,7 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                     ...prev,
                     hotelId: newValue?.id ?? "",
                     name: newValue?.name ?? "",
+                    address: newValue?.information?.address ?? prev.address,
                   }));
                 }}
               />

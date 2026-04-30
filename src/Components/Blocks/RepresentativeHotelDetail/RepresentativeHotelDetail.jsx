@@ -30,6 +30,7 @@ export function HotelDetailToolbar({
   onIssueLink,
   className,
   showAddBookingButton = true,
+  readOnly = false,
 }) {
   return (
     <div className={className ? `${className} ${classes.headerRow}` : classes.headerRow}>
@@ -45,8 +46,8 @@ export function HotelDetailToolbar({
             Выдать ссылку для гостиницы
           </Button>
         )}
-        <Button onClick={onGenerateReport}>Сформировать отчет</Button>
-        {showAddBookingButton && (
+        <Button onClick={onGenerateReport}>Отчет</Button>
+        {!readOnly && showAddBookingButton && (
           <Button onClick={onAddBooking}>Добавить бронь</Button>
         )}
       </div>
@@ -69,6 +70,7 @@ export default function RepresentativeHotelDetail({
   searchQuery,
   onSearchChange,
   isExternalUser = false,
+  readOnly = false,
 }) {
   const [internalSearch, setInternalSearch] = useState("");
   const [internalShowAddBooking, setInternalShowAddBooking] = useState(false);
@@ -324,7 +326,7 @@ export default function RepresentativeHotelDetail({
         />
       )}
 
-      {selectedPersonIndices.length > 0 && (
+      {!readOnly && selectedPersonIndices.length > 0 && (
         <div className={classes.selectionBar}>
           <span className={classes.selectionBarLabel}>
             Выбрано броней: {selectedPersonIndices.length} —
@@ -378,39 +380,43 @@ export default function RepresentativeHotelDetail({
           </div>
           {bookings.map((row, index) => (
             <div key={index} className={classes.tableRow}>
-              <div className={classes.colCheckbox}>
-                <input
-                  type="checkbox"
-                  checked={selectedPersonIndices.includes(index)}
-                  onChange={() => toggleSelectedIndex(index)}
-                  aria-label="Выбрать для переселения или выселения"
-                />
-              </div>
+              {!readOnly && (
+                <div className={classes.colCheckbox}>
+                  <input
+                    type="checkbox"
+                    checked={selectedPersonIndices.includes(index)}
+                    onChange={() => toggleSelectedIndex(index)}
+                    aria-label="Выбрать для переселения или выселения"
+                  />
+                </div>
+              )}
               <div>{index + 1}</div>
               <div>{checkInStr}</div>
               <div>{checkOutStr}</div>
               <div style={{ textAlign: "center" }}>{row.roomNumber ?? "—"}</div>
               <div style={{ textAlign: "center" }}>{row.fullName ?? "—"}</div>
-              <div className={classes.cellActions}>
-                <button
-                  type="button"
-                  onClick={() => setEditingPersonIndex(index)}
-                  className={classes.editBtn}
-                  aria-label="Редактировать бронь"
-                  title="Редактировать бронь"
-                >
-                  <EditPencilIcon cursor="pointer" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteConfirmIndex(index)}
-                  disabled={removing}
-                  className={classes.deleteBtn}
-                  aria-label="Удалить бронь"
-                >
-                  <DeleteIcon cursor="pointer" />
-                </button>
-              </div>
+              {!readOnly && (
+                <div className={classes.cellActions}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingPersonIndex(index)}
+                    className={classes.editBtn}
+                    aria-label="Редактировать бронь"
+                    title="Редактировать бронь"
+                  >
+                    <EditPencilIcon cursor="pointer" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmIndex(index)}
+                    disabled={removing}
+                    className={classes.deleteBtn}
+                    aria-label="Удалить бронь"
+                  >
+                    <DeleteIcon cursor="pointer" />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

@@ -9,7 +9,7 @@ import Button from "../../Standart/Button/Button";
 
 const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
 
-export default function HabitationTab({ id, request, searchQuery = "", addNotification, onHotelSelect, onStatusChanged }) {
+export default function HabitationTab({ id, request, searchQuery = "", addNotification, onHotelSelect, onStatusChanged, readOnly = false }) {
   const token = getCookie("token");
   const ls = request?.livingService;
   const statusText = statusToLabel[ls?.status] ?? "Принята";
@@ -112,7 +112,9 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
                 {h.address ?? "—"}
               </div>
               <div className={`${classes.w20} ${classes.jcEnd} ${classes.linkCol}`}>
-                {(h.linkCRM || h.linkPWA) ? (
+                {readOnly ? (
+                  <span className={classes.link}>—</span>
+                ) : (h.linkCRM || h.linkPWA) ? (
                   <div className={classes.linkGroup}>
                     {h.linkCRM && (
                       <button
@@ -154,8 +156,8 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
       </div>
       <ServiceFooter
         statusText={statusText}
-        earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
-        onEarlyCompleteClick={canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
+        earlyCompleteLabel={!readOnly && canEarlyComplete ? "Завершить" : undefined}
+        onEarlyCompleteClick={!readOnly && canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
         earlyCompleteDisabled={completingEarly}
         history={[
           {
