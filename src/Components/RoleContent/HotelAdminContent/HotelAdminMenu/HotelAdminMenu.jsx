@@ -17,8 +17,9 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       <div className={classes.menuMain}>
         <Link
           to={"/reserveRequests"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "reserveRequests" && classes.menu_items__activeElem}`}
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${id == "reserveRequests" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -43,11 +44,14 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </svg>
           </div>
           {/* {menuOpen ? "ФАП" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >ФАП</DelayedText>
+          <DelayedText show={menuOpen} delay={200}>
+            ФАП
+          </DelayedText>
           {allCreatedReserves > 0 && (
             <div
-              className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""
-                }`}
+              className={`${classes.countRequests} ${
+                !menuOpen ? classes.countRequestsMini : ""
+              }`}
             >
               {allCreatedReserves}
             </div>
@@ -56,10 +60,12 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
         </Link>
         <Link
           to={"/hotelChess"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${(id == "hotelChess" || id == undefined || !id) &&
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${
+            (id == "hotelChess" || id == undefined || !id) &&
             classes.menu_items__activeElem
-            }`}
+          }`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -103,13 +109,16 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </svg>
           </div>
           {/* {menuOpen ? "Шахматка" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Шахматка</DelayedText>
+          <DelayedText show={menuOpen} delay={200}>
+            Шахматка
+          </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Шахматка</span>}
         </Link>
         <Link
           to={"/hotelTarifs"}
-          className={`${classes.menu_items__elem} ${id == "hotelTarifs" && classes.menu_items__activeElem
-            }`}
+          className={`${classes.menu_items__elem} ${
+            id == "hotelTarifs" && classes.menu_items__activeElem
+          }`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -140,13 +149,16 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </svg>
           </div>
           {/* {menuOpen ? "Тарифы" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Тарифы</DelayedText>
+          <DelayedText show={menuOpen} delay={200}>
+            Тарифы
+          </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Тарифы</span>}
         </Link>
         <Link
           to={"/hotelRooms"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "hotelRooms" && classes.menu_items__activeElem}`}
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${id == "hotelRooms" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -177,13 +189,16 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </svg>
           </div>
           {/* {menuOpen ? "Номерной фонд" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Номерной фонд</DelayedText>
+          <DelayedText show={menuOpen} delay={200}>
+            Номерной фонд
+          </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Номерной фонд</span>}
         </Link>
         <Link
           to={"/hotelCompany"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "hotelCompany" && classes.menu_items__activeElem}`}
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${id == "hotelCompany" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -212,13 +227,16 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </svg>
           </div>
           {/* {menuOpen ? "Пользователи" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Пользователи</DelayedText>
+          <DelayedText show={menuOpen} delay={200}>
+            Пользователи
+          </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Пользователи</span>}
         </Link>
         <Link
           to={"/hotelAbout"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "hotelAbout" && classes.menu_items__activeElem}`}
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${id == "hotelAbout" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -243,13 +261,16 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </svg>
           </div>
           {/* {menuOpen ? "О гостинице" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >О гостинице</DelayedText>
+          <DelayedText show={menuOpen} delay={200}>
+            О гостинице
+          </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>О гостинице</span>}
         </Link>
         <Link
           to={"/hotelSettings"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "hotelSettings" && classes.menu_items__activeElem}`}
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${id == "hotelSettings" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -274,29 +295,49 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </svg>
           </div>
           {/* {menuOpen ? "Настройки" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Настройки</DelayedText>
+          <DelayedText show={menuOpen} delay={200}>
+            Настройки
+          </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Настройки</span>}
         </Link>
         <Link
           to={"/hotelRegisterOfContracts"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "hotelRegisterOfContracts" && classes.menu_items__activeElem
-            }`}
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${
+            id == "hotelRegisterOfContracts" && classes.menu_items__activeElem
+          }`}
         >
           <div className={classes.svgWrapper}>
-            <svg width="15" height="19" viewBox="0 0 15 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4.5 14.5H10.5M4.5 11.5H10.5M8.50038 0.500872C8.40484 0.5 8.29738 0.5 8.17471 0.5H3.7002C2.58009 0.5 2.01962 0.5 1.5918 0.717988C1.21547 0.909735 0.909734 1.21547 0.717987 1.5918C0.5 2.01962 0.5 2.58009 0.5 3.7002V15.3002C0.5 16.4203 0.5 16.9801 0.717988 17.4079C0.909735 17.7842 1.21547 18.0905 1.5918 18.2822C2.01921 18.5 2.579 18.5 3.69694 18.5L11.3031 18.5C12.421 18.5 12.98 18.5 13.4074 18.2822C13.7837 18.0905 14.0905 17.7842 14.2822 17.4079C14.5 16.9805 14.5 16.4215 14.5 15.3036V6.82568C14.5 6.70302 14.4999 6.59553 14.499 6.5M8.50038 0.500872C8.78583 0.503475 8.96572 0.514066 9.13818 0.55547C9.34225 0.604464 9.53785 0.685265 9.7168 0.794922C9.91857 0.918567 10.0918 1.09181 10.4375 1.4375L13.563 4.56298C13.9089 4.90889 14.0809 5.08136 14.2046 5.28319C14.3142 5.46214 14.3953 5.65726 14.4443 5.86133C14.4857 6.03379 14.4964 6.21454 14.499 6.5M8.50038 0.500872L8.5 3.30021C8.5 4.42031 8.5 4.98015 8.71799 5.40797C8.90973 5.7843 9.21547 6.09048 9.5918 6.28223C10.0192 6.5 10.579 6.5 11.6969 6.5H14.499" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
+            <svg
+              width="15"
+              height="19"
+              viewBox="0 0 15 19"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4.5 14.5H10.5M4.5 11.5H10.5M8.50038 0.500872C8.40484 0.5 8.29738 0.5 8.17471 0.5H3.7002C2.58009 0.5 2.01962 0.5 1.5918 0.717988C1.21547 0.909735 0.909734 1.21547 0.717987 1.5918C0.5 2.01962 0.5 2.58009 0.5 3.7002V15.3002C0.5 16.4203 0.5 16.9801 0.717988 17.4079C0.909735 17.7842 1.21547 18.0905 1.5918 18.2822C2.01921 18.5 2.579 18.5 3.69694 18.5L11.3031 18.5C12.421 18.5 12.98 18.5 13.4074 18.2822C13.7837 18.0905 14.0905 17.7842 14.2822 17.4079C14.5 16.9805 14.5 16.4215 14.5 15.3036V6.82568C14.5 6.70302 14.4999 6.59553 14.499 6.5M8.50038 0.500872C8.78583 0.503475 8.96572 0.514066 9.13818 0.55547C9.34225 0.604464 9.53785 0.685265 9.7168 0.794922C9.91857 0.918567 10.0918 1.09181 10.4375 1.4375L13.563 4.56298C13.9089 4.90889 14.0809 5.08136 14.2046 5.28319C14.3142 5.46214 14.3953 5.65726 14.4443 5.86133C14.4857 6.03379 14.4964 6.21454 14.499 6.5M8.50038 0.500872L8.5 3.30021C8.5 4.42031 8.5 4.98015 8.71799 5.40797C8.90973 5.7843 9.21547 6.09048 9.5918 6.28223C10.0192 6.5 10.579 6.5 11.6969 6.5H14.499"
+                stroke="var(--menu-gray)"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </div>
 
           {/* {menuOpen ? "Реестр договоров" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Реестр договоров</DelayedText>
-          {!menuOpen && <span className={classes.tooltip}>Реестр договоров</span>}
+          <DelayedText show={menuOpen} delay={200}>
+            Реестр договоров
+          </DelayedText>
+          {!menuOpen && (
+            <span className={classes.tooltip}>Реестр договоров</span>
+          )}
         </Link>
         <Link
           to={"/reports"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "reports" && classes.menu_items__activeElem}`}
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${id == "reports" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg
@@ -345,17 +386,39 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
             </svg>
           </div>
           {/* {menuOpen ? "Отчеты" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Отчеты</DelayedText>
+          <DelayedText show={menuOpen} delay={200}>
+            Отчеты
+          </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
         </Link>
-        <div style={{ margin: "10px 0", height: "1px", width: "100%", backgroundColor: "var(--menu-gray)" }} />
+        <div
+          style={{
+            margin: "10px 0",
+            height: "1px",
+            width: "100%",
+            backgroundColor: "var(--menu-gray)",
+          }}
+        />
         <Link
           to={"/documentation"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "documentation" && classes.menu_items__activeElem}`}
+          className={`${classes.menu_items__elem} ${
+            !menuOpen ? classes.jcc : ""
+          } ${id == "documentation" && classes.menu_items__activeElem}`}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 17V16.9929M12 14.8571C12 11.6429 15 12.3571 15 9.85714C15 8.27919 13.6568 7 12 7C10.6567 7 9.51961 7.84083 9.13733 9M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="var(--menu-gray)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M12 17V16.9929M12 14.8571C12 11.6429 15 12.3571 15 9.85714C15 8.27919 13.6568 7 12 7C10.6567 7 9.51961 7.84083 9.13733 9M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+              stroke="var(--menu-gray)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           <DelayedText show={menuOpen} delay={200}>
             Помощь
@@ -400,19 +463,46 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
       </div>
       <div
         className={classes.bottomMenu}
-        style={menuOpen ? {} : { display: "flex", flexDirection: "column", flex: 1, justifyContent: "flex-end" }}
+        style={
+          menuOpen
+            ? {}
+            : {
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                justifyContent: "flex-end",
+              }
+        }
       >
         <Link
           // to={"/patchNotes"}
-          className={`${classes.alazar} ${!menuOpen ? classes.jcc : ""
-            } ${id == "patchNotes" && classes.menu_items__activeElem___bottom} ${classes.menuLink}`}
+          className={`${classes.alazar} ${
+            !menuOpen ? classes.jcc : ""
+          } ${id == "patchNotes" && classes.menu_items__activeElem___bottom} ${classes.menuLink}`}
           style={menuOpen ? {} : { padding: 0 }}
         >
           {menuOpen ? "ver 3.1.1" : "ver 3.1.1"}
         </Link>
-        <div className={classes.alazar} style={menuOpen ? {} : { display: "none", padding: 0, flexWrap: "wrap", fontSize: "12px" }}>
+        <div
+          className={classes.alazar}
+          style={
+            menuOpen
+              ? {}
+              : {
+                  display: "none",
+                  padding: 0,
+                  flexWrap: "wrap",
+                  fontSize: "12px",
+                }
+          }
+        >
           Powered by{" "}
-          <a href="https://alazarstudio.ru/" target="_blank" rel="noreferrer" className={classes.menuLink}>
+          <a
+            // href="https://alazarstudio.ru/"
+            // target="_blank"
+            rel="noreferrer"
+            className={classes.menuLink}
+          >
             Alazar studio
           </a>
         </div>

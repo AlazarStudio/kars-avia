@@ -152,11 +152,22 @@ src/
 
 ## GraphQL
 
-- **Все** запросы/мутации/подписки — в одном файле `graphQL_requests.js` (5000+ строк). Перед добавлением нового запроса убедись, что аналогичного нет.
+- **Все** запросы/мутации/подписки — в одном файле `graphQL_requests.js` (6000+ строк). Перед добавлением нового запроса убедись, что аналогичного нет.
 - HTTP endpoint: `${server}/graphql`
 - WS endpoint: `ws://${path}/graphql`
 - Загрузка файлов: `apollo-upload-client` (createUploadLink)
 - Подписки: `graphql-ws` + `GraphQLWsLink`
+
+**Хелперы из `graphQL_requests.js`** — используй вместо самописных аналогов:
+
+| Функция | Описание |
+|---------|---------|
+| `convertToDate(dateStr, includeTime?)` | ISO → `"DD.MM.YYYY [HH:MM]"` (московское время) |
+| `convertToDateNew(dateStr, includeTime?)` | Аналог, UTC-вариант |
+| `buildScheduledISO(date, time)` | Локальные дату/время → UTC ISO-строка |
+| `generateTimestampId()` | Уникальный ID: timestamp + random |
+| `getMediaUrl(path)` | Добавляет JWT-токен к URL медиафайла |
+| `decodeJWT(token)` | Ручное декодирование JWT (base64 payload) |
 
 ## Система прав доступа (двухуровневая)
 

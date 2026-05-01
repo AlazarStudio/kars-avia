@@ -10,6 +10,7 @@ import {
   ADD_PASSENGER_REQUEST_DRIVER_PERSON,
   UPDATE_PASSENGER_REQUEST_DRIVER_PERSON,
   REMOVE_PASSENGER_REQUEST_DRIVER_PERSON,
+  REMOVE_PASSENGER_REQUEST_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatTime, formatDateTime } from "../fapConstants";
@@ -35,6 +36,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
   // Passenger CRUD
   const [personModal, setPersonModal] = useState(null); // { driverIndex, personIndex?, form }
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { driverIndex, personIndex }
+  const [deleteDriverConfirm, setDeleteDriverConfirm] = useState(null); // driverIndex
 
   const statusCfg = SERVICE_STATUS_CONFIG[service?.status] || {};
 
@@ -48,6 +50,9 @@ export default function FapTransferSection({ service, color, request, onRefetch,
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [removeDriverPerson] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER_PERSON, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [removeDriver] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
@@ -105,6 +110,21 @@ export default function FapTransferSection({ service, color, request, onRefetch,
       notifyError("Ошибка при сохранении");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDriverDelete = async () => {
+    if (deleteDriverConfirm == null) return;
+    try {
+      setSaving(true);
+      await removeDriver({ variables: { requestId: request.id, driverIndex: deleteDriverConfirm } });
+      onRefetch();
+      success("Водитель удалён");
+    } catch {
+      notifyError("Ошибка при удалении");
+    } finally {
+      setSaving(false);
+      setDeleteDriverConfirm(null);
     }
   };
 
@@ -224,6 +244,16 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                         Ссылка
                       </button>
                     ) : null}
+                    {canEdit && !isCompleted && (
+                      <button
+                        type="button"
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+                        onClick={(e) => { e.stopPropagation(); setDeleteDriverConfirm(idx); }}
+                        title="Удалить водителя"
+                      >
+                        <DeleteIcon cursor="pointer" />
+                      </button>
+                    )}
                     <span className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`}>▾</span>
                   </div>
                 </div>
@@ -337,6 +367,26 @@ export default function FapTransferSection({ service, color, request, onRefetch,
             </Button>
             <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={handlePersonSave} disabled={saving}>
               {personModal.personIndex != null ? "Сохранить" : "Добавить"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      {/* Delete driver confirm */}
+      {deleteDriverConfirm != null && (
+        <Dialog open onClose={() => setDeleteDriverConfirm(null)} PaperProps={{ sx: { borderRadius: "15px" } }}>
+          <DialogTitle>Удалить водителя?</DialogTitle>
+          <DialogContent>
+            <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "#545873" }}>
+              Водитель и все его пассажиры будут удалены. Это действие нельзя отменить.
+            </p>
+          </DialogContent>
+          <DialogActions sx={{ padding: "8px 16px 16px" }}>
+            <Button backgroundcolor="var(--hover-gray)" color="#000" onClick={() => setDeleteDriverConfirm(null)}>
+              Отмена
+            </Button>
+            <Button backgroundcolor="#EF4444" color="#fff" onClick={handleDriverDelete} disabled={saving}>
+              Удалить
             </Button>
           </DialogActions>
         </Dialog>

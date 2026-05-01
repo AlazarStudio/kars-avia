@@ -488,8 +488,8 @@ const AirlineAdminMenu = ({
         <div className={classes.alazar} style={menuOpen ? {} : { display: "none", padding: 0, flexWrap: "wrap", fontSize: "12px" }}>
           Powered by{" "}
           <a
-            href="https://alazarstudio.ru/"
-            target="_blank"
+            // href="https://alazarstudio.ru/"
+            // target="_blank"
             rel="noreferrer"
             className={classes.menuLink}
           >

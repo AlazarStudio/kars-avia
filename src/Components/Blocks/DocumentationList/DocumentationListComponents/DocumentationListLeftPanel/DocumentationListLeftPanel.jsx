@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useMutation } from '@apollo/client'
-import { saveTreeOrder } from '../../documentationTreeOrder'
 import { 
   CREATE_SECTION, 
   CREATE_ARTICLE, 
@@ -162,6 +161,7 @@ function DocumentationListLeftPanel({
   const [creating, setCreating] = useState(null)
   const [hovered, setHovered] = useState(false)
   const [lastDeleted, setLastDeleted] = useState(null)
+  const lastDeletedRef = useRef(null)
   const [copyModal, setCopyModal] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(null)
   const [dropHint, setDropHint] = useState(null)
@@ -1486,19 +1486,17 @@ function DocumentationListLeftPanel({
   }, [setTree])
 
   const commitDelete = useCallback(async (toastId) => {
-    let pendingDelete = null
+    const current = lastDeletedRef.current
+    if (!current) return
+    if (toastId != null && current.toastId !== toastId) return
 
-    setLastDeleted(prev => {
-      if (!prev) return prev
-      if (toastId != null && prev.toastId !== toastId) return prev
-      pendingDelete = prev
-      return null
-    })
+    lastDeletedRef.current = null
+    setLastDeleted(null)
 
-    const pendingEntries = Array.isArray(pendingDelete?.entries) && pendingDelete.entries.length
-      ? pendingDelete.entries
-      : pendingDelete?.item
-        ? [pendingDelete]
+    const pendingEntries = Array.isArray(current.entries) && current.entries.length
+      ? current.entries
+      : current.item
+        ? [current]
         : []
 
     if (!pendingEntries.length) return
@@ -1537,19 +1535,17 @@ function DocumentationListLeftPanel({
   ])
 
   const undoDelete = useCallback((toastId) => {
-    let pendingDelete = null
+    const current = lastDeletedRef.current
+    if (!current) return
+    if (toastId != null && current.toastId !== toastId) return
 
-    setLastDeleted(prev => {
-      if (!prev) return prev
-      if (toastId != null && prev.toastId !== toastId) return prev
-      pendingDelete = prev
-      return null
-    })
+    lastDeletedRef.current = null
+    setLastDeleted(null)
 
-    const pendingEntries = Array.isArray(pendingDelete?.entries) && pendingDelete.entries.length
-      ? pendingDelete.entries
-      : pendingDelete?.item
-        ? [pendingDelete]
+    const pendingEntries = Array.isArray(current.entries) && current.entries.length
+      ? current.entries
+      : current.item
+        ? [current]
         : []
 
     if (!pendingEntries.length) return
@@ -1587,14 +1583,16 @@ function DocumentationListLeftPanel({
     const firstItem = deletedEntries[0]?.item
     const toastId = Date.now() + Math.random()
 
-    setLastDeleted({
+    const newEntry = {
       item: firstItem,
       parentId: deletedEntries[0]?.parentId,
       index: deletedEntries[0]?.index,
       entries: deletedEntries,
       count: deletedEntries.length,
       toastId,
-    })
+    }
+    lastDeletedRef.current = newEntry
+    setLastDeleted(newEntry)
   }
 
   const deleteItem = async (id) => {
@@ -2057,7 +2055,6 @@ function DocumentationListLeftPanel({
 
     insertAt(nextTree, parentId, insertIndex, nextMovedItem)
     setTree(nextTree)
-    saveTreeOrder(nextTree, documentationType)
     setDragState(null)
     setDropHint(null)
 
@@ -2080,7 +2077,6 @@ function DocumentationListLeftPanel({
     } catch (error) {
       console.error('Failed to persist moved item:', error)
       setTree(prevTree)
-      saveTreeOrder(prevTree, documentationType)
     }
   }
 

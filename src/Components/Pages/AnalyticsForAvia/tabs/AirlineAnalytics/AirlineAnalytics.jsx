@@ -6,6 +6,7 @@ import {
   useCallback,
   useRef,
 } from "react";
+import * as XLSX from "xlsx";
 import classes from "./AirlineAnalytics.module.css";
 import AnalyticsChart from "../../AnalyticsChart/AnalyticsChart";
 import DateRangePickerCustom from "../../DateRangePickerCustom";
@@ -654,6 +655,156 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
     }
   }, [pdfExporting, selectedAirline?.name, airlines[0]?.name]);
 
+  const handleExportXlsx = useCallback(() => {
+    if (!period1Result && !period2Result) return;
+
+    const autoWidth = (ws, rows) => {
+      if (!rows.length) return ws;
+      const widths = rows[0].map((_, ci) =>
+        Math.max(10, ...rows.map((row) => String(row[ci] ?? "").length + 2))
+      );
+      ws["!cols"] = widths.map((wch) => ({ wch }));
+      return ws;
+    };
+
+    const makeSheet = (rows) => autoWidth(XLSX.utils.aoa_to_sheet(rows), rows);
+
+    const wb = XLSX.utils.book_new();
+    const isCompare = isPeriodMultiChart;
+    const p1Label = appliedAnalytics ? formatPeriodHuman(appliedAnalytics.mainRange) : "Период 1";
+    const p2Label = (isCompare && appliedAnalytics?.compareRange)
+      ? formatPeriodHuman(appliedAnalytics.compareRange)
+      : "Период 2";
+
+    // Сводка
+    {
+      const header = ["Услуга", "Заявки", "Уник. люди", "Бюджет, ₽", "Комнаты"];
+      if (isCompare) header.push(`Заявки (${p2Label})`, `Уник. люди (${p2Label})`, `Бюджет, ₽ (${p2Label})`, `Комнаты (${p2Label})`);
+      const rows = [header];
+      for (const sk of serviceKeys) {
+        const sb1 = getServiceBlock(period1Result, sk);
+        const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
+        const row = [
+          SERVICE_LABELS[sk] || sk,
+          Number(sb1?.totalRequests) || 0,
+          Number(sb1?.uniquePeopleCount) || 0,
+          Number(sb1?.totalBudget) || 0,
+          sk === "LIVING" ? (Number(sb1?.usedRoomsCount) || 0) : "",
+        ];
+        if (isCompare) row.push(
+          Number(sb2?.totalRequests) || 0,
+          Number(sb2?.uniquePeopleCount) || 0,
+          Number(sb2?.totalBudget) || 0,
+          sk === "LIVING" ? (Number(sb2?.usedRoomsCount) || 0) : "",
+        );
+        rows.push(row);
+      }
+      XLSX.utils.book_append_sheet(wb, makeSheet(rows), "Сводка");
+    }
+
+    // Аэропорты (по каждой услуге)
+    for (const sk of serviceKeys) {
+      const sb1 = getServiceBlock(period1Result, sk);
+      const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
+      const mergedRows = mergeAirportRows(sb1?.airports, sb2?.airports, isCompare);
+      const isLiving = sk === "LIVING";
+      const header = ["Аэропорт", "Заявки", "Уник. люди", "Бюджет, ₽"];
+      if (isLiving) header.push("Комнаты");
+      if (isCompare) {
+        header.push(`Заявки (${p2Label})`, `Уник. люди (${p2Label})`, `Бюджет, ₽ (${p2Label})`);
+        if (isLiving) header.push(`Комнаты (${p2Label})`);
+      }
+      const rows = [header];
+      for (const r of mergedRows) {
+        const row = [
+          r.name,
+          Number(r.p1?.requestsCount) || 0,
+          Number(r.p1?.uniquePeopleCount) || 0,
+          Number(r.p1?.budget) || 0,
+        ];
+        if (isLiving) row.push(Number(r.p1?.usedRoomsCount) || 0);
+        if (isCompare) {
+          row.push(Number(r.p2?.requestsCount) || 0, Number(r.p2?.uniquePeopleCount) || 0, Number(r.p2?.budget) || 0);
+          if (isLiving) row.push(Number(r.p2?.usedRoomsCount) || 0);
+        }
+        rows.push(row);
+      }
+      XLSX.utils.book_append_sheet(wb, makeSheet(rows), `Аэропорты ${SERVICE_LABELS[sk] || sk}`.slice(0, 31));
+    }
+
+    // Должности (по каждой услуге)
+    for (const sk of serviceKeys) {
+      const sb1 = getServiceBlock(period1Result, sk);
+      const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
+      const mergedRows = mergePositionRows(sb1?.positions, sb2?.positions, isCompare);
+      const header = ["Должность", "Кол-во", "%", "Бюджет, ₽"];
+      if (isCompare) header.push(`Кол-во (${p2Label})`, `% (${p2Label})`, `Бюджет, ₽ (${p2Label})`);
+      const rows = [header];
+      for (const r of mergedRows) {
+        const row = [r.name || "", Number(r.p1?.count) || 0, Number(r.p1?.percent) || 0, Number(r.p1?.budget) || 0];
+        if (isCompare) row.push(Number(r.p2?.count) || 0, Number(r.p2?.percent) || 0, Number(r.p2?.budget) || 0);
+        rows.push(row);
+      }
+      XLSX.utils.book_append_sheet(wb, makeSheet(rows), `Должности ${SERVICE_LABELS[sk] || sk}`.slice(0, 31));
+    }
+
+    // Заявки (LIVING + MEAL)
+    const buildReqSheet = (rows) => {
+      const data = [["№ заявки", "Сотрудник", "Должность", "Аэропорт", "Проживание, ₽", "Питание, ₽", "Трансфер, ₽", "Итого, ₽"]];
+      for (const r of rows) {
+        data.push([
+          r.requestNumber || r.requestId || "",
+          r.personName || "",
+          r.positionName || "",
+          r.airportCode || r.airportName || "",
+          Number(r.livingBudget) || 0,
+          Number(r.mealBudget) || 0,
+          Number(r.transferBudget) || 0,
+          sumRequestServiceBudgets(r),
+        ]);
+      }
+      return makeSheet(data);
+    };
+    if (mergedRequestsPeriod1.length > 0) {
+      XLSX.utils.book_append_sheet(wb, buildReqSheet(mergedRequestsPeriod1), isCompare ? "Заявки П1" : "Заявки");
+    }
+    if (isCompare && mergedRequestsPeriod2.length > 0) {
+      XLSX.utils.book_append_sheet(wb, buildReqSheet(mergedRequestsPeriod2), "Заявки П2");
+    }
+
+    // Трансферы
+    const buildTransferSheet = (rows) => {
+      const data = [["№", "Откуда", "Куда", "Пассажиры", "Уник. люди", "Бюджет, ₽"]];
+      for (const r of rows) {
+        data.push([
+          r.requestNumber || r.transferId || "",
+          r.fromAddress || "",
+          r.toAddress || "",
+          Number(r.passengersCount) || 0,
+          Number(r.uniquePeopleCount) || 0,
+          Number(r.budget) || 0,
+        ]);
+      }
+      return makeSheet(data);
+    };
+    const tr1 = getServiceBlock(period1Result, "TRANSFER")?.transfers ?? [];
+    const tr2 = isCompare ? (getServiceBlock(period2Result, "TRANSFER")?.transfers ?? []) : [];
+    if (tr1.length > 0) {
+      XLSX.utils.book_append_sheet(wb, buildTransferSheet(tr1), isCompare ? "Трансфер П1" : "Трансфер");
+    }
+    if (isCompare && tr2.length > 0) {
+      XLSX.utils.book_append_sheet(wb, buildTransferSheet(tr2), "Трансфер П2");
+    }
+
+    const airlineTitle = selectedAirline?.name ?? "Аналитика";
+    const safeSlug = airlineTitle.replace(/[\\/:*?"<>|]+/g, " ").trim();
+    XLSX.writeFile(wb, `Аналитика_${safeSlug}_${format(new Date(), "dd-MM-yyyy_HH-mm")}.xlsx`);
+  }, [
+    period1Result, period2Result, isPeriodMultiChart, serviceKeys,
+    mergedRequestsPeriod1, mergedRequestsPeriod2,
+    appliedAnalytics, selectedAirline?.name,
+  ]);
+
   const handleTableSort = useCallback((tableId, columnKey) => {
     setTableSortById((prev) => {
       const cur = prev[tableId];
@@ -1278,14 +1429,23 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                   )}
                 </div>}
                 {appliedAnalytics && !analyticsLoading && airlineId ? (
-                  <button
-                    type="button"
-                    className={`${classes.exportPdfButton} pdfNoCapture`}
-                    disabled={!!pdfExporting}
-                    onClick={handleExportAnalyticsPdf}
-                  >
-                    Выгрузить аналитику
-                  </button>
+                  <div className={`${classes.exportButtons} pdfNoCapture`}>
+                    <button
+                      type="button"
+                      className={classes.exportXlsxButton}
+                      onClick={handleExportXlsx}
+                    >
+                      Выгрузить xlsx
+                    </button>
+                    <button
+                      type="button"
+                      className={classes.exportPdfButton}
+                      disabled={!!pdfExporting}
+                      onClick={handleExportAnalyticsPdf}
+                    >
+                      Выгрузить PDF
+                    </button>
+                  </div>
                 ) : null}
               </div>
               )}

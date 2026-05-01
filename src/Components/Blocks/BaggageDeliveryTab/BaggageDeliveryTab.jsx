@@ -2,10 +2,12 @@ import React, { useMemo, useState } from "react";
 import classes from "../TransferAccommodationTab/TransferAccommodationTab.module.css";
 import modalClasses from "./BaggageDeliveryTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { convertToDate, COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY, getCookie } from "../../../../graphQL_requests";
+import { convertToDate, COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY, REMOVE_PASSENGER_REQUEST_BAGGAGE_DRIVER, getCookie } from "../../../../graphQL_requests";
 import CopyIcon from "../../../shared/icons/CopyIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
 import { useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button";
+import DeleteComponent from "../DeleteComponent/DeleteComponent";
 
 export default function BaggageDeliveryTab({
   id,
@@ -28,6 +30,21 @@ export default function BaggageDeliveryTab({
 
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completeReason, setCompleteReason] = useState("");
+  const [removeDriverIndex, setRemoveDriverIndex] = useState(null);
+
+  const [removeDriver] = useMutation(REMOVE_PASSENGER_REQUEST_BAGGAGE_DRIVER, {
+    context: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+  });
+
+  const handleRemoveDriver = async (idx) => {
+    try {
+      await removeDriver({ variables: { requestId: request?.id, driverIndex: idx } });
+      setRemoveDriverIndex(null);
+      addNotification?.("Водитель удалён", "success");
+    } catch (e) {
+      addNotification?.(e?.graphQLErrors?.[0]?.message ?? "Ошибка при удалении", "error");
+    }
+  };
 
   const [completeEarly, { loading: completingEarly }] = useMutation(
     COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY,
@@ -139,6 +156,16 @@ export default function BaggageDeliveryTab({
                   <span className={classes.link}>—</span>
                 )}
               </div>
+              {!readOnly && (
+                <button
+                  type="button"
+                  className={classes.deleteBtn}
+                  onClick={() => setRemoveDriverIndex(idx)}
+                  title="Удалить водителя"
+                >
+                  <DeleteIcon cursor="pointer" />
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -166,6 +193,15 @@ export default function BaggageDeliveryTab({
           ]}
         />
       </div>
+
+      {removeDriverIndex !== null && (
+        <DeleteComponent
+          title="Вы действительно хотите удалить водителя?"
+          remove={handleRemoveDriver}
+          index={removeDriverIndex}
+          close={() => setRemoveDriverIndex(null)}
+        />
+      )}
 
       {showCompleteModal && (
         <div

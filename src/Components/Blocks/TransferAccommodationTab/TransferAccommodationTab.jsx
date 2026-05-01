@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from "react";
 import classes from "./TransferAccommodationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { convertToDate, COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY, getCookie } from "../../../../graphQL_requests";
+import { convertToDate, COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY, REMOVE_PASSENGER_REQUEST_DRIVER, getCookie } from "../../../../graphQL_requests";
 import CopyIcon from "../../../shared/icons/CopyIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import { useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button";
+import DeleteComponent from "../DeleteComponent/DeleteComponent";
 
 export default function TransferAccommodationTab({
   id,
@@ -29,6 +31,21 @@ export default function TransferAccommodationTab({
 
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completeReason, setCompleteReason] = useState("");
+  const [removeDriverIndex, setRemoveDriverIndex] = useState(null);
+
+  const [removeDriver] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER, {
+    context: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+  });
+
+  const handleRemoveDriver = async (idx) => {
+    try {
+      await removeDriver({ variables: { requestId: request?.id, driverIndex: idx } });
+      setRemoveDriverIndex(null);
+      addNotification?.("Водитель удалён", "success");
+    } catch (e) {
+      addNotification?.(e?.graphQLErrors?.[0]?.message ?? "Ошибка при удалении", "error");
+    }
+  };
 
   const [completeEarly, { loading: completingEarly }] = useMutation(
     COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY,
@@ -156,6 +173,16 @@ export default function TransferAccommodationTab({
                   <span className={classes.link}>—</span>
                 )}
               </div>
+              {!readOnly && (
+                <button
+                  type="button"
+                  className={classes.deleteBtn}
+                  onClick={(e) => { e.stopPropagation(); setRemoveDriverIndex(idx); }}
+                  title="Удалить водителя"
+                >
+                  <DeleteIcon cursor="pointer" />
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -183,6 +210,15 @@ export default function TransferAccommodationTab({
           ]}
         />
       </div>
+
+      {removeDriverIndex !== null && (
+        <DeleteComponent
+          title="Вы действительно хотите удалить водителя?"
+          remove={handleRemoveDriver}
+          index={removeDriverIndex}
+          close={() => setRemoveDriverIndex(null)}
+        />
+      )}
 
       {showCompleteModal && (
         <div

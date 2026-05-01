@@ -5,6 +5,7 @@ import classes from "../FapDetail/FapDetail.module.css";
 import lClasses from "./FapLivingSection.module.css";
 import {
   COMPLETE_PASSENGER_REQUEST_LIVING_EARLY,
+  REMOVE_PASSENGER_REQUEST_HOTEL,
   getCookie,
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatDate } from "../fapConstants";
@@ -12,6 +13,7 @@ import Button from "../../../Standart/Button/Button";
 import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentativeHotel";
 import HotelGuestsModal from "./HotelGuestsModal";
 import { useToast } from "../../../../contexts/ToastContext";
+import DeleteIcon from "../../../../shared/icons/DeleteIcon.jsx";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
 export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true }) {
@@ -27,10 +29,15 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
   const [saving, setSaving] = useState(false);
 
   const [hotelMgmtIndex, setHotelMgmtIndex] = useState(null);
+  const [removeHotelIndex, setRemoveHotelIndex] = useState(null);
 
   const statusCfg = SERVICE_STATUS_CONFIG[service?.status] || {};
 
   const [completeLivingEarly] = useMutation(COMPLETE_PASSENGER_REQUEST_LIVING_EARLY, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const [removeHotel] = useMutation(REMOVE_PASSENGER_REQUEST_HOTEL, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
@@ -51,6 +58,20 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
 
   const totalCapacity = hotels.reduce((s, h) => s + (h.peopleCount || 0), 0);
   const totalGuests = hotels.reduce((s, h) => s + (h.people?.length || 0), 0);
+
+  const handleRemoveHotel = async () => {
+    try {
+      setSaving(true);
+      await removeHotel({ variables: { requestId: request.id, hotelIndex: removeHotelIndex } });
+      setRemoveHotelIndex(null);
+      onRefetch();
+      success("Отель удален");
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message ?? "Ошибка при удалении отеля");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleCompleteEarly = async (reason) => {
     try {
@@ -219,6 +240,15 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                         Ссылка
                       </button>
                     ) : null}
+                    {canEdit && !isCompleted && (
+                      <button
+                        className={lClasses.deleteBtn}
+                        onClick={(e) => { e.stopPropagation(); setRemoveHotelIndex(idx); }}
+                        title="Удалить отель"
+                      >
+                        <DeleteIcon cursor="pointer" />
+                      </button>
+                    )}
                     <span className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`}>▾</span>
                   </div>
                 </div>
@@ -324,6 +354,17 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
         reasonLabel="Причина *"
         placeholder="Укажите причину..."
         confirmText="Завершить"
+        cancelText="Отмена"
+        saving={saving}
+      />
+
+      <FapDestructiveModal
+        open={removeHotelIndex !== null}
+        onClose={() => setRemoveHotelIndex(null)}
+        onConfirm={handleRemoveHotel}
+        title="Удалить отель"
+        description="Отель и все его гости будут удалены из заявки. Отчёт по этому отелю также будет удалён. Это действие необратимо."
+        confirmText="Удалить"
         cancelText="Отмена"
         saving={saving}
       />

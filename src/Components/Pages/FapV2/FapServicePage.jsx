@@ -94,6 +94,8 @@ export default function FapServicePage({ user }) {
   }, [request?.representativeLinks, user?.representativeDepartmentId]);
 
   const canEdit = canAccessMenu(accessMenu, "reserveUpdate", user);
+  console.log(accessMenu);
+  
   const canCopyRepresentativeLink = !isExternalUser(user) && Boolean(representativePwaLink);
 
   const handleCopyRepresentativeLink = async () => {

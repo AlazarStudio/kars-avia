@@ -4,8 +4,10 @@ import classes from "../FapDetail/FapDetail.module.css";
 import {
   COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY,
   COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY,
+  REMOVE_PASSENGER_REQUEST_BAGGAGE_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
+import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import { SERVICE_STATUS_CONFIG, formatTime } from "../fapConstants";
 import Button from "../../../Standart/Button/Button";
 import AddRepresentativeBaggageDriver from "../../AddRepresentativeBaggageDriver/AddRepresentativeBaggageDriver";
@@ -28,6 +30,10 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
     { context: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
+  const [removeDriver] = useMutation(REMOVE_PASSENGER_REQUEST_BAGGAGE_DRIVER, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
   const [completeBaggageEarly] = useMutation(
     COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY,
     { context: { headers: { Authorization: `Bearer ${token}` } } }
@@ -45,6 +51,21 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
   const drivers = service.drivers || [];
   const isCompleted =
     service.status === "COMPLETED" || service.status === "CANCELLED";
+
+  const handleRemoveDriver = async (driverIndex) => {
+    const ok = await confirm("Удалить водителя? Это действие нельзя отменить.");
+    if (!ok) return;
+    try {
+      setSaving(true);
+      await removeDriver({ variables: { requestId: request.id, driverIndex } });
+      onRefetch();
+      success("Водитель удалён");
+    } catch {
+      notifyError("Ошибка при удалении");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleCompleteDelivery = async (driverIndex) => {
     const ok = await confirm("Отметить доставку выполненной?");
@@ -176,6 +197,17 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
                         Ссылка
                       </button>
                     ) : null}
+                    {canEdit && !isCompleted && (
+                      <button
+                        type="button"
+                        style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+                        onClick={(e) => { e.stopPropagation(); handleRemoveDriver(idx); }}
+                        title="Удалить водителя"
+                        disabled={saving}
+                      >
+                        <DeleteIcon cursor="pointer" />
+                      </button>
+                    )}
                     {done ? (
                       <span className={classes.deliveryDone}>
                         ✓ Доставлено

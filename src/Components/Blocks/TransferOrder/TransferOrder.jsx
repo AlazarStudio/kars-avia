@@ -652,9 +652,10 @@ function TransferOrder({ user, token, accessMenu }) {
           <div
             className={classes.mapWrapper}
             style={
-              status !== "PENDING" &&
-              status !== "ASSIGNED" &&
-              status !== "ACCEPTED"
+              !canAssignDriver ||
+              (status !== "PENDING" &&
+                status !== "ASSIGNED" &&
+                status !== "ACCEPTED")
                 ? { height: "100%" }
                 : {}
             }

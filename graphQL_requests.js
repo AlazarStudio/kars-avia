@@ -1812,9 +1812,25 @@ export const ADD_PASSENGER_REQUEST_HOTEL = gql`
   }
 `;
 
+export const REMOVE_PASSENGER_REQUEST_HOTEL = gql`
+  mutation RemovePassengerRequestHotel($requestId: ID!, $hotelIndex: Int!) {
+    removePassengerRequestHotel(requestId: $requestId, hotelIndex: $hotelIndex) {
+      id
+    }
+  }
+`;
+
 export const ADD_PASSENGER_REQUEST_DRIVER = gql`
   mutation AddPassengerRequestDriver($requestId: ID!, $driver: PassengerServiceDriverInput!) {
     addPassengerRequestDriver(requestId: $requestId, driver: $driver) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_DRIVER = gql`
+  mutation RemovePassengerRequestDriver($requestId: ID!, $driverIndex: Int!) {
+    removePassengerRequestDriver(requestId: $requestId, driverIndex: $driverIndex) {
       id
     }
   }
@@ -2043,6 +2059,14 @@ export const ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
       baggageDeliveryService {
         drivers { fullName phone pickupAt link linkPWA addressFrom addressTo description }
       }
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
+  mutation RemovePassengerRequestBaggageDriver($requestId: ID!, $driverIndex: Int!) {
+    removePassengerRequestBaggageDriver(requestId: $requestId, driverIndex: $driverIndex) {
+      id
     }
   }
 `;

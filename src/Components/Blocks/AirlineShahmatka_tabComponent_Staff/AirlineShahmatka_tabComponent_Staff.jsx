@@ -309,7 +309,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
     }
   };
   
-  console.log(accessMenu);
+  // console.log(accessMenu);
 
   // if (loading || bronLoading) return <MUILoader fullHeight={"70vh"} />;
   // if (error || bronError)
@@ -413,6 +413,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
         id={id}
         user={user}
         accessMenu={accessMenu}
+        refetch={refetch}
         setDeleteIndex={setDeleteIndex}
         show={showUpdateCategory}
         setShowDelete={setShowDelete}

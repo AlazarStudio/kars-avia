@@ -11,7 +11,6 @@ import {
   getCookie,
 } from '../../../../../../graphQL_requests'
 import { findDocById } from '../docTreeUtils'
-import { loadTreeOrder, applyTreeOrder } from '../../documentationTreeOrder'
 import DocumentationListLeftPanel from '../DocumentationListLeftPanel/DocumentationListLeftPanel'
 import DocumentListTiptapPanelContent from '../DocumentationListPanelContent/DocumentListTiptapPanelContent'
 import DocumentationListRightPanel from '../DocumentationListRightPanel/DocumentationListRightPanel'
@@ -525,13 +524,8 @@ function DocumentationList1({
 
       if (isCancelled()) return
 
-      const savedOrder = loadTreeOrder(documentationType)
-      const orderedTree = savedOrder
-        ? applyTreeOrder(nextTreeWithOpenState, savedOrder)
-        : nextTreeWithOpenState
-
       skipNextTreeSyncRef.current = true
-      setTree(orderedTree)
+      setTree(nextTreeWithOpenState)
       setDraftHydrationVersion(prev => prev + 1)
     },
     [documentationType]

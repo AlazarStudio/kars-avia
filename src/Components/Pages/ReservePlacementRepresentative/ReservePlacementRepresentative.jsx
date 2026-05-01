@@ -179,7 +179,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       },
     },
     onData: ({ data }) => {
-      console.log(data);
+      // console.log(data);
       refetch();
     },
   });
@@ -944,7 +944,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       request={request}
                       onStatusChanged={() => {
                         refetch();
-                        refetchHotel();
+                        // refetchHotel();
                       }}
                       addNotification={addNotification}
                       readOnly={isAirlineRole}
@@ -962,7 +962,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       request={request}
                       onStatusChanged={() => {
                         refetch();
-                        refetchHotel();
+                        // refetchHotel();
                       }}
                       addNotification={addNotification}
                       readOnly={isAirlineRole}
