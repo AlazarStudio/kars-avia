@@ -15,7 +15,7 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
-export default function FapBaggageSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true }) {
+export default function FapBaggageSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true, showLinks = true }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const { confirm } = useDialog();
@@ -178,7 +178,7 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    {driver.linkPWA ? (
+                    {showLinks && (driver.linkPWA ? (
                       <button
                         type="button"
                         className={classes.linkBtn}
@@ -196,7 +196,7 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
                       >
                         Ссылка
                       </button>
-                    ) : null}
+                    ) : null)}
                     {canEdit && !isCompleted && (
                       <button
                         type="button"

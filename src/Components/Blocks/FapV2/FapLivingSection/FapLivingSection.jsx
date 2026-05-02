@@ -16,7 +16,7 @@ import { useToast } from "../../../../contexts/ToastContext";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon.jsx";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
-export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true }) {
+export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true, showLinks = true }) {
   const navigate = useNavigate();
   const { requestId } = useParams();
   const token = getCookie("token");
@@ -210,7 +210,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                     >
                       Гости
                     </button>
-                    {(hotel.linkCRM || hotel.linkPWA) ? (
+                    {showLinks && ((hotel.linkCRM || hotel.linkPWA) ? (
                       <>
                         {hotel.linkCRM && (
                           <button
@@ -239,7 +239,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                       >
                         Ссылка
                       </button>
-                    ) : null}
+                    ) : null)}
                     {canEdit && !isCompleted && (
                       <button
                         className={lClasses.deleteBtn}

@@ -104,7 +104,7 @@ export default function TransferAccommodationTab({
           <div className={`${classes.w20} ${classes.jcCenter}`}>
             Кол-во пассажиров
           </div>
-          <div className={`${classes.w10} ${classes.jcEnd}`}>Ссылка</div>
+          {!readOnly && <div className={`${classes.w10} ${classes.jcEnd}`}>Ссылка</div>}
           {!!request?.transferService?.plan?.peopleCount && (
             <span className={classes.countChip}>
               <PeopleCountIcon /> {request.transferService.plan.peopleCount}
@@ -142,37 +142,37 @@ export default function TransferAccommodationTab({
               <div className={`${classes.w20} ${classes.jcCenter}`}>
                 {d.peopleCount ?? "—"}
               </div>
-              <div className={`${classes.w10} ${classes.jcEnd}`}>
-                {readOnly ? (
-                  <span className={classes.link}>—</span>
-                ) : d.linkPWA ? (
-                  <button
-                    type="button"
-                    className={classes.link}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyLink(d.linkPWA);
-                    }}
-                    title="Скопировать PWA-ссылку"
-                  >
-                    PWA <CopyIcon />
-                  </button>
-                ) : d.link ? (
-                  <button
-                    type="button"
-                    className={classes.link}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyLink(d.link);
-                    }}
-                    title="Скопировать ссылку"
-                  >
-                    Ссылка <CopyIcon />
-                  </button>
-                ) : (
-                  <span className={classes.link}>—</span>
-                )}
-              </div>
+              {!readOnly && (
+                <div className={`${classes.w10} ${classes.jcEnd}`}>
+                  {d.linkPWA ? (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyLink(d.linkPWA);
+                      }}
+                      title="Скопировать PWA-ссылку"
+                    >
+                      PWA <CopyIcon />
+                    </button>
+                  ) : d.link ? (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyLink(d.link);
+                      }}
+                      title="Скопировать ссылку"
+                    >
+                      Ссылка <CopyIcon />
+                    </button>
+                  ) : (
+                    <span className={classes.link}>—</span>
+                  )}
+                </div>
+              )}
               {!readOnly && (
                 <button
                   type="button"

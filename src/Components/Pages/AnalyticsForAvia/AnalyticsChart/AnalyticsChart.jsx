@@ -546,8 +546,8 @@ function AnalyticsChart({
   };
 
   return (
-    <div className={classes.container} style={fullWidth ? { width: "100%" } : undefined}>
-      {title && <h4 className={classes.title}>{title}</h4>}
+    <div className={classes.container} data-analytics-chart data-chart-type={type} style={fullWidth ? { width: "100%" } : undefined}>
+      {title && <h4 className={classes.title} data-analytics-chart-title>{title}</h4>}
       {renderChart()}
     </div>
   );

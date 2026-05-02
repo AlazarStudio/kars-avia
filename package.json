@@ -39,6 +39,7 @@
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "emoji-picker-react": "^4.12.0",
+    "exceljs": "^4.4.0",
     "graphql": "^16.9.0",
     "graphql-ws": "^5.16.0",
     "html2canvas": "^1.4.1",

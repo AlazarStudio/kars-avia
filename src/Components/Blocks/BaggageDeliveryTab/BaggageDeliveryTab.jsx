@@ -102,7 +102,7 @@ export default function BaggageDeliveryTab({
           <div className={`${classes.w18} ${classes.jcCenter}`}>Адрес прибытия</div>
           <div className={`${classes.w12} ${classes.jcCenter}`}>Время</div>
           <div className={`${classes.w18} ${classes.jcCenter}`}>Описание</div>
-          <div className={`${classes.w10} ${classes.jcEnd}`}>Ссылка</div>
+          {!readOnly && <div className={`${classes.w10} ${classes.jcEnd}`}>Ссылка</div>}
         </div>
         <div className={classes.tableCard}>
           {drivers.map((d, idx) => (
@@ -131,31 +131,31 @@ export default function BaggageDeliveryTab({
               <div className={`${classes.w18} ${classes.jcCenter}`}>
                 {d.description ?? "—"}
               </div>
-              <div className={`${classes.w10} ${classes.jcEnd}`}>
-                {readOnly ? (
-                  <span className={classes.link}>—</span>
-                ) : d.linkPWA ? (
-                  <button
-                    type="button"
-                    className={classes.link}
-                    onClick={(e) => copyLink(d.linkPWA, e)}
-                    title="Скопировать PWA-ссылку"
-                  >
-                    PWA <CopyIcon />
-                  </button>
-                ) : d.link ? (
-                  <button
-                    type="button"
-                    className={classes.link}
-                    onClick={(e) => copyLink(d.link, e)}
-                    title="Скопировать ссылку"
-                  >
-                    Ссылка <CopyIcon />
-                  </button>
-                ) : (
-                  <span className={classes.link}>—</span>
-                )}
-              </div>
+              {!readOnly && (
+                <div className={`${classes.w10} ${classes.jcEnd}`}>
+                  {d.linkPWA ? (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => copyLink(d.linkPWA, e)}
+                      title="Скопировать PWA-ссылку"
+                    >
+                      PWA <CopyIcon />
+                    </button>
+                  ) : d.link ? (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => copyLink(d.link, e)}
+                      title="Скопировать ссылку"
+                    >
+                      Ссылка <CopyIcon />
+                    </button>
+                  ) : (
+                    <span className={classes.link}>—</span>
+                  )}
+                </div>
+              )}
               {!readOnly && (
                 <button
                   type="button"

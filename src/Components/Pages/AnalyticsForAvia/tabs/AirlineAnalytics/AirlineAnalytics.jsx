@@ -6,7 +6,6 @@ import {
   useCallback,
   useRef,
 } from "react";
-import * as XLSX from "xlsx";
 import classes from "./AirlineAnalytics.module.css";
 import AnalyticsChart from "../../AnalyticsChart/AnalyticsChart";
 import DateRangePickerCustom from "../../DateRangePickerCustom";
@@ -447,6 +446,9 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
 
   const [tableSortById, setTableSortById] = useState({});
   const [pdfExporting, setPdfExporting] = useState(null);
+  const [xlsxExporting, setXlsxExporting] = useState(false);
+  const [xlsxPct, setXlsxPct] = useState(0);
+  const [xlsxHint, setXlsxHint] = useState("");
   const analyticsPdfRef = useRef(null);
 
   const handleExportAnalyticsPdf = useCallback(async () => {
@@ -655,150 +657,379 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
     }
   }, [pdfExporting, selectedAirline?.name, airlines[0]?.name]);
 
-  const handleExportXlsx = useCallback(() => {
+  const handleExportXlsx = useCallback(async () => {
     if (!period1Result && !period2Result) return;
-
-    const autoWidth = (ws, rows) => {
-      if (!rows.length) return ws;
-      const widths = rows[0].map((_, ci) =>
-        Math.max(10, ...rows.map((row) => String(row[ci] ?? "").length + 2))
+    const newWin = window.open("about:blank", "_blank");
+    if (newWin) {
+      newWin.document.write(
+        '<!DOCTYPE html><html><head><title>Формирование xlsx...</title></head>' +
+        '<body style="display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif;background:#f5f7fa">' +
+        '<p style="color:#555;font-size:17px">Файл формируется, пожалуйста подождите...</p></body></html>'
       );
-      ws["!cols"] = widths.map((wch) => ({ wch }));
-      return ws;
-    };
+    }
+    setXlsxPct(0);
+    setXlsxHint("Подготовка данных...");
+    setXlsxExporting(true);
+    const xlsxStart = Date.now();
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - xlsxStart;
+      setXlsxPct(Math.min(90, Math.round((elapsed / 4500) * 90)));
+      if (elapsed < 1500) setXlsxHint("Подготовка данных...");
+      else if (elapsed < 3000) setXlsxHint("Формирование графиков...");
+      else setXlsxHint("Формирование таблиц...");
+    }, 120);
+    try {
+      const [{ default: ExcelJS }, { default: html2canvas }] = await Promise.all([
+        import("exceljs"),
+        import("html2canvas"),
+      ]);
+      const workbook = new ExcelJS.Workbook();
+      const COL_PX = 60; // ~пикселей на колонку Excel (для расчёта позиции правого графика)
+      const ROW_PX = 20; // ~пикселей на строку Excel
 
-    const makeSheet = (rows) => autoWidth(XLSX.utils.aoa_to_sheet(rows), rows);
+      const isCompare = isPeriodMultiChart;
+      const p1Label = appliedAnalytics ? formatPeriodHuman(appliedAnalytics.mainRange) : "Период 1";
+      const p2Label = (isCompare && appliedAnalytics?.compareRange)
+        ? formatPeriodHuman(appliedAnalytics.compareRange)
+        : "Период 2";
 
-    const wb = XLSX.utils.book_new();
-    const isCompare = isPeriodMultiChart;
-    const p1Label = appliedAnalytics ? formatPeriodHuman(appliedAnalytics.mainRange) : "Период 1";
-    const p2Label = (isCompare && appliedAnalytics?.compareRange)
-      ? formatPeriodHuman(appliedAnalytics.compareRange)
-      : "Период 2";
+      // ── Helpers ───────────────────────────────────────────────────────────
 
-    // Сводка
-    {
-      const header = ["Услуга", "Заявки", "Уник. люди", "Бюджет, ₽", "Комнаты"];
-      if (isCompare) header.push(`Заявки (${p2Label})`, `Уник. люди (${p2Label})`, `Бюджет, ₽ (${p2Label})`, `Комнаты (${p2Label})`);
-      const rows = [header];
+      // Быстрый захват SVG-элемента (для bar/line графиков без HTML-легенды)
+      const svgToPng = (svgEl) =>
+        new Promise((resolve) => {
+          const rect = svgEl.getBoundingClientRect();
+          const w = Math.max(rect.width || 0, 200);
+          const h = Math.max(rect.height || 0, 100);
+          // Recharts рисует rotated x-axis labels (angle=-28) ниже границы SVG.
+          // overflow="visible" не помогает при рендере SVG через <img> — браузер обрезает по viewBox.
+          // Решение: расширяем viewBox вниз на PAD px, тогда labels попадают в viewport SVG.
+          // PAD=150: длинные кириллические названия ("Заместитель директора" ~189px × sin28° ≈ 89px overflow)
+          const PAD = 150;
+          const cloned = svgEl.cloneNode(true);
+          cloned.setAttribute("width", w);
+          cloned.setAttribute("height", h + PAD);
+          cloned.setAttribute("viewBox", `0 0 ${w} ${h + PAD}`);
+          cloned.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+          const svgStr = new XMLSerializer().serializeToString(cloned);
+          const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const SCALE = 2;
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = w * SCALE;
+            canvas.height = (h + PAD) * SCALE;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.scale(SCALE, SCALE);
+            ctx.drawImage(img, 0, 0, w, h + PAD);
+            URL.revokeObjectURL(url);
+            resolve({ base64: canvas.toDataURL("image/png").split(",")[1], w, h: h + PAD });
+          };
+          img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+          img.src = url;
+        });
+
+      // Захват одного [data-analytics-chart] элемента.
+      // Pie: html2canvas (нужна HTML-легенда). Остальные: быстрый svgToPng.
+      // Возвращает { base64, w, h, title } или null.
+      const captureChart = async (el) => {
+        const chartType = el.getAttribute("data-chart-type");
+        const titleEl = el.querySelector("[data-analytics-chart-title]");
+        const title = titleEl?.textContent?.trim() || "";
+        if (chartType === "pie") {
+          const rect = el.getBoundingClientRect();
+          if (!rect.width || !rect.height) return null;
+          try {
+            const canvas = await html2canvas(el, {
+              scale: 2,
+              backgroundColor: "#ffffff",
+              logging: false,
+              useCORS: false,
+              allowTaint: false,
+              ignoreElements: (node) => Boolean(node?.classList?.contains("pdfNoCapture")),
+              onclone: (_doc, cloned) => {
+                for (const img of cloned.querySelectorAll("img")) img.remove();
+              },
+            });
+            return {
+              base64: canvas.toDataURL("image/png").split(",")[1],
+              w: Math.round(rect.width),
+              h: Math.round(rect.height),
+              title: "", // уже внутри изображения
+            };
+          } catch { return null; }
+        } else {
+          const svgEl = el.querySelector("svg.recharts-surface");
+          if (!svgEl) return null;
+          const result = await svgToPng(svgEl);
+          if (!result) return null;
+          return { ...result, title };
+        }
+      };
+
+      // Добавляет графики 2-в-ряд на лист. startRow — 1-indexed. Возвращает следующую свободную 1-indexed строку.
+      const addChartsToSheet = async (ws, chartEls, startRow) => {
+        if (!chartEls || chartEls.length === 0) return startRow;
+        const charts = [];
+        for (const el of chartEls) {
+          const result = await captureChart(el);
+          if (!result) continue;
+          charts.push(result);
+        }
+        if (!charts.length) return startRow;
+
+        let row = startRow;
+        for (let i = 0; i < charts.length; i += 2) {
+          const left = charts[i];
+          const right = charts[i + 1];
+          const colRight = Math.ceil(left.w / COL_PX) + 1;
+          // Заголовки (только если title есть — bar-графики; pie уже содержит title внутри)
+          if (left.title || right?.title) {
+            if (left.title) {
+              ws.getRow(row).getCell(1).value = left.title;
+              ws.getRow(row).getCell(1).font = { bold: true, size: 11 };
+            }
+            if (right?.title) {
+              ws.getRow(row).getCell(colRight + 1).value = right.title;
+              ws.getRow(row).getCell(colRight + 1).font = { bold: true, size: 11 };
+            }
+            row++;
+          }
+          const row0 = row - 1; // 0-indexed для addImage
+          const leftId = workbook.addImage({ base64: left.base64, extension: "png" });
+          ws.addImage(leftId, { tl: { col: 0, row: row0 }, ext: { width: left.w, height: left.h } });
+          if (right) {
+            const rightId = workbook.addImage({ base64: right.base64, extension: "png" });
+            ws.addImage(rightId, { tl: { col: colRight, row: row0 }, ext: { width: right.w, height: right.h } });
+          }
+          const maxH = Math.max(left.h, right?.h ?? 0);
+          row += Math.ceil(maxH / ROW_PX) + 1;
+        }
+        return row;
+      };
+
+      // Добавляет секцию с заголовком и таблицей. startRow1 — 1-indexed. Возвращает следующую 1-indexed строку.
+      const addTableBlock = (ws, sectionTitle, headers, dataRows, startRow1) => {
+        const tc = ws.getRow(startRow1).getCell(1);
+        tc.value = sectionTitle;
+        tc.font = { bold: true, size: 12 };
+        let r1 = startRow1 + 1;
+        const hdr = ws.getRow(r1);
+        headers.forEach((h, i) => { hdr.getCell(i + 1).value = h; });
+        hdr.font = { bold: true };
+        hdr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8EAF6" } };
+        r1++;
+        for (const dr of dataRows) {
+          const row = ws.getRow(r1);
+          dr.forEach((v, i) => { row.getCell(i + 1).value = v; });
+          r1++;
+        }
+        const allRows = [headers, ...dataRows];
+        for (let ci = 1; ci <= headers.length; ci++) {
+          const cur = ws.getColumn(ci).width || 10;
+          ws.getColumn(ci).width = Math.max(cur, ...allRows.map((row) => String(row[ci - 1] ?? "").length + 2));
+        }
+        return r1 + 1;
+      };
+
+      // Простой лист из массива строк (для Заявок / Трансферов)
+      const addSheet = (name, rows) => {
+        if (!rows.length) return;
+        const ws = workbook.addWorksheet(name);
+        for (const row of rows) ws.addRow(row);
+        const colCount = rows[0].length;
+        for (let ci = 1; ci <= colCount; ci++) {
+          ws.getColumn(ci).width = Math.max(10, ...rows.map((r) => String(r[ci - 1] ?? "").length + 2));
+        }
+        const hdr = ws.getRow(1);
+        hdr.font = { bold: true };
+        hdr.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8EAF6" } };
+      };
+
+      // ── Лист «Сводка» ─────────────────────────────────────────────────────
+      {
+        const header = ["Услуга", "Заявки", "Уник. люди", "Бюджет, ₽", "Комнаты"];
+        if (isCompare) header.push(`Заявки (${p2Label})`, `Уник. люди (${p2Label})`, `Бюджет, ₽ (${p2Label})`, `Комнаты (${p2Label})`);
+        const rows = [header];
+        for (const sk of serviceKeys) {
+          const sb1 = getServiceBlock(period1Result, sk);
+          const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
+          const row = [
+            SERVICE_LABELS[sk] || sk,
+            Number(sb1?.totalRequests) || 0,
+            Number(sb1?.uniquePeopleCount) || 0,
+            Number(sb1?.totalBudget) || 0,
+            sk === "LIVING" ? (Number(sb1?.usedRoomsCount) || 0) : "",
+          ];
+          if (isCompare) row.push(
+            Number(sb2?.totalRequests) || 0,
+            Number(sb2?.uniquePeopleCount) || 0,
+            Number(sb2?.totalBudget) || 0,
+            sk === "LIVING" ? (Number(sb2?.usedRoomsCount) || 0) : "",
+          );
+          rows.push(row);
+        }
+        addSheet("Сводка", rows);
+      }
+
+      // ── Листы по услугам: позиц.графики → таблица должностей → аэропорт.графики → таблица аэропортов ──
+      const root = analyticsPdfRef.current;
       for (const sk of serviceKeys) {
         const sb1 = getServiceBlock(period1Result, sk);
         const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
-        const row = [
-          SERVICE_LABELS[sk] || sk,
-          Number(sb1?.totalRequests) || 0,
-          Number(sb1?.uniquePeopleCount) || 0,
-          Number(sb1?.totalBudget) || 0,
-          sk === "LIVING" ? (Number(sb1?.usedRoomsCount) || 0) : "",
-        ];
-        if (isCompare) row.push(
-          Number(sb2?.totalRequests) || 0,
-          Number(sb2?.uniquePeopleCount) || 0,
-          Number(sb2?.totalBudget) || 0,
-          sk === "LIVING" ? (Number(sb2?.usedRoomsCount) || 0) : "",
-        );
-        rows.push(row);
-      }
-      XLSX.utils.book_append_sheet(wb, makeSheet(rows), "Сводка");
-    }
+        const isLiving = sk === "LIVING";
+        const serviceLabel = SERVICE_LABELS[sk] || sk;
+        const ws = workbook.addWorksheet(serviceLabel);
 
-    // Аэропорты (по каждой услуге)
-    for (const sk of serviceKeys) {
-      const sb1 = getServiceBlock(period1Result, sk);
-      const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
-      const mergedRows = mergeAirportRows(sb1?.airports, sb2?.airports, isCompare);
-      const isLiving = sk === "LIVING";
-      const header = ["Аэропорт", "Заявки", "Уник. люди", "Бюджет, ₽"];
-      if (isLiving) header.push("Комнаты");
-      if (isCompare) {
-        header.push(`Заявки (${p2Label})`, `Уник. люди (${p2Label})`, `Бюджет, ₽ (${p2Label})`);
-        if (isLiving) header.push(`Комнаты (${p2Label})`);
-      }
-      const rows = [header];
-      for (const r of mergedRows) {
-        const row = [
-          r.name,
-          Number(r.p1?.requestsCount) || 0,
-          Number(r.p1?.uniquePeopleCount) || 0,
-          Number(r.p1?.budget) || 0,
-        ];
-        if (isLiving) row.push(Number(r.p1?.usedRoomsCount) || 0);
-        if (isCompare) {
-          row.push(Number(r.p2?.requestsCount) || 0, Number(r.p2?.uniquePeopleCount) || 0, Number(r.p2?.budget) || 0);
-          if (isLiving) row.push(Number(r.p2?.usedRoomsCount) || 0);
+        // Заголовок листа (строка 1)
+        const sheetTitleCell = ws.getRow(1).getCell(1);
+        sheetTitleCell.value = serviceLabel;
+        sheetTitleCell.font = { bold: true, size: 14 };
+
+        const serviceSection = root ? root.querySelector(`[data-service="${sk}"]`) : null;
+        let row = 2; // текущая строка (1-indexed)
+
+        // 1. Графики должностей (pie + bar)
+        const posChartSection = serviceSection?.querySelector("[data-chart-section='positions']");
+        if (posChartSection) {
+          const chartEls = posChartSection.querySelectorAll("[data-analytics-chart]");
+          row = await addChartsToSheet(ws, chartEls, row);
+          row += 1;
         }
-        rows.push(row);
-      }
-      XLSX.utils.book_append_sheet(wb, makeSheet(rows), `Аэропорты ${SERVICE_LABELS[sk] || sk}`.slice(0, 31));
-    }
 
-    // Должности (по каждой услуге)
-    for (const sk of serviceKeys) {
-      const sb1 = getServiceBlock(period1Result, sk);
-      const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
-      const mergedRows = mergePositionRows(sb1?.positions, sb2?.positions, isCompare);
-      const header = ["Должность", "Кол-во", "%", "Бюджет, ₽"];
-      if (isCompare) header.push(`Кол-во (${p2Label})`, `% (${p2Label})`, `Бюджет, ₽ (${p2Label})`);
-      const rows = [header];
-      for (const r of mergedRows) {
-        const row = [r.name || "", Number(r.p1?.count) || 0, Number(r.p1?.percent) || 0, Number(r.p1?.budget) || 0];
-        if (isCompare) row.push(Number(r.p2?.count) || 0, Number(r.p2?.percent) || 0, Number(r.p2?.budget) || 0);
-        rows.push(row);
-      }
-      XLSX.utils.book_append_sheet(wb, makeSheet(rows), `Должности ${SERVICE_LABELS[sk] || sk}`.slice(0, 31));
-    }
+        // 2. Таблица должностей
+        if (sk !== "TRANSFER") {
+          const mergedPos = mergePositionRows(sb1?.positions, sb2?.positions, isCompare);
+          if (mergedPos.length > 0) {
+            const posHeader = ["Должность", "Кол-во", "%", "Бюджет, ₽"];
+            if (isCompare) posHeader.push(`Кол-во (${p2Label})`, `% (${p2Label})`, `Бюджет, ₽ (${p2Label})`);
+            const posDataRows = mergedPos.map((r) => {
+              const dr = [r.name || "", Number(r.p1?.count) || 0, Number(r.p1?.percent) || 0, Number(r.p1?.budget) || 0];
+              if (isCompare) dr.push(Number(r.p2?.count) || 0, Number(r.p2?.percent) || 0, Number(r.p2?.budget) || 0);
+              return dr;
+            });
+            row = addTableBlock(ws, "Должности", posHeader, posDataRows, row);
+          }
+        }
 
-    // Заявки (LIVING + MEAL)
-    const buildReqSheet = (rows) => {
-      const data = [["№ заявки", "Сотрудник", "Должность", "Аэропорт", "Проживание, ₽", "Питание, ₽", "Трансфер, ₽", "Итого, ₽"]];
-      for (const r of rows) {
-        data.push([
-          r.requestNumber || r.requestId || "",
-          r.personName || "",
-          r.positionName || "",
-          r.airportCode || r.airportName || "",
-          Number(r.livingBudget) || 0,
-          Number(r.mealBudget) || 0,
-          Number(r.transferBudget) || 0,
-          sumRequestServiceBudgets(r),
-        ]);
-      }
-      return makeSheet(data);
-    };
-    if (mergedRequestsPeriod1.length > 0) {
-      XLSX.utils.book_append_sheet(wb, buildReqSheet(mergedRequestsPeriod1), isCompare ? "Заявки П1" : "Заявки");
-    }
-    if (isCompare && mergedRequestsPeriod2.length > 0) {
-      XLSX.utils.book_append_sheet(wb, buildReqSheet(mergedRequestsPeriod2), "Заявки П2");
-    }
+        // 3. Графики аэропортов (каждый airportBarsRow — отдельная пара 2-в-ряд)
+        if (sk !== "TRANSFER" && serviceSection) {
+          const airportRows = serviceSection.querySelectorAll("[data-chart-section='airports-row']");
+          if (airportRows.length > 0) {
+            ws.getRow(row).getCell(1).value = "Аэропорты";
+            ws.getRow(row).getCell(1).font = { bold: true, size: 12 };
+            row++;
+          }
+          for (const barRow of airportRows) {
+            const chartEls = barRow.querySelectorAll("[data-analytics-chart]");
+            row = await addChartsToSheet(ws, chartEls, row);
+            row += 1;
+          }
+        }
 
-    // Трансферы
-    const buildTransferSheet = (rows) => {
-      const data = [["№", "Откуда", "Куда", "Пассажиры", "Уник. люди", "Бюджет, ₽"]];
-      for (const r of rows) {
-        data.push([
-          r.requestNumber || r.transferId || "",
-          r.fromAddress || "",
-          r.toAddress || "",
-          Number(r.passengersCount) || 0,
-          Number(r.uniquePeopleCount) || 0,
-          Number(r.budget) || 0,
-        ]);
+        // 4. Таблица аэропортов
+        if (sk !== "TRANSFER") {
+          const mergedAp = mergeAirportRows(sb1?.airports, sb2?.airports, isCompare);
+          if (mergedAp.length > 0) {
+            const apHeader = ["Аэропорт", "Заявки", "Уник. люди", "Бюджет, ₽"];
+            if (isLiving) apHeader.push("Комнаты");
+            if (isCompare) {
+              apHeader.push(`Заявки (${p2Label})`, `Уник. люди (${p2Label})`, `Бюджет, ₽ (${p2Label})`);
+              if (isLiving) apHeader.push(`Комнаты (${p2Label})`);
+            }
+            const apDataRows = mergedAp.map((r) => {
+              const dr = [r.name, Number(r.p1?.requestsCount) || 0, Number(r.p1?.uniquePeopleCount) || 0, Number(r.p1?.budget) || 0];
+              if (isLiving) dr.push(Number(r.p1?.usedRoomsCount) || 0);
+              if (isCompare) {
+                dr.push(Number(r.p2?.requestsCount) || 0, Number(r.p2?.uniquePeopleCount) || 0, Number(r.p2?.budget) || 0);
+                if (isLiving) dr.push(Number(r.p2?.usedRoomsCount) || 0);
+              }
+              return dr;
+            });
+            addTableBlock(ws, "Аэропорты", apHeader, apDataRows, row);
+          }
+        }
       }
-      return makeSheet(data);
-    };
-    const tr1 = getServiceBlock(period1Result, "TRANSFER")?.transfers ?? [];
-    const tr2 = isCompare ? (getServiceBlock(period2Result, "TRANSFER")?.transfers ?? []) : [];
-    if (tr1.length > 0) {
-      XLSX.utils.book_append_sheet(wb, buildTransferSheet(tr1), isCompare ? "Трансфер П1" : "Трансфер");
-    }
-    if (isCompare && tr2.length > 0) {
-      XLSX.utils.book_append_sheet(wb, buildTransferSheet(tr2), "Трансфер П2");
-    }
 
-    const airlineTitle = selectedAirline?.name ?? "Аналитика";
-    const safeSlug = airlineTitle.replace(/[\\/:*?"<>|]+/g, " ").trim();
-    XLSX.writeFile(wb, `Аналитика_${safeSlug}_${format(new Date(), "dd-MM-yyyy_HH-mm")}.xlsx`);
+      // ── Заявки ────────────────────────────────────────────────────────────
+      const buildReqRows = (rows) => {
+        const data = [["№ заявки", "Сотрудник", "Должность", "Аэропорт", "Проживание, ₽", "Питание, ₽", "Трансфер, ₽", "Итого, ₽"]];
+        for (const r of rows) {
+          data.push([
+            r.requestNumber || r.requestId || "",
+            r.personName || "",
+            r.positionName || "",
+            r.airportCode || r.airportName || "",
+            Number(r.livingBudget) || 0,
+            Number(r.mealBudget) || 0,
+            Number(r.transferBudget) || 0,
+            sumRequestServiceBudgets(r),
+          ]);
+        }
+        return data;
+      };
+      if (mergedRequestsPeriod1.length > 0) addSheet(isCompare ? "Заявки П1" : "Заявки", buildReqRows(mergedRequestsPeriod1));
+      if (isCompare && mergedRequestsPeriod2.length > 0) addSheet("Заявки П2", buildReqRows(mergedRequestsPeriod2));
+
+      // ── Трансферы ─────────────────────────────────────────────────────────
+      const buildTransferRows = (rows) => {
+        const data = [["№", "Откуда", "Куда", "Пассажиры", "Уник. люди", "Бюджет, ₽"]];
+        for (const r of rows) {
+          data.push([
+            r.requestNumber || r.transferId || "",
+            r.fromAddress || "",
+            r.toAddress || "",
+            Number(r.passengersCount) || 0,
+            Number(r.uniquePeopleCount) || 0,
+            Number(r.budget) || 0,
+          ]);
+        }
+        return data;
+      };
+      const tr1 = getServiceBlock(period1Result, "TRANSFER")?.transfers ?? [];
+      const tr2 = isCompare ? (getServiceBlock(period2Result, "TRANSFER")?.transfers ?? []) : [];
+      if (tr1.length > 0) addSheet(isCompare ? "Трансфер П1" : "Трансфер", buildTransferRows(tr1));
+      if (isCompare && tr2.length > 0) addSheet("Трансфер П2", buildTransferRows(tr2));
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const airlineTitle = selectedAirline?.name ?? "Аналитика";
+      const safeSlug = airlineTitle.replace(/[\\/:*?"<>|]+/g, " ").trim();
+      const fileName = `Аналитика_${safeSlug}_${format(new Date(), "dd-MM-yyyy_HH-mm")}.xlsx`;
+
+      clearInterval(progressInterval);
+      setXlsxPct(100);
+      setXlsxHint("Готово!");
+
+      const elapsed = Date.now() - xlsxStart;
+      if (elapsed < 5000) await new Promise((r) => setTimeout(r, 5000 - elapsed));
+
+      if (newWin && !newWin.closed) {
+        const a = newWin.document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        newWin.document.body.appendChild(a);
+        a.click();
+        newWin.document.body.removeChild(a);
+        setTimeout(() => { URL.revokeObjectURL(url); try { newWin.close(); } catch (_) {} }, 3000);
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } finally {
+      clearInterval(progressInterval);
+      setXlsxExporting(false);
+      setXlsxPct(0);
+    }
   }, [
     period1Result, period2Result, isPeriodMultiChart, serviceKeys,
     mergedRequestsPeriod1, mergedRequestsPeriod2,
@@ -1105,6 +1336,18 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
               />
             </div>
             <p className={classes.pdfOverlayHint}>{pdfHint}</p>
+          </div>
+        </div>
+      )}
+      {xlsxExporting && (
+        <div className={classes.pdfOverlay}>
+          <div className={classes.pdfOverlayCard}>
+            <p className={classes.pdfOverlayTitle}>Формирование xlsx</p>
+            <p className={classes.pdfOverlayPercent}>{xlsxPct}%</p>
+            <div className={classes.pdfOverlayBarTrack}>
+              <div className={classes.pdfOverlayBarFill} style={{ width: `${xlsxPct}%` }} />
+            </div>
+            <p className={classes.pdfOverlayHint}>{xlsxHint}</p>
           </div>
         </div>
       )}
@@ -1434,8 +1677,9 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                       type="button"
                       className={classes.exportXlsxButton}
                       onClick={handleExportXlsx}
+                      disabled={xlsxExporting}
                     >
-                      Выгрузить xlsx
+                      {xlsxExporting ? "Формирование..." : "Выгрузить xlsx"}
                     </button>
                     <button
                       type="button"
@@ -1574,7 +1818,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                 </div>
               ) : analyticsLoading ? (
                 <div className={classes.loaderWrap}>
-                  <MUILoader fullHeight="55vh" />
+                  <MUILoader fullHeight="65vh" />
                 </div>
               ) : (
                 <>
@@ -1764,9 +2008,10 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                           <div
                             key={serviceKey}
                             className={classes.serviceSection}
+                            data-service={serviceKey}
                           >
                             {showPieRow ? (
-                              <div data-pdf-section>
+                              <div data-pdf-section data-chart-section="positions">
                               <h3 className={classes.serviceSectionTitle}>
                                 {label}
                               </h3>
@@ -2075,6 +2320,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                                             xKey="name"
                                             height={260}
                                             fullWidth
+                                            title={cfg.label}
                                             groupedValueFormat={(v) =>
                                               cfg.id === "budget"
                                                 ? formatRub(v)
@@ -2115,6 +2361,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                                             barValueLabel={cfg.label}
                                             height={260}
                                             fullWidth
+                                            title={cfg.label}
                                           />
                                         );
                                       }
@@ -2129,6 +2376,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                                         key={`${serviceKey}-barrow-${ri}`}
                                         className={classes.airportBarsRow}
                                         data-pdf-section
+                                        data-chart-section="airports-row"
                                       >
                                         {ri === 0 && (
                                           <div className={classes.barHeaderFull}>
@@ -2143,13 +2391,6 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
                                               key={`${serviceKey}-${cfg.id}`}
                                               className={classes.airportBarChartItem}
                                             >
-                                              <h5
-                                                className={
-                                                  classes.airportBarChartSubtitle
-                                                }
-                                              >
-                                                {cfg.label}
-                                              </h5>
                                               {chartEl}
                                             </div>
                                           ))}

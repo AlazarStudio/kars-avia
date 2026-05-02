@@ -393,7 +393,7 @@ export default function SettingsSidebar({
             </div>
           ) : (
             <>
-              {activeTab === "access" && (
+              <div style={{ display: activeTab === "access" ? "" : "none" }}>
                 <AccessPermissionsPanel
                   accessMenu={accessMenu}
                   stateRef={accessStateRef}
@@ -403,14 +403,14 @@ export default function SettingsSidebar({
                   positionAccessMenusByPosId={positionAccessMenusByPosId}
                   setPositionAccessMenusByPosId={setPositionAccessMenusByPosId}
                 />
-              )}
-              {activeTab === "notifications" && (
+              </div>
+              <div style={{ display: activeTab === "notifications" ? "" : "none" }}>
                 <NotificationsPermissionsPanel
                   notificationMenu={notificationMenu}
                   stateRef={notificationsStateRef}
                   isEditing={isEditing}
                 />
-              )}
+              </div>
             </>
           )}
         </div>

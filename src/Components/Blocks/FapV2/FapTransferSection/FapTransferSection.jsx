@@ -23,7 +23,7 @@ import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 
 const emptyPerson = { fullName: "", phone: "" };
 
-export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true }) {
+export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true, showLinks = true }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const [showAddDriver, setShowAddDriver] = useState(false);
@@ -225,7 +225,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {driver.linkPWA ? (
+                    {showLinks && (driver.linkPWA ? (
                       <button
                         type="button"
                         className={classes.linkBtn}
@@ -243,7 +243,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                       >
                         Ссылка
                       </button>
-                    ) : null}
+                    ) : null)}
                     {canEdit && !isCompleted && (
                       <button
                         type="button"

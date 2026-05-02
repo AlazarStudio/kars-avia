@@ -152,6 +152,7 @@ export default function FapServicePage({ user }) {
             onToggle={noop}
             isPage
             canEdit={canEdit}
+            showLinks={!isAirlineRole}
           />
         );
       case "transfer":
@@ -165,6 +166,7 @@ export default function FapServicePage({ user }) {
             onToggle={noop}
             isPage
             canEdit={canEdit}
+            showLinks={!isAirlineRole}
           />
         );
       case "baggage":
@@ -178,6 +180,7 @@ export default function FapServicePage({ user }) {
             onToggle={noop}
             isPage
             canEdit={canEdit}
+            showLinks={!isAirlineRole}
           />
         );
       default:
