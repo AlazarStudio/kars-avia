@@ -20,6 +20,7 @@ import { statusMapping } from "../../../roles";
 import { useDebounce } from "../../../hooks/useDebounce";
 import Button from "../../Standart/Button/Button";
 import InfoTableRepresentativeData from "../InfoTableRepresentativeData/InfoTableRepresentativeData";
+import { canAccessMenu } from "../../../utils/access";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 function RepresentativeRequests({
@@ -323,9 +324,9 @@ function RepresentativeRequests({
             value={searchQuery}
             onChange={handleSearch}
           />
-          {!user?.airlineId || accessMenu?.reserveCreate ? (
+          {canAccessMenu(accessMenu, "reserveCreate", user) && (
             <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
-          ) : null}
+          )}
         </div>
 
         {loading && <MUILoader fullHeight={"75vh"} />}

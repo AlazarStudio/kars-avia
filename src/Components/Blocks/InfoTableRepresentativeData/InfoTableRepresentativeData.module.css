@@ -181,6 +181,14 @@
     white-space: nowrap;
 }
 
+.statusBadge {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
 .newRequest {
     position: absolute;
     width: 6px;

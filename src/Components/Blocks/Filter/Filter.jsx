@@ -113,6 +113,17 @@ function Filter({
     ];
   }
 
+  if (representativeRequests) {
+    filterListShow = [
+      { label: "Все статусы", value: "all" },
+      { label: "Создан", value: "CREATED" },
+      { label: "Принят", value: "ACCEPTED" },
+      { label: "В работе", value: "IN_PROGRESS" },
+      { label: "Завершён", value: "COMPLETED" },
+      { label: "Отменён", value: "CANCELLED" },
+    ];
+  }
+
   if (
     ((user && user?.role === roles.superAdmin) ||
       user?.role === roles.dispatcerAdmin ||
@@ -131,7 +142,7 @@ function Filter({
     ];
   }
 
-  const statusOptions = useMemo(() => filterListShow, []);
+  const statusOptions = useMemo(() => filterListShow, [representativeRequests]);
 
   // Опции для фильтрации по роли
   // const filterOptions = useMemo(() => [

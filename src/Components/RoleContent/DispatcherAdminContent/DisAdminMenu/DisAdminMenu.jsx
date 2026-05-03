@@ -110,7 +110,7 @@ const DisAdminMenu = ({
             {!menuOpen && <span className={classes.tooltip}>Трансфер</span>}
           </Link>
         )}
-        <Link
+        {canAccessMenu(accessMenu, "airlineMenu", user) && <Link
           to={"/airlines"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
             } ${(id == "airlines" || id == "airlineAccess" || id == "airlineNotifications") && classes.menu_items__activeElem}`}
@@ -135,7 +135,7 @@ const DisAdminMenu = ({
             Авиакомпании
           </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Авиакомпании</span>}
-        </Link>
+        </Link>}
         <Link
           to={"/hotels"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""

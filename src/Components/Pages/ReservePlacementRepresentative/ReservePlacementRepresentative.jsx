@@ -34,6 +34,7 @@ import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
   isExternalPassengerRequestUser,
+  canAccessMenu,
 } from "../../../utils/access";
 import CreateRequestHotel from "../../Blocks/CreateRequestHotel/CreateRequestHotel";
 import CreateRequestHotelReserve from "../../Blocks/CreateRequestHotelReserve/CreateRequestHotelReserve";
@@ -711,7 +712,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 </svg>
               </button>
             )}
-            {!isExternalUser && request?.status !== "CANCELLED" && (
+            {!isExternalUser && request?.status !== "CANCELLED" && canAccessMenu(accessMenu, "reserveUpdate", user) && (
               <Button onClick={() => setShowEditRequestSidebar(true)}>
                 Редактировать
               </Button>
@@ -923,7 +924,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       onStatusChanged={() => refetch()}
                       addNotification={addNotification}
                       token={token}
-                      readOnly={isAirlineRole}
+                      readOnly={!canAccessMenu(accessMenu, "reserveUpdate", user)}
                     />
                   )}
                 {filter === "powerSupply" &&
@@ -934,7 +935,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       onStatusChanged={() => refetch()}
                       addNotification={addNotification}
                       token={token}
-                      readOnly={isAirlineRole}
+                      readOnly={!canAccessMenu(accessMenu, "reserveUpdate", user)}
                     />
                   )}
                 {filter === "transferAccommodation" &&
@@ -947,7 +948,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                         // refetchHotel();
                       }}
                       addNotification={addNotification}
-                      readOnly={isAirlineRole}
+                      readOnly={!canAccessMenu(accessMenu, "reserveUpdate", user)}
                       onDriverSelect={(d, idx) =>
                         navigate(
                           `/${id}/representativeRequestsPlacement/${idRequest}/driver/${idx}`,
@@ -965,7 +966,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                         // refetchHotel();
                       }}
                       addNotification={addNotification}
-                      readOnly={isAirlineRole}
+                      readOnly={!canAccessMenu(accessMenu, "reserveUpdate", user)}
                     />
                   )}
                 {filter === "habitation" &&
@@ -976,7 +977,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                       searchQuery={habitationSearchQuery}
                       addNotification={addNotification}
                       onStatusChanged={() => refetch()}
-                      readOnly={isAirlineRole}
+                      readOnly={!canAccessMenu(accessMenu, "reserveUpdate", user)}
                       onHotelSelect={(h, i) => {
                         const hotelId = h.hotelId ?? h.name ?? String(i);
                         navigate(

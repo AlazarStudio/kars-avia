@@ -124,7 +124,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
       { ids: ["hotels"], guardKey: null, Comp: HotelsList, props: () => ({ user }) },
       {
         ids: ["airlines"],
-        guardKey: null,
+        guardKey: "airlineMenu",
         Comp: AirlinesList,
         props: () => ({ user }),
       },
@@ -161,7 +161,10 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
   }
 
   if (!id && hotelID) return <HotelPage id={hotelID} user={user} accessMenu={safeAccessMenu} />;
-  if (!id && airlineID) return <AirlinePage id={airlineID} user={user} accessMenu={safeAccessMenu} />;
+  if (!id && airlineID) {
+    if (!canAccessMenu(accessMenu, "airlineMenu", user)) return <NoAccess />;
+    return <AirlinePage id={airlineID} user={user} accessMenu={safeAccessMenu} />;
+  }
 
   if (!id && !hotelID && !airlineID && !orderId && !driversCompanyID) {
     if (canAccessMenu(accessMenu, "requestMenu", user)) {
