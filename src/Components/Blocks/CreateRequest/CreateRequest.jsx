@@ -1074,7 +1074,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
             </div>
 
             <div className={classes.requestButton}>
-              <Button onClick={handleSubmit}>Создать заявку</Button>
+              <Button onClick={handleSubmit} disabled={isLoading}>Создать заявку</Button>
             </div>
           </>
         )}

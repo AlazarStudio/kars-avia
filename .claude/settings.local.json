@@ -11,7 +11,10 @@
       "Bash(git -C /c/github/kars-avia show f146345:src/Components/Pages)",
       "Bash(git ls-tree *)",
       "Bash(git log *)",
-      "Bash(grep -E \"\\\\.\\(md|txt\\)$\")"
+      "Bash(grep -E \"\\\\.\\(md|txt\\)$\")",
+      "Bash(grep -E \"^\\\\./\\(t\\\\.js|index\\\\.js\\)$\")",
+      "Bash(xargs cat *)",
+      "Bash(grep -E \"\\(main|index\\)\\\\.\\(jsx?|tsx?\\)$\")"
     ]
   }
 }

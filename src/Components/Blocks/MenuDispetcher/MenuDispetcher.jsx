@@ -277,7 +277,6 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
                 <path d="M12.236 9.05798L17.164 14L12.236 18.942" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             )}
-
             {/* </span> */}
             {/* Стрелка */}
           </button>
@@ -329,6 +328,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
               </svg>
             </div>
           )}
+            <p style={{padding: "0 0 0 47px", width: "100%" ,color:"white", textAlign:'left'}}>beta</p>
+
 
         </Link>
         <div className={classes.menu_items}>
