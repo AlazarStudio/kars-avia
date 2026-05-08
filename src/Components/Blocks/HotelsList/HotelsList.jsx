@@ -42,7 +42,7 @@ function HotelsList({ children, user, ...props }) {
       onData: () => {
         refetch();
       },
-    }
+    },
   );
 
   const location = useLocation();
@@ -60,7 +60,7 @@ function HotelsList({ children, user, ...props }) {
       ...(filterData.filterStars && { stars: filterData.filterStars }),
       ...(filterData.filterUsStars && { usStars: filterData.filterUsStars }),
     }),
-    [selectedCity?.id, filterData.filterStars, filterData.filterUsStars]
+    [selectedCity?.id, filterData.filterStars, filterData.filterUsStars],
   );
 
   const { data: citiesData } = useQuery(GET_CITIES, {
@@ -94,7 +94,7 @@ function HotelsList({ children, user, ...props }) {
   useEffect(() => {
     if (data && data.hotels) {
       const sortedHotels = [...data.hotels.hotels].sort((a, b) =>
-        a.information?.city?.localeCompare(b.information?.city)
+        a.information?.city?.localeCompare(b.information?.city),
       );
       setCompanyData(sortedHotels);
     }
@@ -141,8 +141,8 @@ function HotelsList({ children, user, ...props }) {
   const addHotel = (newHotel) => {
     setCompanyData(
       [...companyData, newHotel].sort((a, b) =>
-        a.information?.city?.localeCompare(b.information?.city)
-      )
+        a.information?.city?.localeCompare(b.information?.city),
+      ),
     );
   };
 
@@ -208,7 +208,7 @@ function HotelsList({ children, user, ...props }) {
           .includes(searchQuery.toLowerCase()) ||
         request.information?.address
           ?.toLowerCase()
-          .includes(searchQuery.toLowerCase())
+          .includes(searchQuery.toLowerCase()),
     );
   }, [isSearching, allFilteredData, companyData, searchQuery]);
 
@@ -302,14 +302,14 @@ function HotelsList({ children, user, ...props }) {
           />
           {(user.role === roles.superAdmin ||
             user.role === roles.dispatcerAdmin) && (
-              <Filter
-                toggleSidebar={toggleCreateSidebar}
-                handleChange={() => { }}
-                filterData={filterData}
-                buttonTitle={"Добавить гостиницу"}
-                needDate={false}
-              />
-            )}
+            <Filter
+              toggleSidebar={toggleCreateSidebar}
+              handleChange={() => {}}
+              filterData={filterData}
+              buttonTitle={"Добавить гостиницу"}
+              needDate={false}
+            />
+          )}
         </div>
         {loading && <MUILoader />}
         {error && <p>Error: {error.message}</p>}

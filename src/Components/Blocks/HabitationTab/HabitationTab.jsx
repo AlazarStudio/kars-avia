@@ -138,9 +138,9 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
                           type="button"
                           className={classes.link}
                           onClick={(e) => { e.stopPropagation(); copyLink(h.linkCRM); }}
-                          title="Скопировать CRM-ссылку"
+                          title="Скопировать ссылку на сайт для гостиниц"
                         >
-                          CRM <CopyIcon />
+                          Сайт <CopyIcon />
                         </button>
                       )}
                       {h.linkPWA && (
@@ -148,9 +148,9 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
                           type="button"
                           className={classes.link}
                           onClick={(e) => { e.stopPropagation(); copyLink(h.linkPWA); }}
-                          title="Скопировать PWA-ссылку"
+                          title="Скопировать ссылку на сканер для гостиниц"
                         >
-                          PWA <CopyIcon />
+                          Сканер <CopyIcon />
                         </button>
                       )}
                     </div>

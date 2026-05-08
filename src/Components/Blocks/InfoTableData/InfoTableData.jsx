@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
-import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
+import { convertToDate, convertToDateNew, getMediaUrl } from "../../../../graphQL_requests";
 
 // Основная таблица с данными о заявках
 function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
@@ -121,8 +121,8 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
                             <div className={classes.InfoTable_data_elem_information}>
                                 {/* <div className={classes.InfoTable_data_elem_title}>{item.arrival.flight}</div> */}
                                 <div className={classes.InfoTable_data_elem_moreInfo}>
-                                    <span><img src="/calendar.png" alt="" /> {convertToDate(item.arrival)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDate(item.arrival, true)}</span>
+                                    <span><img src="/calendar.png" alt="" /> {convertToDateNew(item.arrival)}</span>
+                                    <span><img src="/time.png" alt="" /> {convertToDateNew(item.arrival, true)}</span>
                                 </div>
                             </div>
                         </div>
@@ -130,8 +130,8 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
                             <div className={classes.InfoTable_data_elem_information}>
                                 {/* <div className={classes.InfoTable_data_elem_title}>{item.departure.flight}</div> */}
                                 <div className={classes.InfoTable_data_elem_moreInfo}>
-                                    <span><img src="/calendar.png" alt="" /> {convertToDate(item.departure)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDate(item.departure, true)}</span>
+                                    <span><img src="/calendar.png" alt="" /> {convertToDateNew(item.departure)}</span>
+                                    <span><img src="/time.png" alt="" /> {convertToDateNew(item.departure, true)}</span>
                                 </div>
                             </div>
                         </div>

@@ -21,10 +21,7 @@ import ReactPaginate from "react-paginate";
 import { Box, CircularProgress, TextField } from "@mui/material";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import {
-  menuAccess,
-  statusMapping,
-} from "../../../roles.js";
+import { menuAccess, statusMapping } from "../../../roles.js";
 import {
   canCreateRequest as canCreateRequestAccess,
   getDispatcherAccess,
@@ -40,11 +37,15 @@ function Estafeta({ user, accessMenu }) {
   const navigate = useNavigate();
 
   // console.log(accessMenu);
-  const dispatcherCanChat = getDispatcherAccess(accessMenu, "requestChat", user);
+  const dispatcherCanChat = getDispatcherAccess(
+    accessMenu,
+    "requestChat",
+    user,
+  );
   const dispatcherCanUpdate = getDispatcherAccess(
     accessMenu,
     "requestUpdate",
-    user
+    user,
   );
   const canCreateRequest = canCreateRequestAccess(user, accessMenu);
 
@@ -115,7 +116,7 @@ function Estafeta({ user, accessMenu }) {
       onData: () => {
         refetch();
       },
-    }
+    },
   );
   const { data: subscriptionUpdateData } = useSubscription(
     REQUEST_UPDATED_SUBSCRIPTION,
@@ -123,7 +124,7 @@ function Estafeta({ user, accessMenu }) {
       onData: () => {
         refetch();
       },
-    }
+    },
   );
 
   // console.log(subscriptionData);
@@ -448,8 +449,7 @@ function Estafeta({ user, accessMenu }) {
       return (
         // matchesAirline &&
         // matchesAirport &&
-        matchesSelect &&
-        matchesDate
+        matchesSelect && matchesDate
         // && searchFields?.some((field) =>
         //   String(field)?.toLowerCase().includes(matchesSearch)
         // )
@@ -476,7 +476,7 @@ function Estafeta({ user, accessMenu }) {
   // Синхронизируем внутренний стейт пагинации со значением из URL
   useEffect(() => {
     setPageInfo((prev) =>
-      prev.skip === urlPage ? prev : { ...prev, skip: urlPage }
+      prev.skip === urlPage ? prev : { ...prev, skip: urlPage },
     );
   }, [urlPage]);
 

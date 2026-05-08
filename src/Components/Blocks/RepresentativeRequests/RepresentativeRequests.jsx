@@ -44,8 +44,8 @@ function RepresentativeRequests({
   let currentPageReserve = localPage
     ? parseInt(localPage) - 1
     : pageNumberReserve
-    ? parseInt(pageNumberReserve) - 1
-    : 0;
+      ? parseInt(pageNumberReserve) - 1
+      : 0;
 
   // Состояние для фильтрации по статусу
   const [statusFilter, setStatusFilter] = useState(() => {
@@ -295,6 +295,7 @@ function RepresentativeRequests({
 
   const validCurrentPage =
     currentPageReserve < totalPages ? currentPageReserve : 0;
+
   return (
     <>
       <div className={classes.section}>

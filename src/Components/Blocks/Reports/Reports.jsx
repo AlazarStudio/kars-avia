@@ -214,7 +214,7 @@ function Reports({ children, accessMenu, ...props }) {
       setReports(
         isAirline
           ? companyData.getAirlineReport[0].reports
-          : companyData.getHotelReport[0].reports
+          : companyData.getHotelReport[0].reports,
       );
     }
   }, [companyData]);

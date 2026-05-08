@@ -14,9 +14,22 @@
 }
 
 .logoWrapper {
+    position: relative;
     display: flex;
     gap: 20px;
     align-items: center;
+}
+
+.betaLabel {
+    position: absolute;
+    top: 20px;
+    right: 39px;
+    /* background-color: red; */
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    /* padding: 2px 5px; */
+    /* border-radius: 5px; */
 }
 
 /* .menuClosed {
@@ -88,6 +101,7 @@
     border: none;
     cursor: pointer;
 }
+
 /* .menuToggle span img {
     height: 15px;
     transition: all ease-in-out 0.3s;
@@ -231,6 +245,13 @@
 
     .logoWrapper {
         gap: 10px;
+    }
+
+    .betaLabel {
+        position: absolute;
+        top: 30px;
+        right: 40px;
+        font-size: 11px;
     }
 }
 

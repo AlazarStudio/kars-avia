@@ -152,9 +152,9 @@ export default function TransferAccommodationTab({
                         e.stopPropagation();
                         copyLink(d.linkPWA);
                       }}
-                      title="Скопировать PWA-ссылку"
+                      title="Скопировать ссылку на сканер для водителя"
                     >
-                      PWA <CopyIcon />
+                      Сканер <CopyIcon />
                     </button>
                   ) : d.link ? (
                     <button

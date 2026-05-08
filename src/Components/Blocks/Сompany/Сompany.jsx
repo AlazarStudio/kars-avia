@@ -73,7 +73,7 @@ function Company({ user, accessMenu }) {
           Authorization: `Bearer ${token}`,
         },
       },
-    }
+    },
   );
 
   const {
@@ -98,9 +98,7 @@ function Company({ user, accessMenu }) {
     const users = dispatchersData.dispatcherUsers.users;
     setDispatchers((prev) => {
       const copied = users.map((d) => {
-        const positionFromData = d.position
-          ? { ...d.position }
-          : d.position;
+        const positionFromData = d.position ? { ...d.position } : d.position;
         const prevDispatcher = prev.find((p) => p.id === d.id);
         const position =
           positionFromData ??
@@ -144,7 +142,8 @@ function Company({ user, accessMenu }) {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
-  const [selectedDepartmentForSettings, setSelectedDepartmentForSettings] = useState(null);
+  const [selectedDepartmentForSettings, setSelectedDepartmentForSettings] =
+    useState(null);
   const settingsSidebarRef = useRef(null);
 
   const [showDelete, setShowDelete] = useState(false);
@@ -165,13 +164,16 @@ function Company({ user, accessMenu }) {
     },
   });
 
-  const [deleteDispatcherDepartment] = useMutation(DELETE_DISPATCHER_DEPARTMENT, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  const [deleteDispatcherDepartment] = useMutation(
+    DELETE_DISPATCHER_DEPARTMENT,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     },
-  });
+  );
 
   const [dispatcherEditMode, setDispatcherEditMode] = useState(false);
   const [departmentEditMode, setDepartmentEditMode] = useState(false);
@@ -287,7 +289,7 @@ function Company({ user, accessMenu }) {
     }));
 
     const departmentMap = new Map(
-      groupsList.map((department) => [department.id, department])
+      groupsList.map((department) => [department.id, department]),
     );
 
     const noDepartment = {
@@ -309,7 +311,7 @@ function Company({ user, accessMenu }) {
     const sorted = [...departmentMap.values()].map((department) => ({
       ...department,
       dispatchers: [...department.dispatchers].sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.name.localeCompare(b.name),
       ),
     }));
 
@@ -317,7 +319,7 @@ function Company({ user, accessMenu }) {
       sorted.push({
         ...noDepartment,
         dispatchers: [...noDepartment.dispatchers].sort((a, b) =>
-          a.name.localeCompare(b.name)
+          a.name.localeCompare(b.name),
         ),
       });
     }
@@ -325,7 +327,8 @@ function Company({ user, accessMenu }) {
     return sorted;
   }, [departments, filteredDispatchers]);
 
-  const isLoading = dispatchersLoading || departmentsLoading || positionsLoading;
+  const isLoading =
+    dispatchersLoading || departmentsLoading || positionsLoading;
   const hasError = dispatchersError || departmentsError || positionsError;
 
   return (
@@ -385,8 +388,8 @@ function Company({ user, accessMenu }) {
             onPositionCreated={(newPosition) => {
               setPositions((prev) =>
                 [...(prev || []), newPosition].sort((a, b) =>
-                  String(a?.name || "").localeCompare(String(b?.name || ""))
-                )
+                  String(a?.name || "").localeCompare(String(b?.name || "")),
+                ),
               );
               refetchPositions();
             }}
@@ -395,21 +398,21 @@ function Company({ user, accessMenu }) {
           />
         )}
 
-          <ExistRequestCompany
-            show={showEditDispatcher}
-            accessMenu={accessMenu}
-            onClose={() => setShowEditDispatcher(false)}
-            chooseObject={selectedDispatcher}
-            updateDispatcher={() => {}}
-            openDeleteComponent={openDeleteDispatcherFromSidebar}
-            positions={positions}
-            departments={departments}
-            initialEditMode={dispatcherEditMode}
-            onUpdated={() => {
-              refetchDispatchers();
-              refetchDepartments();
-            }}
-          />
+        <ExistRequestCompany
+          show={showEditDispatcher}
+          accessMenu={accessMenu}
+          onClose={() => setShowEditDispatcher(false)}
+          chooseObject={selectedDispatcher}
+          updateDispatcher={() => {}}
+          openDeleteComponent={openDeleteDispatcherFromSidebar}
+          positions={positions}
+          departments={departments}
+          initialEditMode={dispatcherEditMode}
+          onUpdated={() => {
+            refetchDispatchers();
+            refetchDepartments();
+          }}
+        />
 
         {canCreate && (
           <CreateRequestDispatcherDepartment

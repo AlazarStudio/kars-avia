@@ -40,7 +40,13 @@ import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.j
 import { isSuperAdmin, hasAccessMenu } from "../../../utils/access";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 
-function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) {
+function RegisterOfContracts({
+  children,
+  id,
+  user,
+  accessMenu = {},
+  ...props
+}) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const location = useLocation();
@@ -74,8 +80,10 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
   const [selectedCity, setSelectedCity] = useState(null);
   const [selectedType, setSelectedType] = useState(null);
 
-  const canCreate = isSuperAdmin(user) || hasAccessMenu(accessMenu, "contractCreate");
-  const canEdit = isSuperAdmin(user) || hasAccessMenu(accessMenu, "contractUpdate");
+  const canCreate =
+    isSuperAdmin(user) || hasAccessMenu(accessMenu, "contractCreate");
+  const canEdit =
+    isSuperAdmin(user) || hasAccessMenu(accessMenu, "contractUpdate");
 
   const query =
     activeTab === "airlines"
@@ -202,7 +210,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
           Authorization: `Bearer ${token}`,
         },
       },
-    }
+    },
   );
 
   useEffect(() => {
@@ -244,7 +252,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
       onData: () => {
         refetch();
       },
-    }
+    },
   );
   const { data: subscriptionUpdateData } = useSubscription(
     SUBSCRIPTION_HOTEL_CONTRACTS,
@@ -252,7 +260,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
       onData: () => {
         refetch();
       },
-    }
+    },
   );
   const { data: subscriptionOrgData } = useSubscription(
     SUBSCRIPTION_ORGANIZATION_CONTRACTS,
@@ -260,7 +268,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
       onData: () => {
         refetch();
       },
-    }
+    },
   );
 
   // console.log(data);
@@ -429,7 +437,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
   };
 
   const validCurrentPage = urlPage < totalPages ? urlPage : 0;
-
+  
   return (
     <div className={classes.tariffsWrapper}>
       <Header>Реестр договоров</Header>
@@ -447,8 +455,9 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             key={t.key}
             type="button"
             id={`tab-${t.key}`}
-            className={`${classes.segment} ${activeTab === t.key ? classes.segmentActive : ""
-              }`}
+            className={`${classes.segment} ${
+              activeTab === t.key ? classes.segmentActive : ""
+            }`}
             onClick={() => setActiveTab(t.key)}
           >
             {t.label}
@@ -456,7 +465,6 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
         ))}
       </div>
       <div className={classes.section_searchAndFilter}>
-
         <DateRangeModalSelector
           width={"170px"}
           initialRange={dateRange}
@@ -481,7 +489,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
                   setSelectedAirline(null);
                 } else {
                   const selectedOption = airlines.find(
-                    (airline) => airline.name === newValue
+                    (airline) => airline.name === newValue,
                   );
                   setSelectedAirline(selectedOption);
                 }
@@ -495,7 +503,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
               value={selectedType ? selectedType : ""}
               onChange={(event, newValue) => {
                 const selectedOption = action.find(
-                  (airline) => airline === newValue
+                  (airline) => airline === newValue,
                 );
                 setSelectedType(selectedOption);
               }}
@@ -646,7 +654,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
                   setSelectedOrganization(null);
                 } else {
                   const selectedOption = orgs.find(
-                    (org) => org.name === newValue
+                    (org) => org.name === newValue,
                   );
                   setSelectedOrganization(selectedOption);
                 }
@@ -732,7 +740,7 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
               setSelectedCompany(null);
             } else {
               const selectedCompany = companies.find(
-                (item) => item.name === newValue
+                (item) => item.name === newValue,
               );
               setSelectedCompany(selectedCompany);
             }
@@ -818,7 +826,9 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             onRequestDelete={
               canEdit
                 ? () => {
-                    const contract = addTarif.find((x) => x.id === selectedTarif);
+                    const contract = addTarif.find(
+                      (x) => x.id === selectedTarif,
+                    );
                     if (contract) openDeleteContractFromMenu(contract);
                   }
                 : undefined
@@ -860,7 +870,9 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             onRequestDelete={
               canEdit
                 ? () => {
-                    const contract = addTarif.find((x) => x.id === selectedTarif);
+                    const contract = addTarif.find(
+                      (x) => x.id === selectedTarif,
+                    );
                     if (contract) openDeleteContractFromMenu(contract);
                   }
                 : undefined
@@ -876,12 +888,13 @@ function RegisterOfContracts({ children, id, user, accessMenu = {}, ...props }) 
             return deleteContract(deleteIndex.data.contract);
           }}
           close={closeDeleteComponent}
-          title={`Вы действительно хотите удалить ${deleteIndex.type === "deleteTarif"
-            ? "тариф"
-            : deleteIndex.type === "deleteCategory"
-              ? "категорию"
-              : "договор"
-            }?`}
+          title={`Вы действительно хотите удалить ${
+            deleteIndex.type === "deleteTarif"
+              ? "тариф"
+              : deleteIndex.type === "deleteCategory"
+                ? "категорию"
+                : "договор"
+          }?`}
         />
       )}
     </div>

@@ -31,21 +31,25 @@ function AirlinesList({ children, representative, ...props }) {
   const [airports, setAirports] = useState([]); // Список аэропортов
   const [cities, setCities] = useState([]); // Список аэропортов
 
-  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION, {
+  const { data: dataSubscription } = useSubscription(
+    GET_AIRLINES_SUBSCRIPTION,
+    {
       context: {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
-    }
+    },
+  );
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_AIRLINES_UPDATE_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    },
   );
 
   const location = useLocation();
@@ -97,7 +101,7 @@ function AirlinesList({ children, representative, ...props }) {
   useEffect(() => {
     if (data && data.airlines) {
       const sortedAirlines = [...data.airlines.airlines].sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.name.localeCompare(b.name),
       );
       setCompanyData(sortedAirlines);
     }
@@ -117,7 +121,7 @@ function AirlinesList({ children, representative, ...props }) {
 
   const addAirline = (airline) => {
     setCompanyData(
-      [...companyData, airline].sort((a, b) => a.name.localeCompare(b.name))
+      [...companyData, airline].sort((a, b) => a.name.localeCompare(b.name)),
     );
   };
 
@@ -169,7 +173,7 @@ function AirlinesList({ children, representative, ...props }) {
   const filteredRequests = useMemo(() => {
     const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
     return dataSource.filter((request) =>
-      request.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      request.name?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [isSearching, allFilteredData, companyData, searchQuery]);
 

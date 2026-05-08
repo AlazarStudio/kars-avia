@@ -89,6 +89,51 @@
   margin-top: 10px;
 }
 
+.mapSearch {
+  position: relative;
+}
+
+.mapSearchInput {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  background: #fff;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.mapSearchInput:focus {
+  border-color: #0065ff;
+}
+
+.mapSearchSuggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  margin: 4px 0 0;
+  padding: 4px 0;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10001;
+  list-style: none;
+}
+
+.mapSearchItem {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mapSearchItem:hover {
+  background: #f2f4f7;
+}
+
 /* адаптив под мобильный */
 @media (max-width: 600px) {
   .mapModalContent {

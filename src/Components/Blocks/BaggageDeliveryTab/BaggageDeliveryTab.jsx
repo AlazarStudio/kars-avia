@@ -138,9 +138,9 @@ export default function BaggageDeliveryTab({
                       type="button"
                       className={classes.link}
                       onClick={(e) => copyLink(d.linkPWA, e)}
-                      title="Скопировать PWA-ссылку"
+                      title="Скопировать ссылку на сканер для водителя"
                     >
-                      PWA <CopyIcon />
+                      Сканер <CopyIcon />
                     </button>
                   ) : d.link ? (
                     <button

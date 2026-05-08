@@ -16,7 +16,13 @@ import CreateRequestDriversCompany from "../CreateRequestDriversCompany/CreateRe
 import InfoTableDataDriversCompanies from "../InfoTableDataDriversCompanies/InfoTableDataDriversCompanies";
 import { hasAccessMenu } from "../../../utils/access";
 
-function DriversCompanyList({ children, representative, disAdmin, accessMenu, ...props }) {
+function DriversCompanyList({
+  children,
+  representative,
+  disAdmin,
+  accessMenu,
+  ...props
+}) {
   const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -56,7 +62,7 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
       onError: (error) => {
         console.error("Ошибка подписки на создание:", error);
       },
-    }
+    },
   );
 
   // console.log(subscriptionData);
@@ -66,8 +72,8 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
 
   useEffect(() => {
     if (data && data.organizations) {
-      const sortedAirlines = [...data.organizations.organizations].sort((a, b) =>
-        a.name.localeCompare(b.name)
+      const sortedAirlines = [...data.organizations.organizations].sort(
+        (a, b) => a.name.localeCompare(b.name),
       );
       setCompanyData(sortedAirlines);
     }
@@ -87,7 +93,7 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
 
   const addAirline = (airline) => {
     setCompanyData(
-      [...companyData, airline].sort((a, b) => a.name.localeCompare(b.name))
+      [...companyData, airline].sort((a, b) => a.name.localeCompare(b.name)),
     );
   };
 
@@ -139,7 +145,7 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
   const filteredRequests = useMemo(() => {
     const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
     return dataSource.filter((request) =>
-      request.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      request.name?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [isSearching, allFilteredData, companyData, searchQuery]);
 
@@ -164,7 +170,10 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
 
   return (
     <>
-      <div className={classes.section} style={disAdmin ? { padding: "0", overflow: "visible" } : {}}>
+      <div
+        className={classes.section}
+        style={disAdmin ? { padding: "0", overflow: "visible" } : {}}
+      >
         {!disAdmin && <Header>Организации</Header>}
 
         <div className={classes.section_searchAndFilter}>

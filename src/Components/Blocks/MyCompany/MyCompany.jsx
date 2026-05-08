@@ -42,7 +42,7 @@ function MyCompany({ children, user, ...props }) {
   useEffect(() => {
     if (data) {
       const sortedDispatchers = [...data.getAllCompany].sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.name.localeCompare(b.name),
       );
       setCompanyData(sortedDispatchers);
     }
@@ -102,7 +102,7 @@ function MyCompany({ children, user, ...props }) {
       onData: () => {
         refetch();
       },
-    }
+    },
   );
 
   const toggleCreateSidebar = () => {

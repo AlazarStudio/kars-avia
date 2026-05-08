@@ -107,7 +107,7 @@ export function createAuthErrorLink(options = {}) {
 
   return onError(({ graphQLErrors, networkError, operation, forward }) => {
     if (!isAuthError(graphQLErrors, networkError)) {
-      return forward(operation);
+      return;
     }
 
     if (shouldLogoutImmediately(graphQLErrors)) {

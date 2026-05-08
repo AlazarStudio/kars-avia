@@ -17,11 +17,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ReactPaginate from "react-paginate";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import {
-  menuAccess,
-  statusMapping,
-  roles,
-} from "../../../roles.js";
+import { menuAccess, statusMapping, roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import InfoTableDataTransferOrders from "../InfoTableDataTransferOrders/InfoTableDataTransferOrders.jsx";
@@ -50,8 +46,9 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
 
   // Инициализация текущей страницы на основе параметров URL или по умолчанию
   const pageNumberTransfer = new URLSearchParams(location.search).get("page");
-  const currentPageTransfer = pageNumberTransfer ? parseInt(pageNumberTransfer) - 1 : 0;
-
+  const currentPageTransfer = pageNumberTransfer
+    ? parseInt(pageNumberTransfer) - 1
+    : 0;
 
   // Состояние для фильтрации по статусу. Получаем фильтр из localStorage или устанавливаем значение по умолчанию
   const [statusFilterTransfer, setStatusFilter] = useState(() => {
@@ -63,7 +60,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     skip: currentPageTransfer,
     take: 50,
   });
-
 
   // Запрос на получение списка заявок с использованием параметров пагинации
   const { loading, error, data, refetch } = useQuery(GET_TRANSFER_REQUESTS, {
@@ -97,7 +93,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       onError: (error) => {
         console.error("Ошибка подписки на создание:", error);
       },
-    }
+    },
   );
   const { data: subscriptionUpdateData } = useSubscription(
     TRANSFER_UPDATED_SUBSCRIPTION,
@@ -105,9 +101,8 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       onData: () => {
         refetch();
       },
-    }
+    },
   );
-
 
   // Локальное состояние для хранения новых заявок и всех заявок
   const [newRequests, setNewRequests] = useState([]);
@@ -127,8 +122,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       setTotalPages(data.transfers.totalPages);
     }
   }, [data, currentPageTransfer, newRequests, refetch]);
-
-
 
   // Обновление состояния фильтрации по статусу
   const handleStatusChange = (value) => {
@@ -173,7 +166,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     ? hasAccessMenu(accessMenu, "transferUpdate")
     : true;
 
-
   const handleChange = (e) =>
     setFilterData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -209,7 +201,8 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   // ]);
 
   const handleOpenExistRequest = (matchData) => {
-    const transferId = typeof matchData === "object" && matchData?.id ? matchData.id : matchData;
+    const transferId =
+      typeof matchData === "object" && matchData?.id ? matchData.id : matchData;
     setExistRequestData(matchData);
     setChooseRequestID(transferId);
     setShowRequestSidebar(true);
@@ -228,13 +221,16 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   };
 
   // Отмена трансфера через updateTransfer (смена статуса)
-  const [updateTransferMutation] = useMutation(UPDATE_TRANSFER_REQUEST_MUTATION, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  const [updateTransferMutation] = useMutation(
+    UPDATE_TRANSFER_REQUEST_MUTATION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     },
-  });
+  );
 
   const handleCancelRequest = async (id) => {
     if (!canUpdateTransfer) return;
@@ -276,7 +272,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     if (airlineData) setAirlineName(airlineData.airline.name);
   }, [airlineData]);
 
-
   // Мемоизированная функция для фильтрации и сортировки заявок
   const filteredRequests = useMemo(() => {
     const dataSource = requests; // Используем данные из поиска или стандартные
@@ -291,33 +286,35 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       const matchesSearch = searchQuery.toLowerCase().trim();
 
       // Если поиск пустой, не фильтруем по поиску
-      const matchesSearchFilter = !matchesSearch || (() => {
-        // Получаем читаемое название статуса
-        const statusDisplay = statusMapping[request.status] || request.status;
-        
-        const searchFields = [
-          request?.persons?.map(p => p.name).join(" ") || "",
-          request?.persons?.map(p => p.email).join(" ") || "",
-          request.airline?.name || "",
-          statusDisplay || "",
-        ].filter(Boolean);
+      const matchesSearchFilter =
+        !matchesSearch ||
+        (() => {
+          // Получаем читаемое название статуса
+          const statusDisplay = statusMapping[request.status] || request.status;
 
-        return searchFields.some((field) =>
-          String(field)?.toLowerCase().includes(matchesSearch)
-        );
-      })();
+          const searchFields = [
+            request?.persons?.map((p) => p.name).join(" ") || "",
+            request?.persons?.map((p) => p.email).join(" ") || "",
+            request.airline?.name || "",
+            statusDisplay || "",
+          ].filter(Boolean);
 
-      return (
-        matchesSelect &&
-        matchesDate &&
-        matchesSearchFilter
-      );
+          return searchFields.some((field) =>
+            String(field)?.toLowerCase().includes(matchesSearch),
+          );
+        })();
+
+      return matchesSelect && matchesDate && matchesSearchFilter;
     });
 
     // Сортировка: сначала заявки до которых < 2 часов, потом на сегодня, потом остальные по scheduledPickupAt
     return filtered.sort((a, b) => {
-      const aScheduledTime = a.scheduledPickupAt ? new Date(a.scheduledPickupAt) : null;
-      const bScheduledTime = b.scheduledPickupAt ? new Date(b.scheduledPickupAt) : null;
+      const aScheduledTime = a.scheduledPickupAt
+        ? new Date(a.scheduledPickupAt)
+        : null;
+      const bScheduledTime = b.scheduledPickupAt
+        ? new Date(b.scheduledPickupAt)
+        : null;
 
       // Если нет времени начала, помещаем в конец
       if (!aScheduledTime && !bScheduledTime) return 0;
@@ -330,7 +327,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       // Проверяем, до заявки меньше 2 часов
       const aTimeDiff = aScheduledTime.getTime() - now.getTime();
       const bTimeDiff = bScheduledTime.getTime() - now.getTime();
-      
+
       const aIsLessThan2Hours = aTimeDiff > 0 && aTimeDiff < twoHoursInMs;
       const bIsLessThan2Hours = bTimeDiff > 0 && bTimeDiff < twoHoursInMs;
 
@@ -346,7 +343,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       // Проверяем, является ли заявка сегодняшней
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      
+
       const aDate = new Date(aScheduledTime);
       aDate.setHours(0, 0, 0, 0);
       const bDate = new Date(bScheduledTime);
@@ -364,7 +361,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     });
   }, [isSearching, allFilteredData, requests, filterData, searchQuery, user]);
 
-
   const filterList = ["Азимут", "S7 airlines", "Северный ветер"];
 
   // Текущая страница из URL (0-based)
@@ -376,7 +372,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   // Синхронизируем внутренний стейт пагинации со значением из URL
   useEffect(() => {
     setPageInfo((prev) =>
-      prev.skip === urlPage ? prev : { ...prev, skip: urlPage }
+      prev.skip === urlPage ? prev : { ...prev, skip: urlPage },
     );
   }, [urlPage]);
 
@@ -404,7 +400,10 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   const validCurrentPage = urlPage < totalPages ? urlPage : 0;
 
   return (
-    <div className={classes.section} style={disAdmin ? { padding: "0px", overflow: "visible" } : {}}>
+    <div
+      className={classes.section}
+      style={disAdmin ? { padding: "0px", overflow: "visible" } : {}}
+    >
       {!disAdmin && <Header>Трансфер</Header>}
       <div className={classes.section_searchAndFilter}>
         <Filter

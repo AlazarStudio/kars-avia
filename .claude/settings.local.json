@@ -14,7 +14,8 @@
       "Bash(grep -E \"\\\\.\\(md|txt\\)$\")",
       "Bash(grep -E \"^\\\\./\\(t\\\\.js|index\\\\.js\\)$\")",
       "Bash(xargs cat *)",
-      "Bash(grep -E \"\\(main|index\\)\\\\.\\(jsx?|tsx?\\)$\")"
+      "Bash(grep -E \"\\(main|index\\)\\\\.\\(jsx?|tsx?\\)$\")",
+      "Bash(grep -r '$use\\(' 'c:\\\\git back\\\\kars-avia-backend-graphql' '--include=*.js')"
     ]
   }
 }

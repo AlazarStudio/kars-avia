@@ -374,6 +374,9 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
       }
 
       try {
+        console.log(hotelId);
+        console.log(bookingInput);
+        
         await updateHotelBron({
           variables: {
             updateHotelId: hotelId,
@@ -542,6 +545,9 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
           }
 
           try {
+            console.log(hotelId);            
+            console.log(bookingInput);
+            
             await updateHotelBron({
               variables: {
                 updateHotelId: hotelId,
