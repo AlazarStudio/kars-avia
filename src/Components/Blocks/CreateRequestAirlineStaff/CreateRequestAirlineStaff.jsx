@@ -99,7 +99,7 @@ function CreateRequestAirlineStaff({
 
   const isFormValid = () => {
     return (
-      formData.name && formData.number && formData.position && formData.gender
+      formData.name && formData.number && formData.gender
     );
   };
 

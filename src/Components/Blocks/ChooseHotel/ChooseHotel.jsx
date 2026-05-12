@@ -28,8 +28,11 @@ function ChooseHotel({
   id,
   chooseRequestID,
   chooseCityRequest,
+  defaultTimesUsed,
+  onBackToRequest,
 }) {
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [timeWarningDismissed, setTimeWarningDismissed] = useState(false);
   const [formData, setFormData] = useState({
     city: "",
     hotel: "",
@@ -134,6 +137,7 @@ function ChooseHotel({
   const resetForm = useCallback(() => {
     setFormData({ city: "", hotel: "", request: chooseRequestID });
     setIsEdited(false);
+    setTimeWarningDismissed(false);
   }, [chooseRequestID]);
   const closeButton = useCallback(() => {
     if (
@@ -218,6 +222,40 @@ function ChooseHotel({
         </div>
       </div>
 
+      {defaultTimesUsed && !timeWarningDismissed ? (
+        <div className={classes.timeWarning}>
+          <div className={classes.timeWarning_icon}>⏱</div>
+          <div className={classes.timeWarning_title}>Время заезда и выезда не указано</div>
+          <div className={classes.timeWarning_text}>
+            При создании заявки время не было задано. Установлены значения по умолчанию:
+          </div>
+          <div className={classes.timeWarning_defaults}>
+            <div className={classes.timeWarning_row}>
+              <span>Заезд</span>
+              <span className={classes.timeWarning_value}>14:00</span>
+            </div>
+            <div className={classes.timeWarning_row}>
+              <span>Выезд</span>
+              <span className={classes.timeWarning_value}>12:00</span>
+            </div>
+          </div>
+          <div className={classes.timeWarning_actions}>
+            <button
+              className={classes.timeWarning_btnBack}
+              onClick={onBackToRequest}
+            >
+              Вернуться к заявке
+            </button>
+            <button
+              className={classes.timeWarning_btnContinue}
+              onClick={() => setTimeWarningDismissed(true)}
+            >
+              Продолжить
+            </button>
+          </div>
+        </div>
+      ) : (
+      <>
       <div className={classes.requestMiddle}>
         <div className={classes.requestData}>
           <label>Город</label>
@@ -306,6 +344,8 @@ function ChooseHotel({
             </Button>
           )}
         </div>
+      )}
+      </>
       )}
     </Sidebar>
   );

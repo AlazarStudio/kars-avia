@@ -15,7 +15,9 @@
       "Bash(grep -E \"^\\\\./\\(t\\\\.js|index\\\\.js\\)$\")",
       "Bash(xargs cat *)",
       "Bash(grep -E \"\\(main|index\\)\\\\.\\(jsx?|tsx?\\)$\")",
-      "Bash(grep -r '$use\\(' 'c:\\\\git back\\\\kars-avia-backend-graphql' '--include=*.js')"
+      "Bash(grep -r '$use\\(' 'c:\\\\git back\\\\kars-avia-backend-graphql' '--include=*.js')",
+      "Bash(npx prisma *)",
+      "Bash(Get-Content \"c:\\\\github\\\\kars-avia\\\\graphQL_requests.js\" -TotalCount 100)"
     ]
   }
 }

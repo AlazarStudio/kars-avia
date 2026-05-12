@@ -213,6 +213,8 @@ function Estafeta({ user, accessMenu }) {
   const [chooseObject, setChooseObject] = useState([]);
   const [chooseRequestID, setChooseRequestID] = useState();
   const [chooseCityRequest, setChooseCityRequest] = useState();
+  const [chooseDefaultTimesUsed, setChooseDefaultTimesUsed] = useState(false);
+  const [openExistRequestInEditMode, setOpenExistRequestInEditMode] = useState(false);
 
   // Функции для переключения видимости боковых панелей
   const toggleCreateSidebar = () => setShowCreateSidebar(!showCreateSidebar);
@@ -583,8 +585,13 @@ function Estafeta({ user, accessMenu }) {
       />
       <ExistRequest
         setChooseCityRequest={setChooseCityRequest}
+        setChooseDefaultTimesUsed={setChooseDefaultTimesUsed}
+        openInEditMode={openExistRequestInEditMode}
         show={showRequestSidebar}
-        onClose={toggleRequestSidebar}
+        onClose={() => {
+          setOpenExistRequestInEditMode(false);
+          toggleRequestSidebar();
+        }}
         setChooseRequestID={setChooseRequestID}
         setShowChooseHotel={setShowChooseHotel}
         chooseRequestID={chooseRequestID ? chooseRequestID : existRequestData}
@@ -603,6 +610,12 @@ function Estafeta({ user, accessMenu }) {
         chooseObject={chooseObject}
         chooseRequestID={chooseRequestID}
         id={"relay"}
+        defaultTimesUsed={chooseDefaultTimesUsed}
+        onBackToRequest={() => {
+          setShowChooseHotel(false);
+          setOpenExistRequestInEditMode(true);
+          setShowRequestSidebar(true);
+        }}
       />
 
       {showDelete && (

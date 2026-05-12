@@ -86,6 +86,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
     },
     city: "",
     reserve: false,
+    note: "",
   });
 
   const { data: dataSubscription } = useSubscription(
@@ -264,6 +265,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
       },
       city: "",
       reserve: false,
+      note: "",
     });
     setIsEdited(false); // Сбрасываем флаг, что форма не изменена
     setWarningMessage("");
@@ -452,10 +454,10 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
       formData.airlineId &&
       // formData.arrivalRoute &&
       formData.arrivalDate &&
-      formData.arrivalTime &&
+      // formData.arrivalTime &&
       // formData.departureRoute &&
-      formData.departureDate &&
-      formData.departureTime
+      formData.departureDate
+      // formData.departureTime
     );
   };
 
@@ -502,12 +504,15 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
       return;
     }
 
+    const effectiveArrivalTime = formData.arrivalTime || "14:00";
+    const effectiveDepartureTime = formData.departureTime || "12:00";
+    const defaultTimesUsed = !formData.arrivalTime || !formData.departureTime;
+
     if (
       formData.departureDate === formData.arrivalDate &&
-      formData.departureTime <= formData.arrivalTime
+      effectiveDepartureTime <= effectiveArrivalTime
     ) {
       showAlert("Время отъезда должно быть позже времени прибытия.");
-      // Очищаем значения для времени прибытия и отъезда
       setFormData((prevFormData) => ({
         ...prevFormData,
         departureTime: "",
@@ -519,8 +524,9 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
     const input = {
       personId: formData.personId,
       airportId: formData.airportId,
-      arrival: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00`,
-      departure: `${formData.departureDate}T${formData.departureTime}:00+00:00`,
+      arrival: `${formData.arrivalDate}T${effectiveArrivalTime}:00+00:00`,
+      departure: `${formData.departureDate}T${effectiveDepartureTime}:00+00:00`,
+      defaultTimesUsed,
       mealPlan: {
         included: formData.mealPlan.included,
         breakfastEnabled: formData.mealPlan.breakfastEnabled,
@@ -530,6 +536,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
       senderId: formData.senderId,
       airlineId: formData.airlineId,
       reserve: formData.reserve,
+      ...(formData.note ? { note: formData.note } : {}),
     };
 
     try {
@@ -1064,6 +1071,16 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
                   />
                   Резерв
                 </label> */}
+
+                  <label>Примечание</label>
+                  <textarea
+                    name="note"
+                    value={formData.note}
+                    onChange={handleChange}
+                    placeholder="Доп. информация по заявке"
+                    rows={3}
+                    style={{ resize: "vertical", padding: "8px 10px", outline: "none", fontFamily: "Nunito Sans", fontSize: "14px" }}
+                  />
                 </div>
               )}
 

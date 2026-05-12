@@ -1543,6 +1543,8 @@ export const CREATE_REQUEST_MUTATION = gql`
             images
           }
           reserve
+          defaultTimesUsed
+          note
         }
     }
 `;
@@ -1621,6 +1623,36 @@ export const GET_HOTELS_RELAY = gql`
   }
 `;
 
+export const GET_HOTELS_WITH_PRICES = gql`
+  query HotelsWithPrices {
+    hotels(pagination: {all: true}) {
+      hotels {
+        id
+        name
+        airport {
+          id
+        }
+        roomKind {
+          name
+          category
+          price
+          priceForAirline
+        }
+        mealPriceForAir {
+          breakfast
+          lunch
+          dinner
+        }
+        mealPrice {
+          breakfast
+          lunch
+          dinner
+        }
+      }
+    }
+  }
+`;
+
 export const GET_REQUEST = gql`
   query Query($pagination: LogPaginationInput, $requestId: ID) {
     request(id: $requestId) {
@@ -1691,6 +1723,20 @@ export const GET_REQUEST = gql`
       }
       requestNumber
       reserve
+      defaultTimesUsed
+      note
+      requestAirlinePrice {
+        livingCost
+        breakfast
+        lunch
+        dinner
+      }
+      requestHotelPrice {
+        livingCost
+        breakfast
+        lunch
+        dinner
+      }
       hotel {
         id
         name

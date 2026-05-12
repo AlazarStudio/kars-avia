@@ -288,4 +288,99 @@ select {
     color: #545873;
 }
 
+.timeWarning {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 30px;
+    flex: 1;
+}
+
+.timeWarning_icon {
+    font-size: 32px;
+}
+
+.timeWarning_title {
+    font-family: Inter;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.timeWarning_text {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--main-gray);
+    line-height: 1.5;
+}
+
+.timeWarning_defaults {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: #9CA4D91A;
+    border-radius: 10px;
+    padding: 16px 20px;
+}
+
+.timeWarning_row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--main-gray);
+}
+
+.timeWarning_value {
+    font-family: Nunito Sans;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.timeWarning_actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.timeWarning_btnBack {
+    flex: 1;
+    height: 44px;
+    border: 1px solid #54587380;
+    border-radius: 8px;
+    background: transparent;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.timeWarning_btnBack:hover {
+    background: #f3f3f3;
+}
+
+.timeWarning_btnContinue {
+    flex: 1;
+    height: 44px;
+    border: none;
+    border-radius: 8px;
+    background: #0057C3;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.timeWarning_btnContinue:hover {
+    background: #0046a3;
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {}
