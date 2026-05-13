@@ -402,6 +402,22 @@ const DisAdminMenu = ({
             {!menuOpen && <span className={classes.tooltip}>Аналитика</span>}
           </Link>
         )}
+        <Link
+          to={"/travelline"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+            } ${id == "travelline" && classes.menu_items__activeElem}`}
+        >
+          <div className={classes.svgWrapper}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--menu-gray)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 2v6" />
+              <path d="M15 2v6" />
+              <rect x="6" y="8" width="12" height="13" rx="2" />
+              <path d="M6 13h12" />
+            </svg>
+          </div>
+          <DelayedText show={menuOpen} delay={200}>TravelLine</DelayedText>
+          {!menuOpen && <span className={classes.tooltip}>TravelLine</span>}
+        </Link>
         <div style={{ margin: "10px 0", height: "1px", width: "100%", backgroundColor: "var(--menu-gray)" }} />
         <Link
           to={"/documentation"}

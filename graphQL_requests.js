@@ -1165,6 +1165,8 @@ export const GET_REQUESTS = gql`
       requests {
         id
         airportId
+        externalBookingNumber
+        externalSource
         airport {
           id
           name
@@ -1664,6 +1666,8 @@ export const GET_REQUEST = gql`
     request(id: $requestId) {
       id
       airportId
+      externalBookingNumber
+      externalSource
       airport {
         id
         name
@@ -6198,6 +6202,356 @@ export const GET_EXTERNAL_USERS = gql`
         active
         sessionExpiresAt
       }
+    }
+  }
+`;
+
+// ─── TravelLine Integration ───────────────────────────────────────────────
+
+export const GET_TL_CONFIG = gql`
+  query TlConfig {
+    tlConfig {
+      clientId
+      baseUrl
+      isConfigured
+    }
+  }
+`;
+
+export const SET_TL_CONFIG = gql`
+  mutation TlSetConfig($input: TlSetConfigInput!) {
+    tlSetConfig(input: $input)
+  }
+`;
+
+export const GET_TL_CITIES = gql`
+  query TlCities($countryCode: String) {
+    tlCities(countryCode: $countryCode) {
+      id
+      name
+      regionId
+      countryCode
+    }
+  }
+`;
+
+export const GET_TL_PROPERTIES_BY_CITY = gql`
+  query TlPropertiesByCity($input: TlSearchPropertiesByCityInput!) {
+    tlPropertiesByCity(input: $input) {
+      items {
+        id
+        name
+        description
+        address {
+          country
+          city
+          street
+        }
+        latitude
+        longitude
+        photos
+        stars
+        raw
+      }
+      total
+      page
+      pageSize
+    }
+  }
+`;
+
+export const SEARCH_TL_PROPERTIES = gql`
+  query TlSearchProperties($filter: TlSearchPropertiesInput) {
+    tlSearchProperties(filter: $filter) {
+      items {
+        id
+        name
+        description
+        phone
+        email
+        address {
+          country
+          city
+          street
+          zip
+        }
+        latitude
+        longitude
+        photos
+        stars
+        raw
+      }
+      total
+      page
+      pageSize
+    }
+  }
+`;
+
+export const GET_TL_PROPERTY = gql`
+  query TlProperty($id: ID!) {
+    tlProperty(id: $id) {
+      id
+      name
+      description
+      phone
+      email
+      address {
+        country
+        city
+        street
+        zip
+      }
+      latitude
+      longitude
+      photos
+      stars
+      raw
+    }
+  }
+`;
+
+export const GET_TL_ROOM_TYPES = gql`
+  query TlRoomTypes($propertyId: ID!) {
+    tlRoomTypes(propertyId: $propertyId) {
+      id
+      name
+      description
+      maxOccupancy
+      photos
+      raw
+    }
+  }
+`;
+
+export const GET_TL_RATE_PLANS = gql`
+  query TlRatePlans($propertyId: ID!) {
+    tlRatePlans(propertyId: $propertyId) {
+      id
+      name
+      description
+      includesBreakfast
+      raw
+    }
+  }
+`;
+
+export const TL_AVAILABILITY = gql`
+  query TlAvailability($input: TlAvailabilityInput!) {
+    tlAvailability(input: $input) {
+      propertyId
+      nights
+      rates {
+        roomTypeId
+        roomTypeName
+        maxOccupancy
+        ratePlanId
+        ratePlanName
+        priceBeforeTax
+        totalPrice
+        tax
+        currency
+        availableRooms
+        mealType
+        checkInTime
+        checkOutTime
+        timezone
+        cancellationPolicies {
+          amount
+          deadline
+          timezone
+        }
+        checksum
+        roomTypePlacements
+        placements {
+          code
+          name
+          type
+          capacity
+        }
+        raw
+      }
+      raw
+    }
+  }
+`;
+
+export const TL_PROPERTY_CALENDAR = gql`
+  query TlPropertyCalendar($input: TlCalendarInput!) {
+    tlPropertyCalendar(input: $input) {
+      date
+      roomTypeId
+      roomTypeName
+      available
+      minPrice
+      currency
+    }
+  }
+`;
+
+export const TL_PROPERTIES_AVAILABILITY = gql`
+  query TlPropertiesAvailability($input: TlSearchDatesInput!) {
+    tlPropertiesAvailability(input: $input) {
+      propertyId
+      propertyName
+      hasAvailability
+      minPricePerNight
+      minTotalPrice
+      currency
+      nights
+      hasAnyRate
+      mealFilterApplied
+      reason
+    }
+  }
+`;
+
+export const GET_TL_RESERVATIONS = gql`
+  query TlReservations {
+    tlReservations {
+      id
+      propertyId
+      propertyName
+      roomTypeId
+      ratePlanId
+      arrival
+      departure
+      adults
+      children
+      totalPrice
+      currency
+      status
+      guest {
+        firstName
+        lastName
+        email
+        phone
+      }
+      comment
+      roomTypeName
+      ratePlanName
+      cancellationPoliciesJson
+      createdAt
+    }
+  }
+`;
+
+export const GET_TL_RESERVATION = gql`
+  query TlReservation($id: ID!) {
+    tlReservation(id: $id) {
+      id
+      propertyId
+      propertyName
+      roomTypeId
+      ratePlanId
+      arrival
+      departure
+      adults
+      children
+      totalPrice
+      currency
+      status
+      guest {
+        firstName
+        lastName
+        email
+        phone
+      }
+      comment
+      roomTypeName
+      ratePlanName
+      cancellationPoliciesJson
+      createdAt
+      raw
+    }
+  }
+`;
+
+export const CREATE_TL_RESERVATION = gql`
+  mutation TlCreateReservation($input: TlCreateReservationInput!) {
+    tlCreateReservation(input: $input) {
+      id
+      propertyId
+      propertyName
+      roomTypeId
+      ratePlanId
+      arrival
+      departure
+      adults
+      children
+      totalPrice
+      currency
+      status
+      guest {
+        firstName
+        lastName
+        email
+        phone
+      }
+      comment
+      roomTypeName
+      ratePlanName
+      cancellationPoliciesJson
+      createdAt
+      raw
+    }
+  }
+`;
+
+export const CANCEL_TL_RESERVATION = gql`
+  mutation TlCancelReservation($id: ID!) {
+    tlCancelReservation(id: $id)
+  }
+`;
+
+export const TL_VERIFY_BOOKING = gql`
+  mutation TlVerifyBooking($input: TlVerifyInput!) {
+    tlVerifyBooking(input: $input) {
+      ok
+      conditionChange
+      newChecksum
+      newPriceBeforeTax
+      newTotalPrice
+      newTax
+      message
+    }
+  }
+`;
+
+export const TL_CANCELLATION_PENALTY = gql`
+  query TlCancellationPenalty($bookingId: String!) {
+    tlCancellationPenalty(bookingId: $bookingId) {
+      penalty
+      currency
+      penaltyType
+      description
+    }
+  }
+`;
+
+export const TL_RAW_REQUEST = gql`
+  mutation TlRawRequest($input: TlRawRequestInput!) {
+    tlRawRequest(input: $input) {
+      status
+      body
+      ok
+    }
+  }
+`;
+
+export const GET_HOTEL_OPTIONS_FOR_PLACEMENT = gql`
+  query HotelOptionsForPlacement($city: String!) {
+    hotelOptionsForPlacement(city: $city) {
+      source
+      id
+      name
+      photo
+      city
+      address
+      stars
+      description
+      access
+      hasRooms
     }
   }
 `;

@@ -56,6 +56,38 @@ function ExistRequestEditForm({
           {formData.reserve ? "Резерв" : "Квота"}
         </div>
       </div>
+      {formData.externalSource === "travelline" && (
+        <>
+          <div className={classes.requestDataInfo}>
+            <div className={classes.requestDataInfo_title}>Источник</div>
+            <div className={classes.requestDataInfo_desc}>
+              <span
+                style={{
+                  display: "inline-block",
+                  padding: "2px 8px",
+                  borderRadius: 999,
+                  background: "#2196F3",
+                  color: "#fff",
+                  fontFamily: "Nunito Sans",
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.03em",
+                }}
+              >
+                TravelLine
+              </span>
+            </div>
+          </div>
+          {formData.externalBookingNumber && (
+            <div className={classes.requestDataInfo}>
+              <div className={classes.requestDataInfo_title}>Номер брони</div>
+              <div className={classes.requestDataInfo_desc} style={{ fontFamily: "monospace" }}>
+                {formData.externalBookingNumber}
+              </div>
+            </div>
+          )}
+        </>
+      )}
       <div className={classes.requestDataInfo}>
         <div className={classes.requestDataInfo_title}>
           {!user?.airlineId ? "Аэропорт" : "Город"}
@@ -160,7 +192,10 @@ function ExistRequestEditForm({
           <div className={classes.requestDataInfo}>
             <div className={classes.requestDataInfo_title}>Номер комнаты</div>
             <div className={classes.requestDataInfo_desc}>
-              {formData.hotelChess?.room?.name || "—"}
+              {formData.hotelChess?.room?.name ||
+                formData.roomNumber ||
+                formData.roomCategory ||
+                "—"}
             </div>
           </div>
         </>

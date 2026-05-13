@@ -48,6 +48,10 @@ const TransferOrder = lazy(() =>
   import("./Components/Blocks/TransferOrder/TransferOrder")
 );
 
+const TravellinePage = lazy(() =>
+  import("./Components/Blocks/TravellinePage/TravellinePage")
+);
+
 function App() {
   const { user } = useAuth();
 
@@ -187,6 +191,14 @@ function App() {
             <Route path="/newPlacement/:idHotel" element={<NewPlacement />} />
             <Route path="/newPlacementV2/:idHotel" element={<NewPlacementV2 />} />
             <Route path="/hotel-pms" element={<HotelPMS />} />
+            <Route
+              path="/travelline"
+              element={
+                <Suspense fallback={<div style={{ padding: 24 }}>Загрузка…</div>}>
+                  <TravellinePage />
+                </Suspense>
+              }
+            />
 
             <Route path="*" element={<Non_Found_Page />} />
           </Route>

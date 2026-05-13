@@ -8,18 +8,36 @@ import React, {
 import classes from "./ChooseHotel.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { useMutation, useQuery } from "@apollo/client";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import {
-  GET_CITIES,
-  GET_HOTEL,
   GET_HOTELS_RELAY,
+  GET_HOTEL_OPTIONS_FOR_PLACEMENT,
+  GET_REQUEST,
+  TL_PROPERTIES_AVAILABILITY,
   getCookie,
   UPDATE_REQUEST_RELAY,
 } from "../../../../graphQL_requests";
-import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUILoader from "../MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import TravellineRoomsSidebar from "../TravellineRoomsSidebar/TravellineRoomsSidebar";
+import { useNavigate } from "react-router-dom";
+
+// chooseObject is an array of { start, startTime, end, endTime, client, requestId, ... }
+// Normalize it into shape expected by TravellineRoomsSidebar
+function buildTlRequest(chooseObject, chooseRequestID) {
+  const obj = Array.isArray(chooseObject) ? chooseObject[0] : chooseObject;
+  if (!obj) return null;
+  const start = obj.start || null;
+  const end = obj.end || null;
+  return {
+    id: obj.requestId || chooseRequestID,
+    arrival: start ? `${start}T${obj.startTime || "14:00"}` : null,
+    departure: end ? `${end}T${obj.endTime || "12:00"}` : null,
+    person: { name: obj.client || "" },
+    note: obj.note || "",
+  };
+}
 
 function ChooseHotel({
   show,
@@ -31,114 +49,136 @@ function ChooseHotel({
   defaultTimesUsed,
   onBackToRequest,
 }) {
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [isEdited, setIsEdited] = useState(false);
   const [timeWarningDismissed, setTimeWarningDismissed] = useState(false);
-  const [formData, setFormData] = useState({
-    city: "",
-    hotel: "",
-    request: chooseRequestID,
-  });
-  const [hotels, setHotels] = useState([]);
+  const [selectedCity, setSelectedCity] = useState("");
+  const [tlProperty, setTlProperty] = useState(null); // selected TL option for booking sidebar
   const sidebarRef = useRef();
   const token = getCookie("token");
-  // Получаем данные о гостиницах
-  const { data: hotelsData, loading: hotelsLoading } = useQuery(
-    GET_HOTELS_RELAY,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    }
+  const navigate = useNavigate();
+
+  // Все локальные отели — нужен только для построения списка уникальных городов
+  const { data: hotelsData } = useQuery(GET_HOTELS_RELAY, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const allHotels = hotelsData?.hotels?.hotels ?? [];
+
+  const uniqueCities = useMemo(
+    () =>
+      [
+        ...new Set(
+          allHotels.map((h) => h.information?.city?.trim()).filter(Boolean)
+        ),
+      ].sort(),
+    [allHotels]
   );
 
-  // const { data: citiesData, loading: citiesLoading } = useQuery(GET_CITIES);
+  // Загрузка опций (local + travelline) по выбранному городу
+  const [
+    fetchOptions,
+    { data: optionsData, loading: optionsLoading, error: optionsError },
+  ] = useLazyQuery(GET_HOTEL_OPTIONS_FOR_PLACEMENT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    fetchPolicy: "network-only",
+  });
 
+  // При первом открытии — подставляем город из заявки и грузим опции
   useEffect(() => {
-    if (!hotelsLoading && hotelsData && show) {
-      setHotels(hotelsData.hotels.hotels || []);
+    if (chooseCityRequest && show) {
+      setSelectedCity(chooseCityRequest);
+      fetchOptions({ variables: { city: chooseCityRequest } });
     }
-  }, [hotelsLoading, hotelsData, show]);
+  }, [chooseCityRequest, show, fetchOptions]);
 
-  // 2) When a hotel ID is chosen, fetch its details (including `access`):
-  const {
-    data: chosenHotelData,
-    loading: loadingChosenHotel,
-    error: errorChosenHotel,
-  } = useQuery(GET_HOTEL, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const handleCitySelect = (value) => {
+    setIsEdited(true);
+    setSelectedCity(value);
+    if (value) fetchOptions({ variables: { city: value } });
+  };
+
+  const rawOptions = optionsData?.hotelOptionsForPlacement ?? [];
+
+  // Подтягиваем заявку (за датами) для проверки доступности TL-отелей
+  const { data: reqData } = useQuery(GET_REQUEST, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: {
+      requestId: chooseRequestID,
+      pagination: { skip: 0, take: 10 },
     },
-    variables: { hotelId: formData.hotel },
-    skip: !formData.hotel, // don’t run until we have an ID
+    skip: !chooseRequestID,
+    fetchPolicy: "network-only",
+  });
+  const requestArrival = reqData?.request?.arrival || null;
+  const requestDeparture = reqData?.request?.departure || null;
+  const requestMealPlan = reqData?.request?.mealPlan || null;
+  const mealRequirement = useMemo(() => {
+    if (!requestMealPlan?.included) return null;
+    return {
+      breakfast: !!requestMealPlan.breakfastEnabled,
+      lunch: !!requestMealPlan.lunchEnabled,
+      dinner: !!requestMealPlan.dinnerEnabled,
+    };
+  }, [requestMealPlan]);
+
+  const tlPropertyIds = useMemo(
+    () => rawOptions.filter((o) => o.source === "travelline").map((o) => o.id),
+    [rawOptions]
+  );
+
+  const [
+    fetchTlAvail,
+    { data: tlAvailData, loading: tlAvailLoading },
+  ] = useLazyQuery(TL_PROPERTIES_AVAILABILITY, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
     fetchPolicy: "network-only",
   });
 
   useEffect(() => {
-    if (chooseCityRequest && show) {
-      setFormData((prevState) => ({
-        ...prevState,
-        city: chooseCityRequest,
-        hotel: "",
-        request: chooseRequestID,
-      }));
+    if (
+      tlPropertyIds.length > 0 &&
+      requestArrival &&
+      requestDeparture
+    ) {
+      fetchTlAvail({
+        variables: {
+          input: {
+            arrival: requestArrival,
+            departure: requestDeparture,
+            adults: 1,
+            propertyIds: tlPropertyIds,
+            mealRequirement: mealRequirement || null,
+          },
+        },
+      });
     }
-  }, [chooseCityRequest, show]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    tlPropertyIds.join(","),
+    requestArrival,
+    requestDeparture,
+    mealRequirement?.breakfast,
+    mealRequirement?.lunch,
+    mealRequirement?.dinner,
+    fetchTlAvail,
+  ]);
 
-  // Получаем уникальные города и фильтруем отели по выбранному городу
-  // const uniqueCities = useMemo(
-  //   () =>
-  //     [
-  //       ...new Set(hotels.map((hotel) => hotel.information?.city? hotel.information.city.trim() : '')),
-  //     ].sort(),
-  //   [hotels]
-  // );
-  // const uniqueCities = useMemo(
-  //   () =>
-  //     [
-  //       ...new Set(
-  //         citiesData?.citys.map((item) =>
-  //           item.city ? item.city.trim() : "kdsjf"
-  //         )
-  //       ),
-  //     ].sort(),
-  //   [citiesData]
-  // );
+  const tlAvailMap = useMemo(() => {
+    const map = new Map();
+    (tlAvailData?.tlPropertiesAvailability ?? []).forEach((s) => map.set(s.propertyId, s));
+    return map;
+  }, [tlAvailData]);
 
-  // const filteredHotels = useMemo(() => {
-  //   return formData.city
-  //     ? hotels.filter(
-  //         (hotel) => hotel.information?.city?.trim() === formData.city.trim()
-  //       )
-  //     : [];
-  // }, [formData.city, hotels]);
-
-  // 3) Prepare your city list and filtered hotel list:
-  const uniqueCities = useMemo(
-    () =>
-      [...new Set(hotels.map((h) => h.information?.city?.trim() || ""))].sort(),
-    [hotels]
-  );
-  const filteredHotels = useMemo(
-    () =>
-      formData.city
-        ? hotels.filter(
-          (h) => h.information?.city?.trim() === formData.city.trim()
-        )
-        : [],
-    [formData.city, hotels]
-  );
-
-  // console.log(hotelsData?.hotels?.hotels);
+  // Все отели остаются в списке. У TL без свободных номеров и у локальных без
+  // номерного фонда — кнопка «Выбрать» будет заблокирована.
+  const options = rawOptions;
 
   const resetForm = useCallback(() => {
-    setFormData({ city: "", hotel: "", request: chooseRequestID });
+    setSelectedCity("");
     setIsEdited(false);
     setTimeWarningDismissed(false);
-  }, [chooseRequestID]);
+    setTlProperty(null);
+  }, []);
+
   const closeButton = useCallback(() => {
     if (
       !isEdited ||
@@ -149,52 +189,47 @@ function ChooseHotel({
     }
   }, [isEdited, onClose, resetForm]);
 
-  const handleCitySelect = (value) => {
-    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-    setFormData((prevState) => ({
-      ...prevState,
-      city: value,
-      hotel: "",
-      request: chooseRequestID,
-    })); // Сброс отеля при изменении города
-  };
-
-  const handleHotelSelect = (value) => {
-    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-    setFormData((prevState) => ({
-      ...prevState,
-      hotel: value,
-      request: chooseRequestID,
-    }));
-  };
-
-  // 5) Mutation for self-placement:
-  const [updateRequest] = useMutation(UPDATE_REQUEST_RELAY, {
-    context: { headers: { Authorization: `Bearer ${token}` } },
-    onCompleted: () => {
-      onClose();
-    },
-    onError: (err) => {
-      console.error("Ошибка размещения:", err);
-      alert("Не удалось разместить заявку у отеля.");
-    },
-  });
-  const handleSubmit = () =>
-    updateRequest({
-      variables: {
-        updateRequestId: formData.request,
-        input: { hotelId: formData.hotel },
+  const [updateRequest, { loading: placingLocal }] = useMutation(
+    UPDATE_REQUEST_RELAY,
+    {
+      context: { headers: { Authorization: `Bearer ${token}` } },
+      onCompleted: () => {
+        resetForm();
+        onClose();
       },
-    });
+      onError: (err) => {
+        console.error("Ошибка размещения:", err);
+        alert("Не удалось разместить заявку у отеля.");
+      },
+    }
+  );
+
+  const handleSelectOption = (opt) => {
+    if (opt.source === "local") {
+      if (opt.access) {
+        // саморазмещение — обновляем заявку
+        updateRequest({
+          variables: {
+            updateRequestId: chooseRequestID,
+            input: { hotelId: opt.id },
+          },
+        });
+      } else {
+        // обычный flow — редирект на диспетчерскую страницу
+        onClose();
+        navigate(`/hotels/${opt.id}/${chooseRequestID}`);
+      }
+    } else if (opt.source === "travelline") {
+      // открываем sidebar бронирования TravelLine
+      setTlProperty(opt);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
-      }
-
+      // если открыт TL sidebar — игнорируем (он сам управляет закрытием)
+      if (tlProperty) return;
+      if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
 
@@ -203,386 +238,217 @@ function ChooseHotel({
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
     }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [show, closeButton]);
-
-  // console.log("Выбор города:", chooseCityRequest);
-  // console.log("ID запроса:", chooseRequestID);
-  // console.log("FormData:", formData);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [show, closeButton, tlProperty]);
 
   return (
-    <Sidebar show={show} sidebarRef={sidebarRef}>
-      <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Выбрать гостиницу</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <CloseIcon />
-        </div>
-      </div>
-
-      {defaultTimesUsed && !timeWarningDismissed ? (
-        <div className={classes.timeWarning}>
-          <div className={classes.timeWarning_icon}>⏱</div>
-          <div className={classes.timeWarning_title}>Время заезда и выезда не указано</div>
-          <div className={classes.timeWarning_text}>
-            При создании заявки время не было задано. Установлены значения по умолчанию:
+    <>
+      <Sidebar show={show} sidebarRef={sidebarRef}>
+        <div className={classes.requestTitle}>
+          <div className={classes.requestTitle_name}>Выбрать гостиницу</div>
+          <div className={classes.requestTitle_close} onClick={closeButton}>
+            <CloseIcon />
           </div>
-          <div className={classes.timeWarning_defaults}>
-            <div className={classes.timeWarning_row}>
-              <span>Заезд</span>
-              <span className={classes.timeWarning_value}>14:00</span>
+        </div>
+
+        {defaultTimesUsed && !timeWarningDismissed ? (
+          <div className={classes.timeWarning}>
+            <div className={classes.timeWarning_icon}>⏱</div>
+            <div className={classes.timeWarning_title}>Время заезда и выезда не указано</div>
+            <div className={classes.timeWarning_text}>
+              При создании заявки время не было задано. Установлены значения по умолчанию:
             </div>
-            <div className={classes.timeWarning_row}>
-              <span>Выезд</span>
-              <span className={classes.timeWarning_value}>12:00</span>
+            <div className={classes.timeWarning_defaults}>
+              <div className={classes.timeWarning_row}>
+                <span>Заезд</span>
+                <span className={classes.timeWarning_value}>14:00</span>
+              </div>
+              <div className={classes.timeWarning_row}>
+                <span>Выезд</span>
+                <span className={classes.timeWarning_value}>12:00</span>
+              </div>
+            </div>
+            <div className={classes.timeWarning_actions}>
+              <button
+                className={classes.timeWarning_btnBack}
+                onClick={onBackToRequest}
+              >
+                Вернуться к заявке
+              </button>
+              <button
+                className={classes.timeWarning_btnContinue}
+                onClick={() => setTimeWarningDismissed(true)}
+              >
+                Продолжить
+              </button>
             </div>
           </div>
-          <div className={classes.timeWarning_actions}>
-            <button
-              className={classes.timeWarning_btnBack}
-              onClick={onBackToRequest}
-            >
-              Вернуться к заявке
-            </button>
-            <button
-              className={classes.timeWarning_btnContinue}
-              onClick={() => setTimeWarningDismissed(true)}
-            >
-              Продолжить
-            </button>
+        ) : (
+          <>
+            <div className={classes.requestMiddle}>
+              <div className={classes.requestData}>
+                <label>Город</label>
+                {show && (
+                  <MUIAutocomplete
+                    dropdownWidth={"100%"}
+                    label={"Введите город"}
+                    options={uniqueCities}
+                    value={selectedCity}
+                    onChange={(_, newValue) => handleCitySelect(newValue)}
+                  />
+                )}
+
+                <label style={{ marginTop: 12 }}>Гостиницы</label>
+
+                {!selectedCity ? (
+                  <p className={classes.hotelListEmpty}>
+                    Выберите город, чтобы увидеть доступные гостиницы
+                  </p>
+                ) : optionsLoading ? (
+                  <div className={classes.hotelListLoader}>
+                    <MUILoader loadSize={"32px"} color={"#0057C3"} />
+                  </div>
+                ) : optionsError ? (
+                  <p className={classes.hotelListEmpty}>
+                    Не удалось загрузить список: {optionsError.message}
+                  </p>
+                ) : options.length === 0 ? (
+                  <p className={classes.hotelListEmpty}>
+                    В этом городе нет доступных гостиниц
+                  </p>
+                ) : (
+                  <div className={classes.hotelList}>
+                    {options.map((opt) => (
+                      <HotelOptionCard
+                        key={`${opt.source}-${opt.id}`}
+                        option={opt}
+                        disabled={placingLocal}
+                        onSelect={() => handleSelectOption(opt)}
+                        tlAvailability={
+                          opt.source === "travelline" ? tlAvailMap.get(opt.id) : null
+                        }
+                        tlAvailLoading={
+                          opt.source === "travelline" && tlAvailLoading && !tlAvailMap.has(opt.id)
+                        }
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </Sidebar>
+
+      {tlProperty && (
+        <TravellineRoomsSidebar
+          show={!!tlProperty}
+          property={tlProperty}
+          request={buildTlRequest(chooseObject, chooseRequestID)}
+          onClose={() => setTlProperty(null)}
+          onBooked={() => {
+            setTlProperty(null);
+            resetForm();
+            onClose();
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+function HotelOptionCard({ option, onSelect, disabled, tlAvailability, tlAvailLoading }) {
+  const isTl = option.source === "travelline";
+
+  let availabilityHint = null;
+  if (isTl) {
+    if (tlAvailability) {
+      if (tlAvailability.hasAvailability) {
+        const price = tlAvailability.minPricePerNight;
+        const cur = tlAvailability.currency || "RUB";
+        availabilityHint = (
+          <div className={`${classes.hotelCard_avail} ${classes.hotelCard_availOk}`}>
+            ✓ Можно разместить{price ? ` · от ${Number(price).toLocaleString("ru-RU")} ${cur}/ночь` : ""}
           </div>
+        );
+      } else if (tlAvailability.reason === "no_meal_match") {
+        availabilityHint = (
+          <div className={`${classes.hotelCard_avail} ${classes.hotelCard_availNone}`}>
+            ✕ Нельзя разместить: нет номеров с подходящим питанием
+          </div>
+        );
+      } else {
+        availabilityHint = (
+          <div className={`${classes.hotelCard_avail} ${classes.hotelCard_availNone}`}>
+            ✕ Нельзя разместить: нет свободных номеров на эти даты
+          </div>
+        );
+      }
+    } else if (tlAvailLoading) {
+      availabilityHint = (
+        <div className={classes.hotelCard_avail}>Проверяем доступность…</div>
+      );
+    } else {
+      availabilityHint = (
+        <div className={classes.hotelCard_avail}>
+          Доступность будет проверена при выборе
         </div>
-      ) : (
-      <>
-      <div className={classes.requestMiddle}>
-        <div className={classes.requestData}>
-          <label>Город</label>
-          {/* <DropDownList
-            placeholder="Выберите город"
-            options={uniqueCities}
-            initialValue={formData.city}
-            onSelect={handleCitySelect}
-          /> */}
-          {show && (
-            <MUIAutocomplete
-              dropdownWidth={"100%"}
-              label={"Введите город"}
-              options={uniqueCities}
-              value={formData.city}
-              onChange={(event, newValue) => {
-                handleCitySelect(newValue);
-              }}
-            />
-          )}
-
-          <label>Гостиница</label>
-          {/* <DropDownList
-            placeholder="Выберите гостиницу"
-            options={filteredHotels.map((hotel) => hotel.name)}
-            initialValue={
-              filteredHotels.find((hotel) => hotel.id === formData.hotel)
-                ?.name || ""
-            }
-            onSelect={(value) => {
-              const selectedHotel = filteredHotels.find(
-                (hotel) => hotel.name === value
-              );
-              handleHotelSelect(selectedHotel?.id || "");
-            }}
-          /> */}
-          <MUIAutocomplete
-            dropdownWidth={"100%"}
-            label={"Введите гостиницу"}
-            options={filteredHotels.map((hotel) => hotel.name)}
-            value={
-              filteredHotels.find((hotel) => hotel.id === formData.hotel)
-                ?.name || ""
-            }
-            onChange={(event, newValue) => {
-              const selectedHotel = filteredHotels.find(
-                (hotel) => hotel.name === newValue
-              );
-              handleHotelSelect(selectedHotel?.id || "");
-            }}
-          />
-        </div>
+      );
+    }
+  } else if (option.hasRooms === false) {
+    availabilityHint = (
+      <div className={`${classes.hotelCard_avail} ${classes.hotelCard_availNone}`}>
+        ✕ Номерной фонд не добавлен
       </div>
+    );
+  }
 
-      {formData.city && formData.hotel && (
-        <div className={classes.requestButton}>
-          {loadingChosenHotel ? (
-            <Button disabled>
-              <MUILoader loadSize={"28px"} color={"#fff"} />
-            </Button>
-          ) : errorChosenHotel ? (
-            <Button disabled>Ошибка загрузки</Button>
-          ) : chosenHotelData?.hotel?.access ? (
-            // Hotel can self-place → use mutation
-            <Button onClick={handleSubmit} dataObject={chooseObject}>
-              Отправить на размещение{" "}
-              <img
-                style={{ width: "25px", height: "25px" }}
-                src="/user-check.png"
-                alt="check"
-              />
-            </Button>
+  return (
+    <div className={classes.hotelCard}>
+      <div className={classes.hotelCard_photo}>
+        {option.photo ? (
+          <img src={option.photo} alt={option.name} />
+        ) : (
+          <div className={classes.hotelCard_photoPlaceholder}>🏨</div>
+        )}
+      </div>
+      <div className={classes.hotelCard_body}>
+        <div className={classes.hotelCard_titleRow}>
+          <span className={classes.hotelCard_name}>{option.name}</span>
+          {isTl ? (
+            <span className={classes.hotelCard_tlBadge}>TravelLine</span>
           ) : (
-            // Hotel can’t self-place → navigate to dispatcher flow
-            <Button
-              link={`/hotels/${formData.hotel}/${formData.request}`}
-              dataObject={chooseObject}
-              disabled
-            >
-              Разместить{" "}
-              <img
-                style={{ width: "25px", height: "25px" }}
-                src="/user-check.png"
-                alt="check"
-              />
-            </Button>
+            <span className={classes.hotelCard_karsBadge}>Kars Avia</span>
           )}
         </div>
-      )}
-      </>
-      )}
-    </Sidebar>
+        {option.stars && (
+          <div className={classes.hotelCard_stars}>
+            {"★".repeat(Math.min(parseInt(option.stars) || 0, 5))}
+          </div>
+        )}
+        {(option.city || option.address) && (
+          <div className={classes.hotelCard_addr}>
+            📍 {[option.address, option.city].filter(Boolean).join(", ")}
+          </div>
+        )}
+        {availabilityHint}
+      </div>
+      <div className={classes.hotelCard_action}>
+        <button
+          type="button"
+          className={classes.hotelCard_btn}
+          disabled={
+            disabled ||
+            (!isTl && option.hasRooms === false) ||
+            (isTl && tlAvailability && tlAvailability.hasAnyRate === false)
+          }
+          onClick={onSelect}
+        >
+          Выбрать
+        </button>
+      </div>
+    </div>
   );
 }
 
 export default ChooseHotel;
-
-// import React, {
-//   useState,
-//   useRef,
-//   useEffect,
-//   useCallback,
-//   useMemo,
-// } from "react";
-// import classes from "./ChooseHotel.module.css";
-// import Button from "../../Standart/Button/Button";
-// import Sidebar from "../Sidebar/Sidebar";
-// import { useQuery } from "@apollo/client";
-// import { GET_CITIES, GET_HOTELS_RELAY } from "../../../../graphQL_requests";
-// import DropDownList from "../DropDownList/DropDownList"; // Импортируем кастомный компонент DropDownList
-// import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
-
-// function ChooseHotel({
-//   show,
-//   onClose,
-//   chooseObject,
-//   id,
-//   chooseRequestID,
-//   chooseCityRequest,
-// }) {
-//   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
-//   const [formData, setFormData] = useState({
-//     city: "",
-//     hotel: "",
-//     request: chooseRequestID,
-//   });
-//   const [hotels, setHotels] = useState([]);
-//   const sidebarRef = useRef();
-
-//   // Получаем данные о гостиницах
-//   const { data: hotelsData, loading: hotelsLoading } =
-//     useQuery(GET_HOTELS_RELAY);
-
-//   const { data: citiesData, loading: citiesLoading } = useQuery(GET_CITIES);
-
-//   useEffect(() => {
-//     if (!hotelsLoading && hotelsData && show) {
-//       setHotels(hotelsData.hotels.hotels || []);
-//     }
-//   }, [hotelsLoading, hotelsData, show]);
-
-//   useEffect(() => {
-//     if (chooseCityRequest && show) {
-//       setFormData((prevState) => ({
-//         ...prevState,
-//         city: chooseCityRequest,
-//         hotel: "",
-//         request: chooseRequestID,
-//       }));
-//     }
-//   }, [chooseCityRequest, show]);
-
-//   // Получаем уникальные города и фильтруем отели по выбранному городу
-//   const uniqueCities = useMemo(
-//     () =>
-//       [
-//         ...new Set(hotels.map((hotel) => hotel.information?.city? hotel.information.city.trim() : '')),
-//       ].sort(),
-//     [hotels]
-//   );
-//   // const uniqueCities = useMemo(
-//   //   () =>
-//   //     [
-//   //       ...new Set(
-//   //         citiesData?.citys.map((item) =>
-//   //           item.city ? item.city.trim() : "kdsjf"
-//   //         )
-//   //       ),
-//   //     ].sort(),
-//   //   [citiesData]
-//   // );
-//   const filteredHotels = useMemo(() => {
-//     return formData.city
-//       ? hotels.filter(
-//           (hotel) => hotel.information?.city?.trim() === formData.city.trim()
-//         )
-//       : [];
-//   }, [formData.city, hotels]);
-
-//   // console.log(hotelsData?.hotels?.hotels);
-
-//   const resetForm = useCallback(() => {
-//     setFormData({ city: "", hotel: "", request: chooseRequestID });
-//     setIsEdited(false);
-//   }, []);
-
-//   const closeButton = useCallback(() => {
-//     if (!isEdited) {
-//       resetForm();
-//       onClose();
-//       return;
-//     }
-
-//     if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
-//       resetForm();
-//       onClose();
-//     }
-//   }, [isEdited, onClose]);
-
-//   const handleCitySelect = (value) => {
-//     setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-//     setFormData((prevState) => ({
-//       ...prevState,
-//       city: value,
-//       hotel: "",
-//       request: chooseRequestID,
-//     })); // Сброс отеля при изменении города
-//   };
-
-//   const handleHotelSelect = (value) => {
-//     setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
-//     setFormData((prevState) => ({
-//       ...prevState,
-//       hotel: value,
-//       request: chooseRequestID,
-//     }));
-//   };
-
-//   useEffect(() => {
-//     const handleClickOutside = (event) => {
-//       if (
-//         sidebarRef.current?.contains(event.target) // Клик в боковой панели
-//       ) {
-//         return; // Если клик внутри, ничего не делаем
-//       }
-
-//       closeButton();
-//     };
-
-//     if (show) {
-//       document.addEventListener("mousedown", handleClickOutside);
-//     } else {
-//       document.removeEventListener("mousedown", handleClickOutside);
-//     }
-
-//     return () => {
-//       document.removeEventListener("mousedown", handleClickOutside);
-//     };
-//   }, [show, closeButton]);
-
-//   // console.log("Выбор города:", chooseCityRequest);
-//   // console.log("ID запроса:", chooseRequestID);
-//   // console.log("FormData:", formData);
-
-//   return (
-//     <Sidebar show={show} sidebarRef={sidebarRef}>
-//       <div className={classes.requestTitle}>
-//         <div className={classes.requestTitle_name}>Выбрать гостиницу</div>
-//         <div className={classes.requestTitle_close} onClick={closeButton}>
-//           <img src="/close.png" alt="" />
-//         </div>
-//       </div>
-
-//       <div className={classes.requestMiddle}>
-//         <div className={classes.requestData}>
-//           <label>Город</label>
-//           {/* <DropDownList
-//             placeholder="Выберите город"
-//             options={uniqueCities}
-//             initialValue={formData.city}
-//             onSelect={handleCitySelect}
-//           /> */}
-//           <MUIAutocomplete
-//             dropdownWidth={"100%"}
-//             label={"Введите город"}
-//             options={uniqueCities}
-//             value={formData.city}
-//             onChange={(event, newValue) => {
-//               handleCitySelect(newValue);
-//             }}
-//           />
-
-//           <label>Гостиница</label>
-//           {/* <DropDownList
-//             placeholder="Выберите гостиницу"
-//             options={filteredHotels.map((hotel) => hotel.name)}
-//             initialValue={
-//               filteredHotels.find((hotel) => hotel.id === formData.hotel)
-//                 ?.name || ""
-//             }
-//             onSelect={(value) => {
-//               const selectedHotel = filteredHotels.find(
-//                 (hotel) => hotel.name === value
-//               );
-//               handleHotelSelect(selectedHotel?.id || "");
-//             }}
-//           /> */}
-//           <MUIAutocomplete
-//             dropdownWidth={"100%"}
-//             label={"Введите гостиницу"}
-//             options={filteredHotels.map((hotel) => hotel.name)}
-//             value={
-//               filteredHotels.find((hotel) => hotel.id === formData.hotel)
-//                 ?.name || ""
-//             }
-//             onChange={(event, newValue) => {
-//               const selectedHotel = filteredHotels.find(
-//                 (hotel) => hotel.name === newValue
-//               );
-//               handleHotelSelect(selectedHotel?.id || "");
-//             }}
-//           />
-//         </div>
-//       </div>
-
-//       {formData.city && formData.hotel && (
-//         <div className={classes.requestButton}>
-//           <Button
-//             link={`/hotels/${formData.hotel}/${formData.request}`}
-//             dataObject={chooseObject}
-//             disabled={true}
-//             onClick={() => {
-//               onClose();
-//             }}
-//           >
-//             {/* {console.log(formData)} */}
-//             Разместить{" "}
-//             <img
-//               style={{ width: "fit-content", height: "fit-content" }}
-//               src="/user-check.png"
-//               alt=""
-//             />
-//           </Button>
-//         </div>
-//       )}
-//     </Sidebar>
-//   );
-// }
-
-// export default ChooseHotel;

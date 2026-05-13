@@ -1,0 +1,438 @@
+.title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px 20px 30px;
+  border-bottom: 1px solid #54587380;
+}
+
+.titleName {
+  font-family: Inter;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.titleClose {
+  cursor: pointer;
+}
+
+.body {
+  height: calc(100% - 90px);
+  overflow-y: auto;
+  padding: 20px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Hotel block */
+.hotelBlock {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.hotelPhoto {
+  width: 80px;
+  height: 80px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+
+.hotelPhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hotelMeta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hotelName {
+  font-family: Inter;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.hotelStars {
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+
+.hotelAddr {
+  font-family: Nunito Sans;
+  font-size: 12px;
+  color: var(--main-gray);
+}
+
+/* Trip info */
+.tripInfo {
+  display: flex;
+  align-items: stretch;
+  background: #1e293b;
+  border-radius: 12px;
+  color: #fff;
+  overflow: hidden;
+}
+
+.tripRow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  gap: 4px;
+}
+
+.tripDivider {
+  width: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.tripLbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
+.tripVal {
+  font-family: Inter;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Section */
+.sectionTitle {
+  font-family: Inter;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--main-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 4px 0;
+}
+
+.loader {
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+}
+
+.empty,
+.error {
+  font-family: Nunito Sans;
+  font-size: 13px;
+  color: var(--main-gray);
+  padding: 12px 0;
+  margin: 0;
+}
+
+.error {
+  color: #dc2626;
+}
+
+/* Rates */
+.ratesList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rate {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.rateSelected {
+  border-color: #2196F3;
+  background: rgba(33, 150, 243, 0.04);
+}
+
+.rateInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.rateName {
+  font-family: Inter;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.rateSub {
+  font-family: Nunito Sans;
+  font-size: 12px;
+  color: var(--main-gray);
+  margin-top: 2px;
+}
+
+.rateCancel {
+  font-family: Nunito Sans;
+  font-size: 11px;
+  color: #c2410c;
+  margin-top: 6px;
+}
+
+.rateCancelFree {
+  font-family: Nunito Sans;
+  font-size: 11px;
+  color: #15803d;
+  margin-top: 6px;
+}
+
+.rateRight {
+  text-align: right;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.ratePrice {
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.ratePricePer {
+  font-size: 11px;
+  color: var(--main-gray);
+}
+
+/* Booking form */
+.bookingForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  font-family: Nunito Sans;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--main-gray);
+}
+
+.fieldInput {
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 13px;
+  outline: none;
+}
+
+.fieldInput:focus {
+  border-color: #2196F3;
+}
+
+/* Buttons */
+.btnPrimary {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #0057C3;
+  color: #fff;
+  border: none;
+  font-family: Nunito Sans;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background: #0046a3;
+}
+
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  border: 1px solid #e2e8f0;
+  font-family: Nunito Sans;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnSecondary:hover {
+  background: #f1f5f9;
+}
+
+/* Condition change */
+.conditionChange {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.conditionChangeTitle {
+  font-family: Inter;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c2410c;
+}
+
+.conditionChangeText {
+  font-size: 12px;
+  color: #9a3412;
+  margin-top: 4px;
+}
+
+.conditionChangePrice {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.conditionChangeActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Success */
+.successBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.successTitle {
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 700;
+  color: #15803d;
+}
+
+.successId {
+  font-size: 13px;
+  color: #166534;
+}
+
+.successId code {
+  font-family: monospace;
+  background: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Meal filter */
+.mealFilter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.mealFilterText {
+  font-family: Nunito Sans;
+  font-size: 12px;
+  color: #1d4ed8;
+}
+
+.mealHidden {
+  color: #64748b;
+}
+
+.mealToggle {
+  background: none;
+  border: none;
+  color: #0057C3;
+  font-family: Nunito Sans;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.mealToggle:hover {
+  color: #0046a3;
+}
+
+/* Airline note (read-only) */
+.noteBlock {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.noteLabel {
+  font-family: Nunito Sans;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9a3412;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.noteText {
+  font-family: Nunito Sans;
+  font-size: 13px;
+  color: #7c2d12;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
