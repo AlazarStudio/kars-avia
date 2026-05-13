@@ -86,11 +86,11 @@ function InfoTableDataDispatcherCompany({
                       <div className={classes.employeeName}>
                         {dispatcher.name}
                       </div>
-                      <div className={classes.employeePost}>
+                      {/* <div className={classes.employeePost}>
                         {isDispatcherAdmin(dispatcher)
                           ? "Администратор"
                           : "Модератор"}
-                      </div>
+                      </div> */}
                       <div className={classes.employeePost}>
                         {dispatcher?.position?.name}
                       </div>

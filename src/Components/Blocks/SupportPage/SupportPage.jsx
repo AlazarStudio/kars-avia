@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import classes from "./SupportPage.module.css";
 import Filter from "../Filter/Filter";
 import {
@@ -51,6 +51,7 @@ function SupportPage({ children, user, ...props }) {
   // const [companyData, setCompanyData] = useState([]);
   // const [filterData, setFilterData] = useState({ filterSelect: "" });
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("active");
   // const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   // const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
@@ -128,14 +129,36 @@ function SupportPage({ children, user, ...props }) {
     setSearchQuery(e.target.value);
   };
 
+  const isNewChat = (r) => {
+    if (r.supportStatus === "RESOLVED") return false;
+    if (!r.messages?.length) return false;
+    return true;
+  };
+
+  const getLastMsgTime = (r) => {
+    const last = r.messages?.[r.messages.length - 1];
+    return last?.createdAt ? new Date(last.createdAt).getTime() : 0;
+  };
+
   const filteredRequests = useMemo(() => {
-    const dataSource = data?.supportChats || []; // Если data?.supportChats - undefined, используем пустой массив
-    return dataSource.filter((request) =>
+    const dataSource = data?.supportChats || [];
+    const bySearch = dataSource.filter((request) =>
       request.participants[0]?.name
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     );
-  }, [data, searchQuery]); // Не забудьте добавить `data` в зависимости
+    if (activeTab === "active") {
+      return bySearch
+        .filter(isNewChat)
+        .sort((a, b) => getLastMsgTime(b) - getLastMsgTime(a));
+    }
+    return [...bySearch].sort((a, b) => getLastMsgTime(b) - getLastMsgTime(a));
+  }, [data, searchQuery, activeTab]);
+
+  const newMessagesCount = useMemo(
+    () => (data?.supportChats || []).filter(isNewChat).length,
+    [data]
+  );
 
   // Пагинация: общее количество страниц
   //   const totalPages = data?.airlines?.totalPages;
@@ -170,6 +193,24 @@ function SupportPage({ children, user, ...props }) {
             value={searchQuery}
             onChange={handleSearch}
           />
+        </div>
+
+        <div className={classes.tabs}>
+          <div
+            className={`${classes.tab} ${activeTab === "active" ? classes.activeTab : ""}`}
+            onClick={() => setActiveTab("active")}
+          >
+            Активные обращения
+            {newMessagesCount > 0 && (
+              <span className={classes.tabBadge}>{newMessagesCount}</span>
+            )}
+          </div>
+          <div
+            className={`${classes.tab} ${activeTab === "all" ? classes.activeTab : ""}`}
+            onClick={() => setActiveTab("all")}
+          >
+            Все обращения
+          </div>
         </div>
 
         {loading && <MUILoader fullHeight={"100vh"} />}

@@ -6,7 +6,9 @@ import {
   GET_HOTEL_CITY,
   GET_REQUESTS,
   GET_RESERVE_REQUESTS,
+  GET_USER_SUPPORT_CHATS,
   getCookie,
+  MESSAGE_SENT_SUBSCRIPTION,
   REQUEST_CREATED_SUBSCRIPTION,
   REQUEST_RESERVE_CREATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
@@ -133,6 +135,21 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
 
   const [allCreatedReserves, setAllCreatedReserves] = useState(0);
   const [allCreatedRequests, setAllCreatedRequests] = useState(0);
+
+  const { data: supportChatsData, refetch: refetchSupport } = useQuery(GET_USER_SUPPORT_CHATS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    skip: !isSuperAdmin(user),
+  });
+
+  useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    onData: () => { refetchSupport(); },
+    skip: !isSuperAdmin(user),
+  });
+
+  const activeSupportCount = (supportChatsData?.supportChats || []).filter(
+    (r) => r.supportStatus !== "RESOLVED" && r.messages?.length > 0
+  ).length;
 
   const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
     context: {
@@ -326,7 +343,7 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
                 <path d="M16.8971 19.0068L25.1227 0.372803H30.3136L38.5658 19.0068H33.0821L26.64 2.95495H28.7164L22.2743 19.0068H16.8971ZM21.3959 15.3865L22.7535 11.5H31.8575L33.2152 15.3865H21.3959Z" fill="white" />
                 <path d="M4.71174 14.8807L4.41892 8.97107L12.4316 0.372803H18.2347L10.2487 9.02431L7.32051 12.0856L4.71174 14.8807ZM0 19.0068V0.372803H5.21752V19.0068H0ZM12.5114 19.0068L6.44205 11.3136L9.87603 7.64007L18.634 19.0068H12.5114Z" fill="white" />
               </svg> */}
-              <img src="/kars_avia_logo_01.png" alt="" style={{height: "45px"}} />
+              <img src="/kars_avia_logo_01.png" alt="" style={{height: "35px"}} />
 
               {/* <img src="/kars_avia_logo_05.png" alt="" style={{height: "30px"}} /> */}
               {/* <img src="/kars_avia_logo_03.png" alt="" style={{height: "25px"}} /> */}
@@ -376,6 +393,7 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
+              activeSupportCount={activeSupportCount}
               menuOpen={menuOpen}
             />
           )}

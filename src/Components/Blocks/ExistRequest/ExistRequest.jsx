@@ -16,6 +16,7 @@ import {
   GET_HOTELS_RELAY,
   GET_HOTEL_ROOMS,
   GET_HOTELS_WITH_PRICES,
+  GET_AIRLINE_TARIFS,
   getCookie,
   REQUEST_UPDATED_SUBSCRIPTION,
   SAVE_HANDLE_EXTEND_MUTATION,
@@ -27,6 +28,7 @@ import Message from "../Message/Message";
 import {
   hasAccessMenu,
   isAirlineAdmin,
+  isAirlineRole,
   isDispatcherAdmin,
   isSuperAdmin,
 } from "../../../utils/access";
@@ -75,6 +77,11 @@ function ExistRequest({
 
   const [loadHotelsWithPrices, { data: hotelsWithPricesData, loading: hotelsWithPricesLoading }] =
     useLazyQuery(GET_HOTELS_WITH_PRICES, {
+      context: { headers: { Authorization: `Bearer ${token}` } },
+    });
+
+  const [loadAirlineTariffs, { data: airlineTariffsData, loading: airlineTariffsLoading }] =
+    useLazyQuery(GET_AIRLINE_TARIFS, {
       context: { headers: { Authorization: `Bearer ${token}` } },
     });
 
@@ -129,6 +136,20 @@ function ExistRequest({
     sevenPlace: "Семиместный", eightPlace: "Восьмиместный", ninePlace: "Девятиместный",
     tenPlace: "Десятиместный",
   };
+
+  const airlinePriceFields = [
+    { key: "priceApartment", label: "Апартаменты" },
+    { key: "priceStudio", label: "Студия" },
+    { key: "priceLuxe", label: "Люкс" },
+    { key: "priceOneCategory", label: "Одноместный" },
+    { key: "priceTwoCategory", label: "Двухместный" },
+    { key: "priceThreeCategory", label: "Трёхместный" },
+    { key: "priceFourCategory", label: "Четырёхместный" },
+    { key: "priceFiveCategory", label: "Пятиместный" },
+    { key: "priceSixCategory", label: "Шестиместный" },
+    { key: "priceSevenCategory", label: "Семиместный" },
+    { key: "priceEightCategory", label: "Восьмиместный" },
+  ];
 
   const [activeTab, setActiveTab] = useState("Общая");
   const [formData, setFormData] = useState(null);
@@ -257,7 +278,10 @@ function ExistRequest({
 
   useEffect(() => {
     if (activeTab === "Цены" && formData?.airport?.id) {
-      loadHotelsWithPrices();
+      loadAirlineTariffs({ variables: { airlineId: formData.airline?.id } });
+      if (!isAirlineRole(user)) {
+        loadHotelsWithPrices();
+      }
     }
   }, [activeTab, formData?.airport?.id]);
 
@@ -1426,15 +1450,17 @@ function ExistRequest({
                         <div className={classes.requestDataTitle}>Цены</div>
                         {[
                           { label: "Цена авиакомпании", price: formData.requestAirlinePrice },
-                          { label: "Цена гостиницы", price: formData.requestHotelPrice },
+                          ...(!isAirlineRole(user) ? [{ label: "Цена гостиницы", price: formData.requestHotelPrice }] : []),
                         ].map(({ label, price }) =>
                           price ? (
                             <div key={label} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                              <div className={classes.requestDataInfo}>
-                                <div className={classes.requestDataInfo_title} style={{ fontWeight: 600 }}>
-                                  {label}
+                              {!isAirlineRole(user) && (
+                                <div className={classes.requestDataInfo}>
+                                  <div className={classes.requestDataInfo_title} style={{ fontWeight: 600 }}>
+                                    {label}
+                                  </div>
                                 </div>
-                              </div>
+                              )}
                               {price.livingCost != null && (
                                 <div className={classes.requestDataInfo}>
                                   <div className={classes.requestDataInfo_title}>Проживание</div>
@@ -1615,102 +1641,277 @@ function ExistRequest({
                 {activeTab === "Цены" &&
                   (formData.status === "created" || formData.status === "opened") && (
                   <div className={classes.requestData}>
-                    {hotelsWithPricesLoading ? (
-                      <MUILoader loadSize="30px" fullHeight="200px" />
-                    ) : (
-                      (hotelsWithPricesData?.hotels?.hotels ?? [])
-                        .filter(h => h.airport?.id === formData.airport?.id)
-                        .length === 0 ? (
-                          <div style={{ padding: "20px 0", color: "var(--text)", opacity: 0.5, fontSize: 14 }}>
-                            Нет данных о гостиницах
-                          </div>
-                        ) : (
-                          (hotelsWithPricesData?.hotels?.hotels ?? [])
-                            .filter(h => h.airport?.id === formData.airport?.id)
-                            .map(hotel => {
-                              const mp = hotel.mealPriceForAir ?? hotel.mealPrice;
+                    {isAirlineRole(user) ? (
+                      airlineTariffsLoading ? (
+                        <MUILoader loadSize="30px" fullHeight="200px" />
+                      ) : (() => {
+                        const matchingPrices = (airlineTariffsData?.airline?.prices ?? [])
+                          .filter(ap => ap.airports?.some(a => a.airport?.id === formData.airport?.id));
+                        if (matchingPrices.length === 0) {
+                          return (
+                            <div style={{ padding: "20px 0", color: "var(--text)", opacity: 0.5, fontSize: 14 }}>
+                              Нет тарифов по данному аэропорту
+                            </div>
+                          );
+                        }
+                        return matchingPrices.map((ap, idx) => (
+                          <div key={ap.id ?? idx} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            {airlinePriceFields.map(({ key, label }) => {
+                              const p = ap.prices?.[key];
+                              if (!p) return null;
                               return (
-                                <div key={hotel.id} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                                  <div className={classes.requestDataTitle}>{hotel.name}</div>
-                                  {hotel.roomKind?.map(rk => {
-                                    const basePrice = rk.priceForAirline ?? rk.price;
-                                    return (
-                                      <div key={rk.name} className={classes.requestDataInfo}>
-                                        <div className={classes.requestDataInfo_title}>
-                                          {categoryMap[rk.category] || rk.name}
-                                        </div>
+                                <div key={key} className={classes.requestDataInfo}>
+                                  <div className={classes.requestDataInfo_title}>{label}</div>
+                                  <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                    {effectiveDays > 0 ? (
+                                      <>
+                                        <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(p * effectiveDays).toLocaleString()} ₽</span>
+                                        <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${p.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                      </>
+                                    ) : (
+                                      <span style={{ whiteSpace: "nowrap" }}>{p.toLocaleString()} ₽ / сут.</span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {ap.mealPrice && (
+                              <>
+                                {ap.mealPrice.breakfast != null && (
+                                  <div className={classes.requestDataInfo}>
+                                    <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                    <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                      {effectiveDays > 0 ? (
+                                        <>
+                                          <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.breakfast * effectiveDays).toLocaleString()} ₽</span>
+                                          <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                        </>
+                                      ) : (
+                                        <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.breakfast.toLocaleString()} ₽ / сут.</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                {ap.mealPrice.lunch != null && (
+                                  <div className={classes.requestDataInfo}>
+                                    <div className={classes.requestDataInfo_title}>Обед</div>
+                                    <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                      {effectiveDays > 0 ? (
+                                        <>
+                                          <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.lunch * effectiveDays).toLocaleString()} ₽</span>
+                                          <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.lunch.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                        </>
+                                      ) : (
+                                        <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.lunch.toLocaleString()} ₽ / сут.</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                {ap.mealPrice.dinner != null && (
+                                  <div className={classes.requestDataInfo}>
+                                    <div className={classes.requestDataInfo_title}>Ужин</div>
+                                    <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                      {effectiveDays > 0 ? (
+                                        <>
+                                          <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.dinner * effectiveDays).toLocaleString()} ₽</span>
+                                          <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.dinner.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                        </>
+                                      ) : (
+                                        <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.dinner.toLocaleString()} ₽ / сут.</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ));
+                      })()
+                    ) : (
+                      (airlineTariffsLoading || hotelsWithPricesLoading) ? (
+                        <MUILoader loadSize="30px" fullHeight="200px" />
+                      ) : (
+                        <>
+                          {/* Цена авиакомпании */}
+                          <div className={classes.requestDataTitle}>Цена авиакомпании</div>
+                          {(() => {
+                            const matchingPrices = (airlineTariffsData?.airline?.prices ?? [])
+                              .filter(ap => ap.airports?.some(a => a.airport?.id === formData.airport?.id));
+                            if (matchingPrices.length === 0) {
+                              return (
+                                <div style={{ padding: "4px 0 16px", color: "var(--text)", opacity: 0.5, fontSize: 14 }}>
+                                  Нет тарифов по данному аэропорту
+                                </div>
+                              );
+                            }
+                            return matchingPrices.map((ap, idx) => (
+                              <div key={ap.id ?? idx} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                                {airlinePriceFields.map(({ key, label }) => {
+                                  const p = ap.prices?.[key];
+                                  if (!p) return null;
+                                  return (
+                                    <div key={key} className={classes.requestDataInfo}>
+                                      <div className={classes.requestDataInfo_title}>{label}</div>
+                                      <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                        {effectiveDays > 0 ? (
+                                          <>
+                                            <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(p * effectiveDays).toLocaleString()} ₽</span>
+                                            <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${p.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                          </>
+                                        ) : (
+                                          <span style={{ whiteSpace: "nowrap" }}>{p.toLocaleString()} ₽ / сут.</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {ap.mealPrice && (
+                                  <>
+                                    {ap.mealPrice.breakfast != null && (
+                                      <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Завтрак</div>
                                         <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                          {basePrice != null && effectiveDays > 0 ? (
+                                          {effectiveDays > 0 ? (
                                             <>
-                                              <span style={{ whiteSpace: "nowrap",  }}>
-                                                {`${(basePrice * effectiveDays).toLocaleString()} ₽`}
-                                              </span>
-                                              <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>
-                                                {`${basePrice.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}
-                                              </span>
+                                              <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.breakfast * effectiveDays).toLocaleString()} ₽</span>
+                                              <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
                                             </>
                                           ) : (
-                                            <span style={{ whiteSpace: "nowrap" }}>
-                                              {basePrice != null ? `${basePrice.toLocaleString()} ₽ / сут.` : "—"}
-                                            </span>
+                                            <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.breakfast.toLocaleString()} ₽ / сут.</span>
                                           )}
                                         </div>
                                       </div>
-                                    );
-                                  })}
-                                  {mp && (
-                                    <>
-                                      {mp.breakfast != null && (
-                                        <div className={classes.requestDataInfo}>
-                                          <div className={classes.requestDataInfo_title}>Завтрак</div>
-                                          <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                            {effectiveDays > 0 ? (
-                                              <>
-                                                <span style={{ whiteSpace: "nowrap",  }}>{(mp.breakfast * effectiveDays).toLocaleString()} ₽</span>
-                                                <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
-                                              </>
-                                            ) : (
-                                              <span style={{ whiteSpace: "nowrap" }}>{mp.breakfast.toLocaleString()} ₽ / сут.</span>
-                                            )}
-                                          </div>
+                                    )}
+                                    {ap.mealPrice.lunch != null && (
+                                      <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Обед</div>
+                                        <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                          {effectiveDays > 0 ? (
+                                            <>
+                                              <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.lunch * effectiveDays).toLocaleString()} ₽</span>
+                                              <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.lunch.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                            </>
+                                          ) : (
+                                            <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.lunch.toLocaleString()} ₽ / сут.</span>
+                                          )}
                                         </div>
-                                      )}
-                                      {mp.lunch != null && (
-                                        <div className={classes.requestDataInfo}>
-                                          <div className={classes.requestDataInfo_title}>Обед</div>
-                                          <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                            {effectiveDays > 0 ? (
-                                              <>
-                                                <span style={{ whiteSpace: "nowrap",  }}>{(mp.lunch * effectiveDays).toLocaleString()} ₽</span>
-                                                <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.lunch.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
-                                              </>
-                                            ) : (
-                                              <span style={{ whiteSpace: "nowrap" }}>{mp.lunch.toLocaleString()} ₽ / сут.</span>
-                                            )}
-                                          </div>
+                                      </div>
+                                    )}
+                                    {ap.mealPrice.dinner != null && (
+                                      <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Ужин</div>
+                                        <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                          {effectiveDays > 0 ? (
+                                            <>
+                                              <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.dinner * effectiveDays).toLocaleString()} ₽</span>
+                                              <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.dinner.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                            </>
+                                          ) : (
+                                            <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.dinner.toLocaleString()} ₽ / сут.</span>
+                                          )}
                                         </div>
-                                      )}
-                                      {mp.dinner != null && (
-                                        <div className={classes.requestDataInfo}>
-                                          <div className={classes.requestDataInfo_title}>Ужин</div>
-                                          <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                            {effectiveDays > 0 ? (
-                                              <>
-                                                <span style={{ whiteSpace: "nowrap",  }}>{(mp.dinner * effectiveDays).toLocaleString()} ₽</span>
-                                                <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.dinner.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
-                                              </>
-                                            ) : (
-                                              <span style={{ whiteSpace: "nowrap" }}>{mp.dinner.toLocaleString()} ₽ / сут.</span>
-                                            )}
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            ));
+                          })()}
+
+                          {/* Цены гостиниц */}
+                          <div className={classes.requestDataTitle}>Цены гостиниц</div>
+                          {(hotelsWithPricesData?.hotels?.hotels ?? [])
+                            .filter(h => h.airport?.id === formData.airport?.id)
+                            .length === 0 ? (
+                              <div style={{ padding: "4px 0", color: "var(--text)", opacity: 0.5, fontSize: 14 }}>
+                                Нет данных о гостиницах
+                              </div>
+                            ) : (
+                              (hotelsWithPricesData?.hotels?.hotels ?? [])
+                                .filter(h => h.airport?.id === formData.airport?.id)
+                                .map(hotel => {
+                                  const mp = hotel.mealPriceForAir ?? hotel.mealPrice;
+                                  return (
+                                    <div key={hotel.id} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                                      <div className={classes.requestDataTitle} style={{ fontSize: 14 }}>{hotel.name}</div>
+                                      {hotel.roomKind?.map((rk, rkIdx) => {
+                                        const basePrice = rk.priceForAirline ?? rk.price;
+                                        return (
+                                          <div key={rkIdx} className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                              <span>{rk.name}</span>
+                                              {categoryMap[rk.category] && (
+                                                <span style={{ fontSize: 12, opacity: 0.55 }}>{categoryMap[rk.category]}</span>
+                                              )}
+                                            </div>
+                                            <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                              {basePrice != null && effectiveDays > 0 ? (
+                                                <>
+                                                  <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{`${(basePrice * effectiveDays).toLocaleString()} ₽`}</span>
+                                                  <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${basePrice.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                                </>
+                                              ) : (
+                                                <span style={{ whiteSpace: "nowrap" }}>{basePrice != null ? `${basePrice.toLocaleString()} ₽ / сут.` : "—"}</span>
+                                              )}
+                                            </div>
                                           </div>
-                                        </div>
+                                        );
+                                      })}
+                                      {mp && (
+                                        <>
+                                          {mp.breakfast != null && (
+                                            <div className={classes.requestDataInfo}>
+                                              <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                              <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                                {effectiveDays > 0 ? (
+                                                  <>
+                                                    <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(mp.breakfast * effectiveDays).toLocaleString()} ₽</span>
+                                                    <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                                  </>
+                                                ) : (
+                                                  <span style={{ whiteSpace: "nowrap" }}>{mp.breakfast.toLocaleString()} ₽ / сут.</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                          {mp.lunch != null && (
+                                            <div className={classes.requestDataInfo}>
+                                              <div className={classes.requestDataInfo_title}>Обед</div>
+                                              <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                                {effectiveDays > 0 ? (
+                                                  <>
+                                                    <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(mp.lunch * effectiveDays).toLocaleString()} ₽</span>
+                                                    <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.lunch.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                                  </>
+                                                ) : (
+                                                  <span style={{ whiteSpace: "nowrap" }}>{mp.lunch.toLocaleString()} ₽ / сут.</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                          {mp.dinner != null && (
+                                            <div className={classes.requestDataInfo}>
+                                              <div className={classes.requestDataInfo_title}>Ужин</div>
+                                              <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                                {effectiveDays > 0 ? (
+                                                  <>
+                                                    <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(mp.dinner * effectiveDays).toLocaleString()} ₽</span>
+                                                    <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.dinner.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                                  </>
+                                                ) : (
+                                                  <span style={{ whiteSpace: "nowrap" }}>{mp.dinner.toLocaleString()} ₽ / сут.</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
                                       )}
-                                    </>
-                                  )}
-                                </div>
-                              );
-                            })
-                        )
+                                    </div>
+                                  );
+                                })
+                            )}
+                        </>
+                      )
                     )}
                   </div>
                 )}

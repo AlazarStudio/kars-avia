@@ -9,6 +9,7 @@ const SuperAdminMenu = ({
   id,
   allCreatedReserves,
   allCreatedRequests,
+  activeSupportCount,
   menuOpen,
 }) => {
   const [hovered, setHovered] = useState(false);
@@ -375,6 +376,11 @@ const SuperAdminMenu = ({
           </div>
           {/* {menuOpen ? "Поддержка" : ""} */}
           <DelayedText show={menuOpen} delay={200} >Поддержка</DelayedText>
+          {activeSupportCount > 0 && (
+            <div className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""}`}>
+              {activeSupportCount}
+            </div>
+          )}
           {!menuOpen && <span className={classes.tooltip}>Поддержка</span>}
         </Link>
         <Link

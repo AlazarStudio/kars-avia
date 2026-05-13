@@ -5114,9 +5114,27 @@ export const GET_USER_SUPPORT_CHATS = gql`
         id
         name
         images
+        role
+        position {
+          id
+          name
+        }
+        airline {
+          id
+          name
+        }
+        airlineDepartment {
+          id
+          name
+        }
+        dispatcherDepartment {
+          id
+          name
+        }
       }
       messages {
         id
+        createdAt
         sender {
           id
           name

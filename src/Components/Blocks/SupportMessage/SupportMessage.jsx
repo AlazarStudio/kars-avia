@@ -61,7 +61,7 @@ function SupportMessage({
     skip: userID ? false : true,
   });
 
-  const chatState = data?.userSupportChat ?? messages;
+  const chatState = messages?.id ? messages : (data?.userSupportChat ?? messages);
   const chatMessages = chatState?.messages || [];
 
   const isSupportAgent = user?.support === true;
@@ -388,53 +388,58 @@ function SupportMessage({
       alert("Возьмите тикет в работу, чтобы отвечать пользователю.");
       return;
     }
-    if (messageText.text.trim()) {
-      try {
-        let request = await createRequest({
-          variables: {
-            chatId: messageText.chatId,
-            senderId: messageText.senderId,
-            text: messageText.text,
-          },
+    const text = messageText.text.trim();
+    if (!text) return;
+
+    const optimisticId = `optimistic-${Date.now()}`;
+    const optimisticMsg = {
+      id: optimisticId,
+      text,
+      createdAt: new Date().toISOString(),
+      sender: {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+        images: user.images || [],
+        position: user.position || null,
+      },
+      isRead: true,
+      readBy: [{ user: { id: user.id, name: user.name } }],
+    };
+
+    // Показываем сообщение мгновенно
+    setMessages((prev) => ({
+      ...prev,
+      messages: [...(prev.messages || []), optimisticMsg],
+    }));
+    setMessageText({ text: "", chatId: "", senderId: "" });
+    setShowScrollButton(false);
+    setNewMessagesCount(0);
+    setShowEmojiPicker(false);
+    setTimeout(() => scrollToBottom(), 0);
+
+    try {
+      await createRequest({
+        variables: {
+          chatId: messageText.chatId,
+          senderId: messageText.senderId,
+          text,
+        },
+      });
+      if (chatState?.id) {
+        markAllMessagesAsReadMutation({
+          variables: { chatId: chatState.id, userId: user.id },
         });
-        if (request) {
-          // markAllMessagesAsReadMutation({
-          //   variables: { chatId: data?.userSupportChat?.id, userId: user.id },
-          // }).then(() => {
-          //   refetch();
-          //   scrollToBottom();
-          // });
-          if (chatState?.id) {
-            await markAllMessagesAsReadMutation({
-              variables: { chatId: chatState.id, userId: user.id },
-            });
-          }
-          await refetch();
-          // После refetch данные обновлены, но возможно, DOM еще не обновился.
-          // Поэтому используем setTimeout для прокрутки после обновления DOM.
-          setTimeout(() => {
-            scrollToBottom();
-          }, 0);
-          setMessageText({
-            text: "",
-            chatId: "",
-            senderId: "",
-          });
-          setShowEmojiPicker(false);
-          // setIsUserMessage(true);
-          // Даем время на перерисовку компонента
-          // setTimeout(() => {
-          //   scrollToBottom();
-          // }, 50);
-          setShowScrollButton(false);
-          setNewMessagesCount(0);
-        }
-      } catch (err) {
-        alert("Произошла ошибка при сохранении данных", err);
-        console.error(err);
-      } finally {
-        scrollToBottom();
       }
+      refetch();
+    } catch (err) {
+      // Убираем оптимистичное сообщение при ошибке
+      setMessages((prev) => ({
+        ...prev,
+        messages: (prev.messages || []).filter((m) => m.id !== optimisticId),
+      }));
+      alert("Произошла ошибка при отправке сообщения");
+      console.error(err);
     }
   };
 
@@ -520,26 +525,15 @@ function SupportMessage({
                 <span>Закрыл: {chatState.resolvedBy.name}</span>
               )}
             </div>
-            {isSupportAgent && (canClaim || canResolve) && (
+            {isSupportAgent && canResolve && (
               <div className={classes.ticketActions}>
-                {canClaim && (
-                  <button
-                    type="button"
-                    className={classes.ticketButton}
-                    onClick={handleClaimTicket}
-                  >
-                    Взять в работу
-                  </button>
-                )}
-                {canResolve && (
-                  <button
-                    type="button"
-                    className={classes.ticketButtonSecondary}
-                    onClick={handleResolveTicket}
-                  >
-                    Закрыть
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className={classes.ticketButton}
+                  onClick={handleResolveTicket}
+                >
+                  Завершить
+                </button>
               </div>
             )}
           </div>
@@ -745,45 +739,52 @@ function SupportMessage({
             </div>
           )}
 
-          <div className={classes.sendBlock}>
-            <div className={classes.smiles}>
-              <div
-                className={classes.smilesBlock}
-                onClick={handleEmojiPickerShow}
-              >
-                {/* 😀 */}
-                <SmileIcon />
-              </div>
-              {showEmojiPicker && (
-                <Smiles handleSmileChange={handleSmileChange} />
-              )}
-            </div>
-            <input
-              type="text"
-              value={messageText.text}
-              onChange={handleTextareaChange}
-              disabled={!canSendMessage}
-              placeholder="Сообщение..."
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSubmitMessage();
-                }
-              }}
-              style={{ borderRadius: "20px" }}
-            />
-            <div
-              // className={classes.sendBlock_message}
-              onClick={handleSubmitMessage}
-              style={{ opacity: canSendMessage ? 0.8 : 0.4, cursor: canSendMessage ? "pointer" : "not-allowed", display: "flex", alignItems: 'center' }}
+          {isSupportAgent && canClaim ? (
+            <button
+              type="button"
+              className={classes.claimButton}
+              onClick={handleClaimTicket}
             >
-              {/* <img src="/message.png" alt="Отправить" /> */}
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path opacity="0.4" d="M14.2649 6.34496L27.1049 12.765C32.8649 15.645 32.8649 20.355 27.1049 23.235L14.2649 29.655C5.62491 33.975 2.09991 30.435 6.41991 21.81L7.72491 19.215C8.09991 18.45 8.09991 17.565 7.72491 16.8L6.41991 14.19C2.09991 5.56496 5.63991 2.02496 14.2649 6.34496Z" fill="#0057C3" />
-                <path d="M22.2599 19.125H14.1599C13.5449 19.125 13.0349 18.615 13.0349 18C13.0349 17.385 13.5449 16.875 14.1599 16.875H22.2599C22.8749 16.875 23.3849 17.385 23.3849 18C23.3849 18.615 22.8749 19.125 22.2599 19.125Z" fill="#0057C3" />
-              </svg>
+              Взять в работу
+            </button>
+          ) : (
+            <div className={classes.sendBlock}>
+              <div className={classes.smiles}>
+                <div
+                  className={classes.smilesBlock}
+                  onClick={handleEmojiPickerShow}
+                >
+                  <SmileIcon />
+                </div>
+                {showEmojiPicker && (
+                  <Smiles handleSmileChange={handleSmileChange} />
+                )}
+              </div>
+              <input
+                type="text"
+                value={messageText.text}
+                onChange={handleTextareaChange}
+                disabled={!canSendMessage}
+                placeholder="Сообщение..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSubmitMessage();
+                  }
+                }}
+                style={{ borderRadius: "20px" }}
+              />
+              <div
+                onClick={handleSubmitMessage}
+                style={{ opacity: canSendMessage ? 0.8 : 0.4, cursor: canSendMessage ? "pointer" : "not-allowed", display: "flex", alignItems: "center" }}
+              >
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path opacity="0.4" d="M14.2649 6.34496L27.1049 12.765C32.8649 15.645 32.8649 20.355 27.1049 23.235L14.2649 29.655C5.62491 33.975 2.09991 30.435 6.41991 21.81L7.72491 19.215C8.09991 18.45 8.09991 17.565 7.72491 16.8L6.41991 14.19C2.09991 5.56496 5.63991 2.02496 14.2649 6.34496Z" fill="#0057C3" />
+                  <path d="M22.2599 19.125H14.1599C13.5449 19.125 13.0349 18.615 13.0349 18C13.0349 17.385 13.5449 16.875 14.1599 16.875H22.2599C22.8749 16.875 23.3849 17.385 23.3849 18C23.3849 18.615 22.8749 19.125 22.2599 19.125Z" fill="#0057C3" />
+                </svg>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </>

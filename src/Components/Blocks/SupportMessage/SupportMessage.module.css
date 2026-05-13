@@ -116,6 +116,19 @@
     color: #FFFFFF;
 }
 
+.claimButton {
+    width: 100%;
+    padding: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: Nunito Sans;
+    border: none;
+    border-radius: 100px;
+    background-color: #0057C3;
+    color: #FFFFFF;
+    cursor: pointer;
+}
+
 .ticketButtonSecondary {
     background-color: #F3F3F3;
     color: #545873;
