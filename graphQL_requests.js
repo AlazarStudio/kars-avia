@@ -1081,6 +1081,12 @@ export const RESET_PASSWORD = gql`
   }
 `;
 
+export const VERIFY_EMAIL = gql`
+  mutation VerifyEmail($token: String!) {
+    verifyEmail(token: $token)
+  }
+`;
+
 // Запросы на сброс пароля
 
 // ----------------------------------------------------------------

@@ -31,6 +31,7 @@ import { createAuthErrorLink } from "./services/authErrorLink";
 import Login from "./Components/Pages/Login/Login";
 import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
+import VerifyEmail from "./Components/Pages/VerifyEmail/VerifyEmail";
 import { TokenRefresher } from "./TokenRefresher";
 import { UserActivityTracker } from "./UserActivityTracker";
 import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementRepresentative/ReservePlacementRepresentative";
@@ -194,6 +195,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/reset-to-email" element={<Email />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="*" element={<Login />} />
           </>
         )}

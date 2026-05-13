@@ -88,7 +88,12 @@ function Login() {
       navigate("/");
       window.location.reload();
     } catch (err) {
-      setError("Ошибка авторизации. Проверьте логин или пароль.");
+      const msg = err?.graphQLErrors?.[0]?.message || "";
+      if (msg.toLowerCase().includes("подтвердите email") || msg.toLowerCase().includes("email")) {
+        setError("Подтвердите email перед входом. Проверьте вашу почту.");
+      } else {
+        setError("Ошибка авторизации. Проверьте логин или пароль.");
+      }
     }
   };
 
