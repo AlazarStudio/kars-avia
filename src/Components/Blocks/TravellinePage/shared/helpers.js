@@ -1,3 +1,5 @@
+export { mediaSrc as tlImg } from "../../../../../graphQL_requests"
+
 export const cn = (...args) => args.filter(Boolean).join(" ")
 
 export function fmtDateTime(value) {

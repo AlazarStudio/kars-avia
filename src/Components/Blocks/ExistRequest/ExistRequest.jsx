@@ -39,6 +39,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
+import TlCancelDialog from "../TlCancelDialog/TlCancelDialog";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import ExistRequestAdditionalMenu from "./ExistRequestAdditionalMenu";
 import ExistRequestEditForm from "./ExistRequestEditForm";
@@ -2264,17 +2265,28 @@ function ExistRequest({
         </Sidebar>
       )}
       {showDelete && (
-        <DeleteComponent
-          remove={() => {
-            handleCancelRequest();
-            closeDeleteComponent();
-            // setShowRequestSidebar(false);
-          }}
-          index={chooseRequestID}
-          close={closeDeleteComponent}
-          title={`Вы действительно хотите отменить заявку? `}
-          isCancel={true}
-        />
+        formData?.externalSource === "travelline" ? (
+          <TlCancelDialog
+            bookingId={formData?.externalBookingNumber}
+            onConfirm={async () => {
+              await handleCancelRequest();
+              closeDeleteComponent();
+            }}
+            onClose={closeDeleteComponent}
+          />
+        ) : (
+          <DeleteComponent
+            remove={() => {
+              handleCancelRequest();
+              closeDeleteComponent();
+              // setShowRequestSidebar(false);
+            }}
+            index={chooseRequestID}
+            close={closeDeleteComponent}
+            title={`Вы действительно хотите отменить заявку? `}
+            isCancel={true}
+          />
+        )
       )}
     </>
   );

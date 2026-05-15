@@ -93,7 +93,11 @@ function HotelsList({ children, user, ...props }) {
   // в этой версии проблема с дублированием
   useEffect(() => {
     if (data && data.hotels) {
-      const sortedHotels = [...data.hotels.hotels].sort((a, b) =>
+      // Скрываем external отели (TravelLine и т.п.) — они отображаются в TravelLine Integration
+      const onlyLocal = data.hotels.hotels.filter(
+        (h) => !h.externalSource || h.externalSource === "",
+      );
+      const sortedHotels = [...onlyLocal].sort((a, b) =>
         a.information?.city?.localeCompare(b.information?.city),
       );
       setCompanyData(sortedHotels);

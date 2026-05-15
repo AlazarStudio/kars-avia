@@ -9,13 +9,13 @@ import {
   GET_TL_RATE_PLANS,
   GET_TL_RESERVATIONS,
   GET_TL_ROOM_TYPES,
-  SEARCH_TL_PROPERTIES,
+  TL_LOCAL_PROPERTIES,
   TL_CANCELLATION_PENALTY,
   TL_PROPERTIES_AVAILABILITY
 } from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { Badge, Btn, SectionCard, Spinner, StarRow, EmptyState } from "../shared/ui"
-import { cn, fmtDateTime, nightWord, nightsBetween } from "../shared/helpers"
+import { cn, fmtDateTime, nightWord, nightsBetween, tlImg } from "../shared/helpers"
 import PropertyModal from "../modals/PropertyModal"
 import ReservationDetailModal from "../modals/ReservationDetailModal"
 
@@ -72,11 +72,11 @@ export default function SearchBookingTab() {
 
   const datesReady = !!(arrival && departure && arrival < departure)
 
-  const { data } = useQuery(SEARCH_TL_PROPERTIES, {
+  const { data, refetch: refetchLocalProperties } = useQuery(TL_LOCAL_PROPERTIES, {
     variables: { filter: {} },
-    fetchPolicy: "cache-first"
+    fetchPolicy: "cache-and-network"
   })
-  const allProperties = data?.tlSearchProperties?.items ?? []
+  const allProperties = data?.tlLocalProperties?.items ?? []
 
   const cityOptions = useMemo(() => {
     const set = new Set()
@@ -109,6 +109,9 @@ export default function SearchBookingTab() {
           propertyIds: contentPropertyIds.length > 0 ? contentPropertyIds : null
         }
       }
+    }).then(() => {
+      // Бэк мог дозалить новые отели в БД — обновим локальный список
+      refetchLocalProperties()
     })
   }
 
@@ -559,7 +562,7 @@ export default function SearchBookingTab() {
                   <div key={`${p.id}-${i}`} onClick={() => openModal(p)} className={classes.hotelCard}>
                     <div className={classes.hotelCardImgWrap}>
                       {p.photos?.[0] ? (
-                        <img src={p.photos[0]} alt="" className={classes.hotelCardImg} />
+                        <img src={tlImg(p.photos[0])} alt="" className={classes.hotelCardImg} />
                       ) : (
                         <div className={classes.hotelCardImgPlaceholder}>🏨</div>
                       )}

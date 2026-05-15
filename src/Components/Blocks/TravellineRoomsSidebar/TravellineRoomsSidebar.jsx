@@ -7,6 +7,7 @@ import {
   TL_AVAILABILITY,
   TL_VERIFY_BOOKING,
   getCookie,
+  mediaSrc,
 } from "../../../../graphQL_requests";
 import Sidebar from "../Sidebar/Sidebar";
 import MUILoader from "../MUILoader/MUILoader";
@@ -104,6 +105,13 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
 
   const [selectedRate, setSelectedRate] = useState(null);
   const [guest, setGuest] = useState(initialGuest);
+  const [differentBooker, setDifferentBooker] = useState(false);
+  const [booker, setBooker] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+  });
   const [conditionChange, setConditionChange] = useState(null);
   const [pendingChecksum, setPendingChecksum] = useState(undefined);
   const [bookError, setBookError] = useState("");
@@ -256,6 +264,14 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
               email: guest.email || null,
               phone: guest.phone || null,
             },
+            booker: differentBooker
+              ? {
+                  firstName: booker.firstName,
+                  lastName: booker.lastName,
+                  email: booker.email || null,
+                  phone: booker.phone || null,
+                }
+              : null,
             comment: guest.comment || null,
             checksum: pendingChecksum,
             roomTypePlacements: selectedRate.roomTypePlacements,
@@ -281,7 +297,11 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
   };
 
   const submitDisabled =
-    !guest.firstName?.trim() || !guest.lastName?.trim() || verifying || creating;
+    !guest.firstName?.trim() ||
+    !guest.lastName?.trim() ||
+    (differentBooker && (!booker.firstName?.trim() || !booker.lastName?.trim())) ||
+    verifying ||
+    creating;
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -297,7 +317,7 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
         <div className={classes.hotelBlock}>
           {property?.photo && (
             <div className={classes.hotelPhoto}>
-              <img src={property.photo} alt={property?.name} />
+              <img src={mediaSrc(property.photo)} alt={property?.name} />
             </div>
           )}
           <div className={classes.hotelMeta}>
@@ -519,6 +539,50 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                         onChange={(v) => setGuest({ ...guest, phone: v })}
                       />
                     </div>
+                    <label
+                      className={classes.flexRow}
+                      style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", margin: "4px 0" }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={differentBooker}
+                        onChange={(e) => setDifferentBooker(e.target.checked)}
+                      />
+                      <span style={{ fontSize: 12, color: "var(--main-gray)" }}>
+                        Заказчик отличается от гостя
+                      </span>
+                    </label>
+                    {differentBooker && (
+                      <>
+                        <div className={classes.sectionTitle} style={{ marginTop: 4 }}>
+                          Данные заказчика
+                        </div>
+                        <div className={classes.formRow}>
+                          <FormField
+                            label="Имя *"
+                            value={booker.firstName}
+                            onChange={(v) => setBooker({ ...booker, firstName: v })}
+                          />
+                          <FormField
+                            label="Фамилия *"
+                            value={booker.lastName}
+                            onChange={(v) => setBooker({ ...booker, lastName: v })}
+                          />
+                        </div>
+                        <div className={classes.formRow}>
+                          <FormField
+                            label="Email"
+                            value={booker.email}
+                            onChange={(v) => setBooker({ ...booker, email: v })}
+                          />
+                          <FormField
+                            label="Телефон"
+                            value={booker.phone}
+                            onChange={(v) => setBooker({ ...booker, phone: v })}
+                          />
+                        </div>
+                      </>
+                    )}
                     <FormField
                       label="Комментарий для отеля"
                       placeholder="Пожелания гостя (тихий этаж, поздний заезд и т.п.)"
@@ -565,19 +629,72 @@ function FormField({ label, value, onChange, placeholder }) {
   );
 }
 
+function formatDateTimeWithTz(value, tz) {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value;
+  const datePart = d.toLocaleDateString("ru-RU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  const hasT = String(value).includes("T");
+  const timePart = hasT
+    ? " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
+    : "";
+  return `${datePart}${timePart}${tz ? ` (${tz})` : ""}`;
+}
+
 function RateCard({ rate, nights, selected, onPick }) {
   const total = (rate.priceBeforeTax || 0) * nights;
+  const checkInTimeOnly =
+    rate.checkInTime && String(rate.checkInTime).includes("T")
+      ? String(rate.checkInTime).split("T")[1]?.slice(0, 5)
+      : null;
+  const checkOutTimeOnly =
+    rate.checkOutTime && String(rate.checkOutTime).includes("T")
+      ? String(rate.checkOutTime).split("T")[1]?.slice(0, 5)
+      : null;
   return (
     <div className={`${classes.rate} ${selected ? classes.rateSelected : ""}`}>
       <div className={classes.rateInfo}>
         <div className={classes.rateName}>{rate.roomTypeName || "Номер"}</div>
-        <div className={classes.rateSub}>{rate.ratePlanName}</div>
+        <div className={classes.rateSub}>
+          {rate.ratePlanName}
+          {rate.mealType ? ` · ${rate.mealType}` : ""}
+        </div>
+        {(checkInTimeOnly || checkOutTimeOnly) && (
+          <div className={classes.rateSub}>
+            Заезд {checkInTimeOnly || "—"} · Выезд {checkOutTimeOnly || "—"}
+            {rate.timezone ? ` (${rate.timezone})` : ""}
+          </div>
+        )}
+        {rate.placements?.length > 0 && (
+          <div className={classes.placements}>
+            {rate.placements.map((pl, pi) => {
+              const t = (pl.type || "").toLowerCase();
+              const isMain =
+                t.includes("main") || t.includes("basic") || t.includes("основн");
+              const isExtra =
+                t.includes("extra") || t.includes("add") || t.includes("доп");
+              return (
+                <span
+                  key={pi}
+                  className={`${classes.placementChip} ${isMain ? classes.placementMain : isExtra ? classes.placementExtra : ""}`}
+                >
+                  {isMain ? "🛏 Основное" : isExtra ? "🪑 Доп. место" : pl.name || pl.code}
+                  {pl.capacity ? ` ×${pl.capacity}` : ""}
+                </span>
+              );
+            })}
+          </div>
+        )}
         {rate.cancellationPolicies?.length > 0 ? (
           <div className={classes.rateCancel}>
             {rate.cancellationPolicies.map((cp, ci) => (
               <div key={ci}>
                 {cp.deadline
-                  ? `Штраф ${cp.amount?.toLocaleString("ru-RU")} ${rate.currency} при отмене после ${formatDate(cp.deadline)}`
+                  ? `Штраф ${cp.amount?.toLocaleString("ru-RU")} ${rate.currency} при отмене после ${formatDateTimeWithTz(cp.deadline, cp.timezone || rate.timezone)}`
                   : `Безвозвратный — штраф ${cp.amount?.toLocaleString("ru-RU")} ${rate.currency}`}
               </div>
             ))}

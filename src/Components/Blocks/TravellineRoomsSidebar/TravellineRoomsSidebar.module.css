@@ -201,6 +201,35 @@
   margin-top: 6px;
 }
 
+.placements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.placementChip {
+  font-family: Nunito Sans;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+}
+
+.placementMain {
+  background: #dbeafe;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.placementExtra {
+  background: #fef3c7;
+  border-color: #fde68a;
+  color: #b45309;
+}
+
 .rateRight {
   text-align: right;
   flex-shrink: 0;

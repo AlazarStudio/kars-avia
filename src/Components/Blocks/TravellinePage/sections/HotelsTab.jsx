@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from "react"
 import { useQuery } from "@apollo/client"
 
-import { SEARCH_TL_PROPERTIES } from "../../../../../graphQL_requests"
+import { TL_LOCAL_PROPERTIES } from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { EmptyState, Spinner, StarRow } from "../shared/ui"
+import { tlImg } from "../shared/helpers"
 import PropertyModal from "../modals/PropertyModal"
 
 export default function HotelsTab() {
@@ -13,11 +14,11 @@ export default function HotelsTab() {
   const [sortBy, setSortBy] = useState("alpha")
   const [modalProperty, setModalProperty] = useState(null)
 
-  const { data, loading, error } = useQuery(SEARCH_TL_PROPERTIES, {
+  const { data, loading, error } = useQuery(TL_LOCAL_PROPERTIES, {
     variables: { filter: {} },
-    fetchPolicy: "cache-first"
+    fetchPolicy: "cache-and-network"
   })
-  const allProperties = data?.tlSearchProperties?.items ?? []
+  const allProperties = data?.tlLocalProperties?.items ?? []
 
   const cityOptions = useMemo(() => {
     const set = new Set()
@@ -120,7 +121,7 @@ export default function HotelsTab() {
             >
               <div className={classes.hotelCardImgWrap}>
                 {p.photos?.[0] ? (
-                  <img src={p.photos[0]} alt="" className={classes.hotelCardImg} />
+                  <img src={tlImg(p.photos[0])} alt="" className={classes.hotelCardImg} />
                 ) : (
                   <div className={classes.hotelCardImgPlaceholder}>🏨</div>
                 )}

@@ -1,0 +1,138 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 800;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.dialog {
+  background: #fff;
+  border-radius: 12px;
+  width: 420px;
+  max-width: 100%;
+  padding: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.title {
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.sub {
+  font-family: Nunito Sans;
+  font-size: 12px;
+  color: var(--main-gray);
+  margin-top: 4px;
+}
+
+.sub code {
+  font-family: monospace;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: Nunito Sans;
+  font-size: 13px;
+  color: var(--main-gray);
+}
+
+.box {
+  font-family: Nunito Sans;
+  font-size: 13px;
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: var(--text);
+}
+
+.boxTitle {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.boxText {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.boxDanger {
+  background: #fff1f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.boxWarn {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+}
+
+.boxOk {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #15803d;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btnDanger {
+  flex: 1;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 7px;
+  border: none;
+  background: #dc2626;
+  color: #fff;
+  font-family: Nunito Sans;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnDanger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.btnDanger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  flex: 1;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 7px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: var(--text);
+  font-family: Nunito Sans;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: #f1f5f9;
+}

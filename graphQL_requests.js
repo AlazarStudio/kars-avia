@@ -28,6 +28,14 @@ export const getMediaUrl = (path) => {
   return `${server}${path}?token=${token}`;
 };
 
+// Универсальная обёртка для картинок: абсолютный URL — как есть,
+// локальный путь — через getMediaUrl с токеном.
+export const mediaSrc = (src) => {
+  if (!src) return null;
+  if (/^https?:\/\//i.test(src)) return src;
+  return getMediaUrl(src);
+};
+
 export const decodeJWT = (token) => {
   const tokenParts = token.split('.');
 
@@ -3617,7 +3625,8 @@ export const GET_HOTELS = gql`
         images
         stars
         usStars
-        airportDistance    
+        airportDistance
+        externalSource
       }
     }
   }
@@ -6535,6 +6544,72 @@ export const TL_RAW_REQUEST = gql`
       status
       body
       ok
+    }
+  }
+`;
+
+export const TL_SYNC_STATUS = gql`
+  query TlSyncStatus {
+    tlSyncStatus {
+      running
+      total
+      done
+      currentName
+      startedAt
+      finishedAt
+      error
+      lastSyncAt
+      autoSyncHours
+    }
+  }
+`;
+
+export const TL_SYNC_CATALOG = gql`
+  mutation TlSyncCatalog($countryCode: String) {
+    tlSyncCatalog(countryCode: $countryCode) {
+      running
+      total
+      done
+      currentName
+      startedAt
+      finishedAt
+      error
+      lastSyncAt
+      autoSyncHours
+    }
+  }
+`;
+
+export const TL_SET_AUTO_SYNC_HOURS = gql`
+  mutation TlSetAutoSyncHours($hours: Int!) {
+    tlSetAutoSyncHours(hours: $hours)
+  }
+`;
+
+export const TL_LOCAL_PROPERTIES = gql`
+  query TlLocalProperties($filter: TlSearchPropertiesInput) {
+    tlLocalProperties(filter: $filter) {
+      items {
+        id
+        name
+        description
+        phone
+        email
+        address {
+          country
+          city
+          street
+          zip
+        }
+        latitude
+        longitude
+        photos
+        stars
+        raw
+      }
+      total
+      page
+      pageSize
     }
   }
 `;

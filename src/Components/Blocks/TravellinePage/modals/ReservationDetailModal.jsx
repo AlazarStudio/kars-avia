@@ -2,7 +2,7 @@ import React, { useMemo } from "react"
 
 import classes from "../TravellinePage.module.css"
 import { StarRow } from "../shared/ui"
-import { fmtDateTime, nightWord } from "../shared/helpers"
+import { fmtDateTime, nightWord, tlImg } from "../shared/helpers"
 
 export default function ReservationDetailModal({
   reservation: r,
@@ -131,7 +131,7 @@ export default function ReservationDetailModal({
         <div className={classes.resvHotel} style={{ minHeight: hotelPhoto ? 120 : "auto" }}>
           {hotelPhoto && (
             <>
-              <img src={hotelPhoto} alt={hotelName} className={classes.resvHotelImg} />
+              <img src={tlImg(hotelPhoto)} alt={hotelName} className={classes.resvHotelImg} />
               <div className={classes.resvHotelOverlay} />
             </>
           )}

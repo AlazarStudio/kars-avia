@@ -9,7 +9,7 @@ import {
 } from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { Badge, Btn, JsonViewer, Spinner, StarRow } from "../shared/ui"
-import { cn, fmtDateTime, nightWord, nightsBetween } from "../shared/helpers"
+import { cn, fmtDateTime, nightWord, nightsBetween, tlImg } from "../shared/helpers"
 
 export default function PropertyModal({ property, onClose, searchDates, onBookingCreated }) {
   const [tab, setTab] = useState(searchDates ? "book" : "overview")
@@ -240,7 +240,7 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
       <div className={classes.modalBox}>
         {/* Hero */}
         <div className={classes.modalHero}>
-          {coverPhoto && <img src={coverPhoto} alt={property.name} className={classes.modalHeroImg} />}
+          {coverPhoto && <img src={tlImg(coverPhoto)} alt={property.name} className={classes.modalHeroImg} />}
           {coverPhoto && <div className={classes.modalHeroOverlay} />}
           <button type="button" onClick={onClose} className={classes.modalCloseBtn}>
             ✕
@@ -405,7 +405,7 @@ function PhotosView({ photos, photoIdx, setPhotoIdx }) {
   return (
     <div>
       <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", marginBottom: 12, aspectRatio: "16/7", background: "#f1f5f9" }}>
-        <img src={photos[photoIdx]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <img src={tlImg(photos[photoIdx])} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         <div style={{ position: "absolute", bottom: 12, right: 12, background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 12, padding: "4px 8px", borderRadius: 6 }}>
           {photoIdx + 1} / {photos.length}
         </div>
@@ -423,7 +423,7 @@ function PhotosView({ photos, photoIdx, setPhotoIdx }) {
               border: i === photoIdx ? "2px solid #2196F3" : "2px solid transparent"
             }}
           >
-            <img src={url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={tlImg(url)} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
         ))}
       </div>
@@ -484,7 +484,7 @@ function RoomsView({ rooms }) {
         return (
           <div key={r.id ?? i} className={classes.card}>
             <div style={{ display: "flex" }}>
-              {rPhotos[0] && <img src={rPhotos[0]} alt="" style={{ width: 112, height: 112, objectFit: "cover", flexShrink: 0 }} />}
+              {rPhotos[0] && <img src={tlImg(rPhotos[0])} alt="" style={{ width: 112, height: 112, objectFit: "cover", flexShrink: 0 }} />}
               <div style={{ padding: 12, flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{name}</p>
                 {desc && <p style={{ fontSize: 11, color: "#475569", margin: "4px 0 0" }}>{desc}</p>}

@@ -15,6 +15,7 @@ import {
   GET_REQUEST,
   TL_PROPERTIES_AVAILABILITY,
   getCookie,
+  mediaSrc,
   UPDATE_REQUEST_RELAY,
 } from "../../../../graphQL_requests";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
@@ -407,7 +408,7 @@ function HotelOptionCard({ option, onSelect, disabled, tlAvailability, tlAvailLo
     <div className={classes.hotelCard}>
       <div className={classes.hotelCard_photo}>
         {option.photo ? (
-          <img src={option.photo} alt={option.name} />
+          <img src={mediaSrc(option.photo)} alt={option.name} />
         ) : (
           <div className={classes.hotelCard_photoPlaceholder}>🏨</div>
         )}
