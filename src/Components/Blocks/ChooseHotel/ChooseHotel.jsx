@@ -169,8 +169,9 @@ function ChooseHotel({
     return map;
   }, [tlAvailData]);
 
-  // Все отели остаются в списке. У TL без свободных номеров и у локальных без
-  // номерного фонда — кнопка «Выбрать» будет заблокирована.
+  // ВРЕМЕННО: показываем только гостиницы из нашей системы (source === "local"),
+  // TravelLine-варианты скрыты.
+  // const options = rawOptions.filter((o) => o.source === "local");
   const options = rawOptions;
 
   const resetForm = useCallback(() => {
