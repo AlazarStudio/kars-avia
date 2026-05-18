@@ -7,6 +7,8 @@ import {
   GET_ORGANIZATION_CONTRACTS,
   SUBSCRIPTION_ORGANIZATION_CONTRACTS,
   DELETE_ORGANIZATION_CONTRACT,
+  ARCHIVE_ORGANIZATION_CONTRACT,
+  RESTORE_ORGANIZATION_CONTRACT,
   GET_ALL_COMPANIES,
   GET_CITIES,
   GET_ORGANIZATIONS,
@@ -41,6 +43,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
 
   const [searchTarif, setSearchTarif] = useState("");
   const debouncedSearch = useDebounce(searchTarif, 500);
+  const [archived, setArchived] = useState(false); // false — активные, true — архив
   const [activeTab, setActiveTab] = useState("transfer"); // Для организаций используем "transfer"
 
   const [pageInfo, setPageInfo] = useState({
@@ -78,6 +81,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
       },
       filter: {
         companyId: selectedCompany?.id,
+        ...(archived ? { archived: true } : {}),
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
         organizationId: id,
@@ -143,6 +147,15 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
     },
   });
 
+  const [archiveOrganizationContract] = useMutation(
+    ARCHIVE_ORGANIZATION_CONTRACT,
+    { context: { headers: { Authorization: `Bearer ${token}` } } },
+  );
+  const [restoreOrganizationContract] = useMutation(
+    RESTORE_ORGANIZATION_CONTRACT,
+    { context: { headers: { Authorization: `Bearer ${token}` } } },
+  );
+
   useEffect(() => {
     if (data && data.organizationContracts) {
       setAddTarif(data.organizationContracts.items);
@@ -196,6 +209,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
       },
       filter: {
         companyId: selectedCompany?.id,
+        ...(archived ? { archived: true } : {}),
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
         organizationId: id,
@@ -203,7 +217,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
         search: debouncedSearch,
       },
     }).catch(console.error);
-  }, [debouncedSearch, dateRange, selectedCompany, selectedCity]);
+  }, [debouncedSearch, dateRange, selectedCompany, selectedCity, archived]);
 
   const openDeleteComponent = (index, tarifID) => {
     setShowDelete(true);
@@ -269,6 +283,32 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
     setShowDelete(false);
   };
 
+  // Архивирование договора (только для истёкших)
+  const archiveContract = async (contract) => {
+    try {
+      await archiveOrganizationContract({ variables: { id: contract.id } });
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      addNotification?.("Договор перенесён в архив.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось архивировать договор.", "error");
+    }
+  };
+
+  // Восстановление договора из архива
+  const restoreContract = async (contract) => {
+    try {
+      await restoreOrganizationContract({ variables: { id: contract.id } });
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      addNotification?.("Договор восстановлен из архива.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось восстановить договор.", "error");
+    }
+  };
+
   // Текущая страница из URL (0-based)
   const urlPage = useMemo(() => {
     const p = Number(new URLSearchParams(location.search).get("page") || "1");
@@ -286,9 +326,19 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
+        <MUIAutocomplete
+          dropdownWidth={"140px"}
+          label={"Статус"}
+          hideLabelOnFocus={false}
+          options={["Активные", "Архив"]}
+          value={archived ? "Архив" : "Активные"}
+          onChange={(event, newValue) => {
+            setArchived(newValue === "Архив");
+          }}
+        />
 
         <DateRangeModalSelector
-          width={"170px"}
+          width={"140px"}
           initialRange={dateRange}
           onChange={(start, end) =>
             setDateRange({ startDate: start, endDate: end })
@@ -296,7 +346,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
         />
 
         <MUIAutocompleteColor
-          dropdownWidth={"170px"}
+          dropdownWidth={"140px"}
           hideLabelOnFocus={false}
           label={"Город"}
           options={[
@@ -354,7 +404,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
         />
 
         <MUIAutocomplete
-          dropdownWidth={"170px"}
+          dropdownWidth={"140px"}
           hideLabelOnFocus={false}
           label={"ГК Карс"}
           options={["Все компании", ...companies?.map((item) => item.name)]}
@@ -377,7 +427,7 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
           onChange={handleSearchTarif}
         />
 
-        {canCreate && (
+        {canCreate && !archived && (
           <Filter
             toggleSidebar={() => setShowAddTarifCategory(true)}
             handleChange={""}
@@ -403,6 +453,9 @@ function OrganizationRegisterOfContracts({ children, id, user, accessMenu = {}, 
             openDeleteComponentCategory={openDeleteComponentCategory}
             openDeleteContract={openDeleteContract}
             canEdit={canEdit}
+            archived={archived}
+            onArchiveContract={archiveContract}
+            onRestoreContract={restoreContract}
           />
 
           {totalPages > 0 && (

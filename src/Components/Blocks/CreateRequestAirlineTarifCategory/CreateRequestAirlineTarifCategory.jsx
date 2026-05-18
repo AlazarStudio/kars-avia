@@ -47,6 +47,13 @@ function CreateRequestAirlineTarifCategory({
   const [formData, setFormData] = useState({
     name: "",
     airportIds: [],
+    geography: {
+      country: "",
+      region: "",
+      republic: "",
+      district: "",
+      city: "",
+    },
     priceOneCategory: null,
     priceTwoCategory: null,
     priceThreeCategory: null,
@@ -150,6 +157,18 @@ function CreateRequestAirlineTarifCategory({
     }));
   };
 
+  const handleGeographyChange = (e) => {
+    const { name, value } = e.target;
+    setIsEdited(true);
+    setFormData((prevState) => ({
+      ...prevState,
+      geography: {
+        ...prevState.geography,
+        [name]: value,
+      },
+    }));
+  };
+
   const handleFileChange = (e) => {
     const files = e.target.files;
     if (!files?.length) return;
@@ -192,6 +211,13 @@ function CreateRequestAirlineTarifCategory({
               {
                 name: formData.name,
                 airportIds: formData.airportIds,
+                geography: {
+                  country: formData.geography.country || null,
+                  region: formData.geography.region || null,
+                  republic: formData.geography.republic || null,
+                  district: formData.geography.district || null,
+                  city: formData.geography.city || null,
+                },
                 prices: {
                   priceOneCategory: parseFloat(formData.priceOneCategory) || 0,
                   priceTwoCategory: parseFloat(formData.priceTwoCategory) || 0,
@@ -397,6 +423,36 @@ function CreateRequestAirlineTarifCategory({
                   }));
                 }}
               />
+
+              <label>Географическая привязка</label>
+              <div
+                style={{
+                  fontSize: 12,
+                  opacity: 0.55,
+                  marginBottom: 4,
+                }}
+              >
+                Тариф применяется к отелям, чей адрес совпадает с заданными
+                уровнями. Заполняйте только нужные.
+              </div>
+              {[
+                { key: "country", title: "Страна" },
+                { key: "region", title: "Регион" },
+                { key: "republic", title: "Республика" },
+                { key: "district", title: "Район" },
+                { key: "city", title: "Город" },
+              ].map(({ key, title }) => (
+                <React.Fragment key={key}>
+                  <label>{title}</label>
+                  <input
+                    type="text"
+                    name={key}
+                    value={formData.geography?.[key] || ""}
+                    onChange={handleGeographyChange}
+                    placeholder={`Введите ${title.toLowerCase()}`}
+                  />
+                </React.Fragment>
+              ))}
 
               <label>Стоимость одноместного</label>
               <input

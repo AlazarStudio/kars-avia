@@ -23,6 +23,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
+import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 import { action } from "../../../roles.js";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
@@ -67,6 +68,8 @@ function CreateRequestHotelContract({
   const [formData, setFormData] = useState({
     contractNumber: "",
     date: "",
+    contractEndDate: "",
+    isProlongationEnabled: false,
     companyId: "",
     hotelId: null,
     // organizationId: null,
@@ -169,6 +172,8 @@ function CreateRequestHotelContract({
     setFormData({
       contractNumber: "",
       date: "",
+      contractEndDate: "",
+      isProlongationEnabled: false,
       companyId: "",
       hotelId: null,
       normativeAct: "",
@@ -387,9 +392,15 @@ function CreateRequestHotelContract({
         files: agreement.filesAA,
       }));
 
+      const contractEndIso = formData.contractEndDate
+        ? new Date(formData.contractEndDate).toISOString()
+        : null;
+
       const hotelPayload = {
         contractNumber: formData.contractNumber,
         date: isoDate,
+        contractEndDate: contractEndIso,
+        isProlongationEnabled: !!formData.isProlongationEnabled,
         companyId: formData.companyId,
         hotelId: formData.hotelId,
         cityId: formData.cityId,
@@ -408,6 +419,8 @@ function CreateRequestHotelContract({
         companyId: formData.companyId,
         contractNumber: formData.contractNumber,
         date: isoDate,
+        contractEndDate: contractEndIso,
+        isProlongationEnabled: !!formData.isProlongationEnabled,
         organizationId: formData.hotelId,
         notes: formData.notes,
       };
@@ -548,6 +561,27 @@ function CreateRequestHotelContract({
                   value={formData.date}
                   onChange={handleChange}
                   placeholder="Дата"
+                />
+
+                <label>Дата окончания срока действия</label>
+                <input
+                  type="date"
+                  name="contractEndDate"
+                  value={formData.contractEndDate}
+                  onChange={handleChange}
+                  placeholder="Дата"
+                />
+
+                <MUISwitch
+                  label="Пролонгация включена"
+                  width="100%"
+                  checked={formData.isProlongationEnabled}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isProlongationEnabled: e.target.checked,
+                    }))
+                  }
                 />
 
                 <label>ГК КАРС</label>

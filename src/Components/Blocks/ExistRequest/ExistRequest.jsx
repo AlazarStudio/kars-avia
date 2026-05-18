@@ -164,6 +164,8 @@ function ExistRequest({
     departureTime: "",
     arrivalDate: "",
     arrivalTime: "",
+    actualCheckInDate: "",
+    actualCheckInTime: "",
   });
   const [isEditing, setIsEditing] = useState(false);
 
@@ -273,6 +275,12 @@ function ExistRequest({
         arrivalTime: formData.arrival
           ? parseDateTime(formData.arrival).time
           : "",
+        actualCheckInDate: formData.actualCheckInAt
+          ? parseDateTime(formData.actualCheckInAt).date
+          : "",
+        actualCheckInTime: formData.actualCheckInAt
+          ? parseDateTime(formData.actualCheckInAt).time
+          : "",
       });
     }
   }, [formData, show]); // Следим за изменением formData
@@ -301,6 +309,8 @@ function ExistRequest({
       departureTime: "",
       arrivalDate: "",
       arrivalTime: "",
+      actualCheckInDate: "",
+      actualCheckInTime: "",
     }));
     setSelectedEmployee(null);
     setNewStaffId(null);
@@ -467,6 +477,19 @@ function ExistRequest({
         if (noteEdit !== (formData.note ?? "")) {
           requestInput.note = noteEdit;
         }
+
+        // Фактическое заселение — отправляем только при изменении
+        const originalCheckIn = formData.actualCheckInAt
+          ? parseDateTime(formData.actualCheckInAt)
+          : { date: "", time: "" };
+        if (
+          formDataExtend.actualCheckInDate !== originalCheckIn.date ||
+          formDataExtend.actualCheckInTime !== originalCheckIn.time
+        ) {
+          requestInput.actualCheckInAt = formDataExtend.actualCheckInDate
+            ? `${formDataExtend.actualCheckInDate}T${formDataExtend.actualCheckInTime || "00:00"}:00+00:00`
+            : null;
+        }
         if (reserveChanged) {
           requestInput.reserve = selectedReserve;
         }
@@ -571,6 +594,12 @@ function ExistRequest({
           )
         ) {
           showAlert("Свободных мест в этом номере нет");
+        } else if (
+          String(error).includes(
+            "Фактическое заселение не может быть позже даты выезда"
+          )
+        ) {
+          showAlert("Фактическое заселение не может быть позже даты выезда");
         }
       } finally {
         setIsLoading(false);
@@ -1479,7 +1508,9 @@ function ExistRequest({
                                 <div className={classes.requestDataInfo}>
                                   <div className={classes.requestDataInfo_title}>Завтрак</div>
                                   <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                    {effectiveDays > 0 ? (
+                                    {price.breakfastIncluded ? (
+                                      <span style={{ whiteSpace: "nowrap", opacity: 0.7 }}>Включён в стоимость</span>
+                                    ) : effectiveDays > 0 ? (
                                       <>
                                         <span style={{ whiteSpace: "nowrap",  }}>{(price.breakfast * effectiveDays).toLocaleString()} ₽</span>
                                         <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${price.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>

@@ -18,6 +18,7 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 import { action } from "../../../roles.js";
 import FixIcon from "../../../shared/icons/FixIcon.jsx";
 import EditAdditionalAgreement from "../EditAdditionalAgreement/EditAdditionalAgreement.jsx";
@@ -124,6 +125,8 @@ function EditRequestAirlineContract({
     // контракт
     contractNumber: "",
     date: "",
+    contractEndDate: "",
+    isProlongationEnabled: false,
     companyId: "",
     airlineId: "",
     region: "",
@@ -143,6 +146,8 @@ function EditRequestAirlineContract({
     setFormData({
       contractNumber: c.contractNumber || "",
       date: c.date || "",
+      contractEndDate: c.contractEndDate || "",
+      isProlongationEnabled: !!c.isProlongationEnabled,
       companyId: c.companyId || "",
       airlineId: c.airlineId || "",
       region: c.region || "",
@@ -183,7 +188,9 @@ function EditRequestAirlineContract({
     if (isDialogOpen) return;
 
     if (isEditing) {
-      const ok = await confirm("Вы уверены, все несохраненные данные будут удалены?");
+      const ok = await confirm(
+        "Вы уверены, все несохраненные данные будут удалены?",
+      );
       if (!ok) return;
     }
     onClose?.();
@@ -313,37 +320,40 @@ function EditRequestAirlineContract({
   };
   const [isLoading, setIsLoading] = useState(false);
 
-  const deleteAgreement = useCallback(async (ag, index) => {
-    // console.log(ag);
+  const deleteAgreement = useCallback(
+    async (ag, index) => {
+      // console.log(ag);
 
-    // Предупреждение перед удалением
-    const isConfirmed = await confirm("Удалить дополнительное соглашение?");
-    if (!isConfirmed) return;
+      // Предупреждение перед удалением
+      const isConfirmed = await confirm("Удалить дополнительное соглашение?");
+      if (!isConfirmed) return;
 
-    try {
-      setIsLoading(true);
-      // Отправляем мутацию удаления соглашения
-      await deleteAirlineContractAA({
-        variables: {
-          deleteAdditionalAgreementId: ag?.id,
-        },
-      });
+      try {
+        setIsLoading(true);
+        // Отправляем мутацию удаления соглашения
+        await deleteAirlineContractAA({
+          variables: {
+            deleteAdditionalAgreementId: ag?.id,
+          },
+        });
 
-      // Удаляем соглашение из списка только после успешного удаления на сервере
-      setFormData((prev) => {
-        const list = [...prev.additionalAgreements];
-        list.splice(index, 1); // Удаляем элемент по индексу
-        return { ...prev, additionalAgreements: list };
-      });
-      setIsLoading(false);
+        // Удаляем соглашение из списка только после успешного удаления на сервере
+        setFormData((prev) => {
+          const list = [...prev.additionalAgreements];
+          list.splice(index, 1); // Удаляем элемент по индексу
+          return { ...prev, additionalAgreements: list };
+        });
+        setIsLoading(false);
 
-      // Уведомление об успешном удалении
-      success("Дополнительное соглашение успешно удалено.");
-    } catch (err) {
-      notifyError("Произошла ошибка при удалении соглашения.");
-    }
-    refetch();
-  }, [confirm, refetch, success, notifyError]);
+        // Уведомление об успешном удалении
+        success("Дополнительное соглашение успешно удалено.");
+      } catch (err) {
+        notifyError("Произошла ошибка при удалении соглашения.");
+      }
+      refetch();
+    },
+    [confirm, refetch, success, notifyError],
+  );
 
   const addNewAgreement = () => {
     setFormData((p) => ({
@@ -378,6 +388,10 @@ function EditRequestAirlineContract({
       const payload = {
         contractNumber: formData.contractNumber,
         date: formData.date ? new Date(formData.date).toISOString() : null,
+        contractEndDate: formData.contractEndDate
+          ? new Date(formData.contractEndDate).toISOString()
+          : null,
+        isProlongationEnabled: !!formData.isProlongationEnabled,
         notes: formData.notes,
         applicationType: formData.applicationType,
         region: formData.region,
@@ -565,6 +579,105 @@ function EditRequestAirlineContract({
                         </div>
                         <div className={classes.requestDataInfo_desc}>
                           {formData.date ? convertToDate(formData.date) : "—"}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
+                    {isEditing ? (
+                      <>
+                        <label>Дата окончания срока действия</label>
+                        <input
+                          type="date"
+                          name="contractEndDate"
+                          value={
+                            formData.contractEndDate
+                              ? formData.contractEndDate.slice(0, 10)
+                              : ""
+                          }
+                          onChange={handleChange}
+                          placeholder="Дата"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Дата окончания
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.contractEndDate
+                            ? convertToDate(formData.contractEndDate)
+                            : "—"}
+                          {(() => {
+                            const c = data?.airlineContract;
+                            if (!c?.contractEndDate) return null;
+                            if (c.isExpired)
+                              return (
+                                <span
+                                  style={{ color: "var(--red)", marginLeft: 6 }}
+                                >
+                                  · Истёк
+                                </span>
+                              );
+                            if (c.isExpiringSoon)
+                              return (
+                                <span
+                                  style={{ color: "#E8A33D", marginLeft: 6 }}
+                                >
+                                  · Истекает
+                                  {typeof c.daysUntilEnd === "number"
+                                    ? ` (${c.daysUntilEnd} дн.)`
+                                    : ""}
+                                </span>
+                              );
+                            return null;
+                          })()}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className={classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        {/* <label>Пролонгация</label> */}
+                        <div
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <MUISwitch
+                            width={"100%"}
+                            label={"Пролонгация"}
+                            checked={formData.isProlongationEnabled}
+                            onChange={(e) => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                isProlongationEnabled: e.target.checked,
+                              }));
+                              setIsEdited(true);
+                            }}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Пролонгация
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.isProlongationEnabled
+                            ? "Включена"
+                            : "Отключена"}
                         </div>
                       </>
                     )}

@@ -924,6 +924,14 @@ export const GET_ORGANIZATION_CONTRACTS = gql`
         notes
         applicationType
         files
+        contractEndDate
+        isProlongationEnabled
+        isArchived
+        archivedAt
+        daysUntilEnd
+        isExpiringSoon
+        isExpired
+        expirationPriority
       }
     }
   }
@@ -954,6 +962,13 @@ export const GET_ORGANIZATION_CONTRACT = gql`
       notes
       applicationType
       files
+      contractEndDate
+      isProlongationEnabled
+      isArchived
+      archivedAt
+      daysUntilEnd
+      isExpiringSoon
+      isExpired
       additionalAgreements {
         id
         itemAgreement
@@ -986,6 +1001,63 @@ export const UPDATE_ORGANIZATION_CONTRACT = gql`
 export const DELETE_ORGANIZATION_CONTRACT = gql`
   mutation DeleteOrganizationContract($deleteOrganizationContractId: ID!) {
     deleteOrganizationContract(id: $deleteOrganizationContractId)
+  }
+`;
+
+export const ARCHIVE_AIRLINE_CONTRACT = gql`
+  mutation ArchiveAirlineContract($id: ID!) {
+    archiveAirlineContract(id: $id) {
+      id
+      isArchived
+      archivedAt
+    }
+  }
+`;
+
+export const RESTORE_AIRLINE_CONTRACT = gql`
+  mutation RestoreAirlineContract($id: ID!) {
+    restoreAirlineContract(id: $id) {
+      id
+      isArchived
+    }
+  }
+`;
+
+export const ARCHIVE_HOTEL_CONTRACT = gql`
+  mutation ArchiveHotelContract($id: ID!) {
+    archiveHotelContract(id: $id) {
+      id
+      isArchived
+      archivedAt
+    }
+  }
+`;
+
+export const RESTORE_HOTEL_CONTRACT = gql`
+  mutation RestoreHotelContract($id: ID!) {
+    restoreHotelContract(id: $id) {
+      id
+      isArchived
+    }
+  }
+`;
+
+export const ARCHIVE_ORGANIZATION_CONTRACT = gql`
+  mutation ArchiveOrganizationContract($id: ID!) {
+    archiveOrganizationContract(id: $id) {
+      id
+      isArchived
+      archivedAt
+    }
+  }
+`;
+
+export const RESTORE_ORGANIZATION_CONTRACT = gql`
+  mutation RestoreOrganizationContract($id: ID!) {
+    restoreOrganizationContract(id: $id) {
+      id
+      isArchived
+    }
   }
 `;
 
@@ -1684,6 +1756,7 @@ export const GET_REQUEST = gql`
       }
       arrival
       departure
+      actualCheckInAt
       roomCategory
       mealPlan {
         included
@@ -1748,12 +1821,14 @@ export const GET_REQUEST = gql`
         breakfast
         lunch
         dinner
+        breakfastIncluded
       }
       requestHotelPrice {
         livingCost
         breakfast
         lunch
         dinner
+        breakfastIncluded
       }
       hotel {
         id
@@ -3707,6 +3782,14 @@ export const GET_HOTEL = gql`
         link
         description
       }
+      location {
+        country
+        region
+        republic
+        district
+        city
+        address
+      }
       images
       gallery
       roomKind {
@@ -3734,6 +3817,7 @@ export const GET_HOTEL = gql`
         images
         priceForAirline
       }
+      breakfastIncluded
       breakfast {
         start
         end
@@ -4298,6 +4382,13 @@ export const GET_AIRLINE_TARIFS = gql`
             code
             city
           }
+        }
+        geography {
+          country
+          region
+          republic
+          district
+          city
         }
         id
         name
@@ -5623,6 +5714,14 @@ export const GET_AIRLINE_CONTRACTS = gql`
         applicationType
         notes
         files
+        contractEndDate
+        isProlongationEnabled
+        isArchived
+        archivedAt
+        daysUntilEnd
+        isExpiringSoon
+        isExpired
+        expirationPriority
         additionalAgreements {
           id
           notes
@@ -5651,6 +5750,13 @@ export const GET_AIRLINE_CONTRACT = gql`
       applicationType
       notes
       files
+      contractEndDate
+      isProlongationEnabled
+      isArchived
+      archivedAt
+      daysUntilEnd
+      isExpiringSoon
+      isExpired
       additionalAgreements {
         id
         contractNumber
@@ -5751,6 +5857,14 @@ export const GET_HOTEL_CONTRACTS = gql`
         applicationType
         executor
         files
+        contractEndDate
+        isProlongationEnabled
+        isArchived
+        archivedAt
+        daysUntilEnd
+        isExpiringSoon
+        isExpired
+        expirationPriority
       }
     }
   }
@@ -5784,6 +5898,13 @@ export const GET_HOTEL_CONTRACT = gql`
       applicationType
       executor
       files
+      contractEndDate
+      isProlongationEnabled
+      isArchived
+      archivedAt
+      daysUntilEnd
+      isExpiringSoon
+      isExpired
       additionalAgreements {
         id
         contractNumber

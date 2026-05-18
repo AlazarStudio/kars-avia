@@ -56,6 +56,13 @@ function EditRequestAirlineTarifCategory({
     return {
       name: tarif?.name || "",
       airportIds,
+      geography: {
+        country: tarif?.geography?.country || "",
+        region: tarif?.geography?.region || "",
+        republic: tarif?.geography?.republic || "",
+        district: tarif?.geography?.district || "",
+        city: tarif?.geography?.city || "",
+      },
       priceOneCategory: tarif?.prices?.priceOneCategory ?? 0,
       priceTwoCategory: tarif?.prices?.priceTwoCategory ?? 0,
       priceThreeCategory: tarif?.prices?.priceThreeCategory ?? 0,
@@ -76,6 +83,13 @@ function EditRequestAirlineTarifCategory({
   const [formData, setFormData] = useState(() => ({
     name: "",
     airportIds: [],
+    geography: {
+      country: "",
+      region: "",
+      republic: "",
+      district: "",
+      city: "",
+    },
     priceOneCategory: 0,
     priceTwoCategory: 0,
     priceThreeCategory: 0,
@@ -187,6 +201,18 @@ function EditRequestAirlineTarifCategory({
     }));
   };
 
+  const handleGeographyChange = (e) => {
+    const { name, value } = e.target;
+    setIsEdited(true);
+    setFormData((prevState) => ({
+      ...prevState,
+      geography: {
+        ...prevState.geography,
+        [name]: value,
+      },
+    }));
+  };
+
   const handleFileChange = (e) => {
     const files = e.target.files;
     if (files && files.length > 8) {
@@ -222,6 +248,13 @@ function EditRequestAirlineTarifCategory({
                   id: tarif?.id,
                   name: formData.name,
                   airportIds: formData.airportIds,
+                  geography: {
+                    country: formData.geography.country || null,
+                    region: formData.geography.region || null,
+                    republic: formData.geography.republic || null,
+                    district: formData.geography.district || null,
+                    city: formData.geography.city || null,
+                  },
                   prices: {
                     priceOneCategory: parseFloat(formData.priceOneCategory),
                     priceTwoCategory: parseFloat(formData.priceTwoCategory),
@@ -438,6 +471,41 @@ function EditRequestAirlineTarifCategory({
                     )}
                   </div>
                 )}
+              </div>
+
+              <div className={classes.requestDataInfo_block}>
+                <div className={classes.requestDataInfo_title}>
+                  Географическая привязка
+                </div>
+                <div style={{ fontSize: 12, opacity: 0.55, margin: "4px 0 8px" }}>
+                  Тариф применяется к отелям, чей адрес совпадает с заданными
+                  уровнями. Заполняйте только нужные: страна / регион /
+                  республика / район / город.
+                </div>
+                {[
+                  { key: "country", title: "Страна" },
+                  { key: "region", title: "Регион" },
+                  { key: "republic", title: "Республика" },
+                  { key: "district", title: "Район" },
+                  { key: "city", title: "Город" },
+                ].map(({ key, title }) => (
+                  <div key={key} className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>{title}</div>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name={key}
+                        value={formData.geography?.[key] || ""}
+                        onChange={handleGeographyChange}
+                        placeholder={`Введите ${title.toLowerCase()}`}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.geography?.[key] || "—"}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {[

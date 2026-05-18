@@ -17,6 +17,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
+import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 import { action } from "../../../roles.js";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
@@ -58,6 +59,8 @@ function CreateRequestContract({
   const [formData, setFormData] = useState({
     contractNumber: "",
     date: "",
+    contractEndDate: "",
+    isProlongationEnabled: false,
     companyId: "",
     airlineId: null,
     region: "",
@@ -132,6 +135,8 @@ function CreateRequestContract({
     setFormData({
       contractNumber: "",
       date: "",
+      contractEndDate: "",
+      isProlongationEnabled: false,
       companyId: "",
       airlineId: null,
       region: "",
@@ -352,6 +357,10 @@ function CreateRequestContract({
           input: {
             contractNumber: formData.contractNumber,
             date: isoDate,
+            contractEndDate: formData.contractEndDate
+              ? new Date(formData.contractEndDate).toISOString()
+              : null,
+            isProlongationEnabled: !!formData.isProlongationEnabled,
             companyId: formData.companyId,
             airlineId: formData.airlineId,
             region: formData.region,
@@ -472,6 +481,27 @@ function CreateRequestContract({
                   value={formData.date}
                   onChange={handleChange}
                   placeholder="Дата"
+                />
+
+                <label>Дата окончания срока действия</label>
+                <input
+                  type="date"
+                  name="contractEndDate"
+                  value={formData.contractEndDate}
+                  onChange={handleChange}
+                  placeholder="Дата"
+                />
+
+                <MUISwitch
+                  label="Пролонгация включена"
+                  width="100%"
+                  checked={formData.isProlongationEnabled}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      isProlongationEnabled: e.target.checked,
+                    }))
+                  }
                 />
 
                 <label>ГК КАРС</label>

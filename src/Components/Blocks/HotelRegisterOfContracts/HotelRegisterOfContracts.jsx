@@ -14,6 +14,8 @@ import {
   GET_ALL_COMPANIES,
   GET_HOTELS_RELAY,
   GET_CITIES,
+  ARCHIVE_HOTEL_CONTRACT,
+  RESTORE_HOTEL_CONTRACT,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
@@ -46,6 +48,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
 
   const [searchTarif, setSearchTarif] = useState("");
   const debouncedSearch = useDebounce(searchTarif, 500);
+  const [archived, setArchived] = useState(false); // false — активные, true — архив
 
   const [pageInfo, setPageInfo] = useState({
     skip: currentPageRelay,
@@ -85,6 +88,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
       },
       filter: {
         companyId: selectedCompany?.id,
+        ...(archived ? { archived: true } : {}),
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
         hotelId: id,
@@ -159,6 +163,13 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
     },
   });
 
+  const [archiveHotelContract] = useMutation(ARCHIVE_HOTEL_CONTRACT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [restoreHotelContract] = useMutation(RESTORE_HOTEL_CONTRACT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
   useEffect(() => {
     if (data && data.hotelContracts) {
       setAddTarif(data.hotelContracts.items);
@@ -229,6 +240,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
       },
       filter: {
         companyId: selectedCompany?.id,
+        ...(archived ? { archived: true } : {}),
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
         hotelId: id,
@@ -236,7 +248,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
         search: debouncedSearch,
       },
     }).catch(console.error);
-  }, [debouncedSearch, dateRange, selectedCompany]);
+  }, [debouncedSearch, dateRange, selectedCompany, archived]);
 
   const openDeleteComponent = (index, tarifID) => {
     setShowDelete(true);
@@ -292,6 +304,32 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
     // setEditShowAddTarif(true);
   };
 
+  // Архивирование договора (только для истёкших)
+  const archiveContract = async (contract) => {
+    try {
+      await archiveHotelContract({ variables: { id: contract.id } });
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      addNotification?.("Договор перенесён в архив.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось архивировать договор.", "error");
+    }
+  };
+
+  // Восстановление договора из архива
+  const restoreContract = async (contract) => {
+    try {
+      await restoreHotelContract({ variables: { id: contract.id } });
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      addNotification?.("Договор восстановлен из архива.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось восстановить договор.", "error");
+    }
+  };
+
   const openDeleteComponentCategory = (category, tarif) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -327,9 +365,19 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
+        <MUIAutocomplete
+          dropdownWidth={"140px"}
+          label={"Статус"}
+          hideLabelOnFocus={false}
+          options={["Активные", "Архив"]}
+          value={archived ? "Архив" : "Активные"}
+          onChange={(event, newValue) => {
+            setArchived(newValue === "Архив");
+          }}
+        />
 
         <DateRangeModalSelector
-          width={"170px"}
+          width={"140px"}
           initialRange={dateRange}
           onChange={(start, end) =>
             setDateRange({ startDate: start, endDate: end })
@@ -337,7 +385,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
         />
 
         <MUIAutocompleteColor
-          dropdownWidth={"170px"}
+          dropdownWidth={"140px"}
           hideLabelOnFocus={false}
           label={"Город"}
           options={[
@@ -403,7 +451,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
         />
 
         <MUIAutocomplete
-          dropdownWidth={"170px"}
+          dropdownWidth={"140px"}
           hideLabelOnFocus={false}
           label={"ГК Карс"}
           options={["Все компании", ...companies?.map((item) => item.name)]}
@@ -426,7 +474,7 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
           value={searchTarif}
           onChange={handleSearchTarif}
         />
-        {canCreate && (
+        {canCreate && !archived && (
           <Filter
             toggleSidebar={toggleTarifsCategory}
             handleChange={""}
@@ -452,6 +500,9 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
             openDeleteComponentCategory={openDeleteComponentCategory}
             openDeleteContract={openDeleteContract}
             canEdit={canEdit}
+            archived={archived}
+            onArchiveContract={archiveContract}
+            onRestoreContract={restoreContract}
           />
 
           {totalPages > 0 && (

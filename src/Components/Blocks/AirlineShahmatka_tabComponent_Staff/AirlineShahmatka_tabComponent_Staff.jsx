@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import classes from "./AirlineShahmatka_tabComponent_Staff.module.css";
 import Filter from "../Filter/Filter.jsx";
 
@@ -311,6 +312,32 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
   
   // console.log(accessMenu);
 
+  const exportToExcel = () => {
+    if (!filteredRequests.length) {
+      notifyError("Нет сотрудников для выгрузки.");
+      return;
+    }
+
+    const aoa = [
+      ["ФИО", "Номер телефона", "Должность", "Пол"],
+      ...filteredRequests.map((person) => [
+        person.name || "",
+        person.number || "",
+        person.position?.name || "",
+        person.gender || "",
+      ]),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 25 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Сотрудники");
+    XLSX.writeFile(
+      wb,
+      `sotrudniki-${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+  };
+
   // if (loading || bronLoading) return <MUILoader fullHeight={"70vh"} />;
   // if (error || bronError)
   // return <p>Error: {error ? error.message : bronError.message}</p>;
@@ -338,6 +365,13 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
         </div>
         <div className={classes.section_searchAndFilter_filter}>
           <StatusLegend />
+          <button
+            type="button"
+            className={classes.exportXlsxButton}
+            onClick={exportToExcel}
+          >
+            Выгрузить xlsx
+          </button>
           {(user?.role !== roles.superAdmin && accessMenu?.personalCreate) && (
             <Filter
               toggleSidebar={toggleCategory}

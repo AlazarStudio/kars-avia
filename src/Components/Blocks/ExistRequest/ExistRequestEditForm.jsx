@@ -227,6 +227,84 @@ function ExistRequestEditForm({
         )}
       </div>
       <div className={classes.requestDataInfo}>
+        <div className={classes.requestDataInfo_title}>
+          Фактическое заселение
+        </div>
+        {isEditing && formDataExtend && onExtendChange ? (
+          <div
+            style={{
+              width: "60%",
+              display: "flex",
+              flexDirection: "column",
+              gap: 4,
+            }}
+          >
+            <div className={classes.reis_info} style={{ width: "100%" }}>
+              <input
+                type="date"
+                name="actualCheckInDate"
+                value={formDataExtend.actualCheckInDate || ""}
+                onChange={onExtendChange}
+                placeholder="Дата"
+              />
+              <input
+                type="time"
+                name="actualCheckInTime"
+                value={formDataExtend.actualCheckInTime || ""}
+                onChange={onExtendChange}
+                placeholder="Время"
+              />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{ fontSize: 12, opacity: 0.55 }}>
+                Если не указано — используется плановый заезд
+              </span>
+              {formDataExtend.actualCheckInDate && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onExtendChange({
+                      target: { name: "actualCheckInDate", value: "" },
+                    });
+                    onExtendChange({
+                      target: { name: "actualCheckInTime", value: "" },
+                    });
+                  }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    fontFamily: "Nunito Sans",
+                    fontSize: 12,
+                    color: "var(--red)",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Сбросить
+                </button>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className={classes.requestDataInfo_desc}>
+            {formData.actualCheckInAt
+              ? `${convertToDateNew(formData.actualCheckInAt)} - ${convertToDateNew(
+                  formData.actualCheckInAt,
+                  true
+                )}`
+              : "—"}
+          </div>
+        )}
+      </div>
+      <div className={classes.requestDataInfo}>
         <div className={classes.requestDataInfo_title}>Выезд</div>
         {isEditing && formDataExtend && onExtendChange ? (
           <div className={classes.reis_info} style={{ width: "60%" }}>

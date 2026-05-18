@@ -7,6 +7,15 @@ import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
+import ArchiveIcon from "../../../shared/icons/ArchiveIcon";
+import RestoreIcon from "../../../shared/icons/RestoreIcon";
+
+// Статус срока действия договора для подсветки
+const getExpirationInfo = (item) => {
+  if (item?.isExpired) return { label: "Истёк", color: "var(--red)" };
+  if (item?.isExpiringSoon) return { label: "Истекает", color: "#E8A33D" };
+  return null;
+};
 
 function InfoTableAllDataTarifs({
   id,
@@ -21,6 +30,9 @@ function InfoTableAllDataTarifs({
   openDeleteComponent,
   openDeleteComponentCategory,
   canEdit = false,
+  archived = false,
+  onArchiveContract,
+  onRestoreContract,
   ...props
 }) {
     // Функция для установки выбранного объекта и переключения боковой панели
@@ -65,15 +77,24 @@ function InfoTableAllDataTarifs({
 
             {/* Данные о заявках */}
             <div className={classes.bottom} style={(user?.airlineId || user?.hotelId) && {height:"calc(100vh - 335px)"}} ref={listContainerRef}>
-                {requests.map((item, index) => (
+                {requests.map((item, index) => {
+                    const exp = getExpirationInfo(item);
+                    return (
                     <div
                         className={`${classes.InfoTable_data}`}
                         onClick={() => handleObject(item.id)}
                         key={item.id}
-                        // data-id={item.id}
+                        style={exp ? { borderLeft: `3px solid ${exp.color}` } : undefined}
                     >
                         <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{item.contractNumber}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>{convertToDate(item.date)}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`} style={{flexDirection:'column', gap:2}}>
+                            <span>{convertToDate(item.date)}</span>
+                            {item.contractEndDate && (
+                                <span style={{ fontSize:11, color: exp ? exp.color : undefined, opacity: exp ? 1 : 0.55 }}>
+                                    {exp ? `${exp.label} ${convertToDate(item.contractEndDate)}` : `до ${convertToDate(item.contractEndDate)}`}
+                                </span>
+                            )}
+                        </div>
                         {/* <div className={`${classes.InfoTable_data_elem} ${classes.w20}`} style={{ justifyContent:'flex-start',textAlign:'left', padding:'0 10px 0 30px'}}>
                             <div className={classes.InfoTable_data_elem_img} >
                                 <img src={`${server}${ activeTab !== "hotels" ? item?.airline?.images[0] : item?.hotel?.images[0]}`} alt="" />
@@ -119,13 +140,35 @@ function InfoTableAllDataTarifs({
                             {item?.region?.city ? item.region.city : item.region}
                         </div>
                         {canEdit && (
-
-                          <div className={`${classes.buttonsWrapper} ${classes.w10}`} onClick={(e) => e.stopPropagation()}>
-                            <EditPencilIcon
-                                cursor="pointer"
-                                style={{width:"fit-content", height:"fit-content"}}
-                                onClick={() => onEditRow ? onEditRow(item.id) : handleObject(item.id)}
-                            />
+                          <div
+                            className={`${classes.buttonsWrapper} ${classes.w10}`}
+                            style={{ gap: 12, padding: "0 12px 0 0" }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {archived ? (
+                              <span title="Восстановить из архива" style={{ display: "flex" }}>
+                                <RestoreIcon
+                                    cursor="pointer"
+                                    onClick={() => onRestoreContract && onRestoreContract(item)}
+                                />
+                              </span>
+                            ) : (
+                              <>
+                                <EditPencilIcon
+                                    cursor="pointer"
+                                    style={{width:"fit-content", height:"fit-content"}}
+                                    onClick={() => onEditRow ? onEditRow(item.id) : handleObject(item.id)}
+                                />
+                                {item.isExpired && onArchiveContract && (
+                                  <span title="Перенести в архив" style={{ display: "flex" }}>
+                                    <ArchiveIcon
+                                        cursor="pointer"
+                                        onClick={() => onArchiveContract(item)}
+                                    />
+                                  </span>
+                                )}
+                              </>
+                            )}
                             <DeleteIcon
                                 cursor="pointer"
                                 onClick={() => {openDeleteContract(item)}}
@@ -133,7 +176,8 @@ function InfoTableAllDataTarifs({
                         </div>
                         )}
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </InfoTable>
     );

@@ -12,6 +12,8 @@ import {
   GET_ALL_COMPANIES,
   GET_HOTELS_RELAY,
   GET_CITIES,
+  ARCHIVE_AIRLINE_CONTRACT,
+  RESTORE_AIRLINE_CONTRACT,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
@@ -46,6 +48,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   const [searchTarif, setSearchTarif] = useState("");
   const debouncedSearch = useDebounce(searchTarif, 500);
   const [activeTab, setActiveTab] = useState("airlines"); // "contracts" | "registers"
+  const [archived, setArchived] = useState(false); // false — активные, true — архив
 
   const [pageInfo, setPageInfo] = useState({
     skip: currentPageRelay,
@@ -81,6 +84,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
       },
       filter: {
         companyId: selectedCompany?.id,
+        ...(archived ? { archived: true } : {}),
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
         applicationType: selectedType,
@@ -155,6 +159,13 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         Authorization: `Bearer ${token}`,
       },
     },
+  });
+
+  const [archiveAirlineContract] = useMutation(ARCHIVE_AIRLINE_CONTRACT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [restoreAirlineContract] = useMutation(RESTORE_AIRLINE_CONTRACT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
   });
   // const [deleteHotelContract] = useMutation(DELETE_HOTEL_CONTRACT, {
   //   context: {
@@ -242,6 +253,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
       },
       filter: {
         companyId: selectedCompany?.id,
+        ...(archived ? { archived: true } : {}),
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
         applicationType: selectedType,
@@ -249,7 +261,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         search: debouncedSearch,
       },
     }).catch(console.error);
-  }, [debouncedSearch, dateRange, selectedCompany]);
+  }, [debouncedSearch, dateRange, selectedCompany, archived]);
 
   const openDeleteComponent = (index, tarifID) => {
     setShowDelete(true);
@@ -305,6 +317,32 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
     // setEditShowAddTarif(true);
   };
 
+  // Архивирование договора (только для истёкших)
+  const archiveContract = async (contract) => {
+    try {
+      await archiveAirlineContract({ variables: { id: contract.id } });
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      addNotification?.("Договор перенесён в архив.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось архивировать договор.", "error");
+    }
+  };
+
+  // Восстановление договора из архива
+  const restoreContract = async (contract) => {
+    try {
+      await restoreAirlineContract({ variables: { id: contract.id } });
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      addNotification?.("Договор восстановлен из архива.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось восстановить договор.", "error");
+    }
+  };
+
   const openDeleteComponentCategory = (category, tarif) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -340,9 +378,19 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
+        <MUIAutocomplete
+          dropdownWidth={"140px"}
+          label={"Статус"}
+          hideLabelOnFocus={false}
+          options={["Активные", "Архив"]}
+          value={archived ? "Архив" : "Активные"}
+          onChange={(event, newValue) => {
+            setArchived(newValue === "Архив");
+          }}
+        />
 
         <DateRangeModalSelector
-          width={"170px"}
+          width={"140px"}
           initialRange={dateRange}
           onChange={(start, end) =>
             setDateRange({ startDate: start, endDate: end })
@@ -350,7 +398,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         />
 
         <MUIAutocomplete
-          dropdownWidth={"170px"}
+          dropdownWidth={"140px"}
           hideLabelOnFocus={false}
           label={"Вид приложения"}
           options={["Все", ...action]}
@@ -364,7 +412,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         />
 
         <MUIAutocomplete
-          dropdownWidth={"170px"}
+          dropdownWidth={"140px"}
           hideLabelOnFocus={false}
           label={"ГК Карс"}
           options={["Все компании", ...companies?.map((item) => item.name)]}
@@ -387,7 +435,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
           onChange={handleSearchTarif}
         />
 
-        {canCreate && (
+        {canCreate && !archived && (
           <Filter
             toggleSidebar={toggleTarifsCategory}
             handleChange={""}
@@ -414,6 +462,9 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
             openDeleteComponentCategory={openDeleteComponentCategory}
             openDeleteContract={openDeleteContract}
             canEdit={canEdit}
+            archived={archived}
+            onArchiveContract={archiveContract}
+            onRestoreContract={restoreContract}
           />
 
           {totalPages > 0 && (

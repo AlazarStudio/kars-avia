@@ -115,6 +115,13 @@ function HotelAboutRoomBlock({
                 } ₽`}
           </div>
 
+          {props.priceForAirReq && (
+            <p className={classes.priceHint}>
+              Идёт согласование тарифов и условий размещения — точная стоимость
+              будет доступна после уточнения деталей.
+            </p>
+          )}
+
           {/* {user?.airlineId ? (
             <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
               {props.priceForAirReq
@@ -212,6 +219,13 @@ function HotelAboutRoomBlock({
                         : ""
                     } ₽`}
               </span>
+
+              {props.priceForAirReq && (
+                <p className={classes.priceHint}>
+                  Идёт согласование тарифов и условий размещения — точная
+                  стоимость будет доступна после уточнения деталей.
+                </p>
+              )}
 
               <TextEditorOutput description={props.description} />
             </div>
