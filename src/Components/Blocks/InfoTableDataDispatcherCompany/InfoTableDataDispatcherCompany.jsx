@@ -6,6 +6,7 @@ import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { canAccessMenu, isDispatcherAdmin } from "../../../utils/access";
+import { roles } from "../../../roles";
 
 function InfoTableDataDispatcherCompany({
   user,
@@ -67,16 +68,21 @@ function InfoTableDataDispatcherCompany({
                   key={dispatcher.id || dispatcherIndex}
                 >
                   <div className={classes.InfoTable_BottomInfo__item___elem}>
-                    <div className={classes.employeeImg}>
-                      <img
-                        src={
-                          dispatcher.images?.[0]
-                            ? getMediaUrl(dispatcher.images[0])
-                            : "/no-avatar.png"
-                        }
-                        alt="avatar"
-                        className={classes.employeeAvatar}
-                      />
+                    <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                      <div className={classes.employeeImg}>
+                        <img
+                          src={
+                            dispatcher.images?.[0]
+                              ? getMediaUrl(dispatcher.images[0])
+                              : "/no-avatar.png"
+                          }
+                          alt="avatar"
+                          className={classes.employeeAvatar}
+                        />
+                      </div>
+                      {user?.role === roles.superAdmin && (
+                        <span className={classes.onlineDot} style={{ background: dispatcher.online ? '#22c55e' : '#ef4444' }} />
+                      )}
                     </div>
                     <div
                       className={classes.employeeInfo}

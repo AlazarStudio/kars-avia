@@ -52,7 +52,7 @@ const SuperAdminAirlineContent = ({ id, user, selectedTab, handleTabSelect }) =>
 
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineCompanyTab id={id} />
+        <AirlineCompanyTab id={id} user={user} />
       </Suspense>
     </TabPanel>
 

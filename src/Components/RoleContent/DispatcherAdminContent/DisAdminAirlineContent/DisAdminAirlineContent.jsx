@@ -53,7 +53,7 @@ const DisAdminAirlineContent = ({ id, user, accessMenu, selectedTab, handleTabSe
     {/* Wrap each lazy-loaded panel in Suspense for fallback */}
     <TabPanel className={classes.tabPanel} forceRender={false}>
       <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-        <AirlineCompanyTab id={id} />
+        <AirlineCompanyTab id={id} user={user} />
       </Suspense>
     </TabPanel>
 

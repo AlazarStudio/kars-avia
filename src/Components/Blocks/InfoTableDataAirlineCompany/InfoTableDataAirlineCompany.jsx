@@ -6,7 +6,7 @@ import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { useNavigate } from "react-router-dom";
-import { menuAccess } from "../../../roles";
+import { menuAccess, roles } from "../../../roles";
 
 function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, onViewOtdel, requests, openDeleteComponent, toggleRequestEditNumber, onViewEmployee, openDeleteNomerComponent, onOpenSettings, ...props }) {
     const navigate = useNavigate();
@@ -40,8 +40,13 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                             {item.users.map((employee, employeeIndex) => (
                                 <div className={`${classes.InfoTable_BottomInfo__item}`} key={employeeIndex}>
                                     <div className={`${classes.InfoTable_BottomInfo__item___elem}`}>
-                                        <div className={classes.employeeImg}>
-                                            <img src={employee.images?.[0] ? getMediaUrl(employee.images[0]) : '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
+                                        <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                                            <div className={classes.employeeImg}>
+                                                <img src={employee.images?.[0] ? getMediaUrl(employee.images[0]) : '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
+                                            </div>
+                                            {user?.role === roles.superAdmin && (
+                                                <span className={classes.onlineDot} style={{ background: employee.online ? '#22c55e' : '#ef4444' }} />
+                                            )}
                                         </div>
                                         <div
                                             className={classes.employeeInfo}

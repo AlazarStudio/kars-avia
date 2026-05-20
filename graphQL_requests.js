@@ -4155,6 +4155,7 @@ export const GET_HOTEL_USERS = gql`
       }
       login
       images
+      online
     }
     }
   }
@@ -4520,6 +4521,7 @@ export const GET_AIRLINE_COMPANY = gql`
         images
         email
         login
+        online
       }
       department {
         id
@@ -4536,6 +4538,7 @@ export const GET_AIRLINE_COMPANY = gql`
           images
           email
           login
+          online
         }
         position {
           id
@@ -4878,6 +4881,7 @@ export const GET_ALL_DISPATCHERS = gql`
         }
         email
         login
+        online
       }
     }
   }
@@ -4970,6 +4974,7 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           }
           email
           login
+          online
         }
       }
     }

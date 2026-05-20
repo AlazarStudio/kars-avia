@@ -234,3 +234,14 @@
 }
 
 /* @media (min-width: 0px) and (max-width: 1399px) {} */
+.onlineDot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  pointer-events: none;
+}
+
