@@ -24,6 +24,8 @@ const mealLabels = {
   dinner: "Ужин",
 };
 
+const VAT_RATE = 0.05;
+
 const fmt = (n) =>
   typeof n === "number"
     ? new Intl.NumberFormat("ru-RU", {
@@ -32,6 +34,12 @@ const fmt = (n) =>
         maximumFractionDigits: 0,
       }).format(n)
     : "—";
+
+const fmtVat = (n) =>
+  typeof n === "number" ? fmt(Math.round(n * VAT_RATE)) : "—";
+
+const fmtWithVat = (n) =>
+  typeof n === "number" ? fmt(Math.round(n * (1 + VAT_RATE))) : "—";
 
 export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null, additionalServices }) {
   const hasMeals =
@@ -73,12 +81,17 @@ export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null
             <>
               <tr className={classes.sectionRow}>
                 <td>Питание</td>
-                <td>Цены</td>
+                <td>Цена без НДС</td>
+                <td>НДС</td>
+                <td>Цена с НДС</td>
               </tr>
               {["breakfast", "lunch", "dinner"].map((k) => (
                 <tr key={`meal-${k}`}>
                   <td className={classes.mealName}>{mealLabels[k]}</td>
                   <td className={classes.price}>{fmt(mealPrices[k])}</td>
+                  <td className={classes.price}>5%</td>
+                  {/* <td className={classes.price}>{fmtVat(mealPrices[k])}</td> */}
+                  <td className={classes.price}>{fmtWithVat(mealPrices[k])}</td>
                 </tr>
               ))}
             </>
@@ -87,12 +100,17 @@ export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null
             <>
               <tr className={classes.sectionRow}>
                 <td>Дополнительные услуги</td>
-                <td>Цены</td>
+                <td>Цена без НДС</td>
+                <td>НДС</td>
+                <td>Цена с НДС</td>
               </tr>
               {additionalServices.map((k) => (
                 <tr key={k.id}>
                   <td className={classes.mealName}>{k.name}</td>
                   <td className={classes.price}>{fmt(k?.priceForAirline)}</td>
+                  <td className={classes.price}>5%</td>
+                  {/* <td className={classes.price}>{fmtVat(k?.priceForAirline)}</td> */}
+                  <td className={classes.price}>{fmtWithVat(k?.priceForAirline)}</td>
                 </tr>
               ))}
             </>

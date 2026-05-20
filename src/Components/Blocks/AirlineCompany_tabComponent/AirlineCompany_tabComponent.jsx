@@ -69,8 +69,6 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
     skip: !id,
   });
 
-  console.log(positionsData);
-  
 
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
