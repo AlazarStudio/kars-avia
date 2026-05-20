@@ -51,6 +51,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         Authorization: `Bearer ${token}`,
       },
     },
+    variables: { airlineId: id },
     skip: !id,
   });
 
@@ -64,8 +65,12 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         Authorization: `Bearer ${token}`,
       },
     },
+    // variables: { airlineId: id },
     skip: !id,
   });
+
+  console.log(positionsData);
+  
 
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
@@ -137,15 +142,16 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
   }, [data, id]);
 
   useEffect(() => {
-    if (positionsData && airlinePositionsData) {
-      setPositions(positionsData?.getAirlineUserPositions);
-      setAirlinePositions(airlinePositionsData?.getAirlinePositions);
+    if (positionsData) {
+      setPositions(positionsData.getAirlineUserPositions || []);
     }
-  }, [positionsData, airlinePositionsData]);
+  }, [positionsData]);
 
-  // console.log(positionsData);
-
-  // console.log(positions);
+  useEffect(() => {
+    if (airlinePositionsData) {
+      setAirlinePositions(airlinePositionsData.getAirlinePositions || []);
+    }
+  }, [airlinePositionsData]);
 
   const handleSearchTarif = (e) => {
     setSearchTarif(e.target.value);
@@ -412,6 +418,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
             show={showAddTarif}
             onClose={toggleTarifs}
             onCreated={() => refetch()}
+            onPositionCreated={(pos) => setPositions((prev) => [...(prev || []), pos].sort((a, b) => a.name.localeCompare(b.name)))}
             addTarif={addTarif}
             setAddTarif={setAddTarif}
             positions={positions}
@@ -437,6 +444,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         onSubmit={handleEditNomer}
         addTarif={addTarif}
         positions={positions}
+        onPositionCreated={(pos) => setPositions((prev) => [...(prev || []), pos].sort((a, b) => a.name.localeCompare(b.name)))}
         initialEditMode={employeeEditMode}
         openDeleteComponent={openDeleteNomerComponent}
       />

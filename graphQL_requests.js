@@ -1182,8 +1182,8 @@ export const GET_ALL_POSITIONS = gql`
 `;
 
 export const GET_AIRLINE_USERS_POSITIONS = gql`
-  query GetAirlineUserPositions {
-    getAirlineUserPositions {
+  query GetAirlineUserPositions($airlineId: ID!) {
+    getAirlineUserPositions(airlineId: $airlineId) {
       id
       name
       separator
@@ -1224,7 +1224,7 @@ export const GET_DISPATCHER_POSITIONS = gql`
 `;
 
 export const CREATE_POSITION = gql`
-  mutation CreatePosition($input: PositionInput) {
+  mutation CreatePosition($input: PositionInput!) {
     createPosition(input: $input) {
       id
       name

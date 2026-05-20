@@ -6,6 +6,7 @@ import {
   decodeJWT,
   getCookie,
   CREATE_AIRLINE_USER,
+  CREATE_POSITION,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
@@ -21,6 +22,7 @@ function CreateRequestAirlineCompany({
   show,
   onClose,
   onCreated,
+  onPositionCreated,
   representative,
   id,
   addTarif,
@@ -31,7 +33,10 @@ function CreateRequestAirlineCompany({
   const { success, error: notifyError } = useToast();
 
   const [userRole, setUserRole] = useState();
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [isEdited, setIsEdited] = useState(false);
+  const [isCreatingPosition, setIsCreatingPosition] = useState(false);
+  const [newPositionName, setNewPositionName] = useState("");
+  const [localPositions, setLocalPositions] = useState(positions || []);
   const token = getCookie("token");
 
   useEffect(() => {
@@ -51,6 +56,10 @@ function CreateRequestAirlineCompany({
 
   const sidebarRef = useRef();
 
+  useEffect(() => {
+    setLocalPositions(positions || []);
+  }, [positions]);
+
   const resetForm = useCallback(() => {
     setFormData({
       images: null,
@@ -62,7 +71,9 @@ function CreateRequestAirlineCompany({
       password: "",
       department: "",
     });
-    setIsEdited(false); // Сброс флага изменений
+    setIsEdited(false);
+    setIsCreatingPosition(false);
+    setNewPositionName("");
   }, []);
 
   const closeButton = useCallback(async () => {
@@ -125,6 +136,60 @@ function CreateRequestAirlineCompany({
       },
     },
   });
+
+  const [createPosition] = useMutation(CREATE_POSITION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const handleCreatePosition = useCallback(async () => {
+    const trimmedName = newPositionName.trim();
+    if (!trimmedName) {
+      showAlert("Введите название должности.");
+      return;
+    }
+
+    const isDuplicate = (localPositions || []).some(
+      (p) => String(p?.name || "").trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      showAlert("Такая должность уже существует.");
+      return;
+    }
+
+    try {
+      const response = await createPosition({
+        variables: {
+          input: {
+            name: trimmedName,
+            separator: "airlineUser",
+            airlineId: id,
+          },
+        },
+      });
+
+      const createdPosition = response?.data?.createPosition;
+      if (!createdPosition) throw new Error("Пустой ответ createPosition");
+
+      setLocalPositions((prev) =>
+        [...(prev || []), createdPosition].sort((a, b) =>
+          String(a?.name || "").localeCompare(String(b?.name || ""))
+        )
+      );
+      setFormData((prevData) => ({ ...prevData, position: createdPosition.name }));
+      setIsEdited(true);
+      setNewPositionName("");
+      setIsCreatingPosition(false);
+      onPositionCreated?.(createdPosition);
+      success("Должность добавлена успешно.");
+    } catch (err) {
+      console.error("Ошибка при создании должности:", err);
+      notifyError("Не удалось создать должность.");
+    }
+  }, [newPositionName, localPositions, createPosition, id, onPositionCreated, showAlert, success, notifyError]);
 
   const isFormValid = () => {
     return (
@@ -191,7 +256,7 @@ function CreateRequestAirlineCompany({
         (dept) => dept.name === formData.department
       );
 
-      const selectedPosition = positions.find(
+      const selectedPosition = localPositions.find(
         (position) => position.name === formData.position
       );
       if (representative) {
@@ -357,11 +422,20 @@ function CreateRequestAirlineCompany({
                 </>
               )}
 
-              <label>Должность</label>
+              <div className={classes.fieldHeader}>
+                <label>Должность</label>
+                <div
+                  className={classes.addPosition}
+                  onClick={() => setIsCreatingPosition((prev) => !prev)}
+                  title="Добавить должность"
+                >
+                  <img src="/plus.png" alt="Добавить должность" />
+                </div>
+              </div>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={positions?.map((position) => position.name)}
+                options={localPositions.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setIsEdited(true);
@@ -371,6 +445,23 @@ function CreateRequestAirlineCompany({
                   }));
                 }}
               />
+              {isCreatingPosition && (
+                <div className={classes.inlineCreateRow}>
+                  <input
+                    type="text"
+                    value={newPositionName}
+                    placeholder="Введите должность"
+                    onChange={(e) => setNewPositionName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleCreatePosition();
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleCreatePosition}>+</Button>
+                </div>
+              )}
 
               <label>Логин</label>
               <input
