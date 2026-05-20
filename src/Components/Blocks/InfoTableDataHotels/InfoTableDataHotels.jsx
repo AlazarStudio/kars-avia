@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { getMediaUrl, GET_HOTEL_USERS, getCookie } from "../../../../graphQL_requests";
 import HotelReadinessIndicator from "../HotelReadinessIndicator/HotelReadinessIndicator";
 import { useQuery } from "@apollo/client";
-import { isSuperAdmin, isDispatcherAdmin } from "../../../utils/access";
+import { isSuperAdmin, isDispatcherAdmin, isAirlineRole } from "../../../utils/access";
 
 function HotelListRow({ item, user, onClick }) {
   const token = getCookie("token");
@@ -116,7 +116,7 @@ function HotelListRow({ item, user, onClick }) {
         className={`${classes.InfoTable_data_elem} ${classes.w8}`}
         style={{ alignItems: "center" }}
       >
-        <HotelReadinessIndicator hotel={hotel} />
+        {!isAirlineRole(user) && <HotelReadinessIndicator hotel={hotel} />}
       </div>
     </Link>
   );
@@ -158,7 +158,7 @@ function InfoTableDataHotels({
         <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Звёздность</div> */}
         <div className={`${classes.InfoTable_title_elem} ${classes.w25}`}>Адрес</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Номерной фонд</div>
-        <div className={`${classes.InfoTable_title_elem} ${classes.w8}`} style={{alignItems:'center'}}>Статус</div>
+        {!isAirlineRole(user) && <div className={`${classes.InfoTable_title_elem} ${classes.w8}`} style={{alignItems:'center'}}>Статус</div>}
         {/* <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Удалённость</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>Квота</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>Резерв</div> */}
