@@ -26,6 +26,7 @@ import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
 import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
 import { is } from "date-fns/locale";
+import AirlineReadinessIndicator from "../AirlineReadinessIndicator/AirlineReadinessIndicator";
 
 function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
   const token = getCookie("token");
@@ -323,8 +324,9 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                   />
                 </div>
                 <div className={classes.airlineAbout_top_title}>
-                  <div className={classes.airlineAbout_top_title_name}>
+                  <div className={classes.airlineAbout_top_title_name} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {airline.name}
+                    {user?.role === roles.airlineAdmin && <AirlineReadinessIndicator airline={airline} />}
                   </div>
                   <div className={classes.airlineAbout_top_title_desc}>
                     <img src="/map.png" alt="" />
