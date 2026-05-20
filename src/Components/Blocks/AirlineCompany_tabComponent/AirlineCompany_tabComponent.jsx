@@ -133,9 +133,8 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
 
       setAddTarif(sortedTarifs);
       // setPositions(data.airline?.department?.position);
-      refetch();
     }
-  }, [data, id, refetch]);
+  }, [data, id]);
 
   useEffect(() => {
     if (positionsData && airlinePositionsData) {

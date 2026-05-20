@@ -209,14 +209,14 @@ function HotelSettings_tabComponent({ id }) {
                 ogrn: hotel.information?.ogrn,
                 rs: hotel.information?.rs,
               },
-              location: {
-                country: hotel.location?.country || null,
-                region: hotel.location?.region || null,
-                republic: hotel.location?.republic || null,
-                district: hotel.location?.district || null,
-                city: hotel.location?.city || null,
-                address: hotel.location?.address || null,
-              },
+              // location: {
+              //   country: hotel.location?.country || null,
+              //   region: hotel.location?.region || null,
+              //   republic: hotel.location?.republic || null,
+              //   district: hotel.location?.district || null,
+              //   city: hotel.location?.city || null,
+              //   address: hotel.location?.address || null,
+              // },
               breakfastIncluded: !!hotel.breakfastIncluded,
               breakfast: {
                 start: hotel.breakfast.start,
@@ -1276,7 +1276,7 @@ function HotelSettings_tabComponent({ id }) {
                   </div> */}
                 </div>
                 </div>
-                <div
+                {/* <div
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -1337,7 +1337,7 @@ function HotelSettings_tabComponent({ id }) {
                       </div>
                     ))}
                   </div>
-                </div>
+                </div> */}
               </div>
             )}
           </div>

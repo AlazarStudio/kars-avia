@@ -128,8 +128,32 @@ export default function NotificationsPermissionsPanel({
 
   const set = (key, value) => setState((s) => ({ ...s, [key]: value }));
 
+  const allEnabled = Object.values(state).every((v) => v);
+
+  const enableAll = () =>
+    setState({
+      requestCreate: true, emailRequestCreate: true, sitePushRequestCreate: true,
+      requestDatesChange: true, emailRequestDatesChange: true, sitePushRequestDatesChange: true,
+      requestPlacementChange: true, emailRequestPlacementChange: true, sitePushRequestPlacementChange: true,
+      requestCancel: true, emailRequestCancel: true, sitePushRequestCancel: true,
+      passengerRequestCreate: true, emailPassengerRequestCreate: true, sitePushPassengerRequestCreate: true,
+      passengerRequestDatesChange: true, emailPassengerRequestDatesChange: true, sitePushPassengerRequestDatesChange: true,
+      passengerRequestUpdate: true, emailPassengerRequestUpdate: true, sitePushPassengerRequestUpdate: true,
+      passengerRequestPlacementChange: true, emailPassengerRequestPlacementChange: true, sitePushPassengerRequestPlacementChange: true,
+      passengerRequestCancel: true, emailPassengerRequestCancel: true, sitePushPassengerRequestCancel: true,
+      newMessage: true, emailNewMessage: true, sitePushNewMessage: true,
+    });
+
+  const disableAll = () =>
+    setState((s) => Object.fromEntries(Object.keys(s).map((k) => [k, false])));
+
   return (
     <div className={classes.accessPanel}>
+      {isEditing && (
+        <button className={classes.enableAllBtn} onClick={allEnabled ? disableAll : enableAll}>
+          {allEnabled ? "Выключить всё" : "Включить всё"}
+        </button>
+      )}
       <div className={classes.notificationsGrid}>
         {/* Заявки */}
         <SectionCard title="Заявки">

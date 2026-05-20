@@ -171,8 +171,8 @@ function ChooseHotel({
 
   // ВРЕМЕННО: показываем только гостиницы из нашей системы (source === "local"),
   // TravelLine-варианты скрыты.
-  // const options = rawOptions.filter((o) => o.source === "local");
-  const options = rawOptions;
+  const options = rawOptions.filter((o) => o.source === "local");
+  // const options = rawOptions;
 
   const resetForm = useCallback(() => {
     setSelectedCity("");

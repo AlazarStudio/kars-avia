@@ -13,6 +13,33 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 
+const ALL_ACCESS_ENABLED = {
+  requestMenu: true, requestCreate: true, requestUpdate: true, requestChat: true,
+  transferMenu: true, transferCreate: true, transferUpdate: true, transferChat: true,
+  personalMenu: true, personalCreate: true, personalUpdate: true,
+  reserveMenu: true, reserveCreate: true, reserveUpdate: true,
+  analyticsMenu: true, analyticsUpload: true,
+  reportMenu: true, reportCreate: true,
+  userMenu: true, userCreate: true, userUpdate: true,
+  airlineMenu: true, airlineUpdate: true,
+  contracts: true, contractCreate: true, contractUpdate: true,
+  organizationMenu: true, organizationCreate: true, organizationUpdate: true,
+  organizationAddDrivers: true, organizationAcceptDrivers: true,
+};
+
+const ALL_NOTIFICATIONS_ENABLED = {
+  requestCreate: true, emailRequestCreate: true, sitePushRequestCreate: true,
+  requestDatesChange: true, emailRequestDatesChange: true, sitePushRequestDatesChange: true,
+  requestPlacementChange: true, emailRequestPlacementChange: true, sitePushRequestPlacementChange: true,
+  requestCancel: true, emailRequestCancel: true, sitePushRequestCancel: true,
+  passengerRequestCreate: true, emailPassengerRequestCreate: true, sitePushPassengerRequestCreate: true,
+  passengerRequestDatesChange: true, emailPassengerRequestDatesChange: true, sitePushPassengerRequestDatesChange: true,
+  passengerRequestUpdate: true, emailPassengerRequestUpdate: true, sitePushPassengerRequestUpdate: true,
+  passengerRequestPlacementChange: true, emailPassengerRequestPlacementChange: true, sitePushPassengerRequestPlacementChange: true,
+  passengerRequestCancel: true, emailPassengerRequestCancel: true, sitePushPassengerRequestCancel: true,
+  newMessage: true, emailNewMessage: true, sitePushNewMessage: true,
+};
+
 function CreateRequestAirlineOtdel({
   show,
   onClose,
@@ -130,6 +157,8 @@ function CreateRequestAirlineOtdel({
               {
                 name: formData.category,
                 email: formData.email || null,
+                accessMenu: ALL_ACCESS_ENABLED,
+                notificationMenu: ALL_NOTIFICATIONS_ENABLED,
                 // positionIds: selectedPositions,
               },
             ],

@@ -402,7 +402,7 @@ const DisAdminMenu = ({
             {!menuOpen && <span className={classes.tooltip}>Аналитика</span>}
           </Link>
         )}
-        <Link
+        {/* <Link
           to={"/travelline"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
             } ${id == "travelline" && classes.menu_items__activeElem}`}
@@ -417,7 +417,7 @@ const DisAdminMenu = ({
           </div>
           <DelayedText show={menuOpen} delay={200}>TravelLine</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>TravelLine</span>}
-        </Link>
+        </Link> */}
         <div style={{ margin: "10px 0", height: "1px", width: "100%", backgroundColor: "var(--menu-gray)" }} />
         <Link
           to={"/documentation"}

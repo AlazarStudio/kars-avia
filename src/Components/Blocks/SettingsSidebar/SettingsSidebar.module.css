@@ -372,6 +372,25 @@
     flex-shrink: 0;
 }
 
+.enableAllBtn {
+  align-self: flex-start;
+  margin-bottom: 4px;
+  padding: 6px 14px;
+  border: 1px solid #0057C3;
+  border-radius: 8px;
+  background: transparent;
+  color: #0057C3;
+  font-size: 13px;
+  font-family: Inter, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.enableAllBtn:hover {
+  background: #0057C3;
+  color: #fff;
+}
+
 .loaderContainer {
     display: flex;
     justify-content: center;

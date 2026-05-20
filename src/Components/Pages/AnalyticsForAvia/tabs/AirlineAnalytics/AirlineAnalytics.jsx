@@ -851,22 +851,23 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
 
       // ── Лист «Сводка» ─────────────────────────────────────────────────────
       {
-        const header = ["Услуга", "Заявки", "Уник. люди", "Бюджет, ₽", "Комнаты"];
-        if (isCompare) header.push(`Заявки (${p2Label})`, `Уник. люди (${p2Label})`, `Бюджет, ₽ (${p2Label})`, `Комнаты (${p2Label})`);
+        const header = ["Услуга", "Заявки", /* "Уник. люди", */ "Бюджет, ₽", "Комнаты"];
+        if (isCompare) header.push(`Заявки (${p2Label})`, /* `Уник. люди (${p2Label})`, */ `Бюджет, ₽ (${p2Label})`, `Комнаты (${p2Label})`);
         const rows = [header];
         for (const sk of serviceKeys) {
+          if (sk === "TRANSFER") continue;
           const sb1 = getServiceBlock(period1Result, sk);
           const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
           const row = [
             SERVICE_LABELS[sk] || sk,
             Number(sb1?.totalRequests) || 0,
-            Number(sb1?.uniquePeopleCount) || 0,
+            // Number(sb1?.uniquePeopleCount) || 0,
             Number(sb1?.totalBudget) || 0,
             sk === "LIVING" ? (Number(sb1?.usedRoomsCount) || 0) : "",
           ];
           if (isCompare) row.push(
             Number(sb2?.totalRequests) || 0,
-            Number(sb2?.uniquePeopleCount) || 0,
+            // Number(sb2?.uniquePeopleCount) || 0,
             Number(sb2?.totalBudget) || 0,
             sk === "LIVING" ? (Number(sb2?.usedRoomsCount) || 0) : "",
           );
@@ -878,6 +879,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
       // ── Листы по услугам: позиц.графики → таблица должностей → аэропорт.графики → таблица аэропортов ──
       const root = analyticsPdfRef.current;
       for (const sk of serviceKeys) {
+        if (sk === "TRANSFER") continue;
         const sb1 = getServiceBlock(period1Result, sk);
         const sb2 = isCompare ? getServiceBlock(period2Result, sk) : null;
         const isLiving = sk === "LIVING";
@@ -934,17 +936,17 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
         if (sk !== "TRANSFER") {
           const mergedAp = mergeAirportRows(sb1?.airports, sb2?.airports, isCompare);
           if (mergedAp.length > 0) {
-            const apHeader = ["Аэропорт", "Заявки", "Уник. люди", "Бюджет, ₽"];
+            const apHeader = ["Аэропорт", "Заявки", /* "Уник. люди", */ "Бюджет, ₽"];
             if (isLiving) apHeader.push("Комнаты");
             if (isCompare) {
-              apHeader.push(`Заявки (${p2Label})`, `Уник. люди (${p2Label})`, `Бюджет, ₽ (${p2Label})`);
+              apHeader.push(`Заявки (${p2Label})`, /* `Уник. люди (${p2Label})`, */ `Бюджет, ₽ (${p2Label})`);
               if (isLiving) apHeader.push(`Комнаты (${p2Label})`);
             }
             const apDataRows = mergedAp.map((r) => {
-              const dr = [r.name, Number(r.p1?.requestsCount) || 0, Number(r.p1?.uniquePeopleCount) || 0, Number(r.p1?.budget) || 0];
+              const dr = [r.name, Number(r.p1?.requestsCount) || 0, /* Number(r.p1?.uniquePeopleCount) || 0, */ Number(r.p1?.budget) || 0];
               if (isLiving) dr.push(Number(r.p1?.usedRoomsCount) || 0);
               if (isCompare) {
-                dr.push(Number(r.p2?.requestsCount) || 0, Number(r.p2?.uniquePeopleCount) || 0, Number(r.p2?.budget) || 0);
+                dr.push(Number(r.p2?.requestsCount) || 0, /* Number(r.p2?.uniquePeopleCount) || 0, */ Number(r.p2?.budget) || 0);
                 if (isLiving) dr.push(Number(r.p2?.usedRoomsCount) || 0);
               }
               return dr;
@@ -956,7 +958,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
 
       // ── Заявки ────────────────────────────────────────────────────────────
       const buildReqRows = (rows) => {
-        const data = [["№ заявки", "Сотрудник", "Должность", "Аэропорт", "Проживание, ₽", "Питание, ₽", "Трансфер, ₽", "Итого, ₽"]];
+        const data = [["№ заявки", "Сотрудник", "Должность", "Аэропорт", "Проживание, ₽", "Питание, ₽", /* "Трансфер, ₽", */ "Итого, ₽"]];
         for (const r of rows) {
           data.push([
             r.requestNumber || r.requestId || "",
@@ -965,7 +967,7 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
             r.airportCode || r.airportName || "",
             Number(r.livingBudget) || 0,
             Number(r.mealBudget) || 0,
-            Number(r.transferBudget) || 0,
+            // Number(r.transferBudget) || 0,
             sumRequestServiceBudgets(r),
           ]);
         }
@@ -974,25 +976,25 @@ function AirlineAnalytics({ user, height, filterOpen, onFilterClose, onPeriodCha
       if (mergedRequestsPeriod1.length > 0) addSheet(isCompare ? "Заявки П1" : "Заявки", buildReqRows(mergedRequestsPeriod1));
       if (isCompare && mergedRequestsPeriod2.length > 0) addSheet("Заявки П2", buildReqRows(mergedRequestsPeriod2));
 
-      // ── Трансферы ─────────────────────────────────────────────────────────
-      const buildTransferRows = (rows) => {
-        const data = [["№", "Откуда", "Куда", "Пассажиры", "Уник. люди", "Бюджет, ₽"]];
-        for (const r of rows) {
-          data.push([
-            r.requestNumber || r.transferId || "",
-            r.fromAddress || "",
-            r.toAddress || "",
-            Number(r.passengersCount) || 0,
-            Number(r.uniquePeopleCount) || 0,
-            Number(r.budget) || 0,
-          ]);
-        }
-        return data;
-      };
-      const tr1 = getServiceBlock(period1Result, "TRANSFER")?.transfers ?? [];
-      const tr2 = isCompare ? (getServiceBlock(period2Result, "TRANSFER")?.transfers ?? []) : [];
-      if (tr1.length > 0) addSheet(isCompare ? "Трансфер П1" : "Трансфер", buildTransferRows(tr1));
-      if (isCompare && tr2.length > 0) addSheet("Трансфер П2", buildTransferRows(tr2));
+      // // ── Трансферы ─────────────────────────────────────────────────────────
+      // const buildTransferRows = (rows) => {
+      //   const data = [["№", "Откуда", "Куда", "Пассажиры", "Уник. люди", "Бюджет, ₽"]];
+      //   for (const r of rows) {
+      //     data.push([
+      //       r.requestNumber || r.transferId || "",
+      //       r.fromAddress || "",
+      //       r.toAddress || "",
+      //       Number(r.passengersCount) || 0,
+      //       Number(r.uniquePeopleCount) || 0,
+      //       Number(r.budget) || 0,
+      //     ]);
+      //   }
+      //   return data;
+      // };
+      // const tr1 = getServiceBlock(period1Result, "TRANSFER")?.transfers ?? [];
+      // const tr2 = isCompare ? (getServiceBlock(period2Result, "TRANSFER")?.transfers ?? []) : [];
+      // if (tr1.length > 0) addSheet(isCompare ? "Трансфер П1" : "Трансфер", buildTransferRows(tr1));
+      // if (isCompare && tr2.length > 0) addSheet("Трансфер П2", buildTransferRows(tr2));
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });

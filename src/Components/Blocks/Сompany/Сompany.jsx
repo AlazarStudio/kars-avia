@@ -412,6 +412,14 @@ function Company({ user, accessMenu }) {
             refetchDispatchers();
             refetchDepartments();
           }}
+          onPositionCreated={(newPosition) => {
+            setPositions((prev) =>
+              [...(prev || []), newPosition].sort((a, b) =>
+                String(a?.name || "").localeCompare(String(b?.name || "")),
+              ),
+            );
+            refetchPositions();
+          }}
         />
 
         {canCreate && (

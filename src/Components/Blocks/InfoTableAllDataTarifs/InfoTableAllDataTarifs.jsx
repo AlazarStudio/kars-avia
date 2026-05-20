@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import classes from "./InfoTableAllDataTarifs.module.css";
 import { roles } from "../../../roles";
 import AttachIcon from "../../../shared/icons/AttachIcon";
@@ -10,10 +10,13 @@ import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import ArchiveIcon from "../../../shared/icons/ArchiveIcon";
 import RestoreIcon from "../../../shared/icons/RestoreIcon";
 
-// Статус срока действия договора для подсветки
 const getExpirationInfo = (item) => {
-  if (item?.isExpired) return { label: "Истёк", color: "var(--red)" };
-  if (item?.isExpiringSoon) return { label: "Истекает", color: "#E8A33D" };
+  if (!item?.contractEndDate) return null;
+  if (item?.isExpired) return { label: `Истёк ${convertToDate(item.contractEndDate)}`, color: "var(--red)" };
+  if (item?.isExpiringSoon) {
+    const diffDays = Math.ceil((new Date(item.contractEndDate) - new Date()) / (1000 * 60 * 60 * 24));
+    return { label: `Истекает (${diffDays} дн.)`, color: "#E8A33D" };
+  }
   return null;
 };
 
@@ -40,6 +43,15 @@ function InfoTableAllDataTarifs({
         // setChooseRequestID(id);
         toggleRequestSidebar(id);
     };
+
+    const sortedRequests = useMemo(() => {
+      if (!requests?.length) return requests;
+      return [...requests].sort((a, b) => {
+        if (a.isExpired && !b.isExpired) return -1;
+        if (!a.isExpired && b.isExpired) return 1;
+        return 0;
+      });
+    }, [requests]);
 
     // Ref для контейнера списка
     const listContainerRef = useRef(null);
@@ -77,7 +89,7 @@ function InfoTableAllDataTarifs({
 
             {/* Данные о заявках */}
             <div className={classes.bottom} style={(user?.airlineId || user?.hotelId) && {height:"calc(100vh - 335px)"}} ref={listContainerRef}>
-                {requests.map((item, index) => {
+                {sortedRequests.map((item, index) => {
                     const exp = getExpirationInfo(item);
                     return (
                     <div
@@ -91,7 +103,7 @@ function InfoTableAllDataTarifs({
                             <span>{convertToDate(item.date)}</span>
                             {item.contractEndDate && (
                                 <span style={{ fontSize:11, color: exp ? exp.color : undefined, opacity: exp ? 1 : 0.55 }}>
-                                    {exp ? `${exp.label} ${convertToDate(item.contractEndDate)}` : `до ${convertToDate(item.contractEndDate)}`}
+                                    {exp ? exp.label : `до ${convertToDate(item.contractEndDate)}`}
                                 </span>
                             )}
                         </div>

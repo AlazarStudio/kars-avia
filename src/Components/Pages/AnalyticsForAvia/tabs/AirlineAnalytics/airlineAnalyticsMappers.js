@@ -248,7 +248,7 @@ export function buildGroupedBarDataForMetric(
 export const AIRPORT_BAR_METRICS = [
   { id: "budget", label: "Бюджет, ₽" },
   { id: "requestsCount", label: "Заявки" },
-  { id: "uniquePeopleCount", label: "Уникальные люди" },
+  // { id: "uniquePeopleCount", label: "Уникальные люди" },
   { id: "usedRoomsCount", label: "Комнаты" },
 ];
 

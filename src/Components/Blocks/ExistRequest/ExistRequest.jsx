@@ -2209,7 +2209,7 @@ function ExistRequest({
                           {dayLogs.map((log, idx) => (
                             <div className={classes.logText}>
                               <div className={classes.logInfo}>
-                                <span className='historyLogTime'>{convertToDate(
+                                <span className='historyLogTime'>{convertToDateNew(
                                   log.createdAt,
                                   true
                                 )}</span>

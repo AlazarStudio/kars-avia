@@ -68,7 +68,7 @@ export default function AccessPermissionsPanel({
         acceptDrivers: b(accessMenu?.organizationAcceptDrivers),
       },
     }),
-    [accessMenu]
+    [accessMenu],
   );
 
   const [state, setState] = useState(initial);
@@ -83,7 +83,10 @@ export default function AccessPermissionsPanel({
     setState((s) => ({
       ...s,
       [section]: Object.fromEntries(
-        Object.keys(s[section]).map((k) => [k, k === "access" ? value : (value ? s[section][k] : false)])
+        Object.keys(s[section]).map((k) => [
+          k,
+          k === "access" ? value : value ? s[section][k] : false,
+        ]),
       ),
     }));
 
@@ -93,7 +96,9 @@ export default function AccessPermissionsPanel({
       [section]: {
         ...s[section],
         ...Object.fromEntries(
-          Object.keys(s[section]).filter((k) => k !== "access").map((k) => [k, value])
+          Object.keys(s[section])
+            .filter((k) => k !== "access")
+            .map((k) => [k, value]),
         ),
       },
     }));
@@ -103,8 +108,34 @@ export default function AccessPermissionsPanel({
       .filter(([k]) => k !== "access")
       .every(([, v]) => !!v);
 
+  const allEnabled = Object.values(state).every((section) =>
+    Object.values(section).every((v) => v)
+  );
+
+  const enableAll = () =>
+    setState((s) =>
+      Object.fromEntries(
+        Object.keys(s).map((section) => [
+          section,
+          Object.fromEntries(Object.keys(s[section]).map((k) => [k, true])),
+        ])
+      )
+    );
+
+  const disableAll = () =>
+    setState((s) =>
+      Object.fromEntries(
+        Object.keys(s).map((section) => [
+          section,
+          Object.fromEntries(Object.keys(s[section]).map((k) => [k, false])),
+        ])
+      )
+    );
+
   const positionsForSection = (field) =>
-    positionOptions.filter((opt) => !!positionAccessMenusByPosId[opt.value]?.[field]);
+    positionOptions.filter(
+      (opt) => !!positionAccessMenusByPosId[opt.value]?.[field],
+    );
 
   const handleSectionPositionChange = (field, newValue) => {
     const newIds = newValue.map((o) => o.value);
@@ -113,7 +144,11 @@ export default function AccessPermissionsPanel({
       Object.keys(next).forEach((id) => {
         if (!newIds.includes(id)) {
           const updated = { ...next[id], [field]: false };
-          if (!updated.requestMenu && !updated.transferMenu && !updated.personalMenu) {
+          if (
+            !updated.requestMenu &&
+            !updated.transferMenu &&
+            !updated.personalMenu
+          ) {
             delete next[id];
           } else {
             next[id] = updated;
@@ -121,7 +156,13 @@ export default function AccessPermissionsPanel({
         }
       });
       newIds.forEach((id) => {
-        next[id] = { requestMenu: false, transferMenu: false, personalMenu: false, ...next[id], [field]: true };
+        next[id] = {
+          requestMenu: false,
+          transferMenu: false,
+          personalMenu: false,
+          ...next[id],
+          [field]: true,
+        };
       });
       return next;
     });
@@ -129,6 +170,11 @@ export default function AccessPermissionsPanel({
 
   return (
     <div className={classes.accessPanel}>
+      {isEditing && (
+        <button className={classes.enableAllBtn} onClick={allEnabled ? disableAll : enableAll}>
+          {allEnabled ? "Выключить всё" : "Включить всё"}
+        </button>
+      )}
       <div className={classes.accessGrid}>
         {/* Эскадрилья */}
         <SectionCard title="Эскадрилья">
@@ -153,7 +199,9 @@ export default function AccessPermissionsPanel({
                 label="Должности"
                 options={positionOptions}
                 value={positionsForSection("requestMenu")}
-                onChange={(e, newValue) => handleSectionPositionChange("requestMenu", newValue)}
+                onChange={(e, newValue) =>
+                  handleSectionPositionChange("requestMenu", newValue)
+                }
               />
             </div>
           )}
@@ -198,7 +246,9 @@ export default function AccessPermissionsPanel({
                 label="Должности"
                 options={positionOptions}
                 value={positionsForSection("transferMenu")}
-                onChange={(e, newValue) => handleSectionPositionChange("transferMenu", newValue)}
+                onChange={(e, newValue) =>
+                  handleSectionPositionChange("transferMenu", newValue)
+                }
               />
             </div>
           )}
@@ -261,27 +311,31 @@ export default function AccessPermissionsPanel({
                 label="Должности"
                 options={positionOptions}
                 value={positionsForSection("personalMenu")}
-                onChange={(e, newValue) => handleSectionPositionChange("personalMenu", newValue)}
+                onChange={(e, newValue) =>
+                  handleSectionPositionChange("personalMenu", newValue)
+                }
               />
             </div>
           )}
         </SectionCard>
 
         {/* Реестр договоров */}
-        <SectionCard title="Реестр договоров">
-          <RowSwitch
-            label="Доступ к разделу"
-            checked={state.contracts.access}
-            onChange={(v) => setAccess("contracts", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Взаимодействие с разделом"
-            checked={interactChecked("contracts")}
-            onChange={(v) => setInteraction("contracts", v)}
-            disabled={!isEditing || !state.contracts.access}
-          />
-        </SectionCard>
+        {type === "dispatcher" && (
+          <SectionCard title="Реестр договоров">
+            <RowSwitch
+              label="Доступ к разделу"
+              checked={state.contracts.access}
+              onChange={(v) => setAccess("contracts", v)}
+              disabled={!isEditing}
+            />
+            <RowSwitch
+              label="Взаимодействие с разделом"
+              checked={interactChecked("contracts")}
+              onChange={(v) => setInteraction("contracts", v)}
+              disabled={!isEditing || !state.contracts.access}
+            />
+          </SectionCard>
+        )}
 
         {/* Аналитика */}
         <SectionCard title="Аналитика">

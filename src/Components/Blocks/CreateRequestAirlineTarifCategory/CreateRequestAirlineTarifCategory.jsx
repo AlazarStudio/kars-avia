@@ -424,7 +424,7 @@ function CreateRequestAirlineTarifCategory({
                 }}
               />
 
-              <label>Географическая привязка</label>
+              {/* <label>Географическая привязка</label>
               <div
                 style={{
                   fontSize: 12,
@@ -452,7 +452,7 @@ function CreateRequestAirlineTarifCategory({
                     placeholder={`Введите ${title.toLowerCase()}`}
                   />
                 </React.Fragment>
-              ))}
+              ))} */}
 
               <label>Стоимость одноместного</label>
               <input
