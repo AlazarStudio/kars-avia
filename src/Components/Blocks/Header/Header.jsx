@@ -31,6 +31,7 @@ import { authService } from "../../../services/authService";
 import { useScriptRunner } from "../../../contexts/ScriptRunnerContext";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import { useBrowserNotifications } from "../../../hooks/useBrowserNotifications";
 
 function Header({ children, isExternalUser = false }) {
   const token = authService.getAccessToken();
@@ -55,6 +56,7 @@ function Header({ children, isExternalUser = false }) {
     useScriptRunner();
   const { confirm } = useDialog();
   const { success, error: notifyError } = useToast();
+  const { notify: browserNotify } = useBrowserNotifications();
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
@@ -153,7 +155,12 @@ function Header({ children, isExternalUser = false }) {
 
   const { data: notifySubscriptionData } = useSubscription(
     NOTIFICATIONS_SUBSCRIPTION,
-    { skip: isExternalUser },
+    {
+      skip: isExternalUser,
+      onData: ({ data }) => {
+        browserNotify(data?.data?.notification);
+      },
+    },
   );
 
   const { data: tsChatData } = useQuery(GET_USER_SUPPORT_CHAT, {
