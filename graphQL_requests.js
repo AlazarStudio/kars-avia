@@ -4885,10 +4885,95 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           id
           name
           role
+          position {
+            id
+            name
+          }
           images
           email
           login
-          password
+          online
+        }
+        position {
+          id
+          name
+        }
+        positionAccessMenus {
+          positionId
+          position {
+            id
+            name
+          }
+          accessMenu {
+            requestMenu
+            transferMenu
+            personalMenu
+          }
+        }
+        accessMenu {
+          requestMenu
+          requestCreate
+          requestUpdate
+          requestChat
+          transferMenu
+          transferCreate
+          transferUpdate
+          transferChat
+          personalMenu
+          personalCreate
+          personalUpdate
+          reserveMenu
+          reserveCreate
+          reserveUpdate
+          analyticsMenu
+          analyticsUpload
+          reportMenu
+          reportCreate
+          userMenu
+          userCreate
+          userUpdate
+          airlineMenu
+          airlineUpdate
+          contracts
+          contractCreate
+          contractUpdate
+          organizationMenu
+          organizationCreate
+          organizationUpdate
+          organizationAddDrivers
+          organizationAcceptDrivers
+        }
+        notificationMenu {
+          requestCreate
+          requestDatesChange
+          requestPlacementChange
+          requestCancel
+          passengerRequestCreate
+          passengerRequestDatesChange
+          passengerRequestUpdate
+          passengerRequestPlacementChange
+          passengerRequestCancel
+          newMessage
+          emailRequestCreate
+          emailRequestDatesChange
+          emailRequestPlacementChange
+          emailRequestCancel
+          emailPassengerRequestCreate
+          emailPassengerRequestDatesChange
+          emailPassengerRequestUpdate
+          emailPassengerRequestPlacementChange
+          emailPassengerRequestCancel
+          emailNewMessage
+          sitePushRequestCreate
+          sitePushRequestDatesChange
+          sitePushRequestPlacementChange
+          sitePushRequestCancel
+          sitePushPassengerRequestCreate
+          sitePushPassengerRequestDatesChange
+          sitePushPassengerRequestUpdate
+          sitePushPassengerRequestPlacementChange
+          sitePushPassengerRequestCancel
+          sitePushNewMessage
         }
       }
     }
