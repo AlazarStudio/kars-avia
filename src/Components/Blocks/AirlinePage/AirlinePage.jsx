@@ -9,6 +9,7 @@ import { useQuery } from "@apollo/client";
 import SuperAdminAirlineContent from "../../RoleContent/SuperAdminContent/SuperAdminAirlineContent/SuperAdminAirlineContent";
 import DisAdminAirlineContent from "../../RoleContent/DispatcherAdminContent/DisAdminAirlineContent/DisAdminAirlineContent";
 import AirlineAdminAirlineContent from "../../RoleContent/AirlineAdminContent/AirlineAdminAirlineContent/AirlineAdminAirlineContent";
+import AirlineReadinessIndicator from "../AirlineReadinessIndicator/AirlineReadinessIndicator";
 
 function AirlinePage({ children, id, user, accessMenu, ...props }) {
   let params = useParams();
@@ -69,7 +70,9 @@ function AirlinePage({ children, id, user, accessMenu, ...props }) {
               </Link>
             )}
             {getTitle()}
-            {/* {data && data.airline.name} */}
+            {data?.airline && (user.role === roles.superAdmin || user.role === roles.dispatcerAdmin) && (
+              <AirlineReadinessIndicator airline={data.airline} />
+            )}
           </div>
         </Header>
 

@@ -7,6 +7,8 @@ import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { canAccessMenu, isDispatcherAdmin } from "../../../utils/access";
 import { roles } from "../../../roles";
+import ReadinessIndicator from "../ReadinessIndicator/ReadinessIndicator";
+import { computeDepartmentReadiness } from "../../../utils/dispatcherDepartmentReadiness";
 
 function InfoTableDataDispatcherCompany({
   user,
@@ -39,6 +41,10 @@ function InfoTableDataDispatcherCompany({
               </div>
 
               <div className={classes.infoTable_buttons}>
+                {!group.isNoDepartment && (() => {
+                  const { done, total, groups: rGroups } = computeDepartmentReadiness(group);
+                  return <ReadinessIndicator done={done} total={total} groups={rGroups} />;
+                })()}
                 {!group.isNoDepartment && canEdit && (
                   <>
                     <EditPencilIcon
@@ -46,7 +52,7 @@ function InfoTableDataDispatcherCompany({
                       onClick={() => onEditDepartment?.(group)}
                     />
                     <SettingsIcon
-                      cursor={"pointer"}
+                      cursor="pointer"
                       onClick={() => onOpenAccess?.(group)}
                     />
                     <DeleteIcon

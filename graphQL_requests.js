@@ -3694,6 +3694,10 @@ export const GET_HOTELS = gql`
         information {
           city
           address
+          email
+          number
+          inn
+          ogrn
         }
         quote
         provision
@@ -3702,6 +3706,28 @@ export const GET_HOTELS = gql`
         usStars
         airportDistance
         externalSource
+        roomKind {
+          id
+          price
+          priceForAirline
+        }
+        rooms {
+          id
+        }
+        hotelContract {
+          id
+        }
+        meal
+        mealPrice {
+          breakfast
+          lunch
+          dinner
+        }
+        mealPriceForAir {
+          breakfast
+          lunch
+          dinner
+        }
       }
     }
   }
@@ -3972,6 +3998,35 @@ export const GET_HOTEL_NAME = gql`
     hotel(id: $hotelId) {
       name
       type
+      images
+      information {
+        email
+        number
+        inn
+        ogrn
+      }
+      roomKind {
+        id
+        price
+        priceForAirline
+      }
+      rooms {
+        id
+      }
+      hotelContract {
+        id
+      }
+      meal
+      mealPrice {
+        breakfast
+        lunch
+        dinner
+      }
+      mealPriceForAir {
+        breakfast
+        lunch
+        dinner
+      }
     }
   }
 `;
@@ -4224,6 +4279,97 @@ export const GET_AIRLINES = gql`
         images
         name
         nameFull
+        information {
+          email
+          number
+          inn
+          ogrn
+        }
+        users {
+          id
+          role
+        }
+        department {
+          id
+          email
+          accessMenu {
+            requestMenu
+            requestCreate
+            requestUpdate
+            requestChat
+            transferMenu
+            transferCreate
+            transferUpdate
+            transferChat
+            personalMenu
+            personalCreate
+            personalUpdate
+            reserveMenu
+            reserveCreate
+            reserveUpdate
+            analyticsMenu
+            analyticsUpload
+            reportMenu
+            reportCreate
+            userMenu
+            userCreate
+            userUpdate
+            airlineMenu
+            airlineUpdate
+            contracts
+            contractCreate
+            contractUpdate
+            organizationMenu
+            organizationCreate
+            organizationUpdate
+            organizationAddDrivers
+            organizationAcceptDrivers
+          }
+          notificationMenu {
+            requestCreate
+            requestDatesChange
+            requestPlacementChange
+            requestCancel
+            passengerRequestCreate
+            passengerRequestDatesChange
+            passengerRequestUpdate
+            passengerRequestPlacementChange
+            passengerRequestCancel
+            newMessage
+            emailRequestCreate
+            emailRequestDatesChange
+            emailRequestPlacementChange
+            emailRequestCancel
+            emailPassengerRequestCreate
+            emailPassengerRequestDatesChange
+            emailPassengerRequestUpdate
+            emailPassengerRequestPlacementChange
+            emailPassengerRequestCancel
+            emailNewMessage
+            sitePushRequestCreate
+            sitePushRequestDatesChange
+            sitePushRequestPlacementChange
+            sitePushRequestCancel
+            sitePushPassengerRequestCreate
+            sitePushPassengerRequestDatesChange
+            sitePushPassengerRequestUpdate
+            sitePushPassengerRequestPlacementChange
+            sitePushPassengerRequestCancel
+            sitePushNewMessage
+          }
+        }
+        prices {
+          id
+        }
+        transferPrices {
+          id
+        }
+        staff {
+          id
+        }
+        airlineContract {
+          id
+        }
       }
     }
   }
@@ -4322,6 +4468,88 @@ export const GET_AIRLINE = gql`
           id
           name
         }
+      }
+      users {
+        id
+        role
+      }
+      department {
+        id
+        email
+        accessMenu {
+          requestMenu
+          requestCreate
+          requestUpdate
+          requestChat
+          transferMenu
+          transferCreate
+          transferUpdate
+          transferChat
+          personalMenu
+          personalCreate
+          personalUpdate
+          reserveMenu
+          reserveCreate
+          reserveUpdate
+          analyticsMenu
+          analyticsUpload
+          reportMenu
+          reportCreate
+          userMenu
+          userCreate
+          userUpdate
+          airlineMenu
+          airlineUpdate
+          contracts
+          contractCreate
+          contractUpdate
+          organizationMenu
+          organizationCreate
+          organizationUpdate
+          organizationAddDrivers
+          organizationAcceptDrivers
+        }
+        notificationMenu {
+          requestCreate
+          requestDatesChange
+          requestPlacementChange
+          requestCancel
+          passengerRequestCreate
+          passengerRequestDatesChange
+          passengerRequestUpdate
+          passengerRequestPlacementChange
+          passengerRequestCancel
+          newMessage
+          emailRequestCreate
+          emailRequestDatesChange
+          emailRequestPlacementChange
+          emailRequestCancel
+          emailPassengerRequestCreate
+          emailPassengerRequestDatesChange
+          emailPassengerRequestUpdate
+          emailPassengerRequestPlacementChange
+          emailPassengerRequestCancel
+          emailNewMessage
+          sitePushRequestCreate
+          sitePushRequestDatesChange
+          sitePushRequestPlacementChange
+          sitePushRequestCancel
+          sitePushPassengerRequestCreate
+          sitePushPassengerRequestDatesChange
+          sitePushPassengerRequestUpdate
+          sitePushPassengerRequestPlacementChange
+          sitePushPassengerRequestCancel
+          sitePushNewMessage
+        }
+      }
+      prices {
+        id
+      }
+      transferPrices {
+        id
+      }
+      airlineContract {
+        id
       }
     }
   }

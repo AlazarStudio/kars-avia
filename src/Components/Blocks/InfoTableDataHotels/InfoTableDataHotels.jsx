@@ -2,13 +2,132 @@ import React, { useEffect, useRef } from "react";
 import classes from "./InfoTableDataHotels.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
-import { getMediaUrl } from "../../../../graphQL_requests";
+import { getMediaUrl, GET_HOTEL_USERS, getCookie } from "../../../../graphQL_requests";
+import HotelReadinessIndicator from "../HotelReadinessIndicator/HotelReadinessIndicator";
+import { useQuery } from "@apollo/client";
+import { isSuperAdmin, isDispatcherAdmin } from "../../../utils/access";
+
+function HotelListRow({ item, user, onClick }) {
+  const token = getCookie("token");
+  const shouldFetch = isSuperAdmin(user) || isDispatcherAdmin(user);
+  const { data: usersData } = useQuery(GET_HOTEL_USERS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: { hotelId: item.id },
+    skip: !shouldFetch,
+  });
+
+  const hotel = shouldFetch
+    ? { ...item, _users: usersData?.hotelUsers?.users }
+    : item;
+
+  return (
+    <Link
+      to={`/hotels/${item.id}`}
+      className={classes.InfoTable_data}
+      onClick={onClick}
+      key={item.id}
+    >
+      <div
+        className={`${classes.InfoTable_data_elem} ${classes.w5}`}
+        style={{ alignItems: "center" }}
+      >
+        <span className={classes.blue}>{item.order}</span>
+      </div>
+      <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
+        <div className={classes.InfoTable_data_elem_userInfo}>
+          <div className={classes.InfoTable_data_elem_avatar}>
+            <img
+              loading="lazy"
+              src={
+                item.images.length != 0
+                  ? getMediaUrl(item.images)
+                  : "/no-avatar.png"
+              }
+              alt=""
+            />
+          </div>
+        </div>
+      </div>
+      <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>
+        <div className={classes.InfoTable_data_elem_title}>
+          {item.name}
+        </div>
+        {item.stars ? (
+          <div className={classes.InfoTable_data_elem_title}>
+            <>
+              <p>{item.stars ? `Оценка ${item.stars}` : ""}</p>
+              <div>
+                <img src={"/star.png"} className={classes.star} />
+              </div>
+            </>
+          </div>
+        ) : null}
+        {item.usStars ? (
+          <div className={classes.InfoTable_data_elem_title}>
+            <>
+              <p>{item.usStars ? `Звёздность ${item.usStars}` : ""}</p>
+              <div>
+                <img src={"/star.png"} className={classes.star} />
+              </div>
+            </>
+          </div>
+        ) : null}
+      </div>
+      <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>
+        <div className={classes.InfoTable_data_elem_title}>
+          {item.information?.city}
+        </div>
+        {item.information?.address ? (
+          <div className={classes.InfoTable_data_elem_title} style={{paddingRight:'20px'}}>
+            {item.information?.address}
+          </div>
+        ) : null}
+        {item?.airportDistance ? (
+          <div className={classes.InfoTable_data_elem_title}>
+            До аэропорта
+            <span className={classes.blue}>{`${item.airportDistance} мин`}</span>
+          </div>
+        ) : null}
+      </div>
+      <div
+        className={`${classes.InfoTable_data_elem} ${classes.w15}`}
+        style={{ justifyContent: "flex-start" }}
+      >
+        <div className={classes.InfoTable_data_elem_title}>
+          Квота{" "}
+          <span className={classes.blue}>
+            {item.quote ? item.quote : "0"}
+          </span>
+        </div>
+        <div className={classes.InfoTable_data_elem_title}>
+          Резерв{" "}
+          <span className={classes.blue}>
+            {item.provision ? item.provision : "0"}
+          </span>
+        </div>
+        <div className={classes.InfoTable_data_elem_title}>
+          Мощность{" "}
+          <span className={classes.blue}>
+            {item.capacity ? item.capacity : "0"}
+          </span>
+        </div>
+      </div>
+      <div
+        className={`${classes.InfoTable_data_elem} ${classes.w8}`}
+        style={{ alignItems: "center" }}
+      >
+        <HotelReadinessIndicator hotel={hotel} />
+      </div>
+    </Link>
+  );
+}
 
 function InfoTableDataHotels({
   children,
   toggleRequestSidebar,
   requests,
   pageInfo,
+  user,
   ...props
 }) {
   const handleObject = (item, index) => {
@@ -37,8 +156,9 @@ function InfoTableDataHotels({
         {/* <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Город</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Оценка</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Звёздность</div> */}
-        <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Адрес</div>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w25}`}>Адрес</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w15}`}>Номерной фонд</div>
+        <div className={`${classes.InfoTable_title_elem} ${classes.w8}`} style={{alignItems:'center'}}>Статус</div>
         {/* <div className={`${classes.InfoTable_title_elem} ${classes.w10}`}>Удалённость</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>Квота</div>
         <div className={`${classes.InfoTable_title_elem} ${classes.w5}`}>Резерв</div> */}
@@ -46,125 +166,12 @@ function InfoTableDataHotels({
 
       <div className={classes.bottom} ref={listContainerRef}>
         {requests.map((item, index) => (
-          <Link
-            to={`/hotels/${item.id}`}
-            className={classes.InfoTable_data}
-            onClick={() => handleObject(item, index)}
+          <HotelListRow
             key={item.id}
-          >
-            <div
-              className={`${classes.InfoTable_data_elem} ${classes.w5}`}
-              style={{ alignItems: "center" }}
-            >
-              <span className={classes.blue}>{item.order}</span>
-            </div>
-            <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
-              <div className={classes.InfoTable_data_elem_userInfo}>
-                <div className={classes.InfoTable_data_elem_avatar}>
-                  <img
-                    loading="lazy"
-                    src={
-                      item.images.length != 0
-                        ? getMediaUrl(item.images)
-                        : "/no-avatar.png"
-                    }
-                    alt=""
-                  />
-                </div>
-              </div>
-            </div>
-            <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>
-              <div className={classes.InfoTable_data_elem_title}>
-                {item.name}
-              </div>
-              {item.stars ? (
-                <div className={classes.InfoTable_data_elem_title}>
-                  <>
-                    <p>{item.stars ? `Оценка ${item.stars}` : ""}</p>
-                    <div>
-                      <img src={"/star.png"} className={classes.star} />
-                      {/* {Array.from({ length: 5 }, (_, index) => (
-                        <img
-                          key={index}
-                          src={
-                            index < item.stars ? "/star.png" : "/op_star.png"
-                          }
-                          className={classes.star}
-                        />
-                      ))} */}
-                    </div>
-                  </>
-                </div>
-              ) : null}
-              {item.usStars ? (
-                <div className={classes.InfoTable_data_elem_title}>
-                  <>
-                    <p>{item.usStars ? `Звёздность ${item.usStars}` : ""}</p>
-                    <div>
-                      <img src={"/star.png"} className={classes.star} />
-
-                      {/* {Array.from({ length: 5 }, (_, index) => (
-                        <img
-                          key={index}
-                          src={
-                            index < item.usStars ? "/star.png" : "/op_star.png"
-                          }
-                          className={classes.star}
-                        />
-                      ))} */}
-                    </div>
-                  </>
-                </div>
-              ) : null}
-            </div>
-            <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
-              <div className={classes.InfoTable_data_elem_title}>
-                {item.information?.city}
-              </div>
-              {item.information?.address ? (
-                <div className={classes.InfoTable_data_elem_title} style={{paddingRight:'20px'}}>
-                  {item.information?.address}
-                </div>
-              ) : null}
-              {item?.airportDistance ? (
-                <div className={classes.InfoTable_data_elem_title}>
-                  До аэропорта
-                  <span
-                    className={classes.blue}
-                  >{`${item.airportDistance} мин`}</span>
-                </div>
-              ) : null}
-            </div>
-            {/* <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
-
-            </div> */}
-            {/* <div className={`${classes.InfoTable_data_elem} ${classes.w10}`}>
-
-            </div> */}
-            <div
-              className={`${classes.InfoTable_data_elem} ${classes.w15}`}
-              style={{ justifyContent: "flex-start" }}
-            >
-              <div className={classes.InfoTable_data_elem_title}>
-                Квота{" "}
-                <span className={classes.blue}>
-                  {item.quote ? item.quote : "0"}
-                </span>
-              </div>
-              <div className={classes.InfoTable_data_elem_title}>
-                Резерв{" "}
-                <span className={classes.blue}>
-                  {item.provision ? item.provision : "0"}
-                </span>
-              </div>
-              <div className={classes.InfoTable_data_elem_title}>
-                Мощность{" "}
-                <span className={classes.blue}>
-                  {item.capacity ? item.capacity : "0"}
-                </span>
-              </div>
-            </div>
-          </Link>
+            item={item}
+            user={user}
+            onClick={() => handleObject(item, index)}
+          />
         ))}
       </div>
     </InfoTable>

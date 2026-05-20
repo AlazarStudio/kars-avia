@@ -97,10 +97,7 @@ function HotelsList({ children, user, ...props }) {
       const onlyLocal = data.hotels.hotels.filter(
         (h) => !h.externalSource || h.externalSource === "",
       );
-      const sortedHotels = [...onlyLocal].sort((a, b) =>
-        a.information?.city?.localeCompare(b.information?.city),
-      );
-      setCompanyData(sortedHotels);
+      setCompanyData(onlyLocal);
     }
 
     if (dataSubscription && dataSubscription.hotelCreated) {
@@ -143,11 +140,7 @@ function HotelsList({ children, user, ...props }) {
   // }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
 
   const addHotel = (newHotel) => {
-    setCompanyData(
-      [...companyData, newHotel].sort((a, b) =>
-        a.information?.city?.localeCompare(b.information?.city),
-      ),
-    );
+    setCompanyData([...companyData, newHotel]);
   };
 
   const toggleCreateSidebar = () => {
@@ -324,9 +317,10 @@ function HotelsList({ children, user, ...props }) {
               toggleRequestSidebar={toggleRequestSidebar}
               requests={filteredRequests.map((request, index) => ({
                 ...request,
-                order: pageInfo.skip * pageInfo.take + index + 1, // Добавляем порядковый номер
+                order: pageInfo.skip * pageInfo.take + index + 1,
               }))}
               pageInfo={pageInfo.skip}
+              user={user}
             />
 
             {totalPages > 0 && (

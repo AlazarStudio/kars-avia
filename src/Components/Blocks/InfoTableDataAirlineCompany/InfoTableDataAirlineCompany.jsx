@@ -7,6 +7,8 @@ import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { useNavigate } from "react-router-dom";
 import { menuAccess, roles } from "../../../roles";
+import ReadinessIndicator from "../ReadinessIndicator/ReadinessIndicator";
+import { computeDepartmentReadiness } from "../../../utils/dispatcherDepartmentReadiness";
 
 function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, onViewOtdel, requests, openDeleteComponent, toggleRequestEditNumber, onViewEmployee, openDeleteNomerComponent, onOpenSettings, ...props }) {
     const navigate = useNavigate();
@@ -28,9 +30,12 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                             </div>
 
                             <div className={classes.infoTable_buttons}>
+                                {!item.isNoDepartment && (() => {
+                                  const { done, total, groups: rGroups } = computeDepartmentReadiness(item);
+                                  return <ReadinessIndicator done={done} total={total} groups={rGroups} />;
+                                })()}
                                 {(!user?.airlineId || accessMenu.userUpdate) && !item.isNoDepartment &&
                                 <><EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestSidebar(item)} />
-                                {/* <img src="/settings.png" alt="Edit" onClick={() => toggleRequestSidebar(item)} /> */}
                                 {!representative && (<SettingsIcon cursor={"pointer"} onClick={() => onOpenSettings ? onOpenSettings(item) : navigate("/airlineAccess", { state:{ item: item, airlineId: airlineId } } )} />)}
                                 <DeleteIcon cursor="pointer" strokeWidth={0.5} onClick={() => openDeleteComponent(index, item.id)} /></>}
                             </div>

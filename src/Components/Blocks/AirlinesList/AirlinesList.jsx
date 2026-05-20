@@ -100,20 +100,13 @@ function AirlinesList({ children, representative, ...props }) {
 
   useEffect(() => {
     if (data && data.airlines) {
-      const sortedAirlines = [...data.airlines.airlines].sort((a, b) =>
-        a.name.localeCompare(b.name),
-      );
-      setCompanyData(sortedAirlines);
+      setCompanyData([...data.airlines.airlines].sort((a, b) => a.name.localeCompare(b.name)));
     }
 
     if (dataSubscription && dataSubscription.hotelCreated) {
-      setCompanyData((prevCompanyData) => {
-        const updatedData = [
-          ...prevCompanyData,
-          dataSubscription.airlineCreated,
-        ];
-        return updatedData.sort((a, b) => a.name.localeCompare(b.name));
-      });
+      setCompanyData((prevCompanyData) =>
+        [...prevCompanyData, dataSubscription.airlineCreated].sort((a, b) => a.name.localeCompare(b.name)),
+      );
     }
 
     refetch();
