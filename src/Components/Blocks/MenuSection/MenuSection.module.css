@@ -1,0 +1,67 @@
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionHeader {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.38);
+  font-family: "Open Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 14px 20px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease-in-out;
+  width: 100%;
+  text-align: left;
+}
+
+.sectionHeader:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.sectionTitle {
+  flex: 1;
+}
+
+.sectionChevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease-in-out;
+  transform: rotate(-90deg);
+  color: inherit;
+  opacity: 0.7;
+}
+
+.sectionChevronOpen {
+  transform: rotate(0deg);
+}
+
+.sectionContent {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease-in-out;
+}
+
+.sectionContentOpen {
+  grid-template-rows: 1fr;
+}
+
+.sectionInner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.sectionCompact {
+  display: flex;
+  flex-direction: column;
+}

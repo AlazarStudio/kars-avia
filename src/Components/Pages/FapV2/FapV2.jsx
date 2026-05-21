@@ -25,6 +25,7 @@ import CreateRepresentativeRequest from "../../Blocks/CreateRepresentativeReques
 import { useDebounce } from "../../../hooks/useDebounce";
 import Header from "../../Blocks/Header/Header";
 import { roles } from "../../../roles";
+import { canAccessMenu } from "../../../utils/access";
 
 const STATUS_OPTIONS = [
   { value: null, label: "Все статусы" },
@@ -174,7 +175,7 @@ export default function FapV2({ user, accessMenu }) {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        {((user?.airlineId|| user?.dispatcherDepartmentId) && accessMenu?.reserveCreate) && (
+        {canAccessMenu(accessMenu, "reserveCreate", user) && (
           <Button
             backgroundcolor="var(--dark-blue)"
             color="#fff"

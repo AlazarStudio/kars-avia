@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
+import Message from "../../Message/Message";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@apollo/client";
 import * as XLSX from "xlsx";
@@ -7,6 +8,7 @@ import {
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
   getCookie,
 } from "../../../../../graphQL_requests";
+import { authService } from "../../../../services/authService";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
 import Button from "../../../Standart/Button/Button";
 import { useToast } from "../../../../contexts/ToastContext";
@@ -57,7 +59,7 @@ const emptyPD = (person, hotelIndex, plan) => ({
   accommodationCost: 0,
 });
 
-export default function FapReport({ request, hotelIndex, hotelName, canEdit = true }) {
+export default function FapReport({ request, hotelIndex, hotelName, canEdit = true, user }) {
   const navigate = useNavigate();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -71,6 +73,7 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
   const [activeTab, setActiveTab] = useState("tariffs");
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   // Инициализация
   useEffect(() => {
@@ -304,9 +307,27 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
           )}
         </div>
         <div className={classes.headerRight}>
+          <Button
+            backgroundcolor={showChat ? "var(--dark-blue)" : "#F6F7FB"}
+            color={showChat ? "#fff" : "#545873"}
+            onClick={() => setShowChat((v) => !v)}
+          >
+            Чат
+          </Button>
           <Button backgroundcolor="#F6F7FB" color="#545873" onClick={handleExport} disabled={people.length === 0}>
             ⬇ Excel
           </Button>
+          {user?.subjectType === "EXTERNAL_USER" && (
+            <button
+              className={classes.logoutBtn}
+              onClick={() => {
+                document.cookie = "externalUserContext=; Max-Age=0; Path=/";
+                authService.clear();
+              }}
+            >
+              Выйти
+            </button>
+          )}
         </div>
       </div>
 
@@ -329,6 +350,7 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
       </div>
 
       {/* Content */}
+      <div className={classes.contentRow}>
       <div className={classes.content}>
         {/* ── TAB: ТАРИФЫ ── */}
         {activeTab === "tariffs" && (
@@ -537,6 +559,26 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
                 </div>
               </>
             )}
+          </div>
+        )}
+      </div>
+
+        {showChat && (
+          <div className={classes.chatPane}>
+            <div className={classes.chatPaneHeader}>
+              <span className={classes.chatPaneTitle}>Чат</span>
+              <button className={classes.chatPaneClose} onClick={() => setShowChat(false)}>✕</button>
+            </div>
+            <div className={classes.chatPaneBody}>
+              <Message
+                activeTab="Комментарий"
+                passengerRequestId={request?.id}
+                token={token}
+                user={user}
+                chatPadding="0"
+                chatHeight="calc(100vh - 200px)"
+              />
+            </div>
           </div>
         )}
       </div>

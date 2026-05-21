@@ -9,6 +9,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatDate } from "../fapConstants";
+import { isExternalUser } from "../../../../utils/access";
 import Button from "../../../Standart/Button/Button";
 import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentativeHotel";
 import HotelGuestsModal from "./HotelGuestsModal";
@@ -16,11 +17,13 @@ import { useToast } from "../../../../contexts/ToastContext";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon.jsx";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
-export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true, showLinks = true }) {
+export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true, showLinks = true, user }) {
   const navigate = useNavigate();
   const { requestId } = useParams();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
+
+  const isExtHotel = isExternalUser(user) && user?.scope === "HOTEL";
 
   const [showAddHotel, setShowAddHotel] = useState(false);
   const [expandedHotels, setExpandedHotels] = useState({});
@@ -53,8 +56,12 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
   const hotels = service.hotels || [];
   const isCompleted = service.status === "COMPLETED" || service.status === "CANCELLED";
 
-  const toggleHotel = (idx) =>
-    setExpandedHotels((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  const displayHotels = hotels
+    .map((hotel, idx) => ({ hotel, origIdx: idx }))
+    .filter(({ hotel }) => !isExtHotel || String(hotel.hotelId) === String(user?.hotelId));
+
+  const toggleHotel = (origIdx) =>
+    setExpandedHotels((prev) => ({ ...prev, [origIdx]: !prev[origIdx] }));
 
   const totalCapacity = hotels.reduce((s, h) => s + (h.peopleCount || 0), 0);
   const totalGuests = hotels.reduce((s, h) => s + (h.people?.length || 0), 0);
@@ -132,7 +139,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                 </div>
               )}
             </div>
-            {canEdit && !isCompleted && (
+            {canEdit && !isCompleted && !isExtHotel && (
               <div className={classes.actionsRow}>
                 <Button
                   backgroundcolor="var(--dark-blue)"
@@ -152,16 +159,16 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
             )}
           </div>
 
-          {hotels.map((hotel, idx) => {
+          {displayHotels.map(({ hotel, origIdx }) => {
             const people = hotel.people || [];
             const capacity = hotel.peopleCount || 0;
             const fillPct = capacity > 0 ? Math.min(100, Math.round((people.length / capacity) * 100)) : 0;
             const isFull = capacity > 0 && people.length >= capacity;
-            const isExpanded = expandedHotels[idx];
+            const isExpanded = isExtHotel || expandedHotels[origIdx];
 
             return (
-              <div key={hotel.itemId || idx} className={lClasses.hotelCard}>
-                <div className={lClasses.hotelHeader} onClick={() => toggleHotel(idx)}>
+              <div key={hotel.itemId || origIdx} className={lClasses.hotelCard}>
+                <div className={lClasses.hotelHeader} onClick={() => toggleHotel(origIdx)}>
                   <div className={lClasses.hotelHeaderLeft}>
                     <div
                       className={lClasses.hotelColorBar}
@@ -198,14 +205,14 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                     </div>
                     <button
                       className={lClasses.reportBtn}
-                      onClick={(e) => { e.stopPropagation(); navigate(`/fapv2/${requestId}/report/${idx}`); }}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/fapv2/${requestId}/report/${origIdx}`); }}
                       title="Отчёт по отелю"
                     >
                       Отчёт
                     </button>
                     <button
                       className={lClasses.mgmtBtn}
-                      onClick={(e) => { e.stopPropagation(); setHotelMgmtIndex(idx); }}
+                      onClick={(e) => { e.stopPropagation(); setHotelMgmtIndex(origIdx); }}
                       title="Управление гостями"
                     >
                       Гости
@@ -216,18 +223,18 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                           <button
                             className={lClasses.linkBtn}
                             onClick={(e) => { e.stopPropagation(); copyLink(hotel.linkCRM); }}
-                            title="Скопировать CRM-ссылку"
+                            title="Скопировать ссылку Сайт"
                           >
-                            CRM
+                            Сайт
                           </button>
                         )}
                         {hotel.linkPWA && (
                           <button
                             className={lClasses.linkBtn}
                             onClick={(e) => { e.stopPropagation(); copyLink(hotel.linkPWA); }}
-                            title="Скопировать PWA-ссылку"
+                            title="Скопировать ссылку Сканер"
                           >
-                            PWA
+                            Сканер
                           </button>
                         )}
                       </>
@@ -240,10 +247,10 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                         Ссылка
                       </button>
                     ) : null)}
-                    {canEdit && !isCompleted && (
+                    {canEdit && !isCompleted && !isExtHotel && (
                       <button
                         className={lClasses.deleteBtn}
-                        onClick={(e) => { e.stopPropagation(); setRemoveHotelIndex(idx); }}
+                        onClick={(e) => { e.stopPropagation(); setRemoveHotelIndex(origIdx); }}
                         title="Удалить отель"
                       >
                         <DeleteIcon cursor="pointer" />
@@ -268,11 +275,11 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                       <div className={lClasses.emptyGuests}>
                         <span className={lClasses.emptyGuestsIcon}>🛏</span>
                         <span>Гости ещё не добавлены</span>
-                        {canEdit && !isCompleted && (
+                        {(canEdit || isExtHotel) && !isCompleted && (
                           <Button
                             backgroundcolor="var(--dark-blue)"
                             color="#fff"
-                            onClick={(e) => { e.stopPropagation(); setHotelMgmtIndex(idx); }}
+                            onClick={(e) => { e.stopPropagation(); setHotelMgmtIndex(origIdx); }}
                           >
                             + Добавить гостя
                           </Button>
@@ -333,7 +340,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
         hotel={hotelMgmtIndex != null ? hotels[hotelMgmtIndex] : null}
         hotelIndex={hotelMgmtIndex ?? 0}
         onRefetch={onRefetch}
-        canEdit={canEdit}
+        canEdit={canEdit || isExtHotel}
         onGenerateReport={
           hotelMgmtIndex != null
             ? () => {

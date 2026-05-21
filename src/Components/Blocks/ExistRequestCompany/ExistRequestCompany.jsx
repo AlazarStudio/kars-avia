@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import classes from "./ExistRequestCompany.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { InputMask } from "@react-input/mask";
 import {
   decodeJWT,
   getCookie,
@@ -67,6 +68,7 @@ function ExistRequestCompany({
     images: null,
     name: chooseObject?.name || "",
     email: chooseObject?.email || "",
+    number: chooseObject?.number || "",
     role: chooseObject?.role || "",
     position: chooseObject?.position?.name || "",
     login: chooseObject?.login || "",
@@ -89,6 +91,7 @@ function ExistRequestCompany({
         images: null,
         name: chooseObject.name || "",
         email: chooseObject.email || "",
+        number: chooseObject.number || "",
         role: chooseObject.role || "",
         position: chooseObject?.position?.name || "",
         login: chooseObject.login || "",
@@ -111,6 +114,7 @@ function ExistRequestCompany({
       images: null,
       name: chooseObject?.name || "",
       email: chooseObject?.email || "",
+      number: chooseObject?.number || "",
       role: chooseObject?.role || "",
       position: chooseObject?.position?.name || "",
       login: chooseObject?.login || "",
@@ -311,6 +315,7 @@ function ExistRequestCompany({
               id: formData.id,
               name: formData.name,
               email: formData.email,
+              number: formData.number,
               role: formData.role,
               positionId: selectedPosition?.id,
               login: formData.login,
@@ -456,6 +461,25 @@ function ExistRequestCompany({
                 ) : (
                   <div className={classes.requestDataInfo_desc}>
                     {formData.email || "—"}
+                  </div>
+                )}
+              </div>
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Телефон</div>
+                {isEditing ? (
+                  <InputMask
+                    type="text"
+                    mask="+7 (___) ___-__-__"
+                    replacement={{ _: /\d/ }}
+                    name="number"
+                    value={formData.number}
+                    onChange={handleChange}
+                    placeholder="+7 (___) ___-__-__"
+                  />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.number || "—"}
                   </div>
                 )}
               </div>

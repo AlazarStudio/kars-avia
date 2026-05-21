@@ -183,9 +183,9 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
                         type="button"
                         className={classes.linkBtn}
                         onClick={(e) => { e.stopPropagation(); copyLink(driver.linkPWA); }}
-                        title="Скопировать PWA-ссылку"
+                        title="Скопировать ссылку Сканер"
                       >
-                        PWA
+                        Сканер
                       </button>
                     ) : driver.link ? (
                       <button

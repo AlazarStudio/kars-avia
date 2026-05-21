@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestAirlineCompany.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { InputMask } from "@react-input/mask";
 import {
   getCookie,
   getMediaUrl,
@@ -116,6 +117,7 @@ function EditRequestAirlineCompany({
     images: null,
     name: selectedUser?.name || "",
     email: selectedUser?.email || "",
+    number: selectedUser?.number || "",
     role: selectedUser?.role || "",
     position: selectedUser?.position?.name || "",
     login: selectedUser?.login || "",
@@ -136,6 +138,7 @@ function EditRequestAirlineCompany({
         images: null,
         name: selectedUser?.name || "",
         email: selectedUser?.email || "",
+        number: selectedUser?.number || "",
         role: selectedUser?.role || "",
         position: selectedUser?.position?.name || "",
         login: selectedUser?.login || "",
@@ -153,6 +156,7 @@ function EditRequestAirlineCompany({
       images: null,
       name: selectedUser?.name || "",
       email: selectedUser?.email || "",
+      number: selectedUser?.number || "",
       role: selectedUser?.role || "",
       position: selectedUser?.position?.name || "",
       login: selectedUser?.login || "",
@@ -292,6 +296,7 @@ function EditRequestAirlineCompany({
               id: selectedUser.id,
               name: formData.name,
               email: formData.email,
+              number: formData.number,
               role: formData.role,
               positionId: selectedPosition?.id,
               login: formData.login,
@@ -507,6 +512,25 @@ function EditRequestAirlineCompany({
                   )}
                 </>
               )}
+
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Телефон</div>
+                {isEditing ? (
+                  <InputMask
+                    type="text"
+                    mask="+7 (___) ___-__-__"
+                    replacement={{ _: /\d/ }}
+                    name="number"
+                    value={formData.number}
+                    onChange={handleChange}
+                    placeholder="+7 (___) ___-__-__"
+                  />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.number || "—"}
+                  </div>
+                )}
+              </div>
 
               <div className={classes.requestDataInfo}>
                 {isEditing ? (

@@ -359,10 +359,31 @@ function TransferMessage({
   const handleSubmitMessage = async () => {
     if (!messageText.trim() || !selectedChat?.id) return;
 
+    const text = messageText.trim();
+    const optimisticId = `optimistic-${Date.now()}`;
+    const optimisticMsg = {
+      id: optimisticId,
+      text,
+      createdAt: new Date().toISOString(),
+      authorType: userActorType,
+      chatId: selectedChat.id,
+      senderUser: userActorType === ACTOR_TYPES.USER ? { id: userID, name: user?.name || '', images: user?.images || [] } : null,
+      senderDriver: userActorType === ACTOR_TYPES.DRIVER ? { id: userID, name: user?.name || '' } : null,
+      senderPersonal: userActorType === ACTOR_TYPES.PERSONAL ? { id: userID, name: user?.name || '' } : null,
+      readBy: [],
+    };
+
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setMessageText("");
+    setShowEmojiPicker(false);
+    setShowScrollButton(false);
+    setNewMessagesCount(0);
+    setTimeout(() => scrollToBottom(), 0);
+
     try {
       const input = {
         chatId: selectedChat.id,
-        text: messageText.trim(),
+        text,
         authorType: userActorType,
       };
       if (userActorType === ACTOR_TYPES.USER) input.senderUserId = userID;
@@ -371,7 +392,6 @@ function TransferMessage({
 
       await sendMessageMutation({ variables: { input } });
 
-      // Отмечаем все как прочитанные после отправки
       const markReadInput = {
         chatId: selectedChat.id,
         readerType: userActorType,
@@ -380,17 +400,10 @@ function TransferMessage({
       if (userActorType === ACTOR_TYPES.DRIVER) markReadInput.driverId = userID;
       if (userActorType === ACTOR_TYPES.PERSONAL) markReadInput.personalId = userID;
 
-      await markAllMessagesAsReadMutation({ variables: markReadInput });
-
-      setMessageText("");
-      setShowEmojiPicker(false);
-      setTimeout(() => {
-        scrollToBottom();
-      }, 50);
-      setShowScrollButton(false);
-      setNewMessagesCount(0);
+      markAllMessagesAsReadMutation({ variables: markReadInput });
       refetchMessages();
     } catch (err) {
+      setMessages((prev) => prev.filter((m) => m.id !== optimisticId));
       alert("Произошла ошибка при отправке сообщения");
       console.error(err);
     }

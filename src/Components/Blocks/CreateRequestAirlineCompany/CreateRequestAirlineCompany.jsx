@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestAirlineCompany.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { InputMask } from "@react-input/mask";
 import {
   decodeJWT,
   getCookie,
@@ -47,6 +48,7 @@ function CreateRequestAirlineCompany({
     images: null,
     name: "",
     email: "",
+    number: "",
     role: "AIRLINEADMIN",
     position: "",
     login: "",
@@ -270,6 +272,7 @@ function CreateRequestAirlineCompany({
               positionId: selectedPosition?.id,
               airlineId: id,
               email: formData.email,
+              number: formData.number,
               hotelId: null,
               login: formData.login,
               password: formData.password,
@@ -386,6 +389,18 @@ function CreateRequestAirlineCompany({
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Введите ФИО"
+                autoComplete="new-password"
+              />
+
+              <label>Телефон</label>
+              <InputMask
+                type="text"
+                mask="+7 (___) ___-__-__"
+                replacement={{ _: /\d/ }}
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                placeholder="+7 (___) ___-__-__"
                 autoComplete="new-password"
               />
 

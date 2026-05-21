@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 
 
-// export const path = import.meta.env.VITE_PRODUCTION_PATH;
-// export const server = import.meta.env.VITE_PRODUCTION_SERVER;
+export const path = import.meta.env.VITE_PRODUCTION_PATH;
+export const server = import.meta.env.VITE_PRODUCTION_SERVER;
 
 // export const path = import.meta.env.VITE_DEMO_PATH;
 // export const server = import.meta.env.VITE_DEMO_SERVER;
 
-export const path = import.meta.env.VITE_DEV_PATH;
-export const server = import.meta.env.VITE_DEV_SERVER;
+// export const path = import.meta.env.VITE_DEV_PATH;
+// export const server = import.meta.env.VITE_DEV_SERVER;
 
 
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
@@ -4211,6 +4211,7 @@ export const GET_HOTEL_USERS = gql`
       login
       images
       online
+      number
     }
     }
   }
@@ -4229,6 +4230,7 @@ export const CREATE_HOTEL_USER = gql`
       }
       login
       images
+      number
     }
   }
 `;
@@ -4246,6 +4248,7 @@ export const UPDATE_HOTEL_USER = gql`
       }
       login
       images
+      number
     }
   }
 `;
@@ -4750,6 +4753,7 @@ export const GET_AIRLINE_COMPANY = gql`
         email
         login
         online
+        number
       }
       department {
         id
@@ -4767,6 +4771,7 @@ export const GET_AIRLINE_COMPANY = gql`
           email
           login
           online
+          number
         }
         position {
           id
@@ -4868,6 +4873,7 @@ export const CREATE_AIRLINE_USER = gql`
       login
       password
       email
+      number
     }
   }
 `;
@@ -4893,6 +4899,7 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           email
           login
           online
+          number
         }
         position {
           id
@@ -5010,6 +5017,7 @@ export const UPDATE_AIRLINE_USER = gql`
         }
         login
         images
+        number
     }
   }
 `;
@@ -5195,6 +5203,7 @@ export const GET_ALL_DISPATCHERS = gql`
         email
         login
         online
+        number
       }
     }
   }
@@ -5288,6 +5297,7 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           email
           login
           online
+          number
         }
       }
     }
@@ -5378,6 +5388,7 @@ export const CREATE_DISPATCHER_USER = gql`
       }
       login
       images
+      number
     }
   }
 `;
@@ -5395,6 +5406,7 @@ export const UPDATE_DISPATCHER_USER = gql`
       }
       login
       images
+      number
     }
   }
 `;

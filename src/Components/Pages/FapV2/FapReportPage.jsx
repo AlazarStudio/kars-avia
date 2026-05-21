@@ -14,6 +14,7 @@ import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
   canAccessMenu,
+  isExternalUser,
 } from "../../../utils/access";
 import classes from "../../Pages/Main_page/Main_Page.module.css";
 
@@ -69,7 +70,7 @@ export default function FapReportPage({ user }) {
   if (loading) {
     return (
       <div className={classes.main}>
-        <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />
+        {!isExternalUser(user) && <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />}
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <MUILoader />
         </div>
@@ -80,7 +81,7 @@ export default function FapReportPage({ user }) {
   if (!request || !hotel) {
     return (
       <div className={classes.main}>
-        <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />
+        {!isExternalUser(user) && <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />}
         <div style={{ flex: 1, padding: 30, color: "#94A3B8" }}>
           Отчёт не найден
         </div>
@@ -90,8 +91,8 @@ export default function FapReportPage({ user }) {
 
   return (
     <div className={classes.main}>
-      <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />
-      <FapReport request={request} hotelIndex={hotelIndex} hotelName={hotel.name || "Отель"} canEdit={canAccessMenu(accessMenu, "reserveUpdate", user)} />
+      {!isExternalUser(user) && <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />}
+      <FapReport request={request} hotelIndex={hotelIndex} hotelName={hotel.name || "Отель"} canEdit={canAccessMenu(accessMenu, "reserveUpdate", user) || (isExternalUser(user) && user?.scope === "HOTEL")} user={user} />
     </div>
   );
 }

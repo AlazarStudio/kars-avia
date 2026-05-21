@@ -1165,15 +1165,22 @@ function ExistRequest({
                     onClick={() => handleTabChange("Чат")}
                   >
                     Чат
-                    {formData?.chat?.some(
-                      (chat) =>
-                        chat.unreadMessagesCount > 0 &&
-                        ((user.hotelId && chat.hotelId === user.hotelId) ||
-                          (user.airlineId &&
-                            chat.airlineId === user.airlineId) ||
-                          (!user.hotelId && !user.airlineId))
-                    ) && <div className={classes.unreadMessages}></div>}
-                    {/* {console.log(formData?.chat)} */}
+                    {(() => {
+                      const totalUnread = (formData?.chat || []).reduce((acc, chat) => {
+                        if (
+                          chat.unreadMessagesCount > 0 &&
+                          ((user.hotelId && chat.hotelId === user.hotelId) ||
+                            (user.airlineId && chat.airlineId === user.airlineId) ||
+                            (!user.hotelId && !user.airlineId))
+                        ) {
+                          return acc + chat.unreadMessagesCount;
+                        }
+                        return acc;
+                      }, 0);
+                      return totalUnread > 0 ? (
+                        <div className={classes.unreadMessages}>{totalUnread > 99 ? '99+' : totalUnread}</div>
+                      ) : null;
+                    })()}
                   </div>
                 )}
                 {!isEditing && (

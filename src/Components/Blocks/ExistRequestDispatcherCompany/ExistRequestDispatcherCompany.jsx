@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import classes from "./ExistRequestDispatcherCompany.module.css";
+import { InputMask } from "@react-input/mask";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
@@ -59,6 +60,7 @@ function ExistRequestDispatcherCompany({
     images: null,
     name: chooseObject?.name || "",
     email: chooseObject?.email || "",
+    number: chooseObject?.number || "",
     role: chooseObject?.role || "",
     position: chooseObject?.position?.name || "",
     login: chooseObject?.login || "",
@@ -79,6 +81,7 @@ function ExistRequestDispatcherCompany({
         images: null,
         name: chooseObject.name || "",
         email: chooseObject.email || "",
+        number: chooseObject.number || "",
         role: chooseObject.role || "",
         position: chooseObject?.position?.name || "",
         login: chooseObject.login || "",
@@ -101,6 +104,7 @@ function ExistRequestDispatcherCompany({
       images: null,
       name: chooseObject?.name || "",
       email: chooseObject?.email || "",
+      number: chooseObject?.number || "",
       role: chooseObject?.role || "",
       position: chooseObject?.position?.name || "",
       login: chooseObject?.login || "",
@@ -282,6 +286,7 @@ function ExistRequestDispatcherCompany({
             id: formData.id,
             name: formData.name,
             email: formData.email,
+            number: formData.number,
             role: formData.role,
             positionId: selectedPosition?.id,
             login: formData.login,
@@ -389,6 +394,19 @@ function ExistRequestDispatcherCompany({
                 placeholder="example@mail.ru"
                 value={formData.email}
                 onChange={handleChange}
+                autoComplete="new-password"
+                disabled={!isEditing}
+              />
+
+              <label>Телефон</label>
+              <InputMask
+                type="text"
+                mask="+7 (___) ___-__-__"
+                replacement={{ _: /\d/ }}
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                placeholder="+7 (___) ___-__-__"
                 autoComplete="new-password"
                 disabled={!isEditing}
               />

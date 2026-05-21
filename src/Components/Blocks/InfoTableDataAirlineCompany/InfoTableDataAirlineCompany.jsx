@@ -44,7 +44,11 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                         <div className={classes.InfoTable_BottomInfo}>
                             {item.users.map((employee, employeeIndex) => (
                                 <div className={`${classes.InfoTable_BottomInfo__item}`} key={employeeIndex}>
-                                    <div className={`${classes.InfoTable_BottomInfo__item___elem}`}>
+                                    <div
+                                        className={`${classes.InfoTable_BottomInfo__item___elem}`}
+                                        style={onViewEmployee ? { cursor: "pointer" } : undefined}
+                                        onClick={onViewEmployee ? () => onViewEmployee(employee, item.name) : undefined}
+                                    >
                                         <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
                                             <div className={classes.employeeImg}>
                                                 <img src={employee.images?.[0] ? getMediaUrl(employee.images[0]) : '/no-avatar.png'} alt="avatar" className={classes.employeeAvatar} />
@@ -53,19 +57,18 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                                 <span className={classes.onlineDot} style={{ background: employee.online ? '#22c55e' : '#ef4444' }} />
                                             )}
                                         </div>
-                                        <div
-                                            className={classes.employeeInfo}
-                                            style={onViewEmployee ? { cursor: "pointer" } : undefined}
-                                            onClick={onViewEmployee ? () => onViewEmployee(employee, item.name) : undefined}
-                                        >
+                                        <div className={classes.employeeInfo}>
                                             <div className={classes.employeeName}>{employee.name}</div>
                                             <div className={classes.employeePost}>{employee.role === "AIRLINEADMIN" ? "Администратор" : "Модератор"}</div>
                                             <div className={classes.employeePost}>{employee.position?.name}</div>
                                         </div>
-                                        <div className={classes.infoTable_buttons}>
-                                            {(!user?.airlineId || accessMenu.userUpdate) && 
+                                        <div
+                                            className={classes.infoTable_buttons}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {(!user?.airlineId || accessMenu.userUpdate) &&
                                             <>
-                                                <EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestEditNumber(employee, item.name)} /> 
+                                                <EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestEditNumber(employee, item.name)} />
                                                 <DeleteIcon cursor="pointer" strokeWidth={0.5} onClick={() => openDeleteNomerComponent(employee, item.name)} />
                                             </>}
                                         </div>

@@ -108,12 +108,8 @@ function HotelCompany_tabComponent({ children, id, ...props }) {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const updateDispatcher = (updatedDispatcher, index) => {
-    setIsLoading(true);
-    const newData = [...companyData];
-    newData[index] = updatedDispatcher;
-    setCompanyData(newData);
-    setIsLoading(false);
+  const updateDispatcher = () => {
+    refetch();
   };
 
   const [deleteHotelUser] = useMutation(DELETE_HOTEL_USER, {

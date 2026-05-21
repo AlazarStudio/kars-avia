@@ -1,12 +1,48 @@
 .menuContainer {
-  height: 85vh;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  position: relative;
 }
 
 .menuMain {
-  flex: 8;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: visible;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.25s ease-in-out;
+}
+
+.menuMain:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.menuMain::-webkit-scrollbar {
+  width: 4px;
+}
+
+.menuMain::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.menuMain::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 2px;
+  transition: background 0.25s ease-in-out;
+}
+
+.menuMain:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.menuMain::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .bottomMenu {
@@ -282,19 +318,9 @@
 }
 
 @media (min-height: 0px) and (max-height: 900px) {
-  .menuContainer {
-    height: 80vh;
-  }
-
   .menu_items__elem,
   .menu_items__elem___fill {
     padding: 10px;
     font-size: 14px;
-  }
-}
-
-@media (max-height: 750px) {
-  .menuContainer {
-    height: 60vh;
   }
 }

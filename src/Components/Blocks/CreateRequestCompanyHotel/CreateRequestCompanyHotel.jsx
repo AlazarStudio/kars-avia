@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestCompanyHotel.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { InputMask } from "@react-input/mask";
 
 import {
   getCookie,
@@ -33,6 +34,7 @@ function CreateRequestCompanyHotel({
     images: null,
     name: "",
     email: "",
+    number: "",
     role: "",
     position: "",
     login: "",
@@ -172,6 +174,7 @@ function CreateRequestCompanyHotel({
           input: {
             name: formData.name,
             email: formData.email,
+            number: formData.number,
             role: formData.role,
             positionId: selectedPosition?.id,
             login: formData.login,
@@ -269,6 +272,18 @@ function CreateRequestCompanyHotel({
                 placeholder="example@mail.ru"
                 value={formData.email}
                 onChange={handleChange}
+                autoComplete="new-password"
+              />
+
+              <label>Телефон</label>
+              <InputMask
+                type="text"
+                mask="+7 (___) ___-__-__"
+                replacement={{ _: /\d/ }}
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                placeholder="+7 (___) ___-__-__"
                 autoComplete="new-password"
               />
 

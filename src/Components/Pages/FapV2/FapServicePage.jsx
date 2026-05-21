@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import Message from "../../Blocks/Message/Message";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
   GET_PASSENGER_REQUEST,
@@ -22,6 +23,7 @@ import {
   isExternalUser,
   canAccessMenu,
 } from "../../../utils/access";
+import { authService } from "../../../services/authService";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import { useToast } from "../../../contexts/ToastContext";
 import mainClasses from "../../Pages/Main_page/Main_Page.module.css";
@@ -34,6 +36,7 @@ export default function FapServicePage({ user }) {
   const { success, error: notifyError } = useToast();
 
   const [accessMenu, setAccessMenu] = useState({});
+  const [showChat, setShowChat] = useState(false);
   const isDispatcherRole = isDispatcherRoleCheck(user);
   const isAirlineRole = isAirlineRoleCheck(user);
   const dispatcherDepartmentId = user?.dispatcherDepartmentId;
@@ -94,7 +97,11 @@ export default function FapServicePage({ user }) {
   }, [request?.representativeLinks, user?.representativeDepartmentId]);
 
   const canEdit = canAccessMenu(accessMenu, "reserveUpdate", user);
-  console.log(accessMenu);
+
+  const handleExternalLogout = () => {
+    document.cookie = "externalUserContext=; Max-Age=0; Path=/";
+    authService.clear();
+  };
   
   const canCopyRepresentativeLink = !isExternalUser(user) && Boolean(representativePwaLink);
 
@@ -153,6 +160,7 @@ export default function FapServicePage({ user }) {
             isPage
             canEdit={canEdit}
             showLinks={!isAirlineRole}
+            user={user}
           />
         );
       case "transfer":
@@ -190,7 +198,7 @@ export default function FapServicePage({ user }) {
 
   return (
     <div className={mainClasses.main}>
-      <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />
+      {!isExternalUser(user) && <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />}
 
       <div className={classes.page}>
         <Header>
@@ -216,6 +224,18 @@ export default function FapServicePage({ user }) {
                 Ссылка <CopyIcon />
               </button>
             )}
+            <button
+              className={classes.chatBtn}
+              style={{ background: showChat ? "var(--dark-blue)" : "#F6F7FB", color: showChat ? "#fff" : "#545873" }}
+              onClick={() => setShowChat((v) => !v)}
+            >
+              Чат
+            </button>
+            {isExternalUser(user) && (
+              <button className={classes.logoutBtn} onClick={handleExternalLogout}>
+                Выйти
+              </button>
+            )}
           </div>
         </Header>
 
@@ -224,7 +244,27 @@ export default function FapServicePage({ user }) {
             <MUILoader />
           </div>
         ) : (
-          <div className={classes.content}>{renderSection()}</div>
+          <div className={classes.contentRow}>
+            <div className={classes.content}>{renderSection()}</div>
+            {showChat && (
+              <div className={classes.chatPane}>
+                <div className={classes.chatPaneHeader}>
+                  <span className={classes.chatPaneTitle}>Чат</span>
+                  <button className={classes.chatPaneClose} onClick={() => setShowChat(false)}>✕</button>
+                </div>
+                <div className={classes.chatPaneBody}>
+                  <Message
+                    activeTab="Комментарий"
+                    passengerRequestId={requestId}
+                    token={token}
+                    user={user}
+                    chatPadding="0"
+                    chatHeight="calc(100vh - 160px)"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

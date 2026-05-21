@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import classes from "./CreateRequestDispatcherCompany.module.css";
+import { InputMask } from "@react-input/mask";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
@@ -35,6 +36,7 @@ function CreateRequestDispatcherCompany({
     images: null,
     name: "",
     email: "",
+    number: "",
     role: "",
     position: "",
     login: "",
@@ -249,6 +251,7 @@ function CreateRequestDispatcherCompany({
           input: {
             name: formData.name,
             email: formData.email,
+            number: formData.number,
             role: "DISPATCHERADMIN",
             positionId: selectedPosition?.id,
             login: formData.login,
@@ -347,6 +350,18 @@ function CreateRequestDispatcherCompany({
                 placeholder="example@mail.ru"
                 value={formData.email}
                 onChange={handleChange}
+                autoComplete="new-password"
+              />
+
+              <label>Телефон</label>
+              <InputMask
+                type="text"
+                mask="+7 (___) ___-__-__"
+                replacement={{ _: /\d/ }}
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                placeholder="+7 (___) ___-__-__"
                 autoComplete="new-password"
               />
 

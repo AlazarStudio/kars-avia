@@ -88,13 +88,21 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
                         {/* {item.status === 'created' && <div className={classes.newRequest}></div>} */}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.requestNumber}</div>
                         {/* <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{justifyContent:'center', padding:'0'}}>{item.requestNumber?.slice(0, 4)}</div> */}
-                        {item?.chat?.some(chat => 
-                            chat.unreadMessagesCount > 0 && (
-                                (user.hotelId && chat.hotelId === user.hotelId) ||
-                                (user.airlineId && chat.airlineId === user.airlineId) ||
-                                (!user.hotelId && !user.airlineId)
-                            )
-                            ) && <div className={classes.newRequest}></div>}
+                        {(() => {
+                            const totalUnread = (item?.chat || []).reduce((acc, chat) => {
+                                if (chat.unreadMessagesCount > 0 && (
+                                    (user.hotelId && chat.hotelId === user.hotelId) ||
+                                    (user.airlineId && chat.airlineId === user.airlineId) ||
+                                    (!user.hotelId && !user.airlineId)
+                                )) {
+                                    return acc + chat.unreadMessagesCount;
+                                }
+                                return acc;
+                            }, 0);
+                            return totalUnread > 0 ? (
+                                <div className={classes.newRequest}>{totalUnread > 99 ? '99+' : totalUnread}</div>
+                            ) : null;
+                        })()}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 {item.person ?

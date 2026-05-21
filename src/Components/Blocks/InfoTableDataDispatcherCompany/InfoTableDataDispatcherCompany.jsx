@@ -73,7 +73,11 @@ function InfoTableDataDispatcherCompany({
                   className={classes.InfoTable_BottomInfo__item}
                   key={dispatcher.id || dispatcherIndex}
                 >
-                  <div className={classes.InfoTable_BottomInfo__item___elem}>
+                  <div
+                    className={classes.InfoTable_BottomInfo__item___elem}
+                    style={onViewDispatcher ? { cursor: "pointer" } : undefined}
+                    onClick={onViewDispatcher ? () => onViewDispatcher(dispatcher) : undefined}
+                  >
                     <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
                       <div className={classes.employeeImg}>
                         <img
@@ -90,11 +94,7 @@ function InfoTableDataDispatcherCompany({
                         <span className={classes.onlineDot} style={{ background: dispatcher.online ? '#22c55e' : '#ef4444' }} />
                       )}
                     </div>
-                    <div
-                      className={classes.employeeInfo}
-                      style={onViewDispatcher ? { cursor: "pointer" } : undefined}
-                      onClick={onViewDispatcher ? () => onViewDispatcher(dispatcher) : undefined}
-                    >
+                    <div className={classes.employeeInfo}>
                       <div className={classes.employeeName}>
                         {dispatcher.name}
                       </div>
@@ -108,7 +108,10 @@ function InfoTableDataDispatcherCompany({
                       </div>
                     </div>
                     {canEdit && (
-                      <div className={classes.infoTable_buttons}>
+                      <div
+                        className={classes.infoTable_buttons}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <EditPencilIcon
                           cursor="pointer"
                           onClick={() => onEditDispatcher?.(dispatcher)}
