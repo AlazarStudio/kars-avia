@@ -11,14 +11,49 @@ const EXAMPLES = [
   { label: "Категории номеров", method: "GET", path: "/api/content/v1/room-type-categories", body: "" },
   { label: "Meal plans", method: "GET", path: "/api/content/v1/meal-plans", body: "" },
   {
-    label: "Поиск доступности",
+    label: "Доступность отеля (РЗПВ: 8616)",
+    method: "GET",
+    path: "/api/search/v1/properties/8616/room-stays?arrivalDate=2026-07-01&departureDate=2026-07-03&adults=1",
+    body: ""
+  },
+  {
+    label: "Доступность (корп.: 13090)",
+    method: "GET",
+    path: "/api/search/v1/properties/13090/room-stays?arrivalDate=2026-06-01&departureDate=2026-06-03&adults=1&include=roomTypeShortContent%7CratePlanShortContent",
+    body: ""
+  },
+  {
+    label: "Корп. тарифы с corporateId",
+    method: "GET",
+    path: "/api/search/v1/properties/13090/room-stays?arrivalDate=2026-06-01&departureDate=2026-06-03&adults=1&corporateIds=1&include=roomTypeShortContent%7CratePlanShortContent",
+    body: ""
+  },
+  {
+    label: "РЗПВ extra-stays (8616)",
+    method: "POST",
+    path: "/api/search/v1/properties/8616/extra-stays",
+    body: JSON.stringify({
+      stayDates: {
+        arrivalDateTime: "2026-07-01T15:00",
+        departureDateTime: "2026-07-03T11:00"
+      },
+      roomType: {
+        id: "355411",
+        placements: [{ code: "AdultBed-1" }]
+      },
+      ratePlan: { id: "353410" },
+      guestCount: { adultCount: 1, childAges: [] }
+    }, null, 2)
+  },
+  {
+    label: "Поиск доступности POST",
     method: "POST",
     path: "/api/search/v1/properties/room-stays/search",
     body: JSON.stringify(
       {
-        propertyIds: ["ID"],
-        arrivalDate: "2025-09-01",
-        departureDate: "2025-09-03",
+        propertyIds: ["13090"],
+        arrivalDate: "2026-07-01",
+        departureDate: "2026-07-03",
         adults: 1,
         include: "roomTypeShortContent|ratePlanShortContent"
       },
@@ -26,7 +61,55 @@ const EXAMPLES = [
       2
     )
   },
-  { label: "Список броней", method: "GET", path: "/api/reservation/v1/bookings", body: "" }
+  { label: "Корп. клиенты (список)", method: "GET", path: "/api/reference-data/corporates", body: "" },
+  {
+    label: "Создать корп. клиента",
+    method: "POST",
+    path: "/api/reference-data/corporates",
+    body: JSON.stringify({ taxpayerIdentificationNumber: "770493581", registrationReasonCode: "771401001" }, null, 2)
+  },
+  { label: "Reference-data Swagger", method: "GET", path: "/api/reference-data/swagger/v1/swagger.json", body: "" },
+  { label: "Search Swagger", method: "GET", path: "/api/search/swagger/v1/swagger.json", body: "" },
+  { label: "Reservation Swagger", method: "GET", path: "/api/reservation/swagger/v1/swagger.json", body: "" },
+  {
+    label: "Изменить бронь /modify (подставь номер, version, checksum)",
+    method: "POST",
+    path: "/api/reservation/v1/bookings/{bookingNumber}/modify",
+    body: JSON.stringify({
+      booking: {
+        version: 1,
+        roomStays: [{
+          checksum: "{checksum}",
+          stayDates: {
+            arrivalDateTime: "2026-07-01T15:00",
+            departureDateTime: "2026-07-03T11:00"
+          }
+        }],
+        bookingComments: ["Тестовое изменение"]
+      }
+    }, null, 2)
+  },
+  { label: "Список броней", method: "GET", path: "/api/reservation/v1/bookings", body: "" },
+  { label: "Корп. тарифы отеля 13090", method: "GET", path: "/api/search/v1/properties/13090/room-stays?arrivalDate=2026-07-01&departureDate=2026-07-03&adults=1&corporateIds=1&include=roomTypeShortContent%7CratePlanShortContent", body: "" },
+  {
+    label: "Verify бронь с РЗПВ (8616)",
+    method: "POST",
+    path: "/api/reservation/v1/bookings/verify",
+    body: JSON.stringify({
+      booking: {
+        propertyId: "8616",
+        roomStays: [{
+          roomType: { id: "355411", placements: [{ code: "AdultBed-1" }] },
+          ratePlan: { id: "353410" },
+          stayDates: { arrivalDateTime: "2026-07-01T15:00", departureDateTime: "2026-07-03T11:00" },
+          guestCount: { adultCount: 1 },
+          guests: [{ firstName: "Test", lastName: "Guest" }],
+          additionalServices: [{ type: "EarlyCheckIn", dateTimeLocal: "2026-07-01T08:00" }]
+        }],
+        customer: { firstName: "Test", lastName: "Guest", contacts: { phones: [], emails: [] } }
+      }
+    }, null, 2)
+  }
 ]
 
 const METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"]

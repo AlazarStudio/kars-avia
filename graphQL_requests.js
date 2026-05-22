@@ -6829,6 +6829,9 @@ export const TL_AVAILABILITY = gql`
           type
           capacity
         }
+        earlyCheckInOptions { periodFrom periodTo price currency }
+        lateCheckOutOptions { periodFrom periodTo price currency }
+        corporateIds
         raw
       }
       raw
@@ -6891,7 +6894,11 @@ export const GET_TL_RESERVATIONS = gql`
       roomTypeName
       ratePlanName
       cancellationPoliciesJson
+      earlyCheckInDateTime
+      lateCheckOutDateTime
+      corporateId
       createdAt
+      raw
     }
   }
 `;
@@ -6964,6 +6971,29 @@ export const CANCEL_TL_RESERVATION = gql`
   }
 `;
 
+export const AMEND_TL_RESERVATION = gql`
+  mutation TlAmendReservation($input: TlAmendReservationInput!) {
+    tlAmendReservation(input: $input) {
+      ok
+      conditionChange
+      newArrival
+      newDeparture
+      newTotalPrice
+      newChecksum
+      message
+    }
+  }
+`;
+
+export const TL_EXTRA_STAYS_FOR_AMEND = gql`
+  query TlExtraStaysForAmend($propertyId: String!, $input: TlExtraStaysInput!) {
+    tlExtraStays(propertyId: $propertyId, input: $input) {
+      earlyCheckIn { dateTimeLocal price currency }
+      lateCheckOut { dateTimeLocal price currency }
+    }
+  }
+`;
+
 export const TL_VERIFY_BOOKING = gql`
   mutation TlVerifyBooking($input: TlVerifyInput!) {
     tlVerifyBooking(input: $input) {
@@ -6995,6 +7025,50 @@ export const TL_RAW_REQUEST = gql`
       status
       body
       ok
+    }
+  }
+`;
+
+export const TL_CREATE_CORPORATE = gql`
+  mutation TlCreateCorporate($input: TlCreateCorporateInput!) {
+    tlCreateCorporate(input: $input) {
+      id
+      legalName
+      inn
+      kpp
+      raw
+    }
+  }
+`;
+
+export const TL_GET_CORPORATE = gql`
+  query TlCorporate($id: ID!) {
+    tlCorporate(id: $id) {
+      id
+      legalName
+      inn
+      kpp
+      raw
+    }
+  }
+`;
+
+export const TL_CORPORATES = gql`
+  query TlCorporates {
+    tlCorporates {
+      id
+      legalName
+      inn
+      kpp
+    }
+  }
+`;
+
+export const TL_EXTRA_STAYS = gql`
+  query TlExtraStays($propertyId: String!, $input: TlExtraStaysInput!) {
+    tlExtraStays(propertyId: $propertyId, input: $input) {
+      earlyCheckIn { dateTimeLocal price currency }
+      lateCheckOut { dateTimeLocal price currency }
     }
   }
 `;

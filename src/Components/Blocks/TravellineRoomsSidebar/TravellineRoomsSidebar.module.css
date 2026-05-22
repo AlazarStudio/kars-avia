@@ -401,6 +401,111 @@
   border-radius: 4px;
 }
 
+/* Corporate badge & service badges */
+.rateNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.corporateBadge {
+  font-family: Nunito Sans;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  color: #15803d;
+  white-space: nowrap;
+}
+
+.rateServiceBadges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 5px;
+}
+
+.serviceBadge {
+  font-family: Nunito Sans;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* Ранний заезд / Поздний выезд */
+.timeServiceBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.timeServiceTitle {
+  font-family: Nunito Sans;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--main-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timeServiceChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.timeServiceChip {
+  font-family: Nunito Sans;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.timeServiceChip:hover {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.timeServiceChipActive {
+  border-color: #2196F3;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 700;
+}
+
+/* Итого с доп. услугами */
+.totalBlock {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: Nunito Sans;
+  font-size: 13px;
+  color: #166534;
+}
+
+.totalBlock strong {
+  font-family: Inter;
+  font-size: 15px;
+  font-weight: 700;
+}
+
 /* Meal filter */
 .mealFilter {
   display: flex;

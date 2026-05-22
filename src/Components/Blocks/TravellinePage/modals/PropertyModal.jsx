@@ -4,6 +4,8 @@ import { useLazyQuery, useMutation } from "@apollo/client"
 import {
   CREATE_TL_RESERVATION,
   TL_AVAILABILITY,
+  TL_CORPORATES,
+  TL_EXTRA_STAYS,
   TL_PROPERTY_CALENDAR,
   TL_VERIFY_BOOKING
 } from "../../../../../graphQL_requests"
@@ -44,6 +46,8 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
     parseInt(raw?.stars ?? raw?.starRating ?? raw?.category ?? property.stars ?? "0") || 0
 
   const [getAvail, { data: availData, loading: availLoading }] = useLazyQuery(TL_AVAILABILITY)
+  const [getExtraStays, { loading: extraStaysLoading }] = useLazyQuery(TL_EXTRA_STAYS)
+  const [loadCorporates, { data: corporatesData, loading: corporatesLoading }] = useLazyQuery(TL_CORPORATES, { fetchPolicy: "cache-first" })
   const [verifyBooking, { loading: verifying }] = useMutation(TL_VERIFY_BOOKING)
   const [createRes, { loading: creating }] = useMutation(CREATE_TL_RESERVATION)
 
@@ -55,23 +59,40 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
   const [conditionChange, setConditionChange] = useState(null)
   const [pendingChecksum, setPendingChecksum] = useState(undefined)
   const [bookError, setBookError] = useState("")
+  const [corporateId, setCorporateId] = useState(searchDates?.corporateId ?? "")
+  const [selectedEarlyCheckIn, setSelectedEarlyCheckIn] = useState(null)
+  const [selectedLateCheckOut, setSelectedLateCheckOut] = useState(null)
+  const [extraStays, setExtraStays] = useState(null)
+
+  const extraCost = (selectedEarlyCheckIn?.price ?? 0) + (selectedLateCheckOut?.price ?? 0)
+  const totalWithExtras = bookingRate ? bookingRate.priceBeforeTax * (searchDates ? nightsBetween(searchDates.arrival, searchDates.departure) : 0) + extraCost : 0
+  const effectiveCheckInTime = selectedEarlyCheckIn ? selectedEarlyCheckIn.dateTimeLocal : (bookingRate?.checkInTime ?? null)
+  const effectiveCheckOutTime = selectedLateCheckOut ? selectedLateCheckOut.dateTimeLocal : (bookingRate?.checkOutTime ?? null)
+
+  const runGetAvail = (corpId) => {
+    if (!searchDates) return
+    getAvail({
+      variables: {
+        input: {
+          propertyId: property.id,
+          arrival: searchDates.arrival,
+          departure: searchDates.departure,
+          adults: searchDates.adults,
+          children: searchDates.children ?? 0,
+          childAges: searchDates.childAges ?? [],
+          ...(corpId ? { corporateIds: [corpId] } : {})
+        }
+      }
+    })
+  }
 
   useEffect(() => {
-    if (tab === "book" && searchDates) {
-      getAvail({
-        variables: {
-          input: {
-            propertyId: property.id,
-            arrival: searchDates.arrival,
-            departure: searchDates.departure,
-            adults: searchDates.adults,
-            children: searchDates.children ?? 0,
-            childAges: searchDates.childAges ?? []
-          }
-        }
-      })
+    if (tab === "book") {
+      loadCorporates()
+      if (searchDates) runGetAvail(corporateId)
     }
-  }, [tab, property.id, searchDates, getAvail])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, property.id, searchDates])
 
   const availRates = availData?.tlAvailability?.rates ?? []
   const nights = searchDates ? nightsBetween(searchDates.arrival, searchDates.departure) : 0
@@ -82,6 +103,31 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
     setPendingChecksum(rate.checksum)
     setBookResult(null)
     setBookError("")
+    setSelectedEarlyCheckIn(null)
+    setSelectedLateCheckOut(null)
+    setExtraStays(null)
+    if (searchDates) {
+      getExtraStays({
+        variables: {
+          propertyId: property.id,
+          input: {
+            arrivalDateTime: rate.checkInTime ?? searchDates.arrival,
+            departureDateTime: rate.checkOutTime ?? searchDates.departure,
+            roomTypeId: rate.roomTypeId,
+            ratePlanId: rate.ratePlanId,
+            roomTypePlacements: rate.roomTypePlacements ?? [],
+            adults: searchDates.adults ?? 1,
+            childAges: searchDates.childAges ?? [],
+            corporateId: corporateId || null
+          }
+        }
+      }).then((res) => {
+        const es = res.data?.tlExtraStays
+        if (es && (es.earlyCheckIn.length > 0 || es.lateCheckOut.length > 0)) {
+          setExtraStays(es)
+        }
+      }).catch(() => {})
+    }
   }
 
   const submitBooking = async () => {
@@ -101,7 +147,10 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
             checksum: pendingChecksum,
             roomTypePlacements: bookingRate.roomTypePlacements,
             checkInTime: bookingRate.checkInTime,
-            checkOutTime: bookingRate.checkOutTime
+            checkOutTime: bookingRate.checkOutTime,
+            corporateId: corporateId || null,
+            earlyCheckInDateTime: selectedEarlyCheckIn?.dateTimeLocal ?? null,
+            lateCheckOutDateTime: selectedLateCheckOut?.dateTimeLocal ?? null
           }
         }
       })
@@ -158,6 +207,9 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
             roomTypePlacements: bookingRate.roomTypePlacements,
             checkInTime: bookingRate.checkInTime,
             checkOutTime: bookingRate.checkOutTime,
+            corporateId: corporateId || null,
+            earlyCheckInDateTime: selectedEarlyCheckIn?.dateTimeLocal ?? null,
+            lateCheckOutDateTime: selectedLateCheckOut?.dateTimeLocal ?? null,
             roomTypeName: bookingRate.roomTypeName || null,
             ratePlanName: bookingRate.ratePlanName || null,
             cancellationPoliciesJson: bookingRate.cancellationPolicies?.length
@@ -313,6 +365,21 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
               bookError={bookError}
               onClose={onClose}
               onBookingCreated={onBookingCreated}
+              corporateId={corporateId}
+              setCorporateId={setCorporateId}
+              corporates={corporatesData?.tlCorporates ?? []}
+              corporatesLoading={corporatesLoading}
+              onRefreshAvail={() => runGetAvail(corporateId)}
+              selectedEarlyCheckIn={selectedEarlyCheckIn}
+              setSelectedEarlyCheckIn={setSelectedEarlyCheckIn}
+              selectedLateCheckOut={selectedLateCheckOut}
+              setSelectedLateCheckOut={setSelectedLateCheckOut}
+              extraCost={extraCost}
+              totalWithExtras={totalWithExtras}
+              extraStays={extraStays}
+              extraStaysLoading={extraStaysLoading}
+              effectiveCheckInTime={effectiveCheckInTime}
+              effectiveCheckOutTime={effectiveCheckOutTime}
             />
           )}
           {tab === "calendar" && searchDates && (
@@ -622,7 +689,22 @@ function BookView({
   creating,
   bookError,
   onClose,
-  onBookingCreated
+  onBookingCreated,
+  corporateId,
+  setCorporateId,
+  corporates,
+  corporatesLoading,
+  onRefreshAvail,
+  selectedEarlyCheckIn,
+  setSelectedEarlyCheckIn,
+  selectedLateCheckOut,
+  setSelectedLateCheckOut,
+  extraCost,
+  totalWithExtras,
+  extraStays,
+  extraStaysLoading,
+  effectiveCheckInTime,
+  effectiveCheckOutTime
 }) {
   return (
     <div className={classes.flexCol} style={{ gap: 16 }}>
@@ -649,6 +731,40 @@ function BookView({
         <span style={{ fontWeight: 500, color: "#0f172a" }}>
           {nights} {nightWord(nights)}
         </span>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+          <label style={{ fontSize: 11, color: "#94a3b8" }}>Корпоративный клиент (необязательно)</label>
+          <select
+            value={corporateId}
+            onChange={(e) => setCorporateId(e.target.value)}
+            className={classes.miniInput}
+            disabled={corporatesLoading}
+          >
+            <option value="">— Без корпоративного тарифа —</option>
+            {(corporates ?? []).length > 0
+              ? (corporates ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.legalName || `ID: ${c.id}`}
+                  </option>
+                ))
+              : [
+                  { id: "109", label: "QA: корп. клиент 109" },
+                  { id: "110", label: "QA: корп. клиент 110" },
+                  { id: "118", label: "QA: корп. клиент 118" },
+                  { id: "119", label: "QA: корп. клиент 119" }
+                ].map((c) => (
+                  <option key={c.id} value={c.id}>{c.label}</option>
+                ))
+            }
+          </select>
+        </div>
+        <div style={{ paddingTop: 16 }}>
+          <Btn variant="secondary" onClick={onRefreshAvail} loading={availLoading}>
+            Обновить тарифы
+          </Btn>
+        </div>
       </div>
 
       {conditionChange && (
@@ -764,6 +880,115 @@ function BookView({
             </>
           )}
 
+          {extraStaysLoading && (
+            <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8 }}>Загрузка опций РЗПВ...</p>
+          )}
+
+          {(extraStays?.earlyCheckIn?.length > 0 || extraStays?.lateCheckOut?.length > 0) && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, marginBottom: 12, alignItems: "start" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {extraStays?.earlyCheckIn?.length > 0 && (
+                  <div>
+                    <p className={classes.label} style={{ marginBottom: 4 }}>Ранний заезд</p>
+                    <select
+                      value={selectedEarlyCheckIn ? extraStays.earlyCheckIn.indexOf(selectedEarlyCheckIn) : ""}
+                      onChange={(e) => {
+                        const idx = e.target.value
+                        setSelectedEarlyCheckIn(idx === "" ? null : extraStays.earlyCheckIn[Number(idx)])
+                      }}
+                      className={classes.input}
+                      style={{ fontSize: 13 }}
+                    >
+                      <option value="">— не выбрано</option>
+                      {extraStays.earlyCheckIn.map((opt, i) => (
+                        <option key={i} value={i}>
+                          с {opt.dateTimeLocal?.slice(11, 16)} — +{opt.price.toLocaleString("ru-RU")} {opt.currency}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {extraStays?.lateCheckOut?.length > 0 && (
+                  <div>
+                    <p className={classes.label} style={{ marginBottom: 4 }}>Поздний выезд</p>
+                    <select
+                      value={selectedLateCheckOut ? extraStays.lateCheckOut.indexOf(selectedLateCheckOut) : ""}
+                      onChange={(e) => {
+                        const idx = e.target.value
+                        setSelectedLateCheckOut(idx === "" ? null : extraStays.lateCheckOut[Number(idx)])
+                      }}
+                      className={classes.input}
+                      style={{ fontSize: 13 }}
+                    >
+                      <option value="">— не выбрано</option>
+                      {extraStays.lateCheckOut.map((opt, i) => (
+                        <option key={i} value={i}>
+                          до {opt.dateTimeLocal?.slice(11, 16)} — +{opt.price.toLocaleString("ru-RU")} {opt.currency}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              <div style={{
+                background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8,
+                padding: "10px 14px", minWidth: 160, fontSize: 12
+              }}>
+                <div style={{ marginBottom: 8 }}>
+                  <p style={{ margin: "0 0 2px", color: "#94a3b8", fontSize: 11 }}>Заезд</p>
+                  <p style={{
+                    margin: 0, fontWeight: 700,
+                    color: selectedEarlyCheckIn ? "#d97706" : "#0f172a",
+                    fontSize: 13
+                  }}>
+                    {effectiveCheckInTime
+                      ? effectiveCheckInTime.slice(0, 10).split("-").reverse().join(".") + " " + effectiveCheckInTime.slice(11, 16)
+                      : (searchDates?.arrival?.slice(0, 10).split("-").reverse().join(".") ?? "—")}
+                  </p>
+                  {selectedEarlyCheckIn && (
+                    <p style={{ margin: "2px 0 0", fontSize: 10, color: "#d97706" }}>ранний заезд +{selectedEarlyCheckIn.price.toLocaleString("ru-RU")} {selectedEarlyCheckIn.currency}</p>
+                  )}
+                </div>
+                <div>
+                  <p style={{ margin: "0 0 2px", color: "#94a3b8", fontSize: 11 }}>Выезд</p>
+                  <p style={{
+                    margin: 0, fontWeight: 700,
+                    color: selectedLateCheckOut ? "#d97706" : "#0f172a",
+                    fontSize: 13
+                  }}>
+                    {effectiveCheckOutTime
+                      ? effectiveCheckOutTime.slice(0, 10).split("-").reverse().join(".") + " " + effectiveCheckOutTime.slice(11, 16)
+                      : (searchDates?.departure?.slice(0, 10).split("-").reverse().join(".") ?? "—")}
+                  </p>
+                  {selectedLateCheckOut && (
+                    <p style={{ margin: "2px 0 0", fontSize: 10, color: "#d97706" }}>поздний выезд +{selectedLateCheckOut.price.toLocaleString("ru-RU")} {selectedLateCheckOut.currency}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {extraCost > 0 && (
+            <div style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: "#f0fdf4",
+              border: "1px solid #86efac",
+              borderRadius: 8,
+              padding: "8px 12px",
+              marginBottom: 12,
+              fontSize: 13,
+              color: "#166534"
+            }}>
+              <span>Итого с доп. услугами</span>
+              <strong style={{ fontFamily: "Inter", fontSize: 15, fontWeight: 700 }}>
+                {totalWithExtras.toLocaleString("ru-RU")} {bookingRate.currency}
+              </strong>
+            </div>
+          )}
+
           <input
             type="text"
             value={bookForm.comment}
@@ -795,7 +1020,36 @@ function BookView({
               <InfoRow label="Номер брони" value={<code>{bookResult.id}</code>} />
               <InfoRow label="Статус" value={bookResult.status} />
               <InfoRow label="Отель" value={bookResult.propertyName ?? bookResult.propertyId} />
-              <InfoRow label="Заезд / Выезд" value={`${bookResult.arrival} → ${bookResult.departure}`} />
+              <InfoRow
+                label="Заезд"
+                value={
+                  <span>
+                    {effectiveCheckInTime
+                      ? effectiveCheckInTime.slice(0, 10).split("-").reverse().join(".") + " " + effectiveCheckInTime.slice(11, 16)
+                      : bookResult.arrival}
+                    {selectedEarlyCheckIn && (
+                      <span style={{ marginLeft: 6, fontSize: 11, color: "#d97706", fontWeight: 600 }}>
+                        ранний заезд +{selectedEarlyCheckIn.price.toLocaleString("ru-RU")} {selectedEarlyCheckIn.currency}
+                      </span>
+                    )}
+                  </span>
+                }
+              />
+              <InfoRow
+                label="Выезд"
+                value={
+                  <span>
+                    {effectiveCheckOutTime
+                      ? effectiveCheckOutTime.slice(0, 10).split("-").reverse().join(".") + " " + effectiveCheckOutTime.slice(11, 16)
+                      : bookResult.departure}
+                    {selectedLateCheckOut && (
+                      <span style={{ marginLeft: 6, fontSize: 11, color: "#d97706", fontWeight: 600 }}>
+                        поздний выезд +{selectedLateCheckOut.price.toLocaleString("ru-RU")} {selectedLateCheckOut.currency}
+                      </span>
+                    )}
+                  </span>
+                }
+              />
               <InfoRow label="Гость" value={`${bookResult.guest?.firstName} ${bookResult.guest?.lastName}`} />
               <InfoRow label="Сумма" value={`${bookResult.totalPrice?.toLocaleString("ru-RU")} ${bookResult.currency}`} />
             </div>
@@ -819,8 +1073,14 @@ function BookView({
             return (
               <div key={i} className={cn(classes.rateItem, isSelected && classes.rateItemSelected)}>
                 <div className={classes.rateInfo}>
-                  <div className={classes.flexRow} style={{ gap: 8, flexWrap: "wrap" }}>
+                  <div className={classes.flexRow} style={{ gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                     <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{rate.roomTypeName || "Номер"}</p>
+                    {rate.corporateIds?.length > 0 && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4,
+                        background: "#dcfce7", border: "1px solid #86efac", color: "#15803d", whiteSpace: "nowrap"
+                      }}>Корпоративный</span>
+                    )}
                     {rate.maxOccupancy && <span className={classes.smallText}>до {rate.maxOccupancy} чел.</span>}
                   </div>
                   <p style={{ fontSize: 12, color: "#475569", margin: "4px 0 0" }}>{rate.ratePlanName}</p>
@@ -831,6 +1091,18 @@ function BookView({
                       </Badge>
                     )}
                     {rate.mealType && <Badge color="blue">{rate.mealType}</Badge>}
+                    {rate.earlyCheckInOptions?.length > 0 && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4,
+                        background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8"
+                      }}>⏰ Ранний заезд</span>
+                    )}
+                    {rate.lateCheckOutOptions?.length > 0 && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 600, padding: "2px 7px", borderRadius: 4,
+                        background: "#eff6ff", border: "1px solid #bfdbfe", color: "#1d4ed8"
+                      }}>🌙 Поздний выезд</span>
+                    )}
                   </div>
                   {rate.cancellationPolicies && rate.cancellationPolicies.length > 0 && (
                     <div style={{ marginTop: 8 }}>

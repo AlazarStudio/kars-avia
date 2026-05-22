@@ -104,6 +104,8 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
   }, [personName, personEmail, personNumber]);
 
   const [selectedRate, setSelectedRate] = useState(null);
+  const [selectedEarlyCheckIn, setSelectedEarlyCheckIn] = useState(null);
+  const [selectedLateCheckOut, setSelectedLateCheckOut] = useState(null);
   const [guest, setGuest] = useState(initialGuest);
   const [differentBooker, setDifferentBooker] = useState(false);
   const [booker, setBooker] = useState({
@@ -202,7 +204,25 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
     setConditionChange(null);
     setBookError("");
     setBookResult(null);
+    setSelectedEarlyCheckIn(null);
+    setSelectedLateCheckOut(null);
   };
+
+  // Рассчитываем итоговую цену с учётом РЗПВ
+  const extraCost =
+    (selectedEarlyCheckIn?.price ?? 0) + (selectedLateCheckOut?.price ?? 0);
+  const totalWithExtras =
+    selectedRate
+      ? (selectedRate.priceBeforeTax || 0) * nights + extraCost
+      : 0;
+
+  // Строим checkInTime / checkOutTime с учётом выбранных опций
+  const effectiveCheckInTime = selectedEarlyCheckIn
+    ? `${arrival?.slice(0, 10)}T${selectedEarlyCheckIn.periodFrom}`
+    : selectedRate?.checkInTime ?? null;
+  const effectiveCheckOutTime = selectedLateCheckOut
+    ? `${departure?.slice(0, 10)}T${selectedLateCheckOut.periodTo}`
+    : selectedRate?.checkOutTime ?? null;
 
   const submitBooking = async () => {
     if (!selectedRate || !arrival || !departure) return;
@@ -221,8 +241,9 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
             childAges: [],
             checksum: pendingChecksum,
             roomTypePlacements: selectedRate.roomTypePlacements,
-            checkInTime: selectedRate.checkInTime,
-            checkOutTime: selectedRate.checkOutTime,
+            checkInTime: effectiveCheckInTime,
+            checkOutTime: effectiveCheckOutTime,
+            corporateId: selectedRate.corporateIds?.[0] ?? null,
           },
         },
       });
@@ -275,9 +296,10 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
             comment: guest.comment || null,
             checksum: pendingChecksum,
             roomTypePlacements: selectedRate.roomTypePlacements,
-            checkInTime: selectedRate.checkInTime,
-            checkOutTime: selectedRate.checkOutTime,
+            checkInTime: effectiveCheckInTime,
+            checkOutTime: effectiveCheckOutTime,
             roomTypeName: selectedRate.roomTypeName || null,
+            corporateId: selectedRate.corporateIds?.[0] ?? null,
             ratePlanName: selectedRate.ratePlanName || null,
             cancellationPoliciesJson: selectedRate.cancellationPolicies?.length
               ? JSON.stringify(selectedRate.cancellationPolicies)
@@ -583,6 +605,66 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                         </div>
                       </>
                     )}
+                    {/* Ранний заезд */}
+                    {selectedRate.earlyCheckInOptions?.length > 0 && (
+                      <div className={classes.timeServiceBlock}>
+                        <div className={classes.timeServiceTitle}>Ранний заезд</div>
+                        <div className={classes.timeServiceChips}>
+                          <button
+                            type="button"
+                            className={`${classes.timeServiceChip} ${!selectedEarlyCheckIn ? classes.timeServiceChipActive : ""}`}
+                            onClick={() => setSelectedEarlyCheckIn(null)}
+                          >
+                            Стандартный
+                          </button>
+                          {selectedRate.earlyCheckInOptions.map((opt, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              className={`${classes.timeServiceChip} ${selectedEarlyCheckIn === opt ? classes.timeServiceChipActive : ""}`}
+                              onClick={() => setSelectedEarlyCheckIn(selectedEarlyCheckIn === opt ? null : opt)}
+                            >
+                              с {opt.periodFrom} · +{opt.price.toLocaleString("ru-RU")} {opt.currency}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Поздний выезд */}
+                    {selectedRate.lateCheckOutOptions?.length > 0 && (
+                      <div className={classes.timeServiceBlock}>
+                        <div className={classes.timeServiceTitle}>Поздний выезд</div>
+                        <div className={classes.timeServiceChips}>
+                          <button
+                            type="button"
+                            className={`${classes.timeServiceChip} ${!selectedLateCheckOut ? classes.timeServiceChipActive : ""}`}
+                            onClick={() => setSelectedLateCheckOut(null)}
+                          >
+                            Стандартный
+                          </button>
+                          {selectedRate.lateCheckOutOptions.map((opt, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              className={`${classes.timeServiceChip} ${selectedLateCheckOut === opt ? classes.timeServiceChipActive : ""}`}
+                              onClick={() => setSelectedLateCheckOut(selectedLateCheckOut === opt ? null : opt)}
+                            >
+                              до {opt.periodTo} · +{opt.price.toLocaleString("ru-RU")} {opt.currency}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Итог с учётом доп. услуг */}
+                    {extraCost > 0 && (
+                      <div className={classes.totalBlock}>
+                        <span>Итого с доп. услугами</span>
+                        <strong>{totalWithExtras.toLocaleString("ru-RU")} {selectedRate.currency}</strong>
+                      </div>
+                    )}
+
                     <FormField
                       label="Комментарий для отеля"
                       placeholder="Пожелания гостя (тихий этаж, поздний заезд и т.п.)"
@@ -655,10 +737,19 @@ function RateCard({ rate, nights, selected, onPick }) {
     rate.checkOutTime && String(rate.checkOutTime).includes("T")
       ? String(rate.checkOutTime).split("T")[1]?.slice(0, 5)
       : null;
+  const isCorporate = rate.corporateIds?.length > 0;
+  const hasEarly = rate.earlyCheckInOptions?.length > 0;
+  const hasLate = rate.lateCheckOutOptions?.length > 0;
+
   return (
     <div className={`${classes.rate} ${selected ? classes.rateSelected : ""}`}>
       <div className={classes.rateInfo}>
-        <div className={classes.rateName}>{rate.roomTypeName || "Номер"}</div>
+        <div className={classes.rateNameRow}>
+          <div className={classes.rateName}>{rate.roomTypeName || "Номер"}</div>
+          {isCorporate && (
+            <span className={classes.corporateBadge}>Корпоративный</span>
+          )}
+        </div>
         <div className={classes.rateSub}>
           {rate.ratePlanName}
           {rate.mealType ? ` · ${rate.mealType}` : ""}
@@ -667,6 +758,12 @@ function RateCard({ rate, nights, selected, onPick }) {
           <div className={classes.rateSub}>
             Заезд {checkInTimeOnly || "—"} · Выезд {checkOutTimeOnly || "—"}
             {rate.timezone ? ` (${rate.timezone})` : ""}
+          </div>
+        )}
+        {(hasEarly || hasLate) && (
+          <div className={classes.rateServiceBadges}>
+            {hasEarly && <span className={classes.serviceBadge}>⏰ Ранний заезд</span>}
+            {hasLate && <span className={classes.serviceBadge}>🌙 Поздний выезд</span>}
           </div>
         )}
         {rate.placements?.length > 0 && (

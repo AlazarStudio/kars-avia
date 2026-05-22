@@ -9,6 +9,7 @@ import {
   GET_TL_RATE_PLANS,
   GET_TL_RESERVATIONS,
   GET_TL_ROOM_TYPES,
+  TL_CORPORATES,
   TL_LOCAL_PROPERTIES,
   TL_CANCELLATION_PENALTY,
   TL_PROPERTIES_AVAILABILITY
@@ -32,25 +33,29 @@ export default function SearchBookingTab() {
   const [starsFilter, setStarsFilter] = useState("")
   const [sortBy, setSortBy] = useState("availability")
   const [searched, setSearched] = useState(false)
+  const [corporateId, setCorporateId] = useState("")
   const [guestOpen, setGuestOpen] = useState(false)
   const [dateOpen, setDateOpen] = useState(false)
   const [cityOpen, setCityOpen] = useState(false)
+  const [corporateOpen, setCorporateOpen] = useState(false)
   const [modalProperty, setModalProperty] = useState(null)
   const [modalSearchDates, setModalSearchDates] = useState(null)
 
   const guestDropRef = useRef(null)
   const dateDropRef = useRef(null)
   const cityDropRef = useRef(null)
+  const corporateDropRef = useRef(null)
 
   useEffect(() => {
     const handler = (e) => {
       if (guestOpen && guestDropRef.current && !guestDropRef.current.contains(e.target)) setGuestOpen(false)
       if (dateOpen && dateDropRef.current && !dateDropRef.current.contains(e.target)) setDateOpen(false)
       if (cityOpen && cityDropRef.current && !cityDropRef.current.contains(e.target)) setCityOpen(false)
+      if (corporateOpen && corporateDropRef.current && !corporateDropRef.current.contains(e.target)) setCorporateOpen(false)
     }
     document.addEventListener("mousedown", handler)
     return () => document.removeEventListener("mousedown", handler)
-  }, [guestOpen, dateOpen, cityOpen])
+  }, [guestOpen, dateOpen, cityOpen, corporateOpen])
 
   const rangeStart = arrival && isValid(parseISO(arrival)) ? parseISO(arrival) : new Date()
   const rangeEnd = departure && isValid(parseISO(departure)) ? parseISO(departure) : new Date()
@@ -93,6 +98,18 @@ export default function SearchBookingTab() {
   const [searchAvail, { data: availData, loading: availLoading, error: availError }] = useLazyQuery(
     TL_PROPERTIES_AVAILABILITY
   )
+  const { data: corporatesData } = useQuery(TL_CORPORATES, { fetchPolicy: "cache-first" })
+  const corporates = corporatesData?.tlCorporates ?? []
+
+  const QA_CORPORATES = [
+    { id: "109", label: "QA 109" },
+    { id: "110", label: "QA 110" },
+    { id: "118", label: "QA 118" },
+    { id: "119", label: "QA 119" }
+  ]
+  const corporateOptions = corporates.length > 0
+    ? corporates.map((c) => ({ id: c.id, label: c.legalName || `ID: ${c.id}` }))
+    : QA_CORPORATES
 
   const handleSearch = () => {
     if (!datesReady) return
@@ -106,11 +123,11 @@ export default function SearchBookingTab() {
           adults: parseInt(adults) || 1,
           children: parseInt(childrenCount) || 0,
           childAges: childAges.length > 0 ? childAges : null,
-          propertyIds: contentPropertyIds.length > 0 ? contentPropertyIds : null
+          propertyIds: contentPropertyIds.length > 0 ? contentPropertyIds : null,
+          ...(corporateId ? { corporateIds: [corporateId] } : {})
         }
       }
     }).then(() => {
-      // Бэк мог дозалить новые отели в БД — обновим локальный список
       refetchLocalProperties()
     })
   }
@@ -187,7 +204,8 @@ export default function SearchBookingTab() {
             departure,
             adults: parseInt(adults) || 1,
             children: parseInt(childrenCount) || 0,
-            childAges: childAges.length > 0 ? childAges : null
+            childAges: childAges.length > 0 ? childAges : null,
+            corporateId: corporateId || null
           }
         : null
     )
@@ -473,6 +491,36 @@ export default function SearchBookingTab() {
               )}
             </div>
 
+            <div ref={corporateDropRef} className={cn(classes.searchCol, classes.relative)}>
+              <button type="button" onClick={() => setCorporateOpen(!corporateOpen)} className={classes.searchSelectBtn}>
+                <div className={classes.searchColLabel}>Корп. тариф</div>
+                <div className={classes.searchColValue}>
+                  {corporateId ? (corporateOptions.find((c) => c.id === corporateId)?.label ?? `ID: ${corporateId}`) : "Не выбран"}
+                </div>
+              </button>
+              {corporateOpen && (
+                <div className={classes.dropdownPanel}>
+                  <button
+                    type="button"
+                    className={cn(classes.dropdownItem, !corporateId && classes.dropdownActive)}
+                    onClick={() => { setCorporateId(""); setCorporateOpen(false) }}
+                  >
+                    Не выбран
+                  </button>
+                  {corporateOptions.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => { setCorporateId(c.id); setCorporateOpen(false) }}
+                      className={cn(classes.dropdownItem, corporateId === c.id && classes.dropdownActive)}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div style={{ paddingTop: 12 }}>
               <Btn onClick={handleSearch} loading={availLoading} disabled={!datesReady}>
                 Найти
@@ -574,6 +622,7 @@ export default function SearchBookingTab() {
                     </div>
                     <div className={classes.hotelCardBody}>
                       <p className={classes.hotelCardName}>{p.name || "—"}</p>
+                      <p style={{ fontSize: 10, color: "#94a3b8", fontFamily: "monospace", margin: "2px 0 0" }}>ID: {p.id}</p>
                       {p.address?.city && <p className={classes.hotelCardCity}>📍 {p.address.city}</p>}
                       <div className={classes.hotelCardFooter}>
                         {p.stars ? <StarRow count={parseInt(p.stars) || 0} /> : <span />}
@@ -625,6 +674,11 @@ export default function SearchBookingTab() {
                           ? "Отменено"
                           : r.status}
                       </Badge>
+                      {r.corporateId && (
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4, background: "#dcfce7", border: "1px solid #86efac", color: "#15803d" }}>
+                          Корпоративный
+                        </span>
+                      )}
                     </div>
                     <p style={{ fontSize: 12, color: "#475569", fontWeight: 500, margin: 0 }}>
                       {r.propertyName ?? r.propertyId}
@@ -687,6 +741,7 @@ export default function SearchBookingTab() {
             setDetailReservation(null)
             startCancel(id, r)
           }}
+          onAmended={() => refetch()}
         />
       )}
     </div>
