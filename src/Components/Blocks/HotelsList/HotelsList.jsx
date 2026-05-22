@@ -25,15 +25,45 @@ function HotelsList({ children, user, ...props }) {
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Все фильтры синхронизируются через URL search params,
+  // чтобы при возврате назад из карточки гостиницы они восстанавливались.
+  const urlParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
+  const pageNumber = urlParams.get("page");
+  const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
+  const urlCityId = urlParams.get("city") || "";
+  const urlStars = urlParams.get("stars") || "";
+  const urlUsStars = urlParams.get("usStars") || "";
+  const urlSearch = urlParams.get("search") || "";
+
   const [filterData, setFilterData] = useState({
-    filterStars: "",
-    filterUsStars: "",
+    filterStars: urlStars,
+    filterUsStars: urlUsStars,
   });
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
-  const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
+  const [isSearching, setIsSearching] = useState(Boolean(urlSearch));
+  const [allFilteredData, setAllFilteredData] = useState([]);
+
+  const updateUrlParams = (updates) => {
+    const params = new URLSearchParams(location.search);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === "" || value == null) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    const qs = params.toString();
+    navigate(qs ? `?${qs}` : "", { replace: false });
+  };
 
   const { data: dataSubscription } = useSubscription(GET_HOTELS_SUBSCRIPTION);
   const { data: dataSubscriptionUpd } = useSubscription(
@@ -44,13 +74,6 @@ function HotelsList({ children, user, ...props }) {
       },
     },
   );
-
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  // Получение текущей страницы из URL
-  const pageNumber = new URLSearchParams(location.search).get("page");
-  const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
 
   const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
 
@@ -76,6 +99,44 @@ function HotelsList({ children, user, ...props }) {
       setCities(citiesData.citys);
     }
   }, [citiesData]);
+
+  // Восстановление выбранного города из URL после загрузки справочника.
+  useEffect(() => {
+    if (!urlCityId) {
+      if (selectedCity) setSelectedCity(null);
+      return;
+    }
+    if (selectedCity?.id === urlCityId) return;
+    if (cities.length === 0) return;
+    const city = cities.find((c) => c.id === urlCityId);
+    if (city) setSelectedCity(city);
+  }, [cities, urlCityId, selectedCity]);
+
+  // Синхронизация локального состояния фильтров со значениями из URL
+  // (на случай навигации браузерными кнопками вперёд/назад).
+  useEffect(() => {
+    setFilterData((prev) =>
+      prev.filterStars === urlStars && prev.filterUsStars === urlUsStars
+        ? prev
+        : { filterStars: urlStars, filterUsStars: urlUsStars },
+    );
+  }, [urlStars, urlUsStars]);
+
+  useEffect(() => {
+    setPageInfo((prev) =>
+      prev.skip === currentPage ? prev : { ...prev, skip: currentPage },
+    );
+  }, [currentPage]);
+
+  // Сброс поиска, если в URL не осталось ?search= (например после клика
+  // по пункту меню «Гостиницы»).
+  useEffect(() => {
+    if (!urlSearch && searchQuery) {
+      setSearchQuery("");
+      setIsSearching(false);
+      setAllFilteredData([]);
+    }
+  }, [urlSearch, searchQuery]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTELS, {
     context: {
@@ -154,20 +215,18 @@ function HotelsList({ children, user, ...props }) {
   const handleFilterChange = (name, value) => {
     setFilterData((prev) => ({ ...prev, [name]: value }));
     setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    navigate("?page=1");
+    const urlKey = name === "filterStars" ? "stars" : "usStars";
+    updateUrlParams({ [urlKey]: value, page: "1" });
   };
 
   const handleCityChange = (_, newValue) => {
     setSelectedCity(newValue || null);
     setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    navigate("?page=1");
+    updateUrlParams({ city: newValue?.id || "", page: "1" });
   };
 
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-
-    if (query.trim() == "") {
+  const runSearch = async (query) => {
+    if (query.trim() === "") {
       setIsSearching(false);
       refetch({
         pagination: { skip: currentPage, take: 20 },
@@ -191,6 +250,21 @@ function HotelsList({ children, user, ...props }) {
       console.error("Ошибка при поиске:", err);
     }
   };
+
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    updateUrlParams({ search: query.trim() ? query : "" });
+    await runSearch(query);
+  };
+
+  // Восстановление поиска при возвращении на страницу с непустым ?search=.
+  useEffect(() => {
+    if (urlSearch && isSearching && allFilteredData.length === 0) {
+      runSearch(urlSearch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch]);
 
   const filteredRequests = useMemo(() => {
     const dataSource = isSearching ? allFilteredData : companyData;
@@ -225,7 +299,7 @@ function HotelsList({ children, user, ...props }) {
   const handlePageClick = (event) => {
     const selectedPage = event.selected;
     setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
-    navigate(`?page=${selectedPage + 1}`);
+    updateUrlParams({ page: String(selectedPage + 1) });
   };
 
   const starsOptions = ["1", "2", "3", "4", "5"];

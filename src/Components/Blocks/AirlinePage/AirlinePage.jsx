@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import classes from "./AirlinePage.module.css";
 import Header from "../Header/Header";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { roles } from "../../../roles";
 import { GET_AIRLINE, getCookie } from "../../../../graphQL_requests";
@@ -13,7 +13,18 @@ import AirlineReadinessIndicator from "../AirlineReadinessIndicator/AirlineReadi
 
 function AirlinePage({ children, id, user, accessMenu, ...props }) {
   let params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const token = getCookie("token");
+
+  const handleBack = (e) => {
+    e.preventDefault();
+    if (location.key !== "default") {
+      navigate(-1);
+    } else {
+      navigate("/airlines");
+    }
+  };
 
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -65,7 +76,7 @@ function AirlinePage({ children, id, user, accessMenu, ...props }) {
           <div className={classes.titleHeader}>
             {(user.role === roles.superAdmin ||
               user.role === roles.dispatcerAdmin) && (
-              <Link to={"/airlines"} className={classes.backButton}>
+              <Link to={"/airlines"} onClick={handleBack} className={classes.backButton}>
                 <img src="/arrow.png" alt="" />
               </Link>
             )}

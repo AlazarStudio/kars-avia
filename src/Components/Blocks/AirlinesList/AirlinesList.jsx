@@ -25,8 +25,6 @@ function AirlinesList({ children, representative, ...props }) {
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
   const [filterData, setFilterData] = useState({ filterSelect: "" });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
   const [airports, setAirports] = useState([]); // Список аэропортов
   const [cities, setCities] = useState([]); // Список аэропортов
@@ -55,11 +53,23 @@ function AirlinesList({ children, representative, ...props }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Получение текущей страницы из URL
-  const pageNumber = new URLSearchParams(location.search).get("page");
+  // В URL храним только номер страницы (поиск намеренно не сохраняем).
+  const urlParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
+  const pageNumber = urlParams.get("page");
   const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
+
+  useEffect(() => {
+    setPageInfo((prev) =>
+      prev.skip === currentPage ? prev : { ...prev, skip: currentPage },
+    );
+  }, [currentPage]);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINES, {
     context: {
@@ -134,32 +144,34 @@ function AirlinesList({ children, representative, ...props }) {
     }));
   };
 
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-
-    if (query.trim() == "") {
-      // Если строка поиска пуста, возвращаемся к стандартному режиму
+  const runSearch = async (query) => {
+    if (query.trim() === "") {
       setIsSearching(false);
       refetch({
-        pagination: { skip: currentPage, take: 20 }, // Загрузить большое количество данных для поиска
-      }); // Запускаем повторный запрос с пагинацией
+        pagination: { skip: currentPage, take: 20 },
+      });
       return;
     }
 
-    setIsSearching(true); // Активируем режим поиска
+    setIsSearching(true);
 
     try {
       const { data } = await refetch({
-        pagination: { all: true }, // Загрузить большое количество данных для поиска
+        pagination: { all: true },
       });
 
       if (data && data.airlines?.airlines) {
-        setAllFilteredData(data.airlines.airlines); // Сохраняем все данные для локального поиска
+        setAllFilteredData(data.airlines.airlines);
       }
     } catch (err) {
       console.error("Ошибка при поиске:", err);
     }
+  };
+
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    await runSearch(query);
   };
 
   // Фильтрация запросов по имени авиакомпании

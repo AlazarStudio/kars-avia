@@ -173,7 +173,7 @@ function Header({ children, isExternalUser = false }) {
       userId: user?.userId,
     },
     skip:
-      isExternalUser || (userData?.role !== roles.superAdmin ? false : true),
+      isExternalUser || userData?.dispatcher === true,
   });
 
   const { data: unreadMessagesCount, refetch: unreadRefetch } = useQuery(
@@ -341,7 +341,7 @@ function Header({ children, isExternalUser = false }) {
 
         {!loading && !error && !isExternalUser && (
           <div className={classes.section_top_elems}>
-            {userData?.role !== roles.superAdmin ? (
+            {userData?.dispatcher !== true ? (
               <div
                 className={classes.section_top_elems_support}
                 onClick={toggleSupportSidebar}
@@ -493,7 +493,7 @@ function Header({ children, isExternalUser = false }) {
         mode={profileEditMode}
       />
 
-      {data?.user?.role !== roles.superAdmin && showSupportSidebar ? (
+      {data?.user?.dispatcher !== true && showSupportSidebar ? (
         <Support
           show={showSupportSidebar}
           onClose={toggleSupportSidebar}

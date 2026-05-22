@@ -223,10 +223,28 @@ function TransferMessage({
 
       setMessages((prevMessages) => {
         const messageExists = prevMessages.some((msg) => msg.id === newMessage.id);
-        if (!messageExists) {
-          return [...prevMessages, newMessage];
-        }
-        return prevMessages;
+        if (messageExists) return prevMessages;
+
+        // Снимаем свой оптимистичный дубликат (тот же текст, тот же отправитель)
+        const newSenderId =
+          newMessage.senderUser?.id ||
+          newMessage.senderDriver?.id ||
+          newMessage.senderPersonal?.id ||
+          null;
+        const withoutOptimistic = prevMessages.filter((msg) => {
+          if (!String(msg.id || "").startsWith("optimistic-")) return true;
+          const prevSenderId =
+            msg.senderUser?.id ||
+            msg.senderDriver?.id ||
+            msg.senderPersonal?.id ||
+            null;
+          const sameText = msg.text === newMessage.text;
+          const sameAuthor = msg.authorType === newMessage.authorType;
+          const sameSender = prevSenderId && prevSenderId === newSenderId;
+          return !(sameText && sameAuthor && sameSender);
+        });
+
+        return [...withoutOptimistic, newMessage];
       });
 
       // Увеличиваем счетчик, если это чужое сообщение
@@ -367,7 +385,7 @@ function TransferMessage({
       createdAt: new Date().toISOString(),
       authorType: userActorType,
       chatId: selectedChat.id,
-      senderUser: userActorType === ACTOR_TYPES.USER ? { id: userID, name: user?.name || '', images: user?.images || [] } : null,
+      senderUser: userActorType === ACTOR_TYPES.USER ? { id: userID, name: user?.name || '', role: user?.role || null, images: user?.images || [] } : null,
       senderDriver: userActorType === ACTOR_TYPES.DRIVER ? { id: userID, name: user?.name || '' } : null,
       senderPersonal: userActorType === ACTOR_TYPES.PERSONAL ? { id: userID, name: user?.name || '' } : null,
       readBy: [],
@@ -437,9 +455,15 @@ function TransferMessage({
     return false;
   };
 
-  // Получаем текст роли по authorType
+  // Получаем текст роли по authorType (с учётом супер-админа)
+  const isSenderSuperAdmin = (message) =>
+    message.authorType === ACTOR_TYPES.USER &&
+    message.senderUser?.role === roles.superAdmin;
+
   const getRoleText = (message) => {
-    if (message.authorType === ACTOR_TYPES.USER) return "Диспетчер";
+    if (message.authorType === ACTOR_TYPES.USER) {
+      return isSenderSuperAdmin(message) ? "Техническая поддержка" : "Диспетчер";
+    }
     if (message.authorType === ACTOR_TYPES.DRIVER) return "Водитель";
     if (message.authorType === ACTOR_TYPES.PERSONAL) return "Пассажир";
     return "";
@@ -543,6 +567,7 @@ function TransferMessage({
             const isMy = isMyMessage(message);
             const sender = getSender(message);
             const roleText = getRoleText(message);
+            const roleHasAccent = message.authorType === ACTOR_TYPES.USER;
 
             return (
               <div
@@ -579,7 +604,7 @@ function TransferMessage({
                                 {getSenderName(message)}
                               </span>
                               {roleText && (
-                                <span className={classes.requestData_message_post}>
+                                <span className={`${classes.requestData_message_role} ${roleHasAccent ? classes.requestData_message_role_accent : ""}`}>
                                   {roleText}
                                 </span>
                               )}

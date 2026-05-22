@@ -244,7 +244,9 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   useEffect(() => {
     // сбрасываем на первую страницу
     setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    navigate("?page=1");
+    // replace, чтобы не засорять history (иначе кнопка «назад» с карточки
+    // авиакомпании требует двух нажатий).
+    navigate("?page=1", { replace: true });
 
     refetch({
       pagination: {
@@ -370,7 +372,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   const handlePageClick = (event) => {
     const selectedPage = event.selected;
     setPageInfo((prev) => ({ ...prev, skip: selectedPage * 50 }));
-    navigate(`?page=${selectedPage + 1}`);
+    navigate(`?page=${selectedPage + 1}`, { replace: true });
   };
 
   const validCurrentPage = urlPage < totalPages ? urlPage : 0;

@@ -101,17 +101,25 @@
     font-family: Nunito Sans;
     font-size: 12px;
     font-weight: 400;
-    line-height: 20px;
+    line-height: 16px;
     display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #0057C3;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    margin-top: 2px;
 }
 
-.InfoTable_data_elem_moreInfo span {
-    display: flex;
-    align-items: flex-start;
-    gap: 5px;
+.InfoTable_data_elem_org {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--dark-blue);
+}
+
+.InfoTable_data_elem_role {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--main-gray);
+    letter-spacing: 0.1px;
 }
 
 .InfoTable_data_elem_position {
@@ -141,6 +149,10 @@
 
 .InfoTable_data_elem_title {
     text-align: left;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 20px;
+    color: var(--text);
     /* padding: 0 10px; */
 }
 

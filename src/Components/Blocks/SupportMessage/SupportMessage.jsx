@@ -15,7 +15,7 @@ import {
   getMediaUrl,
   convertToDateNew,
 } from "../../../../graphQL_requests";
-import { roles } from "../../../roles";
+import { roles, roleLabels } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import SmileIcon from "../../../shared/icons/SmileIcon";
 
@@ -64,7 +64,7 @@ function SupportMessage({
   const chatState = messages?.id ? messages : (data?.userSupportChat ?? messages);
   const chatMessages = chatState?.messages || [];
 
-  const isSupportAgent = user?.support === true;
+  const isSupportAgent = user?.dispatcher === true || user?.role === roles.superAdmin;
   const supportStatus = chatState?.supportStatus || "OPEN";
   const assignedToId = chatState?.assignedTo?.id;
   const isAssignedToMe = assignedToId && assignedToId === user?.id;
@@ -556,11 +556,24 @@ function SupportMessage({
                 messageRefs.current[message.id] = React.createRef();
               }
               const isOwn = message.sender?.id === user?.id;
-              const roleText =
-                message.sender?.position?.name ||
-                (message.sender?.role === roles.superAdmin
-                  ? "Техническая поддержка"
-                  : message.sender?.role || "");
+              const senderRole = message.sender?.role;
+              const isSenderSupportAgent = senderRole === roles.superAdmin;
+              const isSenderDispatcher =
+                senderRole === roles.dispatcerAdmin ||
+                senderRole === roles.dispatcherModerator;
+              const senderOrgName = isSenderSupportAgent
+                ? null
+                : message.sender?.airlineDepartment?.name ||
+                  message.sender?.airline?.name ||
+                  message.sender?.dispatcherDepartment?.name ||
+                  null;
+              const roleText = isSenderSupportAgent
+                ? "Техническая поддержка"
+                : message.sender?.position?.name ||
+                  roleLabels[senderRole] ||
+                  senderRole ||
+                  "";
+              const roleHasAccent = isSenderSupportAgent || isSenderDispatcher;
 
               return (
                 <div
@@ -619,11 +632,20 @@ function SupportMessage({
                                 >
                                   {message.sender?.name}
                                 </span>
+                                {senderOrgName && (
+                                  <span
+                                    className={classes.requestData_message_org}
+                                  >
+                                    {senderOrgName}
+                                  </span>
+                                )}
                                 {roleText && (
                                   <span
-                                    className={
-                                      classes.requestData_message_post
-                                    }
+                                    className={`${classes.requestData_message_role} ${
+                                      roleHasAccent
+                                        ? classes.requestData_message_role_agent
+                                        : ""
+                                    }`}
                                   >
                                     {roleText}
                                   </span>
@@ -809,7 +831,7 @@ export default SupportMessage;
 //   RESOLVE_SUPPORT_TICKET,
 //   UPDATE_MESSAGE_BRON,
 // } from "../../../../graphQL_requests";
-// import { roles } from "../../../roles";
+// import { roles, roleLabels } from "../../../roles";
 // import MUILoader from "../MUILoader/MUILoader";
 // import SmileIcon from "../../../shared/icons/SmileIcon";
 
@@ -858,7 +880,7 @@ export default SupportMessage;
 //   const chatState = data?.userSupportChat ?? messages;
 //   const chatMessages = chatState?.messages || [];
 
-//   const isSupportAgent = user?.support === true;
+//   const isSupportAgent = user?.dispatcher === true;
 //   const supportStatus = chatState?.supportStatus || "OPEN";
 //   const assignedToId = chatState?.assignedTo?.id;
 //   const isAssignedToMe = assignedToId && assignedToId === user?.id;

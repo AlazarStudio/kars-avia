@@ -87,9 +87,21 @@ function InfoTableDataSupport({ children, toggleRequestSidebar, user, requests, 
                                     <div className={classes.InfoTable_data_elem_title}>{otherParticipant?.name}</div>
                                     {(roleLabel || orgName || positionName) && (
                                         <div className={classes.InfoTable_data_elem_moreInfo}>
-                                            {roleLabel && <span>{roleLabel}</span>}
-                                            {orgName && <span>· {orgName}</span>}
-                                            {positionName && <span>· {positionName}</span>}
+                                            {orgName && (
+                                                <span className={classes.InfoTable_data_elem_org}>
+                                                    {orgName}
+                                                </span>
+                                            )}
+                                            {roleLabel && (
+                                                <span className={classes.InfoTable_data_elem_role}>
+                                                    {roleLabel}
+                                                </span>
+                                            )}
+                                            {positionName && (
+                                                <span className={classes.InfoTable_data_elem_role}>
+                                                    {positionName}
+                                                </span>
+                                            )}
                                         </div>
                                     )}
                                 </div>

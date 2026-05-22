@@ -2359,6 +2359,18 @@ export const GET_MESSAGES_HOTEL = gql`
             name
           }
           images
+          airline {
+            id
+            name
+          }
+          airlineDepartment {
+            id
+            name
+          }
+          dispatcherDepartment {
+            id
+            name
+          }
         }
         readBy {
           user {
@@ -2392,6 +2404,18 @@ export const GET_PASSENGER_REQUEST_CHATS = gql`
             name
           }
           images
+          airline {
+            id
+            name
+          }
+          airlineDepartment {
+            id
+            name
+          }
+          dispatcherDepartment {
+            id
+            name
+          }
         }
         readBy {
           user {
@@ -2512,6 +2536,7 @@ export const GET_TRANSFER_MESSAGES = gql`
       senderUser {
         id
         name
+        role
         images
       }
       senderDriver {
@@ -2596,6 +2621,7 @@ export const SEND_TRANSFER_MESSAGE = gql`
       senderUser {
         id
         name
+        role
       }
       senderDriver {
         id
@@ -2666,6 +2692,7 @@ export const TRANSFER_MESSAGE_SENT_SUBSCRIPTION = gql`
       senderUser {
         id
         name
+        role
         images
       }
       senderDriver {
@@ -5629,6 +5656,18 @@ export const GET_USER_SUPPORT_CHAT = gql`
           role
           images
           position {
+            id
+            name
+          }
+          airline {
+            id
+            name
+          }
+          airlineDepartment {
+            id
+            name
+          }
+          dispatcherDepartment {
             id
             name
           }

@@ -15,7 +15,7 @@ import {
     getMediaUrl,
     convertToDateNew,
 } from "../../../../graphQL_requests";
-import { roles } from "../../../roles";
+import { roles, roleLabels } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import SmileIcon from "../../../shared/icons/SmileIcon";
 import { getSeparatorStyle, getSeparatorStyleTransparent } from "../../../utils/messageStyles";
@@ -518,7 +518,24 @@ function Message({
                                 messageRefs.current[message.id] = React.createRef();
                             }
                             const isOwn = isOwnMessage(message);
-                            const roleText = message.sender?.position?.name || message.sender?.role || '';
+                            const senderRole = message.sender?.role;
+                            const isSenderSupportAgent = senderRole === roles.superAdmin;
+                            const isSenderDispatcher =
+                                senderRole === roles.dispatcerAdmin ||
+                                senderRole === roles.dispatcherModerator;
+                            const senderOrgName = isSenderSupportAgent
+                                ? null
+                                : message.sender?.airlineDepartment?.name ||
+                                  message.sender?.airline?.name ||
+                                  message.sender?.dispatcherDepartment?.name ||
+                                  null;
+                            const roleText = isSenderSupportAgent
+                                ? "Техническая поддержка"
+                                : message.sender?.position?.name ||
+                                  roleLabels[senderRole] ||
+                                  senderRole ||
+                                  '';
+                            const roleHasAccent = isSenderSupportAgent || isSenderDispatcher;
 
                             return (
                                 <div
@@ -557,8 +574,13 @@ function Message({
                                                                 <span className={classes.requestData_message_name}>
                                                                     {getDisplayName(message)}
                                                                 </span>
+                                                                {senderOrgName && (
+                                                                    <span className={classes.requestData_message_org}>
+                                                                        {senderOrgName}
+                                                                    </span>
+                                                                )}
                                                                 {roleText && (
-                                                                    <span className={classes.requestData_message_post}>
+                                                                    <span className={`${classes.requestData_message_role} ${roleHasAccent ? classes.requestData_message_role_agent : ''}`}>
                                                                         {roleText}
                                                                     </span>
                                                                 )}
@@ -668,7 +690,7 @@ export default Message;
 //     REQUEST_MESSAGES_SUBSCRIPTION, 
 //     UPDATE_MESSAGE_BRON,
 // } from "../../../../graphQL_requests";
-// import { roles } from "../../../roles";
+// import { roles, roleLabels } from "../../../roles";
 // import MUILoader from "../MUILoader/MUILoader";
 // import SmileIcon from "../../../shared/icons/SmileIcon";
 

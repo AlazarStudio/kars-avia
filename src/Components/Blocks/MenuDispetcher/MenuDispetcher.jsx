@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   decodeJWT,
   GET_AIRLINE,
+  GET_DISPATCHER,
   GET_HOTEL_CITY,
   GET_REQUESTS,
   GET_RESERVE_REQUESTS,
@@ -136,15 +137,23 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   const [allCreatedReserves, setAllCreatedReserves] = useState(0);
   const [allCreatedRequests, setAllCreatedRequests] = useState(0);
 
+  const { data: dispatcherUserData } = useQuery(GET_DISPATCHER, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: { userId: user?.userId },
+    skip: !user?.userId,
+  });
+
+  const isSupportAgent = dispatcherUserData?.user?.dispatcher === true;
+
   const { data: supportChatsData, refetch: refetchSupport } = useQuery(GET_USER_SUPPORT_CHATS, {
     context: { headers: { Authorization: `Bearer ${token}` } },
-    skip: !isSuperAdmin(user),
+    skip: !isSupportAgent,
   });
 
   useSubscription(MESSAGE_SENT_SUBSCRIPTION, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     onData: () => { refetchSupport(); },
-    skip: !isSuperAdmin(user),
+    skip: !isSupportAgent,
   });
 
   const activeSupportCount = (supportChatsData?.supportChats || []).filter(
@@ -402,6 +411,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
+              activeSupportCount={activeSupportCount}
+              isSupportAgent={isSupportAgent}
               menuOpen={menuOpen}
               accessMenu={accessMenu}
               user={user}

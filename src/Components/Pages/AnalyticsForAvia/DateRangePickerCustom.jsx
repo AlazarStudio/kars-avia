@@ -165,7 +165,7 @@ import {
   isSameDay,
   startOfToday,
 } from "date-fns";
-import ru from "date-fns/locale/ru";
+import { ru } from "date-fns/locale";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import Button from "../../Standart/Button/Button";
